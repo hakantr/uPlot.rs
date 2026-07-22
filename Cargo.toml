@@ -56,6 +56,10 @@ name = "add_del_series"
 required-features = ["svg"]
 
 [[example]]
+name = "align_data"
+required-features = ["svg"]
+
+[[example]]
 name = "area_fill"
 required-features = ["svg"]
 

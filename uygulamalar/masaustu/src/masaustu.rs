@@ -1,34 +1,39 @@
 //! GPUI masaüstü chart kataloğu; dağıtılan bileşeni kullanan örnek uygulama.
 
 use gpui::{
-    ClickEvent, Context, Entity, FontWeight, IntoElement, Render, SharedString, Window, div,
+    ClickEvent, Context, Entity, FontWeight, IntoElement, Render, SharedString, Task, Window, div,
     prelude::*, px, rgb,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, PlatformPencere,
 };
+use std::time::Duration;
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
-    ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
-    AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ, AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
-    AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ,
-    BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ, BOX_WHISKER_BENCHMARKLERİ,
-    BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
-    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
+    ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ,
+    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
+    AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
+    BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
+    BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ,
+    CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
     SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
     ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
-    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
-    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
-    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
-    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
-    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
+    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
+    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
+    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
+    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum KartKimliği {
     AddDelSeries,
+    AlignDataCost,
+    AlignDataLineBars,
     Resize,
     AreaFill,
     ScalePadding,
@@ -55,6 +60,8 @@ impl KartKimliği {
     fn başlık(self) -> &'static str {
         match self {
             Self::AddDelSeries => "Add/Delete Series",
+            Self::AlignDataCost => "Align Data · join cost",
+            Self::AlignDataLineBars => "Align Data · line + bars",
             Self::Resize => "Resize · sayısal x ölçeği",
             Self::AreaFill => "Area Fill",
             Self::ScalePadding => "Scale Padding · Flat",
@@ -84,6 +91,8 @@ impl KartKimliği {
             Self::AddDelSeries => {
                 "add-del-series.html · addSeries/delSeries/setData · kaynak Y indeksi 1"
             }
+            Self::AlignDataCost => "align-data.html · 5×5×1000 tablo · NULL_EXPAND join",
+            Self::AlignDataLineBars => "align-data.html · farklı X dizilerinde çizgi + çubuk",
             Self::Resize => "resize.html + zoom-wheel.html + zoom-touch.html",
             Self::AreaFill => {
                 "area-fill.html · kaynakla aynı veri üreteci · ortak Resize etkileşim profili"
@@ -122,6 +131,7 @@ impl KartKimliği {
     fn tanım(self) -> &'static str {
         match self {
             Self::AddDelSeries => ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ,
+            Self::AlignDataCost | Self::AlignDataLineBars => ALIGN_DATA_KART_TANIM_ÖRNEĞİ,
             Self::Resize => RESIZE_KART_TANIM_ÖRNEĞİ,
             Self::AreaFill => AREA_FILL_KART_TANIM_ÖRNEĞİ,
             Self::ScalePadding => SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
@@ -146,6 +156,7 @@ impl KartKimliği {
     fn tanım_yolu(self) -> &'static str {
         match self {
             Self::AddDelSeries => "src/kart/add_del_series.rs",
+            Self::AlignDataCost | Self::AlignDataLineBars => "src/kart/align_data.rs",
             Self::Resize => "src/kart/resize.rs",
             Self::AreaFill => "src/kart/area_fill.rs",
             Self::ScalePadding => "src/kart/scale_padding.rs",
@@ -192,6 +203,7 @@ pub struct ChartListesi {
     autosize_kuvvet: i32,
     açıklama_istendi: bool,
     dinamik_seri_sayacı: u32,
+    align_data_zamanlayıcısı: Option<Task<()>>,
 }
 
 impl ChartListesi {
@@ -241,6 +253,7 @@ impl ChartListesi {
             autosize_kuvvet: 0,
             açıklama_istendi: false,
             dinamik_seri_sayacı: 0,
+            align_data_zamanlayıcısı: None,
         }
     }
 
@@ -282,6 +295,7 @@ impl ChartListesi {
         self.autosize_kuvvet = 0;
         self.açıklama_istendi = false;
         self.dinamik_seri_sayacı = 0;
+        self.align_data_zamanlayıcısı = None;
         let etkileşimler = kart.etkileşimler();
         self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
         self.tekerlek_anahtarı.update(cx, |anahtar, cx| {
@@ -289,6 +303,31 @@ impl ChartListesi {
             anahtar.devre_disi_ayarla(false, cx);
         });
         self.grafiği_yenile(self.nokta_sayısı, cx);
+        if kart == KartKimliği::AlignDataCost {
+            self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
+                let mut etkin = false;
+                loop {
+                    cx.background_executor().timer(Duration::from_secs(1)).await;
+                    etkin = !etkin;
+                    let devam = bu
+                        .update(cx, |bu, cx| {
+                            if bu.aktif_kart != KartKimliği::AlignDataCost {
+                                return false;
+                            }
+                            if let Some(grafik) = &bu.grafik {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.boşlukları_birleştir_ayarla(etkin, cx);
+                                });
+                            }
+                            true
+                        })
+                        .unwrap_or(false);
+                    if !devam {
+                        break;
+                    }
+                }
+            }));
+        }
     }
 
     fn arcsinh_kuvvetini_ayarla(&mut self, kuvvet: i32, cx: &mut Context<Self>) {
@@ -357,6 +396,8 @@ fn grafik_oluştur(
 ) -> Result<Grafik, UplotHatası> {
     let (seçenekler, veri) = match kart {
         KartKimliği::AddDelSeries => add_del_series_kartı(),
+        KartKimliği::AlignDataCost => align_data_maliyet_kartı(),
+        KartKimliği::AlignDataLineBars => align_data_çizgi_çubuk_kartı(),
         KartKimliği::Resize => resize_kartı(nokta_sayısı),
         KartKimliği::AreaFill => area_fill_kartı(),
         KartKimliği::ScalePadding => scale_padding_kartı(),
@@ -396,6 +437,10 @@ impl Render for ChartListesi {
             KartKimliği::AddDelSeries => {
                 format!("30 nokta × {mevcut_seri_sayısı} dinamik seri")
             }
+            KartKimliği::AlignDataCost => {
+                "5 tablo × 5 seri × 1000 X · birleşik sıralı X".to_string()
+            }
+            KartKimliği::AlignDataLineBars => "38 noktalı çizgi + 4 çubuk".to_string(),
             KartKimliği::Resize => format!("{} nokta", self.nokta_sayısı),
             KartKimliği::AreaFill => "30 sabit nokta × 3 seri".to_string(),
             KartKimliği::ScalePadding => "10 nokta × 13 düz seri".to_string(),
@@ -454,6 +499,7 @@ impl Render for ChartListesi {
                 .grafik()
                 .seri_seçenekleri()
                 .iter()
+                .filter(|seri| seri.göster)
                 .map(|seri| seri.etiket.clone())
                 .collect::<Vec<_>>()
         });
@@ -517,6 +563,34 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::AddDelSeries, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "align-data-cost",
+                    "Align Data · join cost",
+                    "align-data",
+                    aktif_kart == KartKimliği::AlignDataCost,
+                    "5×5×1000 tablo · NULL_EXPAND",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::AlignDataCost, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "align-data-line-bars",
+                    "Align Data · line + bars",
+                    "align-data",
+                    aktif_kart == KartKimliği::AlignDataLineBars,
+                    "Farklı X dizilerinde çizgi + çubuk",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::AlignDataLineBars, cx);
                 })),
             )
             .child(

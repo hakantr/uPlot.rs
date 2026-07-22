@@ -3,15 +3,16 @@
 #![allow(confusable_idents)]
 
 use uplot_rs::{
-    ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
-    AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ, AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
-    AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ,
-    BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ,
-    CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
-    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
-    MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-    SeriSeçenekleri, SeçimEylemi, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
+    ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ,
+    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
+    AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
+    BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
+    BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
+    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, Grafik,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SeçimEylemi, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
     arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
     axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
     box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
@@ -35,6 +36,8 @@ impl KartOturumu {
     pub fn yeni(kart_kimliği: &str, nokta_sayısı: usize) -> Result<KartOturumu, JsValue> {
         let (seçenekler, veri) = match kart_kimliği {
             "add-del-series" => add_del_series_kartı(),
+            "align-data-cost" => align_data_maliyet_kartı(),
+            "align-data-line-bars" => align_data_çizgi_çubuk_kartı(),
             "resize" => resize_kartı(nokta_sayısı),
             "area-fill" => area_fill_kartı(),
             "scale-padding" => scale_padding_kartı(),
@@ -211,6 +214,10 @@ impl KartOturumu {
         self.grafik.tekerlek_etkileşimi_ayarla(etkin);
     }
 
+    pub fn bosluklari_birlestir_ayarla(&mut self, etkin: bool) {
+        self.grafik.boşlukları_birleştir_ayarla(etkin);
+    }
+
     pub fn gorunur_x_araligi(&self) -> Vec<f64> {
         let aralık = self.grafik.görünür_x_aralığı();
         vec![aralık.en_az, aralık.en_çok]
@@ -336,7 +343,12 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    47
+    49
+}
+
+#[wasm_bindgen]
+pub fn align_data_kart_tanim_ornegi() -> String {
+    ALIGN_DATA_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -478,7 +490,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 47);
+        assert_eq!(kart_sayisi(), 49);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -503,7 +515,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 47);
+        assert_eq!(kart_sayisi(), 49);
     }
 
     #[test]
@@ -524,6 +536,29 @@ mod testler {
         assert!(matches!(oturum.add_del_seri_sil(), Ok(true)));
         assert_eq!(oturum.seri_sayisi(), 3);
         assert!(add_del_series_kart_tanim_ornegi().contains("seri_ekle"));
+    }
+
+    #[test]
+    fn align_data_wasm_join_ve_karma_yolu_üretir() {
+        let maliyet = KartOturumu::yeni("align-data-cost", 100);
+        assert!(maliyet.is_ok());
+        let Ok(mut maliyet) = maliyet else {
+            return;
+        };
+        assert_eq!(maliyet.seri_sayisi(), 25);
+        let ayrı = maliyet.svg(960, 400);
+        maliyet.bosluklari_birlestir_ayarla(true);
+        assert_ne!(maliyet.svg(960, 400), ayrı);
+
+        let karma = KartOturumu::yeni("align-data-line-bars", 100);
+        assert!(karma.is_ok());
+        let Ok(karma) = karma else {
+            return;
+        };
+        let svg = karma.svg(960, 400);
+        assert!(svg.contains("#ff0000"));
+        assert_eq!(svg.matches("fill=\"#0000ff1a\"").count(), 4);
+        assert!(align_data_kart_tanim_ornegi().contains("align_data_maliyet_kartı"));
     }
 
     #[test]

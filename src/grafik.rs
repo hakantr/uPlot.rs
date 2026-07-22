@@ -135,9 +135,7 @@ impl Grafik {
                 ekleme: true,
             });
         }
-        let mut seriler = self.veri.seriler().to_vec();
-        seriler.insert(indeks, değerler);
-        let veri = HizalıVeri::yeni(self.veri.x().to_vec(), seriler)?;
+        let veri = self.veri.seri_ekle(indeks, değerler)?;
         let mut seçenekler = self.seçenekler.clone();
         seçenekler.etkileşimler = self.etkileşim.ayarlar();
         seçenekler.seriler.insert(indeks, seçenek);
@@ -156,15 +154,25 @@ impl Grafik {
                 ekleme: false,
             });
         }
-        let mut seriler = self.veri.seriler().to_vec();
-        seriler.remove(indeks);
-        let veri = HizalıVeri::yeni(self.veri.x().to_vec(), seriler)?;
+        let veri = self.veri.seri_sil(indeks)?;
         let mut seçenekler = self.seçenekler.clone();
         seçenekler.etkileşimler = self.etkileşim.ayarlar();
         seçenekler.seriler.remove(indeks);
         let yeni = Self::yeni(seçenekler, veri)?;
         *self = yeni;
         Ok(())
+    }
+
+    /// Bütün Y serilerinin uPlot `spanGaps` değerini birlikte değiştirir.
+    pub fn boşlukları_birleştir_ayarla(&mut self, birleştir: bool) -> bool {
+        let mut değişti = false;
+        for seri in &mut self.seçenekler.seriler {
+            if seri.boşlukları_birleştir != birleştir {
+                seri.boşlukları_birleştir = birleştir;
+                değişti = true;
+            }
+        }
+        değişti
     }
 
     /// Başlık ve eksen payları çıkarıldıktan sonraki gerçek çizim alanını
@@ -891,6 +899,20 @@ impl Grafik {
             }
             let seri_y_aralığı =
                 self.görünür_ölçek_aralığı(&seri.ölçek, x_aralığı, görünür_y);
+            if seri.çizim_türü == crate::SeriÇizimTürü::Çubuk {
+                self.karma_çubuk_serisini_çiz(
+                    &mut sahne,
+                    seri,
+                    değerler,
+                    x_aralığı,
+                    seri_y_aralığı,
+                    sol,
+                    sağ,
+                    üst,
+                    alt,
+                );
+                continue;
+            }
             let mut ham_parçalar = Vec::<Vec<Nokta>>::new();
             let mut parça = Vec::<Nokta>::new();
             let mut görünür_noktalar = Vec::<Nokta>::new();
@@ -923,6 +945,8 @@ impl Grafik {
                             görünür_noktalar.push(nokta);
                         }
                     }
+                    _ if self.veri.hizalama_eksiği_mi(seri_indeksi, indeks)
+                        || seri.boşlukları_birleştir => {}
                     _ if !parça.is_empty() => {
                         ham_parçalar.push(std::mem::take(&mut parça));
                         önceki_x = None;
@@ -984,6 +1008,70 @@ impl Grafik {
         }
 
         sahne
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn karma_çubuk_serisini_çiz(
+        &self,
+        sahne: &mut Sahne,
+        seri: &crate::SeriSeçenekleri,
+        değerler: &[Option<f64>],
+        x_aralığı: Aralık,
+        y_aralığı: Aralık,
+        sol: f32,
+        sağ: f32,
+        üst: f32,
+        alt: f32,
+    ) {
+        let genişlik = sağ - sol;
+        let yükseklik = alt - üst;
+        let mut önceki_x = None;
+        let mut en_küçük_fark = f64::INFINITY;
+        for (x, değer) in self.veri.x().iter().zip(değerler.iter()) {
+            if değer.is_none() || *x < x_aralığı.en_az || *x > x_aralığı.en_çok {
+                continue;
+            }
+            if let Some(önceki) = önceki_x {
+                let fark = *x - önceki;
+                if fark > 0.0 {
+                    en_küçük_fark = en_küçük_fark.min(fark);
+                }
+            }
+            önceki_x = Some(*x);
+        }
+        let varsayılan_fark =
+            (x_aralığı.en_çok - x_aralığı.en_az) / değerler.len().saturating_sub(1).max(1) as f64;
+        let veri_farkı = if en_küçük_fark.is_finite() {
+            en_küçük_fark
+        } else {
+            varsayılan_fark
+        };
+        let çubuk_genişliği =
+            (veri_farkı / (x_aralığı.en_çok - x_aralığı.en_az) * f64::from(genişlik) * 0.6) as f32;
+        let taban =
+            (alt - self.y_konumu(&seri.ölçek, y_aralığı, 0.0, 0.0, yükseklik)).clamp(üst, alt);
+        let dolgu = seri.dolgu.as_ref().unwrap_or(&seri.renk);
+        for (x_değeri, değer) in self.veri.x().iter().zip(değerler.iter()) {
+            let Some(değer) = değer else {
+                continue;
+            };
+            if *x_değeri < x_aralığı.en_az || *x_değeri > x_aralığı.en_çok {
+                continue;
+            }
+            let merkez = x_aralığı.konum(*x_değeri, sol, genişlik);
+            let y = (alt - self.y_konumu(&seri.ölçek, y_aralığı, *değer, 0.0, yükseklik))
+                .clamp(üst, alt);
+            let x0 = (merkez - çubuk_genişliği / 2.0).clamp(sol, sağ);
+            let x1 = (merkez + çubuk_genişliği / 2.0).clamp(sol, sağ);
+            sahne.ekle(Komut::Dikdörtgen {
+                konum: Nokta::yeni(x0, y.min(taban)),
+                genişlik: (x1 - x0).max(0.0),
+                yükseklik: (taban - y).abs(),
+                dolgu: dolgu.clone(),
+                çizgi: seri.renk.clone(),
+                kalınlık: seri.çizgi_kalınlığı,
+            });
+        }
     }
 
     fn çubukları_çiz(

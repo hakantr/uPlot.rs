@@ -123,6 +123,19 @@ impl GpuiGrafik {
         Ok(())
     }
 
+    pub fn boşlukları_birleştir_ayarla(
+        &mut self,
+        birleştir: bool,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let değişti = self.grafik.boşlukları_birleştir_ayarla(birleştir);
+        if değişti {
+            self.imleç = None;
+            Self::bildir(cx);
+        }
+        değişti
+    }
+
     pub fn tekerlek_etkileşimi_ayarla(&mut self, etkin: bool, cx: &mut Context<Self>) {
         self.grafik.tekerlek_etkileşimi_ayarla(etkin);
         Self::bildir(cx);

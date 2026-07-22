@@ -1,3 +1,9 @@
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SeriÇizimTürü {
+    Çizgi,
+    Çubuk,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct SeriSeçenekleri {
     pub etiket: String,
@@ -8,6 +14,8 @@ pub struct SeriSeçenekleri {
     pub göster: bool,
     pub ölçek: String,
     pub azami_x_boşluğu: Option<f64>,
+    pub boşlukları_birleştir: bool,
+    pub çizim_türü: SeriÇizimTürü,
 }
 
 impl SeriSeçenekleri {
@@ -21,6 +29,8 @@ impl SeriSeçenekleri {
             göster: true,
             ölçek: "y".to_string(),
             azami_x_boşluğu: None,
+            boşlukları_birleştir: false,
+            çizim_türü: SeriÇizimTürü::Çizgi,
         }
     }
 
@@ -61,6 +71,27 @@ impl SeriSeçenekleri {
         if fark.is_finite() && fark > 0.0 {
             self.azami_x_boşluğu = Some(fark);
         }
+        self
+    }
+
+    pub fn göster(mut self, göster: bool) -> Self {
+        self.göster = göster;
+        self
+    }
+
+    /// uPlot `spanGaps` karşılığıdır.
+    pub fn boşlukları_birleştir(mut self, birleştir: bool) -> Self {
+        self.boşlukları_birleştir = birleştir;
+        self
+    }
+
+    /// Bu seriyi uPlot `paths.bars()` geometrisiyle çizer.
+    pub fn çubuk(mut self, çubuk: bool) -> Self {
+        self.çizim_türü = if çubuk {
+            SeriÇizimTürü::Çubuk
+        } else {
+            SeriÇizimTürü::Çizgi
+        };
         self
     }
 }

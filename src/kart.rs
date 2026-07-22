@@ -1,4 +1,5 @@
 mod add_del_series;
+mod align_data;
 mod arcsinh_scales;
 mod area_fill;
 mod axis_autosize;
@@ -23,6 +24,10 @@ mod zoom_wheel;
 pub use add_del_series::{
     ADD_DEL_SERIES_KANIT_TOHUMU, ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
     add_del_series_kartı,
+};
+pub use align_data::{
+    ALIGN_DATA_KANIT_TOHUMU, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, align_data_maliyet_kartı,
+    align_data_çizgi_çubuk_kartı,
 };
 pub use arcsinh_scales::{ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı};
 pub use area_fill::{AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ, area_fill_kartı};

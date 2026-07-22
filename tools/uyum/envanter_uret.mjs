@@ -150,16 +150,21 @@ function veriVarlıkları(içerik, demoYolu) {
     .filter((değer) => değer !== null);
 }
 
+const uygulanmışDemolar = new Set([
+  "add-del-series.html", "align-data.html", "annotations.html", "arcsinh-scales.html",
+  "area-fill.html", "axis-autosize.html", "axis-control.html", "axis-indicators.html",
+  "bars-grouped-stacked.html", "bars-values-autosize.html", "box-whisker.html",
+  "candlestick-ohlc.html", "cursor-bind.html", "cursor-snap.html", "dependent-scale.html",
+  "missing-data.html", "months.html", "resize.html", "scale-padding.html", "zoom-touch.html",
+  "zoom-wheel.html",
+]);
+
 const demolar = dosyalar.map((dosya, indeks) => {
   const yol = resolve(demoKoku, dosya);
   const içerik = readFileSync(yol, "utf8");
   const başlık = içerik.match(/<title>(.*?)<\/title>/is)?.[1]?.trim() ?? basename(dosya, ".html");
   const faz = fazHaritasi.get(dosya);
-  const durum = dosya === "resize.html" ? "uygulandı_kanıtlı" :
-    dosya === "area-fill.html" ? "uygulandı_kanıtlı" :
-    ["zoom-touch.html", "zoom-wheel.html"].includes(dosya)
-      ? "çekirdek_davranışı_port_edildi_kart_bekliyor"
-      : "bekliyor";
+  const durum = uygulanmışDemolar.has(dosya) ? "uygulandı_kanıtlı" : "bekliyor";
   return {
     sıra: indeks + 1,
     id: basename(dosya, ".html"),

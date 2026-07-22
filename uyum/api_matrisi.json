@@ -92,6 +92,24 @@
       "rust_karşılığı": "Grafik::veriyi_ayarla",
       "durum": "kısmi",
       "test": "src/kart/add_del_series.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.join",
+      "rust_karşılığı": "hizalı_verileri_birleştir",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/align_data.rs"
+    },
+    {
+      "kaynak_yolu": "Series.spanGaps",
+      "rust_karşılığı": "SeriSeçenekleri::boşlukları_birleştir",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/align_data.rs"
+    },
+    {
+      "kaynak_yolu": "Series.paths.bars",
+      "rust_karşılığı": "SeriSeçenekleri::çubuk",
+      "durum": "kısmi",
+      "test": "src/kart/align_data.rs"
     }
   ]
 }

@@ -1,0 +1,26 @@
+id = "align-data"
+kaynak = "../uPlot/demos/align-data.html"
+fixture = "src/kart/align_data.rs"
+viewport = [2560, 600]
+device_pixel_ratio = 1
+durum = "join-ve-karma-cizim"
+
+[veri]
+tablo_sayısı = 5
+tablo_başına_seri = 5
+tablo_başına_x = 1000
+x_aralığı = "0..=100000"
+y_aralığı = "0..=100"
+null_kipi = "NULL_EXPAND"
+kanıt_tohumu = "0xA119_DA7A"
+
+[davranış]
+join_api = "hizalı_verileri_birleştir"
+explicit_null_ve_undefined_ayrımı = true
+span_gaps_değişim_ms = 1000
+karma_cizgi_cubuk = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/align-data.svg"

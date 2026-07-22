@@ -3,7 +3,7 @@ use crate::{Aralık, UplotHatası};
 mod seri;
 mod y_olcek;
 
-pub use seri::SeriSeçenekleri;
+pub use seri::{SeriSeçenekleri, SeriÇizimTürü};
 pub use y_olcek::{YÖlçekDağılımı, YÖlçekSeçenekleri};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

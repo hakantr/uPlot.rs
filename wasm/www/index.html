@@ -231,6 +231,7 @@
   <script type="module">
     import init, {
       KartOturumu,
+      align_data_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
@@ -649,6 +650,41 @@
       dinamikSeri: true,
       etkileşimler: () => ortakEtkileşimler(),
     };
+    for (const [kimlik, başlık, durum] of [
+      ["align-data-cost", "Align Data · join cost", "5×5×1000 tablo · NULL_EXPAND"],
+      ["align-data-line-bars", "Align Data · line + bars", "Farklı X dizilerinde çizgi + çubuk"],
+    ]) {
+      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>align-data</small><div class="durum">${durum}</div>
+        </article>`);
+    }
+    kartlar["align-data-cost"] = {
+      başlık: "Align Data · join cost",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/align-data.html">align-data.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/utils.js">uPlot.join</a>
+        <br>Kaynaktaki 5×5×1000 rastgele tablo sabit kanıt tohumu ile üretilir; sıralı X birleşimi ve NULL_EXPAND semantiği çekirdektedir. spanGaps kaynak gibi her saniye değişir.`,
+      tanım: () => align_data_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/align_data.rs",
+      seriler: [
+        { etiket: "Red", renk: "#ff0000" }, { etiket: "Green", renk: "#008000" },
+        { etiket: "Blue", renk: "#0000ff" },
+      ],
+      yardım: "uPlot.join · explicit null ile hizalama eksiği ayrı korunur · spanGaps her saniye değişir",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
+    kartlar["align-data-line-bars"] = {
+      başlık: "Align Data · line + bars",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/align-data.html">align-data.html</a>
+        <br>38 noktalı kırmızı çizgi ve dört noktalı mavi çubuk serisi farklı X dizilerinden uPlot.join eşdeğeriyle hizalanır.`,
+      tanım: () => align_data_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/align_data.rs",
+      seriler: [{ etiket: "Line", renk: "#ff0000" }, { etiket: "Bars", renk: "#0000ff" }],
+      yardım: "Aynı sahnede seri başına çizgi ve çubuk yolu · ortak yakınlaştırma profili",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     function ortakEtkileşimler() {
       return {
@@ -670,6 +706,7 @@
     const dokunmalar = new Map();
     let kıstırma = null;
     let autosizeZamanlayıcı = null;
+    let alignDataZamanlayıcı = null;
     let etkileşimler = {
       tekerlek: false,
       seçim: false,
@@ -1171,6 +1208,10 @@
           clearInterval(autosizeZamanlayıcı);
           autosizeZamanlayıcı = null;
         }
+        if (alignDataZamanlayıcı !== null) {
+          clearInterval(alignDataZamanlayıcı);
+          alignDataZamanlayıcı = null;
+        }
         etkileşimler = kart.etkileşimler();
         tekerlekEtkileşimi.checked = etkileşimler.tekerlek;
         tekerlekEtkileşimi.closest("label").hidden = false;
@@ -1195,6 +1236,19 @@
               hata.textContent = `Axis AutoSize güncellenemedi: ${String(neden)}`;
             }
           }, 500);
+        }
+        if (kimlik === "align-data-cost") {
+          let boşluklarıBirleştir = false;
+          alignDataZamanlayıcı = setInterval(() => {
+            if (aktifKart !== "align-data-cost" || !oturum) {
+              clearInterval(alignDataZamanlayıcı);
+              alignDataZamanlayıcı = null;
+              return;
+            }
+            boşluklarıBirleştir = !boşluklarıBirleştir;
+            oturum.bosluklari_birlestir_ayarla(boşluklarıBirleştir);
+            çiz();
+          }, 1000);
         }
       }
       document.querySelectorAll("[data-kart]").forEach(öğe => {
