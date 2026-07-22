@@ -1,0 +1,5 @@
+/target/
+/wasm/pkg/
+/testler/gorsel/gercek/
+/testler/gorsel/fark/
+*.DS_Store

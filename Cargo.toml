@@ -1,0 +1,52 @@
+[package]
+name = "uplot-rs"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+description = "uPlot'un yerli Rust portu"
+license = "Apache-2.0"
+repository = "https://github.com/hakantr/uPlot.rs"
+
+[workspace]
+members = ["wasm"]
+resolver = "3"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+unreachable = "deny"
+indexing_slicing = "deny"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+unreachable = "deny"
+indexing_slicing = "deny"
+
+[features]
+default = ["desktop"]
+desktop = ["dep:gpui", "dep:gpui_platform", "dep:ortak_bilesenler"]
+
+[dependencies]
+gpui = { path = "../gpui/crates/gpui", optional = true }
+gpui_platform = { path = "../gpui/crates/gpui_platform", optional = true, features = ["font-kit", "wayland", "x11"] }
+ortak_bilesenler = { path = "../gpui_kutuphanesi/kutuphaneler/ortak_bilesenler", optional = true, features = ["varsayilan_tema"] }
+
+[[example]]
+name = "ilk_kart"
+
+[[example]]
+name = "chart_listesi"
+required-features = ["desktop"]
