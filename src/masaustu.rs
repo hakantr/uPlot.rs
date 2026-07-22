@@ -13,10 +13,17 @@ use ortak_bilesenler::{CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, PlatformPen
 
 use crate::{Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne, sinüs_kartı};
 
+#[derive(Clone, Copy)]
+struct İmleçDurumu {
+    fare: Nokta,
+    veri_x: f64,
+    veri_y: f64,
+}
+
 pub struct ChartListesi {
     nokta_sayısı: usize,
     x_aralığı: Option<Aralık>,
-    imleç: Option<(f64, f64)>,
+    imleç: Option<İmleçDurumu>,
     seçim: Option<(f32, f32)>,
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
 }
@@ -39,25 +46,25 @@ impl ChartListesi {
             .çiz_aralıkta(self.x_aralığı);
         let x_aralığı = self.geçerli_x_aralığı();
         let y_aralığı = görünür_y_aralığı(self.nokta_sayısı, x_aralığı);
-        if let Some((x_değeri, y_değeri)) = self.imleç {
-            let x = ölçekle(x_değeri, x_aralığı, 64.0, 712.0);
-            let y = 352.0 - ölçekle(y_değeri, y_aralığı, 0.0, 304.0);
+        if let Some(imleç) = self.imleç {
+            let nokta_x = ölçekle(imleç.veri_x, x_aralığı, 64.0, 712.0);
+            let nokta_y = 352.0 - ölçekle(imleç.veri_y, y_aralığı, 0.0, 304.0);
             sahne.ekle(Komut::KesikliÇizgi {
-                başlangıç: Nokta::yeni(x, 48.0),
-                bitiş: Nokta::yeni(x, 352.0),
+                başlangıç: Nokta::yeni(imleç.fare.x, 48.0),
+                bitiş: Nokta::yeni(imleç.fare.x, 352.0),
                 renk: "#6b7280".to_string(),
                 kalınlık: 1.0,
                 kesik: 4.0,
             });
             sahne.ekle(Komut::KesikliÇizgi {
-                başlangıç: Nokta::yeni(64.0, y),
-                bitiş: Nokta::yeni(776.0, y),
+                başlangıç: Nokta::yeni(64.0, imleç.fare.y),
+                bitiş: Nokta::yeni(776.0, imleç.fare.y),
                 renk: "#6b7280".to_string(),
                 kalınlık: 1.0,
                 kesik: 4.0,
             });
             sahne.ekle(Komut::Daire {
-                merkez: Nokta::yeni(x, y),
+                merkez: Nokta::yeni(nokta_x, nokta_y),
                 yarıçap: 2.5,
                 dolgu: "#dc2626".to_string(),
                 çizgi: "#dc2626".to_string(),
@@ -82,33 +89,42 @@ impl ChartListesi {
             .unwrap_or_else(|| tam_x_aralığı(self.nokta_sayısı))
     }
 
-    fn sahne_x(&self, pencere_x: Pixels) -> Option<f32> {
+    fn sahne_konumu(&self, pencere_konumu: gpui::Point<Pixels>) -> Option<Nokta> {
         let sınırlar = self.çizim_sınırları.get()?;
         let ölçek = (f32::from(sınırlar.size.width) / 800.0)
             .min(f32::from(sınırlar.size.height) / 400.0)
             .max(0.01);
         let köken_x =
             f32::from(sınırlar.origin.x) + (f32::from(sınırlar.size.width) - 800.0 * ölçek) / 2.0;
-        Some((f32::from(pencere_x) - köken_x) / ölçek)
+        let köken_y =
+            f32::from(sınırlar.origin.y) + (f32::from(sınırlar.size.height) - 400.0 * ölçek) / 2.0;
+        Some(Nokta::yeni(
+            (f32::from(pencere_konumu.x) - köken_x) / ölçek,
+            (f32::from(pencere_konumu.y) - köken_y) / ölçek,
+        ))
     }
 
-    fn imleci_güncelle(&mut self, pencere_x: Pixels) {
-        let Some(x) = self.sahne_x(pencere_x) else {
+    fn imleci_güncelle(&mut self, pencere_konumu: gpui::Point<Pixels>) {
+        let Some(fare) = self.sahne_konumu(pencere_konumu) else {
             self.imleç = None;
             return;
         };
-        if !(64.0..=776.0).contains(&x) {
+        if !(64.0..=776.0).contains(&fare.x) || !(48.0..=352.0).contains(&fare.y) {
             self.imleç = None;
             return;
         }
         let aralık = self.geçerli_x_aralığı();
-        let ham_x = ters_ölçekle(x, aralık, 64.0, 712.0);
+        let ham_x = ters_ölçekle(fare.x, aralık, 64.0, 712.0);
         let adım = 2.0 * PI / self.nokta_sayısı as f64;
         let indeks = (ham_x / adım)
             .round()
             .clamp(0.0, (self.nokta_sayısı - 1) as f64);
         let x_değeri = indeks * adım;
-        self.imleç = Some((x_değeri, x_değeri.sin()));
+        self.imleç = Some(İmleçDurumu {
+            fare,
+            veri_x: x_değeri,
+            veri_y: x_değeri.sin(),
+        });
     }
 }
 
@@ -123,7 +139,7 @@ impl Render for ChartListesi {
         let nokta_yazısı = SharedString::from(format!("{} nokta", self.nokta_sayısı));
         let lejant = self.imleç.map_or_else(
             || "x: --    □ sin(x): --".to_string(),
-            |(x, y)| format!("x: {x:.3}    □ sin(x): {y:.3}"),
+            |imleç| format!("x: {:.3}    □ sin(x): {:.3}", imleç.veri_x, imleç.veri_y),
         );
         let çizim_sınırları = self.çizim_sınırları.clone();
 
@@ -137,12 +153,12 @@ impl Render for ChartListesi {
             .bg(panel)
             .overflow_hidden()
             .on_mouse_move(cx.listener(|bu, olay: &MouseMoveEvent, _, cx| {
-                bu.imleci_güncelle(olay.position.x);
+                bu.imleci_güncelle(olay.position);
                 if olay.dragging()
                     && let Some((baş, _)) = bu.seçim
-                    && let Some(x) = bu.sahne_x(olay.position.x)
+                    && let Some(konum) = bu.sahne_konumu(olay.position)
                 {
-                    bu.seçim = Some((baş, x.clamp(64.0, 776.0)));
+                    bu.seçim = Some((baş, konum.x.clamp(64.0, 776.0)));
                 }
                 cx.notify();
             }))
@@ -158,10 +174,11 @@ impl Render for ChartListesi {
                     if olay.click_count >= 2 {
                         bu.x_aralığı = None;
                         bu.seçim = None;
-                    } else if let Some(x) = bu.sahne_x(olay.position.x)
-                        && (64.0..=776.0).contains(&x)
+                    } else if let Some(konum) = bu.sahne_konumu(olay.position)
+                        && (64.0..=776.0).contains(&konum.x)
+                        && (48.0..=352.0).contains(&konum.y)
                     {
-                        bu.seçim = Some((x, x));
+                        bu.seçim = Some((konum.x, konum.x));
                     }
                     cx.notify();
                 }),

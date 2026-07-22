@@ -161,10 +161,12 @@
       }
       const noktaY = alt - (gerçekY - yMin) / (yMax - yMin) * (alt - üst);
       const [dikey, yatay, imleçNoktası] = öğeler;
-      dikey.setAttribute("x1", noktaX); dikey.setAttribute("x2", noktaX);
+      // İmleç çizgileri fareyi kesintisiz izler; yalnız seri noktası en yakın
+      // veri örneğine kilitlenir.
+      dikey.setAttribute("x1", x); dikey.setAttribute("x2", x);
       dikey.setAttribute("y1", üst); dikey.setAttribute("y2", alt);
       yatay.setAttribute("x1", sol); yatay.setAttribute("x2", sağ);
-      yatay.setAttribute("y1", noktaY); yatay.setAttribute("y2", noktaY);
+      yatay.setAttribute("y1", y); yatay.setAttribute("y2", y);
       imleçNoktası.setAttribute("cx", noktaX); imleçNoktası.setAttribute("cy", noktaY);
       öğeler.forEach(öğe => öğe.setAttribute("visibility", "visible"));
       chart.querySelector("#x-değeri").textContent = gerçekX.toLocaleString("tr-TR", {maximumFractionDigits: 3});
