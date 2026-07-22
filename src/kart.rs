@@ -15,6 +15,7 @@ mod cursor_tooltip;
 mod custom_scales;
 mod data_smoothing;
 mod dependent_scale;
+mod draw_hooks;
 mod missing_data;
 mod months;
 mod ortak;
@@ -71,6 +72,7 @@ pub use data_smoothing::{
     hareketli_ortalama, savitzky_golay,
 };
 pub use dependent_scale::{DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, dependent_scale_kartı};
+pub use draw_hooks::{DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, draw_hooks_kartı};
 pub use missing_data::{
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
 };

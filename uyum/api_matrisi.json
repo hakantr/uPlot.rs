@@ -140,6 +140,30 @@
       "rust_karşılığı": "NoktaKatmanı",
       "durum": "kısmi",
       "test": "src/kart/custom_scales.rs"
+    },
+    {
+      "kaynak_yolu": "Hooks.drawClear",
+      "rust_karşılığı": "ÇizimKancasıDüzeni::gradyan",
+      "durum": "kısmi",
+      "test": "src/kart/draw_hooks.rs"
+    },
+    {
+      "kaynak_yolu": "Hooks.drawSeries",
+      "rust_karşılığı": "ÇizimKancasıDüzeni::seri_medyanları",
+      "durum": "kısmi",
+      "test": "src/kart/draw_hooks.rs"
+    },
+    {
+      "kaynak_yolu": "Series.points.show (custom draw)",
+      "rust_karşılığı": "ÇizimKancasıDüzeni::yıldız_noktalar",
+      "durum": "kısmi",
+      "test": "src/kart/draw_hooks.rs"
+    },
+    {
+      "kaynak_yolu": "Hooks.draw",
+      "rust_karşılığı": "ÇizimKancasıDüzeni::çizim_süresi_metni",
+      "durum": "kısmi",
+      "test": "src/kart/draw_hooks.rs"
     }
   ]
 }

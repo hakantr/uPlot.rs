@@ -56,6 +56,72 @@ pub struct NoktaKatmanı {
     pub boyut: f32,
 }
 
+/// uPlot çizim kancalarının sahneye eklediği, yüzeyden bağımsız katmanlar.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ÇizimKancasıDüzeni {
+    pub gradyan_durakları: Option<(String, String)>,
+    pub seri_medyanları: bool,
+    pub medyan_kalınlığı: f32,
+    pub medyan_bulanıklığı: f32,
+    pub yıldız_uçları: Option<usize>,
+    pub yıldız_dış_yarıçapı: f32,
+    pub yıldız_iç_yarıçapı: f32,
+    pub çizim_süresi_metni: bool,
+}
+
+impl Default for ÇizimKancasıDüzeni {
+    fn default() -> Self {
+        Self {
+            gradyan_durakları: None,
+            seri_medyanları: false,
+            medyan_kalınlığı: 50.0,
+            medyan_bulanıklığı: 6.0,
+            yıldız_uçları: None,
+            yıldız_dış_yarıçapı: 8.0,
+            yıldız_iç_yarıçapı: 4.0,
+            çizim_süresi_metni: false,
+        }
+    }
+}
+
+impl ÇizimKancasıDüzeni {
+    pub fn gradyan(mut self, üst: impl Into<String>, alt: impl Into<String>) -> Self {
+        self.gradyan_durakları = Some((üst.into(), alt.into()));
+        self
+    }
+
+    pub fn seri_medyanları(mut self, kalınlık: f32, bulanıklık: f32) -> Self {
+        if kalınlık.is_finite() && kalınlık > 0.0 {
+            self.medyan_kalınlığı = kalınlık;
+        }
+        if bulanıklık.is_finite() && bulanıklık >= 0.0 {
+            self.medyan_bulanıklığı = bulanıklık;
+        }
+        self.seri_medyanları = true;
+        self
+    }
+
+    pub fn yıldız_noktalar(mut self, uçlar: usize, dış: f32, iç: f32) -> Self {
+        if (2..=32).contains(&uçlar)
+            && dış.is_finite()
+            && iç.is_finite()
+            && dış > 0.0
+            && iç > 0.0
+            && iç <= dış
+        {
+            self.yıldız_uçları = Some(uçlar);
+            self.yıldız_dış_yarıçapı = dış;
+            self.yıldız_iç_yarıçapı = iç;
+        }
+        self
+    }
+
+    pub fn çizim_süresi_metni(mut self, etkin: bool) -> Self {
+        self.çizim_süresi_metni = etkin;
+        self
+    }
+}
+
 impl NoktaKatmanı {
     pub fn yeni(noktalar: Vec<(f64, f64)>) -> Self {
         Self {
@@ -303,6 +369,8 @@ pub struct GrafikSeçenekleri {
     pub mum_düzeni: Option<MumDüzeni>,
     pub bantlar: Vec<SeriBandı>,
     pub nokta_katmanları: Vec<NoktaKatmanı>,
+    pub çizim_kancaları: Option<ÇizimKancasıDüzeni>,
+    pub ızgara_rengi: String,
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
     pub imleç_ızgara_adımı: Option<f32>,
@@ -341,6 +409,8 @@ impl GrafikSeçenekleri {
             mum_düzeni: None,
             bantlar: Vec::new(),
             nokta_katmanları: Vec::new(),
+            çizim_kancaları: None,
+            ızgara_rengi: "#e5e7eb".to_string(),
             imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
@@ -371,6 +441,16 @@ impl GrafikSeçenekleri {
 
     pub fn nokta_katmanı(mut self, katman: NoktaKatmanı) -> Self {
         self.nokta_katmanları.push(katman);
+        self
+    }
+
+    pub fn çizim_kancaları(mut self, düzen: ÇizimKancasıDüzeni) -> Self {
+        self.çizim_kancaları = Some(düzen);
+        self
+    }
+
+    pub fn ızgara_rengi(mut self, renk: impl Into<String>) -> Self {
+        self.ızgara_rengi = renk.into();
         self
     }
 

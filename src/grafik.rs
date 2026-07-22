@@ -704,6 +704,27 @@ impl Grafik {
         let genişlik = sağ - sol;
         let yükseklik = alt - üst;
 
+        if let Some((üst_renk, alt_renk)) = self
+            .seçenekler
+            .çizim_kancaları
+            .as_ref()
+            .and_then(|düzen| düzen.gradyan_durakları.as_ref())
+        {
+            const ŞERİT_SAYISI: usize = 32;
+            let şerit_yüksekliği = yükseklik / ŞERİT_SAYISI as f32;
+            for şerit in 0..ŞERİT_SAYISI {
+                let oran = şerit as f32 / ŞERİT_SAYISI.saturating_sub(1) as f32;
+                sahne.ekle(Komut::Dikdörtgen {
+                    konum: Nokta::yeni(sol, üst + şerit as f32 * şerit_yüksekliği),
+                    genişlik,
+                    yükseklik: şerit_yüksekliği + 1.0,
+                    dolgu: renkler_arası(üst_renk, alt_renk, oran),
+                    çizgi: "#00000000".to_string(),
+                    kalınlık: 0.0,
+                });
+            }
+        }
+
         sahne.ekle(Komut::Metin {
             konum: Nokta::yeni(genişlik_px as f32 / 2.0, 26.0),
             içerik: self.seçenekler.başlık.clone(),
@@ -779,7 +800,7 @@ impl Grafik {
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(sol, y),
                 bitiş: Nokta::yeni(sağ, y),
-                renk: "#e5e7eb".to_string(),
+                renk: self.seçenekler.ızgara_rengi.clone(),
                 kalınlık: 1.0,
             });
             sahne.ekle(Komut::Metin {
@@ -854,7 +875,7 @@ impl Grafik {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(sol, y),
                         bitiş: Nokta::yeni(sağ, y),
-                        renk: "#e5e7eb".to_string(),
+                        renk: self.seçenekler.ızgara_rengi.clone(),
                         kalınlık: 1.0,
                     });
                 }
@@ -882,7 +903,7 @@ impl Grafik {
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(x, üst),
                 bitiş: Nokta::yeni(x, alt),
-                renk: "#e5e7eb".to_string(),
+                renk: self.seçenekler.ızgara_rengi.clone(),
                 kalınlık: 1.0,
             });
             sahne.ekle(Komut::Metin {
@@ -1070,14 +1091,54 @@ impl Grafik {
             // uPlot'un varsayılanı: noktalar ancak ortalama yatay boşluk,
             // nokta çapının iki katını karşılayabildiğinde görünür.
             let ortalama_boşluk = genişlik / görünür_noktalar.len().saturating_sub(1).max(1) as f32;
-            if ortalama_boşluk >= 10.0 {
-                for nokta in görünür_noktalar {
+            let kanca = self.seçenekler.çizim_kancaları.as_ref();
+            if let Some((uçlar, düzen)) =
+                kanca.and_then(|düzen| düzen.yıldız_uçları.map(|uçlar| (uçlar, düzen)))
+            {
+                for nokta in &görünür_noktalar {
+                    sahne.ekle(Komut::Alan {
+                        çokgenler: vec![yıldız_çokgeni(
+                            *nokta,
+                            uçlar,
+                            düzen.yıldız_dış_yarıçapı,
+                            düzen.yıldız_iç_yarıçapı,
+                        )],
+                        dolgu: seri.renk.clone(),
+                    });
+                }
+            } else if ortalama_boşluk >= 10.0 {
+                for nokta in &görünür_noktalar {
                     sahne.ekle(Komut::Daire {
-                        merkez: nokta,
+                        merkez: *nokta,
                         yarıçap: 2.5,
                         dolgu: "#ffffff".to_string(),
                         çizgi: seri.renk.clone(),
                         kalınlık: 1.0,
+                    });
+                }
+            }
+
+            if let Some(düzen) = kanca.filter(|düzen| düzen.seri_medyanları) {
+                let mut sıralı = değerler.iter().copied().flatten().collect::<Vec<_>>();
+                sıralı.sort_by(f64::total_cmp);
+                if let Some(medyan) = medyan(&sıralı) {
+                    let y =
+                        alt - self.y_konumu(&seri.ölçek, seri_y_aralığı, medyan, 0.0, yükseklik);
+                    let dış_kalınlık =
+                        düzen.medyan_kalınlığı + düzen.medyan_bulanıklığı.max(0.0) * 2.0;
+                    if düzen.medyan_bulanıklığı > 0.0 {
+                        sahne.ekle(Komut::Çizgi {
+                            başlangıç: Nokta::yeni(sol, y),
+                            bitiş: Nokta::yeni(sağ, y),
+                            renk: renk_alfa(&seri.renk, 0x14),
+                            kalınlık: dış_kalınlık,
+                        });
+                    }
+                    sahne.ekle(Komut::Çizgi {
+                        başlangıç: Nokta::yeni(sol, y),
+                        bitiş: Nokta::yeni(sağ, y),
+                        renk: renk_alfa(&seri.renk, 0x33),
+                        kalınlık: düzen.medyan_kalınlığı,
                     });
                 }
             }
@@ -1113,6 +1174,21 @@ impl Grafik {
                     });
                 }
             }
+        }
+
+        if self
+            .seçenekler
+            .çizim_kancaları
+            .as_ref()
+            .is_some_and(|düzen| düzen.çizim_süresi_metni)
+        {
+            sahne.ekle(Komut::Metin {
+                konum: Nokta::yeni(sol + 10.0, üst + 22.0),
+                içerik: "Time to Draw: 0ms".to_string(),
+                renk: "#ffffff".to_string(),
+                boyut: 12.0,
+                hiza: MetinHizası::Başlangıç,
+            });
         }
 
         sahne
@@ -2244,6 +2320,66 @@ fn eksen_değerini_birimle_yaz(değer: f64, artım: f64, birim: &str) -> String 
     } else {
         format!("{sayı} {birim}")
     }
+}
+
+fn renk_rgb(renk: &str) -> Option<(u8, u8, u8)> {
+    let ham = renk.strip_prefix('#')?;
+    if ham.len() != 6 {
+        return None;
+    }
+    let kırmızı = u8::from_str_radix(ham.get(0..2)?, 16).ok()?;
+    let yeşil = u8::from_str_radix(ham.get(2..4)?, 16).ok()?;
+    let mavi = u8::from_str_radix(ham.get(4..6)?, 16).ok()?;
+    Some((kırmızı, yeşil, mavi))
+}
+
+fn renkler_arası(üst: &str, alt: &str, oran: f32) -> String {
+    let Some((üst_r, üst_g, üst_b)) = renk_rgb(üst) else {
+        return üst.to_string();
+    };
+    let Some((alt_r, alt_g, alt_b)) = renk_rgb(alt) else {
+        return üst.to_string();
+    };
+    let oran = oran.clamp(0.0, 1.0);
+    let karıştır = |başlangıç: u8, bitiş: u8| {
+        (f32::from(başlangıç) + (f32::from(bitiş) - f32::from(başlangıç)) * oran)
+            .round()
+            .clamp(0.0, 255.0) as u8
+    };
+    format!(
+        "#{:02x}{:02x}{:02x}",
+        karıştır(üst_r, alt_r),
+        karıştır(üst_g, alt_g),
+        karıştır(üst_b, alt_b)
+    )
+}
+
+fn renk_alfa(renk: &str, alfa: u8) -> String {
+    renk_rgb(renk).map_or_else(
+        || renk.to_string(),
+        |(r, g, b)| format!("#{r:02x}{g:02x}{b:02x}{alfa:02x}"),
+    )
+}
+
+fn medyan(sıralı: &[f64]) -> Option<f64> {
+    let sağ = sıralı.get(sıralı.len() / 2).copied()?;
+    let sol = sıralı.get(sıralı.len().saturating_sub(1) / 2).copied()?;
+    Some((sol + sağ) / 2.0)
+}
+
+fn yıldız_çokgeni(merkez: Nokta, uçlar: usize, dış: f32, iç: f32) -> Vec<Nokta> {
+    let nokta_sayısı = uçlar.saturating_mul(2);
+    let mut noktalar = Vec::with_capacity(nokta_sayısı);
+    for indeks in 0..nokta_sayısı {
+        let açı = -std::f32::consts::FRAC_PI_2
+            + indeks as f32 * std::f32::consts::PI / uçlar.max(1) as f32;
+        let yarıçap = if indeks.is_multiple_of(2) { dış } else { iç };
+        noktalar.push(Nokta::yeni(
+            merkez.x + açı.cos() * yarıçap,
+            merkez.y + açı.sin() * yarıçap,
+        ));
+    }
+    noktalar
 }
 
 #[cfg(test)]

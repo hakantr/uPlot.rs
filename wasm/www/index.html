@@ -238,6 +238,7 @@
       cursor_tooltip_kart_tanim_ornegi,
       custom_scales_kart_tanim_ornegi,
       data_smoothing_kart_tanim_ornegi,
+      draw_hooks_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
@@ -759,6 +760,26 @@
         etkileşimler: () => ortakEtkileşimler(),
       };
     }
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="draw-hooks" aria-current="false" tabindex="0">
+        <strong>Draw Hooks</strong><small>draw-hooks</small>
+        <div class="durum">Gradyan · medyan · 6 uçlu yıldız · süre</div>
+      </article>`);
+    kartlar["draw-hooks"] = {
+      başlık: "Draw Hooks",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/draw-hooks.html">draw-hooks.html</a>
+        <br>drawClear gradyanı, drawSeries medyan vurgusu, özel altı uçlu seri noktaları ve draw istatistik metni yüzeyden bağımsız Rust sahne katmanlarıdır.`,
+      tanım: () => draw_hooks_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/draw_hooks.rs",
+      seriler: [
+        { etiket: "blah", renk: "#ff3333" },
+        { etiket: "yerp", renk: "#33ccff" },
+        { etiket: "zort", renk: "#ffcc33" },
+      ],
+      yardım: "Koyu gradyan · kaynak medyan şeritleri · 6 uçlu yıldız noktalar",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     function ortakEtkileşimler() {
       return {

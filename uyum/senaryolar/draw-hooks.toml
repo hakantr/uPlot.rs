@@ -1,0 +1,22 @@
+id = "draw-hooks"
+kaynak = "../uPlot/demos/draw-hooks.html"
+fixture = "src/kart/draw_hooks.rs#draw_hooks_kartı"
+viewport = [600, 400]
+device_pixel_ratio = 1
+durum = "dört-kaynak-çizim-kancası"
+
+[veri]
+x_noktası = 9
+seri_sayısı = 3
+seri_medyanları = [43, 30, 15]
+
+[kancalar]
+draw_clear = "#666666 -> #000000"
+draw_series = "50px medyan + 6px blur"
+points_show = "6 uç · dış 8 · iç 4"
+draw = "Time to Draw: Nms"
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/draw-hooks.svg"
