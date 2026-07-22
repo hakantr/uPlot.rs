@@ -340,10 +340,12 @@ impl GpuiGrafik {
     fn imleci_güncelle(&mut self, pencere_konumu: ::gpui::Point<Pixels>) {
         let Some(fare) = self.sahne_konumu(pencere_konumu) else {
             self.imleç = None;
+            self.grafik.imleç_odağını_temizle();
             return;
         };
         if !self.grafik_alanında(fare) {
             self.imleç = None;
+            self.grafik.imleç_odağını_temizle();
             return;
         }
         let (sol, sağ, üst, alt) = self.çizim_alanı();
@@ -356,10 +358,14 @@ impl GpuiGrafik {
             f64::from(alt - üst),
         ) else {
             self.imleç = None;
+            self.grafik.imleç_odağını_temizle();
             return;
         };
+        self.grafik
+            .imleç_odağını_güncelle(yatay, dikey, f64::from(alt - üst));
         let Some((veri_x, seri_değerleri)) = self.grafik.en_yakın_noktalar(yatay) else {
             self.imleç = None;
+            self.grafik.imleç_odağını_temizle();
             return;
         };
         self.imleç = Some(İmleçDurumu {

@@ -1514,6 +1514,48 @@
         "gpui-wasm-catalog-parity", "common-interaction-profile", "panic-free-scene-layers"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+    },
+    {
+      "sıra": 25,
+      "id": "focus-cursor",
+      "başlık": { "en": "Cursor Focus", "tr": "İmleç Odağı" },
+      "kaynak": "demos/focus-cursor.html",
+      "kaynak_sha256": "5a3cc6a710d25a695d2de67d715ff036992173dd41380e48bbcd4e0d86f2ac03",
+      "ek_kaynaklar": [
+        { "yol": "dist/uPlot.d.ts", "sha256": "c9fb5d1fe8f2084b44690c841e84ab63402549d9420535a6081b389a461fefe5" },
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
+      ],
+      "fixture": "src/kart/focus_cursor.rs#focus_cursor_kartı",
+      "örnek": "examples/focus_cursor.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/focus-cursor.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/focus_cursor.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı", "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı", "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı", "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı", "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "kartta_kapalı", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "devralındı"
+        },
+        "gerekçeler": { "kosullu-bos-ve-dolu-noktalar": "Resmî focus demoları normal seri noktalarını yoğun veride çizmez; odak seri stiliyle gösterilir." }
+      },
+      "sahip_faz": 4,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-130000-wave-data", "cursor-y-distance-focus", "prox-and-bias",
+        "defocused-alpha", "dynamic-unfocused-black", "focused-magenta-and-width",
+        "source-300-series-performance-card", "gpui-wasm-catalog-parity",
+        "common-interaction-profile", "panic-free-core-focus"
+      ],
+      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
     }
   ]
 }

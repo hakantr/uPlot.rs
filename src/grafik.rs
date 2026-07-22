@@ -23,6 +23,7 @@ pub struct Grafik {
     seçenekler: GrafikSeçenekleri,
     veri: HizalıVeri,
     etkileşim: EtkileşimDenetleyicisi,
+    odak_serisi: Option<usize>,
 }
 
 impl Grafik {
@@ -88,6 +89,7 @@ impl Grafik {
             seçenekler,
             veri,
             etkileşim,
+            odak_serisi: None,
         })
     }
 
@@ -656,6 +658,88 @@ impl Grafik {
         Some((x, değerler))
     }
 
+    /// `cursor.focus` eşdeğeri: en yakın X örneğindeki Y mesafesine göre
+    /// odaklanan seriyi çekirdekte seçer. `true`, sahnenin yeniden çizilmesi
+    /// gerektiğini bildirir.
+    pub fn imleç_odağını_güncelle(
+        &mut self,
+        yatay_oran: f64,
+        dikey_oran: f64,
+        çizim_yüksekliği: f64,
+    ) -> bool {
+        let Some(düzen) = self.seçenekler.odak else {
+            return false;
+        };
+        if düzen.yakınlık < 0.0 || !çizim_yüksekliği.is_finite() || çizim_yüksekliği <= 0.0
+        {
+            return self.odağı_ayarla(None);
+        }
+        let Some((_, değerler)) = self.en_yakın_noktalar(yatay_oran) else {
+            return self.odağı_ayarla(None);
+        };
+        let x_aralığı = self.görünür_x_aralığı();
+        let fare_y = dikey_oran.clamp(0.0, 1.0) * çizim_yüksekliği;
+        let görünür_y = self.görünür_y_aralığı();
+        let fare_değeri =
+            görünür_y.en_çok - dikey_oran.clamp(0.0, 1.0) * (görünür_y.en_çok - görünür_y.en_az);
+        let mut en_yakın = None;
+        let mut en_kısa = f64::INFINITY;
+        for (indeks, değer) in değerler.into_iter().enumerate() {
+            let Some(değer) = değer else { continue };
+            let Some(seri) = self.seçenekler.seriler.get(indeks) else {
+                continue;
+            };
+            let aralık = self.görünür_ölçek_aralığı(&seri.ölçek, x_aralığı, None);
+            if düzen.yön_eğilimi != 0 {
+                let aynı_işaret = değer.is_sign_negative() == fare_değeri.is_sign_negative();
+                let uygun = if fare_değeri.is_sign_negative() {
+                    if düzen.yön_eğilimi == 1 {
+                        değer <= fare_değeri
+                    } else {
+                        değer >= fare_değeri
+                    }
+                } else if düzen.yön_eğilimi == 1 {
+                    değer >= fare_değeri
+                } else {
+                    değer <= fare_değeri
+                };
+                if !aynı_işaret || !uygun {
+                    continue;
+                }
+            }
+            let konum = çizim_yüksekliği
+                - f64::from(self.y_konumu(
+                    &seri.ölçek,
+                    aralık,
+                    değer,
+                    0.0,
+                    çizim_yüksekliği as f32,
+                ));
+            let mesafe = (konum - fare_y).abs();
+            if mesafe < en_kısa {
+                en_kısa = mesafe;
+                en_yakın = Some(indeks);
+            }
+        }
+        self.odağı_ayarla(
+            (en_kısa <= f64::from(düzen.yakınlık))
+                .then_some(en_yakın)
+                .flatten(),
+        )
+    }
+
+    pub fn imleç_odağını_temizle(&mut self) -> bool {
+        self.odağı_ayarla(None)
+    }
+
+    fn odağı_ayarla(&mut self, seri: Option<usize>) -> bool {
+        if self.odak_serisi == seri {
+            return false;
+        }
+        self.odak_serisi = seri;
+        true
+    }
+
     /// Grafiği belirli bir görünür X aralığında çizer.
     pub fn çiz_aralıkta(&self, görünür_x: Option<Aralık>) -> Sahne {
         self.çiz_boyutta(
@@ -984,6 +1068,8 @@ impl Grafik {
             if !seri.göster {
                 continue;
             }
+            let (seri_rengi, seri_dolgusu, seri_kalınlığı) =
+                odaklı_seri_stili(seri, self.seçenekler.odak, self.odak_serisi, seri_indeksi);
             let seri_y_aralığı =
                 self.görünür_ölçek_aralığı(&seri.ölçek, x_aralığı, görünür_y);
             if seri.çizim_türü == crate::SeriÇizimTürü::Çubuk {
@@ -1045,7 +1131,7 @@ impl Grafik {
                 ham_parçalar.push(parça);
             }
             let parçalar = yolu_dikdörtgene_kırp(&ham_parçalar, sol, sağ, üst, alt);
-            if let Some(dolgu) = &seri.dolgu {
+            if let Some(dolgu) = &seri_dolgusu {
                 let taban = alt
                     - self.y_konumu(
                         &seri.ölçek,
@@ -1075,16 +1161,16 @@ impl Grafik {
             if let Some((çizgi, boşluk)) = seri.çizgi_kesik {
                 sahne.ekle(Komut::KesikliYol {
                     parçalar,
-                    renk: seri.renk.clone(),
-                    kalınlık: seri.çizgi_kalınlığı,
+                    renk: seri_rengi.clone(),
+                    kalınlık: seri_kalınlığı,
                     çizgi,
                     boşluk,
                 });
             } else {
                 sahne.ekle(Komut::Yol {
                     parçalar,
-                    renk: seri.renk.clone(),
-                    kalınlık: seri.çizgi_kalınlığı,
+                    renk: seri_rengi.clone(),
+                    kalınlık: seri_kalınlığı,
                 });
             }
 
@@ -1103,7 +1189,7 @@ impl Grafik {
                             düzen.yıldız_dış_yarıçapı,
                             düzen.yıldız_iç_yarıçapı,
                         )],
-                        dolgu: seri.renk.clone(),
+                        dolgu: seri_rengi.clone(),
                     });
                 }
             } else if ortalama_boşluk >= 10.0 {
@@ -1112,7 +1198,7 @@ impl Grafik {
                         merkez: *nokta,
                         yarıçap: 2.5,
                         dolgu: "#ffffff".to_string(),
-                        çizgi: seri.renk.clone(),
+                        çizgi: seri_rengi.clone(),
                         kalınlık: 1.0,
                     });
                 }
@@ -1130,14 +1216,14 @@ impl Grafik {
                         sahne.ekle(Komut::Çizgi {
                             başlangıç: Nokta::yeni(sol, y),
                             bitiş: Nokta::yeni(sağ, y),
-                            renk: renk_alfa(&seri.renk, 0x14),
+                            renk: renk_alfa(&seri_rengi, 0x14),
                             kalınlık: dış_kalınlık,
                         });
                     }
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(sol, y),
                         bitiş: Nokta::yeni(sağ, y),
-                        renk: renk_alfa(&seri.renk, 0x33),
+                        renk: renk_alfa(&seri_rengi, 0x33),
                         kalınlık: düzen.medyan_kalınlığı,
                     });
                 }
@@ -2359,6 +2445,61 @@ fn renk_alfa(renk: &str, alfa: u8) -> String {
         || renk.to_string(),
         |(r, g, b)| format!("#{r:02x}{g:02x}{b:02x}{alfa:02x}"),
     )
+}
+
+fn renk_opaklığı(renk: &str, opaklık: f32) -> String {
+    let Some(ham) = renk.strip_prefix('#') else {
+        return renk.to_string();
+    };
+    let temel = match ham.len() {
+        6 => ham,
+        8 => ham.get(0..6).unwrap_or(ham),
+        _ => return renk.to_string(),
+    };
+    let mevcut = if ham.len() == 8 {
+        ham.get(6..8)
+            .and_then(|değer| u8::from_str_radix(değer, 16).ok())
+            .unwrap_or(255)
+    } else {
+        255
+    };
+    let alfa = (f32::from(mevcut) * opaklık.clamp(0.0, 1.0)).round() as u8;
+    format!("#{temel}{alfa:02x}")
+}
+
+fn odaklı_seri_stili(
+    seri: &crate::SeriSeçenekleri,
+    düzen: Option<crate::OdakDüzeni>,
+    odak: Option<usize>,
+    seri_indeksi: usize,
+) -> (String, Option<String>, f32) {
+    let (Some(düzen), Some(odak)) = (düzen, odak) else {
+        return (seri.renk.clone(), seri.dolgu.clone(), seri.çizgi_kalınlığı);
+    };
+    let odaklı = odak == seri_indeksi;
+    let kalınlık = if odaklı {
+        düzen.odak_kalınlığı.unwrap_or(seri.çizgi_kalınlığı)
+    } else {
+        seri.çizgi_kalınlığı
+    };
+    match düzen.stil {
+        crate::OdakStili::Opaklık if !odaklı => (
+            renk_opaklığı(&seri.renk, düzen.alfa),
+            seri.dolgu
+                .as_ref()
+                .map(|renk| renk_opaklığı(renk, düzen.alfa)),
+            kalınlık,
+        ),
+        crate::OdakStili::OdakDışıSiyah if !odaklı => (
+            "#000000".to_string(),
+            seri.dolgu.as_ref().map(|_| "#0000001a".to_string()),
+            kalınlık,
+        ),
+        crate::OdakStili::OdaklıMacenta if odaklı => {
+            ("#ff00ff".to_string(), seri.dolgu.clone(), kalınlık)
+        }
+        _ => (seri.renk.clone(), seri.dolgu.clone(), kalınlık),
+    }
 }
 
 fn medyan(sıralı: &[f64]) -> Option<f64> {

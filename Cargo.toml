@@ -104,6 +104,10 @@ name = "draw_hooks"
 required-features = ["svg"]
 
 [[example]]
+name = "focus_cursor"
+required-features = ["svg"]
+
+[[example]]
 name = "missing_data"
 required-features = ["svg"]
 

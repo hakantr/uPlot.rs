@@ -1,0 +1,23 @@
+id = "focus-cursor"
+kaynak = "../uPlot/demos/focus-cursor.html"
+fixture = "src/kart/focus_cursor.rs#focus_cursor_kartı"
+viewport = [1920, 600]
+device_pixel_ratio = 1
+durum = "dört-odak-alt-grafiği"
+
+[veri]
+dalga_noktası = 130000
+dalga_serileri = ["sin(x)", "cos(x)", "log(x)", "flat_one"]
+performans_serisi = 300
+log_sifir = "-Infinity çizilmeyen boşluk"
+
+[odak]
+alfa = [0.3, 1.0, 1.0, 0.1]
+prox = [1000000, 30, 1000000, 1000000]
+bias = [1, 0, 0, 0]
+stiller = ["opacity", "unfocused-black", "focused-magenta", "opacity"]
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/focus-cursor/focus-cursor.svg"

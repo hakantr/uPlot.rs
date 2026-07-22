@@ -239,6 +239,7 @@
       custom_scales_kart_tanim_ornegi,
       data_smoothing_kart_tanim_ornegi,
       draw_hooks_kart_tanim_ornegi,
+      focus_cursor_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
@@ -780,6 +781,37 @@
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
     };
+    for (const [kimlik, başlık, durum, seriTürü] of [
+      ["focus-cursor", "Cursor Focus", "130.000 nokta · 4 seri · bias 1", "dalga4"],
+      ["focus-cursor-dynamic", "Dynamic Focus", "130.000 nokta · 30 px odak", "dalga3"],
+      ["focus-cursor-width-stroke", "Width and stroke color change on focus", "2 düz seri · macenta odak", "iki"],
+      ["focus-cursor-performance-300", "Performance test (300 series)", "10 nokta · 300 seri", "ucyuz"],
+    ]) {
+      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>focus-cursor</small><div class="durum">${durum}</div>
+        </article>`);
+      const dalgaSerileri = [
+        { etiket: "sin(x)", renk: "#ff0000" },
+        { etiket: "cos(x)", renk: "#0000ff" },
+        { etiket: "log(x)", renk: "#008000" },
+      ];
+      const seriler = seriTürü === "dalga4" ? [...dalgaSerileri, { etiket: "flat_one", renk: "#800080" }]
+        : seriTürü === "dalga3" ? dalgaSerileri
+        : seriTürü === "iki" ? [{ etiket: "A", renk: "#0000ff" }, { etiket: "B", renk: "#008000" }]
+        : Array.from({length: 300}, () => ({ etiket: "0", renk: "#000000" }));
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/focus-cursor.html">focus-cursor.html</a>
+          <br>En yakın X örneğindeki Y piksel mesafesi, prox/bias, alfa, dinamik renk ve setSeries kalınlığı Rust çekirdeğinde çözülür.`,
+        tanım: () => focus_cursor_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/focus_cursor.rs",
+        seriler,
+        yardım: "Fareyi serilere yaklaştır: odak, renk/opaklık ve kalınlık canlı değişir",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
 
     function ortakEtkileşimler() {
       return {
@@ -961,6 +993,11 @@
       }
       const hamOranX = Math.max(0, Math.min(1, (hamX - sol) / (sağ - sol)));
       const hamOranY = Math.max(0, Math.min(1, (hamY - üst) / (alt - üst)));
+      if (oturum?.imlec_odagini_guncelle(hamOranX, hamOranY, alt - üst)) {
+        çiz();
+        imleciGüncelle(olay);
+        return;
+      }
       const uyarlanmış = oturum?.imlec_oranlarini_uyarla(
         hamOranX, hamOranY, sağ - sol, alt - üst
       ) ?? [];
@@ -1213,6 +1250,7 @@
     });
     chart.addEventListener("pointerleave", () => {
       grafikÜzerinde = false;
+      if (oturum?.imlec_odagini_temizle()) çiz();
       const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
       if (bilgiKutusu) bilgiKutusu.hidden = true;
     });

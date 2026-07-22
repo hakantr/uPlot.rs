@@ -69,6 +69,59 @@ pub struct ÇizimKancasıDüzeni {
     pub çizim_süresi_metni: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OdakStili {
+    Opaklık,
+    OdakDışıSiyah,
+    OdaklıMacenta,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct OdakDüzeni {
+    pub alfa: f32,
+    pub yakınlık: f32,
+    pub yön_eğilimi: i8,
+    pub odak_kalınlığı: Option<f32>,
+    pub stil: OdakStili,
+}
+
+impl OdakDüzeni {
+    pub fn yeni(alfa: f32, yakınlık: f32) -> Self {
+        Self {
+            alfa: if alfa.is_finite() {
+                alfa.clamp(0.0, 1.0)
+            } else {
+                0.3
+            },
+            yakınlık: if yakınlık.is_finite() {
+                yakınlık.max(-1.0)
+            } else {
+                -1.0
+            },
+            yön_eğilimi: 0,
+            odak_kalınlığı: None,
+            stil: OdakStili::Opaklık,
+        }
+    }
+
+    pub fn yön_eğilimi(mut self, eğilim: i8) -> Self {
+        self.yön_eğilimi = eğilim.clamp(-1, 1);
+        self
+    }
+
+    pub fn odak_kalınlığı(mut self, kalınlık: f32) -> Self {
+        if kalınlık.is_finite() && kalınlık > 0.0 {
+            self.odak_kalınlığı = Some(kalınlık);
+        }
+        self
+    }
+
+    pub fn stil(mut self, stil: OdakStili) -> Self {
+        self.stil = stil;
+        self
+    }
+}
+
 impl Default for ÇizimKancasıDüzeni {
     fn default() -> Self {
         Self {
@@ -370,6 +423,7 @@ pub struct GrafikSeçenekleri {
     pub bantlar: Vec<SeriBandı>,
     pub nokta_katmanları: Vec<NoktaKatmanı>,
     pub çizim_kancaları: Option<ÇizimKancasıDüzeni>,
+    pub odak: Option<OdakDüzeni>,
     pub ızgara_rengi: String,
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
@@ -410,6 +464,7 @@ impl GrafikSeçenekleri {
             bantlar: Vec::new(),
             nokta_katmanları: Vec::new(),
             çizim_kancaları: None,
+            odak: None,
             ızgara_rengi: "#e5e7eb".to_string(),
             imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
@@ -446,6 +501,11 @@ impl GrafikSeçenekleri {
 
     pub fn çizim_kancaları(mut self, düzen: ÇizimKancasıDüzeni) -> Self {
         self.çizim_kancaları = Some(düzen);
+        self
+    }
+
+    pub fn odak(mut self, düzen: OdakDüzeni) -> Self {
+        self.odak = Some(düzen);
         self
     }
 

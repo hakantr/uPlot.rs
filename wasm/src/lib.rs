@@ -10,18 +10,19 @@ use uplot_rs::{
     BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
     CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
     CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
-    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, Grafik,
-    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SeçimEylemi, SmoothingÖrneği, UplotHatası,
-    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
-    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
-    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
-    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
-    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
-    draw_hooks_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
-    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
-    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, DRAW_HOOKS_KART_TANIM_ÖRNEĞİ,
+    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
+    MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    SeriSeçenekleri, SeçimEylemi, SmoothingÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
+    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
+    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
+    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, missing_data_null_kartı,
+    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
+    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
+    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -61,6 +62,10 @@ impl KartOturumu {
                 data_smoothing_kartı(SmoothingÖrneği::HareketliOrtalama)
             }
             "draw-hooks" => draw_hooks_kartı(),
+            "focus-cursor" => focus_cursor_kartı(FocusÖrneği::İmleç),
+            "focus-cursor-dynamic" => focus_cursor_kartı(FocusÖrneği::Dinamik),
+            "focus-cursor-width-stroke" => focus_cursor_kartı(FocusÖrneği::KalınlıkVeRenk),
+            "focus-cursor-performance-300" => focus_cursor_kartı(FocusÖrneği::Performans300),
             "missing-data-null" => missing_data_null_kartı(),
             "missing-data-x-gap" => missing_data_x_boşluğu_kartı(),
             "dependent-scale" => dependent_scale_kartı(),
@@ -346,6 +351,20 @@ impl KartOturumu {
             .map_or_else(Vec::new, |(x, y)| vec![x, y])
     }
 
+    pub fn imlec_odagini_guncelle(
+        &mut self,
+        yatay_oran: f64,
+        dikey_oran: f64,
+        çizim_yüksekliği: f64,
+    ) -> bool {
+        self.grafik
+            .imleç_odağını_güncelle(yatay_oran, dikey_oran, çizim_yüksekliği)
+    }
+
+    pub fn imlec_odagini_temizle(&mut self) -> bool {
+        self.grafik.imleç_odağını_temizle()
+    }
+
     pub fn yakinlastirilmis(&self) -> bool {
         self.grafik.yakınlaştırılmış()
     }
@@ -361,7 +380,12 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    58
+    62
+}
+
+#[wasm_bindgen]
+pub fn focus_cursor_kart_tanim_ornegi() -> String {
+    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -528,7 +552,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 58);
+        assert_eq!(kart_sayisi(), 62);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -553,7 +577,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 58);
+        assert_eq!(kart_sayisi(), 62);
     }
 
     #[test]
@@ -748,6 +772,24 @@ mod testler {
         assert!(svg.contains("#ff333333"));
         assert_eq!(svg.matches("fill=\"#ff3333\"").count(), 9);
         assert!(draw_hooks_kart_tanim_ornegi().contains("draw_hooks_kartı"));
+    }
+
+    #[test]
+    fn focus_cursor_wasm_dört_alt_grafiği_ve_canlı_odağı_üretir() {
+        for kimlik in [
+            "focus-cursor",
+            "focus-cursor-dynamic",
+            "focus-cursor-width-stroke",
+            "focus-cursor-performance-300",
+        ] {
+            assert!(KartOturumu::yeni(kimlik, 100).is_ok());
+        }
+        let oturum = KartOturumu::yeni("focus-cursor-width-stroke", 100);
+        let Ok(mut oturum) = oturum else { return };
+        assert!(oturum.imlec_odagini_guncelle(0.5, 2.0 / 3.0, 500.0));
+        let svg = oturum.svg(960, 400);
+        assert!(svg.contains("#ff00ff"));
+        assert!(focus_cursor_kart_tanim_ornegi().contains("FocusÖrneği::Dinamik"));
     }
 
     #[test]

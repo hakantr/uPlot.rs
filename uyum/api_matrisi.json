@@ -164,6 +164,30 @@
       "rust_karşılığı": "ÇizimKancasıDüzeni::çizim_süresi_metni",
       "durum": "kısmi",
       "test": "src/kart/draw_hooks.rs"
+    },
+    {
+      "kaynak_yolu": "Options.focus.alpha",
+      "rust_karşılığı": "OdakDüzeni::yeni",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/focus_cursor.rs"
+    },
+    {
+      "kaynak_yolu": "Cursor.focus.prox/bias/dist",
+      "rust_karşılığı": "Grafik::imleç_odağını_güncelle",
+      "durum": "kısmi",
+      "test": "src/kart/focus_cursor.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.setSeries({focus})",
+      "rust_karşılığı": "Grafik::imleç_odağını_güncelle / imleç_odağını_temizle",
+      "durum": "kısmi",
+      "test": "src/kart/focus_cursor.rs"
+    },
+    {
+      "kaynak_yolu": "Hooks.setSeries",
+      "rust_karşılığı": "OdakDüzeni::odak_kalınlığı / OdakStili",
+      "durum": "kısmi",
+      "test": "src/kart/focus_cursor.rs"
     }
   ]
 }
