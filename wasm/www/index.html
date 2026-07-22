@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>uPlot.rs · WASM Chart Listesi</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; font-family: Inter, system-ui, sans-serif;
+           color: #111827; background: #f3f4f6; }
+    .uygulama { width: 100%; height: 100vh; display: grid; grid-template-columns: 280px 1fr;
+                overflow: hidden; }
+    aside { padding: 24px 18px; background: #fff; border-right: 1px solid #e5e7eb; }
+    h1 { margin: 0; font-size: 22px; }
+    .alt { margin: 5px 0 24px; color: #6b7280; font-size: 13px; }
+    .kart { padding: 14px; border: 1px solid #dc2626; border-radius: 12px;
+            background: #fef2f2; cursor: pointer; }
+    .kart strong { display: block; }
+    .kart small { color: #6b7280; }
+    .durum { margin-top: 10px; color: #dc2626; font-size: 12px; }
+    main { min-width: 0; min-height: 0; padding: 24px; display: flex; flex-direction: column; }
+    header { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+    h2 { margin: 0; font-size: 19px; }
+    .kaynak { margin-top: 5px; color: #6b7280; font-size: 13px; }
+    .denetimler { display: flex; align-items: center; gap: 12px; }
+    input[type="range"] { width: 200px; }
+    output { min-width: 78px; color: #6b7280; font-size: 13px; }
+    #chart { position: relative; flex: 1; min-height: 320px; margin-top: 18px; padding: 12px;
+             display: grid; place-items: center; overflow: hidden; background: #fff;
+             border: 1px solid #e5e7eb; border-radius: 14px; }
+    #chart svg { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+    .lejant { position: absolute; left: 50%; bottom: 17px; translate: -50% 0;
+              display: flex; gap: 18px; font-size: 12px; font-weight: 600;
+              pointer-events: none; }
+    .örnek { display: inline-block; width: 11px; height: 11px; margin-right: 5px;
+             border: 1px solid #dc2626; vertical-align: -1px; }
+    .yardım { position: absolute; right: 20px; top: 17px; color: #6b7280;
+              font-size: 11px; pointer-events: none; }
+    #hata { color: #b91c1c; }
+    @media (max-width: 760px) {
+      .uygulama { height: auto; min-height: 100vh; grid-template-columns: 1fr; overflow: visible; }
+      aside { border-right: 0; border-bottom: 1px solid #e5e7eb; }
+      header { align-items: start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="uygulama">
+    <aside>
+      <h1>uPlot.rs Charts</h1>
+      <p class="alt">WASM görsel doğrulaması</p>
+      <article class="kart" aria-current="true">
+        <strong>İlk kart · sin(x)</strong>
+        <small>line-resize</small>
+        <div class="durum">Fixture bağlı · masaüstü/WASM ortak sahne</div>
+      </article>
+    </aside>
+    <main>
+      <header>
+        <div>
+          <h2>Resize · sayısal x ölçeği</h2>
+          <div class="kaynak">Kaynak: ../uPlot/demos/resize.html</div>
+        </div>
+        <label class="denetimler">
+          Nokta
+          <input id="nokta" type="range" min="10" max="1000" step="10" value="100">
+          <output id="nokta-değeri">100 nokta</output>
+        </label>
+      </header>
+      <section id="chart" aria-live="polite"><span>WASM yükleniyor…</span></section>
+      <p id="hata" role="alert"></p>
+    </main>
+  </div>
+  <script type="module">
+    import init, { ilk_kart_svg_aralik, kart_sayisi, kaynak_commit } from "../pkg/uplot_rs_wasm.js";
+
+    const chart = document.getElementById("chart");
+    const nokta = document.getElementById("nokta");
+    const değer = document.getElementById("nokta-değeri");
+    const hata = document.getElementById("hata");
+
+    const TAM_X = 2 * Math.PI;
+    let xAralığı = [0, TAM_X * 99 / 100];
+    let sürükleme = null;
+
+    function boyutlar() {
+      return {
+        genişlik: Math.max(160, Math.round(chart.clientWidth - 24)),
+        yükseklik: Math.max(320, Math.round(chart.clientHeight - 24)),
+      };
+    }
+
+    function çiz() {
+      const sayı = Number(nokta.value);
+      değer.value = `${sayı} nokta`;
+      const tamSon = TAM_X * (sayı - 1) / sayı;
+      xAralığı[0] = Math.max(0, Math.min(xAralığı[0], tamSon));
+      xAralığı[1] = Math.max(xAralığı[0] + Number.EPSILON, Math.min(xAralığı[1], tamSon));
+      const { genişlik, yükseklik } = boyutlar();
+      chart.innerHTML = ilk_kart_svg_aralik(
+        sayı, genişlik, yükseklik, xAralığı[0], xAralığı[1]
+      );
+      const svg = chart.querySelector("svg");
+      if (!svg) return;
+      svg.dataset.etkileşim = "hover-x-zoom";
+      svg.insertAdjacentHTML("beforeend", `
+        <g id="etkileşim" pointer-events="none">
+          <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+          <line id="imleç-x" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
+          <line id="imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
+          <circle id="imleç-nokta" visibility="hidden" r="2.5" fill="#dc2626"/>
+        </g>`);
+      chart.insertAdjacentHTML("beforeend", `
+        <div class="yardım">Sürükle: X yakınlaştır · çift tıkla: sıfırla</div>
+        <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
+        <span><i class="örnek"></i>sin(x): <b id="y-değeri">--</b></span></div>`);
+    }
+
+    function svgKonumu(olay) {
+      const svg = chart.querySelector("svg");
+      const rect = svg.getBoundingClientRect();
+      const view = svg.viewBox.baseVal;
+      return {
+        x: (olay.clientX - rect.left) * view.width / rect.width,
+        y: (olay.clientY - rect.top) * view.height / rect.height,
+        svg,
+        view,
+      };
+    }
+
+    function veriX(px, view) {
+      const oran = Math.max(0, Math.min(1, (px - 64) / (view.width - 88)));
+      return xAralığı[0] + oran * (xAralığı[1] - xAralığı[0]);
+    }
+
+    function imleciGüncelle(olay) {
+      const { x, y, svg, view } = svgKonumu(olay);
+      const sol = 64, sağ = view.width - 24, üst = 48, alt = view.height - 48;
+      const öğeler = ["imleç-x", "imleç-y", "imleç-nokta"].map(id => svg.querySelector(`#${id}`));
+      if (x < sol || x > sağ || y < üst || y > alt) {
+        öğeler.forEach(öğe => öğe?.setAttribute("visibility", "hidden"));
+        return;
+      }
+      const sayı = Number(nokta.value);
+      const adım = TAM_X / sayı;
+      const indeks = Math.max(0, Math.min(sayı - 1, Math.round(veriX(x, view) / adım)));
+      const gerçekX = indeks * adım;
+      const gerçekY = Math.sin(gerçekX);
+      const noktaX = sol + (gerçekX - xAralığı[0]) / (xAralığı[1] - xAralığı[0]) * (sağ - sol);
+      const görünürY = Array.from({length: sayı}, (_, i) => i * adım)
+        .filter(değer => değer >= xAralığı[0] && değer <= xAralığı[1])
+        .map(Math.sin);
+      let hamMin = Math.min(...görünürY), hamMax = Math.max(...görünürY);
+      let yMin, yMax;
+      if (hamMin === hamMax) {
+        const pay = Math.max(Math.abs(hamMin), 1) * .1;
+        yMin = hamMin - pay; yMax = hamMax + pay;
+      } else {
+        const pay = (hamMax - hamMin) * .1;
+        yMin = hamMin - pay; yMax = hamMax + pay;
+      }
+      const noktaY = alt - (gerçekY - yMin) / (yMax - yMin) * (alt - üst);
+      const [dikey, yatay, imleçNoktası] = öğeler;
+      dikey.setAttribute("x1", noktaX); dikey.setAttribute("x2", noktaX);
+      dikey.setAttribute("y1", üst); dikey.setAttribute("y2", alt);
+      yatay.setAttribute("x1", sol); yatay.setAttribute("x2", sağ);
+      yatay.setAttribute("y1", noktaY); yatay.setAttribute("y2", noktaY);
+      imleçNoktası.setAttribute("cx", noktaX); imleçNoktası.setAttribute("cy", noktaY);
+      öğeler.forEach(öğe => öğe.setAttribute("visibility", "visible"));
+      chart.querySelector("#x-değeri").textContent = gerçekX.toLocaleString("tr-TR", {maximumFractionDigits: 3});
+      chart.querySelector("#y-değeri").textContent = gerçekY.toLocaleString("tr-TR", {maximumFractionDigits: 3});
+    }
+
+    chart.addEventListener("pointermove", olay => {
+      imleciGüncelle(olay);
+      if (!sürükleme) return;
+      const { x, svg, view } = svgKonumu(olay);
+      sürükleme.son = Math.max(64, Math.min(view.width - 24, x));
+      const seçim = svg.querySelector("#seçim");
+      seçim.setAttribute("x", Math.min(sürükleme.baş, sürükleme.son));
+      seçim.setAttribute("y", 48);
+      seçim.setAttribute("width", Math.abs(sürükleme.son - sürükleme.baş));
+      seçim.setAttribute("height", view.height - 96);
+      seçim.setAttribute("visibility", "visible");
+    });
+    chart.addEventListener("pointerdown", olay => {
+      const { x, view } = svgKonumu(olay);
+      if (x < 64 || x > view.width - 24) return;
+      chart.setPointerCapture(olay.pointerId);
+      sürükleme = { baş: x, son: x, eski: [...xAralığı] };
+    });
+    chart.addEventListener("pointerup", olay => {
+      if (!sürükleme) return;
+      const { view } = svgKonumu(olay);
+      const yakınlaştır = Math.abs(sürükleme.son - sürükleme.baş) >= 4;
+      if (yakınlaştır) {
+        const a = Math.min(sürükleme.baş, sürükleme.son);
+        const b = Math.max(sürükleme.baş, sürükleme.son);
+        const eski = sürükleme.eski;
+        const dönüştür = px => eski[0] + (px - 64) / (view.width - 88) * (eski[1] - eski[0]);
+        xAralığı = [dönüştür(a), dönüştür(b)];
+      }
+      sürükleme = null;
+      if (yakınlaştır) {
+        çiz();
+      } else {
+        chart.querySelector("#seçim")?.setAttribute("visibility", "hidden");
+      }
+    });
+    chart.addEventListener("dblclick", () => {
+      const sayı = Number(nokta.value);
+      xAralığı = [0, TAM_X * (sayı - 1) / sayı];
+      çiz();
+    });
+
+    try {
+      await init();
+      document.documentElement.dataset.kartSayısı = String(kart_sayisi());
+      document.documentElement.dataset.kaynakCommit = kaynak_commit();
+      nokta.addEventListener("input", () => {
+        const sayı = Number(nokta.value);
+        xAralığı = [0, TAM_X * (sayı - 1) / sayı];
+        çiz();
+      });
+      new ResizeObserver(çiz).observe(chart);
+      çiz();
+    } catch (neden) {
+      chart.textContent = "WASM başlatılamadı";
+      hata.textContent = String(neden);
+    }
+  </script>
+</body>
+</html>
