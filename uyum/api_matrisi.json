@@ -110,6 +110,12 @@
       "rust_karşılığı": "SeriSeçenekleri::çubuk",
       "durum": "kısmi",
       "test": "src/kart/align_data.rs"
+    },
+    {
+      "kaynak_yolu": "Plugin.hooks.setCursor",
+      "rust_karşılığı": "GpuiGrafik::imleci_güncelle / KartOturumu::en_yakin_noktalar",
+      "durum": "kısmi",
+      "test": "src/kart/cursor_tooltip.rs"
     }
   ]
 }

@@ -1324,6 +1324,67 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "kısmi"
       }
+    },
+    {
+      "sıra": 21,
+      "id": "cursor-tooltip",
+      "başlık": { "en": "Cursor Tooltip w/placement.js", "tr": "İmleç Bilgi Kutusu" },
+      "kaynak": "demos/cursor-tooltip.html",
+      "kaynak_sha256": "5edd54fc9ea2d2cdb691210e6eb300e65a251b9426fe5eb4bf2ad342336a7325",
+      "ek_kaynaklar": [
+        { "yol": "demos/lib/placement.min.js", "sha256": "f74af88ebe70db955a9b1785b8c5f00f617d4484baf237f0c52ddc5f435da4f5" }
+      ],
+      "fixture": "src/kart/cursor_tooltip.rs#cursor_tooltip_kartı",
+      "örnek": "examples/cursor_tooltip.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/cursor-tooltip.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/cursor_tooltip.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı",
+          "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
+          "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "devralındı"
+        },
+        "gerekçeler": {}
+      },
+      "sahip_faz": 4,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-seven-point-data",
+        "cursor-nearest-index-and-value",
+        "source-text-with-rounded-cursor-position",
+        "right-start-tooltip-placement",
+        "plot-bounded-overflow-prevention",
+        "mouseenter-show-mouseleave-hide",
+        "core-configured-ready-surface-behavior",
+        "gpui-wasm-catalog-parity",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "kısmi",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "bekliyor"
+      }
     }
   ]
 }

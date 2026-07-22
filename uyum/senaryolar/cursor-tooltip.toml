@@ -1,0 +1,24 @@
+id = "cursor-tooltip"
+kaynak = "../uPlot/demos/cursor-tooltip.html"
+fixture = "src/kart/cursor_tooltip.rs#cursor_tooltip_kartı"
+viewport = [600, 400]
+device_pixel_ratio = 1
+durum = "etkileşimli-bilgi-kutusu"
+
+[veri]
+x = [1, 2, 3, 4, 5, 6, 7]
+y = [40, 43, 60, 65, 71, 73, 80]
+seri = "blah"
+
+[davranış]
+mouseenter_göster = true
+mouseleave_gizle = true
+metin = "x,y at cursorLeft,cursorTop"
+yerleşim = "right/start"
+sınır = "plot-over"
+sahiplik = "hazır GPUI/WASM yüzeyi"
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/cursor-tooltip.svg"

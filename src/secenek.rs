@@ -177,6 +177,8 @@ pub struct EtkileşimSeçenekleri {
     pub dokunma_etkileşimi: bool,
     /// `cursor-bind` demosundaki Ctrl + sürükleme açıklama seçim bağını etkinleştirir.
     pub ctrl_açıklama: bool,
+    /// `cursor-tooltip` demosundaki imleç bilgi kutusunu etkinleştirir.
+    pub imleç_bilgi_kutusu: bool,
 }
 
 impl Default for EtkileşimSeçenekleri {
@@ -189,6 +191,7 @@ impl Default for EtkileşimSeçenekleri {
             görünüm_geçmişi: false,
             dokunma_etkileşimi: false,
             ctrl_açıklama: false,
+            imleç_bilgi_kutusu: false,
         }
     }
 }
@@ -227,6 +230,11 @@ impl EtkileşimSeçenekleri {
 
     pub fn ctrl_açıklama(mut self, etkin: bool) -> Self {
         self.ctrl_açıklama = etkin;
+        self
+    }
+
+    pub fn imleç_bilgi_kutusu(mut self, etkin: bool) -> Self {
+        self.imleç_bilgi_kutusu = etkin;
         self
     }
 }

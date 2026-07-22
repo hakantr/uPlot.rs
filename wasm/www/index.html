@@ -56,6 +56,9 @@
               overflow: hidden; color: #6b7280; font-size: 10px; line-height: 1.35;
               text-align: left; text-overflow: ellipsis; white-space: nowrap;
               pointer-events: none; }
+    .imlec-bilgi-kutusu { position: absolute; z-index: 12; max-width: 190px; padding: 8px;
+                          border-radius: 4px; color: #fff; background: rgba(0,0,0,.8);
+                          font-size: 12px; pointer-events: none; white-space: nowrap; }
     .kod-örneği { margin-top: 14px; border: 1px solid #d1d5db; border-radius: 10px;
                   background: #111827; color: #e5e7eb; overflow: hidden; }
     .kod-örneği summary { padding: 9px 12px; color: #93c5fd; cursor: pointer;
@@ -232,6 +235,7 @@
     import init, {
       KartOturumu,
       align_data_kart_tanim_ornegi,
+      cursor_tooltip_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
@@ -685,6 +689,24 @@
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
     };
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="cursor-tooltip" aria-current="false" tabindex="0">
+        <strong>Cursor Tooltip w/placement.js</strong><small>cursor-tooltip</small>
+        <div class="durum">Sınırlara duyarlı canlı bilgi kutusu</div>
+      </article>`);
+    kartlar["cursor-tooltip"] = {
+      başlık: "Cursor Tooltip w/placement.js",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/cursor-tooltip.html">cursor-tooltip.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/placement.min.js">placement.js</a>
+        <br>Kaynak 1…7 X ve 40…80 Y değerleri aynen kullanılır; hover metni ve grafik sınırında taşmayı önleyen sağ/başlangıç yerleşimi hazır yüzey bileşenindedir.`,
+      tanım: () => cursor_tooltip_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/cursor_tooltip.rs",
+      seriler: [{ etiket: "blah", renk: "#008000" }],
+      yardım: "İmleci grafik üzerinde hareket ettir: x,y ve piksel konumu bilgi kutusunda gösterilir",
+      değişkenNokta: false,
+      bilgiKutusu: true,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     function ortakEtkileşimler() {
       return {
@@ -791,6 +813,9 @@
         <div class="yardım">${kart.yardım}</div>
         <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
         ${lejantSerileri}</div>`);
+      if (kart.bilgiKutusu) {
+        chart.insertAdjacentHTML("beforeend", `<div id="imlec-bilgi-kutusu" class="imlec-bilgi-kutusu" hidden></div>`);
+      }
       kontrolleriGüncelle();
       taşımaİmleciniGüncelle();
     }
@@ -875,6 +900,19 @@
       const [gerçekX, ...seriDeğerleri] = enYakın;
       const xAralığı = oturum.gorunur_x_araligi();
       const noktaX = sol + (gerçekX - xAralığı[0]) / (xAralığı[1] - xAralığı[0]) * (sağ - sol);
+      const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
+      if (bilgiKutusu && Number.isFinite(seriDeğerleri[0])) {
+        bilgiKutusu.textContent = `${gerçekX},${seriDeğerleri[0]} at ${Math.round(hamX)},${Math.round(hamY)}`;
+        const chartKutusu = chart.getBoundingClientRect();
+        const svgKutusu = svg.getBoundingClientRect();
+        const pikselX = svgKutusu.left - chartKutusu.left + hamX / view.width * svgKutusu.width;
+        const pikselY = svgKutusu.top - chartKutusu.top + hamY / view.height * svgKutusu.height;
+        bilgiKutusu.hidden = false;
+        const bilgiG = bilgiKutusu.offsetWidth;
+        const bilgiY = bilgiKutusu.offsetHeight;
+        bilgiKutusu.style.left = `${Math.min(pikselX + 12, chart.clientWidth - bilgiG - 4)}px`;
+        bilgiKutusu.style.top = `${Math.min(pikselY + 12, chart.clientHeight - bilgiY - 4)}px`;
+      }
       const [dikey, yatay] = çizgiler;
       // Varsayılan kartlarda kesintisiz; cursor-snap kartında çekirdek ayarının
       // döndürdüğü 10×10 piksel ızgarasına bağlı hareket eder.
@@ -1102,6 +1140,8 @@
     });
     chart.addEventListener("pointerleave", () => {
       grafikÜzerinde = false;
+      const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
+      if (bilgiKutusu) bilgiKutusu.hidden = true;
     });
     document.addEventListener("keydown", olay => {
       if (olay.code !== "Space") return;

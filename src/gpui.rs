@@ -467,8 +467,37 @@ impl Render for GpuiGrafik {
         let çizim_sınırları = self.çizim_sınırları.clone();
         let taşıyor = self.taşıma_başlangıcı.is_some();
         let taşımaya_hazır = self.boşluk_basılı && self.grafik.yakınlaştırılmış();
+        let bilgi_kutusu = self
+            .imleç
+            .as_ref()
+            .filter(|_| self.grafik.etkileşim_seçenekleri().imleç_bilgi_kutusu)
+            .and_then(|imleç| {
+                let y = imleç.seri_değerleri.first().copied().flatten()?;
+                let sınırlar = self.çizim_sınırları.get()?;
+                let (kaynak_g, kaynak_y) = self.grafik.boyut();
+                let ölçek = (f32::from(sınırlar.size.width) / kaynak_g as f32)
+                    .min(f32::from(sınırlar.size.height) / kaynak_y as f32)
+                    .max(0.01);
+                let yatay_pay = (f32::from(sınırlar.size.width) - kaynak_g as f32 * ölçek) / 2.0;
+                let dikey_pay = (f32::from(sınırlar.size.height) - kaynak_y as f32 * ölçek) / 2.0;
+                let sol = (yatay_pay + imleç.fare.x * ölçek + 12.0)
+                    .clamp(4.0, (f32::from(sınırlar.size.width) - 190.0).max(4.0));
+                let üst = (dikey_pay + imleç.fare.y * ölçek + 12.0)
+                    .clamp(4.0, (f32::from(sınırlar.size.height) - 42.0).max(4.0));
+                Some((
+                    sol,
+                    üst,
+                    format!(
+                        "{},{y} at {},{}",
+                        imleç.veri_x,
+                        imleç.fare.x.round(),
+                        imleç.fare.y.round()
+                    ),
+                ))
+            });
         div()
             .id("uplot-rs-gpui-grafik")
+            .relative()
             .track_focus(&odak)
             .size_full()
             .min_h(px(120.0))
@@ -613,6 +642,21 @@ impl Render for GpuiGrafik {
                 )
                 .size_full(),
             )
+            .when_some(bilgi_kutusu, |yüzey, (sol, üst, metin)| {
+                yüzey.child(
+                    div()
+                        .absolute()
+                        .left(px(sol))
+                        .top(px(üst))
+                        .px_2()
+                        .py_1()
+                        .rounded_sm()
+                        .bg(rgba(0x000000cc))
+                        .text_color(rgb(0xffffff))
+                        .text_xs()
+                        .child(metin),
+                )
+            })
     }
 }
 

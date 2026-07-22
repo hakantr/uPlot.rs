@@ -88,6 +88,10 @@ name = "cursor_bind"
 required-features = ["svg"]
 
 [[example]]
+name = "cursor_tooltip"
+required-features = ["svg"]
+
+[[example]]
 name = "missing_data"
 required-features = ["svg"]
 
