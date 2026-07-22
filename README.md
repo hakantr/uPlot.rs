@@ -1,8 +1,10 @@
 # uPlot.rs
 
-uPlot 1.6.32'nin küçük, hızlı ve bellek-verimli çizim yaklaşımını Rust'a ve
-GPUI'ye taşıyan yerli port. Normatif kaynak `../uPlot` deposunun
-`0e5812c504430f5c804e0f993376d8999b26cc34` commit'idir.
+Bu proje, [uPlot](https://github.com/leeoniya/uPlot) 1.6.32'nin küçük, hızlı ve
+bellek-verimli çizim yaklaşımını Rust'a, GPUI'ye ve WASM'e taşıyan bir porttur.
+Bağımsız olarak ortaya çıkarılmış yeni bir grafik motoru değildir. Normatif
+kaynak `../uPlot` deposunun `0e5812c504430f5c804e0f993376d8999b26cc34`
+commit'idir; davranış, API ve görsel uyum kararlarında uPlot esas alınır.
 
 Kod tabanı Rust 2024 edition kullanır ve en az Rust 1.95 gerektirir. Yeni
 modüller `mod.rs` yerine `foo.rs` + gerektiğinde `foo/alt_modul.rs` düzenini
@@ -53,6 +55,19 @@ commit/sürüm/dosya hash kilidini doğrular. Tarayıcı listesi için
 
 Ayrıntılı yol haritası için [UPLOT_TAM_UYUM_FAZ_PLANI.md](UPLOT_TAM_UYUM_FAZ_PLANI.md)
 dosyasına bakın.
+
+## Atıf ve teşekkür
+
+Grafik motorunun özgün tasarımı, performans yaklaşımı, API fikirleri,
+algoritmaları, varsayılan davranışları ve demo senaryoları
+[uPlot deposuna](https://github.com/leeoniya/uPlot) aittir. Bu depodaki Rust
+kodu; söz konusu çalışmayı farklı çalışma zamanı ve arayüzlere uyarlamak,
+eşdeğerliğini sınamak ve belgelemek amacıyla geliştirilir.
+
+uPlot'un yaratıcısı Leon Sorokin'e ve bugüne kadar kaynak projeye kod, hata
+raporu, inceleme, dokümantasyon ve geri bildirimle katkıda bulunan bütün uPlot
+katkıcılarına içtenlikle teşekkür ederiz. uPlot.rs'nin ulaşabildiği işlevsellik
+ve doğruluk, onların açık kaynak olarak paylaştığı çalışma sayesinde mümkündür.
 
 ## Lisans
 
