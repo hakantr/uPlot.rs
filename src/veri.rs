@@ -10,7 +10,7 @@ pub struct HizalıVeri {
 impl HizalıVeri {
     /// Veriyi doğrular. X değerleri sonlu, benzersiz ve kesin artan olmalıdır.
     pub fn yeni(x: Vec<f64>, seriler: Vec<Vec<Option<f64>>>) -> Result<Self, UplotHatası> {
-        if x.len() < 2 {
+        if x.is_empty() {
             return Err(UplotHatası::YetersizVeri { uzunluk: x.len() });
         }
 

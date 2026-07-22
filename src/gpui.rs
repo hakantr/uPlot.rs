@@ -136,6 +136,25 @@ impl GpuiGrafik {
         let (sol, sağ, üst, alt) = self.çizim_alanı();
         let x_aralığı = self.grafik.görünür_x_aralığı();
         if let Some(imleç) = self.imleç.as_ref() {
+            if let Some((_, _, konum, genişlik, yükseklik, _)) = self.grafik.çubuk_vuruşu(
+                self.grafik.boyut().0,
+                self.grafik.boyut().1,
+                imleç.fare.x,
+                imleç.fare.y,
+            ) {
+                sahne.ekle(Komut::Dikdörtgen {
+                    konum,
+                    genişlik,
+                    yükseklik,
+                    dolgu: "#ffffff4d".to_string(),
+                    çizgi: "#ffffff00".to_string(),
+                    kalınlık: 0.0,
+                });
+                return sahne;
+            }
+            if self.grafik.çubuk_grafiği() {
+                return sahne;
+            }
             let nokta_x = ölçekle(imleç.veri_x, x_aralığı, sol, sağ - sol);
             sahne.ekle(Komut::KesikliÇizgi {
                 başlangıç: Nokta::yeni(imleç.fare.x, üst),

@@ -151,6 +151,16 @@
         <small>axis-indicators</small>
         <div class="durum">3 renkli eksen · canlı değer rozetleri</div>
       </article>
+      <article class="kart" data-kart="bars-multi-group-grouped" aria-current="false" tabindex="0"><strong>Bars · grouped</strong><small>bars-multi-group-grouped</small><div class="durum">4 grup × 3 seri · dikey</div></article>
+      <article class="kart" data-kart="bars-multi-group-stacked" aria-current="false" tabindex="0"><strong>Bars · stacked</strong><small>bars-multi-group-stacked</small><div class="durum">4 grup × 3 seri · dikey</div></article>
+      <article class="kart" data-kart="bars-horizontal-grouped" aria-current="false" tabindex="0"><strong>Bars · horizontal grouped</strong><small>bars-horizontal-grouped</small><div class="durum">4 grup × 3 seri · yatay</div></article>
+      <article class="kart" data-kart="bars-horizontal-stacked" aria-current="false" tabindex="0"><strong>Bars · horizontal stacked</strong><small>bars-horizontal-stacked</small><div class="durum">4 grup × 3 seri · yatay</div></article>
+      <article class="kart" data-kart="bars-single-series-grouped" aria-current="false" tabindex="0"><strong>Bars · single series grouped</strong><small>bars-single-series-grouped</small><div class="durum">4 grup × 1 seri</div></article>
+      <article class="kart" data-kart="bars-single-series-stacked" aria-current="false" tabindex="0"><strong>Bars · single series stacked</strong><small>bars-single-series-stacked</small><div class="durum">4 grup × 1 seri</div></article>
+      <article class="kart" data-kart="bars-single-group-grouped" aria-current="false" tabindex="0"><strong>Bars · single group grouped</strong><small>bars-single-group-grouped</small><div class="durum">1 grup × 3 seri</div></article>
+      <article class="kart" data-kart="bars-single-group-stacked" aria-current="false" tabindex="0"><strong>Bars · single group stacked</strong><small>bars-single-group-stacked</small><div class="durum">1 grup × 3 seri</div></article>
+      <article class="kart" data-kart="bars-single-bar-grouped" aria-current="false" tabindex="0"><strong>Bars · single bar grouped</strong><small>bars-single-bar-grouped</small><div class="durum">1 grup × 1 seri</div></article>
+      <article class="kart" data-kart="bars-single-bar-stacked" aria-current="false" tabindex="0"><strong>Bars · single bar stacked</strong><small>bars-single-bar-stacked</small><div class="durum">1 grup × 1 seri</div></article>
     </aside>
     <main>
       <header>
@@ -207,6 +217,7 @@
       axis_control_kart_tanim_ornegi,
       axis_autosize_kart_tanim_ornegi,
       axis_indicators_kart_tanim_ornegi,
+      bars_grouped_stacked_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -467,6 +478,37 @@
       },
     };
 
+    const çubukAltGrafikleri = [
+      "bars-multi-group-grouped", "bars-multi-group-stacked",
+      "bars-horizontal-grouped", "bars-horizontal-stacked",
+      "bars-single-series-grouped", "bars-single-series-stacked",
+      "bars-single-group-grouped", "bars-single-group-stacked",
+      "bars-single-bar-grouped", "bars-single-bar-stacked",
+    ];
+    for (const kimlik of çubukAltGrafikleri) {
+      const tekSeri = kimlik.includes("single-series") || kimlik.includes("single-bar");
+      kartlar[kimlik] = {
+        başlık: kimlik,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/bars-grouped-stacked.html">bars-grouped-stacked.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/grouped-bars.js">grouped-bars.js</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/distr.js">distr.js</a>
+          <br>Resmî sayfadaki on alt grafik aynı kategori, değer, yön, grup dağılımı ve yığma davranışıyla ayrı doğrulama kartlarıdır.`,
+        tanım: () => bars_grouped_stacked_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/bars_grouped_stacked.rs",
+        seriler: tekSeri
+          ? [{ etiket: "Metric 1", renk: "#33BB55" }]
+          : [
+              { etiket: "Metric 1", renk: "#33BB55" },
+              { etiket: "Metric 2", renk: "#B56FAB" },
+              { etiket: "Metric 3", renk: "#BB1133" },
+            ],
+        yardım: "Kategorik çubuk düzeni · kaynak eklentisi seçim yakınlaştırmasını kapatır",
+        değişkenNokta: false,
+        çubuk: true,
+        etkileşimler: () => ({tekerlek: false, seçim: false, çiftTık: false, geçmiş: false, dokunma: false}),
+      };
+    }
+
     function ortakEtkileşimler() {
       return {
         tekerlek: ortak_kart_tekerlek_etkilesimi(),
@@ -546,6 +588,7 @@
       svg.insertAdjacentHTML("beforeend", `
         <g id="etkileşim" pointer-events="none">
           <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+          <rect id="çubuk-vurgu" visibility="hidden" fill="rgba(255,255,255,.3)" stroke="none"/>
           <line id="imleç-x" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
           <line id="imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
           ${imleçNoktaları}
@@ -582,6 +625,25 @@
     function imleciGüncelle(olay) {
       const { x: hamX, y: hamY, svg, view } = svgKonumu(olay);
       const { sol, sağ, üst, alt } = çizimAlanı(view);
+      if (kartlar[aktifKart].çubuk) {
+        const vurgu = svg.querySelector("#çubuk-vurgu");
+        const vuruş = oturum?.cubuk_vurusu(view.width, view.height, hamX, hamY) ?? [];
+        if (vuruş.length !== 7) {
+          vurgu?.setAttribute("visibility", "hidden");
+          return;
+        }
+        const [seri, indeks, x, y, genişlik, yükseklik, değer] = vuruş;
+        vurgu?.setAttribute("x", x); vurgu?.setAttribute("y", y);
+        vurgu?.setAttribute("width", genişlik); vurgu?.setAttribute("height", yükseklik);
+        vurgu?.setAttribute("visibility", "visible");
+        const xHedefi = chart.querySelector("#x-değeri");
+        if (xHedefi) xHedefi.textContent = String(indeks + 1);
+        kartlar[aktifKart].seriler.forEach((_, seriİndeksi) => {
+          const hedef = chart.querySelector(`#seri-değeri-${seriİndeksi}`);
+          if (hedef) hedef.textContent = seriİndeksi === seri ? String(değer) : "--";
+        });
+        return;
+      }
       const çizgiler = ["imleç-x", "imleç-y"].map(id => svg.querySelector(`#${id}`));
       const noktalar = kartlar[aktifKart].seriler.map((_, indeks) => svg.querySelector(`#imleç-nokta-${indeks}`));
       const öğeler = [...çizgiler, ...noktalar];

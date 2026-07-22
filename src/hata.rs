@@ -66,7 +66,7 @@ impl Display for UplotHatası {
             Self::YetersizVeri { uzunluk } => {
                 write!(
                     f,
-                    "uPlot hizalı verisi en az 2 nokta ister; bulunan: {uzunluk}"
+                    "uPlot hizalı verisi en az 1 nokta ister; bulunan: {uzunluk}"
                 )
             }
             Self::SeriUzunluğu {

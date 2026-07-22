@@ -7,6 +7,39 @@ pub use seri::SeriSeçenekleri;
 pub use y_olcek::{YÖlçekDağılımı, YÖlçekSeçenekleri};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ÇubukYönü {
+    Dikey,
+    Yatay,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ÇubukDüzeni {
+    pub yön: ÇubukYönü,
+    pub yığılmış: bool,
+    pub ters: bool,
+}
+
+impl ÇubukDüzeni {
+    pub fn yeni(yön: ÇubukYönü) -> Self {
+        Self {
+            yön,
+            yığılmış: false,
+            ters: false,
+        }
+    }
+
+    pub fn yığılmış(mut self, etkin: bool) -> Self {
+        self.yığılmış = etkin;
+        self
+    }
+
+    pub fn ters(mut self, etkin: bool) -> Self {
+        self.ters = etkin;
+        self
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TekerlekKipi {
     /// Piksel ve satır olaylarını giriş aygıtına göre ayrı işler.
     Otomatik,
@@ -159,6 +192,8 @@ pub struct GrafikSeçenekleri {
     pub otomatik_x_sağ_pay: bool,
     pub otomatik_y_eksen_genişliği: bool,
     pub eksen_göstergeleri: bool,
+    pub kategoriler: Vec<String>,
+    pub çubuk_düzeni: Option<ÇubukDüzeni>,
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
     pub imleç_ızgara_adımı: Option<f32>,
@@ -190,6 +225,8 @@ impl GrafikSeçenekleri {
             otomatik_x_sağ_pay: false,
             otomatik_y_eksen_genişliği: false,
             eksen_göstergeleri: false,
+            kategoriler: Vec::new(),
+            çubuk_düzeni: None,
             imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
@@ -268,6 +305,20 @@ impl GrafikSeçenekleri {
 
     pub fn eksen_göstergeleri(mut self, etkin: bool) -> Self {
         self.eksen_göstergeleri = etkin;
+        self
+    }
+
+    pub fn kategoriler<I, S>(mut self, kategoriler: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.kategoriler = kategoriler.into_iter().map(Into::into).collect();
+        self
+    }
+
+    pub fn çubuk_düzeni(mut self, düzen: ÇubukDüzeni) -> Self {
+        self.çubuk_düzeni = Some(düzen);
         self
     }
 

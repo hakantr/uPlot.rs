@@ -1,0 +1,32 @@
+id = "bars-grouped-stacked"
+kaynak = "../uPlot/demos/bars-grouped-stacked.html"
+fixture = "src/kart/bars_grouped_stacked.rs#bars_grouped_stacked_kartı"
+viewport = [800, 400]
+device_pixel_ratio = 1
+durum = "on-alt-grafik"
+
+[veri]
+kategoriler = ["Group A", "Group B", "Group C", "Group D"]
+metric_1 = [1, 2, 3, 10]
+metric_2 = [3, 2, 1, 10]
+metric_3 = [5, 9, 3, 10]
+tek_grup = [1, 3, 5]
+
+[düzen]
+alt_grafik_sayısı = 10
+yönler = ["dikey", "yatay"]
+kipler = ["gruplanmış", "yığılmış"]
+grup_genişliği = 0.9
+çubuk_genişliği = 1.0
+dağılım = "SPACE_BETWEEN"
+tek_grup_ve_tek_seri = true
+
+[etkileşim]
+kaynak_seçimi_kapalı = true
+çubuk_hover_dikdörtgeni = true
+çekirdek_vuruş_testi = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg_dizini = "target/bars-grouped-stacked"

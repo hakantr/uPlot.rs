@@ -3,6 +3,7 @@ mod area_fill;
 mod axis_autosize;
 mod axis_control;
 mod axis_indicators;
+mod bars_grouped_stacked;
 mod cursor_snap;
 mod dependent_scale;
 mod missing_data;
@@ -24,6 +25,9 @@ pub use axis_control::{
 };
 pub use axis_indicators::{
     AXIS_INDICATORS_KANIT_TOHUMU, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, axis_indicators_kartı,
+};
+pub use bars_grouped_stacked::{
+    BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, bars_grouped_stacked_kartı, ÇubukÖrneği,
 };
 pub use cursor_snap::{
     CURSOR_SNAP_KANIT_TOHUMU, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, cursor_snap_kartı

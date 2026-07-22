@@ -96,3 +96,7 @@ required-features = ["svg"]
 [[example]]
 name = "axis_indicators"
 required-features = ["svg"]
+
+[[example]]
+name = "bars_grouped_stacked"
+required-features = ["svg"]

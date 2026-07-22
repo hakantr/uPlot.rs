@@ -11,14 +11,15 @@ use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
-    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
+    BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
     SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
     ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, cursor_snap_kartı, dependent_scale_kartı,
-    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
-    months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı,
-    zoom_touch_kartı, zoom_wheel_kartı,
+    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı, cursor_snap_kartı,
+    dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -38,6 +39,7 @@ enum KartKimliği {
     AxisControl,
     AxisAutosize,
     AxisIndicators,
+    Bars(ÇubukÖrneği),
 }
 
 impl KartKimliği {
@@ -58,6 +60,7 @@ impl KartKimliği {
             Self::AxisControl => "Axis Control",
             Self::AxisAutosize => "Axis AutoSize",
             Self::AxisIndicators => "Axis indicators",
+            Self::Bars(örnek) => örnek.kimlik(),
         }
     }
 
@@ -86,6 +89,7 @@ impl KartKimliği {
             Self::AxisControl => "axis-control.html · 500.001 nokta ve sağ Y ekseni",
             Self::AxisAutosize => "axis-autosize.html · 501 nokta ve 1…10⁹ dinamik eksen ölçümü",
             Self::AxisIndicators => "axis-indicators.html · üç renkli eksen ve imleç göstergeleri",
+            Self::Bars(_) => "bars-grouped-stacked.html · kaynaktaki kategorik çubuk düzeni",
         }
     }
 
@@ -104,6 +108,7 @@ impl KartKimliği {
             Self::AxisControl => AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
             Self::AxisAutosize => AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
             Self::AxisIndicators => AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
+            Self::Bars(_) => BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ,
         }
     }
 
@@ -122,11 +127,18 @@ impl KartKimliği {
             Self::AxisControl => "src/kart/axis_control.rs",
             Self::AxisAutosize => "src/kart/axis_autosize.rs",
             Self::AxisIndicators => "src/kart/axis_indicators.rs",
+            Self::Bars(_) => "src/kart/bars_grouped_stacked.rs",
         }
     }
 
     fn etkileşimler(self) -> EtkileşimSeçenekleri {
-        ortak_kart_etkileşimleri()
+        if matches!(self, Self::Bars(_)) {
+            EtkileşimSeçenekleri::default()
+                .seçim_yakınlaştır(false)
+                .çift_tıkla_tam_görünüm(false)
+        } else {
+            ortak_kart_etkileşimleri()
+        }
     }
 }
 
@@ -265,6 +277,7 @@ fn grafik_oluştur(
         KartKimliği::AxisControl => axis_control_kartı(),
         KartKimliği::AxisAutosize => axis_autosize_kartı(10_f64.powi(autosize_kuvvet)),
         KartKimliği::AxisIndicators => axis_indicators_kartı(),
+        KartKimliği::Bars(örnek) => bars_grouped_stacked_kartı(örnek),
     }?;
     Grafik::yeni(seçenekler, veri)
 }
@@ -298,6 +311,9 @@ impl Render for ChartListesi {
                 format!("501 nokta · çarpan 10^{}", self.autosize_kuvvet)
             }
             KartKimliği::AxisIndicators => "30 nokta × 3 bağımsız Y ekseni".to_string(),
+            KartKimliği::Bars(örnek) => {
+                format!("Kaynak alt grafik · {} seri", örnek.seri_sayısı())
+            }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
@@ -339,6 +355,8 @@ impl Render for ChartListesi {
             KartKimliği::AxisControl => &["sin(x)"],
             KartKimliği::AxisAutosize => &["sin(x)"],
             KartKimliği::AxisIndicators => &["1", "2", "3"],
+            KartKimliği::Bars(örnek) if örnek.seri_sayısı() == 1 => &["Metric 1"],
+            KartKimliği::Bars(_) => &["Metric 1", "Metric 2", "Metric 3"],
         };
         let lejant = lejant.map_or_else(
             || {
@@ -718,7 +736,21 @@ impl Render for ChartListesi {
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::AxisIndicators, cx);
                 })),
-            );
+            )
+            .children(ÇubukÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.kimlik(),
+                    "bars-grouped-stacked",
+                    aktif_kart == KartKimliği::Bars(örnek),
+                    "Resmî grouped/stacked alt grafik",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::Bars(örnek), cx);
+                }))
+            }));
 
         let araçlar = div()
             .flex()
