@@ -10,13 +10,15 @@ use ortak_bilesenler::{
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
     AREA_FILL_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik, RESIZE_KART_TANIM_ÖRNEĞİ,
-    UplotHatası, area_fill_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, area_fill_kartı, ortak_kart_etkileşimleri,
+    resize_kartı, scale_padding_kartı,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum KartKimliği {
     Resize,
     AreaFill,
+    ScalePadding,
 }
 
 impl KartKimliği {
@@ -24,6 +26,7 @@ impl KartKimliği {
         match self {
             Self::Resize => "Resize · sayısal x ölçeği",
             Self::AreaFill => "Area Fill",
+            Self::ScalePadding => "Scale Padding · Flat",
         }
     }
 
@@ -33,6 +36,9 @@ impl KartKimliği {
             Self::AreaFill => {
                 "area-fill.html · kaynakla aynı veri üreteci · ortak Resize etkileşim profili"
             }
+            Self::ScalePadding => {
+                "scale-padding.html · 13 düz seri · kaynakla aynı değer düzeyleri"
+            }
         }
     }
 
@@ -40,6 +46,7 @@ impl KartKimliği {
         match self {
             Self::Resize => RESIZE_KART_TANIM_ÖRNEĞİ,
             Self::AreaFill => AREA_FILL_KART_TANIM_ÖRNEĞİ,
+            Self::ScalePadding => SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
         }
     }
 
@@ -47,6 +54,7 @@ impl KartKimliği {
         match self {
             Self::Resize => "src/kart/resize.rs",
             Self::AreaFill => "src/kart/area_fill.rs",
+            Self::ScalePadding => "src/kart/scale_padding.rs",
         }
     }
 
@@ -149,6 +157,7 @@ fn grafik_oluştur(kart: KartKimliği, nokta_sayısı: usize) -> Result<Grafik, 
     let (seçenekler, veri) = match kart {
         KartKimliği::Resize => resize_kartı(nokta_sayısı),
         KartKimliği::AreaFill => area_fill_kartı(),
+        KartKimliği::ScalePadding => scale_padding_kartı(),
     }?;
     Grafik::yeni(seçenekler, veri)
 }
@@ -164,6 +173,7 @@ impl Render for ChartListesi {
         let nokta_yazısı = SharedString::from(match aktif_kart {
             KartKimliği::Resize => format!("{} nokta", self.nokta_sayısı),
             KartKimliği::AreaFill => "30 sabit nokta × 3 seri".to_string(),
+            KartKimliği::ScalePadding => "10 nokta × 13 düz seri".to_string(),
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
@@ -190,6 +200,10 @@ impl Render for ChartListesi {
         let seri_adları: &[&str] = match aktif_kart {
             KartKimliği::Resize => &["sin(x)"],
             KartKimliği::AreaFill => &["1", "2", "3"],
+            KartKimliği::ScalePadding => &[
+                "-10500", "-10000", "-9500", "-0.105", "-0.1", "-0.095", "0", "0.095", "0.1",
+                "0.105", "9500", "10000", "10500",
+            ],
         };
         let lejant = lejant.map_or_else(
             || {
@@ -311,6 +325,48 @@ impl Render for ChartListesi {
                             .text_xs()
                             .text_color(vurgu)
                             .child("3 alan serisi · kaynak veri üreteci"),
+                    ),
+            )
+            .child(
+                div()
+                    .id("kart-scale-padding")
+                    .cursor_pointer()
+                    .mt_2()
+                    .p_3()
+                    .rounded_lg()
+                    .border_1()
+                    .border_color(if aktif_kart == KartKimliği::ScalePadding {
+                        vurgu
+                    } else {
+                        rgb(0xd1d5db)
+                    })
+                    .bg(if aktif_kart == KartKimliği::ScalePadding {
+                        rgb(0xfef2f2)
+                    } else {
+                        panel
+                    })
+                    .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                        bu.kartı_seç(KartKimliği::ScalePadding, cx);
+                    }))
+                    .child(
+                        div()
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .text_color(metin)
+                            .child("Scale Padding"),
+                    )
+                    .child(
+                        div()
+                            .mt_1()
+                            .text_xs()
+                            .text_color(soluk)
+                            .child("scale-padding"),
+                    )
+                    .child(
+                        div()
+                            .mt_2()
+                            .text_xs()
+                            .text_color(vurgu)
+                            .child("13 düz seri · otomatik Y payı"),
                     ),
             );
 

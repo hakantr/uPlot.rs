@@ -52,3 +52,7 @@ required-features = ["svg"]
 [[example]]
 name = "area_fill"
 required-features = ["svg"]
+
+[[example]]
+name = "scale_padding"
+required-features = ["svg"]

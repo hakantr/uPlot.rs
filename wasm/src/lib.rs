@@ -3,8 +3,8 @@
 #![allow(confusable_idents)]
 
 use uplot_rs::{
-    AREA_FILL_KART_TANIM_ÖRNEĞİ, Grafik, RESIZE_KART_TANIM_ÖRNEĞİ, UplotHatası, area_fill_kartı,
-    ortak_kart_etkileşimleri, resize_kartı,
+    AREA_FILL_KART_TANIM_ÖRNEĞİ, Grafik, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    UplotHatası, area_fill_kartı, ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı,
 };
 use wasm_bindgen::prelude::*;
 
@@ -22,6 +22,7 @@ impl KartOturumu {
         let (seçenekler, veri) = match kart_kimliği {
             "resize" => resize_kartı(nokta_sayısı),
             "area-fill" => area_fill_kartı(),
+            "scale-padding" => scale_padding_kartı(),
             kimlik => Err(UplotHatası::BilinmeyenKart {
                 kimlik: kimlik.to_string(),
             }),
@@ -146,7 +147,7 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    2
+    3
 }
 
 #[wasm_bindgen]
@@ -157,6 +158,11 @@ pub fn resize_kart_tanim_ornegi() -> String {
 #[wasm_bindgen]
 pub fn area_fill_kart_tanim_ornegi() -> String {
     AREA_FILL_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
+pub fn scale_padding_kart_tanim_ornegi() -> String {
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -203,7 +209,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 2);
+        assert_eq!(kart_sayisi(), 3);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -228,6 +234,18 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 2);
+        assert_eq!(kart_sayisi(), 3);
+    }
+
+    #[test]
+    fn scale_padding_wasm_on_üç_seriyi_üretir() {
+        let oturum = KartOturumu::yeni("scale-padding", 100);
+        assert!(oturum.is_ok());
+        let Ok(oturum) = oturum else {
+            return;
+        };
+        let svg = oturum.svg(960, 400);
+        assert!(svg.contains("Flat"));
+        assert_eq!(svg.matches("fill=\"none\"").count(), 13);
     }
 }

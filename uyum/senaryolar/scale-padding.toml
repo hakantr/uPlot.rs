@@ -1,0 +1,34 @@
+id = "scale-padding"
+kaynak = "../uPlot/demos/scale-padding.html"
+fixture = "src/kart/scale_padding.rs#scale_padding_kartı"
+viewport = [1600, 600]
+device_pixel_ratio = 1
+durum = "etkileşimli"
+
+[veri]
+x_değerleri = "1..=10"
+seri_sayısı = 13
+seri_uzunluğu = 10
+düzeyler = [-10500.0, -10000.0, -9500.0, -0.105, -0.100, -0.095, 0.0, 0.095, 0.100, 0.105, 9500.0, 10000.0, 10500.0]
+
+[ölçek]
+x_zaman = false
+y_veri_aralığı = [-10500.0, 10500.0]
+y_otomatik_paylı_aralık = [-12600.0, 12600.0]
+
+[seri]
+çizgi_rengi = "#ff0000"
+çizgi_sayısı = 13
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/scale-padding.svg"

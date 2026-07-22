@@ -84,6 +84,11 @@
         <small>area-fill</small>
         <div class="durum">Kaynak veri üreteci · 3 alan serisi</div>
       </article>
+      <article class="kart" data-kart="scale-padding" aria-current="false" tabindex="0">
+        <strong>Scale Padding</strong>
+        <small>scale-padding</small>
+        <div class="durum">13 düz seri · otomatik Y payı</div>
+      </article>
     </aside>
     <main>
       <header>
@@ -121,6 +126,7 @@
       KartOturumu,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
+      scale_padding_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -176,6 +182,27 @@
           { etiket: "2", renk: "#008000" },
           { etiket: "3", renk: "#0000ff" },
         ],
+        yardım: "Sürükle: seç · boşluk + sürükle: taşı · iki parmak: yakınlaştır · tek parmak: taşı · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ({
+          tekerlek: ortak_kart_tekerlek_etkilesimi(),
+          seçim: ortak_kart_secim_yakinlastir(),
+          çiftTık: ortak_kart_cift_tikla_tam_gorunum(),
+          geçmiş: ortak_kart_gorunum_gecmisi(),
+          dokunma: ortak_kart_dokunma_etkilesimi(),
+        }),
+      },
+      "scale-padding": {
+        başlık: "Scale Padding · Flat",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/scale-padding.html">scale-padding.html</a>
+          <br>Kaynaktaki 10 X değeri ve −10500…10500 aralığına yayılan 13 düz seri aynen kullanılır.
+          <br>Otomatik Y payı, görünür aralık eksenleri ve ortak kart etkileşim profili çekirdekte uygulanır.`,
+        tanım: () => scale_padding_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/scale_padding.rs",
+        seriler: [
+          "-10500", "-10000", "-9500", "-0.105", "-0.1", "-0.095", "0", "0.095",
+          "0.1", "0.105", "9500", "10000", "10500",
+        ].map(etiket => ({ etiket, renk: "#ff0000" })),
         yardım: "Sürükle: seç · boşluk + sürükle: taşı · iki parmak: yakınlaştır · tek parmak: taşı · çift tıkla: tam görünüm",
         değişkenNokta: false,
         etkileşimler: () => ({

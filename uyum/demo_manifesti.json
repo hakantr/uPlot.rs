@@ -165,6 +165,74 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "bekliyor"
       }
+    },
+    {
+      "sıra": 3,
+      "id": "scale-padding",
+      "başlık": {
+        "en": "Scale Padding",
+        "tr": "Ölçek Payı"
+      },
+      "kaynak": "demos/scale-padding.html",
+      "kaynak_sha256": "e886f3c98e84c59bacf70dd99743a29505f3842fcacd2073be4124dd183774d1",
+      "ek_kaynaklar": [
+        {
+          "yol": "src/utils.js",
+          "sha256": "8df33192e0ab7b4f4cf64fae9829fc0dc0300a618668699f43c5881ed8a0553c"
+        }
+      ],
+      "fixture": "src/kart/scale_padding.rs#scale_padding_kartı",
+      "örnek": "examples/scale_padding.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/scale-padding.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/scale_padding.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı",
+          "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
+          "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "devralındı"
+        },
+        "gerekçeler": {
+          "kosullu-bos-ve-dolu-noktalar": "Resmî scale-padding kartı seri noktalarını çizmez."
+        }
+      },
+      "sahip_faz": 1,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-equivalent-flat-series",
+        "numeric-x-scale",
+        "thirteen-aligned-series",
+        "linear-path",
+        "numeric-auto-scale-padding",
+        "dynamic-axis-grid",
+        "multi-series-cursor-legend",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "kısmi",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "bekliyor"
+      }
     }
   ]
 }
