@@ -72,3 +72,7 @@ required-features = ["svg"]
 [[example]]
 name = "cursor_snap"
 required-features = ["svg"]
+
+[[example]]
+name = "missing_data"
+required-features = ["svg"]

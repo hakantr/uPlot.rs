@@ -501,6 +501,80 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "bekliyor"
       }
+    },
+    {
+      "sıra": 8,
+      "id": "missing-data",
+      "başlık": {
+        "en": "Missing Data",
+        "tr": "Eksik Veri"
+      },
+      "kaynak": "demos/missing-data.html",
+      "kaynak_sha256": "2e55fc511aa44f73bd5a054092e0b924abd548a6dddbc693a6c88745d4d3be48",
+      "ek_kaynaklar": [
+        {
+          "yol": "src/uPlot.js",
+          "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645"
+        },
+        {
+          "yol": "src/paths/linear.js",
+          "sha256": "8f5002721c15f9a965b0e56522c58378c5b412856356c85188c74066ffba6749"
+        },
+        {
+          "yol": "src/paths/utils.js",
+          "sha256": "7636973ddf67ca47993ae86a4b53b1e7a6ea5ebd90483e0c305e84d558c38e13"
+        }
+      ],
+      "fixture": "src/kart/missing_data.rs#missing_data_null_kartı",
+      "alt_fixtureler": ["src/kart/missing_data.rs#missing_data_x_boşluğu_kartı"],
+      "örnek": "examples/missing_data.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/missing-data.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/missing_data.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı",
+          "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
+          "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "devralındı"
+        },
+        "gerekçeler": {}
+      },
+      "sahip_faz": 2,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "two-source-subcharts",
+        "source-equivalent-200-point-dataset",
+        "null-split-paths-and-fills",
+        "named-independent-y-scales",
+        "left-percent-and-right-mb-axes",
+        "adjacent-x-gap-callback",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "kısmi",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "bekliyor"
+      }
     }
   ]
 }

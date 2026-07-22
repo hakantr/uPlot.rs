@@ -6,6 +6,8 @@ pub struct SeriSeçenekleri {
     pub dolgu: Option<String>,
     pub dolgu_tabanı: f64,
     pub göster: bool,
+    pub ölçek: String,
+    pub azami_x_boşluğu: Option<f64>,
 }
 
 impl SeriSeçenekleri {
@@ -17,6 +19,8 @@ impl SeriSeçenekleri {
             dolgu: None,
             dolgu_tabanı: 0.0,
             göster: true,
+            ölçek: "y".to_string(),
+            azami_x_boşluğu: None,
         }
     }
 
@@ -42,6 +46,20 @@ impl SeriSeçenekleri {
     pub fn dolgu_tabanı(mut self, değer: f64) -> Self {
         if değer.is_finite() {
             self.dolgu_tabanı = değer;
+        }
+        self
+    }
+
+    pub fn ölçek(mut self, anahtar: impl Into<String>) -> Self {
+        self.ölçek = anahtar.into();
+        self
+    }
+
+    /// Ardışık X değerleri arasındaki fark bu eşiği aştığında yol ve dolgu
+    /// parçasını böler. uPlot `series.gaps` callback'inin sayısal karşılığıdır.
+    pub fn azami_x_boşluğu(mut self, fark: f64) -> Self {
+        if fark.is_finite() && fark > 0.0 {
+            self.azami_x_boşluğu = Some(fark);
         }
         self
     }

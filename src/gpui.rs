@@ -115,14 +115,13 @@ impl GpuiGrafik {
 
     fn çizim_alanı(&self) -> (f32, f32, f32, f32) {
         let (genişlik, yükseklik) = self.grafik.boyut();
-        (64.0, genişlik as f32 - 24.0, 48.0, yükseklik as f32 - 48.0)
+        self.grafik.çizim_alanı_boyutta(genişlik, yükseklik)
     }
 
     fn sahne(&self) -> Sahne {
         let mut sahne = self.grafik.çiz();
         let (sol, sağ, üst, alt) = self.çizim_alanı();
         let x_aralığı = self.grafik.görünür_x_aralığı();
-        let y_aralığı = self.grafik.görünür_y_aralığı();
         if let Some(imleç) = self.imleç.as_ref() {
             let nokta_x = ölçekle(imleç.veri_x, x_aralığı, sol, sağ - sol);
             sahne.ekle(Komut::KesikliÇizgi {
@@ -144,6 +143,10 @@ impl GpuiGrafik {
                     continue;
                 };
                 let Some(seri) = self.grafik.seri_seçenekleri().get(seri_indeksi) else {
+                    continue;
+                };
+                let Some(y_aralığı) = self.grafik.seri_görünür_y_aralığı(seri_indeksi)
+                else {
                     continue;
                 };
                 let nokta_y = alt - ölçekle(*değer, y_aralığı, 0.0, alt - üst);

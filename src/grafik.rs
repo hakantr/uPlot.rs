@@ -20,6 +20,19 @@ impl Grafik {
                 bulunan: seçenekler.seriler.len(),
             });
         }
+        for (seri, ayarlar) in seçenekler.seriler.iter().enumerate() {
+            if ayarlar.ölçek != seçenekler.birincil_y_ölçeği
+                && !seçenekler
+                    .y_ölçekleri
+                    .iter()
+                    .any(|ölçek| ölçek.anahtar == ayarlar.ölçek)
+            {
+                return Err(UplotHatası::BilinmeyenÖlçek {
+                    seri,
+                    anahtar: ayarlar.ölçek.clone(),
+                });
+            }
+        }
         let tam = veri
             .x()
             .first()
@@ -28,9 +41,21 @@ impl Grafik {
             .ok_or(UplotHatası::YetersizVeri {
                 uzunluk: veri.x().len(),
             })?;
-        let tam_y = seçenekler.y_aralığı.unwrap_or_else(|| {
-            Aralık::otomatik(veri.seriler().iter().flat_map(|seri| seri.iter()))
-        });
+        let tam_y = seçenekler
+            .y_ölçekleri
+            .iter()
+            .find(|ölçek| ölçek.anahtar == seçenekler.birincil_y_ölçeği)
+            .and_then(|ölçek| ölçek.aralık)
+            .or(seçenekler.y_aralığı)
+            .unwrap_or_else(|| {
+                Aralık::otomatik(
+                    veri.seriler()
+                        .iter()
+                        .zip(seçenekler.seriler.iter())
+                        .filter(|(_, ayarlar)| ayarlar.ölçek == seçenekler.birincil_y_ölçeği)
+                        .flat_map(|(seri, _)| seri.iter()),
+                )
+            });
         let etkileşim = EtkileşimDenetleyicisi::yeni(tam, tam_y, seçenekler.etkileşimler);
         Ok(Self {
             seçenekler,
@@ -56,6 +81,29 @@ impl Grafik {
 
     pub fn boyut(&self) -> (u32, u32) {
         (self.seçenekler.genişlik, self.seçenekler.yükseklik)
+    }
+
+    /// Başlık ve eksen payları çıkarıldıktan sonraki gerçek çizim alanını
+    /// `(sol, sağ, üst, alt)` olarak döndürür. Yüzey adaptörleri sabit sayı
+    /// çoğaltmak yerine bu çekirdek geometrisini kullanır.
+    pub fn çizim_alanı_boyutta(
+        &self,
+        genişlik_px: u32,
+        yükseklik_px: u32,
+    ) -> (f32, f32, f32, f32) {
+        let genişlik_px = genişlik_px.max(160) as f32;
+        let yükseklik_px = yükseklik_px.max(120) as f32;
+        let sağ_pay = if self
+            .seçenekler
+            .y_ölçekleri
+            .iter()
+            .any(|ölçek| ölçek.anahtar != self.seçenekler.birincil_y_ölçeği && ölçek.sağda)
+        {
+            72.0
+        } else {
+            24.0
+        };
+        (64.0, genişlik_px - sağ_pay, 48.0, yükseklik_px - 48.0)
     }
 
     pub fn yakınlaştırılmış(&self) -> bool {
@@ -178,6 +226,15 @@ impl Grafik {
             .unwrap_or_else(|| self.y_aralığı(self.görünür_x_aralığı()))
     }
 
+    pub fn seri_görünür_y_aralığı(&self, seri_indeksi: usize) -> Option<Aralık> {
+        let seri = self.seçenekler.seriler.get(seri_indeksi)?;
+        Some(self.görünür_ölçek_aralığı(
+            &seri.ölçek,
+            self.görünür_x_aralığı(),
+            self.etkileşim.görünür_y(),
+        ))
+    }
+
     /// Geçerli görünümde, normalize edilmiş yatay konuma en yakın seri noktasını bulur.
     pub fn en_yakın_nokta(&self, yatay_oran: f64, seri_indeksi: usize) -> Option<(f64, f64)> {
         if !yatay_oran.is_finite() {
@@ -265,12 +322,9 @@ impl Grafik {
             renk: "#ffffff".to_string(),
         });
 
-        let sol = 64.0_f32;
-        let sağ = 24.0_f32;
-        let üst = 48.0_f32;
-        let alt = 48.0_f32;
-        let genişlik = genişlik_px as f32 - sol - sağ;
-        let yükseklik = yükseklik_px as f32 - üst - alt;
+        let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
+        let genişlik = sağ - sol;
+        let yükseklik = alt - üst;
 
         sahne.ekle(Komut::Metin {
             konum: Nokta::yeni(genişlik_px as f32 / 2.0, 26.0),
@@ -300,23 +354,54 @@ impl Grafik {
             })
             .unwrap_or(tam_x_aralığı);
         let y_aralığı = görünür_y.unwrap_or_else(|| self.y_aralığı(x_aralığı));
+        let birincil_birim = self
+            .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
+            .map_or("", |ölçek| ölçek.birim.as_str());
 
         let y_artımı = uygun_artım(y_aralığı, yükseklik, 30.0);
         for y_değeri in eksen_bölmeleri(y_aralığı, yükseklik, 30.0) {
             let y = üst + yükseklik - y_aralığı.konum(y_değeri, 0.0, yükseklik);
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(sol, y),
-                bitiş: Nokta::yeni(sol + genişlik, y),
+                bitiş: Nokta::yeni(sağ, y),
                 renk: "#e5e7eb".to_string(),
                 kalınlık: 1.0,
             });
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(sol - 8.0, y + 4.0),
-                içerik: eksen_değerini_yaz(y_değeri, y_artımı),
+                içerik: eksen_değerini_birimle_yaz(y_değeri, y_artımı, birincil_birim),
                 renk: "#4b5563".to_string(),
                 boyut: 11.0,
                 hiza: MetinHizası::Bitiş,
             });
+        }
+
+        for ölçek in self
+            .seçenekler
+            .y_ölçekleri
+            .iter()
+            .filter(|ölçek| ölçek.anahtar != self.seçenekler.birincil_y_ölçeği && ölçek.sağda)
+        {
+            let aralık = self.görünür_ölçek_aralığı(&ölçek.anahtar, x_aralığı, görünür_y);
+            let artım = uygun_artım(aralık, yükseklik, 30.0);
+            for değer in eksen_bölmeleri(aralık, yükseklik, 30.0) {
+                let y = alt - aralık.konum(değer, 0.0, yükseklik);
+                if ölçek.ızgara {
+                    sahne.ekle(Komut::Çizgi {
+                        başlangıç: Nokta::yeni(sol, y),
+                        bitiş: Nokta::yeni(sağ, y),
+                        renk: "#e5e7eb".to_string(),
+                        kalınlık: 1.0,
+                    });
+                }
+                sahne.ekle(Komut::Metin {
+                    konum: Nokta::yeni(sağ + 8.0, y + 4.0),
+                    içerik: eksen_değerini_birimle_yaz(değer, artım, &ölçek.birim),
+                    renk: "#4b5563".to_string(),
+                    boyut: 11.0,
+                    hiza: MetinHizası::Başlangıç,
+                });
+            }
         }
 
         let x_artımı = uygun_artım(x_aralığı, genişlik, 50.0);
@@ -324,12 +409,12 @@ impl Grafik {
             let x = x_aralığı.konum(x_değeri, sol, genişlik);
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(x, üst),
-                bitiş: Nokta::yeni(x, üst + yükseklik),
+                bitiş: Nokta::yeni(x, alt),
                 renk: "#e5e7eb".to_string(),
                 kalınlık: 1.0,
             });
             sahne.ekle(Komut::Metin {
-                konum: Nokta::yeni(x, üst + yükseklik + 20.0),
+                konum: Nokta::yeni(x, alt + 20.0),
                 içerik: if self.seçenekler.x_zaman {
                     crate::zaman::eksen_etiketi(x_değeri, x_artımı)
                         .unwrap_or_else(|| eksen_değerini_yaz(x_değeri, x_artımı))
@@ -349,38 +434,48 @@ impl Grafik {
             if !seri.göster {
                 continue;
             }
+            let seri_y_aralığı =
+                self.görünür_ölçek_aralığı(&seri.ölçek, x_aralığı, görünür_y);
             let mut ham_parçalar = Vec::<Vec<Nokta>>::new();
             let mut parça = Vec::<Nokta>::new();
             let mut görünür_noktalar = Vec::<Nokta>::new();
+            let mut önceki_x = None::<f64>;
             for (indeks, değer) in değerler.iter().enumerate() {
                 let Some(x_değeri) = self.veri.x().get(indeks) else {
                     continue;
                 };
                 match değer {
                     Some(y_değeri) => {
+                        if önceki_x.is_some_and(|önceki| {
+                            seri.azami_x_boşluğu
+                                .is_some_and(|azami| *x_değeri - önceki > azami)
+                        }) && !parça.is_empty()
+                        {
+                            ham_parçalar.push(std::mem::take(&mut parça));
+                        }
                         let x = x_aralığı.konum(*x_değeri, sol, genişlik);
-                        let y = üst + yükseklik - (y_aralığı.konum(*y_değeri, 0.0, yükseklik));
+                        let y = alt - seri_y_aralığı.konum(*y_değeri, 0.0, yükseklik);
                         let nokta = Nokta::yeni(x, y);
                         parça.push(nokta);
-                        if nokta_dikdörtgende(nokta, sol, sol + genişlik, üst, üst + yükseklik)
-                        {
+                        önceki_x = Some(*x_değeri);
+                        if nokta_dikdörtgende(nokta, sol, sağ, üst, alt) {
                             görünür_noktalar.push(nokta);
                         }
                     }
                     _ if !parça.is_empty() => {
                         ham_parçalar.push(std::mem::take(&mut parça));
+                        önceki_x = None;
                     }
-                    _ => {}
+                    _ => önceki_x = None,
                 }
             }
             if !parça.is_empty() {
                 ham_parçalar.push(parça);
             }
-            let parçalar =
-                yolu_dikdörtgene_kırp(&ham_parçalar, sol, sol + genişlik, üst, üst + yükseklik);
+            let parçalar = yolu_dikdörtgene_kırp(&ham_parçalar, sol, sağ, üst, alt);
             if let Some(dolgu) = &seri.dolgu {
-                let taban = üst + yükseklik - y_aralığı.konum(seri.dolgu_tabanı, 0.0, yükseklik);
-                let taban = taban.clamp(üst, üst + yükseklik);
+                let taban = alt - seri_y_aralığı.konum(seri.dolgu_tabanı, 0.0, yükseklik);
+                let taban = taban.clamp(üst, alt);
                 let çokgenler = ham_parçalar
                     .iter()
                     .filter_map(|parça| {
@@ -389,13 +484,7 @@ impl Grafik {
                         let mut çokgen = parça.clone();
                         çokgen.push(Nokta::yeni(son.x, taban));
                         çokgen.push(Nokta::yeni(ilk.x, taban));
-                        let kırpılmış = çokgeni_dikdörtgene_kırp(
-                            &çokgen,
-                            sol,
-                            sol + genişlik,
-                            üst,
-                            üst + yükseklik,
-                        );
+                        let kırpılmış = çokgeni_dikdörtgene_kırp(&çokgen, sol, sağ, üst, alt);
                         (kırpılmış.len() >= 3).then_some(kırpılmış)
                     })
                     .collect();
@@ -430,21 +519,82 @@ impl Grafik {
     }
 
     fn y_aralığı(&self, x_aralığı: Aralık) -> Aralık {
-        self.seçenekler.y_aralığı.unwrap_or_else(|| {
-            let görünür = self
-                .veri
-                .x()
-                .iter()
-                .enumerate()
-                .filter(|(_, x)| **x >= x_aralığı.en_az && **x <= x_aralığı.en_çok)
-                .flat_map(|(indeks, _)| {
-                    self.veri
-                        .seriler()
-                        .iter()
-                        .filter_map(move |seri| seri.get(indeks))
-                });
-            Aralık::otomatik(görünür)
-        })
+        self.y_aralığı_ölçek(&self.seçenekler.birincil_y_ölçeği, x_aralığı)
+    }
+
+    fn y_aralığı_ölçek(&self, anahtar: &str, x_aralığı: Aralık) -> Aralık {
+        self.ölçek_seçeneği(anahtar)
+            .and_then(|ölçek| ölçek.aralık)
+            .or_else(|| {
+                (anahtar == self.seçenekler.birincil_y_ölçeği)
+                    .then_some(self.seçenekler.y_aralığı)
+                    .flatten()
+            })
+            .unwrap_or_else(|| {
+                let görünür = self
+                    .veri
+                    .x()
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, x)| **x >= x_aralığı.en_az && **x <= x_aralığı.en_çok)
+                    .flat_map(|(indeks, _)| {
+                        self.veri
+                            .seriler()
+                            .iter()
+                            .zip(self.seçenekler.seriler.iter())
+                            .filter(move |(_, ayarlar)| ayarlar.ölçek == anahtar)
+                            .filter_map(move |(seri, _)| seri.get(indeks))
+                    });
+                Aralık::otomatik(görünür)
+            })
+    }
+
+    fn görünür_ölçek_aralığı(
+        &self,
+        anahtar: &str,
+        x_aralığı: Aralık,
+        görünür_birincil: Option<Aralık>,
+    ) -> Aralık {
+        if anahtar == self.seçenekler.birincil_y_ölçeği {
+            return görünür_birincil.unwrap_or_else(|| {
+                self.y_aralığı_ölçek(&self.seçenekler.birincil_y_ölçeği, x_aralığı)
+            });
+        }
+        let Some(görünür_birincil) = görünür_birincil else {
+            return self.y_aralığı_ölçek(anahtar, x_aralığı);
+        };
+        let Some(tam_x) = self.tam_x_aralığı() else {
+            return self.y_aralığı_ölçek(anahtar, x_aralığı);
+        };
+        let tam_birincil = self.y_aralığı_ölçek(&self.seçenekler.birincil_y_ölçeği, tam_x);
+        let tam_ikincil = self.y_aralığı_ölçek(anahtar, tam_x);
+        let birincil_uzunluk = tam_birincil.en_çok - tam_birincil.en_az;
+        if birincil_uzunluk <= f64::EPSILON {
+            return tam_ikincil;
+        }
+        let ikincil_uzunluk = tam_ikincil.en_çok - tam_ikincil.en_az;
+        let en_az_oran = (görünür_birincil.en_az - tam_birincil.en_az) / birincil_uzunluk;
+        let en_çok_oran = (görünür_birincil.en_çok - tam_birincil.en_az) / birincil_uzunluk;
+        Aralık::yeni(
+            tam_ikincil.en_az + en_az_oran * ikincil_uzunluk,
+            tam_ikincil.en_az + en_çok_oran * ikincil_uzunluk,
+        )
+        .unwrap_or(tam_ikincil)
+    }
+
+    fn tam_x_aralığı(&self) -> Option<Aralık> {
+        self.veri
+            .x()
+            .first()
+            .zip(self.veri.x().last())
+            .and_then(|(ilk, son)| Aralık::yeni(*ilk, *son).ok())
+    }
+
+    fn ölçek_seçeneği(&self, anahtar: &str) -> Option<&crate::YÖlçekSeçenekleri> {
+        self.seçenekler
+            .y_ölçekleri
+            .iter()
+            .find(|ölçek| ölçek.anahtar == anahtar)
     }
 }
 
@@ -509,6 +659,15 @@ fn ondalık_basamak(artım: f64) -> u32 {
 fn eksen_değerini_yaz(değer: f64, artım: f64) -> String {
     let basamak = usize::try_from(ondalık_basamak(artım).max(2)).unwrap_or(12);
     format!("{değer:.basamak$}")
+}
+
+fn eksen_değerini_birimle_yaz(değer: f64, artım: f64, birim: &str) -> String {
+    let sayı = eksen_değerini_yaz(değer, artım);
+    if birim.is_empty() {
+        sayı
+    } else {
+        format!("{sayı} {birim}")
+    }
 }
 
 #[cfg(test)]

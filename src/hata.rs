@@ -41,6 +41,14 @@ pub enum UplotHatası {
         ay: u32,
         gün: u32,
     },
+    BilinmeyenÖlçek {
+        seri: usize,
+        anahtar: String,
+    },
+    GeçersizVarlıkSatırı {
+        varlık: &'static str,
+        satır: usize,
+    },
 }
 
 impl Display for UplotHatası {
@@ -85,6 +93,15 @@ impl Display for UplotHatası {
             Self::BilinmeyenKart { kimlik } => write!(f, "bilinmeyen kart kimliği: {kimlik}"),
             Self::GeçersizTarih { yıl, ay, gün } => {
                 write!(f, "geçersiz UTC tarihi: {yıl:04}-{ay:02}-{gün:02}")
+            }
+            Self::BilinmeyenÖlçek { seri, anahtar } => {
+                write!(
+                    f,
+                    "{seri}. seri bilinmeyen Y ölçeğini kullanıyor: {anahtar}"
+                )
+            }
+            Self::GeçersizVarlıkSatırı { varlık, satır } => {
+                write!(f, "{varlık} varlığının {satır}. satırı geçersiz")
             }
         }
     }

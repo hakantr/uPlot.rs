@@ -10,9 +10,10 @@ use ortak_bilesenler::{
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
     AREA_FILL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
-    MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-    UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı,
-    cursor_snap_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, cursor_snap_kartı, missing_data_null_kartı,
+    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
     ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
     zoom_wheel_kartı,
 };
@@ -27,6 +28,8 @@ enum KartKimliği {
     MonthsNoLeap,
     MonthsLeap,
     CursorSnap,
+    MissingDataNull,
+    MissingDataXGap,
 }
 
 impl KartKimliği {
@@ -40,6 +43,8 @@ impl KartKimliği {
             Self::MonthsNoLeap => "Months · No leap year",
             Self::MonthsLeap => "Months · 2024 leap year",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
+            Self::MissingDataNull => "Missing Data · null values",
+            Self::MissingDataXGap => "Missing Data · adjacent X gap",
         }
     }
 
@@ -58,6 +63,9 @@ impl KartKimliği {
                 "months.html · UTC ay ekseni · resmî sayfadaki iki alt grafik"
             }
             Self::CursorSnap => "cursor-snap.html · çekirdek 10×10 piksel imleç ızgarası",
+            Self::MissingDataNull | Self::MissingDataXGap => {
+                "missing-data.html · resmî veri ve iki kaynak alt grafiği"
+            }
         }
     }
 
@@ -70,6 +78,7 @@ impl KartKimliği {
             Self::ZoomTouch => ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
             Self::MonthsNoLeap | Self::MonthsLeap => MONTHS_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
+            Self::MissingDataNull | Self::MissingDataXGap => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
         }
     }
 
@@ -82,6 +91,7 @@ impl KartKimliği {
             Self::ZoomTouch => "src/kart/zoom_touch.rs",
             Self::MonthsNoLeap | Self::MonthsLeap => "src/kart/months.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
+            Self::MissingDataNull | Self::MissingDataXGap => "src/kart/missing_data.rs",
         }
     }
 
@@ -190,6 +200,8 @@ fn grafik_oluştur(kart: KartKimliği, nokta_sayısı: usize) -> Result<Grafik, 
         KartKimliği::MonthsNoLeap => months_artık_yılsız_kartı(),
         KartKimliği::MonthsLeap => months_artık_yıllı_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
+        KartKimliği::MissingDataNull => missing_data_null_kartı(),
+        KartKimliği::MissingDataXGap => missing_data_x_boşluğu_kartı(),
     }?;
     Grafik::yeni(seçenekler, veri)
 }
@@ -212,6 +224,8 @@ impl Render for ChartListesi {
                 "36 aylık nokta × 1 seri".to_string()
             }
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
+            KartKimliği::MissingDataNull => "200 nokta × 3 seri · % + MB".to_string(),
+            KartKimliği::MissingDataXGap => "8 nokta × 1 seri · 2 yol parçası".to_string(),
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
@@ -246,6 +260,8 @@ impl Render for ChartListesi {
             KartKimliği::ZoomTouch => &["One", "Two"],
             KartKimliği::MonthsNoLeap | KartKimliği::MonthsLeap => &["Value"],
             KartKimliği::CursorSnap => &["1", "2", "3"],
+            KartKimliği::MissingDataNull => &["CPU", "RAM", "TCP Out"],
+            KartKimliği::MissingDataXGap => &["Value"],
         };
         let lejant = lejant.map_or_else(
             || {
@@ -523,6 +539,34 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::CursorSnap, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "kart-missing-data-null",
+                    "Missing Data (null values)",
+                    "missing-data-null",
+                    aktif_kart == KartKimliği::MissingDataNull,
+                    "200 özgün nokta · % ve MB ölçekleri",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::MissingDataNull, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "kart-missing-data-x-gap",
+                    "Adjacent X gap",
+                    "missing-data-x-gap",
+                    aktif_kart == KartKimliği::MissingDataXGap,
+                    "X farkı > 1 olduğunda yolu böl",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::MissingDataXGap, cx);
                 })),
             );
 

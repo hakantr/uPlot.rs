@@ -114,6 +114,16 @@
         <small>cursor-snap</small>
         <div class="durum">10×10 piksel çekirdek ızgarası</div>
       </article>
+      <article class="kart" data-kart="missing-data-null" aria-current="false" tabindex="0">
+        <strong>Missing Data (null values)</strong>
+        <small>missing-data-null</small>
+        <div class="durum">200 özgün nokta · % ve MB ölçekleri</div>
+      </article>
+      <article class="kart" data-kart="missing-data-x-gap" aria-current="false" tabindex="0">
+        <strong>Adjacent X gap</strong>
+        <small>missing-data-x-gap</small>
+        <div class="durum">X farkı &gt; 1 olduğunda yolu böl</div>
+      </article>
     </aside>
     <main>
       <header>
@@ -156,6 +166,7 @@
       zoom_touch_kart_tanim_ornegi,
       months_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
+      missing_data_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -322,6 +333,32 @@
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       },
+      "missing-data-null": {
+        başlık: "Missing Data (null values)",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/missing-data.html">missing-data.html</a>
+          <br>Kaynaktaki 200 zaman noktası, CPU/RAM null aralıkları ve bağımsız yüzde/MB ölçekleri aynen korunur.`,
+        tanım: () => missing_data_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/missing_data.rs",
+        seriler: [
+          { etiket: "CPU", renk: "#ff0000" },
+          { etiket: "RAM", renk: "#0000ff" },
+          { etiket: "TCP Out", renk: "#00aa00" },
+        ],
+        yardım: "Null noktalar çizgiyi böler · sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
+      "missing-data-x-gap": {
+        başlık: "Insert gaps when adjacent points > delta",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/missing-data.html">missing-data.html</a>
+          <br>Kaynaktaki ikinci alt grafikte X farkı 1'i aşınca series.gaps yolu iki parçaya ayırır.`,
+        tanım: () => missing_data_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/missing_data.rs",
+        seriler: [{ etiket: "Value", renk: "#ff0000" }],
+        yardım: "Büyük X boşluğu görünür · sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
     };
 
     function ortakEtkileşimler() {
@@ -418,9 +455,14 @@
       };
     }
 
+    function çizimAlanı(view) {
+      const [sol, sağ, üst, alt] = oturum?.cizim_alani(view.width, view.height) ?? [];
+      return { sol, sağ, üst, alt, genişlik: sağ - sol, yükseklik: alt - üst };
+    }
+
     function imleciGüncelle(olay) {
       const { x: hamX, y: hamY, svg, view } = svgKonumu(olay);
-      const sol = 64, sağ = view.width - 24, üst = 48, alt = view.height - 48;
+      const { sol, sağ, üst, alt } = çizimAlanı(view);
       const çizgiler = ["imleç-x", "imleç-y"].map(id => svg.querySelector(`#${id}`));
       const noktalar = kartlar[aktifKart].seriler.map((_, indeks) => svg.querySelector(`#imleç-nokta-${indeks}`));
       const öğeler = [...çizgiler, ...noktalar];
@@ -442,7 +484,6 @@
       const [gerçekX, ...seriDeğerleri] = enYakın;
       const xAralığı = oturum.gorunur_x_araligi();
       const noktaX = sol + (gerçekX - xAralığı[0]) / (xAralığı[1] - xAralığı[0]) * (sağ - sol);
-      const [yMin, yMax] = oturum.gorunur_y_araligi();
       const [dikey, yatay] = çizgiler;
       // Varsayılan kartlarda kesintisiz; cursor-snap kartında çekirdek ayarının
       // döndürdüğü 10×10 piksel ızgarasına bağlı hareket eder.
@@ -455,6 +496,11 @@
         const seriDeğeri = seriDeğerleri[indeks];
         if (!nokta || !Number.isFinite(seriDeğeri)) {
           nokta?.setAttribute("visibility", "hidden");
+          return;
+        }
+        const [yMin, yMax] = oturum.seri_gorunur_y_araligi(indeks);
+        if (!Number.isFinite(yMin) || !Number.isFinite(yMax) || yMin === yMax) {
+          nokta.setAttribute("visibility", "hidden");
           return;
         }
         const noktaY = alt - (seriDeğeri - yMin) / (yMax - yMin) * (alt - üst);
@@ -478,11 +524,12 @@
           const uzaklık = Math.hypot(b.x - a.x, b.y - a.y);
           const merkez = { clientX: (a.x + b.x) / 2, clientY: (a.y + b.y) / 2 };
           const { x, y, view } = svgKonumu(merkez);
+          const alan = çizimAlanı(view);
           try {
             const çarpan = kıstırma.uzaklık > 0 ? uzaklık / kıstırma.uzaklık : 1;
             if (oturum?.dokunma_yakinlastir(
-              (x - 64) / (view.width - 88),
-              (y - 48) / (view.height - 96),
+              (x - alan.sol) / alan.genişlik,
+              (y - alan.üst) / alan.yükseklik,
               çarpan,
             )) çiz();
             kıstırma.uzaklık = uzaklık;
@@ -496,10 +543,11 @@
       }
       if (taşıma) {
         const { x, y, view } = svgKonumu(olay);
+        const alan = çizimAlanı(view);
         try {
           const değişti = oturum?.tasi(
-            (x - taşıma.x) / (view.width - 88),
-            (y - taşıma.y) / (view.height - 96),
+            (x - taşıma.x) / alan.genişlik,
+            (y - taşıma.y) / alan.yükseklik,
           );
           if (değişti) çiz();
           hata.textContent = "";
@@ -511,19 +559,21 @@
       imleciGüncelle(olay);
       if (!sürükleme) return;
       const { x, svg, view } = svgKonumu(olay);
-      sürükleme.son = Math.max(64, Math.min(view.width - 24, x));
+      const alan = çizimAlanı(view);
+      sürükleme.son = Math.max(alan.sol, Math.min(alan.sağ, x));
       const seçim = svg.querySelector("#seçim");
       seçim.setAttribute("x", Math.min(sürükleme.baş, sürükleme.son));
-      seçim.setAttribute("y", 48);
+      seçim.setAttribute("y", alan.üst);
       seçim.setAttribute("width", Math.abs(sürükleme.son - sürükleme.baş));
-      seçim.setAttribute("height", view.height - 96);
+      seçim.setAttribute("height", alan.yükseklik);
       seçim.setAttribute("visibility", "visible");
     });
     chart.addEventListener("pointerdown", olay => {
       if (olay.pointerType === "touch") {
         if (!etkileşimler.dokunma) return;
         const { x, y, view } = svgKonumu(olay);
-        if (x < 64 || x > view.width - 24 || y < 48 || y > view.height - 48) return;
+        const alan = çizimAlanı(view);
+        if (x < alan.sol || x > alan.sağ || y < alan.üst || y > alan.alt) return;
         chart.setPointerCapture(olay.pointerId);
         dokunmalar.set(olay.pointerId, { x: olay.clientX, y: olay.clientY });
         if (dokunmalar.size === 1 && oturum?.tasimayi_baslat()) {
@@ -542,8 +592,9 @@
       if (olay.button !== 0) return;
       chart.focus({ preventScroll: true });
       const { x, y, view } = svgKonumu(olay);
+      const alan = çizimAlanı(view);
       if (boşlukBasılı) {
-        if (x < 64 || x > view.width - 24 || y < 48 || y > view.height - 48) return;
+        if (x < alan.sol || x > alan.sağ || y < alan.üst || y > alan.alt) return;
         if (oturum?.tasimayi_baslat()) {
           chart.setPointerCapture(olay.pointerId);
           taşıma = { x, y, pointerId: olay.pointerId };
@@ -554,7 +605,7 @@
         return;
       }
       if (!etkileşimler.seçim) return;
-      if (x < 64 || x > view.width - 24) return;
+      if (x < alan.sol || x > alan.sağ) return;
       chart.setPointerCapture(olay.pointerId);
       sürükleme = { baş: x, son: x };
     });
@@ -584,14 +635,15 @@
       }
       if (!sürükleme) return;
       const { view } = svgKonumu(olay);
+      const alan = çizimAlanı(view);
       const yakınlaştır = Math.abs(sürükleme.son - sürükleme.baş) >= 4;
       if (yakınlaştır) {
         const a = Math.min(sürükleme.baş, sürükleme.son);
         const b = Math.max(sürükleme.baş, sürükleme.son);
         try {
           oturum.secim_yakinlastir(
-            (a - 64) / (view.width - 88),
-            (b - 64) / (view.width - 88),
+            (a - alan.sol) / alan.genişlik,
+            (b - alan.sol) / alan.genişlik,
           );
           hata.textContent = "";
           çiz();
@@ -651,11 +703,12 @@
     chart.addEventListener("wheel", olay => {
       if (!etkileşimler.tekerlek || olay.deltaY === 0) return;
       const { x, y, view } = svgKonumu(olay);
-      if (x < 64 || x > view.width - 24 || y < 48 || y > view.height - 48) return;
+      const alan = çizimAlanı(view);
+      if (x < alan.sol || x > alan.sağ || y < alan.üst || y > alan.alt) return;
       olay.preventDefault();
       try {
-        const yatayOran = (x - 64) / (view.width - 88);
-        const dikeyOran = (y - 48) / (view.height - 96);
+        const yatayOran = (x - alan.sol) / alan.genişlik;
+        const dikeyOran = (y - alan.üst) / alan.yükseklik;
         if (oturum.tekerlek(yatayOran, dikeyOran, -olay.deltaY, olay.deltaMode === 0)) {
           chart.focus({ preventScroll: true });
           çiz();

@@ -1,0 +1,38 @@
+id = "missing-data"
+kaynak = "../uPlot/demos/missing-data.html"
+fixture = "src/kart/missing_data.rs#missing_data_null_kartı"
+alt_fixture = "src/kart/missing_data.rs#missing_data_x_boşluğu_kartı"
+viewport = [1920, 600]
+device_pixel_ratio = 1
+durum = "iki_alt_grafikli_etkileşimli"
+
+[veri]
+nokta_sayısı = 200
+seriler = ["CPU", "RAM", "TCP Out"]
+cpu_null_sayısı = 6
+ram_null_sayısı = 6
+varlık = "assets/data/missing-data.csv"
+
+[ölçek]
+birincil = "%"
+ikincil = "mb"
+ikincil_konum = "sağ"
+ikincil_birim = "MB"
+
+[boşluk]
+x_değerleri = [0, 1, 2, 3, 25, 26, 27, 28]
+azami_x_farkı = 1.0
+beklenen_yol_parçası = 2
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg_dizini = "target/missing-data"

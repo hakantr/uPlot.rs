@@ -1,8 +1,10 @@
 use crate::{Aralık, UplotHatası};
 
 mod seri;
+mod y_olcek;
 
 pub use seri::SeriSeçenekleri;
+pub use y_olcek::YÖlçekSeçenekleri;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TekerlekKipi {
@@ -147,6 +149,8 @@ pub struct GrafikSeçenekleri {
     pub yükseklik: u32,
     pub x_zaman: bool,
     pub y_aralığı: Option<Aralık>,
+    pub y_ölçekleri: Vec<YÖlçekSeçenekleri>,
+    pub birincil_y_ölçeği: String,
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
     pub imleç_ızgara_adımı: Option<f32>,
@@ -168,6 +172,8 @@ impl GrafikSeçenekleri {
             yükseklik,
             x_zaman: true,
             y_aralığı: None,
+            y_ölçekleri: Vec::new(),
+            birincil_y_ölçeği: "y".to_string(),
             imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
@@ -186,6 +192,24 @@ impl GrafikSeçenekleri {
 
     pub fn y_aralığı(mut self, aralık: Aralık) -> Self {
         self.y_aralığı = Some(aralık);
+        self
+    }
+
+    pub fn y_ölçeği(mut self, ölçek: YÖlçekSeçenekleri) -> Self {
+        if let Some(mevcut) = self
+            .y_ölçekleri
+            .iter_mut()
+            .find(|mevcut| mevcut.anahtar == ölçek.anahtar)
+        {
+            *mevcut = ölçek;
+        } else {
+            self.y_ölçekleri.push(ölçek);
+        }
+        self
+    }
+
+    pub fn birincil_y_ölçeği(mut self, anahtar: impl Into<String>) -> Self {
+        self.birincil_y_ölçeği = anahtar.into();
         self
     }
 

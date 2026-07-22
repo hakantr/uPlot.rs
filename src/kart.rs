@@ -1,5 +1,6 @@
 mod area_fill;
 mod cursor_snap;
+mod missing_data;
 mod months;
 mod ortak;
 mod resize;
@@ -11,6 +12,9 @@ mod zoom_wheel;
 pub use area_fill::{AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ, area_fill_kartı};
 pub use cursor_snap::{
     CURSOR_SNAP_KANIT_TOHUMU, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, cursor_snap_kartı
+};
+pub use missing_data::{
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
 };
 pub use months::{
     MONTHS_KANIT_TOHUMU, MONTHS_KART_TANIM_ÖRNEĞİ, months_artık_yıllı_kartı,
