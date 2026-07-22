@@ -1,0 +1,119 @@
+name: nightly-artifacts
+
+on:
+  schedule:
+    # GitHub cron UTC kullanır: 18:00 UTC = Türkiye saatiyle 21:00.
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: ${{ matrix.artifact }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            target: aarch64-apple-darwin
+            artifact: uplot-rs-macos-arm64
+            binary: target/aarch64-apple-darwin/release/examples/chart_listesi
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            artifact: uplot-rs-linux-arm64
+            binary: target/aarch64-unknown-linux-gnu/release/examples/chart_listesi
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            artifact: uplot-rs-linux-x86_64
+            binary: target/x86_64-unknown-linux-gnu/release/examples/chart_listesi
+          - os: windows-2025
+            target: x86_64-pc-windows-msvc
+            artifact: uplot-rs-windows-x86_64
+            binary: target/x86_64-pc-windows-msvc/release/examples/chart_listesi.exe
+    steps:
+      - name: uPlot.rs
+        uses: actions/checkout@v6
+        with:
+          path: uPlot.rs
+      - name: Güncel GPUI
+        uses: actions/checkout@v6
+        with:
+          repository: hakantr/gpui
+          path: gpui
+      - name: Güncel GPUI bileşen kütüphanesi
+        uses: actions/checkout@v6
+        with:
+          repository: hakantr/gpui_kutuphanesi
+          path: gpui_kutuphanesi
+      - name: Linux sistem bağımlılıkları
+        if: runner.os == 'Linux'
+        run: >-
+          sudo apt-get update && sudo apt-get install -y
+          libasound2-dev libfontconfig1-dev libwayland-dev libxkbcommon-dev
+          libxkbcommon-x11-dev libxcb1-dev libxcb-render0-dev
+          libxcb-shape0-dev libxcb-xfixes0-dev libudev-dev
+      - name: Rust hedefi
+        uses: dtolnay/rust-toolchain@1.95
+        with:
+          targets: ${{ matrix.target }}
+      - name: Masaüstü chart listesini derle
+        working-directory: uPlot.rs
+        run: cargo build --release --example chart_listesi --target ${{ matrix.target }}
+      - name: Masaüstü artefaktını yükle
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            uPlot.rs/${{ matrix.binary }}
+            uPlot.rs/README.md
+            uPlot.rs/readme_en.md
+            uPlot.rs/LICENSE
+            uPlot.rs/NOTICE
+          if-no-files-found: error
+          retention-days: 14
+
+  wasm:
+    name: uplot-rs-wasm
+    runs-on: ubuntu-24.04
+    steps:
+      - name: uPlot.rs
+        uses: actions/checkout@v6
+        with:
+          path: uPlot.rs
+      - name: Güncel GPUI
+        uses: actions/checkout@v6
+        with:
+          repository: hakantr/gpui
+          path: gpui
+      - name: Güncel GPUI bileşen kütüphanesi
+        uses: actions/checkout@v6
+        with:
+          repository: hakantr/gpui_kutuphanesi
+          path: gpui_kutuphanesi
+      - name: Rust ve WASM hedefi
+        uses: dtolnay/rust-toolchain@1.95
+        with:
+          targets: wasm32-unknown-unknown
+      - name: wasm-bindgen CLI
+        run: cargo install wasm-bindgen-cli --version 0.2.120 --locked
+      - name: WASM release derlemesi
+        working-directory: uPlot.rs
+        run: cargo build -p uplot-rs-wasm --release --target wasm32-unknown-unknown
+      - name: Tarayıcı bağlarını üret
+        working-directory: uPlot.rs
+        run: >-
+          wasm-bindgen --target web --out-dir wasm/pkg
+          target/wasm32-unknown-unknown/release/uplot_rs_wasm.wasm
+      - name: WASM artefaktını yükle
+        uses: actions/upload-artifact@v5
+        with:
+          name: uplot-rs-wasm
+          path: |
+            uPlot.rs/wasm/pkg
+            uPlot.rs/wasm/www
+            uPlot.rs/wasm/README.md
+          if-no-files-found: error
+          retention-days: 14
