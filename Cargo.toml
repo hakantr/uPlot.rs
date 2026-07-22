@@ -110,3 +110,7 @@ required-features = ["svg"]
 [[example]]
 name = "box_whisker"
 required-features = ["svg"]
+
+[[example]]
+name = "candlestick_ohlc"
+required-features = ["svg"]

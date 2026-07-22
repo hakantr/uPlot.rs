@@ -222,6 +222,7 @@
       bars_grouped_stacked_kart_tanim_ornegi,
       bars_values_autosize_kart_tanim_ornegi,
       box_whisker_kart_tanim_ornegi,
+      candlestick_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -556,6 +557,23 @@
         etkileşimler: () => ortakEtkileşimler(),
       };
     }
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="candlestick-ohlc" aria-current="false" tabindex="0">
+        <strong>Candlestick Chart · Gold</strong><small>candlestick-ohlc</small>
+        <div class="durum">218 gün · OHLC + hacim</div>
+      </article>`);
+    kartlar["candlestick-ohlc"] = {
+      başlık: "Candlestick Chart · Gold",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/candlestick-ohlc.html">candlestick-ohlc.html</a>
+        <br>Kaynaktaki 218 günlük Gold OHLC verisi aynen; Math.random hacim serisi aynı 10…250 aralığında sabit kanıt tohumu ile kullanılır.`,
+      tanım: () => candlestick_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/candlestick_ohlc.rs",
+      seriler: ["Open", "High", "Low", "Close", "Volume"].map(etiket => ({ etiket, renk: "#000000" })),
+      yardım: "İmleci hareket ettir: kaynak sütun vurgusu · yeşil yükseliş, kırmızı düşüş · altta hacim",
+      değişkenNokta: false,
+      kutuBıyık: true,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     function ortakEtkileşimler() {
       return {

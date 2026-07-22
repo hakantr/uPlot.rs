@@ -18,6 +18,25 @@ pub struct KutuBıyıkDüzeni {
     pub gövde_genişlik_oranı: f32,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct MumDüzeni {
+    pub zamanlar: Vec<f64>,
+    pub yükseliş_rengi: String,
+    pub düşüş_rengi: String,
+    pub azami_gövde_genişliği: f32,
+}
+
+impl MumDüzeni {
+    pub fn yeni(zamanlar: Vec<f64>) -> Self {
+        Self {
+            zamanlar,
+            yükseliş_rengi: "#4ab650".to_string(),
+            düşüş_rengi: "#e54245".to_string(),
+            azami_gövde_genişliği: 20.0,
+        }
+    }
+}
+
 impl KutuBıyıkDüzeni {
     pub fn yeni(ayrık_değerler: Vec<Vec<f64>>) -> Self {
         Self {
@@ -224,6 +243,7 @@ pub struct GrafikSeçenekleri {
     pub kategoriler: Vec<String>,
     pub çubuk_düzeni: Option<ÇubukDüzeni>,
     pub kutu_bıyık_düzeni: Option<KutuBıyıkDüzeni>,
+    pub mum_düzeni: Option<MumDüzeni>,
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
     pub imleç_ızgara_adımı: Option<f32>,
@@ -258,6 +278,7 @@ impl GrafikSeçenekleri {
             kategoriler: Vec::new(),
             çubuk_düzeni: None,
             kutu_bıyık_düzeni: None,
+            mum_düzeni: None,
             imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
@@ -355,6 +376,11 @@ impl GrafikSeçenekleri {
 
     pub fn kutu_bıyık_düzeni(mut self, düzen: KutuBıyıkDüzeni) -> Self {
         self.kutu_bıyık_düzeni = Some(düzen);
+        self
+    }
+
+    pub fn mum_düzeni(mut self, düzen: MumDüzeni) -> Self {
+        self.mum_düzeni = Some(düzen);
         self
     }
 

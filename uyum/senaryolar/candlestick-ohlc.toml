@@ -1,0 +1,30 @@
+id = "candlestick-ohlc"
+kaynak = "../uPlot/demos/candlestick-ohlc.html"
+fixture = "src/kart/candlestick_ohlc.rs#candlestick_ohlc_kartı"
+viewport = [1920, 600]
+device_pixel_ratio = 1
+durum = "gold-ohlc"
+
+[veri]
+nokta_sayısı = 218
+ohlc_varlığı = "src/kart/veri/candlestick_ohlc.json"
+ohlc_sha256 = "af986c2bcf5dca55eb51fbe614f9a3539bfd5590c9dca28d0d53ba50b44871eb"
+hacim_aralığı = [10, 250]
+hacim_kanıt_tohumu = "0x00CA_AD1E"
+
+[düzen]
+yükseliş_rengi = "#4ab650"
+düşüş_rengi = "#e54245"
+fitil_rengi = "#000000"
+azami_gövde_genişliği = 20
+hacim_ölçeği = [0, 2000]
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+sütun_vurgusu = "rgba(51,204,255,0.3)"
+çekirdek_vuruş_testi = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/candlestick-ohlc.svg"

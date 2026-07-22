@@ -171,7 +171,7 @@ impl GpuiGrafik {
                 });
                 return sahne;
             }
-            if self.grafik.kutu_bıyık_grafiği() {
+            if self.grafik.kutu_bıyık_grafiği() || self.grafik.mum_grafiği() {
                 return sahne;
             }
             let nokta_x = ölçekle(imleç.veri_x, x_aralığı, sol, sağ - sol);

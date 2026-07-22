@@ -34,7 +34,9 @@ impl Grafik {
             }
         }
         let mut tam = tam_x_aralığı(&veri)?;
-        if (seçenekler.çubuk_düzeni.is_some() || seçenekler.kutu_bıyık_düzeni.is_some())
+        if (seçenekler.çubuk_düzeni.is_some()
+            || seçenekler.kutu_bıyık_düzeni.is_some()
+            || seçenekler.mum_düzeni.is_some())
             && veri.uzunluk() > 1
         {
             tam = Aralık::yeni(tam.en_az - 0.5, tam.en_çok + 0.5)?;
@@ -115,6 +117,9 @@ impl Grafik {
         }
         if self.seçenekler.kutu_bıyık_düzeni.is_some() {
             return (64.0, genişlik_px - 24.0, 48.0, yükseklik_px - 130.0);
+        }
+        if self.seçenekler.mum_düzeni.is_some() {
+            return (72.0, genişlik_px - 72.0, 48.0, yükseklik_px - 48.0);
         }
         let sağ_eksen_sayısı = self
             .seçenekler
@@ -206,6 +211,10 @@ impl Grafik {
         self.seçenekler.kutu_bıyık_düzeni.is_some()
     }
 
+    pub fn mum_grafiği(&self) -> bool {
+        self.seçenekler.mum_düzeni.is_some()
+    }
+
     pub fn kutu_bıyık_vuruşu(
         &self,
         genişlik_px: u32,
@@ -213,7 +222,8 @@ impl Grafik {
         x: f32,
         y: f32,
     ) -> Option<(usize, Nokta, f32, f32, [f64; 5])> {
-        if !self.kutu_bıyık_grafiği() || !x.is_finite() || !y.is_finite() {
+        if (!self.kutu_bıyık_grafiği() && !self.mum_grafiği()) || !x.is_finite() || !y.is_finite()
+        {
             return None;
         }
         let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
@@ -594,6 +604,17 @@ impl Grafik {
         }
         if let Some(düzen) = &self.seçenekler.kutu_bıyık_düzeni {
             self.kutu_bıyıkları_çiz(
+                &mut sahne,
+                genişlik_px,
+                yükseklik_px,
+                düzen,
+                görünür_x,
+                görünür_y,
+            );
+            return sahne;
+        }
+        if let Some(düzen) = &self.seçenekler.mum_düzeni {
+            self.mumları_çiz(
                 &mut sahne,
                 genişlik_px,
                 yükseklik_px,
@@ -1386,6 +1407,135 @@ impl Grafik {
                 renk: "#4b5563".to_string(),
                 boyut: 8.0,
                 hiza: MetinHizası::Orta,
+            });
+        }
+    }
+
+    fn mumları_çiz(
+        &self,
+        sahne: &mut Sahne,
+        genişlik_px: u32,
+        yükseklik_px: u32,
+        düzen: &crate::MumDüzeni,
+        görünür_x: Option<Aralık>,
+        görünür_y: Option<Aralık>,
+    ) {
+        let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
+        let çizim_g = sağ - sol;
+        let çizim_y = alt - üst;
+        let tam_x = tam_x_aralığı(&self.veri)
+            .ok()
+            .and_then(|aralık| Aralık::yeni(aralık.en_az - 0.5, aralık.en_çok + 0.5).ok())
+            .unwrap_or(Aralık {
+                en_az: -0.5,
+                en_çok: 0.5,
+            });
+        let x_aralığı = görünür_x.unwrap_or(tam_x);
+        let y_aralığı = görünür_y.unwrap_or_else(|| self.y_aralığı(x_aralığı));
+        let x_açıklığı = (x_aralığı.en_çok - x_aralığı.en_az).max(f64::EPSILON);
+        let sütun_genişliği = çizim_g / x_açıklığı as f32;
+        let gövde_genişliği = düzen
+            .azami_gövde_genişliği
+            .min((sütun_genişliği - 2.0).max(1.0));
+        let artım = uygun_artım(y_aralığı, çizim_y, 30.0);
+        for değer in eksen_bölmeleri(y_aralığı, çizim_y, 30.0) {
+            let y = alt - y_aralığı.konum(değer, 0.0, çizim_y);
+            sahne.ekle(Komut::Çizgi {
+                başlangıç: Nokta::yeni(sol, y),
+                bitiş: Nokta::yeni(sağ, y),
+                renk: "#e5e7eb".to_string(),
+                kalınlık: 1.0,
+            });
+            sahne.ekle(Komut::Metin {
+                konum: Nokta::yeni(sol - 8.0, y + 4.0),
+                içerik: format!("${}", eksen_değerini_yaz(değer, artım)),
+                renk: "#4b5563".to_string(),
+                boyut: 11.0,
+                hiza: MetinHizası::Bitiş,
+            });
+        }
+        let değer = |seri: usize, indeks: usize| {
+            self.veri
+                .seriler()
+                .get(seri)
+                .and_then(|değerler| değerler.get(indeks))
+                .copied()
+                .flatten()
+        };
+        let etiket_adımı = ((60.0 / sütun_genişliği.max(1.0)).ceil() as usize).max(1);
+        for indeks in 0..self.veri.uzunluk() {
+            let Some(x_değeri) = self.veri.x().get(indeks).copied() else {
+                continue;
+            };
+            let merkez = sol + ((x_değeri - x_aralığı.en_az) / x_açıklığı) as f32 * çizim_g;
+            if merkez + gövde_genişliği / 2.0 < sol || merkez - gövde_genişliği / 2.0 > sağ {
+                continue;
+            }
+            let (Some(açılış), Some(yüksek), Some(düşük), Some(kapanış), Some(hacim)) = (
+                değer(0, indeks),
+                değer(1, indeks),
+                değer(2, indeks),
+                değer(3, indeks),
+                değer(4, indeks),
+            ) else {
+                continue;
+            };
+            let y_konumu = |değer| alt - y_aralığı.konum(değer, 0.0, çizim_y);
+            let yüksek_y = y_konumu(yüksek).clamp(üst, alt);
+            let düşük_y = y_konumu(düşük).clamp(üst, alt);
+            let açılış_y = y_konumu(açılış).clamp(üst, alt);
+            let kapanış_y = y_konumu(kapanış).clamp(üst, alt);
+            let renk = if açılış > kapanış {
+                &düzen.düşüş_rengi
+            } else {
+                &düzen.yükseliş_rengi
+            };
+            sahne.ekle(Komut::Dikdörtgen {
+                konum: Nokta::yeni(merkez - 1.0, yüksek_y.min(düşük_y)),
+                genişlik: 2.0,
+                yükseklik: (düşük_y - yüksek_y).abs(),
+                dolgu: "#000000".to_string(),
+                çizgi: "#000000".to_string(),
+                kalınlık: 0.0,
+            });
+            sahne.ekle(Komut::Dikdörtgen {
+                konum: Nokta::yeni(merkez - gövde_genişliği / 2.0, açılış_y.min(kapanış_y)),
+                genişlik: gövde_genişliği,
+                yükseklik: (kapanış_y - açılış_y).abs().max(1.0),
+                dolgu: renk.clone(),
+                çizgi: "#000000".to_string(),
+                kalınlık: 1.0,
+            });
+            let hacim_y = alt - (hacim / 2_000.0).clamp(0.0, 1.0) as f32 * çizim_y;
+            sahne.ekle(Komut::Dikdörtgen {
+                konum: Nokta::yeni(merkez - gövde_genişliği / 2.0, hacim_y),
+                genişlik: gövde_genişliği,
+                yükseklik: alt - hacim_y,
+                dolgu: renk.clone(),
+                çizgi: "none".to_string(),
+                kalınlık: 0.0,
+            });
+            if indeks.is_multiple_of(etiket_adımı)
+                && let Some(zaman) = düzen.zamanlar.get(indeks)
+                && let Some((yıl, ay, gün, ..)) = crate::zaman::utc_alanları(*zaman)
+            {
+                sahne.ekle(Komut::Metin {
+                    konum: Nokta::yeni(merkez, alt + 18.0),
+                    içerik: format!("{yıl:04}-{ay:02}-{gün:02}"),
+                    renk: "#4b5563".to_string(),
+                    boyut: 9.0,
+                    hiza: MetinHizası::Orta,
+                });
+            }
+        }
+        for değer in [0.0, 500.0, 1_000.0, 1_500.0, 2_000.0] {
+            let y = alt - (değer / 2_000.0) as f32 * çizim_y;
+            sahne.ekle(Komut::Metin {
+                konum: Nokta::yeni(sağ + 8.0, y + 4.0),
+                içerik: format!("{değer:.0}"),
+                renk: "#4b5563".to_string(),
+                boyut: 10.0,
+                hiza: MetinHizası::Başlangıç,
             });
         }
     }

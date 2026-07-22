@@ -12,16 +12,16 @@ use uplot_rs::{
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
     BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
-    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
+    BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ,
+    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
     SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
     ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
     axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, cursor_snap_kartı, dependent_scale_kartı,
-    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
-    months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı,
-    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_snap_kartı,
+    dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -44,6 +44,7 @@ enum KartKimliği {
     Bars(ÇubukÖrneği),
     BarsValuesAutosize(ÇubukYönü),
     BoxWhisker(&'static str),
+    Candlestick,
 }
 
 impl KartKimliği {
@@ -68,6 +69,7 @@ impl KartKimliği {
             Self::BarsValuesAutosize(ÇubukYönü::Dikey) => "bars-values-autosize-vertical",
             Self::BarsValuesAutosize(ÇubukYönü::Yatay) => "bars-values-autosize-horizontal",
             Self::BoxWhisker(benchmark) => benchmark,
+            Self::Candlestick => "Candlestick Chart · Gold",
         }
     }
 
@@ -101,6 +103,7 @@ impl KartKimliği {
                 "bars-values-autosize.html · otomatik kompakt değer yazısı"
             }
             Self::BoxWhisker(_) => "box-whisker.html · results.json ve stats.js",
+            Self::Candlestick => "candlestick-ohlc.html · Gold OHLC ve hacim",
         }
     }
 
@@ -122,6 +125,7 @@ impl KartKimliği {
             Self::Bars(_) => BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ,
             Self::BarsValuesAutosize(_) => BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
             Self::BoxWhisker(_) => BOX_WHISKER_KART_TANIM_ÖRNEĞİ,
+            Self::Candlestick => CANDLESTICK_KART_TANIM_ÖRNEĞİ,
         }
     }
 
@@ -143,6 +147,7 @@ impl KartKimliği {
             Self::Bars(_) => "src/kart/bars_grouped_stacked.rs",
             Self::BarsValuesAutosize(_) => "src/kart/bars_values_autosize.rs",
             Self::BoxWhisker(_) => "src/kart/box_whisker.rs",
+            Self::Candlestick => "src/kart/candlestick_ohlc.rs",
         }
     }
 
@@ -295,6 +300,7 @@ fn grafik_oluştur(
         KartKimliği::Bars(örnek) => bars_grouped_stacked_kartı(örnek),
         KartKimliği::BarsValuesAutosize(yön) => bars_values_autosize_kartı(yön),
         KartKimliği::BoxWhisker(benchmark) => box_whisker_kartı(benchmark),
+        KartKimliği::Candlestick => candlestick_ohlc_kartı(),
     }?;
     Grafik::yeni(seçenekler, veri)
 }
@@ -335,6 +341,7 @@ impl Render for ChartListesi {
                 "12 kanıt değeri · −100K…100K · otomatik etiket".to_string()
             }
             KartKimliği::BoxWhisker(_) => "İlk 30 keyed framework · medyan ve 1,5×IQR".to_string(),
+            KartKimliği::Candlestick => "218 gün · Gold OHLC + kanıt hacmi".to_string(),
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
@@ -380,6 +387,7 @@ impl Render for ChartListesi {
             KartKimliği::Bars(_) => &["Metric 1", "Metric 2", "Metric 3"],
             KartKimliği::BarsValuesAutosize(_) => &["Value"],
             KartKimliği::BoxWhisker(_) => &["Median", "q1", "q3", "min", "max"],
+            KartKimliği::Candlestick => &["Open", "High", "Low", "Close", "Volume"],
         };
         let lejant = lejant.map_or_else(
             || {
@@ -803,7 +811,21 @@ impl Render for ChartListesi {
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }));
+            }))
+            .child(
+                katalog_kartı(
+                    "candlestick-ohlc",
+                    "Candlestick Chart · Gold",
+                    "candlestick-ohlc",
+                    aktif_kart == KartKimliği::Candlestick,
+                    "218 gün · OHLC + hacim",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::Candlestick, cx);
+                })),
+            );
 
         let araçlar = div()
             .flex()

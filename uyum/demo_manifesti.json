@@ -1069,6 +1069,69 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "uygulandı_kanıtlı"
       }
+    },
+    {
+      "sıra": 17,
+      "id": "candlestick-ohlc",
+      "başlık": { "en": "Candlestick Chart", "tr": "Mum Grafiği" },
+      "kaynak": "demos/candlestick-ohlc.html",
+      "kaynak_sha256": "c4c08d95c8f4d7a4ae44733e7a8a2d2a65b70d440ab8c3512586969564135af9",
+      "ek_kaynaklar": [
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
+      ],
+      "fixture": "src/kart/candlestick_ohlc.rs#candlestick_ohlc_kartı",
+      "örnek": "examples/candlestick_ohlc.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/candlestick-ohlc.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/candlestick_ohlc.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı",
+          "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
+          "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "devralındı"
+        },
+        "gerekçeler": {
+          "kosullu-bos-ve-dolu-noktalar": "Mum eklentisi normal seri noktaları çizmez."
+        }
+      },
+      "sahip_faz": 3,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-218-day-gold-ohlc",
+        "deterministic-source-range-volume",
+        "bullish-and-bearish-candle-bodies",
+        "high-low-wicks",
+        "fixed-zero-to-two-thousand-volume-scale",
+        "utc-date-labels",
+        "column-highlight-hit-testing",
+        "gpui-wasm-catalog-parity",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "kısmi",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "uygulandı_kanıtlı"
+      }
     }
   ]
 }

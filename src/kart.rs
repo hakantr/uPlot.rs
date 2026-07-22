@@ -6,6 +6,7 @@ mod axis_indicators;
 mod bars_grouped_stacked;
 mod bars_values_autosize;
 mod box_whisker;
+mod candlestick_ohlc;
 mod cursor_snap;
 mod dependent_scale;
 mod missing_data;
@@ -37,6 +38,9 @@ pub use bars_values_autosize::{
 };
 pub use box_whisker::{
     BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, box_whisker_kartı,
+};
+pub use candlestick_ohlc::{
+    CANDLESTICK_KANIT_TOHUMU, CANDLESTICK_KART_TANIM_ÖRNEĞİ, candlestick_ohlc_kartı,
 };
 pub use cursor_snap::{
     CURSOR_SNAP_KANIT_TOHUMU, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, cursor_snap_kartı
