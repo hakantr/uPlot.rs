@@ -233,6 +233,72 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "bekliyor"
       }
+    },
+    {
+      "sıra": 4,
+      "id": "zoom-wheel",
+      "başlık": {
+        "en": "Wheel Zoom & Drag",
+        "tr": "Tekerlekle Yakınlaştırma ve Taşıma"
+      },
+      "kaynak": "demos/zoom-wheel.html",
+      "kaynak_sha256": "a9da7c0c6dcd8f446790ee7ed151736ea505d949b7872ea6385cf2eab8a01a90",
+      "ek_kaynaklar": [
+        {
+          "yol": "src/opts.js",
+          "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba"
+        }
+      ],
+      "fixture": "src/kart/zoom_wheel.rs#zoom_wheel_kartı",
+      "örnek": "examples/zoom_wheel.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/zoom-wheel.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/zoom_wheel.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı",
+          "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
+          "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "devralındı"
+        },
+        "gerekçeler": {}
+      },
+      "sahip_faz": 4,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-equivalent-aligned-data",
+        "two-linear-series",
+        "official-wheel-zoom-plugin",
+        "official-0.75-zoom-factor",
+        "cursor-anchored-xy-wheel-zoom",
+        "full-range-clamping",
+        "adaptive-precise-wheel-normalization",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "kısmi",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "bekliyor"
+      }
     }
   ]
 }

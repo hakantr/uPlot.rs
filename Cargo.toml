@@ -56,3 +56,7 @@ required-features = ["svg"]
 [[example]]
 name = "scale_padding"
 required-features = ["svg"]
+
+[[example]]
+name = "zoom_wheel"
+required-features = ["svg"]

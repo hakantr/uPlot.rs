@@ -4,7 +4,8 @@
 
 use uplot_rs::{
     AREA_FILL_KART_TANIM_ÖRNEĞİ, Grafik, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-    UplotHatası, area_fill_kartı, ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı,
+    UplotHatası, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, ortak_kart_etkileşimleri,
+    resize_kartı, scale_padding_kartı, zoom_wheel_kartı,
 };
 use wasm_bindgen::prelude::*;
 
@@ -23,6 +24,7 @@ impl KartOturumu {
             "resize" => resize_kartı(nokta_sayısı),
             "area-fill" => area_fill_kartı(),
             "scale-padding" => scale_padding_kartı(),
+            "zoom-wheel" => zoom_wheel_kartı(),
             kimlik => Err(UplotHatası::BilinmeyenKart {
                 kimlik: kimlik.to_string(),
             }),
@@ -147,7 +149,7 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    3
+    4
 }
 
 #[wasm_bindgen]
@@ -163,6 +165,11 @@ pub fn area_fill_kart_tanim_ornegi() -> String {
 #[wasm_bindgen]
 pub fn scale_padding_kart_tanim_ornegi() -> String {
     SCALE_PADDING_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
+pub fn zoom_wheel_kart_tanim_ornegi() -> String {
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -209,7 +216,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 3);
+        assert_eq!(kart_sayisi(), 4);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -234,7 +241,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 3);
+        assert_eq!(kart_sayisi(), 4);
     }
 
     #[test]
@@ -247,5 +254,17 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Flat"));
         assert_eq!(svg.matches("fill=\"none\"").count(), 13);
+    }
+
+    #[test]
+    fn zoom_wheel_wasm_kaynak_serilerini_üretir() {
+        let oturum = KartOturumu::yeni("zoom-wheel", 100);
+        assert!(oturum.is_ok());
+        let Ok(mut oturum) = oturum else {
+            return;
+        };
+        assert!(oturum.svg(600, 400).contains("Wheel Zoom &amp; Drag"));
+        assert!(oturum.tekerlek(0.5, 0.5, 1.0, false).is_ok());
+        assert!(oturum.yakinlastirilmis());
     }
 }
