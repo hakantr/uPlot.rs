@@ -50,6 +50,9 @@ uplot-rs = {
 }
 ```
 
+Bu registry tanımı `0.1.0` sürümü crates.io'da yayımlandıktan sonra doğrudan
+çalışır; kaynak depo aşağıda ayrıca verilmiştir.
+
 Cargo paket adı küçük harfli `uplot-rs`, Rust kodundaki crate adı ise tirelerin
 alt çizgiye çevrilmesi nedeniyle `uplot_rs` olur. Kaynak depo
 [hakantr/uPlot.rs](https://github.com/hakantr/uPlot.rs) adresindedir.

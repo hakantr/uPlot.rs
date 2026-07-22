@@ -51,6 +51,9 @@ uplot-rs = {
 }
 ```
 
+This registry declaration becomes directly usable after version `0.1.0` is
+published on crates.io; the source repository is also linked below.
+
 The Cargo package name is the lowercase `uplot-rs`; Rust exposes it in code as
 `uplot_rs` because hyphens become underscores. The source repository is
 [hakantr/uPlot.rs](https://github.com/hakantr/uPlot.rs).
