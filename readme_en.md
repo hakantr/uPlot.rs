@@ -45,11 +45,15 @@ Cargo features are additive and may be enabled together:
 
 ```toml
 uplot-rs = {
-    path = "../uPlot.rs",
+    version = "0.1.0",
     default-features = false,
     features = ["gpui", "svg"]
 }
 ```
+
+The Cargo package name is the lowercase `uplot-rs`; Rust exposes it in code as
+`uplot_rs` because hyphens become underscores. The source repository is
+[hakantr/uPlot.rs](https://github.com/hakantr/uPlot.rs).
 
 - `svg`: the default dependency-free SVG output;
 - `wasm`: enables `svg` support for the WASM surface;

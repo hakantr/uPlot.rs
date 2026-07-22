@@ -44,11 +44,15 @@ Cargo feature'ları toplamsaldır ve birbiriyle birlikte açılabilir:
 
 ```toml
 uplot-rs = {
-    path = "../uPlot.rs",
+    version = "0.1.0",
     default-features = false,
     features = ["gpui", "svg"]
 }
 ```
+
+Cargo paket adı küçük harfli `uplot-rs`, Rust kodundaki crate adı ise tirelerin
+alt çizgiye çevrilmesi nedeniyle `uplot_rs` olur. Kaynak depo
+[hakantr/uPlot.rs](https://github.com/hakantr/uPlot.rs) adresindedir.
 
 - `svg`: varsayılan, bağımlılıksız SVG çıktısı;
 - `wasm`: WASM yüzeyi için `svg` desteğini açar;
