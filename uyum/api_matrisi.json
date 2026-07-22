@@ -116,6 +116,30 @@
       "rust_karşılığı": "GpuiGrafik::imleci_güncelle / KartOturumu::en_yakin_noktalar",
       "durum": "kısmi",
       "test": "src/kart/cursor_tooltip.rs"
+    },
+    {
+      "kaynak_yolu": "Scale.distr/log",
+      "rust_karşılığı": "XÖlçekDağılımı::Logaritmik / YÖlçekDağılımı::Logaritmik",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/custom_scales.rs"
+    },
+    {
+      "kaynak_yolu": "Scale.fwd/bwd (distr: 100)",
+      "rust_karşılığı": "YÖlçekDağılımı::Weibull",
+      "durum": "kısmi",
+      "test": "src/kart/custom_scales.rs"
+    },
+    {
+      "kaynak_yolu": "Options.bands",
+      "rust_karşılığı": "SeriBandı",
+      "durum": "kısmi",
+      "test": "src/kart/custom_scales.rs"
+    },
+    {
+      "kaynak_yolu": "Plugin.hooks.draw",
+      "rust_karşılığı": "NoktaKatmanı",
+      "durum": "kısmi",
+      "test": "src/kart/custom_scales.rs"
     }
   ]
 }

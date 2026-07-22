@@ -6,6 +6,12 @@ mod y_olcek;
 pub use seri::{SeriSeçenekleri, SeriÇizimTürü};
 pub use y_olcek::{YÖlçekDağılımı, YÖlçekSeçenekleri};
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum XÖlçekDağılımı {
+    Doğrusal,
+    Logaritmik { taban: f64 },
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ÇubukYönü {
     Dikey,
@@ -24,6 +30,40 @@ pub struct MumDüzeni {
     pub yükseliş_rengi: String,
     pub düşüş_rengi: String,
     pub azami_gövde_genişliği: f32,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SeriBandı {
+    pub üst_seri: usize,
+    pub alt_seri: usize,
+    pub dolgu: String,
+}
+
+impl SeriBandı {
+    pub fn yeni(üst_seri: usize, alt_seri: usize, dolgu: impl Into<String>) -> Self {
+        Self {
+            üst_seri,
+            alt_seri,
+            dolgu: dolgu.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct NoktaKatmanı {
+    pub noktalar: Vec<(f64, f64)>,
+    pub renk: String,
+    pub boyut: f32,
+}
+
+impl NoktaKatmanı {
+    pub fn yeni(noktalar: Vec<(f64, f64)>) -> Self {
+        Self {
+            noktalar,
+            renk: "#000000".to_string(),
+            boyut: 5.0,
+        }
+    }
 }
 
 impl MumDüzeni {
@@ -245,6 +285,7 @@ pub struct GrafikSeçenekleri {
     pub genişlik: u32,
     pub yükseklik: u32,
     pub x_zaman: bool,
+    pub x_dağılımı: XÖlçekDağılımı,
     pub y_aralığı: Option<Aralık>,
     pub y_ölçekleri: Vec<YÖlçekSeçenekleri>,
     pub birincil_y_ölçeği: String,
@@ -260,6 +301,8 @@ pub struct GrafikSeçenekleri {
     pub çubuk_düzeni: Option<ÇubukDüzeni>,
     pub kutu_bıyık_düzeni: Option<KutuBıyıkDüzeni>,
     pub mum_düzeni: Option<MumDüzeni>,
+    pub bantlar: Vec<SeriBandı>,
+    pub nokta_katmanları: Vec<NoktaKatmanı>,
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
     pub imleç_ızgara_adımı: Option<f32>,
@@ -280,6 +323,7 @@ impl GrafikSeçenekleri {
             genişlik,
             yükseklik,
             x_zaman: true,
+            x_dağılımı: XÖlçekDağılımı::Doğrusal,
             y_aralığı: None,
             y_ölçekleri: Vec::new(),
             birincil_y_ölçeği: "y".to_string(),
@@ -295,6 +339,8 @@ impl GrafikSeçenekleri {
             çubuk_düzeni: None,
             kutu_bıyık_düzeni: None,
             mum_düzeni: None,
+            bantlar: Vec::new(),
+            nokta_katmanları: Vec::new(),
             imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
@@ -308,6 +354,23 @@ impl GrafikSeçenekleri {
 
     pub fn x_zaman(mut self, zaman: bool) -> Self {
         self.x_zaman = zaman;
+        self
+    }
+
+    pub fn x_logaritmik(mut self, taban: f64) -> Self {
+        if taban.is_finite() && taban > 1.0 {
+            self.x_dağılımı = XÖlçekDağılımı::Logaritmik { taban };
+        }
+        self
+    }
+
+    pub fn bant(mut self, bant: SeriBandı) -> Self {
+        self.bantlar.push(bant);
+        self
+    }
+
+    pub fn nokta_katmanı(mut self, katman: NoktaKatmanı) -> Self {
+        self.nokta_katmanları.push(katman);
         self
     }
 

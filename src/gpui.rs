@@ -12,7 +12,7 @@ use ::gpui::{
 };
 
 use crate::{
-    Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne, SeriSeçenekleri, SeçimEylemi, UplotHatası,
+    Grafik, Komut, MetinHizası, Nokta, Sahne, SeriSeçenekleri, SeçimEylemi, UplotHatası
 };
 
 #[derive(Clone)]
@@ -178,7 +178,6 @@ impl GpuiGrafik {
     fn sahne(&self) -> Sahne {
         let mut sahne = self.grafik.çiz();
         let (sol, sağ, üst, alt) = self.çizim_alanı();
-        let x_aralığı = self.grafik.görünür_x_aralığı();
         if let Some(imleç) = self.imleç.as_ref() {
             if let Some((_, _, konum, genişlik, yükseklik, _)) = self.grafik.çubuk_vuruşu(
                 self.grafik.boyut().0,
@@ -218,7 +217,10 @@ impl GpuiGrafik {
             if self.grafik.kutu_bıyık_grafiği() || self.grafik.mum_grafiği() {
                 return sahne;
             }
-            let nokta_x = ölçekle(imleç.veri_x, x_aralığı, sol, sağ - sol);
+            let nokta_x = self
+                .grafik
+                .x_konum_oranı(imleç.veri_x)
+                .map_or(imleç.fare.x, |oran| sol + oran as f32 * (sağ - sol));
             sahne.ekle(Komut::KesikliÇizgi {
                 başlangıç: Nokta::yeni(imleç.fare.x, üst),
                 bitiş: Nokta::yeni(imleç.fare.x, alt),
@@ -728,6 +730,28 @@ pub fn sahneyi_boya(
                     pencere.paint_path(yol, renk_çöz(renk));
                 }
             }
+            Komut::KesikliYol {
+                parçalar,
+                renk,
+                kalınlık,
+                çizgi,
+                boşluk,
+            } => {
+                let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek))
+                    .dash_array(&[px(*çizgi * ölçek), px(*boşluk * ölçek)]);
+                for parça in parçalar {
+                    let mut noktalar = parça.iter();
+                    if let Some(ilk) = noktalar.next() {
+                        yol.move_to(dönüştür(*ilk));
+                    }
+                    for nokta in noktalar {
+                        yol.line_to(dönüştür(*nokta));
+                    }
+                }
+                if let Ok(yol) = yol.build() {
+                    pencere.paint_path(yol, renk_çöz(renk));
+                }
+            }
             Komut::Alan { çokgenler, dolgu } => {
                 let mut yol = PathBuilder::fill();
                 for çokgen in çokgenler {
@@ -837,8 +861,4 @@ fn renk_çöz(kod: &str) -> Hsla {
             .map_or_else(|_| rgb(0x000000).into(), |sayı| rgb(sayı).into()),
         _ => rgb(0x000000).into(),
     }
-}
-
-fn ölçekle(değer: f64, aralık: Aralık, başlangıç: f32, uzunluk: f32) -> f32 {
-    başlangıç + ((değer - aralık.en_az) / (aralık.en_çok - aralık.en_az)) as f32 * uzunluk
 }

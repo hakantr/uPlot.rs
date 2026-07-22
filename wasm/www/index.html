@@ -236,6 +236,7 @@
       KartOturumu,
       align_data_kart_tanim_ornegi,
       cursor_tooltip_kart_tanim_ornegi,
+      custom_scales_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
@@ -707,6 +708,32 @@
       bilgiKutusu: true,
       etkileşimler: () => ortakEtkileşimler(),
     };
+    for (const [kimlik, başlık] of [
+      ["custom-scales-linear", "x linear; y linear"],
+      ["custom-scales-log-log", "log(x); log(y)"],
+      ["custom-scales-weibull", "log(x); log(-log(1 - y))"],
+    ]) {
+      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>custom-scales</small>
+          <div class="durum">199 nokta · güven bandı · 20 gözlem</div>
+        </article>`);
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/custom-scales.html">custom-scales.html</a>
+          <br>Kaynaktaki 199×4 veri, 20 draw-hook noktası, turuncu güven bandı ve kesikli Weibull fitted çizgisi aynen kullanılır. Ölçek dönüşümü geometri, eksen ve imleç hesabında çekirdektedir.`,
+        tanım: () => custom_scales_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/custom_scales.rs",
+        seriler: [
+          { etiket: "upper_ci", renk: "#0000ff" },
+          { etiket: "lower_ci", renk: "#008000" },
+          { etiket: "weibull_fitted", renk: "#ffa500" },
+        ],
+        yardım: "Aynı veri · doğrusal, log-log veya özel fwd/bwd Weibull geometrisi",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
 
     function ortakEtkileşimler() {
       return {
@@ -898,8 +925,8 @@
       const enYakın = oturum?.en_yakin_noktalar(oran) ?? [];
       if (enYakın.length < 2) return;
       const [gerçekX, ...seriDeğerleri] = enYakın;
-      const xAralığı = oturum.gorunur_x_araligi();
-      const noktaX = sol + (gerçekX - xAralığı[0]) / (xAralığı[1] - xAralığı[0]) * (sağ - sol);
+      const xKonumOranı = oturum.x_konum_orani(gerçekX);
+      const noktaX = sol + xKonumOranı * (sağ - sol);
       const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
       if (bilgiKutusu && Number.isFinite(seriDeğerleri[0])) {
         bilgiKutusu.textContent = `${gerçekX},${seriDeğerleri[0]} at ${Math.round(hamX)},${Math.round(hamY)}`;

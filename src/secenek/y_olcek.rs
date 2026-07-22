@@ -3,7 +3,14 @@ use crate::Aralık;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum YÖlçekDağılımı {
     Doğrusal,
-    ArcSinh { eşik: f64 },
+    Logaritmik {
+        taban: f64,
+    },
+    /// `log(-log(1-y))` ileri ve `1-exp(-exp(v))` geri dönüşümü.
+    Weibull,
+    ArcSinh {
+        eşik: f64,
+    },
 }
 
 /// uPlot'un adlandırılmış Y ölçekleri ve bunlara bağlı eksenlerinin çekirdek
@@ -92,6 +99,18 @@ impl YÖlçekSeçenekleri {
         if eşik.is_finite() && eşik > 0.0 {
             self.dağılım = YÖlçekDağılımı::ArcSinh { eşik };
         }
+        self
+    }
+
+    pub fn logaritmik(mut self, taban: f64) -> Self {
+        if taban.is_finite() && taban > 1.0 {
+            self.dağılım = YÖlçekDağılımı::Logaritmik { taban };
+        }
+        self
+    }
+
+    pub fn weibull(mut self) -> Self {
+        self.dağılım = YÖlçekDağılımı::Weibull;
         self
     }
 }

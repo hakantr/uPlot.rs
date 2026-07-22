@@ -1,0 +1,24 @@
+id = "custom-scales"
+kaynak = "../uPlot/demos/custom-scales.html"
+fixture = "src/kart/custom_scales.rs#custom_scales_kartı"
+viewport = [800, 800]
+device_pixel_ratio = 1
+durum = "üç-ölçek-alt-grafiği"
+
+[veri]
+x_ve_seri_uzunluğu = 199
+seri_sayısı = 3
+draw_noktası = 20
+aktarim = "tools/uyum/custom_scales_veri_aktar.mjs"
+
+[alt_grafikler]
+kimlikler = ["custom-scales-linear", "custom-scales-log-log", "custom-scales-weibull"]
+özel_fwd = "log(-log(1-y))"
+özel_bwd = "1-exp(-exp(v))"
+band = "upper_ci/lower_ci #ffa50030"
+fitted_dash = [10, 5]
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/custom-scales.svg"

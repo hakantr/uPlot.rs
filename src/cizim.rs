@@ -45,6 +45,13 @@ pub enum Komut {
         renk: String,
         kalınlık: f32,
     },
+    KesikliYol {
+        parçalar: Vec<Vec<Nokta>>,
+        renk: String,
+        kalınlık: f32,
+        çizgi: f32,
+        boşluk: f32,
+    },
     Alan {
         çokgenler: Vec<Vec<Nokta>>,
         dolgu: String,
@@ -172,6 +179,30 @@ impl Sahne {
                         d.trim_end(),
                         kaçış(renk),
                         sayı(*kalınlık)
+                    );
+                }
+                Komut::KesikliYol {
+                    parçalar,
+                    renk,
+                    kalınlık,
+                    çizgi,
+                    boşluk,
+                } => {
+                    let mut d = String::new();
+                    for parça in parçalar {
+                        for (indeks, nokta) in parça.iter().enumerate() {
+                            let işlem = if indeks == 0 { 'M' } else { 'L' };
+                            let _ = write!(d, "{işlem}{} {} ", sayı(nokta.x), sayı(nokta.y));
+                        }
+                    }
+                    let _ = writeln!(
+                        çıktı,
+                        "  <path d=\"{}\" fill=\"none\" stroke=\"{}\" stroke-width=\"{}\" stroke-dasharray=\"{} {}\" stroke-linejoin=\"round\"/>",
+                        d.trim_end(),
+                        kaçış(renk),
+                        sayı(*kalınlık),
+                        sayı(*çizgi),
+                        sayı(*boşluk)
                     );
                 }
                 Komut::Alan { çokgenler, dolgu } => {

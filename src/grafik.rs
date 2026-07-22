@@ -3,7 +3,9 @@ use crate::cizim::kirpma::{
 };
 use crate::cizim::{Komut, MetinHizası, Nokta, Sahne};
 use crate::etkilesim::EtkileşimDenetleyicisi;
-use crate::{Aralık, GrafikSeçenekleri, HizalıVeri, UplotHatası, YÖlçekDağılımı};
+use crate::{
+    Aralık, GrafikSeçenekleri, HizalıVeri, UplotHatası, XÖlçekDağılımı, YÖlçekDağılımı
+};
 
 /// Bir işaretçi seçiminin çekirdekte çözümlenen sonucu.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -603,6 +605,14 @@ impl Grafik {
         )))
     }
 
+    pub fn x_konum_oranı(&self, değer: f64) -> Option<f64> {
+        if !değer.is_finite() {
+            return None;
+        }
+        let aralık = self.görünür_x_aralığı();
+        Some(f64::from(self.x_konumu(aralık, değer, 0.0, 1.0)))
+    }
+
     /// Geçerli görünümde, normalize edilmiş yatay konuma en yakın seri noktasını bulur.
     pub fn en_yakın_nokta(&self, yatay_oran: f64, seri_indeksi: usize) -> Option<(f64, f64)> {
         if !yatay_oran.is_finite() {
@@ -610,7 +620,7 @@ impl Grafik {
         }
         let seri = self.veri.seriler().get(seri_indeksi)?;
         let aralık = self.görünür_x_aralığı();
-        let hedef = aralık.en_az + yatay_oran.clamp(0.0, 1.0) * (aralık.en_çok - aralık.en_az);
+        let hedef = self.x_değeri_orandan(aralık, yatay_oran.clamp(0.0, 1.0));
         self.veri
             .x()
             .iter()
@@ -628,7 +638,7 @@ impl Grafik {
             return None;
         }
         let aralık = self.görünür_x_aralığı();
-        let hedef = aralık.en_az + yatay_oran.clamp(0.0, 1.0) * (aralık.en_çok - aralık.en_az);
+        let hedef = self.x_değeri_orandan(aralık, yatay_oran.clamp(0.0, 1.0));
         let (indeks, x) = self
             .veri
             .x()
@@ -781,7 +791,15 @@ impl Grafik {
                     },
                     y + 4.0,
                 ),
-                içerik: eksen_değerini_birimle_yaz(y_değeri, y_artımı, birincil_birim),
+                içerik: if matches!(
+                    self.ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
+                        .map(|ölçek| ölçek.dağılım),
+                    Some(YÖlçekDağılımı::Weibull)
+                ) {
+                    format!("{y_değeri:e}")
+                } else {
+                    eksen_değerini_birimle_yaz(y_değeri, y_artımı, birincil_birim)
+                },
                 renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
                 boyut: 11.0,
                 hiza: if self.seçenekler.birincil_y_sağda {
@@ -855,8 +873,12 @@ impl Grafik {
         }
 
         let x_artımı = uygun_artım(x_aralığı, genişlik, 50.0);
-        for x_değeri in eksen_bölmeleri(x_aralığı, genişlik, 50.0) {
-            let x = x_aralığı.konum(x_değeri, sol, genişlik);
+        let x_bölmeleri = match self.seçenekler.x_dağılımı {
+            XÖlçekDağılımı::Logaritmik { taban } => logaritmik_bölmeler(x_aralığı, taban),
+            XÖlçekDağılımı::Doğrusal => eksen_bölmeleri(x_aralığı, genişlik, 50.0),
+        };
+        for x_değeri in x_bölmeleri {
+            let x = self.x_konumu(x_aralığı, x_değeri, sol, genişlik);
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(x, üst),
                 bitiş: Nokta::yeni(x, alt),
@@ -888,6 +910,50 @@ impl Grafik {
                 boyut: 12.0,
                 hiza: MetinHizası::Orta,
             });
+        }
+
+        for bant in &self.seçenekler.bantlar {
+            let Some(üst_seri) = self.veri.seriler().get(bant.üst_seri) else {
+                continue;
+            };
+            let Some(alt_seri) = self.veri.seriler().get(bant.alt_seri) else {
+                continue;
+            };
+            let Some(seri) = self.seçenekler.seriler.get(bant.üst_seri) else {
+                continue;
+            };
+            let y_aralığı = self.görünür_ölçek_aralığı(&seri.ölçek, x_aralığı, görünür_y);
+            let mut üst_noktalar = Vec::new();
+            let mut alt_noktalar = Vec::new();
+            for (indeks, x_değeri) in self.veri.x().iter().copied().enumerate() {
+                if x_değeri < x_aralığı.en_az || x_değeri > x_aralığı.en_çok {
+                    continue;
+                }
+                let Some(üst_değer) = üst_seri.get(indeks).copied().flatten() else {
+                    continue;
+                };
+                let Some(alt_değer) = alt_seri.get(indeks).copied().flatten() else {
+                    continue;
+                };
+                let x = self.x_konumu(x_aralığı, x_değeri, sol, genişlik);
+                üst_noktalar.push(Nokta::yeni(
+                    x,
+                    alt - self.y_konumu(&seri.ölçek, y_aralığı, üst_değer, 0.0, yükseklik),
+                ));
+                alt_noktalar.push(Nokta::yeni(
+                    x,
+                    alt - self.y_konumu(&seri.ölçek, y_aralığı, alt_değer, 0.0, yükseklik),
+                ));
+            }
+            alt_noktalar.reverse();
+            üst_noktalar.extend(alt_noktalar);
+            let çokgen = çokgeni_dikdörtgene_kırp(&üst_noktalar, sol, sağ, üst, alt);
+            if çokgen.len() >= 3 {
+                sahne.ekle(Komut::Alan {
+                    çokgenler: vec![çokgen],
+                    dolgu: bant.dolgu.clone(),
+                });
+            }
         }
 
         for (seri_indeksi, değerler) in self.veri.seriler().iter().enumerate() {
@@ -935,7 +1001,7 @@ impl Grafik {
                         {
                             ham_parçalar.push(std::mem::take(&mut parça));
                         }
-                        let x = x_aralığı.konum(*x_değeri, sol, genişlik);
+                        let x = self.x_konumu(x_aralığı, *x_değeri, sol, genişlik);
                         let y = alt
                             - self.y_konumu(&seri.ölçek, seri_y_aralığı, *y_değeri, 0.0, yükseklik);
                         let nokta = Nokta::yeni(x, y);
@@ -985,11 +1051,21 @@ impl Grafik {
                     dolgu: dolgu.clone(),
                 });
             }
-            sahne.ekle(Komut::Yol {
-                parçalar,
-                renk: seri.renk.clone(),
-                kalınlık: seri.çizgi_kalınlığı,
-            });
+            if let Some((çizgi, boşluk)) = seri.çizgi_kesik {
+                sahne.ekle(Komut::KesikliYol {
+                    parçalar,
+                    renk: seri.renk.clone(),
+                    kalınlık: seri.çizgi_kalınlığı,
+                    çizgi,
+                    boşluk,
+                });
+            } else {
+                sahne.ekle(Komut::Yol {
+                    parçalar,
+                    renk: seri.renk.clone(),
+                    kalınlık: seri.çizgi_kalınlığı,
+                });
+            }
 
             // uPlot'un varsayılanı: noktalar ancak ortalama yatay boşluk,
             // nokta çapının iki katını karşılayabildiğinde görünür.
@@ -1002,6 +1078,38 @@ impl Grafik {
                         dolgu: "#ffffff".to_string(),
                         çizgi: seri.renk.clone(),
                         kalınlık: 1.0,
+                    });
+                }
+            }
+        }
+
+        let birincil_aralık = self.görünür_ölçek_aralığı(
+            &self.seçenekler.birincil_y_ölçeği,
+            x_aralığı,
+            görünür_y,
+        );
+        for katman in &self.seçenekler.nokta_katmanları {
+            for (x_değeri, y_değeri) in katman.noktalar.iter().copied() {
+                if x_değeri < x_aralığı.en_az || x_değeri > x_aralığı.en_çok {
+                    continue;
+                }
+                let x = self.x_konumu(x_aralığı, x_değeri, sol, genişlik);
+                let y = alt
+                    - self.y_konumu(
+                        &self.seçenekler.birincil_y_ölçeği,
+                        birincil_aralık,
+                        y_değeri,
+                        0.0,
+                        yükseklik,
+                    );
+                if nokta_dikdörtgende(Nokta::yeni(x, y), sol, sağ, üst, alt) {
+                    sahne.ekle(Komut::Dikdörtgen {
+                        konum: Nokta::yeni(x, y),
+                        genişlik: katman.boyut,
+                        yükseklik: katman.boyut,
+                        dolgu: katman.renk.clone(),
+                        çizgi: katman.renk.clone(),
+                        kalınlık: 0.0,
                     });
                 }
             }
@@ -1058,7 +1166,7 @@ impl Grafik {
             if *x_değeri < x_aralığı.en_az || *x_değeri > x_aralığı.en_çok {
                 continue;
             }
-            let merkez = x_aralığı.konum(*x_değeri, sol, genişlik);
+            let merkez = self.x_konumu(x_aralığı, *x_değeri, sol, genişlik);
             let y = (alt - self.y_konumu(&seri.ölçek, y_aralığı, *değer, 0.0, yükseklik))
                 .clamp(üst, alt);
             let x0 = (merkez - çubuk_genişliği / 2.0).clamp(sol, sağ);
@@ -1835,6 +1943,18 @@ impl Grafik {
         uzunluk: f32,
     ) -> f32 {
         match self.ölçek_seçeneği(anahtar).map(|ölçek| ölçek.dağılım) {
+            Some(YÖlçekDağılımı::Logaritmik { taban })
+                if taban.is_finite() && taban > 1.0 && aralık.en_az > 0.0 && değer > 0.0 =>
+            {
+                let dönüştür = |sayı: f64| sayı.log(taban);
+                dönüştürülmüş_konum(aralık, değer, başlangıç, uzunluk, dönüştür)
+            }
+            Some(YÖlçekDağılımı::Weibull)
+                if aralık.en_az > 0.0 && aralık.en_çok < 1.0 && değer > 0.0 && değer < 1.0 =>
+            {
+                let dönüştür = |sayı: f64| (-(-sayı).ln_1p()).ln();
+                dönüştürülmüş_konum(aralık, değer, başlangıç, uzunluk, dönüştür)
+            }
             Some(YÖlçekDağılımı::ArcSinh { eşik }) if eşik.is_finite() && eşik > 0.0 => {
                 let dönüştür = |sayı: f64| (sayı / eşik).asinh();
                 let en_az = dönüştür(aralık.en_az);
@@ -1848,24 +1968,89 @@ impl Grafik {
     }
 
     fn y_eksen_bölmeleri(&self, anahtar: &str, aralık: Aralık, boyut: f32) -> Vec<f64> {
-        let Some(YÖlçekDağılımı::ArcSinh { eşik }) =
-            self.ölçek_seçeneği(anahtar).map(|ölçek| ölçek.dağılım)
-        else {
-            return eksen_bölmeleri(aralık, boyut, 30.0);
-        };
-        if !eşik.is_finite() || eşik <= 0.0 {
-            return eksen_bölmeleri(aralık, boyut, 30.0);
+        match self.ölçek_seçeneği(anahtar).map(|ölçek| ölçek.dağılım) {
+            Some(YÖlçekDağılımı::ArcSinh { eşik }) if eşik.is_finite() && eşik > 0.0 => {
+                let en_az = (aralık.en_az / eşik).asinh();
+                let en_çok = (aralık.en_çok / eşik).asinh();
+                dönüşmüş_bölmeler(en_az, en_çok, boyut, |değer| eşik * değer.sinh())
+            }
+            Some(YÖlçekDağılımı::Logaritmik { taban }) if aralık.en_az > 0.0 => {
+                logaritmik_bölmeler(aralık, taban)
+            }
+            Some(YÖlçekDağılımı::Weibull) => [
+                0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99,
+                0.999, 0.9999, 0.99999, 0.999999,
+            ]
+            .into_iter()
+            .filter(|değer| (*değer >= aralık.en_az) && (*değer <= aralık.en_çok))
+            .collect(),
+            _ => eksen_bölmeleri(aralık, boyut, 30.0),
         }
-        let en_az = (aralık.en_az / eşik).asinh();
-        let en_çok = (aralık.en_çok / eşik).asinh();
-        let adım_sayısı = (boyut / 55.0).round().clamp(3.0, 12.0) as u32;
-        (0..=adım_sayısı)
-            .map(|indeks| {
-                let oran = f64::from(indeks) / f64::from(adım_sayısı);
-                eşik * (en_az + (en_çok - en_az) * oran).sinh()
-            })
-            .collect()
     }
+
+    fn x_konumu(&self, aralık: Aralık, değer: f64, başlangıç: f32, uzunluk: f32) -> f32 {
+        match self.seçenekler.x_dağılımı {
+            XÖlçekDağılımı::Logaritmik { taban }
+                if aralık.en_az > 0.0 && değer > 0.0 && taban > 1.0 =>
+            {
+                dönüştürülmüş_konum(aralık, değer, başlangıç, uzunluk, |sayı| {
+                    sayı.log(taban)
+                })
+            }
+            _ => aralık.konum(değer, başlangıç, uzunluk),
+        }
+    }
+
+    fn x_değeri_orandan(&self, aralık: Aralık, oran: f64) -> f64 {
+        match self.seçenekler.x_dağılımı {
+            XÖlçekDağılımı::Logaritmik { taban } if aralık.en_az > 0.0 && taban > 1.0 => {
+                let en_az = aralık.en_az.log(taban);
+                let en_çok = aralık.en_çok.log(taban);
+                taban.powf(en_az + oran * (en_çok - en_az))
+            }
+            _ => aralık.en_az + oran * (aralık.en_çok - aralık.en_az),
+        }
+    }
+}
+
+fn dönüştürülmüş_konum(
+    aralık: Aralık,
+    değer: f64,
+    başlangıç: f32,
+    uzunluk: f32,
+    dönüştür: impl Fn(f64) -> f64,
+) -> f32 {
+    let en_az = dönüştür(aralık.en_az);
+    let en_çok = dönüştür(aralık.en_çok);
+    let değer = dönüştür(değer);
+    başlangıç + ((değer - en_az) / (en_çok - en_az)) as f32 * uzunluk
+}
+
+fn dönüşmüş_bölmeler(
+    en_az: f64,
+    en_çok: f64,
+    boyut: f32,
+    geri: impl Fn(f64) -> f64,
+) -> Vec<f64> {
+    let adım_sayısı = (boyut / 55.0).round().clamp(3.0, 12.0) as u32;
+    (0..=adım_sayısı)
+        .map(|indeks| {
+            let oran = f64::from(indeks) / f64::from(adım_sayısı);
+            geri(en_az + (en_çok - en_az) * oran)
+        })
+        .collect()
+}
+
+fn logaritmik_bölmeler(aralık: Aralık, taban: f64) -> Vec<f64> {
+    if !taban.is_finite() || taban <= 1.0 || aralık.en_az <= 0.0 {
+        return Vec::new();
+    }
+    let ilk = aralık.en_az.log(taban).floor() as i32;
+    let son = aralık.en_çok.log(taban).ceil() as i32;
+    (ilk..=son)
+        .map(|üs| taban.powi(üs))
+        .filter(|değer| *değer >= aralık.en_az && *değer <= aralık.en_çok)
+        .collect()
 }
 
 fn tam_x_aralığı(veri: &HizalıVeri) -> Result<Aralık, UplotHatası> {

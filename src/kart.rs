@@ -12,6 +12,7 @@ mod candlestick_ohlc;
 mod cursor_bind;
 mod cursor_snap;
 mod cursor_tooltip;
+mod custom_scales;
 mod dependent_scale;
 mod missing_data;
 mod months;
@@ -61,6 +62,9 @@ pub use cursor_snap::{
     CURSOR_SNAP_KANIT_TOHUMU, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, cursor_snap_kartı
 };
 pub use cursor_tooltip::{CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ, cursor_tooltip_kartı};
+pub use custom_scales::{
+    CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, custom_scales_kartı
+};
 pub use dependent_scale::{DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, dependent_scale_kartı};
 pub use missing_data::{
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, missing_data_null_kartı, missing_data_x_boşluğu_kartı,

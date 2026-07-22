@@ -92,6 +92,10 @@ name = "cursor_tooltip"
 required-features = ["svg"]
 
 [[example]]
+name = "custom_scales"
+required-features = ["svg"]
+
+[[example]]
 name = "missing_data"
 required-features = ["svg"]
 

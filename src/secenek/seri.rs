@@ -9,6 +9,7 @@ pub struct SeriSeçenekleri {
     pub etiket: String,
     pub renk: String,
     pub çizgi_kalınlığı: f32,
+    pub çizgi_kesik: Option<(f32, f32)>,
     pub dolgu: Option<String>,
     pub dolgu_tabanı: f64,
     pub göster: bool,
@@ -24,6 +25,7 @@ impl SeriSeçenekleri {
             etiket: etiket.into(),
             renk: "#000000".to_string(),
             çizgi_kalınlığı: 1.0,
+            çizgi_kesik: None,
             dolgu: None,
             dolgu_tabanı: 0.0,
             göster: true,
@@ -42,6 +44,13 @@ impl SeriSeçenekleri {
     pub fn çizgi_kalınlığı(mut self, kalınlık: f32) -> Self {
         if kalınlık.is_finite() {
             self.çizgi_kalınlığı = kalınlık.max(0.0);
+        }
+        self
+    }
+
+    pub fn çizgi_kesik(mut self, çizgi: f32, boşluk: f32) -> Self {
+        if çizgi.is_finite() && boşluk.is_finite() && çizgi > 0.0 && boşluk > 0.0 {
+            self.çizgi_kesik = Some((çizgi, boşluk));
         }
         self
     }
