@@ -24,3 +24,6 @@ ve çift tıklama uPlot çekirdek davranışlarıdır; varsayılanı kapalı tek
 özelliği resmi `wheelZoomPlugin` portu, “Geri” görünüm geçmişi ise uPlot.rs
 uzantısıdır. Her biri kartın `EtkileşimSeçenekleri` tanımından açılıp kapatılır.
 “Tekerlek eklentisi” anahtarı da bu ayarı sayfa açıkken canlı değiştirir.
+Otomatik kip klasik tekerleği ayrık, Magic Mouse/trackpad akışını ise piksel
+delta büyüklüğüyle orantılı işler; aynı animasyon karesindeki olaylar tek
+çizimde birleştirilir.

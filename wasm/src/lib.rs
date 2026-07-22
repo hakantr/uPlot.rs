@@ -49,6 +49,32 @@ pub fn tekerlek_x_araligi(
 }
 
 #[wasm_bindgen]
+pub fn uyarlanabilir_tekerlek_x_araligi(
+    mevcut_en_az: f64,
+    mevcut_en_çok: f64,
+    tam_en_az: f64,
+    tam_en_çok: f64,
+    odak: f64,
+    delta: f64,
+    hassas_girdi: bool,
+) -> Result<Vec<f64>, JsValue> {
+    let mevcut = Aralık::yeni(mevcut_en_az, mevcut_en_çok)
+        .map_err(|hata| JsValue::from_str(&hata.to_string()))?;
+    let tam =
+        Aralık::yeni(tam_en_az, tam_en_çok).map_err(|hata| JsValue::from_str(&hata.to_string()))?;
+    mevcut
+        .uyarlanabilir_tekerlek_yakınlaştır(
+            tam,
+            odak,
+            delta,
+            hassas_girdi,
+            ilk_kart_etkileşimleri().tekerlek_ayarları,
+        )
+        .map(|aralık| vec![aralık.en_az, aralık.en_çok])
+        .map_err(|hata| JsValue::from_str(&hata.to_string()))
+}
+
+#[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
     1
 }
@@ -61,6 +87,14 @@ pub fn ilk_kart_tanim_ornegi() -> String {
 #[wasm_bindgen]
 pub fn ilk_kart_tekerlek_etkilesimi() -> bool {
     ilk_kart_etkileşimleri().tekerlek_etkileşimi
+}
+
+#[wasm_bindgen]
+pub fn ilk_kart_tekerlek_hareket_birlestirme_ms() -> u32 {
+    ilk_kart_etkileşimleri()
+        .tekerlek_ayarları
+        .hareket_birleştirme_ms
+        .min(u64::from(u32::MAX)) as u32
 }
 
 #[wasm_bindgen]

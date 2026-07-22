@@ -19,5 +19,7 @@ pub use grafik::Grafik;
 pub use hata::UplotHatası;
 pub use kart::{ilk_kart, ilk_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ};
 pub use olcek::Aralık;
-pub use secenek::{EtkileşimSeçenekleri, GrafikSeçenekleri, SeriSeçenekleri};
+pub use secenek::{
+    EtkileşimSeçenekleri, GrafikSeçenekleri, SeriSeçenekleri, TekerlekAyarları, TekerlekKipi,
+};
 pub use veri::HizalıVeri;

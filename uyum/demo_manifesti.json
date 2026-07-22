@@ -31,6 +31,7 @@
         "core-dblclick-full-range-reset",
         "official-wheel-zoom-plugin",
         "cursor-anchored-wheel-zoom",
+        "adaptive-precise-wheel-normalization",
         "uplot-rs-view-history-extension",
         "responsive-resize"
       ],

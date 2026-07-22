@@ -33,6 +33,11 @@ tekerlek_kaynağı = "demos/zoom-wheel.html#wheelZoomPlugin"
 tekerlek_uyum_türü = "resmi_plugin_portu"
 tekerlek_odak_davranışı = "farenin_göreli_ekran_konumunu_koru"
 tekerlek_canlı_anahtar = true
+tekerlek_girdi_kipi = "otomatik_satır_ve_hassas_piksel"
+tekerlek_hassas_piksel_adımı = 100.0
+tekerlek_hassas_ölü_bölge = 1.5
+tekerlek_hareket_birleştirme_ms = 140
+tekerlek_girdi_normalizasyonu = "uplot_rs_uyarlaması"
 önceki_görünüme_dön = true
 önceki_görünüm_uyum_türü = "uplot_rs_uzantısı"
 

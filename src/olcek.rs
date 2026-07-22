@@ -1,4 +1,4 @@
-use crate::hata::UplotHatası;
+use crate::{TekerlekAyarları, TekerlekKipi, hata::UplotHatası};
 
 /// Sonlu ve artan sayısal ölçek aralığı.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -17,6 +17,52 @@ impl Aralık {
         odak: f64,
         yakınlaştır: bool,
     ) -> Result<Self, UplotHatası> {
+        self.tekerlek_katsayısıyla(tam, odak, if yakınlaştır { 0.75 } else { 1.0 / 0.75 })
+    }
+
+    /// Ayrık tekerlekleri sabit adımla, hassas piksel akışlarını delta
+    /// büyüklüğüyle orantılı olarak işler. Pozitif `delta` yakınlaştırır.
+    pub fn uyarlanabilir_tekerlek_yakınlaştır(
+        self,
+        tam: Self,
+        odak: f64,
+        delta: f64,
+        hassas_girdi: bool,
+        ayarlar: TekerlekAyarları,
+    ) -> Result<Self, UplotHatası> {
+        if !delta.is_finite() || delta.abs() <= f64::EPSILON {
+            return Ok(self);
+        }
+        let hassas = match ayarlar.kip {
+            TekerlekKipi::Otomatik => hassas_girdi,
+            TekerlekKipi::Ayrık => false,
+            TekerlekKipi::Hassas => true,
+        };
+        let adım = if hassas {
+            if delta.abs() < ayarlar.hassas_ölü_bölge {
+                return Ok(self);
+            }
+            delta.clamp(-ayarlar.azami_hassas_delta, ayarlar.azami_hassas_delta)
+                / ayarlar.hassas_piksel_adımı
+        } else {
+            delta.signum()
+        };
+        let katsayı = ayarlar.ayrık_katsayı.powf(adım);
+        self.tekerlek_katsayısıyla(tam, odak, katsayı)
+    }
+
+    fn tekerlek_katsayısıyla(
+        self,
+        tam: Self,
+        odak: f64,
+        katsayı: f64,
+    ) -> Result<Self, UplotHatası> {
+        if !katsayı.is_finite() || katsayı <= 0.0 {
+            return Err(UplotHatası::GeçersizAralık {
+                en_az: katsayı,
+                en_çok: katsayı,
+            });
+        }
         let mevcut = Self::yeni(self.en_az, self.en_çok)?;
         let tam = Self::yeni(tam.en_az, tam.en_çok)?;
         if !odak.is_finite() {
@@ -26,14 +72,9 @@ impl Aralık {
             });
         }
 
-        const KATSAYI: f64 = 0.75;
         let tam_uzunluk = tam.en_çok - tam.en_az;
         let mevcut_uzunluk = mevcut.en_çok - mevcut.en_az;
-        let yeni_uzunluk = if yakınlaştır {
-            (mevcut_uzunluk * KATSAYI).max(tam_uzunluk / 10_000.0)
-        } else {
-            mevcut_uzunluk / KATSAYI
-        };
+        let yeni_uzunluk = (mevcut_uzunluk * katsayı).max(tam_uzunluk / 10_000.0);
         if yeni_uzunluk >= tam_uzunluk {
             return Ok(tam);
         }

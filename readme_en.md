@@ -40,6 +40,8 @@ Each card can enable or disable interactions independently through
 ```rust
 .etkileşimler(EtkileşimSeçenekleri::default()
     .tekerlek_etkileşimi(true)
+    .tekerlek_ayarları(TekerlekAyarları::default()
+        .kip(TekerlekKipi::Otomatik))
     .seçim_yakınlaştır(true)
     .çift_tıkla_tam_görünüm(true)
     .görünüm_geçmişi(true))
@@ -53,6 +55,13 @@ uPlot.rs-specific Back-history extension and also defaults to off. The first
 card explicitly enables all four for visual and behavioral verification.
 The “Tekerlek eklentisi” switch in both the WASM and desktop examples changes
 this card setting between `true` and `false` at runtime.
+
+`TekerlekKipi::Otomatik` preserves the official `0.75` step for line-based
+traditional mouse wheels. Pixel-based precise input such as Magic Mouse and
+trackpads uses delta-proportional zoom, a small dead zone, per-frame event
+coalescing, and one history entry per gesture. This input normalization is a
+uPlot.rs adaptation for equivalent control across devices, not part of the
+official plugin.
 
 ## Live demo and automated builds
 

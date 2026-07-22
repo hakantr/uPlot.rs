@@ -1,5 +1,6 @@
 use crate::{
-    EtkileşimSeçenekleri, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası
+    EtkileşimSeçenekleri, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, TekerlekAyarları,
+    TekerlekKipi, UplotHatası,
 };
 
 /// Masaüstü ve WASM kataloglarında gösterilen, çalıştırılabilir API biçimiyle
@@ -9,6 +10,8 @@ pub const İLK_KART_TANIM_ÖRNEĞİ: &str = r##"let seçenekler = GrafikSeçenek
     .x_zaman(false)
     .etkileşimler(EtkileşimSeçenekleri::default()
         .tekerlek_etkileşimi(true)
+        .tekerlek_ayarları(TekerlekAyarları::default()
+            .kip(TekerlekKipi::Otomatik))
         .seçim_yakınlaştır(true)
         .çift_tıkla_tam_görünüm(true)
         .görünüm_geçmişi(true))
@@ -27,6 +30,7 @@ pub fn ilk_kart() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
 pub fn ilk_kart_etkileşimleri() -> EtkileşimSeçenekleri {
     EtkileşimSeçenekleri::default()
         .tekerlek_etkileşimi(true)
+        .tekerlek_ayarları(TekerlekAyarları::default().kip(TekerlekKipi::Otomatik))
         .seçim_yakınlaştır(true)
         .çift_tıkla_tam_görünüm(true)
         .görünüm_geçmişi(true)

@@ -77,14 +77,14 @@
           <div class="kaynak">Kaynak:
             <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/resize.html">resize.html</a>
             · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-wheel.html">zoom-wheel.html</a>
-            <br>Çekirdek: seçim + çift tık · İsteğe bağlı resmi eklenti portu: tekerlek · uPlot.rs: geri geçmişi
+            <br>Çekirdek: seçim + çift tık · Resmi eklenti: tekerlek · uPlot.rs: hassas giriş normalizasyonu + geri geçmişi
           </div>
         </div>
         <div class="denetimler">
           <button id="gorunum-geri" type="button">↶ Geri</button>
           <button id="tam-gorunum" type="button">Tam görünüm</button>
           <label class="eklenti-anahtarı">
-            <input id="tekerlek-etkilesimi" type="checkbox"> Tekerlek eklentisi
+            <input id="tekerlek-etkilesimi" type="checkbox"> Tekerlek eklentisi · Otomatik
           </label>
           <label>Nokta
             <input id="nokta" type="range" min="10" max="1000" step="10" value="100">
@@ -108,7 +108,8 @@
       ilk_kart_secim_yakinlastir,
       ilk_kart_cift_tikla_tam_gorunum,
       ilk_kart_gorunum_gecmisi,
-      tekerlek_x_araligi,
+      uyarlanabilir_tekerlek_x_araligi,
+      ilk_kart_tekerlek_hareket_birlestirme_ms,
       kart_sayisi,
       kaynak_commit,
     } from "../pkg/uplot_rs_wasm.js";
@@ -126,6 +127,11 @@
     let xAralığı = [0, TAM_X * 99 / 100];
     let sürükleme = null;
     let görünümGeçmişi = [];
+    let tekerlekBiriken = null;
+    let tekerlekKaresi = null;
+    let sonTekerlekOlayı = Number.NEGATIVE_INFINITY;
+    let tekerlekHareketiKaydedildi = false;
+    let tekerlekBirleştirmeMs = 140;
     let etkileşimler = {
       tekerlek: false,
       seçim: false,
@@ -148,8 +154,19 @@
       tamGörünüm.disabled = !etkileşimler.çiftTık || aynıAralık(xAralığı, tamAralık());
     }
 
-    function görünümüUygula(yeni, geçmişeEkle = true) {
-      if (aynıAralık(xAralığı, yeni)) return;
+    function tekerlekHareketiniSıfırla() {
+      tekerlekBiriken = null;
+      sonTekerlekOlayı = Number.NEGATIVE_INFINITY;
+      tekerlekHareketiKaydedildi = false;
+      if (tekerlekKaresi !== null) {
+        cancelAnimationFrame(tekerlekKaresi);
+        tekerlekKaresi = null;
+      }
+    }
+
+    function görünümüUygula(yeni, geçmişeEkle = true, tekerlekten = false) {
+      if (aynıAralık(xAralığı, yeni)) return false;
+      if (!tekerlekten) tekerlekHareketiniSıfırla();
       if (geçmişeEkle && etkileşimler.geçmiş) {
         if (görünümGeçmişi.length >= 100) görünümGeçmişi.shift();
         görünümGeçmişi.push([...xAralığı]);
@@ -157,6 +174,7 @@
       xAralığı = [...yeni];
       hata.textContent = "";
       çiz();
+      return true;
     }
 
     function boyutlar() {
@@ -290,19 +308,51 @@
     chart.addEventListener("dblclick", () => {
       if (etkileşimler.çiftTık) görünümüUygula(tamAralık());
     });
+    function birikmişTekerleğiUygula() {
+      tekerlekKaresi = null;
+      const biriken = tekerlekBiriken;
+      tekerlekBiriken = null;
+      if (!biriken || !etkileşimler.tekerlek) return;
+      const taklitOlay = { clientX: biriken.clientX, clientY: biriken.clientY };
+      const { x, view } = svgKonumu(taklitOlay);
+      try {
+        const tam = tamAralık();
+        const yeni = uyarlanabilir_tekerlek_x_araligi(
+          xAralığı[0], xAralığı[1], tam[0], tam[1], veriX(x, view),
+          biriken.delta, biriken.hassas,
+        );
+        const değişti = görünümüUygula(
+          [yeni[0], yeni[1]], !tekerlekHareketiKaydedildi, true,
+        );
+        if (değişti) tekerlekHareketiKaydedildi = true;
+      } catch (neden) {
+        hata.textContent = `Tekerlek yakınlaştırması uygulanamadı: ${String(neden)}`;
+      }
+    }
+
     chart.addEventListener("wheel", olay => {
       if (!etkileşimler.tekerlek || olay.deltaY === 0) return;
       const { x, y, view } = svgKonumu(olay);
       if (x < 64 || x > view.width - 24 || y < 48 || y > view.height - 48) return;
       olay.preventDefault();
-      try {
-        const tam = tamAralık();
-        const yeni = tekerlek_x_araligi(
-          xAralığı[0], xAralığı[1], tam[0], tam[1], veriX(x, view), olay.deltaY < 0,
-        );
-        görünümüUygula([yeni[0], yeni[1]]);
-      } catch (neden) {
-        hata.textContent = `Tekerlek yakınlaştırması uygulanamadı: ${String(neden)}`;
+      if (olay.timeStamp - sonTekerlekOlayı >= tekerlekBirleştirmeMs) {
+        tekerlekHareketiKaydedildi = false;
+      }
+      sonTekerlekOlayı = olay.timeStamp;
+
+      const hassas = olay.deltaMode === 0;
+      const delta = -olay.deltaY;
+      const yönDeğişti = tekerlekBiriken
+        && Math.sign(tekerlekBiriken.delta) !== Math.sign(delta);
+      if (!tekerlekBiriken || tekerlekBiriken.hassas !== hassas || yönDeğişti) {
+        tekerlekBiriken = { delta, hassas, clientX: olay.clientX, clientY: olay.clientY };
+      } else {
+        tekerlekBiriken.delta += delta;
+        tekerlekBiriken.clientX = olay.clientX;
+        tekerlekBiriken.clientY = olay.clientY;
+      }
+      if (tekerlekKaresi === null) {
+        tekerlekKaresi = requestAnimationFrame(birikmişTekerleğiUygula);
       }
     }, { passive: false });
 
@@ -313,6 +363,7 @@
     tamGörünüm.addEventListener("click", () => görünümüUygula(tamAralık()));
     tekerlekEtkileşimi.addEventListener("change", () => {
       etkileşimler.tekerlek = tekerlekEtkileşimi.checked;
+      tekerlekHareketiniSıfırla();
     });
 
     try {
@@ -327,9 +378,11 @@
         geçmiş: ilk_kart_gorunum_gecmisi(),
       };
       tekerlekEtkileşimi.checked = etkileşimler.tekerlek;
+      tekerlekBirleştirmeMs = ilk_kart_tekerlek_hareket_birlestirme_ms();
       nokta.addEventListener("input", () => {
         xAralığı = tamAralık();
         görünümGeçmişi = [];
+        tekerlekHareketiniSıfırla();
         çiz();
       });
       new ResizeObserver(çiz).observe(chart);

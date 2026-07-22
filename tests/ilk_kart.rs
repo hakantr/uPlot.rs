@@ -1,5 +1,6 @@
 use uplot_rs::{
-    Aralık, EtkileşimSeçenekleri, Grafik, HizalıVeri, UplotHatası, ilk_kart, ilk_kart_etkileşimleri,
+    Aralık, EtkileşimSeçenekleri, Grafik, HizalıVeri, TekerlekAyarları, TekerlekKipi, UplotHatası,
+    ilk_kart, ilk_kart_etkileşimleri,
 };
 
 #[test]
@@ -52,6 +53,36 @@ fn isteğe_bağlı_etkileşimler_kart_bazında_açılır() {
     assert!(ilk_kart.seçim_yakınlaştır);
     assert!(ilk_kart.çift_tıkla_tam_görünüm);
     assert!(ilk_kart.görünüm_geçmişi);
+    assert_eq!(ilk_kart.tekerlek_ayarları.kip, TekerlekKipi::Otomatik);
+}
+
+#[test]
+fn hassas_tekerlek_delta_büyüklüğüyle_orantılıdır() -> Result<(), UplotHatası> {
+    let tam = Aralık::yeni(0.0, 100.0)?;
+    let mevcut = Aralık::yeni(20.0, 80.0)?;
+    let ayarlar = TekerlekAyarları::default();
+
+    let küçük = mevcut.uyarlanabilir_tekerlek_yakınlaştır(tam, 30.0, 1.0, true, ayarlar)?;
+    assert_eq!(küçük, mevcut);
+
+    let hassas = mevcut.uyarlanabilir_tekerlek_yakınlaştır(tam, 30.0, 100.0, true, ayarlar)?;
+    let ayrık = mevcut.uyarlanabilir_tekerlek_yakınlaştır(tam, 30.0, 1.0, false, ayarlar)?;
+    let büyük_ayrık =
+        mevcut.uyarlanabilir_tekerlek_yakınlaştır(tam, 30.0, 3.0, false, ayarlar)?;
+    assert!((hassas.en_az - ayrık.en_az).abs() < f64::EPSILON);
+    assert!((hassas.en_çok - ayrık.en_çok).abs() < f64::EPSILON);
+    assert_eq!(büyük_ayrık, ayrık);
+
+    let onda_bir = mevcut.uyarlanabilir_tekerlek_yakınlaştır(
+        tam,
+        30.0,
+        10.0,
+        true,
+        TekerlekAyarları::default().kip(TekerlekKipi::Otomatik),
+    )?;
+    assert!(onda_bir.en_çok - onda_bir.en_az > hassas.en_çok - hassas.en_az);
+    assert!(onda_bir.en_çok - onda_bir.en_az < mevcut.en_çok - mevcut.en_az);
+    Ok(())
 }
 
 #[test]
