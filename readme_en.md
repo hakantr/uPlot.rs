@@ -32,36 +32,12 @@ compatibility card:
 The first card also ports the source demo's conditional hollow points, filled
 hover marker, live legend, and drag-to-zoom interaction on the X axis.
 
-### Interaction options and provenance
+## Behavior that differs from upstream
 
-Each card can enable or disable interactions independently through
-`EtkileşimSeçenekleri`:
-
-```rust
-.etkileşimler(EtkileşimSeçenekleri::default()
-    .tekerlek_etkileşimi(true)
-    .tekerlek_ayarları(TekerlekAyarları::default()
-        .kip(TekerlekKipi::Otomatik))
-    .seçim_yakınlaştır(true)
-    .çift_tıkla_tam_görünüm(true)
-    .görünüm_geçmişi(true))
-```
-
-`seçim_yakınlaştır` and `çift_tıkla_tam_görünüm` are uPlot core behaviors.
-`tekerlek_etkileşimi` is a port of uPlot's official
-[`wheelZoomPlugin`](https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-wheel.html)
-and defaults to off because it is an optional plugin. `görünüm_geçmişi` is the
-uPlot.rs-specific Back-history extension and also defaults to off. The first
-card explicitly enables all four for visual and behavioral verification.
-The “Tekerlek eklentisi” switch in both the WASM and desktop examples changes
-this card setting between `true` and `false` at runtime.
-
-`TekerlekKipi::Otomatik` preserves the official `0.75` step for line-based
-traditional mouse wheels. Pixel-based precise input such as Magic Mouse and
-trackpads uses delta-proportional zoom, a small dead zone, per-frame event
-coalescing, and one history entry per gesture. This input normalization is a
-uPlot.rs adaptation for equivalent control across devices, not part of the
-official plugin.
+Required port changes, API adaptations, and uPlot.rs-specific extensions live
+in a separate inventory to keep this README compact. See
+[Differences from the official uPlot repository](RESMI_DEPO_FARKLILIKLARI.md#differences-from-the-official-uplot-repository)
+for details and provenance.
 
 ## Live demo and automated builds
 
@@ -129,6 +105,7 @@ beside this repository. See
 - `src/kart.rs`: verifiable card fixtures
 - `uyum/`: machine-readable source and evidence inventory
 - `tools/uyum/`: reproducibility and verification tooling
+- `RESMI_DEPO_FARKLILIKLARI.md`: direct-port versus uPlot.rs-extension inventory
 
 See [UPLOT_TAM_UYUM_FAZ_PLANI.md](UPLOT_TAM_UYUM_FAZ_PLANI.md) for the detailed
 roadmap.

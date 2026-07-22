@@ -18,12 +18,7 @@ Rust kartını yeniden üretir; böylece farklı veri yoğunlukları görsel ola
 doğrulanabilir.
 
 Web portunun geliştirme sözleşmesi **8081**'dir. Grafik üzerinde hover canlı
-değerleri gösterir; yatay sürükleme X aralığına yakınlaştırır, çift tıklama
-tam görünüme döner ve tekerlek fare konumunu odak alarak yakınlaştırır. Seçim
-ve çift tıklama uPlot çekirdek davranışlarıdır; varsayılanı kapalı tekerlek
-özelliği resmi `wheelZoomPlugin` portu, “Geri” görünüm geçmişi ise uPlot.rs
-uzantısıdır. Her biri kartın `EtkileşimSeçenekleri` tanımından açılıp kapatılır.
-“Tekerlek eklentisi” anahtarı da bu ayarı sayfa açıkken canlı değiştirir.
-Otomatik kip klasik tekerleği ayrık, Magic Mouse/trackpad akışını ise piksel
-delta büyüklüğüyle orantılı işler; aynı animasyon karesindeki olaylar tek
-çizimde birleştirilir.
+değerleri gösterir; yatay sürükleme X aralığına yakınlaştırır, çift tıklama tam
+görünüme döner ve tekerlek fare konumunu odak alarak yakınlaştırır. Resmî
+davranışlarla uPlot.rs uyarlamalarının ayrıntılı ayrımı için
+[Resmî depo farklılıkları](../RESMI_DEPO_FARKLILIKLARI.md) belgesini okuyun.
