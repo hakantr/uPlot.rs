@@ -42,6 +42,27 @@ const demoEnvanteri = JSON.parse(
 const kaynakEnvanteri = JSON.parse(
   readFileSync(resolve(kok, "uyum/kaynak_envanteri.json"), "utf8"),
 );
+const davranışSözleşmesi = JSON.parse(
+  readFileSync(resolve(kok, "uyum/ortak_davranis_sozlesmesi.json"), "utf8"),
+);
+
+const davranışKimlikleri = new Set();
+for (const davranış of davranışSözleşmesi.davranışlar) {
+  if (davranışKimlikleri.has(davranış.id)) {
+    hata(`yinelenen ortak davranış kimliği: ${davranış.id}`);
+  }
+  davranışKimlikleri.add(davranış.id);
+  if (!davranış.açıklama || !davranış.tür || !davranış.başlık) {
+    hata(`eksik ortak davranış tanımı: ${davranış.id}`);
+  }
+  for (const kanıtDosyası of davranış.kanıt_dosyaları ?? []) {
+    readFileSync(resolve(kok, kanıtDosyası));
+  }
+}
+if (davranışKimlikleri.size < 19) {
+  hata(`ortak davranış sözleşmesi beklenenden küçük: ${davranışKimlikleri.size}`);
+}
+const izinliKararlar = new Set(davranışSözleşmesi.izinli_kararlar);
 
 if (demoEnvanteri.demo_sayısı !== 73 || demoEnvanteri.demolar.length !== 73) {
   hata(`demo envanteri 73 kayıt içermiyor: ${demoEnvanteri.demolar.length}`);
@@ -94,6 +115,37 @@ for (const kart of manifest.kartlar) {
   ]) {
     readFileSync(resolve(kok, yerelYol));
   }
+
+  const kartSözleşmesi = kart.ortak_davranış_sözleşmesi;
+  if (kartSözleşmesi?.sürüm !== davranışSözleşmesi.şema_sürümü) {
+    hata(`${kart.id} ortak davranış sözleşmesi sürümü eksik veya güncel değil`);
+    continue;
+  }
+  const kararlar = kartSözleşmesi.kararlar ?? {};
+  const gerekçeler = kartSözleşmesi.gerekçeler ?? {};
+  for (const davranışKimliği of davranışKimlikleri) {
+    const karar = kararlar[davranışKimliği];
+    if (!izinliKararlar.has(karar)) {
+      hata(`${kart.id} davranış kararı eksik/geçersiz: ${davranışKimliği}`);
+      continue;
+    }
+    if (
+      (karar === "kartta_kapalı" || karar === "uygulanamaz") &&
+      !gerekçeler[davranışKimliği]?.trim()
+    ) {
+      hata(`${kart.id} davranış gerekçesi eksik: ${davranışKimliği}`);
+    }
+  }
+  for (const davranışKimliği of Object.keys(kararlar)) {
+    if (!davranışKimlikleri.has(davranışKimliği)) {
+      hata(`${kart.id} bilinmeyen davranış kararı: ${davranışKimliği}`);
+    }
+  }
+  for (const davranışKimliği of Object.keys(gerekçeler)) {
+    if (!davranışKimlikleri.has(davranışKimliği)) {
+      hata(`${kart.id} bilinmeyen davranış gerekçesi: ${davranışKimliği}`);
+    }
+  }
 }
 
 const tipHash = sha256(resolve(kaynak, "dist/uPlot.d.ts"));
@@ -103,6 +155,6 @@ if (tipHash !== matris.kaynak_sha256) {
 
 if (process.exitCode !== 1) {
   process.stdout.write(
-    `uyum denetimi geçti: ${manifest.kartlar.length} kart, ${matris.satırlar.length} API satırı\n`,
+    `uyum denetimi geçti: ${manifest.kartlar.length} kart, ${matris.satırlar.length} API satırı, ${davranışKimlikleri.size} ortak davranış\n`,
   );
 }

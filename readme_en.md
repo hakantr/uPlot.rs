@@ -180,6 +180,8 @@ beside this repository. See
 - `uyum/`: machine-readable source and evidence inventory
 - `tools/uyum/`: reproducibility and verification tooling
 - `RESMI_DEPO_FARKLILIKLARI.md`: direct-port versus uPlot.rs-extension inventory
+- `ORTAK_KART_DAVRANISLARI.md`: shared visual/interaction contract enforced for
+  every newly ported card by CI
 
 See the [uPlot.rs full-port phase plan](UPlot_TAM_PORT_FAZI.md) for the detailed
 roadmap.

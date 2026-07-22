@@ -178,6 +178,8 @@ hash kilidini doğrular. Tarayıcı listesi için
 - `uyum/`: makine-okunur kaynak ve kanıt envanteri
 - `tools/uyum/`: yeniden üretim/denetim araçları
 - `RESMI_DEPO_FARKLILIKLARI.md`: resmî port ile uPlot.rs uzantılarının ayrımı
+- `ORTAK_KART_DAVRANISLARI.md`: her yeni portta zorunlu ve CI tarafından
+  denetlenen ortak görsel/etkileşim sözleşmesi
 
 Ayrıntılı yol haritası için [uPlot.rs tam port faz planı](UPlot_TAM_PORT_FAZI.md)
 dosyasına bakın.

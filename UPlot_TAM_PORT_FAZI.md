@@ -26,6 +26,9 @@ Kart kodunda davranış tekrarlanmaz: yeni bir ihtiyaç önce çekirdek seçenek
 - GPUI katalog uygulaması dağıtılan çekirdeğin içine sızmaz. Geliştirici yalnız
   kart verisini, görünüm seçeneklerini ve açık/kapalı yetenekleri tanımlar.
 - Her faz önceki fazların test, uyum ve görsel kanıt kapılarını yeniden çalıştırır.
+- Her kart [ortak kart davranışları](ORTAK_KART_DAVRANISLARI.md) sözleşmesindeki
+  bütün maddeler için manifest kararı taşır. Eksik karar veya gerekçesiz istisna
+  uyum denetimini ve CI'ı kırar.
 - Kaynakta etkileşim varsa port kartında da bulunur; statik benzerlik tek başına
   kabul sayılmaz.
 - Demo içindeki sabit diziler ve veri varlıkları aynen kullanılır. Rastgele veri

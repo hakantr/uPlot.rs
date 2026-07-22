@@ -1,0 +1,145 @@
+{
+  "şema_sürümü": 1,
+  "profil": "resize-temeli-v1",
+  "izinli_kararlar": [
+    "devralındı",
+    "kartta_etkin",
+    "kartta_kapalı",
+    "uygulanamaz"
+  ],
+  "davranışlar": [
+    {
+      "id": "kaynak-veri-esligi",
+      "başlık": "Kaynak veri ve üretici eşliği",
+      "tür": "port_kuralı",
+      "açıklama": "Sabit veri, veri üretme algoritması, seri sırası ve kaynakta sabitse boyutlar resmî demoyla eşleşir.",
+      "kanıt_dosyaları": ["tools/uyum/denetle.mjs", "uyum/demo_manifesti.json"]
+    },
+    {
+      "id": "cekirdek-davranis-sahipligi",
+      "başlık": "Davranışın çekirdekte sahiplenilmesi",
+      "tür": "mimari_kural",
+      "açıklama": "Kart davranışı katalog uygulamasında tekrarlanmaz; yüzey yalnız olay iletir ve sahneyi boyar.",
+      "kanıt_dosyaları": ["src/etkilesim.rs", "src/grafik.rs"]
+    },
+    {
+      "id": "gpui-wasm-yuzey-esdegerligi",
+      "başlık": "GPUI ve WASM yüzey eşdeğerliği",
+      "tür": "mimari_kural",
+      "açıklama": "İki katalog aynı Rust kartını ve ortak sahne semantiğini kullanır.",
+      "kanıt_dosyaları": ["src/gpui.rs", "wasm/src/lib.rs"]
+    },
+    {
+      "id": "duyarli-boyutlandirma",
+      "başlık": "Duyarlı boyutlandırma",
+      "tür": "dogrudan_port",
+      "açıklama": "Grafik görünür yüzeye yeniden yerleşir ve sahne yeni boyutta yeniden üretilir.",
+      "kanıt_dosyaları": ["src/gpui.rs", "wasm/www/index.html"]
+    },
+    {
+      "id": "cizim-alani-kirpmasi",
+      "başlık": "Çizim alanı kırpması",
+      "tür": "dogrudan_port",
+      "açıklama": "Seri yolları ve dolguları eksenlerin içindeki çizim dikdörtgeninde kırpılır.",
+      "kanıt_dosyaları": ["src/cizim/kirpma.rs", "src/grafik.rs"]
+    },
+    {
+      "id": "dinamik-eksen-izgara",
+      "başlık": "Dinamik eksen ve ızgara",
+      "tür": "dogrudan_port",
+      "açıklama": "Yakınlaştırma ve taşıma sonrasında bölmeler görünür aralıktan yeniden hesaplanır ve sıfıra hizalanır.",
+      "kanıt_dosyaları": ["src/grafik.rs", "tests/ilk_kart.rs"]
+    },
+    {
+      "id": "surekli-imlec-izleme",
+      "başlık": "Kesintisiz cursor izleme",
+      "tür": "dogrudan_port",
+      "açıklama": "Kesikli eksen çizgileri yalnız veri noktalarında atlamaz; yüzey içindeki gerçek fare konumunu izler.",
+      "kanıt_dosyaları": ["src/gpui.rs", "wasm/www/index.html"]
+    },
+    {
+      "id": "canli-coklu-seri-lejanti",
+      "başlık": "Canlı çoklu seri lejantı",
+      "tür": "dogrudan_port",
+      "açıklama": "Ortak X konumundaki bütün seri değerleri cursor ile birlikte güncellenir.",
+      "kanıt_dosyaları": ["src/grafik.rs", "src/gpui.rs", "wasm/src/lib.rs"]
+    },
+    {
+      "id": "kosullu-bos-ve-dolu-noktalar",
+      "başlık": "Koşullu boş ve hover sırasında dolu noktalar",
+      "tür": "dogrudan_port",
+      "açıklama": "Kaynak kart nokta gösteriyorsa normal noktalar boş, hover noktası seri rengiyle dolu çizilir.",
+      "kanıt_dosyaları": ["src/grafik.rs", "src/gpui.rs"]
+    },
+    {
+      "id": "secim-yakinlastirma",
+      "başlık": "Sürükleyerek seçim ve yakınlaştırma",
+      "tür": "dogrudan_port",
+      "açıklama": "Yatay seçim bırakıldığında seçilen görünür X aralığına yakınlaştırılır ve kart seçeneğiyle kapatılabilir.",
+      "kanıt_dosyaları": ["src/etkilesim.rs", "tests/ilk_kart.rs"]
+    },
+    {
+      "id": "cift-tik-tam-gorunum",
+      "başlık": "Çift tıklamayla tam görünüme dönüş",
+      "tür": "dogrudan_port",
+      "açıklama": "Yakın görünüm çift tıklamayla tam veri aralığına döner ve kart seçeneğiyle kapatılabilir.",
+      "kanıt_dosyaları": ["src/etkilesim.rs", "src/gpui.rs", "wasm/www/index.html"]
+    },
+    {
+      "id": "tekerlek-yakinlastirma",
+      "başlık": "Fare odaklı tekerlek yakınlaştırma",
+      "tür": "resmi_eklenti_portu",
+      "açıklama": "Açıldığında X/Y görünümü fare konumunu odakta tutarak yakınlaştırır ve tam veri aralığında sınırlar.",
+      "kanıt_dosyaları": ["src/etkilesim.rs", "tests/ilk_kart.rs"]
+    },
+    {
+      "id": "uyarlanabilir-hassas-tekerlek",
+      "başlık": "Magic Mouse ve klasik tekerlek normalizasyonu",
+      "tür": "uplot_rs_uzantısı",
+      "açıklama": "Piksel tabanlı hassas akış ile satır tabanlı ayrık tekerlek otomatik ayrılır.",
+      "kanıt_dosyaları": ["src/secenek.rs", "src/etkilesim.rs", "tests/ilk_kart.rs"]
+    },
+    {
+      "id": "dokunma-yakinlastirma-tasima",
+      "başlık": "Dokunma ile yakınlaştırma ve taşıma",
+      "tür": "resmi_eklenti_portu",
+      "açıklama": "Açıldığında iki parmakla X/Y yakınlaştırma ve tek parmakla taşıma çekirdekte uygulanır.",
+      "kanıt_dosyaları": ["src/etkilesim.rs", "wasm/src/lib.rs", "tests/ilk_kart.rs"]
+    },
+    {
+      "id": "bosluk-sol-surukleme-tasima",
+      "başlık": "Boşluk ve sol sürüklemeyle taşıma",
+      "tür": "giris_uyarlaması",
+      "açıklama": "Yakınlaştırılmış masaüstü/web görünümü boşluk basılıyken sol sürüklemeyle X/Y yönünde taşınır.",
+      "kanıt_dosyaları": ["src/etkilesim.rs", "src/gpui.rs", "wasm/www/index.html"]
+    },
+    {
+      "id": "gorunum-gecmisi",
+      "başlık": "Hareket bazlı görünüm geçmişi",
+      "tür": "uplot_rs_uzantısı",
+      "açıklama": "Açıldığında seçim, tekerlek ve taşıma hareketleri geri alınabilir görünüm adımları üretir.",
+      "kanıt_dosyaları": ["src/etkilesim.rs", "tests/ilk_kart.rs"]
+    },
+    {
+      "id": "gorunur-geri-ve-tam-gorunum-kontrolleri",
+      "başlık": "Görünür Geri ve Tam görünüm kontrolleri",
+      "tür": "sunum_uyarlaması",
+      "açıklama": "Kataloglar desteklenen görünüm durumlarında keşfedilebilir geri dönüş kontrolleri gösterir.",
+      "kanıt_dosyaları": ["uygulamalar/masaustu/src/masaustu.rs", "wasm/www/index.html"]
+    },
+    {
+      "id": "kart-bilgi-ve-tanim-yerlesimi",
+      "başlık": "Kart bilgisi ve kapalı tanım kutusu",
+      "tür": "sunum_kuralı",
+      "açıklama": "Bilgi satırı başlık altında ve çizim sınırının üstündedir; Rust tanımı kart altında varsayılan kapalıdır.",
+      "kanıt_dosyaları": ["uygulamalar/masaustu/src/masaustu.rs", "wasm/www/index.html"]
+    },
+    {
+      "id": "paniksiz-hata-bildirimi",
+      "başlık": "Paniksiz hata bildirimi",
+      "tür": "mimari_kural",
+      "açıklama": "Üretim davranışı panic üretmez; geçersiz veri ve seçenekler tipli UplotHatası olarak döner.",
+      "kanıt_dosyaları": ["src/hata.rs", "Cargo.toml"]
+    }
+  ]
+}
