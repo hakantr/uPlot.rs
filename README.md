@@ -31,6 +31,27 @@ Port şu anda Faz 0 altyapısı ve ilk dikey uyum kartını içerir:
 İlk kart, kaynak demonun koşullu boş noktalarını, dolu hover noktasını, canlı
 lejantını ve X ekseninde sürükle-bırak yakınlaştırmasını da taşır.
 
+### Etkileşim seçenekleri ve kaynak ayrımı
+
+Kart etkileşimleri `EtkileşimSeçenekleri` ile ayrı ayrı açılıp kapatılır:
+
+```rust
+.etkileşimler(EtkileşimSeçenekleri::default()
+    .tekerlek_etkileşimi(true)
+    .seçim_yakınlaştır(true)
+    .çift_tıkla_tam_görünüm(true)
+    .görünüm_geçmişi(true))
+```
+
+`seçim_yakınlaştır` ile `çift_tıkla_tam_görünüm`, uPlot çekirdeğinin
+davranışlarıdır. `tekerlek_etkileşimi`, uPlot'un resmi
+[`wheelZoomPlugin`](https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-wheel.html)
+portudur ve eklenti olduğu için varsayılan olarak kapalıdır.
+`görünüm_geçmişi` ise uPlot.rs'e özgü “Geri” uzantısıdır ve o da varsayılan
+olarak kapalıdır. İlk kart, görsel ve davranışsal doğrulama için dördünü de
+açık tanımlar. WASM ve masaüstü örneklerindeki “Tekerlek eklentisi” anahtarı,
+bu kart ayarını canlı olarak `true`/`false` arasında değiştirir.
+
 ## Canlı örnek ve otomatik derlemeler
 
 Etkileşimli WASM chart listesi GitHub Pages üzerinde yayınlanır:

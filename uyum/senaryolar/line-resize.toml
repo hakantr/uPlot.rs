@@ -26,6 +26,15 @@ seri_noktası_en_yakın_örneğe_kilitlenir = true
 canlı_lejant = true
 x_sürükle_yakınlaştır = true
 çift_tıkla_sıfırla = true
+çift_tıkla_tam_görünüm_kaynağı = "src/uPlot.js#dblClick"
+tekerlek_x_yakınlaştır = true
+tekerlek_katsayısı = 0.75
+tekerlek_kaynağı = "demos/zoom-wheel.html#wheelZoomPlugin"
+tekerlek_uyum_türü = "resmi_plugin_portu"
+tekerlek_odak_davranışı = "farenin_göreli_ekran_konumunu_koru"
+tekerlek_canlı_anahtar = true
+önceki_görünüme_dön = true
+önceki_görünüm_uyum_türü = "uplot_rs_uzantısı"
 
 [web]
 port = 8081

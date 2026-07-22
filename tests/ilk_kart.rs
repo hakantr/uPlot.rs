@@ -1,4 +1,6 @@
-use uplot_rs::{Grafik, HizalıVeri, UplotHatası, ilk_kart};
+use uplot_rs::{
+    Aralık, EtkileşimSeçenekleri, Grafik, HizalıVeri, UplotHatası, ilk_kart, ilk_kart_etkileşimleri,
+};
 
 #[test]
 fn ilk_kart_belirlenimci_svg_üretir() -> Result<(), UplotHatası> {
@@ -22,4 +24,44 @@ fn hizalı_veri_sırasız_x_değerini_reddeder() {
         vec![vec![Some(1.0), Some(2.0), Some(3.0)]],
     );
     assert_eq!(sonuç, Err(UplotHatası::SırasızX { indeks: 2 }));
+}
+
+#[test]
+fn tekerlek_yakınlaştırması_farenin_göreli_konumunu_korur() -> Result<(), UplotHatası> {
+    let tam = Aralık::yeni(0.0, 100.0)?;
+    let mevcut = Aralık::yeni(20.0, 80.0)?;
+
+    let yakın = mevcut.tekerlek_yakınlaştır(tam, 30.0, true)?;
+    assert!((yakın.en_az - 22.5).abs() < f64::EPSILON);
+    assert!((yakın.en_çok - 67.5).abs() < f64::EPSILON);
+
+    let kenar = mevcut.tekerlek_yakınlaştır(tam, 20.0, true)?;
+    assert!((kenar.en_az - 20.0).abs() < f64::EPSILON);
+    assert!((kenar.en_çok - 65.0).abs() < f64::EPSILON);
+    Ok(())
+}
+
+#[test]
+fn isteğe_bağlı_etkileşimler_kart_bazında_açılır() {
+    let varsayılan = EtkileşimSeçenekleri::default();
+    assert!(!varsayılan.tekerlek_etkileşimi);
+    assert!(!varsayılan.görünüm_geçmişi);
+
+    let ilk_kart = ilk_kart_etkileşimleri();
+    assert!(ilk_kart.tekerlek_etkileşimi);
+    assert!(ilk_kart.seçim_yakınlaştır);
+    assert!(ilk_kart.çift_tıkla_tam_görünüm);
+    assert!(ilk_kart.görünüm_geçmişi);
+}
+
+#[test]
+fn tekerlek_uzaklaştırması_tam_aralıkta_sınırlanır() -> Result<(), UplotHatası> {
+    let tam = Aralık::yeni(0.0, 100.0)?;
+    let mevcut = Aralık::yeni(20.0, 80.0)?;
+
+    let uzak = mevcut.tekerlek_yakınlaştır(tam, 30.0, false)?;
+    assert!((uzak.en_az - 50.0 / 3.0).abs() < f64::EPSILON * 16.0);
+    assert!((uzak.en_çok - 290.0 / 3.0).abs() < f64::EPSILON * 16.0);
+    assert_eq!(uzak.tekerlek_yakınlaştır(tam, 30.0, false)?, tam);
+    Ok(())
 }

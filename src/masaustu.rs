@@ -1,19 +1,23 @@
 //! GPUI masaüstü chart listesi ve sahne adaptörü.
 
 use std::cell::Cell;
+use std::collections::VecDeque;
 use std::f64::consts::PI;
 use std::rc::Rc;
 
 use gpui::{
-    App, BorderStyle, Bounds, Context, FontWeight, Hsla, IntoElement, MouseButton, MouseDownEvent,
-    MouseExitEvent, MouseMoveEvent, MouseUpEvent, PathBuilder, Pixels, Render, SharedString,
-    TextAlign, TextRun, Window, canvas, div, point, prelude::*, px, quad, rgb, rgba, size,
+    App, BorderStyle, Bounds, Context, Entity, FontWeight, Hsla, IntoElement, MouseButton,
+    MouseDownEvent, MouseExitEvent, MouseMoveEvent, MouseUpEvent, PathBuilder, Pixels, Render,
+    ScrollDelta, ScrollWheelEvent, SharedString, TextAlign, TextRun, Window, canvas, div, point,
+    prelude::*, px, quad, rgb, rgba, size,
 };
-use ortak_bilesenler::{CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, PlatformPencere};
+use ortak_bilesenler::{
+    Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, PlatformPencere,
+};
 
 use crate::{
-    Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne, UplotHatası, sinüs_kartı,
-    İLK_KART_TANIM_ÖRNEĞİ,
+    Aralık, EtkileşimSeçenekleri, Grafik, Komut, MetinHizası, Nokta, Sahne, UplotHatası,
+    ilk_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
 };
 
 #[derive(Clone, Copy)]
@@ -30,11 +34,23 @@ pub struct ChartListesi {
     seçim: Option<(f32, f32)>,
     hata: Option<String>,
     kart_tanımı_açık: bool,
+    görünüm_geçmişi: VecDeque<Option<Aralık>>,
+    etkileşimler: EtkileşimSeçenekleri,
+    tekerlek_anahtarı: Entity<Anahtar>,
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
 }
 
 impl ChartListesi {
-    pub fn yeni(_: &mut Context<Self>) -> Self {
+    pub fn yeni(cx: &mut Context<Self>) -> Self {
+        let etkileşimler = ilk_kart_etkileşimleri();
+        let tekerlek_anahtarı =
+            cx.new(|cx| Anahtar::yeni("Tekerlek eklentisi", etkileşimler.tekerlek_etkileşimi, cx));
+        cx.subscribe(&tekerlek_anahtarı, |bu, _, olay: &AnahtarOlayi, cx| {
+            let AnahtarOlayi::Degisti(etkin) = *olay;
+            bu.etkileşimler.tekerlek_etkileşimi = etkin;
+            cx.notify();
+        })
+        .detach();
         Self {
             nokta_sayısı: 100,
             x_aralığı: None,
@@ -42,6 +58,9 @@ impl ChartListesi {
             seçim: None,
             hata: None,
             kart_tanımı_açık: false,
+            görünüm_geçmişi: VecDeque::new(),
+            etkileşimler,
+            tekerlek_anahtarı,
             çizim_sınırları: Rc::new(Cell::new(None)),
         }
     }
@@ -131,6 +150,56 @@ impl ChartListesi {
             veri_y: x_değeri.sin(),
         });
     }
+
+    fn görünümü_uygula(&mut self, yeni: Option<Aralık>) {
+        if self.x_aralığı == yeni {
+            return;
+        }
+        if self.etkileşimler.görünüm_geçmişi {
+            if self.görünüm_geçmişi.len() >= 100 {
+                self.görünüm_geçmişi.pop_front();
+            }
+            self.görünüm_geçmişi.push_back(self.x_aralığı);
+        }
+        self.x_aralığı = yeni;
+        self.hata = None;
+    }
+
+    fn önceki_görünüme_dön(&mut self) {
+        if let Some(önceki) = self.görünüm_geçmişi.pop_back() {
+            self.x_aralığı = önceki;
+            self.hata = None;
+        }
+    }
+
+    fn tekerlek_yakınlaştır(&mut self, olay: &ScrollWheelEvent) {
+        if !self.etkileşimler.tekerlek_etkileşimi {
+            return;
+        }
+        let Some(fare) = self.sahne_konumu(olay.position) else {
+            return;
+        };
+        if !(64.0..=776.0).contains(&fare.x) || !(48.0..=352.0).contains(&fare.y) {
+            return;
+        }
+        let yön = match olay.delta {
+            ScrollDelta::Pixels(delta) => f32::from(delta.y),
+            ScrollDelta::Lines(delta) => delta.y,
+        };
+        if !yön.is_finite() || yön.abs() <= f32::EPSILON {
+            return;
+        }
+
+        let tam = tam_x_aralığı(self.nokta_sayısı);
+        let mevcut = self.geçerli_x_aralığı();
+        let odak = ters_ölçekle(fare.x, mevcut, 64.0, 712.0);
+        match mevcut.tekerlek_yakınlaştır(tam, odak, yön > 0.0) {
+            Ok(aralık) => self.görünümü_uygula((aralık != tam).then_some(aralık)),
+            Err(hata) => {
+                self.hata = Some(format!("Tekerlek yakınlaştırması uygulanamadı: {hata}"));
+            }
+        }
+    }
 }
 
 impl Render for ChartListesi {
@@ -151,6 +220,9 @@ impl Render for ChartListesi {
         );
         let çizim_sınırları = self.çizim_sınırları.clone();
         let kart_tanımı_açık = self.kart_tanımı_açık;
+        let geri_var = !self.görünüm_geçmişi.is_empty();
+        let yakınlaştırılmış = self.x_aralığı.is_some();
+        let tekerlek_anahtarı = self.tekerlek_anahtarı.clone();
 
         let çizim = div()
             .id("canli-chart")
@@ -171,6 +243,10 @@ impl Render for ChartListesi {
                 }
                 cx.notify();
             }))
+            .on_scroll_wheel(cx.listener(|bu, olay: &ScrollWheelEvent, _, cx| {
+                bu.tekerlek_yakınlaştır(olay);
+                cx.notify();
+            }))
             .on_mouse_exit(cx.listener(|bu, _: &MouseExitEvent, _, cx| {
                 if bu.seçim.is_none() {
                     bu.imleç = None;
@@ -180,10 +256,11 @@ impl Render for ChartListesi {
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(|bu, olay: &MouseDownEvent, _, cx| {
-                    if olay.click_count >= 2 {
-                        bu.x_aralığı = None;
+                    if olay.click_count >= 2 && bu.etkileşimler.çift_tıkla_tam_görünüm {
+                        bu.görünümü_uygula(None);
                         bu.seçim = None;
-                    } else if let Some(konum) = bu.sahne_konumu(olay.position)
+                    } else if bu.etkileşimler.seçim_yakınlaştır
+                        && let Some(konum) = bu.sahne_konumu(olay.position)
                         && (64.0..=776.0).contains(&konum.x)
                         && (48.0..=352.0).contains(&konum.y)
                     {
@@ -203,8 +280,7 @@ impl Render for ChartListesi {
                         let en_çok = ters_ölçekle(baş.max(son), eski, 64.0, 712.0);
                         match Aralık::yeni(en_az, en_çok) {
                             Ok(aralık) => {
-                                bu.x_aralığı = Some(aralık);
-                                bu.hata = None;
+                                bu.görünümü_uygula(Some(aralık));
                             }
                             Err(hata) => {
                                 bu.hata = Some(format!("Seçilen aralık uygulanamadı: {hata}"));
@@ -292,6 +368,7 @@ impl Render for ChartListesi {
                     .text_color(soluk)
                     .child(nokta_yazısı),
             )
+            .child(tekerlek_anahtarı)
             .child(
                 Dugme::yeni("nokta-azalt", "− Nokta")
                     .boyutu(DugmeBoyutu::Kucuk)
@@ -299,6 +376,7 @@ impl Render for ChartListesi {
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
                         bu.nokta_sayısı = bu.nokta_sayısı.saturating_sub(10).max(10);
                         bu.x_aralığı = None;
+                        bu.görünüm_geçmişi.clear();
                         bu.imleç = None;
                         cx.notify();
                     })),
@@ -310,7 +388,28 @@ impl Render for ChartListesi {
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
                         bu.nokta_sayısı = bu.nokta_sayısı.saturating_add(10).min(10_000);
                         bu.x_aralığı = None;
+                        bu.görünüm_geçmişi.clear();
                         bu.imleç = None;
+                        cx.notify();
+                    })),
+            )
+            .child(
+                Dugme::yeni("gorunum-geri", "↶ Geri")
+                    .boyutu(DugmeBoyutu::Kucuk)
+                    .turu(DugmeTuru::Hayalet)
+                    .devre_disi(!geri_var || !self.etkileşimler.görünüm_geçmişi)
+                    .tiklaninca(cx.listener(|bu, _, _, cx| {
+                        bu.önceki_görünüme_dön();
+                        cx.notify();
+                    })),
+            )
+            .child(
+                Dugme::yeni("tam-gorunum", "Tam görünüm")
+                    .boyutu(DugmeBoyutu::Kucuk)
+                    .turu(DugmeTuru::Hayalet)
+                    .devre_disi(!yakınlaştırılmış || !self.etkileşimler.çift_tıkla_tam_görünüm)
+                    .tiklaninca(cx.listener(|bu, _, _, cx| {
+                        bu.görünümü_uygula(None);
                         cx.notify();
                     })),
             )
@@ -321,6 +420,7 @@ impl Render for ChartListesi {
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
                         bu.nokta_sayısı = 100;
                         bu.x_aralığı = None;
+                        bu.görünüm_geçmişi.clear();
                         bu.imleç = None;
                         cx.notify();
                     })),
@@ -346,7 +446,9 @@ impl Render for ChartListesi {
                         div()
                             .text_sm()
                             .text_color(soluk)
-                            .child("Kaynak: github.com/leeoniya/uPlot/demos/resize.html"),
+                            .child(
+                                "Çekirdek: seçim + çift tık · İsteğe bağlı resmi eklenti portu: tekerlek · uPlot.rs: geri geçmişi",
+                            ),
                     ),
             )
             .child(araçlar)

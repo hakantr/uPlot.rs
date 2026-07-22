@@ -19,4 +19,8 @@ doğrulanabilir.
 
 Web portunun geliştirme sözleşmesi **8081**'dir. Grafik üzerinde hover canlı
 değerleri gösterir; yatay sürükleme X aralığına yakınlaştırır, çift tıklama
-ölçeği sıfırlar.
+tam görünüme döner ve tekerlek fare konumunu odak alarak yakınlaştırır. Seçim
+ve çift tıklama uPlot çekirdek davranışlarıdır; varsayılanı kapalı tekerlek
+özelliği resmi `wheelZoomPlugin` portu, “Geri” görünüm geçmişi ise uPlot.rs
+uzantısıdır. Her biri kartın `EtkileşimSeçenekleri` tanımından açılıp kapatılır.
+“Tekerlek eklentisi” anahtarı da bu ayarı sayfa açıkken canlı değiştirir.

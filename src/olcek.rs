@@ -8,6 +8,51 @@ pub struct Aralık {
 }
 
 impl Aralık {
+    /// uPlot'un resmi `wheelZoomPlugin` yaklaşımındaki 0.75 katsayısını ve
+    /// tam veri aralığına sıkıştırmayı kullanarak X görünümünü değiştirir.
+    /// `odak`, resmi eklentideki gibi ekrandaki göreli konumunu korur.
+    pub fn tekerlek_yakınlaştır(
+        self,
+        tam: Self,
+        odak: f64,
+        yakınlaştır: bool,
+    ) -> Result<Self, UplotHatası> {
+        let mevcut = Self::yeni(self.en_az, self.en_çok)?;
+        let tam = Self::yeni(tam.en_az, tam.en_çok)?;
+        if !odak.is_finite() {
+            return Err(UplotHatası::GeçersizAralık {
+                en_az: odak,
+                en_çok: odak,
+            });
+        }
+
+        const KATSAYI: f64 = 0.75;
+        let tam_uzunluk = tam.en_çok - tam.en_az;
+        let mevcut_uzunluk = mevcut.en_çok - mevcut.en_az;
+        let yeni_uzunluk = if yakınlaştır {
+            (mevcut_uzunluk * KATSAYI).max(tam_uzunluk / 10_000.0)
+        } else {
+            mevcut_uzunluk / KATSAYI
+        };
+        if yeni_uzunluk >= tam_uzunluk {
+            return Ok(tam);
+        }
+
+        let odak = odak.clamp(mevcut.en_az, mevcut.en_çok);
+        let odak_oranı = (odak - mevcut.en_az) / mevcut_uzunluk;
+        let mut en_az = odak - odak_oranı * yeni_uzunluk;
+        let mut en_çok = en_az + yeni_uzunluk;
+        if en_az < tam.en_az {
+            en_az = tam.en_az;
+            en_çok = tam.en_az + yeni_uzunluk;
+        } else if en_çok > tam.en_çok {
+            en_çok = tam.en_çok;
+            en_az = tam.en_çok - yeni_uzunluk;
+        }
+
+        Self::yeni(en_az, en_çok)
+    }
+
     pub fn yeni(en_az: f64, en_çok: f64) -> Result<Self, UplotHatası> {
         if !en_az.is_finite() || !en_çok.is_finite() || en_az >= en_çok {
             return Err(UplotHatası::GeçersizAralık { en_az, en_çok });

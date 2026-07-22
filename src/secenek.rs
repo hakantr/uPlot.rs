@@ -1,5 +1,51 @@
 use crate::{Aralık, UplotHatası};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct EtkileşimSeçenekleri {
+    /// uPlot'un resmi `wheelZoomPlugin` portunu etkinleştirir. Varsayılan: kapalı.
+    pub tekerlek_etkileşimi: bool,
+    /// uPlot çekirdeğinin sürükleyerek X aralığı seçme davranışı.
+    pub seçim_yakınlaştır: bool,
+    /// uPlot çekirdeğinin çift tıklamayla tam X aralığına dönme davranışı.
+    pub çift_tıkla_tam_görünüm: bool,
+    /// uPlot.rs'e özgü adımlı görünüm geçmişi. Varsayılan: kapalı.
+    pub görünüm_geçmişi: bool,
+}
+
+impl Default for EtkileşimSeçenekleri {
+    fn default() -> Self {
+        Self {
+            tekerlek_etkileşimi: false,
+            seçim_yakınlaştır: true,
+            çift_tıkla_tam_görünüm: true,
+            görünüm_geçmişi: false,
+        }
+    }
+}
+
+impl EtkileşimSeçenekleri {
+    /// Resmi `wheelZoomPlugin` portunu kart için açar veya kapatır.
+    pub fn tekerlek_etkileşimi(mut self, etkin: bool) -> Self {
+        self.tekerlek_etkileşimi = etkin;
+        self
+    }
+
+    pub fn seçim_yakınlaştır(mut self, etkin: bool) -> Self {
+        self.seçim_yakınlaştır = etkin;
+        self
+    }
+
+    pub fn çift_tıkla_tam_görünüm(mut self, etkin: bool) -> Self {
+        self.çift_tıkla_tam_görünüm = etkin;
+        self
+    }
+
+    pub fn görünüm_geçmişi(mut self, etkin: bool) -> Self {
+        self.görünüm_geçmişi = etkin;
+        self
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct SeriSeçenekleri {
     pub etiket: String,
@@ -36,6 +82,7 @@ pub struct GrafikSeçenekleri {
     pub yükseklik: u32,
     pub x_zaman: bool,
     pub y_aralığı: Option<Aralık>,
+    pub etkileşimler: EtkileşimSeçenekleri,
     pub seriler: Vec<SeriSeçenekleri>,
 }
 
@@ -53,6 +100,7 @@ impl GrafikSeçenekleri {
             yükseklik,
             x_zaman: true,
             y_aralığı: None,
+            etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
         })
     }
@@ -69,6 +117,11 @@ impl GrafikSeçenekleri {
 
     pub fn y_aralığı(mut self, aralık: Aralık) -> Self {
         self.y_aralığı = Some(aralık);
+        self
+    }
+
+    pub fn etkileşimler(mut self, etkileşimler: EtkileşimSeçenekleri) -> Self {
+        self.etkileşimler = etkileşimler;
         self
     }
 

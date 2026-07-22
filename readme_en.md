@@ -32,6 +32,28 @@ compatibility card:
 The first card also ports the source demo's conditional hollow points, filled
 hover marker, live legend, and drag-to-zoom interaction on the X axis.
 
+### Interaction options and provenance
+
+Each card can enable or disable interactions independently through
+`EtkileşimSeçenekleri`:
+
+```rust
+.etkileşimler(EtkileşimSeçenekleri::default()
+    .tekerlek_etkileşimi(true)
+    .seçim_yakınlaştır(true)
+    .çift_tıkla_tam_görünüm(true)
+    .görünüm_geçmişi(true))
+```
+
+`seçim_yakınlaştır` and `çift_tıkla_tam_görünüm` are uPlot core behaviors.
+`tekerlek_etkileşimi` is a port of uPlot's official
+[`wheelZoomPlugin`](https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-wheel.html)
+and defaults to off because it is an optional plugin. `görünüm_geçmişi` is the
+uPlot.rs-specific Back-history extension and also defaults to off. The first
+card explicitly enables all four for visual and behavioral verification.
+The “Tekerlek eklentisi” switch in both the WASM and desktop examples changes
+this card setting between `true` and `false` at runtime.
+
 ## Live demo and automated builds
 
 The interactive WASM chart list is published with GitHub Pages:

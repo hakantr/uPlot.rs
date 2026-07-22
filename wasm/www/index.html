@@ -24,6 +24,13 @@
     h2 { margin: 0; font-size: 19px; }
     .kaynak { margin-top: 5px; color: #6b7280; font-size: 13px; }
     .denetimler { display: flex; align-items: center; gap: 12px; }
+    .denetimler label { display: flex; align-items: center; gap: 8px; }
+    .eklenti-anahtarı { white-space: nowrap; font-size: 13px; color: #374151; }
+    .eklenti-anahtarı input { accent-color: #dc2626; }
+    button { padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 8px;
+             color: #374151; background: #fff; cursor: pointer; }
+    button:hover:not(:disabled) { border-color: #9ca3af; background: #f9fafb; }
+    button:disabled { color: #9ca3af; background: #f3f4f6; cursor: default; }
     input[type="range"] { width: 200px; }
     output { min-width: 78px; color: #6b7280; font-size: 13px; }
     #chart { position: relative; flex: 1; min-height: 320px; margin-top: 18px; padding: 12px;
@@ -68,14 +75,22 @@
         <div>
           <h2>Resize · sayısal x ölçeği</h2>
           <div class="kaynak">Kaynak:
-            <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/resize.html">uPlot/demos/resize.html</a>
+            <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/resize.html">resize.html</a>
+            · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-wheel.html">zoom-wheel.html</a>
+            <br>Çekirdek: seçim + çift tık · İsteğe bağlı resmi eklenti portu: tekerlek · uPlot.rs: geri geçmişi
           </div>
         </div>
-        <label class="denetimler">
-          Nokta
-          <input id="nokta" type="range" min="10" max="1000" step="10" value="100">
-          <output id="nokta-değeri">100 nokta</output>
-        </label>
+        <div class="denetimler">
+          <button id="gorunum-geri" type="button">↶ Geri</button>
+          <button id="tam-gorunum" type="button">Tam görünüm</button>
+          <label class="eklenti-anahtarı">
+            <input id="tekerlek-etkilesimi" type="checkbox"> Tekerlek eklentisi
+          </label>
+          <label>Nokta
+            <input id="nokta" type="range" min="10" max="1000" step="10" value="100">
+            <output id="nokta-değeri">100 nokta</output>
+          </label>
+        </div>
       </header>
       <section id="chart" aria-live="polite"><span>WASM yükleniyor…</span></section>
       <details class="kod-örneği">
@@ -86,17 +101,63 @@
     </main>
   </div>
   <script type="module">
-    import init, { ilk_kart_svg_aralik, ilk_kart_tanim_ornegi, kart_sayisi, kaynak_commit } from "../pkg/uplot_rs_wasm.js";
+    import init, {
+      ilk_kart_svg_aralik,
+      ilk_kart_tanim_ornegi,
+      ilk_kart_tekerlek_etkilesimi,
+      ilk_kart_secim_yakinlastir,
+      ilk_kart_cift_tikla_tam_gorunum,
+      ilk_kart_gorunum_gecmisi,
+      tekerlek_x_araligi,
+      kart_sayisi,
+      kaynak_commit,
+    } from "../pkg/uplot_rs_wasm.js";
 
     const chart = document.getElementById("chart");
     const nokta = document.getElementById("nokta");
     const değer = document.getElementById("nokta-değeri");
     const hata = document.getElementById("hata");
     const kartTanımKodu = document.getElementById("kart-tanım-kodu");
+    const görünümGeri = document.getElementById("gorunum-geri");
+    const tamGörünüm = document.getElementById("tam-gorunum");
+    const tekerlekEtkileşimi = document.getElementById("tekerlek-etkilesimi");
 
     const TAM_X = 2 * Math.PI;
     let xAralığı = [0, TAM_X * 99 / 100];
     let sürükleme = null;
+    let görünümGeçmişi = [];
+    let etkileşimler = {
+      tekerlek: false,
+      seçim: false,
+      çiftTık: false,
+      geçmiş: false,
+    };
+
+    function tamAralık() {
+      const sayı = Number(nokta.value);
+      return [0, TAM_X * (sayı - 1) / sayı];
+    }
+
+    function aynıAralık(sol, sağ) {
+      return Math.abs(sol[0] - sağ[0]) <= Number.EPSILON
+        && Math.abs(sol[1] - sağ[1]) <= Number.EPSILON;
+    }
+
+    function kontrolleriGüncelle() {
+      görünümGeri.disabled = !etkileşimler.geçmiş || görünümGeçmişi.length === 0;
+      tamGörünüm.disabled = !etkileşimler.çiftTık || aynıAralık(xAralığı, tamAralık());
+    }
+
+    function görünümüUygula(yeni, geçmişeEkle = true) {
+      if (aynıAralık(xAralığı, yeni)) return;
+      if (geçmişeEkle && etkileşimler.geçmiş) {
+        if (görünümGeçmişi.length >= 100) görünümGeçmişi.shift();
+        görünümGeçmişi.push([...xAralığı]);
+      }
+      xAralığı = [...yeni];
+      hata.textContent = "";
+      çiz();
+    }
 
     function boyutlar() {
       return {
@@ -111,6 +172,8 @@
       const tamSon = TAM_X * (sayı - 1) / sayı;
       xAralığı[0] = Math.max(0, Math.min(xAralığı[0], tamSon));
       xAralığı[1] = Math.max(xAralığı[0] + Number.EPSILON, Math.min(xAralığı[1], tamSon));
+      chart.dataset.xEnAz = String(xAralığı[0]);
+      chart.dataset.xEnCok = String(xAralığı[1]);
       const { genişlik, yükseklik } = boyutlar();
       chart.innerHTML = ilk_kart_svg_aralik(
         sayı, genişlik, yükseklik, xAralığı[0], xAralığı[1]
@@ -126,9 +189,10 @@
           <circle id="imleç-nokta" visibility="hidden" r="2.5" fill="#dc2626"/>
         </g>`);
       chart.insertAdjacentHTML("beforeend", `
-        <div class="yardım">Sürükle: X yakınlaştır · çift tıkla: sıfırla</div>
+        <div class="yardım">Sürükle: seç · tekerlek: yakınlaştır/uzaklaştır · çift tıkla: tam görünüm</div>
         <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
         <span><i class="örnek"></i>sin(x): <b id="y-değeri">--</b></span></div>`);
+      kontrolleriGüncelle();
     }
 
     function svgKonumu(olay) {
@@ -201,6 +265,7 @@
       seçim.setAttribute("visibility", "visible");
     });
     chart.addEventListener("pointerdown", olay => {
+      if (!etkileşimler.seçim) return;
       const { x, view } = svgKonumu(olay);
       if (x < 64 || x > view.width - 24) return;
       chart.setPointerCapture(olay.pointerId);
@@ -215,19 +280,39 @@
         const b = Math.max(sürükleme.baş, sürükleme.son);
         const eski = sürükleme.eski;
         const dönüştür = px => eski[0] + (px - 64) / (view.width - 88) * (eski[1] - eski[0]);
-        xAralığı = [dönüştür(a), dönüştür(b)];
+        görünümüUygula([dönüştür(a), dönüştür(b)]);
       }
       sürükleme = null;
-      if (yakınlaştır) {
-        çiz();
-      } else {
+      if (!yakınlaştır) {
         chart.querySelector("#seçim")?.setAttribute("visibility", "hidden");
       }
     });
     chart.addEventListener("dblclick", () => {
-      const sayı = Number(nokta.value);
-      xAralığı = [0, TAM_X * (sayı - 1) / sayı];
-      çiz();
+      if (etkileşimler.çiftTık) görünümüUygula(tamAralık());
+    });
+    chart.addEventListener("wheel", olay => {
+      if (!etkileşimler.tekerlek || olay.deltaY === 0) return;
+      const { x, y, view } = svgKonumu(olay);
+      if (x < 64 || x > view.width - 24 || y < 48 || y > view.height - 48) return;
+      olay.preventDefault();
+      try {
+        const tam = tamAralık();
+        const yeni = tekerlek_x_araligi(
+          xAralığı[0], xAralığı[1], tam[0], tam[1], veriX(x, view), olay.deltaY < 0,
+        );
+        görünümüUygula([yeni[0], yeni[1]]);
+      } catch (neden) {
+        hata.textContent = `Tekerlek yakınlaştırması uygulanamadı: ${String(neden)}`;
+      }
+    }, { passive: false });
+
+    görünümGeri.addEventListener("click", () => {
+      const önceki = görünümGeçmişi.pop();
+      if (önceki) görünümüUygula(önceki, false);
+    });
+    tamGörünüm.addEventListener("click", () => görünümüUygula(tamAralık()));
+    tekerlekEtkileşimi.addEventListener("change", () => {
+      etkileşimler.tekerlek = tekerlekEtkileşimi.checked;
     });
 
     try {
@@ -235,9 +320,16 @@
       document.documentElement.dataset.kartSayısı = String(kart_sayisi());
       document.documentElement.dataset.kaynakCommit = kaynak_commit();
       kartTanımKodu.textContent = ilk_kart_tanim_ornegi();
+      etkileşimler = {
+        tekerlek: ilk_kart_tekerlek_etkilesimi(),
+        seçim: ilk_kart_secim_yakinlastir(),
+        çiftTık: ilk_kart_cift_tikla_tam_gorunum(),
+        geçmiş: ilk_kart_gorunum_gecmisi(),
+      };
+      tekerlekEtkileşimi.checked = etkileşimler.tekerlek;
       nokta.addEventListener("input", () => {
-        const sayı = Number(nokta.value);
-        xAralığı = [0, TAM_X * (sayı - 1) / sayı];
+        xAralığı = tamAralık();
+        görünümGeçmişi = [];
         çiz();
       });
       new ResizeObserver(çiz).observe(chart);

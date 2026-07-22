@@ -28,6 +28,10 @@
         "cursor-hover",
         "live-legend",
         "x-drag-zoom",
+        "core-dblclick-full-range-reset",
+        "official-wheel-zoom-plugin",
+        "cursor-anchored-wheel-zoom",
+        "uplot-rs-view-history-extension",
         "responsive-resize"
       ],
       "kanıt": {

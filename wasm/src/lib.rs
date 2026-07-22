@@ -1,6 +1,8 @@
 //! Tarayıcı chart listesinin WASM köprüsü.
 
-use uplot_rs::{Aralık, Grafik, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ};
+use uplot_rs::{
+    Aralık, Grafik, ilk_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ
+};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -28,6 +30,25 @@ pub fn ilk_kart_svg_aralik(
 }
 
 #[wasm_bindgen]
+pub fn tekerlek_x_araligi(
+    mevcut_en_az: f64,
+    mevcut_en_çok: f64,
+    tam_en_az: f64,
+    tam_en_çok: f64,
+    odak: f64,
+    yakınlaştır: bool,
+) -> Result<Vec<f64>, JsValue> {
+    let mevcut = Aralık::yeni(mevcut_en_az, mevcut_en_çok)
+        .map_err(|hata| JsValue::from_str(&hata.to_string()))?;
+    let tam =
+        Aralık::yeni(tam_en_az, tam_en_çok).map_err(|hata| JsValue::from_str(&hata.to_string()))?;
+    mevcut
+        .tekerlek_yakınlaştır(tam, odak, yakınlaştır)
+        .map(|aralık| vec![aralık.en_az, aralık.en_çok])
+        .map_err(|hata| JsValue::from_str(&hata.to_string()))
+}
+
+#[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
     1
 }
@@ -35,6 +56,26 @@ pub fn kart_sayisi() -> usize {
 #[wasm_bindgen]
 pub fn ilk_kart_tanim_ornegi() -> String {
     İLK_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
+pub fn ilk_kart_tekerlek_etkilesimi() -> bool {
+    ilk_kart_etkileşimleri().tekerlek_etkileşimi
+}
+
+#[wasm_bindgen]
+pub fn ilk_kart_secim_yakinlastir() -> bool {
+    ilk_kart_etkileşimleri().seçim_yakınlaştır
+}
+
+#[wasm_bindgen]
+pub fn ilk_kart_cift_tikla_tam_gorunum() -> bool {
+    ilk_kart_etkileşimleri().çift_tıkla_tam_görünüm
+}
+
+#[wasm_bindgen]
+pub fn ilk_kart_gorunum_gecmisi() -> bool {
+    ilk_kart_etkileşimleri().görünüm_geçmişi
 }
 
 #[wasm_bindgen]
