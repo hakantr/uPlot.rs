@@ -40,6 +40,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Linux sistem bağımlılıkları
+        run: >-
+          sudo apt-get update && sudo apt-get install -y
+          libasound2-dev libfontconfig1-dev libwayland-dev libxkbcommon-dev
+          libxkbcommon-x11-dev libxcb1-dev libxcb-render0-dev
+          libxcb-shape0-dev libxcb-xfixes0-dev libudev-dev
       - name: Kaynak kilidi ve uyum envanteri
         working-directory: uPlot.rs
         run: npm --prefix tools/uyum run denetle

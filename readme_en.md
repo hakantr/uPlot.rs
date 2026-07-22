@@ -56,6 +56,15 @@ cancelled. Only the latest nightly run's artifacts and the latest two Pages
 deployment records are retained; GitHub Release versions are not affected by
 this cleanup.
 
+## Application icon
+
+<img src="assets/app-icon.svg" width="128" alt="uPlot.rs application icon">
+
+One SVG source produces the web favicon, Linux PNG desktop icon, macOS ICNS
+application/dock icon, and Windows ICO/EXE icon. Nightly artifacts contain a
+macOS `.app` bundle, a portable Linux directory with a `.desktop` entry, and a
+Windows `uplot-rs.exe` with the icon embedded.
+
 ## Running locally
 
 ```sh

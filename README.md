@@ -54,6 +54,15 @@ Yeni bir gece koşusu başladığında bekleyen/eski koşu iptal edilir. Yalnız
 gece koşusunun artefaktları ve son iki Pages dağıtım kaydı tutulur; GitHub
 Release sürümleri bu temizlikten etkilenmez.
 
+## Uygulama ikonu
+
+<img src="assets/app-icon.svg" width="128" alt="uPlot.rs uygulama ikonu">
+
+Tek SVG ana kaynaktan web faviconu, Linux PNG masaüstü ikonu, macOS ICNS
+uygulama/dock ikonu ve Windows ICO/EXE ikonu üretilir. Gece artefaktı macOS'ta
+`.app` paketi, Linux'ta `.desktop` kaydıyla taşınabilir dizin ve Windows'ta
+ikonu gömülü `uplot-rs.exe` içerir.
+
 ## Çalıştırma
 
 ```sh

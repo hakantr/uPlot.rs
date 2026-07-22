@@ -29,18 +29,22 @@ jobs:
             target: aarch64-apple-darwin
             artifact: uplot-rs-macos-arm64
             binary: target/aarch64-apple-darwin/release/examples/chart_listesi
+            package: dist/uplot-rs-macos-arm64
           - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             artifact: uplot-rs-linux-arm64
             binary: target/aarch64-unknown-linux-gnu/release/examples/chart_listesi
+            package: dist/uplot-rs-linux-arm64
           - os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             artifact: uplot-rs-linux-x86_64
             binary: target/x86_64-unknown-linux-gnu/release/examples/chart_listesi
+            package: dist/uplot-rs-linux-x86_64
           - os: windows-2025
             target: x86_64-pc-windows-msvc
             artifact: uplot-rs-windows-x86_64
             binary: target/x86_64-pc-windows-msvc/release/examples/chart_listesi.exe
+            package: dist/uplot-rs-windows-x86_64
     steps:
       - name: uPlot.rs
         uses: actions/checkout@v6
@@ -70,12 +74,42 @@ jobs:
       - name: Masaüstü chart listesini derle
         working-directory: uPlot.rs
         run: cargo build --release --example chart_listesi --target ${{ matrix.target }}
+      - name: macOS uygulama paketini hazırla
+        if: runner.os == 'macOS'
+        working-directory: uPlot.rs
+        run: |
+          app="${{ matrix.package }}/uPlot.rs.app"
+          mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+          cp "${{ matrix.binary }}" "$app/Contents/MacOS/uplot-rs"
+          cp assets/macos/Info.plist "$app/Contents/Info.plist"
+          cp assets/icons/uplot-rs.icns "$app/Contents/Resources/uplot-rs.icns"
+          chmod +x "$app/Contents/MacOS/uplot-rs"
+      - name: Linux masaüstü paketini hazırla
+        if: runner.os == 'Linux'
+        working-directory: uPlot.rs
+        run: |
+          paket="${{ matrix.package }}"
+          mkdir -p "$paket/bin" "$paket/share/applications" \
+            "$paket/share/icons/hicolor/512x512/apps"
+          cp "${{ matrix.binary }}" "$paket/bin/uplot-rs"
+          cp assets/linux/uplot-rs.desktop "$paket/share/applications/"
+          cp assets/icons/uplot-rs.png \
+            "$paket/share/icons/hicolor/512x512/apps/uplot-rs.png"
+          chmod +x "$paket/bin/uplot-rs"
+      - name: Windows EXE paketini hazırla
+        if: runner.os == 'Windows'
+        working-directory: uPlot.rs
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "${{ matrix.package }}" | Out-Null
+          Copy-Item "${{ matrix.binary }}" "${{ matrix.package }}/uplot-rs.exe"
+          Copy-Item "assets/icons/uplot-rs.ico" "${{ matrix.package }}/uplot-rs.ico"
       - name: Masaüstü artefaktını yükle
         uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.artifact }}
           path: |
-            uPlot.rs/${{ matrix.binary }}
+            uPlot.rs/${{ matrix.package }}
             uPlot.rs/README.md
             uPlot.rs/readme_en.md
             uPlot.rs/LICENSE
@@ -118,9 +152,10 @@ jobs:
       - name: Pages paketini hazırla
         working-directory: uPlot.rs
         run: |
-          mkdir -p _site/wasm/www _site/wasm/pkg
+          mkdir -p _site/wasm/www _site/wasm/pkg _site/assets
           cp -R wasm/www/. _site/wasm/www/
           cp -R wasm/pkg/. _site/wasm/pkg/
+          cp assets/app-icon.svg _site/assets/app-icon.svg
           cp wasm/pages/index.html _site/index.html
           touch _site/.nojekyll
       - name: WASM artefaktını yükle

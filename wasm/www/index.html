@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="../../assets/app-icon.svg" type="image/svg+xml">
   <title>uPlot.rs · WASM Chart Listesi</title>
   <style>
     * { box-sizing: border-box; }
@@ -66,7 +67,9 @@
       <header>
         <div>
           <h2>Resize · sayısal x ölçeği</h2>
-          <div class="kaynak">Kaynak: ../uPlot/demos/resize.html</div>
+          <div class="kaynak">Kaynak:
+            <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/resize.html">uPlot/demos/resize.html</a>
+          </div>
         </div>
         <label class="denetimler">
           Nokta
@@ -74,11 +77,11 @@
           <output id="nokta-değeri">100 nokta</output>
         </label>
       </header>
-      <details class="kod-örneği" open>
+      <section id="chart" aria-live="polite"><span>WASM yükleniyor…</span></section>
+      <details class="kod-örneği">
         <summary>Kart tanımı · src/kart.rs</summary>
         <pre><code id="kart-tanım-kodu">Kod örneği yükleniyor…</code></pre>
       </details>
-      <section id="chart" aria-live="polite"><span>WASM yükleniyor…</span></section>
       <p id="hata" role="alert"></p>
     </main>
   </div>

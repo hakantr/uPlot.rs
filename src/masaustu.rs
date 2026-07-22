@@ -29,6 +29,7 @@ pub struct ChartListesi {
     imleç: Option<İmleçDurumu>,
     seçim: Option<(f32, f32)>,
     hata: Option<String>,
+    kart_tanımı_açık: bool,
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
 }
 
@@ -40,6 +41,7 @@ impl ChartListesi {
             imleç: None,
             seçim: None,
             hata: None,
+            kart_tanımı_açık: false,
             çizim_sınırları: Rc::new(Cell::new(None)),
         }
     }
@@ -148,6 +150,7 @@ impl Render for ChartListesi {
             |imleç| format!("x: {:.3}    □ sin(x): {:.3}", imleç.veri_x, imleç.veri_y),
         );
         let çizim_sınırları = self.çizim_sınırları.clone();
+        let kart_tanımı_açık = self.kart_tanımı_açık;
 
         let çizim = div()
             .id("canli-chart")
@@ -343,7 +346,7 @@ impl Render for ChartListesi {
                         div()
                             .text_sm()
                             .text_color(soluk)
-                            .child("Kaynak: ../uPlot/demos/resize.html"),
+                            .child("Kaynak: github.com/leeoniya/uPlot/demos/resize.html"),
                     ),
             )
             .child(araçlar)
@@ -364,26 +367,37 @@ impl Render for ChartListesi {
             .child(
                 div()
                     .mt_3()
-                    .p_3()
                     .rounded_lg()
                     .border_1()
                     .border_color(rgb(0xd1d5db))
                     .bg(rgb(0x111827))
                     .child(
-                        div()
-                            .mb_2()
-                            .text_xs()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .text_color(rgb(0x93c5fd))
-                            .child("Kart tanımı · src/kart.rs"),
+                        Dugme::yeni(
+                            "kart-tanimi-toggle",
+                            if kart_tanımı_açık {
+                                "▾ Kart tanımı · src/kart.rs"
+                            } else {
+                                "▸ Kart tanımı · src/kart.rs"
+                            },
+                        )
+                        .boyutu(DugmeBoyutu::Kucuk)
+                        .turu(DugmeTuru::Hayalet)
+                        .tiklaninca(cx.listener(|bu, _, _, cx| {
+                            bu.kart_tanımı_açık = !bu.kart_tanımı_açık;
+                            cx.notify();
+                        })),
                     )
-                    .child(
-                        div()
-                            .text_xs()
-                            .font_family("SF Mono")
-                            .text_color(rgb(0xe5e7eb))
-                            .child(İLK_KART_TANIM_ÖRNEĞİ),
-                    ),
+                    .when(kart_tanımı_açık, |öğe| {
+                        öğe.child(
+                            div()
+                                .px_3()
+                                .pb_3()
+                                .text_xs()
+                                .font_family("SF Mono")
+                                .text_color(rgb(0xe5e7eb))
+                                .child(İLK_KART_TANIM_ÖRNEĞİ),
+                        )
+                    }),
             );
 
         let içerik = div()
