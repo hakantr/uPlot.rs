@@ -38,6 +38,34 @@ Selection, wheel zoom, full-view reset, and view history are implemented in
 the core. Library users only provide data, colors, and feature switches;
 unspecified features retain their core defaults.
 
+## Rendering-surface features
+
+Cargo features are additive and may be enabled together:
+
+```toml
+uplot-rs = {
+    path = "../uPlot.rs",
+    default-features = false,
+    features = ["gpui", "svg"]
+}
+```
+
+- `svg`: the default dependency-free SVG output;
+- `wasm`: enables `svg` support for the WASM surface;
+- `gpui`: enables the ready-to-use `uplot_rs::gpui::GpuiGrafik` component.
+
+The `gpui` feature follows the unpinned `../gpui/crates/gpui` worktree. A
+feature enables compilation but does not import Rust names automatically:
+
+```rust
+use uplot_rs::gpui::GpuiGrafik;
+
+let chart = Grafik::yeni(options, data)?;
+let surface = cx.new(|_| GpuiGrafik::yeni(chart));
+```
+
+The GPUI catalog uses this component but is not included in the library package.
+
 ## Behavior that differs from upstream
 
 Required port changes, API adaptations, and uPlot.rs-specific extensions live
@@ -109,6 +137,8 @@ beside this repository. See
 - `src/cizim.rs`: surface-independent scene commands and SVG output
 - `src/grafik.rs`: initial rendering pipeline
 - `src/etkilesim.rs`: chart interaction state, zooming, and view history
+- `src/gpui.rs`: ready GPUI chart component behind the `gpui` feature
+- `src/svg.rs`: SVG surface used by the `svg` and `wasm` features
 - `src/kart.rs`: verifiable card fixtures
 - `uygulamalar/masaustu/`: GPUI verification app excluded from distribution
 - `uyum/`: machine-readable source and evidence inventory

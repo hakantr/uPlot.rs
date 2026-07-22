@@ -4,14 +4,21 @@
 //! çizim komutları ve SVG çıktısı sağlar. GPUI ve WASM doğrulama uygulamaları
 //! yalnız platform olaylarını çekirdeğe ileten ayrı yüzey adaptörleridir.
 
+#![cfg_attr(feature = "gpui", allow(confusable_idents))]
+
 pub mod cizim;
 mod etkilesim;
+#[cfg(feature = "gpui")]
+pub mod gpui;
 pub mod grafik;
 pub mod hata;
 pub mod kart;
 pub mod olcek;
 pub mod secenek;
 pub mod veri;
+
+#[cfg(feature = "svg")]
+pub mod svg;
 
 pub use cizim::{Komut, MetinHizası, Nokta, Sahne};
 pub use grafik::Grafik;

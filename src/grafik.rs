@@ -45,6 +45,10 @@ impl Grafik {
         self.etkileşim.görünür()
     }
 
+    pub fn boyut(&self) -> (u32, u32) {
+        (self.seçenekler.genişlik, self.seçenekler.yükseklik)
+    }
+
     pub fn yakınlaştırılmış(&self) -> bool {
         self.etkileşim.yakınlaştırılmış()
     }

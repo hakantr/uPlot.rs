@@ -35,8 +35,16 @@ unimplemented = "deny"
 unreachable = "deny"
 indexing_slicing = "deny"
 
+[features]
+default = ["svg"]
+svg = []
+wasm = ["svg"]
+gpui = ["dep:gpui"]
+
 [dependencies]
+gpui = { version = "0.2.2", path = "../gpui/crates/gpui", optional = true }
 web-time = "1.1.0"
 
 [[example]]
 name = "ilk_kart"
+required-features = ["svg"]

@@ -11,6 +11,7 @@ fn ilk_kart_belirlenimci_svg_üretir() -> Result<(), UplotHatası> {
     let ikinci = sahne.svg();
 
     assert_eq!(ilk, ikinci);
+    assert_eq!(ilk, uplot_rs::svg::çiz(&sahne));
     assert!(ilk.starts_with("<svg"));
     assert!(ilk.contains("İlk kart · sin(x)"));
     assert!(ilk.contains("stroke=\"#dc2626\""));

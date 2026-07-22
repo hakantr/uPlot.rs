@@ -21,6 +21,7 @@ uyarlama ve uzantıların birbirine karışmaması için tutulur.
 | Görünüm geçmişi | Adımlı geri alma geçmişi bulunmaz | Hareket başına kayıt tutan “Geri” kontrolü vardır | uPlot.rs uzantısı |
 | Örnek kataloğu | Bağımsız HTML demoları | Aynı kart tanımını kullanan masaüstü ve WASM chart listeleri | Port sunumu |
 | Örnek/çekirdek sınırı | Demolar dağıtımdan ayrı HTML girişleridir | GPUI kataloğu ayrı ve yayınlanmayan workspace uygulamasıdır; bütün davranış çekirdektedir | Rust paket uyarlaması |
+| Yüzey seçimi | Canvas tarayıcı ortamına gömülüdür | `svg`, `wasm` ve `gpui` toplamsal Cargo feature'larıyla seçilir | Rust paket uyarlaması |
 
 ### Hassas tekerlek normalizasyonu
 
@@ -83,6 +84,7 @@ This inventory separates direct ports from uPlot.rs-specific adaptations.
 | View history | No stepwise view undo | Gesture-level Back history | uPlot.rs extension |
 | Demo catalog | Independent HTML demos | Desktop and WASM chart lists sharing one card definition | Port presentation |
 | Demo/core boundary | Demos are separate HTML entry points | The GPUI catalog is a separate unpublished workspace app; all behavior lives in core | Rust packaging adaptation |
+| Surface selection | Canvas is built into the browser runtime | Additive `svg`, `wasm`, and `gpui` Cargo features select surfaces | Rust packaging adaptation |
 
 In automatic wheel mode, traditional line-based wheels keep the official
 `0.75` step. Precise input maps 100 pixels to one official step, applies a

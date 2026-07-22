@@ -52,6 +52,14 @@ jobs:
       - name: Biçim
         working-directory: uPlot.rs
         run: cargo fmt --all --check
+      - name: Çizim yüzeyi feature matrisi
+        working-directory: uPlot.rs
+        run: |
+          cargo check -p uplot-rs --lib --no-default-features
+          cargo check -p uplot-rs --lib --no-default-features --features svg
+          cargo check -p uplot-rs --lib --no-default-features --features wasm
+          cargo check -p uplot-rs --lib --no-default-features --features gpui
+          cargo check -p uplot-rs --lib --all-features
       - name: Clippy
         working-directory: uPlot.rs
         run: cargo clippy --workspace --all-targets -- -D warnings

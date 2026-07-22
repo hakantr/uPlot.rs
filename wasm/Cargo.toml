@@ -10,7 +10,7 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-uplot-rs = { path = "..", default-features = false }
+uplot-rs = { path = "..", default-features = false, features = ["wasm"] }
 wasm-bindgen = "=0.2.120"
 
 [lints]

@@ -1,3 +1,4 @@
+#[cfg(feature = "svg")]
 use std::fmt::Write as _;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -95,6 +96,7 @@ impl Sahne {
     }
 
     /// Sahneyi bağımlılıksız ve belirlenimci bir SVG belgesine dönüştürür.
+    #[cfg(feature = "svg")]
     pub fn svg(&self) -> String {
         let mut çıktı = format!(
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}\" height=\"{}\" viewBox=\"0 0 {} {}\">\n",
@@ -243,6 +245,7 @@ impl Sahne {
     }
 }
 
+#[cfg(feature = "svg")]
 fn sayı(değer: f32) -> String {
     let yuvarlanmış = (değer * 100.0).round() / 100.0;
     let yuvarlanmış = if yuvarlanmış == 0.0 {
@@ -253,6 +256,7 @@ fn sayı(değer: f32) -> String {
     format!("{yuvarlanmış:.2}")
 }
 
+#[cfg(feature = "svg")]
 fn kaçış(metin: &str) -> String {
     metin
         .replace('&', "&amp;")

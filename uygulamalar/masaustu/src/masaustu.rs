@@ -1,40 +1,24 @@
-//! GPUI masaüstü chart listesi ve sahne adaptörü.
-
-use std::cell::Cell;
-use std::rc::Rc;
+//! GPUI masaüstü chart kataloğu; dağıtılan bileşeni kullanan örnek uygulama.
 
 use gpui::{
-    App, BorderStyle, Bounds, Context, Entity, FontWeight, Hsla, IntoElement, MouseButton,
-    MouseDownEvent, MouseExitEvent, MouseMoveEvent, MouseUpEvent, PathBuilder, Pixels, Render,
-    ScrollDelta, ScrollWheelEvent, SharedString, TextAlign, TextRun, Window, canvas, div, point,
-    prelude::*, px, quad, rgb, rgba, size,
+    Context, Entity, FontWeight, IntoElement, Render, SharedString, Window, div, prelude::*, px,
+    rgb,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, PlatformPencere,
 };
-
+use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
-    Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne, UplotHatası, ilk_kart_etkileşimleri,
-    sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
+    Grafik, UplotHatası, ilk_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ
 };
-
-#[derive(Clone, Copy)]
-struct İmleçDurumu {
-    fare: Nokta,
-    veri_x: f64,
-    veri_y: f64,
-}
 
 pub struct ChartListesi {
     nokta_sayısı: usize,
-    grafik: Option<Grafik>,
-    imleç: Option<İmleçDurumu>,
-    seçim: Option<(f32, f32)>,
+    grafik: Option<Entity<GpuiGrafik>>,
     hata: Option<String>,
     kart_tanımı_açık: bool,
     tekerlek_etkin: bool,
     tekerlek_anahtarı: Entity<Anahtar>,
-    çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
 }
 
 impl ChartListesi {
@@ -49,119 +33,47 @@ impl ChartListesi {
         });
         cx.subscribe(&tekerlek_anahtarı, |bu, _, olay: &AnahtarOlayi, cx| {
             let AnahtarOlayi::Degisti(etkin) = *olay;
-            if let Some(grafik) = bu.grafik.as_mut() {
-                grafik.tekerlek_etkileşimi_ayarla(etkin);
+            if let Some(grafik) = &bu.grafik {
+                grafik.update(cx, |grafik, cx| {
+                    grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                });
             }
             bu.tekerlek_etkin = etkin;
             cx.notify();
         })
         .detach();
+
         let (grafik, hata) = grafik_oluştur(100).map_or_else(
             |hata| (None, Some(format!("Grafik oluşturulamadı: {hata}"))),
-            |grafik| (Some(grafik), None),
+            |grafik| (Some(cx.new(|_| GpuiGrafik::yeni(grafik))), None),
         );
+        if let Some(grafik) = &grafik {
+            cx.subscribe(grafik, |_, _, _: &GpuiGrafikOlayı, cx| cx.notify())
+                .detach();
+        }
         Self {
             nokta_sayısı: 100,
             grafik,
-            imleç: None,
-            seçim: None,
             hata,
             kart_tanımı_açık: false,
             tekerlek_etkin: etkileşimler.tekerlek_etkileşimi,
             tekerlek_anahtarı,
-            çizim_sınırları: Rc::new(Cell::new(None)),
         }
     }
 
-    fn sahne(&self) -> Option<Sahne> {
-        let grafik = self.grafik.as_ref()?;
-        let mut sahne = grafik.çiz();
-        let x_aralığı = grafik.görünür_x_aralığı();
-        let y_aralığı = grafik.görünür_y_aralığı();
-        if let Some(imleç) = self.imleç {
-            let nokta_x = ölçekle(imleç.veri_x, x_aralığı, 64.0, 712.0);
-            let nokta_y = 352.0 - ölçekle(imleç.veri_y, y_aralığı, 0.0, 304.0);
-            sahne.ekle(Komut::KesikliÇizgi {
-                başlangıç: Nokta::yeni(imleç.fare.x, 48.0),
-                bitiş: Nokta::yeni(imleç.fare.x, 352.0),
-                renk: "#6b7280".to_string(),
-                kalınlık: 1.0,
-                kesik: 4.0,
-            });
-            sahne.ekle(Komut::KesikliÇizgi {
-                başlangıç: Nokta::yeni(64.0, imleç.fare.y),
-                bitiş: Nokta::yeni(776.0, imleç.fare.y),
-                renk: "#6b7280".to_string(),
-                kalınlık: 1.0,
-                kesik: 4.0,
-            });
-            sahne.ekle(Komut::Daire {
-                merkez: Nokta::yeni(nokta_x, nokta_y),
-                yarıçap: 2.5,
-                dolgu: "#dc2626".to_string(),
-                çizgi: "#dc2626".to_string(),
-                kalınlık: 0.0,
-            });
-        }
-        if let Some((baş, son)) = self.seçim {
-            sahne.ekle(Komut::Dikdörtgen {
-                konum: Nokta::yeni(baş.min(son), 48.0),
-                genişlik: (son - baş).abs(),
-                yükseklik: 304.0,
-                dolgu: "#3b82f633".to_string(),
-                çizgi: "#3b82f6".to_string(),
-                kalınlık: 1.0,
-            });
-        }
-        Some(sahne)
-    }
-
-    fn sahne_konumu(&self, pencere_konumu: gpui::Point<Pixels>) -> Option<Nokta> {
-        let çizim_alanı = self.çizim_sınırları.get()?;
-        let ölçek = (f32::from(çizim_alanı.size.width) / 800.0)
-            .min(f32::from(çizim_alanı.size.height) / 400.0)
-            .max(0.01);
-        let köken_x = f32::from(çizim_alanı.origin.x)
-            + (f32::from(çizim_alanı.size.width) - 800.0 * ölçek) / 2.0;
-        let köken_y = f32::from(çizim_alanı.origin.y)
-            + (f32::from(çizim_alanı.size.height) - 400.0 * ölçek) / 2.0;
-        Some(Nokta::yeni(
-            (f32::from(pencere_konumu.x) - köken_x) / ölçek,
-            (f32::from(pencere_konumu.y) - köken_y) / ölçek,
-        ))
-    }
-
-    fn imleci_güncelle(&mut self, pencere_konumu: gpui::Point<Pixels>) {
-        let Some(fare) = self.sahne_konumu(pencere_konumu) else {
-            self.imleç = None;
-            return;
-        };
-        if !(64.0..=776.0).contains(&fare.x) || !(48.0..=352.0).contains(&fare.y) {
-            self.imleç = None;
-            return;
-        }
-        let oran = f64::from((fare.x - 64.0) / 712.0);
-        let Some((x_değeri, y_değeri)) = self
-            .grafik
-            .as_ref()
-            .and_then(|grafik| grafik.en_yakın_nokta(oran, 0))
-        else {
-            self.imleç = None;
-            return;
-        };
-        self.imleç = Some(İmleçDurumu {
-            fare,
-            veri_x: x_değeri,
-            veri_y: y_değeri,
-        });
-    }
-
-    fn grafiği_yenile(&mut self, nokta_sayısı: usize) {
+    fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
         match grafik_oluştur(nokta_sayısı) {
-            Ok(mut grafik) => {
-                grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
-                self.grafik = Some(grafik);
+            Ok(mut yeni) => {
+                yeni.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+                if let Some(grafik) = &self.grafik {
+                    grafik.update(cx, |grafik, cx| grafik.grafiği_ayarla(yeni, cx));
+                } else {
+                    let grafik = cx.new(|_| GpuiGrafik::yeni(yeni));
+                    cx.subscribe(&grafik, |_, _, _: &GpuiGrafikOlayı, cx| cx.notify())
+                        .detach();
+                    self.grafik = Some(grafik);
+                }
                 self.hata = None;
             }
             Err(hata) => {
@@ -169,31 +81,7 @@ impl ChartListesi {
                 self.hata = Some(format!("Grafik oluşturulamadı: {hata}"));
             }
         }
-        self.imleç = None;
-        self.seçim = None;
-    }
-
-    fn tekerlek_yakınlaştır(&mut self, olay: &ScrollWheelEvent) {
-        let Some(fare) = self.sahne_konumu(olay.position) else {
-            return;
-        };
-        if !(64.0..=776.0).contains(&fare.x) || !(48.0..=352.0).contains(&fare.y) {
-            return;
-        }
-        let (ham_delta, platform_hassas) = match olay.delta {
-            ScrollDelta::Pixels(delta) => (f64::from(f32::from(delta.y)), true),
-            ScrollDelta::Lines(delta) => (f64::from(delta.y), false),
-        };
-        let oran = f64::from((fare.x - 64.0) / 712.0);
-        let Some(grafik) = self.grafik.as_mut() else {
-            return;
-        };
-        match grafik.tekerlek(oran, ham_delta, platform_hassas) {
-            Ok(_) => self.hata = None,
-            Err(hata) => {
-                self.hata = Some(format!("Tekerlek yakınlaştırması uygulanamadı: {hata}"));
-            }
-        }
+        cx.notify();
     }
 }
 
@@ -209,107 +97,28 @@ impl Render for ChartListesi {
         let metin = rgb(0x111827);
         let soluk = rgb(0x6b7280);
         let vurgu = rgb(0xdc2626);
-        let sahne = self.sahne();
-        let çizim_hatası = self.hata.clone();
         let nokta_yazısı = SharedString::from(format!("{} nokta", self.nokta_sayısı));
-        let lejant = self.imleç.map_or_else(
-            || "x: --    □ sin(x): --".to_string(),
-            |imleç| format!("x: {:.3}    □ sin(x): {:.3}", imleç.veri_x, imleç.veri_y),
-        );
-        let çizim_sınırları = self.çizim_sınırları.clone();
         let kart_tanımı_açık = self.kart_tanımı_açık;
-        let geri_var = self.grafik.as_ref().is_some_and(Grafik::geri_var);
-        let yakınlaştırılmış = self.grafik.as_ref().is_some_and(Grafik::yakınlaştırılmış);
-        let etkileşimler = self
-            .grafik
-            .as_ref()
-            .map_or_else(ilk_kart_etkileşimleri, Grafik::etkileşim_seçenekleri);
         let tekerlek_anahtarı = self.tekerlek_anahtarı.clone();
-
-        let çizim = div()
-            .id("canli-chart")
-            .flex_1()
-            .min_h(px(320.0))
-            .rounded_lg()
-            .border_1()
-            .border_color(rgb(0xe5e7eb))
-            .bg(panel)
-            .overflow_hidden()
-            .on_mouse_move(cx.listener(|bu, olay: &MouseMoveEvent, _, cx| {
-                bu.imleci_güncelle(olay.position);
-                if olay.dragging()
-                    && let Some((baş, _)) = bu.seçim
-                    && let Some(konum) = bu.sahne_konumu(olay.position)
-                {
-                    bu.seçim = Some((baş, konum.x.clamp(64.0, 776.0)));
-                }
-                cx.notify();
-            }))
-            .on_scroll_wheel(cx.listener(|bu, olay: &ScrollWheelEvent, _, cx| {
-                bu.tekerlek_yakınlaştır(olay);
-                cx.notify();
-            }))
-            .on_mouse_exit(cx.listener(|bu, _: &MouseExitEvent, _, cx| {
-                if bu.seçim.is_none() {
-                    bu.imleç = None;
-                    cx.notify();
-                }
-            }))
-            .on_mouse_down(
-                MouseButton::Left,
-                cx.listener(|bu, olay: &MouseDownEvent, _, cx| {
-                    let etkileşimler = bu.grafik.as_ref().map(Grafik::etkileşim_seçenekleri);
-                    if olay.click_count >= 2
-                        && etkileşimler.is_some_and(|ayarlar| ayarlar.çift_tıkla_tam_görünüm)
-                    {
-                        if let Some(grafik) = bu.grafik.as_mut() {
-                            grafik.tam_görünüm();
-                        }
-                        bu.seçim = None;
-                    } else if etkileşimler.is_some_and(|ayarlar| ayarlar.seçim_yakınlaştır)
-                        && let Some(konum) = bu.sahne_konumu(olay.position)
-                        && (64.0..=776.0).contains(&konum.x)
-                        && (48.0..=352.0).contains(&konum.y)
-                    {
-                        bu.seçim = Some((konum.x, konum.x));
-                    }
-                    cx.notify();
-                }),
-            )
-            .on_mouse_up(
-                MouseButton::Left,
-                cx.listener(|bu, _: &MouseUpEvent, _, cx| {
-                    if let Some((baş, son)) = bu.seçim.take()
-                        && (son - baş).abs() >= 4.0
-                    {
-                        let başlangıç = f64::from((baş - 64.0) / 712.0);
-                        let bitiş = f64::from((son - 64.0) / 712.0);
-                        let sonuç = bu
-                            .grafik
-                            .as_mut()
-                            .map(|grafik| grafik.seçim_yakınlaştır(başlangıç, bitiş));
-                        match sonuç {
-                            Some(Ok(_)) => bu.hata = None,
-                            Some(Err(hata)) => {
-                                bu.hata = Some(format!("Seçilen aralık uygulanamadı: {hata}"));
-                            }
-                            None => {}
-                        }
-                    }
-                    cx.notify();
-                }),
-            )
-            .child(
-                canvas(
-                    move |sınırlar, _, _| çizim_sınırları.set(Some(sınırlar)),
-                    move |sınırlar, _, pencere, uygulama| {
-                        if let Some(sahne) = &sahne {
-                            sahneyi_boya(sahne, sınırlar, pencere, uygulama);
-                        }
-                    },
-                )
-                .size_full(),
+        let (geri_var, yakınlaştırılmış, etkileşimler, lejant, bileşen_hatası) =
+            self.grafik.as_ref().map_or_else(
+                || (false, false, ilk_kart_etkileşimleri(), None, None),
+                |grafik| {
+                    let grafik = grafik.read(cx);
+                    (
+                        grafik.grafik().geri_var(),
+                        grafik.grafik().yakınlaştırılmış(),
+                        grafik.grafik().etkileşim_seçenekleri(),
+                        grafik.lejant(),
+                        grafik.hata().map(str::to_string),
+                    )
+                },
             );
+        let çizim_hatası = self.hata.clone().or(bileşen_hatası);
+        let lejant = lejant.map_or_else(
+            || "x: --    □ sin(x): --".to_string(),
+            |(x, y)| format!("x: {x:.3}    □ sin(x): {y:.3}"),
+        );
 
         let liste = div()
             .w(px(280.0))
@@ -342,7 +151,6 @@ impl Render for ChartListesi {
                     .border_1()
                     .border_color(vurgu)
                     .bg(rgb(0xfef2f2))
-                    .cursor_pointer()
                     .child(
                         div()
                             .font_weight(FontWeight::SEMIBOLD)
@@ -361,7 +169,7 @@ impl Render for ChartListesi {
                             .mt_2()
                             .text_xs()
                             .text_color(vurgu)
-                            .child("Fixture bağlı · SVG/WASM hazır"),
+                            .child("uplot-rs/gpui feature bileşeni"),
                     ),
             );
 
@@ -383,8 +191,7 @@ impl Render for ChartListesi {
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Ikincil)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        bu.grafiği_yenile(bu.nokta_sayısı.saturating_sub(10).max(10));
-                        cx.notify();
+                        bu.grafiği_yenile(bu.nokta_sayısı.saturating_sub(10).max(10), cx);
                     })),
             )
             .child(
@@ -392,8 +199,7 @@ impl Render for ChartListesi {
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Ikincil)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        bu.grafiği_yenile(bu.nokta_sayısı.saturating_add(10).min(10_000));
-                        cx.notify();
+                        bu.grafiği_yenile(bu.nokta_sayısı.saturating_add(10).min(10_000), cx);
                     })),
             )
             .child(
@@ -402,8 +208,10 @@ impl Render for ChartListesi {
                     .turu(DugmeTuru::Hayalet)
                     .devre_disi(!geri_var || !etkileşimler.görünüm_geçmişi)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        if let Some(grafik) = bu.grafik.as_mut() {
-                            grafik.önceki_görünüm();
+                        if let Some(grafik) = &bu.grafik {
+                            grafik.update(cx, |grafik, cx| {
+                                grafik.önceki_görünüm(cx);
+                            });
                         }
                         cx.notify();
                     })),
@@ -414,8 +222,10 @@ impl Render for ChartListesi {
                     .turu(DugmeTuru::Hayalet)
                     .devre_disi(!yakınlaştırılmış || !etkileşimler.çift_tıkla_tam_görünüm)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        if let Some(grafik) = bu.grafik.as_mut() {
-                            grafik.tam_görünüm();
+                        if let Some(grafik) = &bu.grafik {
+                            grafik.update(cx, |grafik, cx| {
+                                grafik.tam_görünüm(cx);
+                            });
                         }
                         cx.notify();
                     })),
@@ -424,11 +234,19 @@ impl Render for ChartListesi {
                 Dugme::yeni("grafik-sifirla", "Sıfırla")
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Hayalet)
-                    .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        bu.grafiği_yenile(100);
-                        cx.notify();
-                    })),
+                    .tiklaninca(cx.listener(|bu, _, _, cx| bu.grafiği_yenile(100, cx))),
             );
+
+        let çizim = div()
+            .id("canli-chart")
+            .flex_1()
+            .min_h(px(320.0))
+            .rounded_lg()
+            .border_1()
+            .border_color(rgb(0xe5e7eb))
+            .bg(panel)
+            .overflow_hidden()
+            .when_some(self.grafik.clone(), |öğe, grafik| öğe.child(grafik));
 
         let ayrıntı = div()
             .flex_1()
@@ -450,9 +268,7 @@ impl Render for ChartListesi {
                         div()
                             .text_sm()
                             .text_color(soluk)
-                            .child(
-                                "Çekirdek: seçim + çift tık · Resmi eklenti: tekerlek · uPlot.rs: hassas giriş normalizasyonu + geri geçmişi",
-                            ),
+                            .child("Hazır GPUI yüzeyi · davranışlar uplot-rs çekirdeğinde"),
                     ),
             )
             .child(araçlar)
@@ -523,166 +339,4 @@ impl Render for ChartListesi {
                     .child("Rust 2024 · MSRV 1.95"),
             )
     }
-}
-
-fn sahneyi_boya(
-    sahne: &Sahne,
-    sınırlar: gpui::Bounds<gpui::Pixels>,
-    pencere: &mut Window,
-    uygulama: &mut App,
-) {
-    let (kaynak_g, kaynak_y) = sahne.boyut();
-    let ölçek = (f32::from(sınırlar.size.width) / kaynak_g as f32)
-        .min(f32::from(sınırlar.size.height) / kaynak_y as f32)
-        .max(0.01);
-    let içerik_g = kaynak_g as f32 * ölçek;
-    let içerik_y = kaynak_y as f32 * ölçek;
-    let köken_x = f32::from(sınırlar.origin.x) + (f32::from(sınırlar.size.width) - içerik_g) / 2.0;
-    let köken_y = f32::from(sınırlar.origin.y) + (f32::from(sınırlar.size.height) - içerik_y) / 2.0;
-    let dönüştür =
-        |nokta: Nokta| point(px(köken_x + nokta.x * ölçek), px(köken_y + nokta.y * ölçek));
-
-    for komut in sahne.komutlar() {
-        match komut {
-            Komut::ArkaPlan { .. } => {}
-            Komut::Çizgi {
-                başlangıç,
-                bitiş,
-                renk,
-                kalınlık,
-            } => {
-                let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek));
-                yol.move_to(dönüştür(*başlangıç));
-                yol.line_to(dönüştür(*bitiş));
-                if let Ok(yol) = yol.build() {
-                    pencere.paint_path(yol, renk_çöz(renk));
-                }
-            }
-            Komut::KesikliÇizgi {
-                başlangıç,
-                bitiş,
-                renk,
-                kalınlık,
-                kesik,
-            } => {
-                let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek))
-                    .dash_array(&[px(*kesik * ölçek), px(*kesik * ölçek)]);
-                yol.move_to(dönüştür(*başlangıç));
-                yol.line_to(dönüştür(*bitiş));
-                if let Ok(yol) = yol.build() {
-                    pencere.paint_path(yol, renk_çöz(renk));
-                }
-            }
-            Komut::Yol {
-                parçalar,
-                renk,
-                kalınlık,
-            } => {
-                let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek));
-                for parça in parçalar {
-                    let mut noktalar = parça.iter();
-                    if let Some(ilk) = noktalar.next() {
-                        yol.move_to(dönüştür(*ilk));
-                    }
-                    for nokta in noktalar {
-                        yol.line_to(dönüştür(*nokta));
-                    }
-                }
-                if let Ok(yol) = yol.build() {
-                    pencere.paint_path(yol, renk_çöz(renk));
-                }
-            }
-            Komut::Daire {
-                merkez,
-                yarıçap,
-                dolgu,
-                çizgi,
-                kalınlık,
-            } => {
-                let merkez = dönüştür(*merkez);
-                let yarıçap = px(*yarıçap * ölçek);
-                let sınırlar = Bounds::new(
-                    point(merkez.x - yarıçap, merkez.y - yarıçap),
-                    size(yarıçap * 2.0, yarıçap * 2.0),
-                );
-                pencere.paint_quad(quad(
-                    sınırlar,
-                    yarıçap,
-                    renk_çöz(dolgu),
-                    px(*kalınlık * ölçek),
-                    renk_çöz(çizgi),
-                    BorderStyle::default(),
-                ));
-            }
-            Komut::Dikdörtgen {
-                konum,
-                genişlik,
-                yükseklik,
-                dolgu,
-                çizgi,
-                kalınlık,
-            } => {
-                let konum = dönüştür(*konum);
-                pencere.paint_quad(quad(
-                    Bounds::new(konum, size(px(*genişlik * ölçek), px(*yükseklik * ölçek))),
-                    px(0.0),
-                    renk_çöz(dolgu),
-                    px(*kalınlık * ölçek),
-                    renk_çöz(çizgi),
-                    BorderStyle::default(),
-                ));
-            }
-            Komut::Metin {
-                konum,
-                içerik,
-                renk,
-                boyut,
-                hiza,
-            } => {
-                let paylaşımlı = SharedString::from(içerik.clone());
-                let koşu = TextRun {
-                    len: paylaşımlı.len(),
-                    font: pencere.text_style().font(),
-                    color: renk_çöz(renk),
-                    background_color: None,
-                    underline: None,
-                    strikethrough: None,
-                };
-                let çizgi =
-                    pencere
-                        .text_system()
-                        .shape_line(paylaşımlı, px(*boyut * ölçek), &[koşu], None);
-                let genişlik = f32::from(çizgi.width());
-                let x = match hiza {
-                    MetinHizası::Başlangıç => konum.x * ölçek,
-                    MetinHizası::Orta => konum.x * ölçek - genişlik / 2.0,
-                    MetinHizası::Bitiş => konum.x * ölçek - genişlik,
-                };
-                let başlangıç = point(px(köken_x + x), px(köken_y + (konum.y - *boyut) * ölçek));
-                let _ = çizgi.paint(
-                    başlangıç,
-                    px(*boyut * 1.25 * ölçek),
-                    TextAlign::Left,
-                    None,
-                    pencere,
-                    uygulama,
-                );
-            }
-        }
-    }
-}
-
-fn renk_çöz(kod: &str) -> Hsla {
-    if kod == "#3b82f633" {
-        return rgba(0x3b82f633).into();
-    }
-    let sayı = kod
-        .strip_prefix('#')
-        .and_then(|ham| u32::from_str_radix(ham, 16).ok())
-        .unwrap_or(0x000000);
-    rgb(sayı).into()
-}
-
-fn ölçekle(değer: f64, aralık: Aralık, başlangıç: f32, uzunluk: f32) -> f32 {
-    başlangıç + ((değer - aralık.en_az) / (aralık.en_çok - aralık.en_az)) as f32 * uzunluk
 }

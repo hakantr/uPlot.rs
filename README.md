@@ -37,6 +37,34 @@ Kartın seçim, tekerlek, tam görünüm ve geçmiş davranışları çekirdekte
 Kütüphane kullanıcısı yalnız veriyi, renk düzenini ve açık/kapalı özellikleri
 tanımlar; belirtilmeyen özellikler çekirdek varsayılanlarını kullanır.
 
+## Çizim yüzeyi feature'ları
+
+Cargo feature'ları toplamsaldır ve birbiriyle birlikte açılabilir:
+
+```toml
+uplot-rs = {
+    path = "../uPlot.rs",
+    default-features = false,
+    features = ["gpui", "svg"]
+}
+```
+
+- `svg`: varsayılan, bağımlılıksız SVG çıktısı;
+- `wasm`: WASM yüzeyi için `svg` desteğini açar;
+- `gpui`: hazır `uplot_rs::gpui::GpuiGrafik` bileşenini açar.
+
+`gpui` feature'ı pinsiz `../gpui/crates/gpui` çalışma ağacına bağlıdır. Feature
+yalnız modülü derlemeye açar; kullanımda açık ad alanı korunur:
+
+```rust
+use uplot_rs::gpui::GpuiGrafik;
+
+let grafik = Grafik::yeni(seçenekler, veri)?;
+let yüzey = cx.new(|_| GpuiGrafik::yeni(grafik));
+```
+
+GPUI katalog uygulaması bu bileşeni kullanır fakat kütüphane paketine girmez.
+
 ## Resmî depodan farklı işleyişler
 
 Port zorunlulukları, API uyarlamaları ve uPlot.rs'e özgü uzantılar ana README'yi
@@ -106,6 +134,8 @@ hash kilidini doğrular. Tarayıcı listesi için
 - `src/cizim.rs`: yüzeyden bağımsız sahne komutları ve SVG çıktısı
 - `src/grafik.rs`: ilk çizim hattı
 - `src/etkilesim.rs`: kartın etkileşim durumu, yakınlaştırma ve görünüm geçmişi
+- `src/gpui.rs`: `gpui` feature'ıyla açılan hazır GPUI grafik bileşeni
+- `src/svg.rs`: `svg`/`wasm` feature'larının SVG yüzeyi
 - `src/kart.rs`: kanıtlanabilir kart fixture'ları
 - `uygulamalar/masaustu/`: dağıtıma girmeyen GPUI doğrulama uygulaması
 - `uyum/`: makine-okunur kaynak ve kanıt envanteri
