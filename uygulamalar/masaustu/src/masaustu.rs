@@ -133,7 +133,7 @@ impl Render for ChartListesi {
                     .text_xl()
                     .font_weight(FontWeight::BOLD)
                     .text_color(metin)
-                    .child("uPlot.rs Charts"),
+                    .child("uPlot.rs Grafik Kataloğu"),
             )
             .child(
                 div()
@@ -155,7 +155,7 @@ impl Render for ChartListesi {
                         div()
                             .font_weight(FontWeight::SEMIBOLD)
                             .text_color(metin)
-                            .child("İlk kart · sin(x)"),
+                            .child("Resize"),
                     )
                     .child(
                         div()
@@ -337,7 +337,7 @@ impl Render for ChartListesi {
             .child(liste)
             .child(ayrıntı);
 
-        PlatformPencere::yeni("uplot-rs-pencere", "uPlot.rs Charts", içerik)
+        PlatformPencere::yeni("uplot-rs-pencere", "uPlot.rs Grafik Kataloğu", içerik)
             .ayarlar(CubukAyarlari::default().kompakt(true))
             .sag(
                 div()

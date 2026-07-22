@@ -58,4 +58,4 @@ kanıt = "target/wasm-resize-etkilesim.png"
 [beklenti]
 seri_sayısı = 1
 çizim_komutu_sayısı = 47
-svg_başlığı = "İlk kart · sin(x)"
+svg_başlığı = "Resize"

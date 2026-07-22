@@ -27,9 +27,9 @@ compatibility card:
 - interactive WASM chart list served on development port 8081;
 - one shared Rust card-definition example shown in desktop and WASM UIs;
 - source lock, API matrix, demo manifest, and scenario record;
-- first card: a 100-point `sin(x)` line based on `demos/resize.html`.
+- `Resize` card: a 100-point `sin(x)` line based on `demos/resize.html`.
 
-The first card also ports the source demo's conditional hollow points, filled
+The `Resize` card also ports the source demo's conditional hollow points, filled
 hover marker, live legend, numeric grid aligned to the visible range, and
 drag-to-zoom interaction on the X axis.
 

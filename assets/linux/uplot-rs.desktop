@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=uPlot.rs Charts
+Name=uPlot.rs Grafik Kataloğu
 Comment=Etkileşimli uPlot Rust portu chart listesi
 Exec=uplot-rs
 Icon=uplot-rs

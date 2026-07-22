@@ -19,7 +19,7 @@ fn main() {
         let başlangıç_geometrisi = Bounds::centered(None, size(px(1180.0), px(720.0)), cx);
         let mut seçenekler = pencere_secenekleri(
             cx,
-            PencereKurulumAyarlari::yeni("uPlot.rs Charts").sinirlar(başlangıç_geometrisi),
+            PencereKurulumAyarlari::yeni("uPlot.rs Grafik Kataloğu").sinirlar(başlangıç_geometrisi),
         );
         seçenekler.app_id = Some("io.github.hakantr.uplot-rs".to_string());
         match uygulama_ikonu() {

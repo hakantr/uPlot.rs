@@ -26,9 +26,9 @@ Port şu anda Faz 0 altyapısı ve ilk dikey uyum kartını içerir:
 - 8081 portunda çalışan etkileşimli WASM chart listesi;
 - masaüstü ve WASM'de ortak Rust kart tanımı örneği;
 - kaynak kilidi, API matrisi, demo manifesti ve senaryo kaydı;
-- ilk kart: `demos/resize.html` tabanlı 100 noktalı `sin(x)` çizgisi.
+- `Resize` kartı: `demos/resize.html` tabanlı 100 noktalı `sin(x)` çizgisi.
 
-İlk kart, kaynak demonun koşullu boş noktalarını, dolu hover noktasını, canlı
+`Resize` kartı, kaynak demonun koşullu boş noktalarını, dolu hover noktasını, canlı
 lejantını, görünür aralığa göre yeniden hizalanan sayısal ızgarasını ve X
 ekseninde sürükle-bırak yakınlaştırmasını da taşır.
 

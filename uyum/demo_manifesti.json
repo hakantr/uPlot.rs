@@ -7,7 +7,7 @@
       "id": "line-resize",
       "başlık": {
         "en": "Resize",
-        "tr": "İlk kart · sin(x)"
+        "tr": "Resize"
       },
       "kaynak": "demos/resize.html",
       "kaynak_sha256": "f9e5d8eba64cb8be7c3222a006b261a2dc234592478b54f5eedd453b852f3593",

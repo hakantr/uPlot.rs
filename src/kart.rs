@@ -6,7 +6,7 @@ use crate::{
 /// Masaüstü ve WASM kataloglarında gösterilen, çalıştırılabilir API biçimiyle
 /// aynı kalan kart tanım örneği.
 pub const İLK_KART_TANIM_ÖRNEĞİ: &str = r##"let seçenekler = GrafikSeçenekleri::yeni(800, 400)?
-    .başlık("İlk kart · sin(x)")
+    .başlık("Resize")
     .x_zaman(false)
     .etkileşimler(EtkileşimSeçenekleri::default()
         .tekerlek_etkileşimi(true)
@@ -54,7 +54,7 @@ pub fn sinüs_kartı(
     }
 
     let seçenekler = GrafikSeçenekleri::yeni(800, 400)?
-        .başlık("İlk kart · sin(x)")
+        .başlık("Resize")
         .x_zaman(false)
         .etkileşimler(ilk_kart_etkileşimleri())
         .seri(

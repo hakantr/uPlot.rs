@@ -13,7 +13,7 @@ fn ilk_kart_belirlenimci_svg_üretir() -> Result<(), UplotHatası> {
     assert_eq!(ilk, ikinci);
     assert_eq!(ilk, uplot_rs::svg::çiz(&sahne));
     assert!(ilk.starts_with("<svg"));
-    assert!(ilk.contains("İlk kart · sin(x)"));
+    assert!(ilk.contains("Resize"));
     assert!(ilk.contains("stroke=\"#dc2626\""));
     assert_eq!(sahne.komutlar().len(), 47);
     Ok(())

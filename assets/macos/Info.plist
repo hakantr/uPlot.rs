@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleDevelopmentRegion</key><string>tr</string>
-  <key>CFBundleDisplayName</key><string>uPlot.rs Charts</string>
+  <key>CFBundleDisplayName</key><string>uPlot.rs Grafik Kataloğu</string>
   <key>CFBundleExecutable</key><string>uplot-rs</string>
   <key>CFBundleIconFile</key><string>uplot-rs.icns</string>
   <key>CFBundleIdentifier</key><string>io.github.hakantr.uplot-rs</string>

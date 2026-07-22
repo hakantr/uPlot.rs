@@ -178,7 +178,7 @@ mod testler {
         };
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
-        assert!(svg.contains("İlk kart · sin(x)"));
+        assert!(svg.contains("Resize"));
         assert_eq!(kart_sayisi(), 1);
         assert!(ilk_kart_tanim_ornegi().contains("GrafikSeçenekleri::yeni"));
 
