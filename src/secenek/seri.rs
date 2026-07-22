@@ -10,7 +10,9 @@ pub struct SeriSeçenekleri {
     pub renk: String,
     pub çizgi_kalınlığı: f32,
     pub çizgi_kesik: Option<(f32, f32)>,
+    pub çizgi_gradyanı: Option<ÖlçekGradyanı>,
     pub dolgu: Option<String>,
+    pub dolgu_gradyanı: Option<ÖlçekGradyanı>,
     pub dolgu_tabanı: f64,
     pub göster: bool,
     pub ölçek: String,
@@ -26,7 +28,9 @@ impl SeriSeçenekleri {
             renk: "#000000".to_string(),
             çizgi_kalınlığı: 1.0,
             çizgi_kesik: None,
+            çizgi_gradyanı: None,
             dolgu: None,
+            dolgu_gradyanı: None,
             dolgu_tabanı: 0.0,
             göster: true,
             ölçek: "y".to_string(),
@@ -55,10 +59,20 @@ impl SeriSeçenekleri {
         self
     }
 
+    pub fn çizgi_gradyanı(mut self, gradyan: ÖlçekGradyanı) -> Self {
+        self.çizgi_gradyanı = Some(gradyan);
+        self
+    }
+
     /// uPlot `Series.fill` karşılığıdır. Doğrusal yol varsayılan olarak
     /// `fillTo = 0` tabanına kapatılır.
     pub fn dolgu(mut self, renk: impl Into<String>) -> Self {
         self.dolgu = Some(renk.into());
+        self
+    }
+
+    pub fn dolgu_gradyanı(mut self, gradyan: ÖlçekGradyanı) -> Self {
+        self.dolgu_gradyanı = Some(gradyan);
         self
     }
 
@@ -104,3 +118,4 @@ impl SeriSeçenekleri {
         self
     }
 }
+use super::gradyan::ÖlçekGradyanı;

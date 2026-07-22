@@ -1,8 +1,10 @@
 use crate::{Aralık, UplotHatası};
 
+mod gradyan;
 mod seri;
 mod y_olcek;
 
+pub use gradyan::{GradyanDurağı, GradyanEkseni, GradyanKonumu, ÖlçekGradyanı};
 pub use seri::{SeriSeçenekleri, SeriÇizimTürü};
 pub use y_olcek::{YÖlçekDağılımı, YÖlçekSeçenekleri};
 

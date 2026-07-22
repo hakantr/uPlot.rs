@@ -108,6 +108,10 @@ name = "focus_cursor"
 required-features = ["svg"]
 
 [[example]]
+name = "gradients"
+required-features = ["svg"]
+
+[[example]]
 name = "missing_data"
 required-features = ["svg"]
 

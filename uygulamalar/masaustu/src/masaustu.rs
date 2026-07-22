@@ -18,15 +18,16 @@ use uplot_rs::{
     CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
     CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
     DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri,
-    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
-    MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-    SeriSeçenekleri, SmoothingÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
-    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, missing_data_null_kartı,
+    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ, GradientÖrneği,
+    Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SmoothingÖrneği, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, missing_data_null_kartı,
     missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
     ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
     zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
@@ -51,6 +52,7 @@ enum KartKimliği {
     DataSmoothing(SmoothingÖrneği),
     DrawHooks,
     FocusCursor(FocusÖrneği),
+    Gradients(GradientÖrneği),
     MissingDataNull,
     MissingDataXGap,
     DependentScale,
@@ -84,6 +86,7 @@ impl KartKimliği {
             Self::DataSmoothing(örnek) => örnek.başlık(),
             Self::DrawHooks => "Draw Hooks",
             Self::FocusCursor(örnek) => örnek.başlık(),
+            Self::Gradients(örnek) => örnek.başlık(),
             Self::MissingDataNull => "Missing Data · null values",
             Self::MissingDataXGap => "Missing Data · adjacent X gap",
             Self::DependentScale => "Derived Scale · °F / °C",
@@ -131,6 +134,7 @@ impl KartKimliği {
             }
             Self::DrawHooks => "draw-hooks.html · drawClear/drawSeries/draw plugin hooks",
             Self::FocusCursor(_) => "focus-cursor.html · cursor.focus + setSeries",
+            Self::Gradients(_) => "gradients.html · scaleGradient + cursor point colors",
             Self::MissingDataNull | Self::MissingDataXGap => {
                 "missing-data.html · resmî veri ve iki kaynak alt grafiği"
             }
@@ -167,6 +171,7 @@ impl KartKimliği {
             Self::DataSmoothing(_) => DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
             Self::DrawHooks => DRAW_HOOKS_KART_TANIM_ÖRNEĞİ,
             Self::FocusCursor(_) => FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ,
+            Self::Gradients(_) => GRADIENTS_KART_TANIM_ÖRNEĞİ,
             Self::MissingDataNull | Self::MissingDataXGap => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
             Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::ArcSinhScales => ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
@@ -197,6 +202,7 @@ impl KartKimliği {
             Self::DataSmoothing(_) => "src/kart/data_smoothing.rs",
             Self::DrawHooks => "src/kart/draw_hooks.rs",
             Self::FocusCursor(_) => "src/kart/focus_cursor.rs",
+            Self::Gradients(_) => "src/kart/gradients.rs",
             Self::MissingDataNull | Self::MissingDataXGap => "src/kart/missing_data.rs",
             Self::DependentScale => "src/kart/dependent_scale.rs",
             Self::ArcSinhScales => "src/kart/arcsinh_scales.rs",
@@ -444,6 +450,7 @@ fn grafik_oluştur(
         KartKimliği::DataSmoothing(örnek) => data_smoothing_kartı(örnek),
         KartKimliği::DrawHooks => draw_hooks_kartı(),
         KartKimliği::FocusCursor(örnek) => focus_cursor_kartı(örnek),
+        KartKimliği::Gradients(örnek) => gradients_kartı(örnek),
         KartKimliği::MissingDataNull => missing_data_null_kartı(),
         KartKimliği::MissingDataXGap => missing_data_x_boşluğu_kartı(),
         KartKimliği::DependentScale => dependent_scale_kartı(),
@@ -518,6 +525,21 @@ impl Render for ChartListesi {
             }
             KartKimliği::FocusCursor(FocusÖrneği::Performans300) => {
                 "10 nokta × 300 seri · alfa 0,1".to_string()
+            }
+            KartKimliği::Gradients(GradientÖrneği::YatayÇizgi) => {
+                "5 nokta · X'e hizalı 3 ayrık renk".to_string()
+            }
+            KartKimliği::Gradients(GradientÖrneği::DikeyÇizgi) => {
+                "5 nokta · Y'ye hizalı mavi/kırmızı".to_string()
+            }
+            KartKimliği::Gradients(GradientÖrneği::DikeyArcSinh) => {
+                "5 nokta · ArcSinh · 3 ayrık renk".to_string()
+            }
+            KartKimliği::Gradients(GradientÖrneği::ÖlçekDolguları) => {
+                "6 nokta × 2 seri · ölçek dolguları".to_string()
+            }
+            KartKimliği::Gradients(GradientÖrneği::GöreliDolgu) => {
+                "6 nokta · görünür min/orta/max dolgusu".to_string()
             }
             KartKimliği::MissingDataNull => "200 nokta × 3 seri · % + MB".to_string(),
             KartKimliği::MissingDataXGap => "8 nokta × 1 seri · 2 yol parçası".to_string(),
@@ -641,6 +663,21 @@ impl Render for ChartListesi {
                     "focus-cursor",
                     aktif_kart == kart,
                     "Y mesafesine göre çekirdek seri odağı",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
+            .children(GradientÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::Gradients(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "gradients",
+                    aktif_kart == kart,
+                    "Ölçek hizalı çekirdek gradyanı",
                     panel,
                     vurgu,
                 )

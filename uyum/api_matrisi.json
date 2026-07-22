@@ -188,6 +188,30 @@
       "rust_karşılığı": "OdakDüzeni::odak_kalınlığı / OdakStili",
       "durum": "kısmi",
       "test": "src/kart/focus_cursor.rs"
+    },
+    {
+      "kaynak_yolu": "Series.stroke/fill (CanvasGradient)",
+      "rust_karşılığı": "ÖlçekGradyanı / Komut::GradyanYol / Komut::GradyanAlan",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/gradients.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.valToPos scaleGradient",
+      "rust_karşılığı": "Grafik::ölçek_gradyanını_çöz",
+      "durum": "kısmi",
+      "test": "src/kart/gradients.rs"
+    },
+    {
+      "kaynak_yolu": "Cursor.points.fill callback",
+      "rust_karşılığı": "Grafik::seri_imleç_rengi",
+      "durum": "kısmi",
+      "test": "src/kart/gradients.rs"
+    },
+    {
+      "kaynak_yolu": "Scale.distr: 4 gradient coordinates",
+      "rust_karşılığı": "YÖlçekDağılımı::ArcSinh + ÖlçekGradyanı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/gradients.rs"
     }
   ]
 }

@@ -240,6 +240,7 @@
       data_smoothing_kart_tanim_ornegi,
       draw_hooks_kart_tanim_ornegi,
       focus_cursor_kart_tanim_ornegi,
+      gradients_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
@@ -812,6 +813,29 @@
         etkileşimler: () => ortakEtkileşimler(),
       };
     }
+    for (const [kimlik, başlık, durum, seriler] of [
+      ["gradients-horizontal-stroke", "Scale-aligned gradient strokes (hz)", "5 nokta · X'e hizalı ayrık duraklar", [{ etiket: "Trends", renk: "#ff0000" }]],
+      ["gradients-vertical-stroke", "Scale-aligned gradient strokes (vt)", "5 nokta · Y'ye hizalı mavi/kırmızı", [{ etiket: "Over/Under", renk: "#ff0000" }]],
+      ["gradients-vertical-arcsinh", "Scale-aligned gradient strokes (vt)", "5 nokta · ArcSinh · 3 ayrık renk", [{ etiket: "Over/Under", renk: "#ff0000" }]],
+      ["gradients-scale-fills", "Scale-aligned gradient fills", "6 nokta · 2 basınç dolgusu", [{ etiket: "Tank 1 (red = high pressure)", renk: "#00ff00" }, { etiket: "Tank 2 (red = low pressure)", renk: "#ff00ff" }]],
+      ["gradients-relative-fill", "Data min/max % relative gradient fills", "6 nokta · görünür min/orta/max", [{ etiket: "Tank 1", renk: "#00ff00" }]],
+    ]) {
+      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>gradients</small><div class="durum">${durum}</div>
+        </article>`);
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/gradients.html">gradients.html</a>
+          <br>scaleGradient durak seçimi, ayrık/akıcı renkler, ArcSinh konumları ve görünür veri min/max hesabı Rust çekirdeğinde yeniden çözülür.`,
+        tanım: () => gradients_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/gradients.rs",
+        seriler,
+        yardım: "Gradyan durakları yakınlaştırma ve taşıma sonrası görünür ölçekle yeniden hizalanır",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
 
     function ortakEtkileşimler() {
       return {
@@ -1008,6 +1032,7 @@
       const enYakın = oturum?.en_yakin_noktalar(oran) ?? [];
       if (enYakın.length < 2) return;
       const [gerçekX, ...seriDeğerleri] = enYakın;
+      const imleçRenkleri = oturum?.imlec_seri_renkleri(oran) ?? [];
       const xKonumOranı = oturum.x_konum_orani(gerçekX);
       const noktaX = sol + xKonumOranı * (sağ - sol);
       const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
@@ -1058,6 +1083,7 @@
         }
         const noktaY = alt - yOranı * (alt - üst);
         nokta.setAttribute("cx", noktaX); nokta.setAttribute("cy", noktaY);
+        nokta.setAttribute("fill", imleçRenkleri[indeks] ?? kartlar[aktifKart].seriler[indeks]?.renk ?? "#000000");
         nokta.setAttribute("visibility", "visible");
         if (yGösterge) {
           const rozetX = sol - 50 - indeks * 56;

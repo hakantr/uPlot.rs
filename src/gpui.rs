@@ -4,15 +4,16 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 use ::gpui::{
-    App, BorderStyle, Bounds, Context, EventEmitter, FocusHandle, Hsla, IntoElement, KeyDownEvent,
-    KeyUpEvent, MouseButton, MouseDownEvent, MouseExitEvent, MouseMoveEvent, MouseUpEvent,
-    PathBuilder, PinchEvent, Pixels, Render, ScrollDelta, ScrollWheelEvent, SharedString,
-    TextAlign, TextRun, TouchPhase, Window, canvas, div, point, prelude::*, px, quad, rgb, rgba,
-    size,
+    App, BorderStyle, Bounds, ContentMask, Context, EventEmitter, FocusHandle, Hsla, IntoElement,
+    KeyDownEvent, KeyUpEvent, MouseButton, MouseDownEvent, MouseExitEvent, MouseMoveEvent,
+    MouseUpEvent, PathBuilder, PinchEvent, Pixels, Render, ScrollDelta, ScrollWheelEvent,
+    SharedString, TextAlign, TextRun, TouchPhase, Window, canvas, div, linear_color_stop,
+    linear_gradient, point, prelude::*, px, quad, rgb, rgba, size,
 };
 
 use crate::{
-    Grafik, Komut, MetinHizası, Nokta, Sahne, SeriSeçenekleri, SeçimEylemi, UplotHatası
+    DoğrusalGradyan, Grafik, Komut, MetinHizası, Nokta, Sahne, SeriSeçenekleri, SeçimEylemi,
+    UplotHatası,
 };
 
 #[derive(Clone)]
@@ -260,6 +261,10 @@ impl GpuiGrafik {
                 let Some(seri) = self.grafik.seri_seçenekleri().get(seri_indeksi) else {
                     continue;
                 };
+                let seri_rengi = self
+                    .grafik
+                    .seri_imleç_rengi(seri_indeksi, imleç.veri_x, *değer)
+                    .unwrap_or_else(|| seri.renk.clone());
                 let Some(y_oranı) = self.grafik.seri_y_konum_oranı(seri_indeksi, *değer) else {
                     continue;
                 };
@@ -268,7 +273,7 @@ impl GpuiGrafik {
                     sahne.ekle(Komut::KesikliÇizgi {
                         başlangıç: Nokta::yeni(sol, nokta_y),
                         bitiş: Nokta::yeni(sağ, nokta_y),
-                        renk: seri.renk.clone(),
+                        renk: seri_rengi.clone(),
                         kalınlık: 1.0,
                         kesik: 4.0,
                     });
@@ -277,8 +282,8 @@ impl GpuiGrafik {
                         konum: Nokta::yeni(rozet_x, nokta_y - 11.0),
                         genişlik: 44.0,
                         yükseklik: 22.0,
-                        dolgu: seri.renk.clone(),
-                        çizgi: seri.renk.clone(),
+                        dolgu: seri_rengi.clone(),
+                        çizgi: seri_rengi.clone(),
                         kalınlık: 0.0,
                     });
                     sahne.ekle(Komut::Metin {
@@ -292,8 +297,8 @@ impl GpuiGrafik {
                 sahne.ekle(Komut::Daire {
                     merkez: Nokta::yeni(nokta_x, nokta_y),
                     yarıçap: 2.5,
-                    dolgu: seri.renk.clone(),
-                    çizgi: seri.renk.clone(),
+                    dolgu: seri_rengi.clone(),
+                    çizgi: seri_rengi,
                     kalınlık: 0.0,
                 });
             }
@@ -736,6 +741,25 @@ pub fn sahneyi_boya(
                     pencere.paint_path(yol, renk_çöz(renk));
                 }
             }
+            Komut::GradyanYol {
+                parçalar,
+                gradyan,
+                kalınlık,
+            } => {
+                let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek));
+                for parça in parçalar {
+                    let mut noktalar = parça.iter();
+                    if let Some(ilk) = noktalar.next() {
+                        yol.move_to(dönüştür(*ilk));
+                    }
+                    for nokta in noktalar {
+                        yol.line_to(dönüştür(*nokta));
+                    }
+                }
+                if let Ok(yol) = yol.build() {
+                    gradyan_yolunu_boya(yol, gradyan, &dönüştür, pencere);
+                }
+            }
             Komut::KesikliYol {
                 parçalar,
                 renk,
@@ -774,6 +798,26 @@ pub fn sahneyi_boya(
                 }
                 if let Ok(yol) = yol.build() {
                     pencere.paint_path(yol, renk_çöz(dolgu));
+                }
+            }
+            Komut::GradyanAlan {
+                çokgenler, gradyan
+            } => {
+                let mut yol = PathBuilder::fill();
+                for çokgen in çokgenler {
+                    let mut noktalar = çokgen.iter();
+                    if let Some(ilk) = noktalar.next() {
+                        yol.move_to(dönüştür(*ilk));
+                    }
+                    for nokta in noktalar {
+                        yol.line_to(dönüştür(*nokta));
+                    }
+                    if çokgen.len() >= 3 {
+                        yol.close();
+                    }
+                }
+                if let Ok(yol) = yol.build() {
+                    gradyan_yolunu_boya(yol, gradyan, &dönüştür, pencere);
                 }
             }
             Komut::Daire {
@@ -854,6 +898,152 @@ pub fn sahneyi_boya(
             }
         }
     }
+}
+
+fn gradyan_yolunu_boya(
+    yol: ::gpui::Path<Pixels>,
+    gradyan: &DoğrusalGradyan,
+    dönüştür: &impl Fn(Nokta) -> ::gpui::Point<Pixels>,
+    pencere: &mut Window,
+) {
+    let Some(ilk) = gradyan.duraklar.first() else {
+        return;
+    };
+    if gradyan.duraklar.len() == 1 {
+        pencere.paint_path(yol, renk_çöz(&ilk.renk));
+        return;
+    }
+    let başlangıç = dönüştür(gradyan.başlangıç);
+    let bitiş = dönüştür(gradyan.bitiş);
+    let dx = f32::from(bitiş.x - başlangıç.x);
+    let dy = f32::from(bitiş.y - başlangıç.y);
+    let yatay = dx.abs() >= dy.abs();
+    let eksen_başlangıcı = if yatay {
+        f32::from(başlangıç.x)
+    } else {
+        f32::from(başlangıç.y)
+    };
+    let eksen_bitişi = if yatay {
+        f32::from(bitiş.x)
+    } else {
+        f32::from(bitiş.y)
+    };
+    let eksen_farkı = eksen_bitişi - eksen_başlangıcı;
+    if eksen_farkı.abs() <= f32::EPSILON {
+        pencere.paint_path(yol, renk_çöz(&ilk.renk));
+        return;
+    }
+    let sınır_başı = if yatay {
+        f32::from(yol.bounds.left())
+    } else {
+        f32::from(yol.bounds.top())
+    };
+    let sınır_sonu = if yatay {
+        f32::from(yol.bounds.right())
+    } else {
+        f32::from(yol.bounds.bottom())
+    };
+    let sınır_uzunluğu = (sınır_sonu - sınır_başı).max(f32::EPSILON);
+    let açı = if yatay {
+        if eksen_farkı >= 0.0 { 90.0 } else { 270.0 }
+    } else if eksen_farkı >= 0.0 {
+        180.0
+    } else {
+        0.0
+    };
+
+    let ilk_konum = eksen_başlangıcı + ilk.oran.clamp(0.0, 1.0) * eksen_farkı;
+    boya_maskeli_aralık(
+        &yol,
+        yatay,
+        if eksen_farkı >= 0.0 {
+            sınır_başı
+        } else {
+            ilk_konum
+        },
+        if eksen_farkı >= 0.0 {
+            ilk_konum
+        } else {
+            sınır_sonu
+        },
+        renk_çöz(&ilk.renk),
+        pencere,
+    );
+
+    for çift in gradyan.duraklar.windows(2) {
+        let (Some(sol), Some(sağ)) = (çift.first(), çift.get(1)) else {
+            continue;
+        };
+        let sol_konum = eksen_başlangıcı + sol.oran.clamp(0.0, 1.0) * eksen_farkı;
+        let sağ_konum = eksen_başlangıcı + sağ.oran.clamp(0.0, 1.0) * eksen_farkı;
+        if (sağ_konum - sol_konum).abs() <= f32::EPSILON {
+            continue;
+        }
+        let sol_yüzde = (sol_konum - sınır_başı) / sınır_uzunluğu;
+        let sağ_yüzde = (sağ_konum - sınır_başı) / sınır_uzunluğu;
+        let arka_plan = linear_gradient(
+            açı,
+            linear_color_stop(renk_çöz(&sol.renk), sol_yüzde),
+            linear_color_stop(renk_çöz(&sağ.renk), sağ_yüzde),
+        );
+        boya_maskeli_aralık(
+            &yol,
+            yatay,
+            sol_konum.min(sağ_konum),
+            sol_konum.max(sağ_konum),
+            arka_plan,
+            pencere,
+        );
+    }
+
+    if let Some(son) = gradyan.duraklar.last() {
+        let son_konum = eksen_başlangıcı + son.oran.clamp(0.0, 1.0) * eksen_farkı;
+        boya_maskeli_aralık(
+            &yol,
+            yatay,
+            if eksen_farkı >= 0.0 {
+                son_konum
+            } else {
+                sınır_başı
+            },
+            if eksen_farkı >= 0.0 {
+                sınır_sonu
+            } else {
+                son_konum
+            },
+            renk_çöz(&son.renk),
+            pencere,
+        );
+    }
+}
+
+fn boya_maskeli_aralık(
+    yol: &::gpui::Path<Pixels>,
+    yatay: bool,
+    başlangıç: f32,
+    bitiş: f32,
+    boya: impl Into<::gpui::Background>,
+    pencere: &mut Window,
+) {
+    let (başlangıç, bitiş) = (başlangıç.min(bitiş), başlangıç.max(bitiş));
+    if bitiş - başlangıç <= f32::EPSILON {
+        return;
+    }
+    let sınırlar = if yatay {
+        Bounds::new(
+            point(px(başlangıç), yol.bounds.top()),
+            size(px(bitiş - başlangıç), yol.bounds.size.height),
+        )
+    } else {
+        Bounds::new(
+            point(yol.bounds.left(), px(başlangıç)),
+            size(yol.bounds.size.width, px(bitiş - başlangıç)),
+        )
+    };
+    let boya = boya.into();
+    pencere.with_content_mask(Some(ContentMask { bounds: sınırlar }), |pencere| {
+        pencere.paint_path(yol.clone(), boya);
+    });
 }
 
 fn renk_çöz(kod: &str) -> Hsla {

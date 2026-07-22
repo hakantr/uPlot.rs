@@ -1,10 +1,11 @@
 use crate::cizim::kirpma::{
     nokta_dikdörtgende, yolu_dikdörtgene_kırp, çokgeni_dikdörtgene_kırp
 };
-use crate::cizim::{Komut, MetinHizası, Nokta, Sahne};
+use crate::cizim::{DoğrusalGradyan, GradyanRenkDurağı, Komut, MetinHizası, Nokta, Sahne};
 use crate::etkilesim::EtkileşimDenetleyicisi;
 use crate::{
-    Aralık, GrafikSeçenekleri, HizalıVeri, UplotHatası, XÖlçekDağılımı, YÖlçekDağılımı
+    Aralık, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri, HizalıVeri, UplotHatası,
+    XÖlçekDağılımı, YÖlçekDağılımı, ÖlçekGradyanı,
 };
 
 /// Bir işaretçi seçiminin çekirdekte çözümlenen sonucu.
@@ -658,6 +659,32 @@ impl Grafik {
         Some((x, değerler))
     }
 
+    /// İmleç noktasının rengini seri gradyanının geçerli ölçek duraklarına göre çözer.
+    pub fn seri_imleç_rengi(
+        &self,
+        seri_indeksi: usize,
+        x_değeri: f64,
+        y_değeri: f64,
+    ) -> Option<String> {
+        let seri = self.seçenekler.seriler.get(seri_indeksi)?;
+        let gradyan = seri.çizgi_gradyanı.as_ref()?;
+        let x_aralığı = self.görünür_x_aralığı();
+        let y_aralığı =
+            self.görünür_ölçek_aralığı(&seri.ölçek, x_aralığı, self.etkileşim.görünür_y());
+        let duraklar =
+            self.gradyan_değerlerini_çöz(gradyan, &seri.ölçek, x_aralığı, y_aralığı)?;
+        let değer = match gradyan.eksen {
+            GradyanEkseni::X => x_değeri,
+            GradyanEkseni::Y => y_değeri,
+        };
+        duraklar
+            .iter()
+            .rev()
+            .find(|(durak, _)| değer >= *durak)
+            .or_else(|| duraklar.first())
+            .map(|(_, renk)| renk.clone())
+    }
+
     /// `cursor.focus` eşdeğeri: en yakın X örneğindeki Y mesafesine göre
     /// odaklanan seriyi çekirdekte seçer. `true`, sahnenin yeniden çizilmesi
     /// gerektiğini bildirir.
@@ -1088,7 +1115,7 @@ impl Grafik {
             }
             let mut ham_parçalar = Vec::<Vec<Nokta>>::new();
             let mut parça = Vec::<Nokta>::new();
-            let mut görünür_noktalar = Vec::<Nokta>::new();
+            let mut görünür_noktalar = Vec::<(Nokta, f64, f64)>::new();
             let mut önceki_x = None::<f64>;
             let çizilecek_indeksler =
                 çizilecek_indeksler(self.veri.x(), değerler, x_aralığı, genişlik);
@@ -1115,7 +1142,7 @@ impl Grafik {
                         parça.push(nokta);
                         önceki_x = Some(*x_değeri);
                         if nokta_dikdörtgende(nokta, sol, sağ, üst, alt) {
-                            görünür_noktalar.push(nokta);
+                            görünür_noktalar.push((nokta, *x_değeri, *y_değeri));
                         }
                     }
                     _ if self.veri.hizalama_eksiği_mi(seri_indeksi, indeks)
@@ -1131,7 +1158,7 @@ impl Grafik {
                 ham_parçalar.push(parça);
             }
             let parçalar = yolu_dikdörtgene_kırp(&ham_parçalar, sol, sağ, üst, alt);
-            if let Some(dolgu) = &seri_dolgusu {
+            if seri_dolgusu.is_some() || seri.dolgu_gradyanı.is_some() {
                 let taban = alt
                     - self.y_konumu(
                         &seri.ölçek,
@@ -1153,12 +1180,46 @@ impl Grafik {
                         (kırpılmış.len() >= 3).then_some(kırpılmış)
                     })
                     .collect();
-                sahne.ekle(Komut::Alan {
-                    çokgenler,
-                    dolgu: dolgu.clone(),
-                });
+                if let Some(gradyan) = seri.dolgu_gradyanı.as_ref().and_then(|düzen| {
+                    self.ölçek_gradyanını_çöz(
+                        düzen,
+                        &seri.ölçek,
+                        x_aralığı,
+                        seri_y_aralığı,
+                        sol,
+                        üst,
+                        genişlik,
+                        yükseklik,
+                    )
+                }) {
+                    sahne.ekle(Komut::GradyanAlan {
+                        çokgenler, gradyan
+                    });
+                } else if let Some(dolgu) = &seri_dolgusu {
+                    sahne.ekle(Komut::Alan {
+                        çokgenler,
+                        dolgu: dolgu.clone(),
+                    });
+                }
             }
-            if let Some((çizgi, boşluk)) = seri.çizgi_kesik {
+            if let Some(gradyan) = seri.çizgi_gradyanı.as_ref().and_then(|düzen| {
+                self.ölçek_gradyanını_çöz(
+                    düzen,
+                    &seri.ölçek,
+                    x_aralığı,
+                    seri_y_aralığı,
+                    sol,
+                    üst,
+                    genişlik,
+                    yükseklik,
+                )
+            }) {
+                sahne.ekle(Komut::GradyanYol {
+                    parçalar,
+                    gradyan,
+                    kalınlık: seri_kalınlığı,
+                });
+            } else if let Some((çizgi, boşluk)) = seri.çizgi_kesik {
                 sahne.ekle(Komut::KesikliYol {
                     parçalar,
                     renk: seri_rengi.clone(),
@@ -1181,7 +1242,7 @@ impl Grafik {
             if let Some((uçlar, düzen)) =
                 kanca.and_then(|düzen| düzen.yıldız_uçları.map(|uçlar| (uçlar, düzen)))
             {
-                for nokta in &görünür_noktalar {
+                for (nokta, _, _) in &görünür_noktalar {
                     sahne.ekle(Komut::Alan {
                         çokgenler: vec![yıldız_çokgeni(
                             *nokta,
@@ -1193,12 +1254,15 @@ impl Grafik {
                     });
                 }
             } else if ortalama_boşluk >= 10.0 {
-                for nokta in &görünür_noktalar {
+                for (nokta, x_değeri, y_değeri) in &görünür_noktalar {
+                    let nokta_rengi = self
+                        .seri_imleç_rengi(seri_indeksi, *x_değeri, *y_değeri)
+                        .unwrap_or_else(|| seri_rengi.clone());
                     sahne.ekle(Komut::Daire {
                         merkez: *nokta,
                         yarıçap: 2.5,
                         dolgu: "#ffffff".to_string(),
-                        çizgi: seri_rengi.clone(),
+                        çizgi: nokta_rengi,
                         kalınlık: 1.0,
                     });
                 }
@@ -2079,6 +2143,171 @@ impl Grafik {
             tam_ikincil.en_az + en_çok_oran * ikincil_uzunluk,
         )
         .unwrap_or(tam_ikincil)
+    }
+
+    fn gradyan_değerlerini_çöz(
+        &self,
+        gradyan: &ÖlçekGradyanı,
+        ölçek: &str,
+        x_aralığı: Aralık,
+        ölçek_aralığı: Aralık,
+    ) -> Option<Vec<(f64, String)>> {
+        let göreli = gradyan
+            .duraklar
+            .iter()
+            .any(|durak| matches!(durak.konum, GradyanKonumu::GörünürVeriOranı(_)));
+        let (veri_en_az, veri_en_çok) = if göreli {
+            self.görünür_veri_aralığı(ölçek, x_aralığı)
+                .filter(|(en_az, en_çok)| en_çok - en_az > f64::EPSILON)
+                .unwrap_or((ölçek_aralığı.en_az, ölçek_aralığı.en_çok))
+        } else {
+            (ölçek_aralığı.en_az, ölçek_aralığı.en_çok)
+        };
+        let veri_aralığı = veri_en_çok - veri_en_az;
+        gradyan
+            .duraklar
+            .iter()
+            .map(|durak| {
+                let değer = match durak.konum {
+                    GradyanKonumu::Değer(değer) => değer,
+                    GradyanKonumu::NegatifSonsuz => f64::NEG_INFINITY,
+                    GradyanKonumu::PozitifSonsuz => f64::INFINITY,
+                    GradyanKonumu::GörünürVeriOranı(oran) => veri_en_az + veri_aralığı * oran,
+                };
+                (!değer.is_nan()).then(|| (değer, durak.renk.clone()))
+            })
+            .collect()
+    }
+
+    fn görünür_veri_aralığı(
+        &self, ölçek: &str, x_aralığı: Aralık
+    ) -> Option<(f64, f64)> {
+        let mut en_az = f64::INFINITY;
+        let mut en_çok = f64::NEG_INFINITY;
+        for (seri, _) in self
+            .veri
+            .seriler()
+            .iter()
+            .zip(self.seçenekler.seriler.iter())
+            .filter(|(_, seçenek)| seçenek.göster && seçenek.ölçek == ölçek)
+        {
+            for (x, değer) in self.veri.x().iter().zip(seri.iter()) {
+                if *x < x_aralığı.en_az || *x > x_aralığı.en_çok {
+                    continue;
+                }
+                let Some(değer) = değer else { continue };
+                en_az = en_az.min(*değer);
+                en_çok = en_çok.max(*değer);
+            }
+        }
+        (en_az.is_finite() && en_çok.is_finite()).then_some((en_az, en_çok))
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn ölçek_gradyanını_çöz(
+        &self,
+        gradyan: &ÖlçekGradyanı,
+        ölçek: &str,
+        x_aralığı: Aralık,
+        y_aralığı: Aralık,
+        sol: f32,
+        üst: f32,
+        genişlik: f32,
+        yükseklik: f32,
+    ) -> Option<DoğrusalGradyan> {
+        let ölçek_aralığı = match gradyan.eksen {
+            GradyanEkseni::X => x_aralığı,
+            GradyanEkseni::Y => y_aralığı,
+        };
+        let değerler = self.gradyan_değerlerini_çöz(gradyan, ölçek, x_aralığı, ölçek_aralığı)?;
+        let mut en_az_indeks = None;
+        let mut en_çok_indeks = None;
+        for (indeks, (değer, _)) in değerler.iter().enumerate() {
+            if *değer <= ölçek_aralığı.en_az || en_az_indeks.is_none() {
+                en_az_indeks = Some(indeks);
+            }
+            en_çok_indeks = Some(indeks);
+            if *değer >= ölçek_aralığı.en_çok {
+                break;
+            }
+        }
+        let (en_az_indeks, en_çok_indeks) = (en_az_indeks?, en_çok_indeks?);
+        let en_az_durak = değerler.get(en_az_indeks)?;
+        let en_çok_durak = değerler.get(en_çok_indeks)?;
+        let en_az_değer = if en_az_durak.0.is_infinite() {
+            ölçek_aralığı.en_az
+        } else {
+            en_az_durak.0
+        };
+        let en_çok_değer = if en_çok_durak.0.is_infinite() {
+            ölçek_aralığı.en_çok
+        } else {
+            en_çok_durak.0
+        };
+        let alt = üst + yükseklik;
+        let konum = |değer: f64| match gradyan.eksen {
+            GradyanEkseni::X => self.x_konumu(x_aralığı, değer, sol, genişlik),
+            GradyanEkseni::Y => alt - self.y_konumu(ölçek, y_aralığı, değer, 0.0, yükseklik),
+        };
+        let en_az_konum = konum(en_az_değer);
+        let en_çok_konum = konum(en_çok_değer);
+        let başlangıç = match gradyan.eksen {
+            GradyanEkseni::X => Nokta::yeni(en_az_konum, üst),
+            GradyanEkseni::Y => Nokta::yeni(sol, en_az_konum),
+        };
+        let bitiş = match gradyan.eksen {
+            GradyanEkseni::X => Nokta::yeni(en_çok_konum, üst),
+            GradyanEkseni::Y => Nokta::yeni(sol, en_çok_konum),
+        };
+        if en_az_indeks == en_çok_indeks || (en_az_konum - en_çok_konum).abs() <= f32::EPSILON {
+            return Some(DoğrusalGradyan {
+                başlangıç,
+                bitiş,
+                duraklar: vec![
+                    GradyanRenkDurağı {
+                        oran: 0.0,
+                        renk: en_az_durak.1.clone(),
+                    },
+                    GradyanRenkDurağı {
+                        oran: 1.0,
+                        renk: en_az_durak.1.clone(),
+                    },
+                ],
+            });
+        }
+        let seçilenler = değerler.get(en_az_indeks..=en_çok_indeks)?;
+        let fark = en_az_konum - en_çok_konum;
+        let mut duraklar = Vec::new();
+        let mut önceki_renk = None::<String>;
+        for (yerel_indeks, (değer, renk)) in seçilenler.iter().enumerate() {
+            let durak_konumu = if yerel_indeks == 0 {
+                en_az_konum
+            } else if yerel_indeks + 1 == seçilenler.len() {
+                en_çok_konum
+            } else {
+                konum(*değer)
+            };
+            let oran = ((en_az_konum - durak_konumu) / fark).clamp(0.0, 1.0);
+            if gradyan.ayrık
+                && yerel_indeks > 0
+                && let Some(önceki_renk) = önceki_renk.as_ref()
+            {
+                duraklar.push(GradyanRenkDurağı {
+                    oran,
+                    renk: önceki_renk.clone(),
+                });
+            }
+            duraklar.push(GradyanRenkDurağı {
+                oran,
+                renk: renk.clone(),
+            });
+            önceki_renk = Some(renk.clone());
+        }
+        Some(DoğrusalGradyan {
+            başlangıç,
+            bitiş,
+            duraklar,
+        })
     }
 
     fn tam_x_aralığı(&self) -> Option<Aralık> {

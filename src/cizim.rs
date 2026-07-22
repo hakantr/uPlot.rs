@@ -15,6 +15,19 @@ impl Nokta {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct GradyanRenkDurağı {
+    pub oran: f32,
+    pub renk: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct DoğrusalGradyan {
+    pub başlangıç: Nokta,
+    pub bitiş: Nokta,
+    pub duraklar: Vec<GradyanRenkDurağı>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MetinHizası {
     Başlangıç,
@@ -45,6 +58,11 @@ pub enum Komut {
         renk: String,
         kalınlık: f32,
     },
+    GradyanYol {
+        parçalar: Vec<Vec<Nokta>>,
+        gradyan: DoğrusalGradyan,
+        kalınlık: f32,
+    },
     KesikliYol {
         parçalar: Vec<Vec<Nokta>>,
         renk: String,
@@ -55,6 +73,10 @@ pub enum Komut {
     Alan {
         çokgenler: Vec<Vec<Nokta>>,
         dolgu: String,
+    },
+    GradyanAlan {
+        çokgenler: Vec<Vec<Nokta>>,
+        gradyan: DoğrusalGradyan,
     },
     Daire {
         merkez: Nokta,
@@ -115,7 +137,7 @@ impl Sahne {
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}\" height=\"{}\" viewBox=\"0 0 {} {}\">\n",
             self.genişlik, self.yükseklik, self.genişlik, self.yükseklik
         );
-        for komut in &self.komutlar {
+        for (komut_indeksi, komut) in self.komutlar.iter().enumerate() {
             match komut {
                 Komut::ArkaPlan { renk } => {
                     let _ = writeln!(
@@ -181,6 +203,22 @@ impl Sahne {
                         sayı(*kalınlık)
                     );
                 }
+                Komut::GradyanYol {
+                    parçalar,
+                    gradyan,
+                    kalınlık,
+                } => {
+                    let kimlik = format!("uplot-gradyan-{komut_indeksi}");
+                    gradyan_tanımını_yaz(&mut çıktı, &kimlik, gradyan);
+                    let d = yol_verisi(parçalar, false);
+                    let _ = writeln!(
+                        çıktı,
+                        "  <path d=\"{}\" fill=\"none\" stroke=\"url(#{})\" stroke-width=\"{}\" stroke-linejoin=\"round\"/>",
+                        d,
+                        kimlik,
+                        sayı(*kalınlık)
+                    );
+                }
                 Komut::KesikliYol {
                     parçalar,
                     renk,
@@ -221,6 +259,18 @@ impl Sahne {
                         "  <path d=\"{}\" fill=\"{}\" stroke=\"none\"/>",
                         d.trim_end(),
                         kaçış(dolgu)
+                    );
+                }
+                Komut::GradyanAlan {
+                    çokgenler, gradyan
+                } => {
+                    let kimlik = format!("uplot-gradyan-{komut_indeksi}");
+                    gradyan_tanımını_yaz(&mut çıktı, &kimlik, gradyan);
+                    let d = yol_verisi(çokgenler, true);
+                    let _ = writeln!(
+                        çıktı,
+                        "  <path d=\"{}\" fill=\"url(#{})\" stroke=\"none\"/>",
+                        d, kimlik
                     );
                 }
                 Komut::Daire {
@@ -298,6 +348,43 @@ impl Sahne {
             .collect::<Vec<_>>()
             .join("\n")
     }
+}
+
+#[cfg(feature = "svg")]
+fn yol_verisi(parçalar: &[Vec<Nokta>], kapat: bool) -> String {
+    let mut d = String::new();
+    for parça in parçalar {
+        for (indeks, nokta) in parça.iter().enumerate() {
+            let işlem = if indeks == 0 { 'M' } else { 'L' };
+            let _ = write!(d, "{işlem}{} {} ", sayı(nokta.x), sayı(nokta.y));
+        }
+        if kapat && parça.len() >= 3 {
+            d.push_str("Z ");
+        }
+    }
+    d.trim_end().to_string()
+}
+
+#[cfg(feature = "svg")]
+fn gradyan_tanımını_yaz(çıktı: &mut String, kimlik: &str, gradyan: &DoğrusalGradyan) {
+    let _ = writeln!(
+        çıktı,
+        "  <defs><linearGradient id=\"{}\" gradientUnits=\"userSpaceOnUse\" x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\">",
+        kaçış(kimlik),
+        sayı(gradyan.başlangıç.x),
+        sayı(gradyan.başlangıç.y),
+        sayı(gradyan.bitiş.x),
+        sayı(gradyan.bitiş.y)
+    );
+    for durak in &gradyan.duraklar {
+        let _ = writeln!(
+            çıktı,
+            "    <stop offset=\"{}\" stop-color=\"{}\"/>",
+            sayı(durak.oran.clamp(0.0, 1.0)),
+            kaçış(&durak.renk)
+        );
+    }
+    çıktı.push_str("  </linearGradient></defs>\n");
 }
 
 #[cfg(feature = "svg")]

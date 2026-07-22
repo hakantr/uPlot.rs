@@ -61,6 +61,9 @@ pub enum UplotHatası {
         varlık: &'static str,
         açıklama: String,
     },
+    GeçersizGradyan {
+        açıklama: String,
+    },
 }
 
 impl Display for UplotHatası {
@@ -131,6 +134,9 @@ impl Display for UplotHatası {
                 varlık, açıklama
             } => {
                 write!(f, "{varlık} kaynak verisi çözümlenemedi: {açıklama}")
+            }
+            Self::GeçersizGradyan { açıklama } => {
+                write!(f, "geçersiz gradyan tanımı: {açıklama}")
             }
         }
     }

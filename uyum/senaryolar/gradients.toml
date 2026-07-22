@@ -1,0 +1,22 @@
+id = "gradients"
+kaynak = "../uPlot/demos/gradients.html"
+fixture = "src/kart/gradients.rs#gradients_kartı"
+viewport = [800, 600]
+device_pixel_ratio = 1
+durum = "beş-kaynak-alt-grafiği"
+
+[veri]
+yatay = [[20, 30, 40, 50, 60], [20, 10, 25, 50, 30]]
+dikey = [[20, 30, 40, 50, 60], [-5, 10, -2, -30, 30]]
+dolgular = [[0, 1, 2, 3, 4, 5], [10, 20, 30, 40, 50, 60], [1, 3, 5, 8, 15, 20]]
+
+[gradyan]
+yatay_ayrık = [[0, "red"], [30, "orange"], [50, "blue"]]
+dikey_ayrık = [[-100, "blue"], [0, "red"]]
+arcsinh_ayrık = [["-Infinity", "blue"], [-10, "red"], [0, "green"]]
+göreli_oranlar = [0.0, 0.5, 1.0]
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/gradients/gradients-horizontal-stroke.svg"
