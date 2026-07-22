@@ -8,6 +8,10 @@ Kod tabanı Rust 2024 edition kullanır ve en az Rust 1.95 gerektirir. Yeni
 modüller `mod.rs` yerine `foo.rs` + gerektiğinde `foo/alt_modul.rs` düzenini
 izler.
 
+`gpui` ve `gpui_kutuphanesi` commit pinlenmez. Path bağımlılıkları her yerel
+derlemede kardeş çalışma ağaçlarının mevcut durumunu, CI ise depoların güncel
+varsayılan dallarını kullanır. Yalnız normatif uPlot kaynağı commit kilitlidir.
+
 Port şu anda Faz 0 altyapısı ve ilk dikey uyum kartını içerir:
 
 - doğrulanmış sütunlu/hizalı veri modeli;

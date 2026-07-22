@@ -19,17 +19,15 @@ jobs:
           repository: leeoniya/uPlot
           ref: 0e5812c504430f5c804e0f993376d8999b26cc34
           path: uPlot
-      - name: Kilitli GPUI
+      - name: Güncel GPUI
         uses: actions/checkout@v4
         with:
           repository: hakantr/gpui
-          ref: 5566476024607a4c6999ab7b91d0218633a9b96c
           path: gpui
-      - name: Kilitli GPUI bileşen kütüphanesi
+      - name: Güncel GPUI bileşen kütüphanesi
         uses: actions/checkout@v4
         with:
           repository: hakantr/gpui_kutuphanesi
-          ref: c97926c3c15ab99091b51f7ed88bd98f357de409
           path: gpui_kutuphanesi
       - uses: dtolnay/rust-toolchain@1.95
         with:

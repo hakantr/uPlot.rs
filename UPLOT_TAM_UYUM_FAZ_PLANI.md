@@ -26,10 +26,13 @@ geriye çekilmez.
 | uPlot tip yüzeyi | aynı commit, `dist/uPlot.d.ts` | `../uPlot/dist/uPlot.d.ts` | Kamu API envanteri ve varsayılanlar |
 | uPlot demoları | aynı commit, 74 HTML + 2 JS giriş | `../uPlot/demos` | Davranış, görsel ve performans senaryoları |
 | Cizelge | çalışma ağacındaki mevcut sürüm | `../cizelge` | Yalnız port süreci, test katmanları ve CI örneği |
-| GPUI | hedef repo kurulurken ayrıca kilitlenecek | `../gpui` | Pencere, olay, metin ve çizim entegrasyonu |
+| GPUI | kilitsiz; mevcut canlı çalışma ağacı | `../gpui` | Pencere, olay, metin ve çizim entegrasyonu |
+| GPUI bileşen kütüphanesi | kilitsiz; mevcut canlı çalışma ağacı | `../gpui_kutuphanesi` | Başlık çubuğu ve ortak arayüz bileşenleri |
 
-Kaynak commit yükseltilmedikçe uyum hedefi hareket ettirilmez. Kaynak yükseltme
-ayrı bir değişiklik ve envanter fark raporu gerektirir.
+Normatif uPlot kaynak commit'i yükseltilmedikçe uyum hedefi hareket ettirilmez.
+Bu kaynak yükseltmesi ayrı bir değişiklik ve envanter fark raporu gerektirir.
+GPUI ile GPUI bileşen kütüphanesi ise sürekli geliştirilen canlı geliştirme
+bağımlılıklarıdır; commit pinlenmez ve her derlemede mevcut halleri kullanılır.
 
 ## 2. Başlangıç envanteri ve kapsam
 

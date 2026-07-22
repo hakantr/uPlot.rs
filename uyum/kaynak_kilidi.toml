@@ -12,10 +12,13 @@ lisans = "MIT"
 tip_bildirimi = "c9fb5d1fe8f2084b44690c841e84ab63402549d9420535a6081b389a461fefe5"
 çekirdek = "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645"
 
-[gpui]
-commit = "5566476024607a4c6999ab7b91d0218633a9b96c"
+[canlı_bağımlılıklar.gpui]
 yol = "../gpui"
-durum = "Faz 1 adaptörü bekliyor"
+politika = "kardeş çalışma ağacındaki mevcut durum"
+
+[canlı_bağımlılıklar.gpui_kutuphanesi]
+yol = "../gpui_kutuphanesi"
+politika = "kardeş çalışma ağacındaki mevcut durum"
 
 [render_profili]
 viewport = [800, 400]
