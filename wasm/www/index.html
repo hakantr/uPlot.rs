@@ -12,7 +12,9 @@
            color: #111827; background: #f3f4f6; }
     .uygulama { width: 100%; height: 100vh; display: grid; grid-template-columns: 280px 1fr;
                 overflow: hidden; }
-    aside { padding: 24px 18px; background: #fff; border-right: 1px solid #e5e7eb; }
+    aside { min-height: 0; height: 100vh; padding: 24px 18px; overflow-x: hidden;
+            overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable;
+            background: #fff; border-right: 1px solid #e5e7eb; }
     h1 { margin: 0; font-size: 22px; }
     .alt { margin: 5px 0 24px; color: #6b7280; font-size: 13px; }
     .kart { padding: 14px; border: 1px solid #dc2626; border-radius: 12px;
@@ -64,7 +66,7 @@
     #hata { color: #b91c1c; }
     @media (max-width: 760px) {
       .uygulama { height: auto; min-height: 100vh; grid-template-columns: 1fr; overflow: visible; }
-      aside { border-right: 0; border-bottom: 1px solid #e5e7eb; }
+      aside { height: min(46vh, 520px); border-right: 0; border-bottom: 1px solid #e5e7eb; }
       header { align-items: start; flex-direction: column; }
     }
   </style>
