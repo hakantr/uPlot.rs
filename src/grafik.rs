@@ -302,7 +302,12 @@ impl Grafik {
             });
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(x, üst + yükseklik + 20.0),
-                içerik: eksen_değerini_yaz(x_değeri, x_artımı),
+                içerik: if self.seçenekler.x_zaman {
+                    crate::zaman::eksen_etiketi(x_değeri, x_artımı)
+                        .unwrap_or_else(|| eksen_değerini_yaz(x_değeri, x_artımı))
+                } else {
+                    eksen_değerini_yaz(x_değeri, x_artımı)
+                },
                 renk: "#4b5563".to_string(),
                 boyut: 11.0,
                 hiza: MetinHizası::Orta,

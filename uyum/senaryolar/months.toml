@@ -1,0 +1,36 @@
+id = "months"
+kaynak = "../uPlot/demos/months.html"
+fixture = "src/kart/months.rs#months_artık_yılsız_kartı"
+alt_fixture = "src/kart/months.rs#months_artık_yıllı_kartı"
+viewport = [1920, 200]
+device_pixel_ratio = 1
+durum = "iki_alt_grafikli_etkileşimli"
+
+[veri]
+ay_sayısı = 36
+artık_yılsız_yıllar = [2017, 2018, 2019]
+artık_yıllı_yıllar = [2024, 2025, 2026]
+ilk_değer = 5.0
+değer_havuzu = "0..=10"
+kanıt_rastgele_üreteci = "mulberry32"
+kanıt_tohumu = 1297043028
+
+[zaman]
+saat_dilimi = "Etc/UTC"
+ay_günü = 1
+saat = "00:00:00"
+etiket = "YYYY-MM"
+artık_yıl_kanıtı = "2024-02-01T00:00:00Z"
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg_dizini = "target/months"

@@ -36,6 +36,11 @@ pub enum UplotHatası {
     BilinmeyenKart {
         kimlik: String,
     },
+    GeçersizTarih {
+        yıl: i64,
+        ay: u32,
+        gün: u32,
+    },
 }
 
 impl Display for UplotHatası {
@@ -78,6 +83,9 @@ impl Display for UplotHatası {
                 "veri için {beklenen} seri seçeneği gerekir; bulunan: {bulunan}"
             ),
             Self::BilinmeyenKart { kimlik } => write!(f, "bilinmeyen kart kimliği: {kimlik}"),
+            Self::GeçersizTarih { yıl, ay, gün } => {
+                write!(f, "geçersiz UTC tarihi: {yıl:04}-{ay:02}-{gün:02}")
+            }
         }
     }
 }

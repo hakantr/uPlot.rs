@@ -99,6 +99,16 @@
         <small>zoom-touch</small>
         <div class="durum">Resmî touch eklentisi · 2 seri</div>
       </article>
+      <article class="kart" data-kart="months-no-leap" aria-current="false" tabindex="0">
+        <strong>No leap year</strong>
+        <small>months-no-leap</small>
+        <div class="durum">UTC ay ekseni · months.html</div>
+      </article>
+      <article class="kart" data-kart="months-leap" aria-current="false" tabindex="0">
+        <strong>2024 leap year</strong>
+        <small>months-leap</small>
+        <div class="durum">UTC ay ekseni · months.html</div>
+      </article>
     </aside>
     <main>
       <header>
@@ -139,6 +149,7 @@
       scale_padding_kart_tanim_ornegi,
       zoom_wheel_kart_tanim_ornegi,
       zoom_touch_kart_tanim_ornegi,
+      months_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -267,7 +278,39 @@
           dokunma: ortak_kart_dokunma_etkilesimi(),
         }),
       },
+      "months-no-leap": {
+        başlık: "Months · No leap year",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months.html">months.html</a>
+          <br>2017–2019 arasındaki 36 UTC ay başlangıcı ve kaynaktaki 0…10 değer örneklemesi.`,
+        tanım: () => months_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/months.rs",
+        seriler: [{ etiket: "Value", renk: "#ff0000" }],
+        yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
+      "months-leap": {
+        başlık: "Months · 2024 leap year",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months.html">months.html</a>
+          <br>2024–2026 arasındaki 36 UTC ay başlangıcı; Şubat 2024 artık yıl takviminde korunur.`,
+        tanım: () => months_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/months.rs",
+        seriler: [{ etiket: "Value", renk: "#ff0000" }],
+        yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
     };
+
+    function ortakEtkileşimler() {
+      return {
+        tekerlek: ortak_kart_tekerlek_etkilesimi(),
+        seçim: ortak_kart_secim_yakinlastir(),
+        çiftTık: ortak_kart_cift_tikla_tam_gorunum(),
+        geçmiş: ortak_kart_gorunum_gecmisi(),
+        dokunma: ortak_kart_dokunma_etkilesimi(),
+      };
+    }
 
     let oturum = null;
     let aktifKart = "resize";

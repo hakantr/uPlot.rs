@@ -9,9 +9,10 @@ use ortak_bilesenler::{
 };
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
-    AREA_FILL_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    AREA_FILL_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik, MONTHS_KART_TANIM_ÖRNEĞİ,
+    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
     scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı,
 };
 
@@ -22,6 +23,8 @@ enum KartKimliği {
     ScalePadding,
     ZoomWheel,
     ZoomTouch,
+    MonthsNoLeap,
+    MonthsLeap,
 }
 
 impl KartKimliği {
@@ -32,6 +35,8 @@ impl KartKimliği {
             Self::ScalePadding => "Scale Padding · Flat",
             Self::ZoomWheel => "Wheel Zoom & Drag",
             Self::ZoomTouch => "Pinch Zoom & Pan",
+            Self::MonthsNoLeap => "Months · No leap year",
+            Self::MonthsLeap => "Months · 2024 leap year",
         }
     }
 
@@ -46,6 +51,9 @@ impl KartKimliği {
             }
             Self::ZoomWheel => "zoom-wheel.html · resmî 0.75 katsayılı tekerlek eklentisi",
             Self::ZoomTouch => "zoom-touch.html · resmî kıstırma ve tek parmak taşıma eklentisi",
+            Self::MonthsNoLeap | Self::MonthsLeap => {
+                "months.html · UTC ay ekseni · resmî sayfadaki iki alt grafik"
+            }
         }
     }
 
@@ -56,6 +64,7 @@ impl KartKimliği {
             Self::ScalePadding => SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
             Self::ZoomWheel => ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
             Self::ZoomTouch => ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+            Self::MonthsNoLeap | Self::MonthsLeap => MONTHS_KART_TANIM_ÖRNEĞİ,
         }
     }
 
@@ -66,6 +75,7 @@ impl KartKimliği {
             Self::ScalePadding => "src/kart/scale_padding.rs",
             Self::ZoomWheel => "src/kart/zoom_wheel.rs",
             Self::ZoomTouch => "src/kart/zoom_touch.rs",
+            Self::MonthsNoLeap | Self::MonthsLeap => "src/kart/months.rs",
         }
     }
 
@@ -171,6 +181,8 @@ fn grafik_oluştur(kart: KartKimliği, nokta_sayısı: usize) -> Result<Grafik, 
         KartKimliği::ScalePadding => scale_padding_kartı(),
         KartKimliği::ZoomWheel => zoom_wheel_kartı(),
         KartKimliği::ZoomTouch => zoom_touch_kartı(),
+        KartKimliği::MonthsNoLeap => months_artık_yılsız_kartı(),
+        KartKimliği::MonthsLeap => months_artık_yıllı_kartı(),
     }?;
     Grafik::yeni(seçenekler, veri)
 }
@@ -189,6 +201,9 @@ impl Render for ChartListesi {
             KartKimliği::ScalePadding => "10 nokta × 13 düz seri".to_string(),
             KartKimliği::ZoomWheel => "7 nokta × 2 seri".to_string(),
             KartKimliği::ZoomTouch => "7 nokta × 2 seri".to_string(),
+            KartKimliği::MonthsNoLeap | KartKimliği::MonthsLeap => {
+                "36 aylık nokta × 1 seri".to_string()
+            }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
@@ -221,6 +236,7 @@ impl Render for ChartListesi {
             ],
             KartKimliği::ZoomWheel => &["One", "Two"],
             KartKimliği::ZoomTouch => &["One", "Two"],
+            KartKimliği::MonthsNoLeap | KartKimliği::MonthsLeap => &["Value"],
         };
         let lejant = lejant.map_or_else(
             || {
@@ -457,6 +473,32 @@ impl Render for ChartListesi {
                             .text_color(vurgu)
                             .child("Resmî touch eklentisi · 2 seri"),
                     ),
+            )
+            .child(
+                ay_kartı(
+                    "kart-months-no-leap",
+                    "No leap year",
+                    "months-no-leap",
+                    aktif_kart == KartKimliği::MonthsNoLeap,
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::MonthsNoLeap, cx);
+                })),
+            )
+            .child(
+                ay_kartı(
+                    "kart-months-leap",
+                    "2024 leap year",
+                    "months-leap",
+                    aktif_kart == KartKimliği::MonthsLeap,
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::MonthsLeap, cx);
+                })),
             );
 
         let araçlar = div()
@@ -621,4 +663,43 @@ impl Render for ChartListesi {
                     .child("Rust 2024 · MSRV 1.95"),
             )
     }
+}
+
+fn ay_kartı(
+    kimlik: &'static str,
+    başlık: &'static str,
+    alt_kimlik: &'static str,
+    aktif: bool,
+    panel: gpui::Rgba,
+    vurgu: gpui::Rgba,
+) -> gpui::Stateful<gpui::Div> {
+    div()
+        .id(kimlik)
+        .cursor_pointer()
+        .mt_2()
+        .p_3()
+        .rounded_lg()
+        .border_1()
+        .border_color(if aktif { vurgu } else { rgb(0xd1d5db) })
+        .bg(if aktif { rgb(0xfef2f2) } else { panel })
+        .child(
+            div()
+                .font_weight(FontWeight::SEMIBOLD)
+                .text_color(rgb(0x111827))
+                .child(başlık),
+        )
+        .child(
+            div()
+                .mt_1()
+                .text_xs()
+                .text_color(rgb(0x6b7280))
+                .child(alt_kimlik),
+        )
+        .child(
+            div()
+                .mt_2()
+                .text_xs()
+                .text_color(vurgu)
+                .child("UTC ay ekseni · months.html"),
+        )
 }
