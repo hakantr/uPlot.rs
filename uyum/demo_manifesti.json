@@ -11,9 +11,19 @@
       },
       "kaynak": "demos/resize.html",
       "kaynak_sha256": "f9e5d8eba64cb8be7c3222a006b261a2dc234592478b54f5eedd453b852f3593",
+      "ek_kaynaklar": [
+        {
+          "yol": "demos/zoom-wheel.html",
+          "sha256": "a9da7c0c6dcd8f446790ee7ed151736ea505d949b7872ea6385cf2eab8a01a90"
+        },
+        {
+          "yol": "demos/zoom-touch.html",
+          "sha256": "099e85e0076c683bb852cb49abf0cbf2b1dc1c2304f780eb08b8876032ce9c59"
+        }
+      ],
       "fixture": "src/kart.rs#ilk_kart",
       "örnek": "examples/ilk_kart.rs",
-      "masaüstü_örneği": "examples/chart_listesi.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
       "senaryo": "uyum/senaryolar/line-resize.toml",
       "sahip_faz": 1,
@@ -32,6 +42,8 @@
         "official-wheel-zoom-plugin",
         "cursor-anchored-wheel-zoom",
         "adaptive-precise-wheel-normalization",
+        "official-touch-xy-zoom-pan-plugin",
+        "space-left-drag-xy-pan-adaptation",
         "uplot-rs-view-history-extension",
         "responsive-resize"
       ],

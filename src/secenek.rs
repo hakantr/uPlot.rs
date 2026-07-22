@@ -85,6 +85,9 @@ pub struct EtkileşimSeçenekleri {
     pub çift_tıkla_tam_görünüm: bool,
     /// uPlot.rs'e özgü adımlı görünüm geçmişi. Varsayılan: kapalı.
     pub görünüm_geçmişi: bool,
+    /// Resmî `zoom-touch` demosundaki kıstırarak yakınlaştırma ve tek parmakla
+    /// taşıma davranışlarını etkinleştirir. Varsayılan: kapalı.
+    pub dokunma_etkileşimi: bool,
 }
 
 impl Default for EtkileşimSeçenekleri {
@@ -95,6 +98,7 @@ impl Default for EtkileşimSeçenekleri {
             seçim_yakınlaştır: true,
             çift_tıkla_tam_görünüm: true,
             görünüm_geçmişi: false,
+            dokunma_etkileşimi: false,
         }
     }
 }
@@ -123,6 +127,11 @@ impl EtkileşimSeçenekleri {
 
     pub fn görünüm_geçmişi(mut self, etkin: bool) -> Self {
         self.görünüm_geçmişi = etkin;
+        self
+    }
+
+    pub fn dokunma_etkileşimi(mut self, etkin: bool) -> Self {
+        self.dokunma_etkileşimi = etkin;
         self
     }
 }

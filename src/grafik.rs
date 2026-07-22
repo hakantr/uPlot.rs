@@ -25,7 +25,10 @@ impl Grafik {
             .ok_or(UplotHatası::YetersizVeri {
                 uzunluk: veri.x().len(),
             })?;
-        let etkileşim = EtkileşimDenetleyicisi::yeni(tam, seçenekler.etkileşimler);
+        let tam_y = seçenekler.y_aralığı.unwrap_or_else(|| {
+            Aralık::otomatik(veri.seriler().iter().flat_map(|seri| seri.iter()))
+        });
+        let etkileşim = EtkileşimDenetleyicisi::yeni(tam, tam_y, seçenekler.etkileşimler);
         Ok(Self {
             seçenekler,
             veri,
@@ -34,15 +37,18 @@ impl Grafik {
     }
 
     pub fn çiz(&self) -> Sahne {
-        self.çiz_aralıkta(
+        self.çiz_boyutta_aralıklarla(
+            self.seçenekler.genişlik,
+            self.seçenekler.yükseklik,
             self.etkileşim
                 .yakınlaştırılmış()
-                .then(|| self.etkileşim.görünür()),
+                .then(|| self.etkileşim.görünür_x()),
+            self.etkileşim.görünür_y(),
         )
     }
 
     pub fn görünür_x_aralığı(&self) -> Aralık {
-        self.etkileşim.görünür()
+        self.etkileşim.görünür_x()
     }
 
     pub fn boyut(&self) -> (u32, u32) {
@@ -91,9 +97,47 @@ impl Grafik {
         self.etkileşim.geri()
     }
 
+    pub fn taşımayı_başlat(&mut self) -> bool {
+        let görünür_y = self.görünür_y_aralığı();
+        self.etkileşim.taşımayı_başlat(görünür_y)
+    }
+
+    pub fn taşı(
+        &mut self,
+        yatay_fark_oranı: f64,
+        dikey_fark_oranı: f64,
+    ) -> Result<bool, UplotHatası> {
+        self.etkileşim.taşı(yatay_fark_oranı, dikey_fark_oranı)
+    }
+
+    pub fn taşımayı_bitir(&mut self) {
+        self.etkileşim.taşımayı_bitir();
+    }
+
+    pub fn dokunmayı_başlat(&mut self) -> bool {
+        let görünür_y = self.görünür_y_aralığı();
+        self.etkileşim.dokunmayı_başlat(görünür_y)
+    }
+
+    pub fn dokunma_yakınlaştır(
+        &mut self,
+        yatay_odak_oranı: f64,
+        dikey_odak_oranı: f64,
+        çarpan: f64,
+    ) -> Result<bool, UplotHatası> {
+        self.etkileşim
+            .dokunma_yakınlaştır(yatay_odak_oranı, dikey_odak_oranı, çarpan)
+    }
+
+    pub fn dokunmayı_bitir(&mut self) {
+        self.etkileşim.dokunmayı_bitir();
+    }
+
     /// Geçerli X görünümündeki veriden hesaplanan Y aralığını döndürür.
     pub fn görünür_y_aralığı(&self) -> Aralık {
-        self.y_aralığı(self.görünür_x_aralığı())
+        self.etkileşim
+            .görünür_y()
+            .unwrap_or_else(|| self.y_aralığı(self.görünür_x_aralığı()))
     }
 
     /// Geçerli görünümde, normalize edilmiş yatay konuma en yakın seri noktasını bulur.
@@ -126,7 +170,12 @@ impl Grafik {
     /// Etkileşim denetleyicisindeki güncel görünümü hedef yüzey boyutunda çizer.
     pub fn çiz_görünür_boyutta(&self, genişlik_px: u32, yükseklik_px: u32) -> Sahne {
         let görünür = self.yakınlaştırılmış().then(|| self.görünür_x_aralığı());
-        self.çiz_boyutta(genişlik_px, yükseklik_px, görünür)
+        self.çiz_boyutta_aralıklarla(
+            genişlik_px,
+            yükseklik_px,
+            görünür,
+            self.etkileşim.görünür_y(),
+        )
     }
 
     /// Resize demosundaki gibi hedef yüzey boyutuna göre yeniden yerleşim yapar.
@@ -135,6 +184,16 @@ impl Grafik {
         genişlik_px: u32,
         yükseklik_px: u32,
         görünür_x: Option<Aralık>,
+    ) -> Sahne {
+        self.çiz_boyutta_aralıklarla(genişlik_px, yükseklik_px, görünür_x, None)
+    }
+
+    fn çiz_boyutta_aralıklarla(
+        &self,
+        genişlik_px: u32,
+        yükseklik_px: u32,
+        görünür_x: Option<Aralık>,
+        görünür_y: Option<Aralık>,
     ) -> Sahne {
         let genişlik_px = genişlik_px.max(160);
         let yükseklik_px = yükseklik_px.max(120);
@@ -177,7 +236,7 @@ impl Grafik {
                 .ok()
             })
             .unwrap_or(tam_x_aralığı);
-        let y_aralığı = self.y_aralığı(x_aralığı);
+        let y_aralığı = görünür_y.unwrap_or_else(|| self.y_aralığı(x_aralığı));
 
         let bölme = 4_u32;
         for sıra in 0..=bölme {

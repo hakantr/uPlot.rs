@@ -4,10 +4,11 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 use ::gpui::{
-    App, BorderStyle, Bounds, Context, EventEmitter, Hsla, IntoElement, MouseButton,
-    MouseDownEvent, MouseExitEvent, MouseMoveEvent, MouseUpEvent, PathBuilder, Pixels, Render,
-    ScrollDelta, ScrollWheelEvent, SharedString, TextAlign, TextRun, Window, canvas, div, point,
-    prelude::*, px, quad, rgb, rgba, size,
+    App, BorderStyle, Bounds, Context, EventEmitter, FocusHandle, Hsla, IntoElement, KeyDownEvent,
+    KeyUpEvent, MouseButton, MouseDownEvent, MouseExitEvent, MouseMoveEvent, MouseUpEvent,
+    PathBuilder, PinchEvent, Pixels, Render, ScrollDelta, ScrollWheelEvent, SharedString,
+    TextAlign, TextRun, TouchPhase, Window, canvas, div, point, prelude::*, px, quad, rgb, rgba,
+    size,
 };
 
 use crate::{Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne};
@@ -32,8 +33,12 @@ pub struct GpuiGrafik {
     grafik: Grafik,
     imleç: Option<İmleçDurumu>,
     seçim: Option<(f32, f32)>,
+    taşıma_başlangıcı: Option<Nokta>,
+    dokunma_kaydırma: Option<(f64, f64)>,
+    boşluk_basılı: bool,
     hata: Option<String>,
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
+    odak: Option<FocusHandle>,
 }
 
 impl GpuiGrafik {
@@ -42,8 +47,12 @@ impl GpuiGrafik {
             grafik,
             imleç: None,
             seçim: None,
+            taşıma_başlangıcı: None,
+            dokunma_kaydırma: None,
+            boşluk_basılı: false,
             hata: None,
             çizim_sınırları: Rc::new(Cell::new(None)),
+            odak: None,
         }
     }
 
@@ -63,6 +72,9 @@ impl GpuiGrafik {
         self.grafik = grafik;
         self.imleç = None;
         self.seçim = None;
+        self.taşıma_başlangıcı = None;
+        self.dokunma_kaydırma = None;
+        self.boşluk_basılı = false;
         self.hata = None;
         Self::bildir(cx);
     }
@@ -186,6 +198,39 @@ impl GpuiGrafik {
         if !self.grafik_alanında(fare) {
             return;
         }
+        if cfg!(target_os = "windows") && self.grafik.etkileşim_seçenekleri().dokunma_etkileşimi
+        {
+            match olay.touch_phase {
+                TouchPhase::Started => {
+                    let _ = self.grafik.taşımayı_başlat();
+                    self.dokunma_kaydırma = Some((0.0_f64, 0.0_f64));
+                    return;
+                }
+                TouchPhase::Ended | TouchPhase::Cancelled if self.dokunma_kaydırma.is_some() => {
+                    self.dokunma_kaydırma = None;
+                    self.grafik.taşımayı_bitir();
+                    return;
+                }
+                TouchPhase::Moved => {}
+                _ => return,
+            }
+        }
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        if let Some((birikmiş_x, birikmiş_y)) = self.dokunma_kaydırma.as_mut() {
+            let (x, y) = match olay.delta {
+                ScrollDelta::Pixels(delta) => {
+                    (f64::from(f32::from(delta.x)), f64::from(f32::from(delta.y)))
+                }
+                ScrollDelta::Lines(delta) => (f64::from(delta.x * 16.0), f64::from(delta.y * 16.0)),
+            };
+            *birikmiş_x += x / f64::from(sağ - sol);
+            *birikmiş_y += y / f64::from(alt - üst);
+            match self.grafik.taşı(*birikmiş_x, *birikmiş_y) {
+                Ok(_) => self.hata = None,
+                Err(hata) => self.hata = Some(format!("Dokunma taşıması uygulanamadı: {hata}")),
+            }
+            return;
+        }
         let (delta, hassas) = match olay.delta {
             ScrollDelta::Pixels(delta) => (f64::from(f32::from(delta.y)), true),
             ScrollDelta::Lines(delta) => (f64::from(delta.y), false),
@@ -200,6 +245,30 @@ impl GpuiGrafik {
         }
     }
 
+    fn dokunma_yakınlaştır(&mut self, olay: &PinchEvent) {
+        if matches!(olay.phase, TouchPhase::Ended | TouchPhase::Cancelled) {
+            self.grafik.dokunmayı_bitir();
+            return;
+        }
+        if olay.phase == TouchPhase::Started && !self.grafik.dokunmayı_başlat() {
+            return;
+        }
+        let Some(fare) = self.sahne_konumu(olay.position) else {
+            return;
+        };
+        if !self.grafik_alanında(fare) {
+            return;
+        }
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        let yatay = f64::from((fare.x - sol) / (sağ - sol));
+        let dikey = f64::from((fare.y - üst) / (alt - üst));
+        let çarpan = f64::from((1.0 + olay.delta).max(0.01));
+        match self.grafik.dokunma_yakınlaştır(yatay, dikey, çarpan) {
+            Ok(_) => self.hata = None,
+            Err(hata) => self.hata = Some(format!("Dokunma yakınlaştırması uygulanamadı: {hata}")),
+        }
+    }
+
     fn bildir(cx: &mut Context<Self>) {
         cx.emit(GpuiGrafikOlayı::DurumDeğişti);
         cx.notify();
@@ -210,16 +279,66 @@ impl EventEmitter<GpuiGrafikOlayı> for GpuiGrafik {}
 
 impl Render for GpuiGrafik {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let odak = self
+            .odak
+            .get_or_insert_with(|| cx.focus_handle().tab_stop(true))
+            .clone();
         let sahne = self.sahne();
         let çizim_sınırları = self.çizim_sınırları.clone();
+        let taşıyor = self.taşıma_başlangıcı.is_some();
+        let taşımaya_hazır = self.boşluk_basılı && self.grafik.yakınlaştırılmış();
         div()
             .id("uplot-rs-gpui-grafik")
+            .track_focus(&odak)
             .size_full()
             .min_h(px(120.0))
             .overflow_hidden()
-            .on_mouse_move(cx.listener(|bu, olay: &MouseMoveEvent, _, cx| {
-                bu.imleci_güncelle(olay.position);
-                if olay.dragging()
+            .when(taşıyor, |yüzey| yüzey.cursor_grabbing())
+            .when(!taşıyor && taşımaya_hazır, |yüzey| yüzey.cursor_grab())
+            .on_key_down(cx.listener(|bu, olay: &KeyDownEvent, _, cx| {
+                if olay.keystroke.key.as_str() == "space" {
+                    bu.boşluk_basılı = true;
+                    bu.seçim = None;
+                    cx.stop_propagation();
+                    GpuiGrafik::bildir(cx);
+                }
+            }))
+            .on_key_up(cx.listener(|bu, olay: &KeyUpEvent, _, cx| {
+                if olay.keystroke.key.as_str() == "space" {
+                    bu.boşluk_basılı = false;
+                    bu.taşıma_başlangıcı = None;
+                    bu.grafik.taşımayı_bitir();
+                    cx.stop_propagation();
+                    GpuiGrafik::bildir(cx);
+                }
+            }))
+            .on_mouse_move(cx.listener(|bu, olay: &MouseMoveEvent, window, cx| {
+                if let Some(odak) = bu.odak.as_ref()
+                    && !odak.is_focused(window)
+                    && bu
+                        .sahne_konumu(olay.position)
+                        .is_some_and(|konum| bu.grafik_alanında(konum))
+                {
+                    odak.focus(window, cx);
+                }
+                if let Some(başlangıç) = bu.taşıma_başlangıcı
+                    && let Some(konum) = bu.sahne_konumu(olay.position)
+                {
+                    let (sol, sağ, üst, alt) = bu.çizim_alanı();
+                    let yatay = f64::from((konum.x - başlangıç.x) / (sağ - sol));
+                    let dikey = f64::from((konum.y - başlangıç.y) / (alt - üst));
+                    match bu.grafik.taşı(yatay, dikey) {
+                        Ok(_) => bu.hata = None,
+                        Err(hata) => {
+                            bu.hata = Some(format!("Grafik görünümü taşınamadı: {hata}"));
+                        }
+                    }
+                    bu.imleç = None;
+                } else {
+                    bu.imleci_güncelle(olay.position);
+                }
+                if bu.taşıma_başlangıcı.is_none()
+                    && olay.dragging()
                     && let Some((başlangıç, _)) = bu.seçim
                     && let Some(konum) = bu.sahne_konumu(olay.position)
                 {
@@ -232,17 +351,32 @@ impl Render for GpuiGrafik {
                 bu.tekerlek_yakınlaştır(olay);
                 GpuiGrafik::bildir(cx);
             }))
+            .on_pinch(cx.listener(|bu, olay: &PinchEvent, _, cx| {
+                bu.dokunma_yakınlaştır(olay);
+                GpuiGrafik::bildir(cx);
+            }))
             .on_mouse_exit(cx.listener(|bu, _: &MouseExitEvent, _, cx| {
-                if bu.seçim.is_none() {
+                if bu.seçim.is_none() && bu.taşıma_başlangıcı.is_none() {
                     bu.imleç = None;
                     GpuiGrafik::bildir(cx);
                 }
             }))
             .on_mouse_down(
                 MouseButton::Left,
-                cx.listener(|bu, olay: &MouseDownEvent, _, cx| {
+                cx.listener(|bu, olay: &MouseDownEvent, window, cx| {
+                    if let Some(odak) = bu.odak.as_ref() {
+                        odak.focus(window, cx);
+                    }
                     let ayarlar = bu.grafik.etkileşim_seçenekleri();
-                    if olay.click_count >= 2 && ayarlar.çift_tıkla_tam_görünüm {
+                    if bu.boşluk_basılı
+                        && let Some(konum) = bu.sahne_konumu(olay.position)
+                        && bu.grafik_alanında(konum)
+                        && bu.grafik.taşımayı_başlat()
+                    {
+                        bu.taşıma_başlangıcı = Some(konum);
+                        bu.seçim = None;
+                        bu.imleç = None;
+                    } else if olay.click_count >= 2 && ayarlar.çift_tıkla_tam_görünüm {
                         bu.grafik.tam_görünüm();
                         bu.seçim = None;
                     } else if ayarlar.seçim_yakınlaştır
@@ -257,6 +391,11 @@ impl Render for GpuiGrafik {
             .on_mouse_up(
                 MouseButton::Left,
                 cx.listener(|bu, _: &MouseUpEvent, _, cx| {
+                    if bu.taşıma_başlangıcı.take().is_some() {
+                        bu.grafik.taşımayı_bitir();
+                        GpuiGrafik::bildir(cx);
+                        return;
+                    }
                     if let Some((başlangıç, bitiş)) = bu.seçim.take()
                         && (bitiş - başlangıç).abs() >= 4.0
                     {

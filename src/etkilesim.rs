@@ -3,37 +3,65 @@ use web_time::{Duration, Instant};
 
 use crate::{Aralık, EtkileşimSeçenekleri, TekerlekKipi, UplotHatası};
 
+#[derive(Clone, Copy, Default, PartialEq)]
+struct Görünüm {
+    x: Option<Aralık>,
+    y: Option<Aralık>,
+}
+
+#[derive(Clone, Copy)]
+struct TaşımaBaşlangıcı {
+    görünüm: Görünüm,
+    x: Aralık,
+    y: Aralık,
+    geçmişe_eklendi: bool,
+}
+
 /// Bir grafiğin görünümünü ve kartta açılan etkileşimlerin bütün durumunu taşır.
 /// Yüzey adaptörleri yalnız normalize koordinat ve ham platform deltasını iletir.
 pub(crate) struct EtkileşimDenetleyicisi {
-    tam: Aralık,
-    görünür: Option<Aralık>,
+    tam_x: Aralık,
+    tam_y: Aralık,
+    görünüm: Görünüm,
     ayarlar: EtkileşimSeçenekleri,
-    geçmiş: VecDeque<Option<Aralık>>,
+    geçmiş: VecDeque<Görünüm>,
     son_tekerlek: Option<Instant>,
     tekerlek_hareketi_kaydedildi: bool,
     birikmiş_hassas_delta: f64,
+    taşıma: Option<TaşımaBaşlangıcı>,
+    dokunma_sürüyor: bool,
+    dokunma_hareketi_kaydedildi: bool,
+    dokunma_başlangıç_y: Option<Aralık>,
 }
 
 impl EtkileşimDenetleyicisi {
-    pub(crate) fn yeni(tam: Aralık, ayarlar: EtkileşimSeçenekleri) -> Self {
+    pub(crate) fn yeni(tam_x: Aralık, tam_y: Aralık, ayarlar: EtkileşimSeçenekleri) -> Self {
         Self {
-            tam,
-            görünür: None,
+            tam_x,
+            tam_y,
+            görünüm: Görünüm::default(),
             ayarlar,
             geçmiş: VecDeque::new(),
             son_tekerlek: None,
             tekerlek_hareketi_kaydedildi: false,
             birikmiş_hassas_delta: 0.0,
+            taşıma: None,
+            dokunma_sürüyor: false,
+            dokunma_hareketi_kaydedildi: false,
+            dokunma_başlangıç_y: None,
         }
     }
 
-    pub(crate) fn görünür(&self) -> Aralık {
-        self.görünür.unwrap_or(self.tam)
+    pub(crate) fn görünür_x(&self) -> Aralık {
+        self.görünüm.x.unwrap_or(self.tam_x)
+    }
+
+    pub(crate) fn görünür_y(&self) -> Option<Aralık> {
+        self.görünüm.y
     }
 
     pub(crate) fn yakınlaştırılmış(&self) -> bool {
-        self.görünür.is_some()
+        self.görünüm != Görünüm::default()
     }
 
     pub(crate) fn geri_var(&self) -> bool {
@@ -70,13 +98,19 @@ impl EtkileşimDenetleyicisi {
         } else {
             (bitiş, başlangıç)
         };
-        let mevcut = self.görünür();
+        let mevcut = self.görünür_x();
         let uzunluk = mevcut.en_çok - mevcut.en_az;
         let yeni = Aralık::yeni(
             mevcut.en_az + en_az_oran * uzunluk,
             mevcut.en_az + en_çok_oran * uzunluk,
         )?;
-        Ok(self.uygula(Some(yeni), true))
+        Ok(self.uygula(
+            Görünüm {
+                x: Some(yeni),
+                y: self.görünüm.y,
+            },
+            true,
+        ))
     }
 
     pub(crate) fn tekerlek(
@@ -124,11 +158,14 @@ impl EtkileşimDenetleyicisi {
             ham_delta
         };
 
-        let mevcut = self.görünür();
+        let mevcut = self.görünür_x();
         let odak = mevcut.en_az + odak_oranı.clamp(0.0, 1.0) * (mevcut.en_çok - mevcut.en_az);
         let aralık = mevcut
-            .uyarlanabilir_tekerlek_yakınlaştır(self.tam, odak, delta, hassas, tekerlek)?;
-        let yeni = (aralık != self.tam).then_some(aralık);
+            .uyarlanabilir_tekerlek_yakınlaştır(self.tam_x, odak, delta, hassas, tekerlek)?;
+        let yeni = Görünüm {
+            x: (aralık != self.tam_x).then_some(aralık),
+            y: self.görünüm.y,
+        };
         let değişti = self.uygula(yeni, !self.tekerlek_hareketi_kaydedildi);
         if değişti {
             self.tekerlek_hareketi_kaydedildi = true;
@@ -141,7 +178,9 @@ impl EtkileşimDenetleyicisi {
             return false;
         }
         self.tekerleği_sıfırla();
-        self.uygula(None, true)
+        self.taşıma = None;
+        self.dokunmayı_bitir();
+        self.uygula(Görünüm::default(), true)
     }
 
     pub(crate) fn geri(&mut self) -> bool {
@@ -151,22 +190,138 @@ impl EtkileşimDenetleyicisi {
         let Some(önceki) = self.geçmiş.pop_back() else {
             return false;
         };
-        self.görünür = önceki;
+        self.görünüm = önceki;
+        self.taşıma = None;
+        self.dokunmayı_bitir();
         self.tekerleği_sıfırla();
         true
     }
 
-    fn uygula(&mut self, yeni: Option<Aralık>, geçmişe_ekle: bool) -> bool {
-        if self.görünür == yeni {
+    pub(crate) fn taşımayı_başlat(&mut self, görünür_y: Aralık) -> bool {
+        if !self.yakınlaştırılmış() {
+            return false;
+        }
+        self.tekerleği_sıfırla();
+        self.taşıma = Some(TaşımaBaşlangıcı {
+            görünüm: self.görünüm,
+            x: self.görünür_x(),
+            y: görünür_y,
+            geçmişe_eklendi: false,
+        });
+        true
+    }
+
+    pub(crate) fn taşı(
+        &mut self,
+        yatay_fark_oranı: f64,
+        dikey_fark_oranı: f64,
+    ) -> Result<bool, UplotHatası> {
+        if !yatay_fark_oranı.is_finite() || !dikey_fark_oranı.is_finite() {
+            return Err(UplotHatası::GeçersizAralık {
+                en_az: yatay_fark_oranı,
+                en_çok: dikey_fark_oranı,
+            });
+        }
+        let Some(mut başlangıç) = self.taşıma else {
+            return Ok(false);
+        };
+        let x = kaydır(
+            başlangıç.x,
+            self.tam_x,
+            -yatay_fark_oranı * (başlangıç.x.en_çok - başlangıç.x.en_az),
+        )?;
+        let y = kaydır(
+            başlangıç.y,
+            self.tam_y,
+            dikey_fark_oranı * (başlangıç.y.en_çok - başlangıç.y.en_az),
+        )?;
+        let yeni = Görünüm {
+            x: (x != self.tam_x).then_some(x),
+            y: (y != self.tam_y).then_some(y),
+        };
+        if yeni == self.görünüm {
+            return Ok(false);
+        }
+        if !başlangıç.geçmişe_eklendi && self.ayarlar.görünüm_geçmişi {
+            if self.geçmiş.len() >= 100 {
+                self.geçmiş.pop_front();
+            }
+            self.geçmiş.push_back(başlangıç.görünüm);
+            başlangıç.geçmişe_eklendi = true;
+        }
+        self.taşıma = Some(başlangıç);
+        self.görünüm = yeni;
+        Ok(true)
+    }
+
+    pub(crate) fn taşımayı_bitir(&mut self) {
+        self.taşıma = None;
+    }
+
+    pub(crate) fn dokunmayı_başlat(&mut self, görünür_y: Aralık) -> bool {
+        if !self.ayarlar.dokunma_etkileşimi {
+            return false;
+        }
+        self.dokunma_sürüyor = true;
+        self.dokunma_hareketi_kaydedildi = false;
+        self.dokunma_başlangıç_y = Some(görünür_y);
+        self.taşıma = None;
+        self.tekerleği_sıfırla();
+        true
+    }
+
+    pub(crate) fn dokunma_yakınlaştır(
+        &mut self,
+        yatay_odak_oranı: f64,
+        dikey_odak_oranı: f64,
+        çarpan: f64,
+    ) -> Result<bool, UplotHatası> {
+        if !self.dokunma_sürüyor
+            || !yatay_odak_oranı.is_finite()
+            || !dikey_odak_oranı.is_finite()
+            || !çarpan.is_finite()
+            || çarpan <= 0.0
+        {
+            return Ok(false);
+        }
+        let x = odakta_yakınlaştır(self.görünür_x(), self.tam_x, yatay_odak_oranı, çarpan)?;
+        let y = odakta_yakınlaştır(
+            self.görünüm
+                .y
+                .or(self.dokunma_başlangıç_y)
+                .unwrap_or(self.tam_y),
+            self.tam_y,
+            1.0 - dikey_odak_oranı,
+            çarpan,
+        )?;
+        let yeni = Görünüm {
+            x: (x != self.tam_x).then_some(x),
+            y: (y != self.tam_y).then_some(y),
+        };
+        let değişti = self.uygula(yeni, !self.dokunma_hareketi_kaydedildi);
+        if değişti {
+            self.dokunma_hareketi_kaydedildi = true;
+        }
+        Ok(değişti)
+    }
+
+    pub(crate) fn dokunmayı_bitir(&mut self) {
+        self.dokunma_sürüyor = false;
+        self.dokunma_hareketi_kaydedildi = false;
+        self.dokunma_başlangıç_y = None;
+    }
+
+    fn uygula(&mut self, yeni: Görünüm, geçmişe_ekle: bool) -> bool {
+        if self.görünüm == yeni {
             return false;
         }
         if geçmişe_ekle && self.ayarlar.görünüm_geçmişi {
             if self.geçmiş.len() >= 100 {
                 self.geçmiş.pop_front();
             }
-            self.geçmiş.push_back(self.görünür);
+            self.geçmiş.push_back(self.görünüm);
         }
-        self.görünür = yeni;
+        self.görünüm = yeni;
         true
     }
 
@@ -175,4 +330,40 @@ impl EtkileşimDenetleyicisi {
         self.tekerlek_hareketi_kaydedildi = false;
         self.birikmiş_hassas_delta = 0.0;
     }
+}
+
+fn kaydır(mevcut: Aralık, tam: Aralık, fark: f64) -> Result<Aralık, UplotHatası> {
+    let uzunluk = mevcut.en_çok - mevcut.en_az;
+    let tam_uzunluk = tam.en_çok - tam.en_az;
+    if uzunluk >= tam_uzunluk {
+        return Ok(tam);
+    }
+    let mut en_az = mevcut.en_az + fark;
+    let mut en_çok = mevcut.en_çok + fark;
+    if en_az < tam.en_az {
+        en_az = tam.en_az;
+        en_çok = tam.en_az + uzunluk;
+    } else if en_çok > tam.en_çok {
+        en_çok = tam.en_çok;
+        en_az = tam.en_çok - uzunluk;
+    }
+    Aralık::yeni(en_az, en_çok)
+}
+
+fn odakta_yakınlaştır(
+    mevcut: Aralık,
+    tam: Aralık,
+    odak_oranı: f64,
+    çarpan: f64,
+) -> Result<Aralık, UplotHatası> {
+    let mevcut_uzunluk = mevcut.en_çok - mevcut.en_az;
+    let tam_uzunluk = tam.en_çok - tam.en_az;
+    let yeni_uzunluk = (mevcut_uzunluk / çarpan).clamp(tam_uzunluk / 10_000.0, tam_uzunluk);
+    let oran = odak_oranı.clamp(0.0, 1.0);
+    let odak = mevcut.en_az + oran * mevcut_uzunluk;
+    let aday = Aralık::yeni(
+        odak - oran * yeni_uzunluk,
+        odak + (1.0 - oran) * yeni_uzunluk,
+    )?;
+    kaydır(aday, tam, 0.0)
 }

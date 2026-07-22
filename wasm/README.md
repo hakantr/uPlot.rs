@@ -19,6 +19,8 @@ doğrulanabilir.
 
 Web portunun geliştirme sözleşmesi **8081**'dir. Grafik üzerinde hover canlı
 değerleri gösterir; yatay sürükleme X aralığına yakınlaştırır, çift tıklama tam
-görünüme döner ve tekerlek fare konumunu odak alarak yakınlaştırır. Resmî
+görünüme döner, tekerlek fare konumunu odak alarak yakınlaştırır, boşluk + sol
+sürükleme yakın görünümü taşır. Kartta `dokunma_etkileşimi(true)` ise iki
+parmakla X/Y yakınlaştırma ve tek parmakla taşıma da çalışır. Resmî
 davranışlarla uPlot.rs uyarlamalarının ayrıntılı ayrımı için
 [Resmî depo farklılıkları](../RESMI_DEPO_FARKLILIKLARI.md) belgesini okuyun.

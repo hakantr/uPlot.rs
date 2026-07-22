@@ -47,6 +47,11 @@ for (const kart of manifest.kartlar) {
   if (sha256(kartKaynagi) !== kart.kaynak_sha256) {
     hata(`${kart.id} kaynak hash'i değişti`);
   }
+  for (const ekKaynak of kart.ek_kaynaklar ?? []) {
+    if (sha256(resolve(kaynak, ekKaynak.yol)) !== ekKaynak.sha256) {
+      hata(`${kart.id} ek kaynak hash'i değişti: ${ekKaynak.yol}`);
+    }
+  }
   for (const yerelYol of [
     kart.örnek,
     kart.masaüstü_örneği,

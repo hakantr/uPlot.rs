@@ -48,12 +48,14 @@ fn isteğe_bağlı_etkileşimler_kart_bazında_açılır() {
     let varsayılan = EtkileşimSeçenekleri::default();
     assert!(!varsayılan.tekerlek_etkileşimi);
     assert!(!varsayılan.görünüm_geçmişi);
+    assert!(!varsayılan.dokunma_etkileşimi);
 
     let ilk_kart = ilk_kart_etkileşimleri();
     assert!(ilk_kart.tekerlek_etkileşimi);
     assert!(ilk_kart.seçim_yakınlaştır);
     assert!(ilk_kart.çift_tıkla_tam_görünüm);
     assert!(ilk_kart.görünüm_geçmişi);
+    assert!(ilk_kart.dokunma_etkileşimi);
     assert_eq!(ilk_kart.tekerlek_ayarları.kip, TekerlekKipi::Otomatik);
 }
 
@@ -118,5 +120,44 @@ fn grafik_etkileşim_durumunu_çekirdekte_yönetir() -> Result<(), UplotHatası>
     grafik.tekerlek_etkileşimi_ayarla(false);
     assert!(!grafik.tekerlek(0.5, 1.0, false)?);
     assert_eq!(grafik.görünür_x_aralığı(), tam);
+    Ok(())
+}
+
+#[test]
+fn yakınlaştırılmış_görünüm_boşluk_sürüklemesi_için_çekirdekte_taşınır() -> Result<(), UplotHatası>
+{
+    let (seçenekler, veri) = ilk_kart()?;
+    let mut grafik = Grafik::yeni(seçenekler, veri)?;
+    assert!(!grafik.taşımayı_başlat());
+    assert!(grafik.seçim_yakınlaştır(0.2, 0.4)?);
+    let önceki_x = grafik.görünür_x_aralığı();
+    let önceki_y = grafik.görünür_y_aralığı();
+
+    assert!(grafik.taşımayı_başlat());
+    assert!(grafik.taşı(-0.1, 0.1)?);
+    grafik.taşımayı_bitir();
+    assert!(grafik.görünür_x_aralığı().en_az > önceki_x.en_az);
+    assert_ne!(grafik.görünür_y_aralığı(), önceki_y);
+    assert!(grafik.önceki_görünüm());
+    assert_eq!(grafik.görünür_x_aralığı(), önceki_x);
+    Ok(())
+}
+
+#[test]
+fn zoom_touch_x_ve_y_eksenlerini_odak_çevresinde_yakınlaştırır() -> Result<(), UplotHatası> {
+    let (seçenekler, veri) = ilk_kart()?;
+    let mut grafik = Grafik::yeni(seçenekler, veri)?;
+    let tam_x = grafik.görünür_x_aralığı();
+    let tam_y = grafik.görünür_y_aralığı();
+
+    assert!(grafik.dokunmayı_başlat());
+    assert!(grafik.dokunma_yakınlaştır(0.25, 0.75, 2.0)?);
+    grafik.dokunmayı_bitir();
+    let yakın_x = grafik.görünür_x_aralığı();
+    let yakın_y = grafik.görünür_y_aralığı();
+    assert!(yakın_x.en_çok - yakın_x.en_az < tam_x.en_çok - tam_x.en_az);
+    assert!(yakın_y.en_çok - yakın_y.en_az < tam_y.en_çok - tam_y.en_az);
+    assert!(grafik.önceki_görünüm());
+    assert_eq!(grafik.görünür_x_aralığı(), tam_x);
     Ok(())
 }

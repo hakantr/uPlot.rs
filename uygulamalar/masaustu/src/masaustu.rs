@@ -272,6 +272,13 @@ impl Render for ChartListesi {
                     ),
             )
             .child(araçlar)
+            .child(
+                div()
+                    .mb_2()
+                    .text_xs()
+                    .text_color(soluk)
+                    .child("Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır"),
+            )
             .child(div().mb_2().text_xs().text_color(vurgu).child(lejant))
             .when_some(çizim_hatası, |öğe, hata| {
                 öğe.child(

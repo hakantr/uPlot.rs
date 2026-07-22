@@ -37,13 +37,16 @@
              display: grid; place-items: center; overflow: hidden; background: #fff;
              border: 1px solid #e5e7eb; border-radius: 14px; }
     #chart svg { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+    #chart[data-tasima-imleci="hazir"] svg { cursor: grab; }
+    #chart[data-tasima-imleci="tasiyor"] svg { cursor: grabbing; }
     .lejant { position: absolute; left: 50%; bottom: 17px; translate: -50% 0;
               display: flex; gap: 18px; font-size: 12px; font-weight: 600;
               pointer-events: none; }
     .örnek { display: inline-block; width: 11px; height: 11px; margin-right: 5px;
              border: 1px solid #dc2626; vertical-align: -1px; }
-    .yardım { position: absolute; right: 20px; top: 17px; color: #6b7280;
-              font-size: 11px; pointer-events: none; }
+    .yardım { position: absolute; right: 20px; top: 58px; max-width: min(460px, 55%);
+              color: #6b7280; font-size: 11px; line-height: 1.35; text-align: right;
+              pointer-events: none; }
     .kod-örneği { margin-top: 14px; border: 1px solid #d1d5db; border-radius: 10px;
                   background: #111827; color: #e5e7eb; overflow: hidden; }
     .kod-örneği summary { padding: 9px 12px; color: #93c5fd; cursor: pointer;
@@ -77,7 +80,8 @@
           <div class="kaynak">Kaynak:
             <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/resize.html">resize.html</a>
             · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-wheel.html">zoom-wheel.html</a>
-            <br>Çekirdek: seçim + çift tık · Resmi eklenti: tekerlek · uPlot.rs: hassas giriş normalizasyonu + geri geçmişi
+            · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-touch.html">zoom-touch.html</a>
+            <br>Çekirdek: seçim + çift tık · Resmi eklentiler: tekerlek + taşıma matematiği · uPlot.rs: boşluk + sol sürükleme bağı
           </div>
         </div>
         <div class="denetimler">
@@ -108,6 +112,7 @@
       ilk_kart_secim_yakinlastir,
       ilk_kart_cift_tikla_tam_gorunum,
       ilk_kart_gorunum_gecmisi,
+      ilk_kart_dokunma_etkilesimi,
       kart_sayisi,
       kaynak_commit,
     } from "../pkg/uplot_rs_wasm.js";
@@ -123,12 +128,25 @@
 
     let oturum = null;
     let sürükleme = null;
+    let taşıma = null;
+    let boşlukBasılı = false;
+    let grafikÜzerinde = false;
+    const dokunmalar = new Map();
+    let kıstırma = null;
     let etkileşimler = {
       tekerlek: false,
       seçim: false,
       çiftTık: false,
       geçmiş: false,
+      dokunma: false,
     };
+
+    function taşımaİmleciniGüncelle() {
+      if (taşıma) chart.dataset.tasimaImleci = "tasiyor";
+      else if (boşlukBasılı && oturum?.yakinlastirilmis()) {
+        chart.dataset.tasimaImleci = "hazir";
+      } else delete chart.dataset.tasimaImleci;
+    }
 
     function kontrolleriGüncelle() {
       görünümGeri.disabled = !etkileşimler.geçmiş || !oturum?.geri_var();
@@ -149,6 +167,9 @@
       const xAralığı = oturum.gorunur_x_araligi();
       chart.dataset.xEnAz = String(xAralığı[0]);
       chart.dataset.xEnCok = String(xAralığı[1]);
+      const yAralığı = oturum.gorunur_y_araligi();
+      chart.dataset.yEnAz = String(yAralığı[0]);
+      chart.dataset.yEnCok = String(yAralığı[1]);
       const { genişlik, yükseklik } = boyutlar();
       chart.innerHTML = oturum.svg(genişlik, yükseklik);
       const svg = chart.querySelector("svg");
@@ -162,10 +183,11 @@
           <circle id="imleç-nokta" visibility="hidden" r="2.5" fill="#dc2626"/>
         </g>`);
       chart.insertAdjacentHTML("beforeend", `
-        <div class="yardım">Sürükle: seç · tekerlek: yakınlaştır/uzaklaştır · çift tıkla: tam görünüm</div>
+        <div class="yardım">Sürükle: seç · boşluk + sürükle: taşı · iki parmak: yakınlaştır · tek parmak: taşı · çift tıkla: tam görünüm</div>
         <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
         <span><i class="örnek"></i>sin(x): <b id="y-değeri">--</b></span></div>`);
       kontrolleriGüncelle();
+      taşımaİmleciniGüncelle();
     }
 
     function svgKonumu(olay) {
@@ -210,6 +232,44 @@
     }
 
     chart.addEventListener("pointermove", olay => {
+      if (olay.pointerType === "touch") {
+        if (!dokunmalar.has(olay.pointerId)) return;
+        dokunmalar.set(olay.pointerId, { x: olay.clientX, y: olay.clientY });
+        if (kıstırma && dokunmalar.size >= 2) {
+          const [a, b] = [...dokunmalar.values()];
+          const uzaklık = Math.hypot(b.x - a.x, b.y - a.y);
+          const merkez = { clientX: (a.x + b.x) / 2, clientY: (a.y + b.y) / 2 };
+          const { x, y, view } = svgKonumu(merkez);
+          try {
+            const çarpan = kıstırma.uzaklık > 0 ? uzaklık / kıstırma.uzaklık : 1;
+            if (oturum?.dokunma_yakinlastir(
+              (x - 64) / (view.width - 88),
+              (y - 48) / (view.height - 96),
+              çarpan,
+            )) çiz();
+            kıstırma.uzaklık = uzaklık;
+            hata.textContent = "";
+          } catch (neden) {
+            hata.textContent = `Dokunma yakınlaştırması uygulanamadı: ${String(neden)}`;
+          }
+          olay.preventDefault();
+          return;
+        }
+      }
+      if (taşıma) {
+        const { x, y, view } = svgKonumu(olay);
+        try {
+          const değişti = oturum?.tasi(
+            (x - taşıma.x) / (view.width - 88),
+            (y - taşıma.y) / (view.height - 96),
+          );
+          if (değişti) çiz();
+          hata.textContent = "";
+        } catch (neden) {
+          hata.textContent = `Grafik görünümü taşınamadı: ${String(neden)}`;
+        }
+        return;
+      }
       imleciGüncelle(olay);
       if (!sürükleme) return;
       const { x, svg, view } = svgKonumu(olay);
@@ -222,13 +282,67 @@
       seçim.setAttribute("visibility", "visible");
     });
     chart.addEventListener("pointerdown", olay => {
+      if (olay.pointerType === "touch") {
+        if (!etkileşimler.dokunma) return;
+        const { x, y, view } = svgKonumu(olay);
+        if (x < 64 || x > view.width - 24 || y < 48 || y > view.height - 48) return;
+        chart.setPointerCapture(olay.pointerId);
+        dokunmalar.set(olay.pointerId, { x: olay.clientX, y: olay.clientY });
+        if (dokunmalar.size === 1 && oturum?.tasimayi_baslat()) {
+          taşıma = { x, y, pointerId: olay.pointerId, tür: "dokunma" };
+        } else if (dokunmalar.size === 2) {
+          if (taşıma) oturum?.tasimayi_bitir();
+          taşıma = null;
+          const [a, b] = [...dokunmalar.values()];
+          const uzaklık = Math.hypot(b.x - a.x, b.y - a.y);
+          kıstırma = oturum?.dokunmayi_baslat() ? { uzaklık } : null;
+        }
+        taşımaİmleciniGüncelle();
+        olay.preventDefault();
+        return;
+      }
+      if (olay.button !== 0) return;
+      const { x, y, view } = svgKonumu(olay);
+      if (boşlukBasılı) {
+        if (x < 64 || x > view.width - 24 || y < 48 || y > view.height - 48) return;
+        if (oturum?.tasimayi_baslat()) {
+          chart.setPointerCapture(olay.pointerId);
+          taşıma = { x, y, pointerId: olay.pointerId };
+          sürükleme = null;
+          taşımaİmleciniGüncelle();
+        }
+        olay.preventDefault();
+        return;
+      }
       if (!etkileşimler.seçim) return;
-      const { x, view } = svgKonumu(olay);
       if (x < 64 || x > view.width - 24) return;
       chart.setPointerCapture(olay.pointerId);
       sürükleme = { baş: x, son: x };
     });
     chart.addEventListener("pointerup", olay => {
+      if (olay.pointerType === "touch") {
+        dokunmalar.delete(olay.pointerId);
+        if (kıstırma) {
+          oturum?.dokunmayi_bitir();
+          kıstırma = null;
+        }
+        if (taşıma?.tür === "dokunma") {
+          oturum?.tasimayi_bitir();
+          taşıma = null;
+        }
+        if (chart.hasPointerCapture(olay.pointerId)) chart.releasePointerCapture(olay.pointerId);
+        taşımaİmleciniGüncelle();
+        kontrolleriGüncelle();
+        return;
+      }
+      if (taşıma) {
+        oturum?.tasimayi_bitir();
+        taşıma = null;
+        if (chart.hasPointerCapture(olay.pointerId)) chart.releasePointerCapture(olay.pointerId);
+        taşımaİmleciniGüncelle();
+        kontrolleriGüncelle();
+        return;
+      }
       if (!sürükleme) return;
       const { view } = svgKonumu(olay);
       const yakınlaştır = Math.abs(sürükleme.son - sürükleme.baş) >= 4;
@@ -250,6 +364,45 @@
       if (!yakınlaştır) {
         chart.querySelector("#seçim")?.setAttribute("visibility", "hidden");
       }
+    });
+    chart.addEventListener("pointercancel", olay => {
+      dokunmalar.delete(olay.pointerId);
+      if (kıstırma) oturum?.dokunmayi_bitir();
+      kıstırma = null;
+      if (taşıma) oturum?.tasimayi_bitir();
+      taşıma = null;
+      sürükleme = null;
+      if (chart.hasPointerCapture(olay.pointerId)) chart.releasePointerCapture(olay.pointerId);
+      taşımaİmleciniGüncelle();
+    });
+    chart.addEventListener("pointerenter", () => {
+      grafikÜzerinde = true;
+    });
+    chart.addEventListener("pointerleave", () => {
+      grafikÜzerinde = false;
+    });
+    document.addEventListener("keydown", olay => {
+      if (olay.code !== "Space" || !grafikÜzerinde) return;
+      boşlukBasılı = true;
+      olay.preventDefault();
+      taşımaİmleciniGüncelle();
+    });
+    document.addEventListener("keyup", olay => {
+      if (olay.code !== "Space") return;
+      boşlukBasılı = false;
+      if (taşıma) {
+        oturum?.tasimayi_bitir();
+        taşıma = null;
+      }
+      taşımaİmleciniGüncelle();
+    });
+    window.addEventListener("blur", () => {
+      boşlukBasılı = false;
+      if (taşıma) {
+        oturum?.tasimayi_bitir();
+        taşıma = null;
+      }
+      taşımaİmleciniGüncelle();
     });
     chart.addEventListener("dblclick", () => {
       if (etkileşimler.çiftTık && oturum?.tam_gorunum()) çiz();
@@ -290,6 +443,7 @@
         seçim: ilk_kart_secim_yakinlastir(),
         çiftTık: ilk_kart_cift_tikla_tam_gorunum(),
         geçmiş: ilk_kart_gorunum_gecmisi(),
+        dokunma: ilk_kart_dokunma_etkilesimi(),
       };
       tekerlekEtkileşimi.checked = etkileşimler.tekerlek;
       oturum = new IlkKartOturumu(Number(nokta.value));

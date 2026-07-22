@@ -33,7 +33,7 @@ lejantını ve X ekseninde sürükle-bırak yakınlaştırmasını da taşır.
 
 GPUI chart listesi dağıtılan `uplot-rs` kütüphanesinin parçası değildir;
 `uygulamalar/masaustu` altındaki ayrı, yayınlanmayan bir doğrulama uygulamasıdır.
-Kartın seçim, tekerlek, tam görünüm ve geçmiş davranışları çekirdekte çözülür.
+Kartın seçim, tekerlek, dokunma, taşıma, tam görünüm ve geçmiş davranışları çekirdekte çözülür.
 Kütüphane kullanıcısı yalnız veriyi, renk düzenini ve açık/kapalı özellikleri
 tanımlar; belirtilmeyen özellikler çekirdek varsayılanlarını kullanır.
 
@@ -64,6 +64,24 @@ let yüzey = cx.new(|_| GpuiGrafik::yeni(grafik));
 ```
 
 GPUI katalog uygulaması bu bileşeni kullanır fakat kütüphane paketine girmez.
+
+## Kart etkileşimleri
+
+İsteğe bağlı resmî eklenti davranışları kart tanımında açılıp kapatılır:
+
+```rust
+let etkileşimler = EtkileşimSeçenekleri::default()
+    .tekerlek_etkileşimi(true)
+    .dokunma_etkileşimi(true)
+    .seçim_yakınlaştır(true);
+```
+
+`dokunma_etkileşimi(true)`, `demos/zoom-touch.html` kaynaklı iki parmakla X/Y
+yakınlaştırmayı ve yakınlaştırılmış görünümde tek parmakla taşımayı açar.
+Masaüstünde grafik yakınlaştırıldıktan sonra boşluk + sol sürükleme otomatik
+olarak taşıma yapar; bunun için ikinci bir kart seçeneği gerekmez. `false`
+verilen isteğe bağlı davranışlar kapanır, hiç belirtilmeyenler `Default`
+değerleriyle çalışır.
 
 ## Resmî depodan farklı işleyişler
 

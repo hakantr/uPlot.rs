@@ -48,6 +48,41 @@ impl IlkKartOturumu {
             .map_err(js_hatası)
     }
 
+    pub fn tasimayi_baslat(&mut self) -> bool {
+        self.grafik.taşımayı_başlat()
+    }
+
+    pub fn tasi(
+        &mut self, yatay_fark_oranı: f64, dikey_fark_oranı: f64
+    ) -> Result<bool, JsValue> {
+        self.grafik
+            .taşı(yatay_fark_oranı, dikey_fark_oranı)
+            .map_err(js_hatası)
+    }
+
+    pub fn tasimayi_bitir(&mut self) {
+        self.grafik.taşımayı_bitir();
+    }
+
+    pub fn dokunmayi_baslat(&mut self) -> bool {
+        self.grafik.dokunmayı_başlat()
+    }
+
+    pub fn dokunma_yakinlastir(
+        &mut self,
+        yatay_odak_oranı: f64,
+        dikey_odak_oranı: f64,
+        çarpan: f64,
+    ) -> Result<bool, JsValue> {
+        self.grafik
+            .dokunma_yakınlaştır(yatay_odak_oranı, dikey_odak_oranı, çarpan)
+            .map_err(js_hatası)
+    }
+
+    pub fn dokunmayi_bitir(&mut self) {
+        self.grafik.dokunmayı_bitir();
+    }
+
     pub fn tam_gorunum(&mut self) -> bool {
         self.grafik.tam_görünüm()
     }
@@ -120,6 +155,11 @@ pub fn ilk_kart_gorunum_gecmisi() -> bool {
 }
 
 #[wasm_bindgen]
+pub fn ilk_kart_dokunma_etkilesimi() -> bool {
+    ilk_kart_etkileşimleri().dokunma_etkileşimi
+}
+
+#[wasm_bindgen]
 pub fn kaynak_commit() -> String {
     "0e5812c504430f5c804e0f993376d8999b26cc34".to_string()
 }
@@ -144,5 +184,12 @@ mod testler {
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
         let yakın = oturum.svg(800, 400);
         assert!(yakın.contains("<circle"));
+        assert!(ilk_kart_dokunma_etkilesimi());
+        assert!(oturum.dokunmayi_baslat());
+        assert!(oturum.dokunma_yakinlastir(0.5, 0.5, 1.25).is_ok());
+        oturum.dokunmayi_bitir();
+        assert!(oturum.tasimayi_baslat());
+        assert!(oturum.tasi(0.05, 0.05).is_ok());
+        oturum.tasimayi_bitir();
     }
 }

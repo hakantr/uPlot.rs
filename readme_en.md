@@ -34,7 +34,7 @@ hover marker, live legend, and drag-to-zoom interaction on the X axis.
 
 The GPUI chart list is not part of the distributed `uplot-rs` library. It is a
 separate, unpublished verification application under `uygulamalar/masaustu`.
-Selection, wheel zoom, full-view reset, and view history are implemented in
+Selection, wheel zoom, touch zoom/pan, desktop pan, full-view reset, and view history are implemented in
 the core. Library users only provide data, colors, and feature switches;
 unspecified features retain their core defaults.
 
@@ -65,6 +65,23 @@ let surface = cx.new(|_| GpuiGrafik::yeni(chart));
 ```
 
 The GPUI catalog uses this component but is not included in the library package.
+
+## Chart interactions
+
+Optional upstream plugin behaviors are switched per chart:
+
+```rust
+let interactions = EtkileşimSeçenekleri::default()
+    .tekerlek_etkileşimi(true)
+    .dokunma_etkileşimi(true)
+    .seçim_yakınlaştır(true);
+```
+
+`dokunma_etkileşimi(true)` enables the two-finger X/Y zoom and single-finger
+pan ported from `demos/zoom-touch.html`. Once a desktop chart is zoomed,
+Space + left drag pans automatically and requires no additional chart option.
+Optional behaviors set to `false` are disabled; omitted settings keep their
+`Default` values.
 
 ## Behavior that differs from upstream
 

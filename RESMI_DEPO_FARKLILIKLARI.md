@@ -16,6 +16,8 @@ uyarlama ve uzantıların birbirine karışmaması için tutulur.
 | Hata modeli | JavaScript çalışma zamanı davranışı | Tipli `UplotHatası`; üretim kodunda panic yasakları | uPlot.rs güvenlik ilkesi |
 | Etkileşim tanımı | Bazı cursor davranışları örtük varsayılandır; eklentiler ayrıca kurulur | Etkileşimler kart başına açık `true`/`false` seçenekleridir | API uyarlaması |
 | Tekerlek yakınlaştırma | `demos/zoom-wheel.html` içindeki isteğe bağlı `wheelZoomPlugin` | Aynı eklentinin kart seçeneğiyle açılan portu ve canlı anahtarı | Resmî eklenti portu + kontrol uyarlaması |
+| Dokunma yakınlaştırma/taşıma | `demos/zoom-touch.html` içinde iki parmakla X/Y yakınlaştırma ve tek dokunuşla taşıma | `dokunma_etkileşimi(true)` ile yüzey adaptörlerinin kullandığı çekirdek davranışı | Resmî eklenti portu + API uyarlaması |
+| Masaüstü taşıma bağı | `zoom-wheel.html` orta tuşla X taşıma yapar; `zoom-touch.html` X/Y taşıma matematiğini içerir | Yakın görünümde boşluk + sol sürükleme aynı ölçek matematiğiyle X/Y taşır; ayrı seçenek gerekmez | Resmî matematik portu + giriş uyarlaması |
 | Hassas tekerlek girdisi | Her `wheel` olayına sabit katsayı uygular | Ayrık mouse tekerleği ile Magic Mouse/trackpad piksel akışını otomatik ayırır | uPlot.rs uzantısı |
 | Tam görünüme dönüş | Çekirdekte çift tıklama `autoScaleX()` çağırır | Çift tıklamaya ek olarak görünür “Tam görünüm” düğmesi sunar | Keşfedilebilirlik uyarlaması |
 | Görünüm geçmişi | Adımlı geri alma geçmişi bulunmaz | Hareket başına kayıt tutan “Geri” kontrolü vardır | uPlot.rs uzantısı |
@@ -46,11 +48,13 @@ Aşağıdakiler uPlot.rs'e özgü özellik olarak değerlendirilmez:
 - X ekseninde sürükleyerek seçim/yakınlaştırma;
 - çift tıklamayla tam X aralığına dönme;
 - resmî `wheelZoomPlugin`in `0.75` temel katsayısı, fare odağı ve aralık sınırı.
+- resmî `zoom-touch` eklentisinin X/Y ölçek yakınlaştırma ve taşıma matematiği.
 
 Kaynaklar:
 
 - [`demos/resize.html`](https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/resize.html)
 - [`demos/zoom-wheel.html`](https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-wheel.html)
+- [`demos/zoom-touch.html`](https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-touch.html)
 - [`src/uPlot.js` çift tıklama davranışı](https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js#L3364)
 
 ## Kaynak ve bağımlılık politikası
@@ -79,6 +83,8 @@ This inventory separates direct ports from uPlot.rs-specific adaptations.
 | Error model | JavaScript runtime behavior | Typed `UplotHatası` and production panic prohibitions | uPlot.rs safety policy |
 | Interaction declaration | Some cursor behaviors are implicit defaults; plugins are installed separately | Explicit per-card `true`/`false` interaction options | API adaptation |
 | Wheel zoom | Optional `wheelZoomPlugin` in `demos/zoom-wheel.html` | Port enabled per card, with a live switch | Official plugin port plus control adaptation |
+| Touch zoom/pan | Two-finger X/Y zoom and single-touch pan in `demos/zoom-touch.html` | Core behavior enabled per chart with `dokunma_etkileşimi(true)` | Official plugin port plus API adaptation |
+| Desktop pan binding | Middle-button X pan in `zoom-wheel.html`; X/Y pan mathematics in `zoom-touch.html` | Space + left drag pans X/Y after zoom, without a separate option | Official mathematics plus input adaptation |
 | Precise wheel input | Fixed factor per `wheel` event | Automatic separation of discrete wheels and Magic Mouse/trackpad pixel streams | uPlot.rs extension |
 | Full-range reset | Core double-click calls `autoScaleX()` | Also exposes a visible Full view button | Discoverability adaptation |
 | View history | No stepwise view undo | Gesture-level Back history | uPlot.rs extension |
@@ -96,7 +102,9 @@ behavior.
 Conditional hollow points, filled hover markers, continuous cursor lines,
 live legends, drag selection, double-click reset, and the official wheel
 plugin's base mathematics are direct ports and are not claimed as uPlot.rs
-extensions.
+extensions. The same applies to the X/Y scale mathematics ported from the
+official `zoom-touch` demo; only the Space + left-drag desktop binding is an
+input adaptation.
 
 The normative uPlot checkout is commit/hash locked. GPUI dependencies remain
 live by project policy; this is a development-policy distinction rather than
