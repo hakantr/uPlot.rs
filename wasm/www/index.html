@@ -64,6 +64,15 @@
                       overflow: auto; white-space: pre; font: 11px/1.45 "SFMono-Regular",
                       Consolas, monospace; }
     #hata { color: #b91c1c; }
+    dialog { width: min(420px, calc(100vw - 32px)); padding: 0; border: 1px solid #d1d5db;
+             border-radius: 12px; box-shadow: 0 20px 50px #11182740; }
+    dialog::backdrop { background: #11182766; }
+    dialog form { padding: 18px; }
+    dialog h3 { margin: 0 0 14px; font-size: 17px; }
+    dialog label { display: grid; gap: 6px; color: #374151; font-size: 13px; }
+    dialog input { width: 100%; padding: 9px 10px; border: 1px solid #d1d5db;
+                   border-radius: 8px; font: inherit; }
+    .diyalog-eylemleri { margin-top: 14px; display: flex; justify-content: flex-end; gap: 8px; }
     @media (max-width: 760px) {
       .uygulama { height: auto; min-height: 100vh; grid-template-columns: 1fr; overflow: visible; }
       aside { height: min(46vh, 520px); border-right: 0; border-bottom: 1px solid #e5e7eb; }
@@ -203,6 +212,18 @@
       <p id="hata" role="alert"></p>
     </main>
   </div>
+  <dialog id="açıklama-diyaloğu" aria-labelledby="açıklama-başlığı">
+    <form method="dialog">
+      <h3 id="açıklama-başlığı">Annotation Text</h3>
+      <label>Açıklama
+        <input id="açıklama-metni" type="text" autocomplete="off">
+      </label>
+      <div class="diyalog-eylemleri">
+        <button value="iptal" type="submit">İptal</button>
+        <button value="tamam" type="submit">Tamam</button>
+      </div>
+    </form>
+  </dialog>
   <script type="module">
     import init, {
       KartOturumu,
@@ -223,6 +244,7 @@
       bars_values_autosize_kart_tanim_ornegi,
       box_whisker_kart_tanim_ornegi,
       candlestick_kart_tanim_ornegi,
+      cursor_bind_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -250,6 +272,8 @@
     const autosizeKontrolü = document.getElementById("autosize-kontrolü");
     const autosizeKuvvet = document.getElementById("autosize-kuvvet");
     const autosizeDeğeri = document.getElementById("autosize-degeri");
+    const açıklamaDiyaloğu = document.getElementById("açıklama-diyaloğu");
+    const açıklamaMetni = document.getElementById("açıklama-metni");
 
     const kartlar = {
       resize: {
@@ -574,6 +598,27 @@
       kutuBıyık: true,
       etkileşimler: () => ortakEtkileşimler(),
     };
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="cursor-bind" aria-current="false" tabindex="0">
+        <strong>Cursor Bind</strong><small>cursor-bind</small>
+        <div class="durum">Ctrl+sürükle · sarı açıklama seçimi</div>
+      </article>`);
+    kartlar["cursor-bind"] = {
+      başlık: "Cursor Bind (try Ctrl + drag)",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/cursor-bind.html">cursor-bind.html</a>
+        <br>Kaynaktaki 1…30 X değerleri, −10…10 örnekleme havuzu ve üç renkli seri sabit kanıt tohumu ile üretilir.
+        <br>Ctrl+sürükle sarı açıklama seçimi yapar, normal seçim zoomunu durdurur ve kaynak gibi Annotation Text ister; kaynak demo metni kalıcı çizime eklemez.`,
+      tanım: () => cursor_bind_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/cursor_bind.rs",
+      seriler: [
+        { etiket: "Red", renk: "#ff0000" },
+        { etiket: "Green", renk: "#008000" },
+        { etiket: "Blue", renk: "#0000ff" },
+      ],
+      yardım: "Sürükle: yakınlaştır · Ctrl+sürükle: sarı açıklama seçimi · açıklama seçimi zoom yapmaz",
+      değişkenNokta: false,
+      etkileşimler: () => ({ ...ortakEtkileşimler(), ctrlAçıklama: true }),
+    };
 
     function ortakEtkileşimler() {
       return {
@@ -582,6 +627,7 @@
         çiftTık: ortak_kart_cift_tikla_tam_gorunum(),
         geçmiş: ortak_kart_gorunum_gecmisi(),
         dokunma: ortak_kart_dokunma_etkilesimi(),
+        ctrlAçıklama: false,
       };
     }
 
@@ -600,6 +646,7 @@
       çiftTık: false,
       geçmiş: false,
       dokunma: false,
+      ctrlAçıklama: false,
     };
 
     function taşımaİmleciniGüncelle() {
@@ -860,6 +907,8 @@
       seçim.setAttribute("y", alan.üst);
       seçim.setAttribute("width", Math.abs(sürükleme.son - sürükleme.baş));
       seçim.setAttribute("height", alan.yükseklik);
+      seçim.setAttribute("fill", sürükleme.açıklama ? "rgba(255,255,0,.3)" : "rgba(59,130,246,.18)");
+      seçim.setAttribute("stroke", sürükleme.açıklama ? "#d4a800" : "#3b82f6");
       seçim.setAttribute("visibility", "visible");
     });
     chart.addEventListener("pointerdown", olay => {
@@ -901,7 +950,11 @@
       if (!etkileşimler.seçim) return;
       if (x < alan.sol || x > alan.sağ) return;
       chart.setPointerCapture(olay.pointerId);
-      sürükleme = { baş: x, son: x };
+      sürükleme = {
+        baş: x,
+        son: x,
+        açıklama: etkileşimler.ctrlAçıklama && olay.ctrlKey,
+      };
     });
     chart.addEventListener("pointerup", olay => {
       if (olay.pointerType === "touch") {
@@ -930,23 +983,30 @@
       if (!sürükleme) return;
       const { view } = svgKonumu(olay);
       const alan = çizimAlanı(view);
-      const yakınlaştır = Math.abs(sürükleme.son - sürükleme.baş) >= 4;
-      if (yakınlaştır) {
-        const a = Math.min(sürükleme.baş, sürükleme.son);
-        const b = Math.max(sürükleme.baş, sürükleme.son);
+      const seçim = sürükleme;
+      sürükleme = null;
+      const geçerli = Math.abs(seçim.son - seçim.baş) >= 4;
+      if (geçerli) {
+        const a = Math.min(seçim.baş, seçim.son);
+        const b = Math.max(seçim.baş, seçim.son);
         try {
-          oturum.secim_yakinlastir(
+          const eylem = oturum.secimi_bitir(
             (a - alan.sol) / alan.genişlik,
             (b - alan.sol) / alan.genişlik,
+            seçim.açıklama,
           );
           hata.textContent = "";
           çiz();
+          if (eylem === 2) {
+            açıklamaMetni.value = "";
+            açıklamaDiyaloğu.showModal();
+            açıklamaMetni.focus();
+          }
         } catch (neden) {
           hata.textContent = `Seçilen aralık uygulanamadı: ${String(neden)}`;
         }
       }
-      sürükleme = null;
-      if (!yakınlaştır) {
+      if (!geçerli) {
         chart.querySelector("#seçim")?.setAttribute("visibility", "hidden");
       }
     });
@@ -969,12 +1029,14 @@
     });
     document.addEventListener("keydown", olay => {
       if (olay.code !== "Space") return;
+      if (olay.target === açıklamaMetni) return;
       boşlukBasılı = true;
       if (grafikÜzerinde) olay.preventDefault();
       taşımaİmleciniGüncelle();
     });
     document.addEventListener("keyup", olay => {
       if (olay.code !== "Space") return;
+      if (olay.target === açıklamaMetni) return;
       boşlukBasılı = false;
       if (taşıma) {
         oturum?.tasimayi_bitir();

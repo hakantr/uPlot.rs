@@ -13,15 +13,17 @@ use uplot_rs::{
     AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
     BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ,
-    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
+    CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
     SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
     ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
     axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_snap_kartı,
-    dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
-    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
-    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
+    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
+    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
+    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -33,6 +35,7 @@ enum KartKimliği {
     ZoomTouch,
     MonthsNoLeap,
     MonthsLeap,
+    CursorBind,
     CursorSnap,
     MissingDataNull,
     MissingDataXGap,
@@ -57,6 +60,7 @@ impl KartKimliği {
             Self::ZoomTouch => "Pinch Zoom & Pan",
             Self::MonthsNoLeap => "Months · No leap year",
             Self::MonthsLeap => "Months · 2024 leap year",
+            Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::MissingDataNull => "Missing Data · null values",
             Self::MissingDataXGap => "Missing Data · adjacent X gap",
@@ -87,6 +91,9 @@ impl KartKimliği {
             Self::MonthsNoLeap | Self::MonthsLeap => {
                 "months.html · UTC ay ekseni · resmî sayfadaki iki alt grafik"
             }
+            Self::CursorBind => {
+                "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
+            }
             Self::CursorSnap => "cursor-snap.html · çekirdek 10×10 piksel imleç ızgarası",
             Self::MissingDataNull | Self::MissingDataXGap => {
                 "missing-data.html · resmî veri ve iki kaynak alt grafiği"
@@ -115,6 +122,7 @@ impl KartKimliği {
             Self::ZoomWheel => ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
             Self::ZoomTouch => ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
             Self::MonthsNoLeap | Self::MonthsLeap => MONTHS_KART_TANIM_ÖRNEĞİ,
+            Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::MissingDataNull | Self::MissingDataXGap => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
             Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
@@ -137,6 +145,7 @@ impl KartKimliği {
             Self::ZoomWheel => "src/kart/zoom_wheel.rs",
             Self::ZoomTouch => "src/kart/zoom_touch.rs",
             Self::MonthsNoLeap | Self::MonthsLeap => "src/kart/months.rs",
+            Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::MissingDataNull | Self::MissingDataXGap => "src/kart/missing_data.rs",
             Self::DependentScale => "src/kart/dependent_scale.rs",
@@ -156,6 +165,8 @@ impl KartKimliği {
             EtkileşimSeçenekleri::default()
                 .seçim_yakınlaştır(false)
                 .çift_tıkla_tam_görünüm(false)
+        } else if self == Self::CursorBind {
+            ortak_kart_etkileşimleri().ctrl_açıklama(true)
         } else {
             ortak_kart_etkileşimleri()
         }
@@ -172,6 +183,7 @@ pub struct ChartListesi {
     tekerlek_anahtarı: Entity<Anahtar>,
     arcsinh_kuvvet: i32,
     autosize_kuvvet: i32,
+    açıklama_istendi: bool,
 }
 
 impl ChartListesi {
@@ -201,8 +213,13 @@ impl ChartListesi {
             |grafik| (Some(cx.new(|_| GpuiGrafik::yeni(grafik))), None),
         );
         if let Some(grafik) = &grafik {
-            cx.subscribe(grafik, |_, _, _: &GpuiGrafikOlayı, cx| cx.notify())
-                .detach();
+            cx.subscribe(grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                    bu.açıklama_istendi = true;
+                }
+                cx.notify();
+            })
+            .detach();
         }
         Self {
             aktif_kart: KartKimliği::Resize,
@@ -214,6 +231,7 @@ impl ChartListesi {
             tekerlek_anahtarı,
             arcsinh_kuvvet: 0,
             autosize_kuvvet: 0,
+            açıklama_istendi: false,
         }
     }
 
@@ -226,8 +244,13 @@ impl ChartListesi {
                     grafik.update(cx, |grafik, cx| grafik.grafiği_ayarla(yeni, cx));
                 } else {
                     let grafik = cx.new(|_| GpuiGrafik::yeni(yeni));
-                    cx.subscribe(&grafik, |_, _, _: &GpuiGrafikOlayı, cx| cx.notify())
-                        .detach();
+                    cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                        if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                            bu.açıklama_istendi = true;
+                        }
+                        cx.notify();
+                    })
+                    .detach();
                     self.grafik = Some(grafik);
                 }
                 self.hata = None;
@@ -248,6 +271,7 @@ impl ChartListesi {
         self.kart_tanımı_açık = false;
         self.arcsinh_kuvvet = 0;
         self.autosize_kuvvet = 0;
+        self.açıklama_istendi = false;
         let etkileşimler = kart.etkileşimler();
         self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
         self.tekerlek_anahtarı.update(cx, |anahtar, cx| {
@@ -289,6 +313,7 @@ fn grafik_oluştur(
         KartKimliği::ZoomTouch => zoom_touch_kartı(),
         KartKimliği::MonthsNoLeap => months_artık_yılsız_kartı(),
         KartKimliği::MonthsLeap => months_artık_yıllı_kartı(),
+        KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::MissingDataNull => missing_data_null_kartı(),
         KartKimliği::MissingDataXGap => missing_data_x_boşluğu_kartı(),
@@ -322,6 +347,7 @@ impl Render for ChartListesi {
             KartKimliği::MonthsNoLeap | KartKimliği::MonthsLeap => {
                 "36 aylık nokta × 1 seri".to_string()
             }
+            KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
             KartKimliği::MissingDataNull => "200 nokta × 3 seri · % + MB".to_string(),
             KartKimliği::MissingDataXGap => "8 nokta × 1 seri · 2 yol parçası".to_string(),
@@ -375,6 +401,7 @@ impl Render for ChartListesi {
             KartKimliği::ZoomWheel => &["One", "Two"],
             KartKimliği::ZoomTouch => &["One", "Two"],
             KartKimliği::MonthsNoLeap | KartKimliği::MonthsLeap => &["Value"],
+            KartKimliği::CursorBind => &["Red", "Green", "Blue"],
             KartKimliği::CursorSnap => &["1", "2", "3"],
             KartKimliği::MissingDataNull => &["CPU", "RAM", "TCP Out"],
             KartKimliği::MissingDataXGap => &["Value"],
@@ -825,6 +852,20 @@ impl Render for ChartListesi {
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::Candlestick, cx);
                 })),
+            )
+            .child(
+                katalog_kartı(
+                    "cursor-bind",
+                    "Cursor Bind",
+                    "cursor-bind",
+                    aktif_kart == KartKimliği::CursorBind,
+                    "Ctrl+sürükle · sarı açıklama seçimi",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::CursorBind, cx);
+                })),
             );
 
         let araçlar = div()
@@ -956,6 +997,12 @@ impl Render for ChartListesi {
             .overflow_hidden()
             .when_some(self.grafik.clone(), |öğe, grafik| öğe.child(grafik));
 
+        let yardım = if aktif_kart == KartKimliği::CursorBind {
+            "Sürükle: yakınlaştır · Ctrl+sürükle: sarı açıklama seçimi · açıklama seçimi zoom yapmaz"
+        } else {
+            "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır · çift tıkla: tam görünüm"
+        };
+        let açıklama_istendi = self.açıklama_istendi;
         let ayrıntı = div()
             .flex_1()
             .h_full()
@@ -975,10 +1022,20 @@ impl Render for ChartListesi {
                     .child(div().text_sm().text_color(soluk).child(aktif_kart.kaynak())),
             )
             .child(araçlar)
-            .child(div().mb_2().text_xs().text_color(soluk).child(
-                "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır · çift tıkla: tam görünüm",
-            ))
+            .child(div().mb_2().text_xs().text_color(soluk).child(yardım))
             .child(div().mb_2().text_xs().text_color(vurgu).child(lejant))
+            .when(açıklama_istendi, |öğe| {
+                öğe.child(
+                    div()
+                        .mb_2()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xfffbeb))
+                        .text_sm()
+                        .text_color(rgb(0x92400e))
+                        .child("Annotation Text istendi · kaynak demo girilen metni kalıcı çizime eklemez"),
+                )
+            })
             .when_some(çizim_hatası, |öğe, hata| {
                 öğe.child(
                     div()

@@ -76,6 +76,10 @@ name = "cursor_snap"
 required-features = ["svg"]
 
 [[example]]
+name = "cursor_bind"
+required-features = ["svg"]
+
+[[example]]
 name = "missing_data"
 required-features = ["svg"]
 

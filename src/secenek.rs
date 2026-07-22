@@ -175,6 +175,8 @@ pub struct EtkileşimSeçenekleri {
     /// Resmî `zoom-touch` demosundaki kıstırarak yakınlaştırma ve tek parmakla
     /// taşıma davranışlarını etkinleştirir. Varsayılan: kapalı.
     pub dokunma_etkileşimi: bool,
+    /// `cursor-bind` demosundaki Ctrl + sürükleme açıklama seçim bağını etkinleştirir.
+    pub ctrl_açıklama: bool,
 }
 
 impl Default for EtkileşimSeçenekleri {
@@ -186,6 +188,7 @@ impl Default for EtkileşimSeçenekleri {
             çift_tıkla_tam_görünüm: true,
             görünüm_geçmişi: false,
             dokunma_etkileşimi: false,
+            ctrl_açıklama: false,
         }
     }
 }
@@ -219,6 +222,11 @@ impl EtkileşimSeçenekleri {
 
     pub fn dokunma_etkileşimi(mut self, etkin: bool) -> Self {
         self.dokunma_etkileşimi = etkin;
+        self
+    }
+
+    pub fn ctrl_açıklama(mut self, etkin: bool) -> Self {
+        self.ctrl_açıklama = etkin;
         self
     }
 }

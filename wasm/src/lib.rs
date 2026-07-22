@@ -6,13 +6,14 @@ use uplot_rs::{
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
     BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
-    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
-    MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-    UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı,
-    area_fill_kartı, axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı,
-    bars_grouped_stacked_kartı, bars_values_autosize_kartı, box_whisker_kartı,
-    candlestick_ohlc_kartı, cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
+    BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
+    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, Grafik,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeçimEylemi, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
+    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
     missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
     ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
     zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
@@ -38,6 +39,7 @@ impl KartOturumu {
             "zoom-touch" => zoom_touch_kartı(),
             "months-no-leap" => months_artık_yılsız_kartı(),
             "months-leap" => months_artık_yıllı_kartı(),
+            "cursor-bind" => cursor_bind_kartı(),
             "cursor-snap" => cursor_snap_kartı(),
             "missing-data-null" => missing_data_null_kartı(),
             "missing-data-x-gap" => missing_data_x_boşluğu_kartı(),
@@ -90,6 +92,27 @@ impl KartOturumu {
         self.grafik
             .seçim_yakınlaştır(başlangıç_oranı, bitiş_oranı)
             .map_err(js_hatası)
+    }
+
+    /// 0: değişmedi, 1: yakınlaştırıldı, 2: açıklama metni istenmeli.
+    pub fn secimi_bitir(
+        &mut self,
+        başlangıç_oranı: f64,
+        bitiş_oranı: f64,
+        açıklama_tuşu: bool,
+    ) -> Result<u8, JsValue> {
+        self.grafik
+            .seçimi_bitir(başlangıç_oranı, bitiş_oranı, açıklama_tuşu)
+            .map(|eylem| match eylem {
+                SeçimEylemi::Değişmedi => 0,
+                SeçimEylemi::Yakınlaştırıldı => 1,
+                SeçimEylemi::Açıklamaİstendi => 2,
+            })
+            .map_err(js_hatası)
+    }
+
+    pub fn ctrl_aciklama_etkin(&self) -> bool {
+        self.grafik.etkileşim_seçenekleri().ctrl_açıklama
     }
 
     pub fn tasimayi_baslat(&mut self) -> bool {
@@ -264,7 +287,7 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    45
+    46
 }
 
 #[wasm_bindgen]
@@ -353,6 +376,11 @@ pub fn candlestick_kart_tanim_ornegi() -> String {
 }
 
 #[wasm_bindgen]
+pub fn cursor_bind_kart_tanim_ornegi() -> String {
+    CURSOR_BIND_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
 pub fn ortak_kart_tekerlek_etkilesimi() -> bool {
     ortak_kart_etkileşimleri().tekerlek_etkileşimi
 }
@@ -396,7 +424,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 45);
+        assert_eq!(kart_sayisi(), 46);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -421,7 +449,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 45);
+        assert_eq!(kart_sayisi(), 46);
     }
 
     #[test]
@@ -487,6 +515,22 @@ mod testler {
             oturum.imlec_oranlarini_uyarla(0.14, 0.16, 100.0, 100.0),
             vec![0.1, 0.2]
         );
+    }
+
+    #[test]
+    fn cursor_bind_wasm_ctrl_seçimini_yakınlaştırmadan_ayırır() {
+        let oturum = KartOturumu::yeni("cursor-bind", 100);
+        assert!(oturum.is_ok());
+        let Ok(mut oturum) = oturum else {
+            return;
+        };
+        assert!(oturum.svg(1_920, 600).contains("Cursor Bind"));
+        assert!(oturum.ctrl_aciklama_etkin());
+        assert_eq!(oturum.secimi_bitir(0.2, 0.6, true), Ok(2));
+        assert!(!oturum.yakinlastirilmis());
+        assert_eq!(oturum.secimi_bitir(0.2, 0.6, false), Ok(1));
+        assert!(oturum.yakinlastirilmis());
+        assert!(cursor_bind_kart_tanim_ornegi().contains("cursor_bind_kartı"));
     }
 
     #[test]

@@ -11,7 +11,7 @@ use ::gpui::{
     size,
 };
 
-use crate::{Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne};
+use crate::{Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne, SeçimEylemi};
 
 #[derive(Clone)]
 struct İmleçDurumu {
@@ -23,6 +23,8 @@ struct İmleçDurumu {
 #[derive(Clone, Copy, Debug)]
 pub enum GpuiGrafikOlayı {
     DurumDeğişti,
+    /// `cursor-bind` Ctrl seçimi tamamlandı; üst uygulama metin UI'si açabilir.
+    Açıklamaİstendi,
 }
 
 /// Çekirdek [`Grafik`] durumunu GPUI canvas üzerinde gösteren hazır bileşen.
@@ -33,6 +35,7 @@ pub struct GpuiGrafik {
     grafik: Grafik,
     imleç: Option<İmleçDurumu>,
     seçim: Option<(f32, f32)>,
+    açıklama_seçimi: bool,
     taşıma_başlangıcı: Option<Nokta>,
     dokunma_kaydırma: Option<(f64, f64)>,
     boşluk_basılı: bool,
@@ -47,6 +50,7 @@ impl GpuiGrafik {
             grafik,
             imleç: None,
             seçim: None,
+            açıklama_seçimi: false,
             taşıma_başlangıcı: None,
             dokunma_kaydırma: None,
             boşluk_basılı: false,
@@ -85,6 +89,7 @@ impl GpuiGrafik {
         self.grafik = grafik;
         self.imleç = None;
         self.seçim = None;
+        self.açıklama_seçimi = false;
         self.taşıma_başlangıcı = None;
         self.dokunma_kaydırma = None;
         self.boşluk_basılı = false;
@@ -253,12 +258,17 @@ impl GpuiGrafik {
             }
         }
         if let Some((başlangıç, bitiş)) = self.seçim {
+            let (dolgu, çizgi) = if self.açıklama_seçimi {
+                ("#ffff004d", "#d4a800")
+            } else {
+                ("#3b82f633", "#3b82f6")
+            };
             sahne.ekle(Komut::Dikdörtgen {
                 konum: Nokta::yeni(başlangıç.min(bitiş), üst),
                 genişlik: (bitiş - başlangıç).abs(),
                 yükseklik: alt - üst,
-                dolgu: "#3b82f633".to_string(),
-                çizgi: "#3b82f6".to_string(),
+                dolgu: dolgu.to_string(),
+                çizgi: çizgi.to_string(),
                 kalınlık: 1.0,
             });
         }
@@ -430,6 +440,7 @@ impl Render for GpuiGrafik {
                 if olay.keystroke.key.as_str() == "space" {
                     bu.boşluk_basılı = true;
                     bu.seçim = None;
+                    bu.açıklama_seçimi = false;
                     cx.stop_propagation();
                     GpuiGrafik::bildir(cx);
                 }
@@ -506,15 +517,18 @@ impl Render for GpuiGrafik {
                     {
                         bu.taşıma_başlangıcı = Some(konum);
                         bu.seçim = None;
+                        bu.açıklama_seçimi = false;
                         bu.imleç = None;
                     } else if olay.click_count >= 2 && ayarlar.çift_tıkla_tam_görünüm {
                         bu.grafik.tam_görünüm();
                         bu.seçim = None;
+                        bu.açıklama_seçimi = false;
                     } else if ayarlar.seçim_yakınlaştır
                         && let Some(konum) = bu.sahne_konumu(olay.position)
                         && bu.grafik_alanında(konum)
                     {
                         bu.seçim = Some((konum.x, konum.x));
+                        bu.açıklama_seçimi = ayarlar.ctrl_açıklama && olay.modifiers.control;
                     }
                     GpuiGrafik::bildir(cx);
                 }),
@@ -527,13 +541,21 @@ impl Render for GpuiGrafik {
                         GpuiGrafik::bildir(cx);
                         return;
                     }
+                    let açıklama_seçimi = std::mem::take(&mut bu.açıklama_seçimi);
                     if let Some((başlangıç, bitiş)) = bu.seçim.take()
                         && (bitiş - başlangıç).abs() >= 4.0
                     {
                         let (sol, sağ, _, _) = bu.çizim_alanı();
                         let başlangıç_oranı = f64::from((başlangıç - sol) / (sağ - sol));
                         let bitiş_oranı = f64::from((bitiş - sol) / (sağ - sol));
-                        match bu.grafik.seçim_yakınlaştır(başlangıç_oranı, bitiş_oranı) {
+                        match bu
+                            .grafik
+                            .seçimi_bitir(başlangıç_oranı, bitiş_oranı, açıklama_seçimi)
+                        {
+                            Ok(SeçimEylemi::Açıklamaİstendi) => {
+                                bu.hata = None;
+                                cx.emit(GpuiGrafikOlayı::Açıklamaİstendi);
+                            }
                             Ok(_) => bu.hata = None,
                             Err(hata) => {
                                 bu.hata = Some(format!("Seçilen aralık uygulanamadı: {hata}"));

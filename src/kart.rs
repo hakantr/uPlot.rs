@@ -7,6 +7,7 @@ mod bars_grouped_stacked;
 mod bars_values_autosize;
 mod box_whisker;
 mod candlestick_ohlc;
+mod cursor_bind;
 mod cursor_snap;
 mod dependent_scale;
 mod missing_data;
@@ -41,6 +42,9 @@ pub use box_whisker::{
 };
 pub use candlestick_ohlc::{
     CANDLESTICK_KANIT_TOHUMU, CANDLESTICK_KART_TANIM_ÖRNEĞİ, candlestick_ohlc_kartı,
+};
+pub use cursor_bind::{
+    CURSOR_BIND_KANIT_TOHUMU, CURSOR_BIND_KART_TANIM_ÖRNEĞİ, cursor_bind_kartı
 };
 pub use cursor_snap::{
     CURSOR_SNAP_KANIT_TOHUMU, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, cursor_snap_kartı

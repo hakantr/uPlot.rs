@@ -5,6 +5,17 @@ use crate::cizim::{Komut, MetinHizası, Nokta, Sahne};
 use crate::etkilesim::EtkileşimDenetleyicisi;
 use crate::{Aralık, GrafikSeçenekleri, HizalıVeri, UplotHatası, YÖlçekDağılımı};
 
+/// Bir işaretçi seçiminin çekirdekte çözümlenen sonucu.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SeçimEylemi {
+    /// Kart ayarları seçimi devre dışı bıraktı veya görünüm değişmedi.
+    Değişmedi,
+    /// Seçilen X aralığı görünür aralık olarak uygulandı.
+    Yakınlaştırıldı,
+    /// `cursor-bind` bağı yakınlaştırmayı durdurup açıklama UI'si istedi.
+    Açıklamaİstendi,
+}
+
 /// Doğrulanmış seçenek ve veriyi taşıyan çizelge örneği.
 pub struct Grafik {
     seçenekler: GrafikSeçenekleri,
@@ -411,6 +422,39 @@ impl Grafik {
     ) -> Result<bool, UplotHatası> {
         self.etkileşim
             .seçim_yakınlaştır(başlangıç_oranı, bitiş_oranı)
+    }
+
+    /// Seçim bırakma davranışını kart ayarlarına göre çekirdekte çözümler.
+    ///
+    /// `açıklama_tuşu` açıkken `ctrl_açıklama` etkin bir kart normal seçim
+    /// yakınlaştırmasını uygulamaz; yüzeyin metin istemesi için ayrı sonuç döner.
+    pub fn seçimi_bitir(
+        &mut self,
+        başlangıç_oranı: f64,
+        bitiş_oranı: f64,
+        açıklama_tuşu: bool,
+    ) -> Result<SeçimEylemi, UplotHatası> {
+        let ayarlar = self.etkileşim.ayarlar();
+        if !ayarlar.seçim_yakınlaştır {
+            return Ok(SeçimEylemi::Değişmedi);
+        }
+        if açıklama_tuşu && ayarlar.ctrl_açıklama {
+            if !başlangıç_oranı.is_finite() || !bitiş_oranı.is_finite() {
+                return Err(UplotHatası::GeçersizAralık {
+                    en_az: başlangıç_oranı,
+                    en_çok: bitiş_oranı,
+                });
+            }
+            return Ok(SeçimEylemi::Açıklamaİstendi);
+        }
+        self.seçim_yakınlaştır(başlangıç_oranı, bitiş_oranı)
+            .map(|değişti| {
+                if değişti {
+                    SeçimEylemi::Yakınlaştırıldı
+                } else {
+                    SeçimEylemi::Değişmedi
+                }
+            })
     }
 
     pub fn tam_görünüm(&mut self) -> bool {

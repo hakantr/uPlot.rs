@@ -1,0 +1,38 @@
+id = "cursor-bind"
+kaynak = "../uPlot/demos/cursor-bind.html"
+fixture = "src/kart/cursor_bind.rs#cursor_bind_kartı"
+viewport = [1920, 600]
+device_pixel_ratio = 1
+durum = "etkileşimli"
+
+[veri]
+x_değerleri = "1..=30"
+değer_havuzu = "-10..=10"
+seri_sayısı = 3
+seri_uzunluğu = 30
+kanıt_rastgele_üreteci = "mulberry32"
+kanıt_tohumu = "0xC0B1_1D00"
+
+[seçim_bağı]
+normal_sürükleme = "x-yakınlaştır"
+ctrl_sürükleme = "açıklama-isteği"
+ctrl_seçim_dolgusu = "rgba(255,255,0,0.3)"
+ctrl_yakınlaştırır = false
+istem = "Annotation Text"
+kalıcı_açıklama = false
+sahiplik = "çekirdek"
+gpui_adaptörü = true
+wasm_adaptörü = true
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/cursor-bind.svg"
