@@ -13,6 +13,7 @@ mod cursor_bind;
 mod cursor_snap;
 mod cursor_tooltip;
 mod custom_scales;
+mod data_smoothing;
 mod dependent_scale;
 mod missing_data;
 mod months;
@@ -64,6 +65,10 @@ pub use cursor_snap::{
 pub use cursor_tooltip::{CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ, cursor_tooltip_kartı};
 pub use custom_scales::{
     CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, custom_scales_kartı
+};
+pub use data_smoothing::{
+    DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ, SmoothingÖrneği, asap_yumuşat, data_smoothing_kartı,
+    hareketli_ortalama, savitzky_golay,
 };
 pub use dependent_scale::{DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, dependent_scale_kartı};
 pub use missing_data::{

@@ -16,18 +16,19 @@ use uplot_rs::{
     BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ,
     CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
-    CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
-    EtkileşimSeçenekleri, Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ,
-    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, UplotHatası,
+    CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SmoothingÖrneği, UplotHatası,
     ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
     add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
     arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
     axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
     box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    cursor_tooltip_kartı, custom_scales_kartı, dependent_scale_kartı, missing_data_null_kartı,
-    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
+    months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı,
+    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -46,6 +47,7 @@ enum KartKimliği {
     CursorSnap,
     CursorTooltip,
     CustomScales(CustomScaleÖrneği),
+    DataSmoothing(SmoothingÖrneği),
     MissingDataNull,
     MissingDataXGap,
     DependentScale,
@@ -76,6 +78,7 @@ impl KartKimliği {
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
             Self::CustomScales(örnek) => örnek.başlık(),
+            Self::DataSmoothing(örnek) => örnek.başlık(),
             Self::MissingDataNull => "Missing Data · null values",
             Self::MissingDataXGap => "Missing Data · adjacent X gap",
             Self::DependentScale => "Derived Scale · °F / °C",
@@ -118,6 +121,9 @@ impl KartKimliği {
             Self::CustomScales(_) => {
                 "custom-scales.html · doğrusal, log-log ve özel Weibull ölçeği"
             }
+            Self::DataSmoothing(_) => {
+                "data-smoothing.html · taxi-trips + SGG + ASAP FFT + Moving Avg 300"
+            }
             Self::MissingDataNull | Self::MissingDataXGap => {
                 "missing-data.html · resmî veri ve iki kaynak alt grafiği"
             }
@@ -151,6 +157,7 @@ impl KartKimliği {
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
             Self::CustomScales(_) => CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ,
+            Self::DataSmoothing(_) => DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
             Self::MissingDataNull | Self::MissingDataXGap => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
             Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::ArcSinhScales => ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
@@ -178,6 +185,7 @@ impl KartKimliği {
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
             Self::CustomScales(_) => "src/kart/custom_scales.rs",
+            Self::DataSmoothing(_) => "src/kart/data_smoothing.rs",
             Self::MissingDataNull | Self::MissingDataXGap => "src/kart/missing_data.rs",
             Self::DependentScale => "src/kart/dependent_scale.rs",
             Self::ArcSinhScales => "src/kart/arcsinh_scales.rs",
@@ -422,6 +430,7 @@ fn grafik_oluştur(
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
         KartKimliği::CustomScales(örnek) => custom_scales_kartı(örnek),
+        KartKimliği::DataSmoothing(örnek) => data_smoothing_kartı(örnek),
         KartKimliği::MissingDataNull => missing_data_null_kartı(),
         KartKimliği::MissingDataXGap => missing_data_x_boşluğu_kartı(),
         KartKimliği::DependentScale => dependent_scale_kartı(),
@@ -469,6 +478,18 @@ impl Render for ChartListesi {
             KartKimliği::CursorTooltip => "7 nokta × 1 seri · canlı bilgi kutusu".to_string(),
             KartKimliği::CustomScales(_) => {
                 "199 nokta × 3 seri · güven bandı + 20 gözlem".to_string()
+            }
+            KartKimliği::DataSmoothing(SmoothingÖrneği::Ham) => {
+                "3600 resmî Taxi Trips örneği".to_string()
+            }
+            KartKimliği::DataSmoothing(SmoothingÖrneği::SavitzkyGolay) => {
+                "3600 nokta · Savitzky–Golay pencere 101".to_string()
+            }
+            KartKimliği::DataSmoothing(SmoothingÖrneği::Asap) => {
+                "137 nokta · ASAP FFT çözünürlük 150".to_string()
+            }
+            KartKimliği::DataSmoothing(SmoothingÖrneği::HareketliOrtalama) => {
+                "3600 nokta · hareketli ortalama 300".to_string()
             }
             KartKimliği::MissingDataNull => "200 nokta × 3 seri · % + MB".to_string(),
             KartKimliği::MissingDataXGap => "8 nokta × 1 seri · 2 yol parçası".to_string(),
@@ -867,6 +888,21 @@ impl Render for ChartListesi {
                     "custom-scales",
                     aktif_kart == kart,
                     "199 nokta · güven bandı · 20 draw noktası",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
+            .children(SmoothingÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::DataSmoothing(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "data-smoothing",
+                    aktif_kart == kart,
+                    "Resmî Taxi Trips · kaynak JS algoritması",
                     panel,
                     vurgu,
                 )

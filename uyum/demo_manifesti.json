@@ -1426,6 +1426,51 @@
         "weibull-exponential-axis-splits", "gpui-wasm-catalog-parity", "common-interaction-profile"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "bekliyor" }
+    },
+    {
+      "sıra": 23,
+      "id": "data-smoothing",
+      "başlık": { "en": "Data Smoothing", "tr": "Veri Yumuşatma" },
+      "kaynak": "demos/data-smoothing.html",
+      "kaynak_sha256": "290b916d0a7ac45fba501fdcd19e9c5299c221c7aab66f7cb29842ee7d8bc837",
+      "ek_kaynaklar": [
+        { "yol": "demos/data/taxi-trips.json", "sha256": "77049382a98b18a499c9a750809d43c3269eadc33d4606f1fa696202aa007993" },
+        { "yol": "demos/lib/sgg.js", "sha256": "4bfbe56ba214eedbfe7d91c40e99faa3824e401fc52487b877d46fff12889606" },
+        { "yol": "demos/lib/ASAP-optimized.js", "sha256": "b01779c308e9a12bb3ea2d430038bacb84480de998874f77706fa9cf8b09933e" }
+      ],
+      "fixture": "src/kart/data_smoothing.rs#data_smoothing_kartı",
+      "örnek": "examples/data_smoothing.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/data-smoothing.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/data_smoothing.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı", "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı", "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı", "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı", "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "kartta_kapalı", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "devralındı"
+        },
+        "gerekçeler": {
+          "kosullu-bos-ve-dolu-noktalar": "Resmî data-smoothing alt grafikleri seri noktalarını çizmez."
+        }
+      },
+      "sahip_faz": 2,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-3600-taxi-trips", "source-equivalent-savitzky-golay-window-101",
+        "source-equivalent-asap-fft-resolution-150", "source-equivalent-moving-average-300",
+        "four-source-subcharts", "fixed-source-y-ranges", "gpui-wasm-catalog-parity",
+        "common-interaction-profile", "panic-free-typed-errors"
+      ],
+      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "bekliyor" }
     }
   ]
 }

@@ -1,0 +1,26 @@
+id = "data-smoothing"
+kaynak = "../uPlot/demos/data-smoothing.html"
+fixture = "src/kart/data_smoothing.rs#data_smoothing_kartı"
+viewport = [1920, 300]
+device_pixel_ratio = 1
+durum = "dört-kaynak-alt-grafiği"
+
+[veri]
+kaynak_noktası = 3600
+aktarim = "tools/uyum/data_smoothing_veri_aktar.mjs"
+taxi_sha256 = "77049382a98b18a499c9a750809d43c3269eadc33d4606f1fa696202aa007993"
+
+[algoritmalar]
+savitzky_golay_penceresi = 101
+asap_cozunurlugu = 150
+asap_cikti_noktasi = 137
+hareketli_ortalama_penceresi = 300
+
+[alt_grafikler]
+kimlikler = ["data-smoothing-raw", "data-smoothing-sgg", "data-smoothing-asap", "data-smoothing-moving-average"]
+y_araliklari = [[0, 40000], [0, 30000], [12000, 20000], [10000, 20000]]
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/data-smoothing.svg"

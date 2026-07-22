@@ -237,6 +237,7 @@
       align_data_kart_tanim_ornegi,
       cursor_tooltip_kart_tanim_ornegi,
       custom_scales_kart_tanim_ornegi,
+      data_smoothing_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
@@ -730,6 +731,30 @@
           { etiket: "weibull_fitted", renk: "#ffa500" },
         ],
         yardım: "Aynı veri · doğrusal, log-log veya özel fwd/bwd Weibull geometrisi",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+    for (const [kimlik, başlık, durum] of [
+      ["data-smoothing-raw", "Taxi Trips (raw)", "3600 resmî Taxi Trips örneği"],
+      ["data-smoothing-sgg", "Savitzky-Golay", "3600 nokta · pencere 101"],
+      ["data-smoothing-asap", "Taxi Trips (ASAP FFT)", "137 nokta · çözünürlük 150"],
+      ["data-smoothing-moving-average", "Taxi Trips (Moving Avg 300)", "3600 nokta · pencere 300"],
+    ]) {
+      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>data-smoothing</small>
+          <div class="durum">${durum}</div>
+        </article>`);
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data-smoothing.html">data-smoothing.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/taxi-trips.json">taxi-trips.json</a>
+          <br>Resmî veri ile kaynak SGG, ASAP FFT ve hareketli ortalama algoritmaları Rust çekirdeğinde aynı sayısal çıktıyı üretir.`,
+        tanım: () => data_smoothing_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/data_smoothing.rs",
+        seriler: [{ etiket: "Trips", renk: "#ff0000" }],
+        yardım: "Kırmızı Taxi Trips serisi · ortak yakınlaştırma ve taşıma profili",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       };

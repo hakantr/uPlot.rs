@@ -96,6 +96,10 @@ name = "custom_scales"
 required-features = ["svg"]
 
 [[example]]
+name = "data_smoothing"
+required-features = ["svg"]
+
+[[example]]
 name = "missing_data"
 required-features = ["svg"]
 

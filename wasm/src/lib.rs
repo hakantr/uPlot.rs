@@ -9,18 +9,18 @@ use uplot_rs::{
     BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
     CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
-    CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, Grafik,
-    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SeçimEylemi, UplotHatası,
-    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
-    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
-    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
-    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
-    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    cursor_tooltip_kartı, custom_scales_kartı, dependent_scale_kartı, missing_data_null_kartı,
-    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
+    MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    SeriSeçenekleri, SeçimEylemi, SmoothingÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
+    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
+    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
+    dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -53,6 +53,12 @@ impl KartOturumu {
             "custom-scales-linear" => custom_scales_kartı(CustomScaleÖrneği::Doğrusal),
             "custom-scales-log-log" => custom_scales_kartı(CustomScaleÖrneği::LogLog),
             "custom-scales-weibull" => custom_scales_kartı(CustomScaleÖrneği::Weibull),
+            "data-smoothing-raw" => data_smoothing_kartı(SmoothingÖrneği::Ham),
+            "data-smoothing-sgg" => data_smoothing_kartı(SmoothingÖrneği::SavitzkyGolay),
+            "data-smoothing-asap" => data_smoothing_kartı(SmoothingÖrneği::Asap),
+            "data-smoothing-moving-average" => {
+                data_smoothing_kartı(SmoothingÖrneği::HareketliOrtalama)
+            }
             "missing-data-null" => missing_data_null_kartı(),
             "missing-data-x-gap" => missing_data_x_boşluğu_kartı(),
             "dependent-scale" => dependent_scale_kartı(),
@@ -353,7 +359,12 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    53
+    57
+}
+
+#[wasm_bindgen]
+pub fn data_smoothing_kart_tanim_ornegi() -> String {
+    DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -510,7 +521,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 53);
+        assert_eq!(kart_sayisi(), 57);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -535,7 +546,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 53);
+        assert_eq!(kart_sayisi(), 57);
     }
 
     #[test]
@@ -696,6 +707,27 @@ mod testler {
         assert_ne!(svgler.first(), svgler.get(1));
         assert_ne!(svgler.get(1), svgler.get(2));
         assert!(custom_scales_kart_tanim_ornegi().contains("CustomScaleÖrneği"));
+    }
+
+    #[test]
+    fn data_smoothing_wasm_dört_kaynak_alt_grafiğini_üretir() {
+        for (kimlik, başlık) in [
+            ("data-smoothing-raw", "Taxi Trips (raw)"),
+            ("data-smoothing-sgg", "Savitzky-Golay"),
+            ("data-smoothing-asap", "Taxi Trips (ASAP FFT)"),
+            (
+                "data-smoothing-moving-average",
+                "Taxi Trips (Moving Avg 300)",
+            ),
+        ] {
+            let oturum = KartOturumu::yeni(kimlik, 100);
+            assert!(oturum.is_ok());
+            let Ok(oturum) = oturum else { return };
+            let svg = oturum.svg(960, 300);
+            assert!(svg.contains(başlık));
+            assert!(svg.contains("#ff0000"));
+        }
+        assert!(data_smoothing_kart_tanim_ornegi().contains("SmoothingÖrneği::Asap"));
     }
 
     #[test]
