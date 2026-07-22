@@ -8,6 +8,14 @@ on:
 
 permissions:
   contents: read
+  actions: write
+  deployments: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: nightly-artifacts
+  cancel-in-progress: true
 
 jobs:
   desktop:
@@ -73,7 +81,7 @@ jobs:
             uPlot.rs/LICENSE
             uPlot.rs/NOTICE
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 1
 
   wasm:
     name: uplot-rs-wasm
@@ -107,6 +115,14 @@ jobs:
         run: >-
           wasm-bindgen --target web --out-dir wasm/pkg
           target/wasm32-unknown-unknown/release/uplot_rs_wasm.wasm
+      - name: Pages paketini hazırla
+        working-directory: uPlot.rs
+        run: |
+          mkdir -p _site/wasm/www _site/wasm/pkg
+          cp -R wasm/www/. _site/wasm/www/
+          cp -R wasm/pkg/. _site/wasm/pkg/
+          cp wasm/pages/index.html _site/index.html
+          touch _site/.nojekyll
       - name: WASM artefaktını yükle
         uses: actions/upload-artifact@v5
         with:
@@ -116,4 +132,55 @@ jobs:
             uPlot.rs/wasm/www
             uPlot.rs/wasm/README.md
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 1
+      - name: Pages yapılandırması
+        uses: actions/configure-pages@v5
+      - name: Pages artefaktını yükle
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: uPlot.rs/_site
+          retention-days: 1
+
+  deploy:
+    name: uplot-rs-pages
+    runs-on: ubuntu-24.04
+    needs: wasm
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: GitHub Pages'e yayınla
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  cleanup:
+    name: eski gece kayıtlarını temizle
+    runs-on: ubuntu-24.04
+    needs: [desktop, wasm, deploy]
+    steps:
+      - name: Yalnız son iki Pages dağıtımını tut
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/deployments?environment=github-pages&per_page=100" \
+            --jq '.[].id' | tail -n +3 | while read -r deployment_id; do
+              gh api --method POST \
+                "repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses" \
+                -f state=inactive >/dev/null
+              gh api --method DELETE \
+                "repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}"
+            done
+      - name: Yalnız bu gece koşusunu tut
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/nightly-builds.yml/runs?per_page=100" \
+            --jq '.workflow_runs[].id' | while read -r run_id; do
+              if [ "${run_id}" != "${CURRENT_RUN_ID}" ]; then
+                gh api --method DELETE \
+                  "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}"
+              fi
+            done

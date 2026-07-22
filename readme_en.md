@@ -38,9 +38,8 @@ The interactive WASM chart list is published with GitHub Pages:
 
 **[Open the live uPlot.rs WASM demo](https://hakantr.github.io/uPlot.rs/)**
 
-Every push to `main` rebuilds the WASM package and deploys it to Pages. The
-following downloadable workflow artifacts are also produced every day at
-18:00 UTC (21:00 in Türkiye):
+Every day at 18:00 UTC (21:00 in Türkiye), the WASM package is rebuilt and
+deployed to Pages together with the following downloadable workflow artifacts:
 
 - macOS ARM64;
 - Linux ARM64;
@@ -51,6 +50,11 @@ following downloadable workflow artifacts are also produced every day at
 See the
 [nightly-artifacts workflow](https://github.com/hakantr/uPlot.rs/actions/workflows/nightly-builds.yml)
 for scheduled builds and manual runs.
+
+When a new nightly run starts, any queued or older in-progress run is
+cancelled. Only the latest nightly run's artifacts and the latest two Pages
+deployment records are retained; GitHub Release versions are not affected by
+this cleanup.
 
 ## Running locally
 

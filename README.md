@@ -37,9 +37,8 @@ Etkileşimli WASM chart listesi GitHub Pages üzerinde yayınlanır:
 
 **[uPlot.rs canlı WASM örneğini aç](https://hakantr.github.io/uPlot.rs/)**
 
-`main` dalına yapılan her push, WASM paketini yeniden derleyip Pages ortamına
-yayınlar. Her gün Türkiye saatiyle 21:00'de ayrıca şu indirilebilir workflow
-artefaktları oluşturulur:
+Her gün Türkiye saatiyle 21:00'de WASM paketi yeniden derlenip Pages ortamına
+yayınlanır ve şu indirilebilir workflow artefaktları oluşturulur:
 
 - macOS ARM64;
 - Linux ARM64;
@@ -50,6 +49,10 @@ artefaktları oluşturulur:
 Gece derlemeleri ve elle çalıştırma için
 [nightly-artifacts workflow'una](https://github.com/hakantr/uPlot.rs/actions/workflows/nightly-builds.yml)
 bakın.
+
+Yeni bir gece koşusu başladığında bekleyen/eski koşu iptal edilir. Yalnız son
+gece koşusunun artefaktları ve son iki Pages dağıtım kaydı tutulur; GitHub
+Release sürümleri bu temizlikten etkilenmez.
 
 ## Çalıştırma
 
