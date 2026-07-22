@@ -235,9 +235,10 @@ impl GpuiGrafik {
             ScrollDelta::Pixels(delta) => (f64::from(f32::from(delta.y)), true),
             ScrollDelta::Lines(delta) => (f64::from(delta.y), false),
         };
-        let (sol, sağ, _, _) = self.çizim_alanı();
-        let oran = f64::from((fare.x - sol) / (sağ - sol));
-        match self.grafik.tekerlek(oran, delta, hassas) {
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        let yatay = f64::from((fare.x - sol) / (sağ - sol));
+        let dikey = f64::from((fare.y - üst) / (alt - üst));
+        match self.grafik.tekerlek(yatay, dikey, delta, hassas) {
             Ok(_) => self.hata = None,
             Err(hata) => {
                 self.hata = Some(format!("Tekerlek yakınlaştırması uygulanamadı: {hata}"));

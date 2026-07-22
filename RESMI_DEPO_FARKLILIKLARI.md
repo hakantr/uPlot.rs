@@ -45,6 +45,8 @@ Aşağıdakiler uPlot.rs'e özgü özellik olarak değerlendirilmez:
 
 - koşullu boş seri noktaları ve hover sırasında dolu nokta;
 - fareyi kesintisiz izleyen cursor çizgileri ve canlı lejant;
+- görünür aralık ve piksel yoğunluğundan uygun sayısal artımı seçen, artım
+  katlarına hizalı dinamik eksen bölmeleri;
 - X ekseninde sürükleyerek seçim/yakınlaştırma;
 - çift tıklamayla tam X aralığına dönme;
 - resmî `wheelZoomPlugin`in `0.75` temel katsayısı, fare odağı ve aralık sınırı.
@@ -56,6 +58,8 @@ Kaynaklar:
 - [`demos/zoom-wheel.html`](https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-wheel.html)
 - [`demos/zoom-touch.html`](https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-touch.html)
 - [`src/uPlot.js` çift tıklama davranışı](https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js#L3364)
+- [`src/uPlot.js` eksen artımı seçimi](https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js#L257)
+- [`src/opts.js` sayısal eksen bölmeleri](https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/opts.js#L595)
 
 ## Kaynak ve bağımlılık politikası
 
@@ -100,7 +104,7 @@ official plugin; cursor anchoring and full-range clamping remain ported
 behavior.
 
 Conditional hollow points, filled hover markers, continuous cursor lines,
-live legends, drag selection, double-click reset, and the official wheel
+live legends, visible-range-aligned numeric axis splits, drag selection, double-click reset, and the official wheel
 plugin's base mathematics are direct ports and are not claimed as uPlot.rs
 extensions. The same applies to the X/Y scale mathematics ported from the
 official `zoom-touch` demo; only the Space + left-drag desktop binding is an

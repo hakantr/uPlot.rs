@@ -11,6 +11,7 @@ lisans = "MIT"
 [uplot_dosyaları]
 tip_bildirimi = "c9fb5d1fe8f2084b44690c841e84ab63402549d9420535a6081b389a461fefe5"
 çekirdek = "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645"
+eksen_seçenekleri = "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba"
 tekerlek_demo = "a9da7c0c6dcd8f446790ee7ed151736ea505d949b7872ea6385cf2eab8a01a90"
 dokunma_demo = "099e85e0076c683bb852cb49abf0cbf2b1dc1c2304f780eb08b8876032ce9c59"
 

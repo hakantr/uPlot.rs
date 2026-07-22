@@ -29,7 +29,8 @@ Port şu anda Faz 0 altyapısı ve ilk dikey uyum kartını içerir:
 - ilk kart: `demos/resize.html` tabanlı 100 noktalı `sin(x)` çizgisi.
 
 İlk kart, kaynak demonun koşullu boş noktalarını, dolu hover noktasını, canlı
-lejantını ve X ekseninde sürükle-bırak yakınlaştırmasını da taşır.
+lejantını, görünür aralığa göre yeniden hizalanan sayısal ızgarasını ve X
+ekseninde sürükle-bırak yakınlaştırmasını da taşır.
 
 GPUI chart listesi dağıtılan `uplot-rs` kütüphanesinin parçası değildir;
 `uygulamalar/masaustu` altındaki ayrı, yayınlanmayan bir doğrulama uygulamasıdır.

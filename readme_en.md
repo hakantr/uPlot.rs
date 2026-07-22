@@ -30,7 +30,8 @@ compatibility card:
 - first card: a 100-point `sin(x)` line based on `demos/resize.html`.
 
 The first card also ports the source demo's conditional hollow points, filled
-hover marker, live legend, and drag-to-zoom interaction on the X axis.
+hover marker, live legend, numeric grid aligned to the visible range, and
+drag-to-zoom interaction on the X axis.
 
 The GPUI chart list is not part of the distributed `uplot-rs` library. It is a
 separate, unpublished verification application under `uygulamalar/masaustu`.

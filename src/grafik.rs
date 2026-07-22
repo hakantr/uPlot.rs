@@ -73,11 +73,14 @@ impl Grafik {
 
     pub fn tekerlek(
         &mut self,
-        odak_oranı: f64,
+        yatay_odak_oranı: f64,
+        dikey_odak_oranı: f64,
         delta: f64,
         hassas: bool,
     ) -> Result<bool, UplotHatası> {
-        self.etkileşim.tekerlek(odak_oranı, delta, hassas)
+        let görünür_y = self.görünür_y_aralığı();
+        self.etkileşim
+            .tekerlek(yatay_odak_oranı, dikey_odak_oranı, görünür_y, delta, hassas)
     }
 
     pub fn seçim_yakınlaştır(
@@ -238,39 +241,36 @@ impl Grafik {
             .unwrap_or(tam_x_aralığı);
         let y_aralığı = görünür_y.unwrap_or_else(|| self.y_aralığı(x_aralığı));
 
-        let bölme = 4_u32;
-        for sıra in 0..=bölme {
-            let oran = sıra as f32 / bölme as f32;
-            let y = üst + oran * yükseklik;
-            let x = sol + oran * genişlik;
+        let y_artımı = uygun_artım(y_aralığı, yükseklik, 30.0);
+        for y_değeri in eksen_bölmeleri(y_aralığı, yükseklik, 30.0) {
+            let y = üst + yükseklik - y_aralığı.konum(y_değeri, 0.0, yükseklik);
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(sol, y),
                 bitiş: Nokta::yeni(sol + genişlik, y),
                 renk: "#e5e7eb".to_string(),
                 kalınlık: 1.0,
             });
+            sahne.ekle(Komut::Metin {
+                konum: Nokta::yeni(sol - 8.0, y + 4.0),
+                içerik: eksen_değerini_yaz(y_değeri, y_artımı),
+                renk: "#4b5563".to_string(),
+                boyut: 11.0,
+                hiza: MetinHizası::Bitiş,
+            });
+        }
+
+        let x_artımı = uygun_artım(x_aralığı, genişlik, 50.0);
+        for x_değeri in eksen_bölmeleri(x_aralığı, genişlik, 50.0) {
+            let x = x_aralığı.konum(x_değeri, sol, genişlik);
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(x, üst),
                 bitiş: Nokta::yeni(x, üst + yükseklik),
                 renk: "#e5e7eb".to_string(),
                 kalınlık: 1.0,
             });
-
-            let y_değeri = y_aralığı.en_çok
-                - f64::from(sıra) / f64::from(bölme) * (y_aralığı.en_çok - y_aralığı.en_az);
-            sahne.ekle(Komut::Metin {
-                konum: Nokta::yeni(sol - 8.0, y + 4.0),
-                içerik: format!("{y_değeri:.2}"),
-                renk: "#4b5563".to_string(),
-                boyut: 11.0,
-                hiza: MetinHizası::Bitiş,
-            });
-
-            let x_değeri = x_aralığı.en_az
-                + f64::from(sıra) / f64::from(bölme) * (x_aralığı.en_çok - x_aralığı.en_az);
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(x, üst + yükseklik + 20.0),
-                içerik: format!("{x_değeri:.2}"),
+                içerik: eksen_değerini_yaz(x_değeri, x_artımı),
                 renk: "#4b5563".to_string(),
                 boyut: 11.0,
                 hiza: MetinHizası::Orta,
@@ -351,5 +351,101 @@ impl Grafik {
                 });
             Aralık::otomatik(görünür)
         })
+    }
+}
+
+/// uPlot'un sayısal eksen yaklaşımı gibi görünür aralık ve piksel yoğunluğuna
+/// göre 1/2/2.5/5 × 10ⁿ ailesinden uygun artımı seçer.
+fn uygun_artım(aralık: Aralık, boyut: f32, en_az_boşluk: f32) -> f64 {
+    let uzunluk = aralık.en_çok - aralık.en_az;
+    if !uzunluk.is_finite() || uzunluk <= 0.0 || !boyut.is_finite() || boyut <= 0.0 {
+        return 1.0;
+    }
+    let hedef = uzunluk * f64::from(en_az_boşluk.max(1.0)) / f64::from(boyut);
+    if !hedef.is_finite() || hedef <= 0.0 {
+        return 1.0;
+    }
+    let taban = 10_f64.powf(hedef.log10().floor());
+    for çarpan in [1.0_f64, 2.0, 2.5, 5.0, 10.0] {
+        let aday = taban * çarpan;
+        if aday >= hedef && aday.is_finite() {
+            return aday;
+        }
+    }
+    hedef
+}
+
+fn eksen_bölmeleri(aralık: Aralık, boyut: f32, en_az_boşluk: f32) -> Vec<f64> {
+    let artım = uygun_artım(aralık, boyut, en_az_boşluk);
+    let tolerans = artım.abs() * 1e-9;
+    let mut değer = ((aralık.en_az - tolerans) / artım).ceil() * artım;
+    let mut bölmeler = Vec::new();
+    for _ in 0..1_000 {
+        if değer > aralık.en_çok + tolerans {
+            break;
+        }
+        let yuvarlanmış = artıma_yuvarla(değer, artım);
+        bölmeler.push(if yuvarlanmış.abs() <= tolerans {
+            0.0
+        } else {
+            yuvarlanmış
+        });
+        değer += artım;
+    }
+    bölmeler
+}
+
+fn artıma_yuvarla(değer: f64, artım: f64) -> f64 {
+    let basamak = ondalık_basamak(artım);
+    let kuvvet = 10_f64.powf(f64::from(basamak));
+    (değer * kuvvet).round() / kuvvet
+}
+
+fn ondalık_basamak(artım: f64) -> u32 {
+    let mut ölçekli = artım.abs();
+    for basamak in 0..=12 {
+        if (ölçekli - ölçekli.round()).abs() <= 1e-9 {
+            return basamak;
+        }
+        ölçekli *= 10.0;
+    }
+    12
+}
+
+fn eksen_değerini_yaz(değer: f64, artım: f64) -> String {
+    let basamak = usize::try_from(ondalık_basamak(artım).max(2)).unwrap_or(12);
+    format!("{değer:.basamak$}")
+}
+
+#[cfg(test)]
+mod eksen_testleri {
+    use super::*;
+
+    #[test]
+    fn bölmeler_sıfıra_hizalanır_ve_yakınlaştıkça_ondalık_detayı_artırır() {
+        let tam = Aralık {
+            en_az: -1.2,
+            en_çok: 1.2,
+        };
+        let yakın = Aralık {
+            en_az: -0.011,
+            en_çok: 0.013,
+        };
+        let tam_artım = uygun_artım(tam, 304.0, 30.0);
+        let yakın_artım = uygun_artım(yakın, 304.0, 30.0);
+        let yakın_bölmeler = eksen_bölmeleri(yakın, 304.0, 30.0);
+        let hizalı_tam_bölmeler = eksen_bölmeleri(tam, 593.0, 30.0);
+
+        assert!(yakın_artım < tam_artım);
+        assert!(yakın_bölmeler.contains(&0.0));
+        assert!(hizalı_tam_bölmeler.contains(&-1.2));
+        assert!(hizalı_tam_bölmeler.contains(&1.2));
+        assert_eq!(eksen_değerini_yaz(0.0, yakın_artım), "0.0000");
+        assert!(yakın_bölmeler.windows(2).all(|çift| {
+            çift
+                .first()
+                .zip(çift.get(1))
+                .is_some_and(|(sol, sağ)| sol < sağ)
+        }));
     }
 }

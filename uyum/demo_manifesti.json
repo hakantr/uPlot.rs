@@ -19,6 +19,10 @@
         {
           "yol": "demos/zoom-touch.html",
           "sha256": "099e85e0076c683bb852cb49abf0cbf2b1dc1c2304f780eb08b8876032ce9c59"
+        },
+        {
+          "yol": "src/opts.js",
+          "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba"
         }
       ],
       "fixture": "src/kart.rs#ilk_kart",
@@ -32,6 +36,7 @@
         "aligned-data",
         "numeric-x-scale",
         "auto-y-scale",
+        "visible-range-aligned-numeric-axis-splits",
         "linear-path",
         "svg-surface",
         "conditional-hollow-points",

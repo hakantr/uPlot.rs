@@ -414,8 +414,9 @@
       if (x < 64 || x > view.width - 24 || y < 48 || y > view.height - 48) return;
       olay.preventDefault();
       try {
-        const oran = (x - 64) / (view.width - 88);
-        if (oturum.tekerlek(oran, -olay.deltaY, olay.deltaMode === 0)) çiz();
+        const yatayOran = (x - 64) / (view.width - 88);
+        const dikeyOran = (y - 48) / (view.height - 96);
+        if (oturum.tekerlek(yatayOran, dikeyOran, -olay.deltaY, olay.deltaMode === 0)) çiz();
         hata.textContent = "";
       } catch (neden) {
         hata.textContent = `Tekerlek yakınlaştırması uygulanamadı: ${String(neden)}`;

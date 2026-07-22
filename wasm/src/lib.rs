@@ -29,12 +29,13 @@ impl IlkKartOturumu {
 
     pub fn tekerlek(
         &mut self,
-        odak_oranı: f64,
+        yatay_odak_oranı: f64,
+        dikey_odak_oranı: f64,
         delta: f64,
         hassas_girdi: bool,
     ) -> Result<bool, JsValue> {
         self.grafik
-            .tekerlek(odak_oranı, delta, hassas_girdi)
+            .tekerlek(yatay_odak_oranı, dikey_odak_oranı, delta, hassas_girdi)
             .map_err(js_hatası)
     }
 

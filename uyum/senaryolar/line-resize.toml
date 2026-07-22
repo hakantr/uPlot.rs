@@ -24,6 +24,9 @@ kesikli_imleç = true
 imleç_çizgileri_fareyi_izler = true
 seri_noktası_en_yakın_örneğe_kilitlenir = true
 canlı_lejant = true
+sayısal_eksen_artım_ailesi = "1_2_2.5_5_x_10n"
+eksen_bölmeleri_görünür_aralığa_hizalı = true
+sıfır_bölmesi_korunur = true
 x_sürükle_yakınlaştır = true
 çift_tıkla_sıfırla = true
 çift_tıkla_tam_görünüm_kaynağı = "src/uPlot.js#dblClick"
@@ -53,5 +56,5 @@ kanıt = "target/wasm-resize-etkilesim.png"
 
 [beklenti]
 seri_sayısı = 1
-çizim_komutu_sayısı = 23
+çizim_komutu_sayısı = 47
 svg_başlığı = "İlk kart · sin(x)"

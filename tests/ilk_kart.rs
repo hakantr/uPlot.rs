@@ -15,7 +15,7 @@ fn ilk_kart_belirlenimci_svg_üretir() -> Result<(), UplotHatası> {
     assert!(ilk.starts_with("<svg"));
     assert!(ilk.contains("İlk kart · sin(x)"));
     assert!(ilk.contains("stroke=\"#dc2626\""));
-    assert_eq!(sahne.komutlar().len(), 23);
+    assert_eq!(sahne.komutlar().len(), 47);
     Ok(())
 }
 
@@ -118,8 +118,25 @@ fn grafik_etkileşim_durumunu_çekirdekte_yönetir() -> Result<(), UplotHatası>
     assert!(!grafik.yakınlaştırılmış());
 
     grafik.tekerlek_etkileşimi_ayarla(false);
-    assert!(!grafik.tekerlek(0.5, 1.0, false)?);
+    assert!(!grafik.tekerlek(0.5, 0.5, 1.0, false)?);
     assert_eq!(grafik.görünür_x_aralığı(), tam);
+    Ok(())
+}
+
+#[test]
+fn tekerlek_x_ve_y_eksenlerini_fare_odağında_yeniden_ölçekler() -> Result<(), UplotHatası> {
+    let (seçenekler, veri) = ilk_kart()?;
+    let mut grafik = Grafik::yeni(seçenekler, veri)?;
+    let tam_x = grafik.görünür_x_aralığı();
+    let tam_y = grafik.görünür_y_aralığı();
+
+    assert!(grafik.tekerlek(0.25, 0.75, 1.0, false)?);
+    let yakın_x = grafik.görünür_x_aralığı();
+    let yakın_y = grafik.görünür_y_aralığı();
+    assert!(yakın_x.en_çok - yakın_x.en_az < tam_x.en_çok - tam_x.en_az);
+    assert!(yakın_y.en_çok - yakın_y.en_az < tam_y.en_çok - tam_y.en_az);
+    assert!(yakın_x.en_az > tam_x.en_az);
+    assert!(yakın_y.en_çok < tam_y.en_çok);
     Ok(())
 }
 
