@@ -41,7 +41,7 @@
       "başlık": "Çizim alanı kırpması",
       "tür": "dogrudan_port",
       "açıklama": "Seri yolları ve dolguları eksenlerin içindeki çizim dikdörtgeninde kırpılır.",
-      "kanıt_dosyaları": ["src/cizim/kirpma.rs", "src/grafik.rs"]
+      "kanıt_dosyaları": ["src/cizim/kirpma.rs", "src/grafik.rs", "tests/area_fill.rs"]
     },
     {
       "id": "dinamik-eksen-izgara",

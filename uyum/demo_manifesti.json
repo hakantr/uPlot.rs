@@ -148,6 +148,7 @@
         "linear-path",
         "series-fill-to-zero",
         "rgba-area-fill",
+        "single-polygon-plot-rectangle-fill-clipping",
         "multi-series-cursor-legend",
         "x-drag-zoom",
         "core-dblclick-full-range-reset",

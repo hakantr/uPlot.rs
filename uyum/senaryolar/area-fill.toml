@@ -18,6 +18,7 @@ kanıt_tohumu = 3235779124
 çizgi_renkleri = ["#ff0000", "#008000", "#0000ff"]
 dolgu_renkleri = ["#ff00001a", "#00ff001a", "#0000ff1a"]
 dolgu_tabanı = 0.0
+dolgu_kırpma = "tek_çokgeni_çizim_dikdörtgenine_kırp"
 
 [etkileşim]
 cursor = true

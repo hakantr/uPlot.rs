@@ -57,6 +57,121 @@ pub(crate) fn yolu_dikdörtgene_kırp(
     sonuç
 }
 
+/// Kapalı bir dolgu çokgenini eksenlerin içindeki dikdörtgene kırpar.
+/// Çizgi kırpmasından farklı olarak alanı parçalara ayırıp her parçayı yeniden
+/// tabana kapatmaz; böylece sınır dışındaki tepe noktalarında dikey dolgu
+/// şeritleri oluşmaz.
+pub(crate) fn çokgeni_dikdörtgene_kırp(
+    çokgen: &[Nokta],
+    sol: f32,
+    sağ: f32,
+    üst: f32,
+    alt: f32,
+) -> Vec<Nokta> {
+    let mut çıktı = çokgen.to_vec();
+    for kenar in [Kenar::Sol, Kenar::Sağ, Kenar::Üst, Kenar::Alt] {
+        çıktı = çokgeni_kenara_kırp(&çıktı, kenar, sol, sağ, üst, alt);
+        if çıktı.is_empty() {
+            break;
+        }
+    }
+    çıktı
+}
+
+#[derive(Clone, Copy)]
+enum Kenar {
+    Sol,
+    Sağ,
+    Üst,
+    Alt,
+}
+
+fn çokgeni_kenara_kırp(
+    çokgen: &[Nokta],
+    kenar: Kenar,
+    sol: f32,
+    sağ: f32,
+    üst: f32,
+    alt: f32,
+) -> Vec<Nokta> {
+    let Some(mut önceki) = çokgen.last().copied() else {
+        return Vec::new();
+    };
+    let mut önceki_içeride = kenarın_içinde(önceki, kenar, sol, sağ, üst, alt);
+    let mut çıktı = Vec::new();
+    for güncel in çokgen.iter().copied() {
+        let güncel_içeride = kenarın_içinde(güncel, kenar, sol, sağ, üst, alt);
+        match (önceki_içeride, güncel_içeride) {
+            (true, true) => çıktı.push(güncel),
+            (true, false) => {
+                if let Some(kesişim) = kenar_kesişimi(önceki, güncel, kenar, sol, sağ, üst, alt)
+                {
+                    çıktı.push(kesişim);
+                }
+            }
+            (false, true) => {
+                if let Some(kesişim) = kenar_kesişimi(önceki, güncel, kenar, sol, sağ, üst, alt)
+                {
+                    çıktı.push(kesişim);
+                }
+                çıktı.push(güncel);
+            }
+            (false, false) => {}
+        }
+        önceki = güncel;
+        önceki_içeride = güncel_içeride;
+    }
+    çıktı
+}
+
+fn kenarın_içinde(nokta: Nokta, kenar: Kenar, sol: f32, sağ: f32, üst: f32, alt: f32) -> bool {
+    match kenar {
+        Kenar::Sol => nokta.x >= sol,
+        Kenar::Sağ => nokta.x <= sağ,
+        Kenar::Üst => nokta.y >= üst,
+        Kenar::Alt => nokta.y <= alt,
+    }
+}
+
+fn kenar_kesişimi(
+    başlangıç: Nokta,
+    bitiş: Nokta,
+    kenar: Kenar,
+    sol: f32,
+    sağ: f32,
+    üst: f32,
+    alt: f32,
+) -> Option<Nokta> {
+    let dx = bitiş.x - başlangıç.x;
+    let dy = bitiş.y - başlangıç.y;
+    match kenar {
+        Kenar::Sol | Kenar::Sağ => {
+            if dx.abs() <= f32::EPSILON {
+                return None;
+            }
+            let x = if matches!(kenar, Kenar::Sol) {
+                sol
+            } else {
+                sağ
+            };
+            let oran = (x - başlangıç.x) / dx;
+            Some(Nokta::yeni(x, başlangıç.y + oran * dy))
+        }
+        Kenar::Üst | Kenar::Alt => {
+            if dy.abs() <= f32::EPSILON {
+                return None;
+            }
+            let y = if matches!(kenar, Kenar::Üst) {
+                üst
+            } else {
+                alt
+            };
+            let oran = (y - başlangıç.y) / dy;
+            Some(Nokta::yeni(başlangıç.x + oran * dx, y))
+        }
+    }
+}
+
 fn doğru_parçasını_kırp(
     başlangıç: Nokta,
     bitiş: Nokta,
@@ -117,5 +232,27 @@ mod testler {
         );
         assert!(kırpılmış.iter().flatten().any(|nokta| nokta.y == 0.0));
         assert!(kırpılmış.iter().flatten().any(|nokta| nokta.y == 10.0));
+    }
+
+    #[test]
+    fn dolgu_cokgeni_sinir_disindaki_uclarda_tek_alan_olarak_kalir() {
+        let çokgen = vec![
+            Nokta::yeni(-5.0, 5.0),
+            Nokta::yeni(5.0, -10.0),
+            Nokta::yeni(10.0, 20.0),
+            Nokta::yeni(15.0, 5.0),
+            Nokta::yeni(15.0, 10.0),
+            Nokta::yeni(-5.0, 10.0),
+        ];
+        let kırpılmış = çokgeni_dikdörtgene_kırp(&çokgen, 0.0, 10.0, 0.0, 10.0);
+
+        assert!(kırpılmış.len() >= 4);
+        assert!(
+            kırpılmış.iter().all(|nokta| {
+                (0.0..=10.0).contains(&nokta.x) && (0.0..=10.0).contains(&nokta.y)
+            })
+        );
+        assert!(kırpılmış.iter().any(|nokta| nokta.y == 0.0));
+        assert!(kırpılmış.iter().any(|nokta| nokta.x == 10.0));
     }
 }

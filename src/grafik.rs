@@ -1,4 +1,6 @@
-use crate::cizim::kirpma::{nokta_dikdörtgende, yolu_dikdörtgene_kırp};
+use crate::cizim::kirpma::{
+    nokta_dikdörtgende, yolu_dikdörtgene_kırp, çokgeni_dikdörtgene_kırp
+};
 use crate::cizim::{Komut, MetinHizası, Nokta, Sahne};
 use crate::etkilesim::EtkileşimDenetleyicisi;
 use crate::{Aralık, GrafikSeçenekleri, HizalıVeri, UplotHatası};
@@ -314,7 +316,7 @@ impl Grafik {
             if !seri.göster {
                 continue;
             }
-            let mut parçalar = Vec::<Vec<Nokta>>::new();
+            let mut ham_parçalar = Vec::<Vec<Nokta>>::new();
             let mut parça = Vec::<Nokta>::new();
             let mut görünür_noktalar = Vec::<Nokta>::new();
             for (indeks, değer) in değerler.iter().enumerate() {
@@ -322,9 +324,7 @@ impl Grafik {
                     continue;
                 };
                 match değer {
-                    Some(y_değeri)
-                        if *x_değeri >= x_aralığı.en_az && *x_değeri <= x_aralığı.en_çok =>
-                    {
+                    Some(y_değeri) => {
                         let x = x_aralığı.konum(*x_değeri, sol, genişlik);
                         let y = üst + yükseklik - (y_aralığı.konum(*y_değeri, 0.0, yükseklik));
                         let nokta = Nokta::yeni(x, y);
@@ -335,20 +335,20 @@ impl Grafik {
                         }
                     }
                     _ if !parça.is_empty() => {
-                        parçalar.push(std::mem::take(&mut parça));
+                        ham_parçalar.push(std::mem::take(&mut parça));
                     }
                     _ => {}
                 }
             }
             if !parça.is_empty() {
-                parçalar.push(parça);
+                ham_parçalar.push(parça);
             }
             let parçalar =
-                yolu_dikdörtgene_kırp(&parçalar, sol, sol + genişlik, üst, üst + yükseklik);
+                yolu_dikdörtgene_kırp(&ham_parçalar, sol, sol + genişlik, üst, üst + yükseklik);
             if let Some(dolgu) = &seri.dolgu {
                 let taban = üst + yükseklik - y_aralığı.konum(seri.dolgu_tabanı, 0.0, yükseklik);
                 let taban = taban.clamp(üst, üst + yükseklik);
-                let çokgenler = parçalar
+                let çokgenler = ham_parçalar
                     .iter()
                     .filter_map(|parça| {
                         let ilk = parça.first()?;
@@ -356,7 +356,14 @@ impl Grafik {
                         let mut çokgen = parça.clone();
                         çokgen.push(Nokta::yeni(son.x, taban));
                         çokgen.push(Nokta::yeni(ilk.x, taban));
-                        Some(çokgen)
+                        let kırpılmış = çokgeni_dikdörtgene_kırp(
+                            &çokgen,
+                            sol,
+                            sol + genişlik,
+                            üst,
+                            üst + yükseklik,
+                        );
+                        (kırpılmış.len() >= 3).then_some(kırpılmış)
                     })
                     .collect();
                 sahne.ekle(Komut::Alan {

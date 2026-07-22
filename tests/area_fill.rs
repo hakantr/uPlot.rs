@@ -50,3 +50,31 @@ fn area_fill_ortak_yakinlastirma_ve_gecmis_davranislarini_devralir() -> Result<(
     assert!(grafik.yakınlaştırılmış());
     Ok(())
 }
+
+#[test]
+fn area_fill_yakinlastirmada_dolguyu_dikey_seritlere_bolmez() -> Result<(), UplotHatası> {
+    let (seçenekler, veri) = area_fill_kartı()?;
+    let mut grafik = Grafik::yeni(seçenekler, veri)?;
+    for _ in 0..4 {
+        assert!(grafik.tekerlek(0.5, 0.45, 1.0, false)?);
+    }
+
+    let sahne = grafik.çiz_görünür_boyutta(1200, 600);
+    let alanlar = sahne.komutlar().iter().filter_map(|komut| {
+        if let Komut::Alan { çokgenler, .. } = komut {
+            Some(çokgenler)
+        } else {
+            None
+        }
+    });
+    let mut alan_sayısı = 0;
+    for çokgenler in alanlar {
+        alan_sayısı += 1;
+        assert_eq!(çokgenler.len(), 1);
+        assert!(çokgenler.iter().flatten().all(|nokta| {
+            (64.0..=1176.0).contains(&nokta.x) && (48.0..=552.0).contains(&nokta.y)
+        }));
+    }
+    assert_eq!(alan_sayısı, 3);
+    Ok(())
+}
