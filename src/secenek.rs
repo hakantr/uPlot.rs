@@ -17,6 +17,7 @@ pub struct ÇubukDüzeni {
     pub yön: ÇubukYönü,
     pub yığılmış: bool,
     pub ters: bool,
+    pub değer_etiketi_otomatik: bool,
 }
 
 impl ÇubukDüzeni {
@@ -25,6 +26,7 @@ impl ÇubukDüzeni {
             yön,
             yığılmış: false,
             ters: false,
+            değer_etiketi_otomatik: false,
         }
     }
 
@@ -35,6 +37,11 @@ impl ÇubukDüzeni {
 
     pub fn ters(mut self, etkin: bool) -> Self {
         self.ters = etkin;
+        self
+    }
+
+    pub fn değer_etiketi_otomatik(mut self, etkin: bool) -> Self {
+        self.değer_etiketi_otomatik = etkin;
         self
     }
 }

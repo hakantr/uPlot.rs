@@ -161,6 +161,8 @@
       <article class="kart" data-kart="bars-single-group-stacked" aria-current="false" tabindex="0"><strong>Bars · single group stacked</strong><small>bars-single-group-stacked</small><div class="durum">1 grup × 3 seri</div></article>
       <article class="kart" data-kart="bars-single-bar-grouped" aria-current="false" tabindex="0"><strong>Bars · single bar grouped</strong><small>bars-single-bar-grouped</small><div class="durum">1 grup × 1 seri</div></article>
       <article class="kart" data-kart="bars-single-bar-stacked" aria-current="false" tabindex="0"><strong>Bars · single bar stacked</strong><small>bars-single-bar-stacked</small><div class="durum">1 grup × 1 seri</div></article>
+      <article class="kart" data-kart="bars-values-autosize-vertical" aria-current="false" tabindex="0"><strong>Bars values autosize · vertical</strong><small>bars-values-autosize-vertical</small><div class="durum">12 değer · otomatik kompakt yazı</div></article>
+      <article class="kart" data-kart="bars-values-autosize-horizontal" aria-current="false" tabindex="0"><strong>Bars values autosize · horizontal</strong><small>bars-values-autosize-horizontal</small><div class="durum">12 değer · otomatik kompakt yazı</div></article>
     </aside>
     <main>
       <header>
@@ -218,6 +220,7 @@
       axis_autosize_kart_tanim_ornegi,
       axis_indicators_kart_tanim_ornegi,
       bars_grouped_stacked_kart_tanim_ornegi,
+      bars_values_autosize_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -506,6 +509,21 @@
         değişkenNokta: false,
         çubuk: true,
         etkileşimler: () => ({tekerlek: false, seçim: false, çiftTık: false, geçmiş: false, dokunma: false}),
+      };
+    }
+
+    for (const kimlik of ["bars-values-autosize-vertical", "bars-values-autosize-horizontal"]) {
+      kartlar[kimlik] = {
+        başlık: kimlik,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/bars-values-autosize.html">bars-values-autosize.html</a>
+          <br>Kaynaktaki 5…50 adet, −100.000…100.000 aralığındaki rastgele değerler sabit kanıt tohumu ile 12 değere bağlanır. Dikey ve yatay otomatik kompakt değer yazıları ayrı kartlardır.`,
+        tanım: () => bars_values_autosize_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/bars_values_autosize.rs",
+        seriler: [{ etiket: "Value", renk: "#000000" }],
+        yardım: "Yeşil alan değer yazısı için kullanılabilir boşluğu gösterir · yazı 10–25 px arasında otomatik ölçeklenir",
+        değişkenNokta: false,
+        çubuk: true,
+        etkileşimler: () => ortakEtkileşimler(),
       };
     }
 

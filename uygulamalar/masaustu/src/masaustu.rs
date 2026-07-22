@@ -11,15 +11,16 @@ use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
-    BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
-    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
+    BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
+    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
     SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
     ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı, cursor_snap_kartı,
-    dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
-    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
-    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
+    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    bars_values_autosize_kartı, cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
+    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
+    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
+    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -40,6 +41,7 @@ enum KartKimliği {
     AxisAutosize,
     AxisIndicators,
     Bars(ÇubukÖrneği),
+    BarsValuesAutosize(ÇubukYönü),
 }
 
 impl KartKimliği {
@@ -61,6 +63,8 @@ impl KartKimliği {
             Self::AxisAutosize => "Axis AutoSize",
             Self::AxisIndicators => "Axis indicators",
             Self::Bars(örnek) => örnek.kimlik(),
+            Self::BarsValuesAutosize(ÇubukYönü::Dikey) => "bars-values-autosize-vertical",
+            Self::BarsValuesAutosize(ÇubukYönü::Yatay) => "bars-values-autosize-horizontal",
         }
     }
 
@@ -90,6 +94,9 @@ impl KartKimliği {
             Self::AxisAutosize => "axis-autosize.html · 501 nokta ve 1…10⁹ dinamik eksen ölçümü",
             Self::AxisIndicators => "axis-indicators.html · üç renkli eksen ve imleç göstergeleri",
             Self::Bars(_) => "bars-grouped-stacked.html · kaynaktaki kategorik çubuk düzeni",
+            Self::BarsValuesAutosize(_) => {
+                "bars-values-autosize.html · otomatik kompakt değer yazısı"
+            }
         }
     }
 
@@ -109,6 +116,7 @@ impl KartKimliği {
             Self::AxisAutosize => AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
             Self::AxisIndicators => AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
             Self::Bars(_) => BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ,
+            Self::BarsValuesAutosize(_) => BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
         }
     }
 
@@ -128,6 +136,7 @@ impl KartKimliği {
             Self::AxisAutosize => "src/kart/axis_autosize.rs",
             Self::AxisIndicators => "src/kart/axis_indicators.rs",
             Self::Bars(_) => "src/kart/bars_grouped_stacked.rs",
+            Self::BarsValuesAutosize(_) => "src/kart/bars_values_autosize.rs",
         }
     }
 
@@ -278,6 +287,7 @@ fn grafik_oluştur(
         KartKimliği::AxisAutosize => axis_autosize_kartı(10_f64.powi(autosize_kuvvet)),
         KartKimliği::AxisIndicators => axis_indicators_kartı(),
         KartKimliği::Bars(örnek) => bars_grouped_stacked_kartı(örnek),
+        KartKimliği::BarsValuesAutosize(yön) => bars_values_autosize_kartı(yön),
     }?;
     Grafik::yeni(seçenekler, veri)
 }
@@ -313,6 +323,9 @@ impl Render for ChartListesi {
             KartKimliği::AxisIndicators => "30 nokta × 3 bağımsız Y ekseni".to_string(),
             KartKimliği::Bars(örnek) => {
                 format!("Kaynak alt grafik · {} seri", örnek.seri_sayısı())
+            }
+            KartKimliği::BarsValuesAutosize(_) => {
+                "12 kanıt değeri · −100K…100K · otomatik etiket".to_string()
             }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
@@ -357,6 +370,7 @@ impl Render for ChartListesi {
             KartKimliği::AxisIndicators => &["1", "2", "3"],
             KartKimliği::Bars(örnek) if örnek.seri_sayısı() == 1 => &["Metric 1"],
             KartKimliği::Bars(_) => &["Metric 1", "Metric 2", "Metric 3"],
+            KartKimliği::BarsValuesAutosize(_) => &["Value"],
         };
         let lejant = lejant.map_or_else(
             || {
@@ -749,6 +763,21 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::Bars(örnek), cx);
+                }))
+            }))
+            .children([ÇubukYönü::Dikey, ÇubukYönü::Yatay].into_iter().map(|yön| {
+                let kart = KartKimliği::BarsValuesAutosize(yön);
+                katalog_kartı(
+                    kart.başlık(),
+                    kart.başlık(),
+                    "bars-values-autosize",
+                    aktif_kart == kart,
+                    "Resmî otomatik değer yazısı alt grafiği",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
                 }))
             }));
 

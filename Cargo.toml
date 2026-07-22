@@ -100,3 +100,7 @@ required-features = ["svg"]
 [[example]]
 name = "bars_grouped_stacked"
 required-features = ["svg"]
+
+[[example]]
+name = "bars_values_autosize"
+required-features = ["svg"]

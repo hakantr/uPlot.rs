@@ -940,6 +940,69 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "uygulandı_kanıtlı"
       }
+    },
+    {
+      "sıra": 15,
+      "id": "bars-values-autosize",
+      "başlık": { "en": "Bars values autosize", "tr": "Otomatik Boyutlanan Çubuk Değerleri" },
+      "kaynak": "demos/bars-values-autosize.html",
+      "kaynak_sha256": "70af3b8b8ef67e798ba6095aec1ccbd31f127c2f0ed4ca3f79c83d0a47feb303",
+      "ek_kaynaklar": [
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
+      ],
+      "fixture": "src/kart/bars_values_autosize.rs#bars_values_autosize_kartı",
+      "örnek": "examples/bars_values_autosize.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/bars-values-autosize.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/bars_values_autosize.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı",
+          "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
+          "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "devralındı"
+        },
+        "gerekçeler": {
+          "kosullu-bos-ve-dolu-noktalar": "Çubuk yollarında nokta işaretçisi bulunmaz."
+        }
+      },
+      "sahip_faz": 3,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-equivalent-random-count-and-range",
+        "deterministic-proof-seed",
+        "vertical-and-horizontal-source-charts",
+        "positive-and-negative-bar-range",
+        "compact-three-significant-digit-values",
+        "automatic-10-to-25-pixel-label-sizing",
+        "source-available-space-overlay",
+        "core-bar-clipping-and-hit-testing",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "kısmi",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "uygulandı_kanıtlı"
+      }
     }
   ]
 }

@@ -1,0 +1,32 @@
+id = "bars-values-autosize"
+kaynak = "../uPlot/demos/bars-values-autosize.html"
+fixture = "src/kart/bars_values_autosize.rs#bars_values_autosize_kartı"
+viewport = [1275, 600]
+device_pixel_ratio = 1
+durum = "iki-yön"
+
+[veri]
+adet_aralığı = [5, 50]
+değer_aralığı = [-100000, 100000]
+kanıt_tohumu = 8
+kanıt_adedi = 12
+üreteç = "Mulberry32 + kaynak randInt"
+
+[düzen]
+yönler = ["dikey", "yatay"]
+grup_genişliği = 0.9
+dolgu = "#00000033"
+kullanılabilir_alan_dolgusu = "#00ff0022"
+asgari_yazı_pikseli = 10
+azami_yazı_pikseli = 25
+kompakt_anlamlı_basamak = 3
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+çekirdek_vuruş_testi = true
+çizim_alanı_kırpması = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg_dizini = "target/bars-values-autosize"

@@ -4,6 +4,7 @@ mod axis_autosize;
 mod axis_control;
 mod axis_indicators;
 mod bars_grouped_stacked;
+mod bars_values_autosize;
 mod cursor_snap;
 mod dependent_scale;
 mod missing_data;
@@ -28,6 +29,10 @@ pub use axis_indicators::{
 };
 pub use bars_grouped_stacked::{
     BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, bars_grouped_stacked_kartı, ÇubukÖrneği,
+};
+pub use bars_values_autosize::{
+    BARS_VALUES_AUTOSIZE_KANIT_TOHUMU, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
+    bars_values_autosize_kartı,
 };
 pub use cursor_snap::{
     CURSOR_SNAP_KANIT_TOHUMU, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, cursor_snap_kartı
