@@ -1,5 +1,7 @@
 # uPlot.rs
 
+[English](readme_en.md) · **Türkçe**
+
 Bu proje, [uPlot](https://github.com/leeoniya/uPlot) 1.6.32'nin küçük, hızlı ve
 bellek-verimli çizim yaklaşımını Rust'a, GPUI'ye ve WASM'e taşıyan bir porttur.
 Bağımsız olarak ortaya çıkarılmış yeni bir grafik motoru değildir. Normatif
@@ -28,6 +30,26 @@ Port şu anda Faz 0 altyapısı ve ilk dikey uyum kartını içerir:
 
 İlk kart, kaynak demonun koşullu boş noktalarını, dolu hover noktasını, canlı
 lejantını ve X ekseninde sürükle-bırak yakınlaştırmasını da taşır.
+
+## Canlı örnek ve otomatik derlemeler
+
+Etkileşimli WASM chart listesi GitHub Pages üzerinde yayınlanır:
+
+**[uPlot.rs canlı WASM örneğini aç](https://hakantr.github.io/uPlot.rs/)**
+
+`main` dalına yapılan her push, WASM paketini yeniden derleyip Pages ortamına
+yayınlar. Her gün Türkiye saatiyle 21:00'de ayrıca şu indirilebilir workflow
+artefaktları oluşturulur:
+
+- macOS ARM64;
+- Linux ARM64;
+- Linux x86_64;
+- Windows x86_64;
+- WASM web paketi.
+
+Gece derlemeleri ve elle çalıştırma için
+[nightly-artifacts workflow'una](https://github.com/hakantr/uPlot.rs/actions/workflows/nightly-builds.yml)
+bakın.
 
 ## Çalıştırma
 
