@@ -1,0 +1,37 @@
+id = "axis-control"
+kaynak = "../uPlot/demos/axis-control.html"
+fixture = "src/kart/axis_control.rs#axis_control_kartı"
+viewport = [1048, 600]
+device_pixel_ratio = 1
+durum = "etkileşimli"
+
+[veri]
+nokta_sayısı = 500001
+x_en_az = 0
+x_en_çok = 500000
+formül = "random()-0.5 + sin(x*0.00002)*40 + sin(x*0.001)*5 + sin(x*0.1)*2"
+kanıt_tohumu = "0xA815_C017"
+
+[eksen]
+y_aralığı = [-50.0, 50.0]
+y_konumu = "sağ"
+x_etiketi = "X Axis Label"
+y_etiketi = "Y Axis Label"
+y_rengi = "#ff0000"
+
+[performans]
+yöntem = "piksel-kovası-ilk-min-maks-son"
+azami_sahne_noktası = 5000
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/axis-control.svg"

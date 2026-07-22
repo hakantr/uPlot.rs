@@ -134,6 +134,11 @@
         <small>arcsinh-scales</small>
         <div class="durum">Doğrusal eşik: 10⁻³…10³</div>
       </article>
+      <article class="kart" data-kart="axis-control" aria-current="false" tabindex="0">
+        <strong>Axis Control</strong>
+        <small>axis-control</small>
+        <div class="durum">500.001 nokta · sağ Y ekseni</div>
+      </article>
     </aside>
     <main>
       <header>
@@ -183,6 +188,7 @@
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
       arcsinh_scales_kart_tanim_ornegi,
+      axis_control_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -397,6 +403,17 @@
         tanımYolu: "src/kart/arcsinh_scales.rs",
         seriler: [{ etiket: "Value", renk: "#0000ff" }],
         yardım: "Eşik denetimi: ArcSinh doğrusal merkezini değiştir · ortak yakınlaştırma profili etkin",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
+      "axis-control": {
+        başlık: "Axis Control",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/axis-control.html">axis-control.html</a>
+          <br>Kaynaktaki 500.001 nokta ve sinüs bileşenleri korunur. Math.random kanıt üretimi için sabit tohumludur; yoğun veri, piksel kovası başına ilk/minimum/maksimum/son nokta korunarak seyreltilir.`,
+        tanım: () => axis_control_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/axis_control.rs",
+        seriler: [{ etiket: "sin(x)", renk: "#ff0000" }],
+        yardım: "Sağ Y ekseni ve iki eksen etiketi · ortak yakınlaştırma ve taşıma profili etkin",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       },

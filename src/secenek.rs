@@ -151,6 +151,10 @@ pub struct GrafikSeçenekleri {
     pub y_aralığı: Option<Aralık>,
     pub y_ölçekleri: Vec<YÖlçekSeçenekleri>,
     pub birincil_y_ölçeği: String,
+    pub x_eksen_etiketi: String,
+    pub y_eksen_etiketi: String,
+    pub birincil_y_sağda: bool,
+    pub birincil_y_eksen_rengi: String,
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
     pub imleç_ızgara_adımı: Option<f32>,
@@ -174,6 +178,10 @@ impl GrafikSeçenekleri {
             y_aralığı: None,
             y_ölçekleri: Vec::new(),
             birincil_y_ölçeği: "y".to_string(),
+            x_eksen_etiketi: String::new(),
+            y_eksen_etiketi: String::new(),
+            birincil_y_sağda: false,
+            birincil_y_eksen_rengi: "#4b5563".to_string(),
             imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
@@ -210,6 +218,26 @@ impl GrafikSeçenekleri {
 
     pub fn birincil_y_ölçeği(mut self, anahtar: impl Into<String>) -> Self {
         self.birincil_y_ölçeği = anahtar.into();
+        self
+    }
+
+    pub fn x_eksen_etiketi(mut self, etiket: impl Into<String>) -> Self {
+        self.x_eksen_etiketi = etiket.into();
+        self
+    }
+
+    pub fn y_eksen_etiketi(mut self, etiket: impl Into<String>) -> Self {
+        self.y_eksen_etiketi = etiket.into();
+        self
+    }
+
+    pub fn birincil_y_sağda(mut self, sağda: bool) -> Self {
+        self.birincil_y_sağda = sağda;
+        self
+    }
+
+    pub fn birincil_y_eksen_rengi(mut self, renk: impl Into<String>) -> Self {
+        self.birincil_y_eksen_rengi = renk.into();
         self
     }
 

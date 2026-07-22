@@ -9,14 +9,15 @@ use ortak_bilesenler::{
 };
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
-    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
-    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
+    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
+    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
     SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, cursor_snap_kartı,
-    dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
-    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
-    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, axis_control_kartı,
+    cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
+    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
+    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
+    zoom_wheel_kartı,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -33,6 +34,7 @@ enum KartKimliği {
     MissingDataXGap,
     DependentScale,
     ArcSinhScales,
+    AxisControl,
 }
 
 impl KartKimliği {
@@ -50,6 +52,7 @@ impl KartKimliği {
             Self::MissingDataXGap => "Missing Data · adjacent X gap",
             Self::DependentScale => "Derived Scale · °F / °C",
             Self::ArcSinhScales => "ArcSinh Y Scale",
+            Self::AxisControl => "Axis Control",
         }
     }
 
@@ -75,6 +78,7 @@ impl KartKimliği {
                 "dependent-scale.html · Fahrenheit'tan türetilen Celsius ekseni"
             }
             Self::ArcSinhScales => "arcsinh-scales.html · değiştirilebilir doğrusal merkez eşiği",
+            Self::AxisControl => "axis-control.html · 500.001 nokta ve sağ Y ekseni",
         }
     }
 
@@ -90,6 +94,7 @@ impl KartKimliği {
             Self::MissingDataNull | Self::MissingDataXGap => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
             Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::ArcSinhScales => ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
+            Self::AxisControl => AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
         }
     }
 
@@ -105,6 +110,7 @@ impl KartKimliği {
             Self::MissingDataNull | Self::MissingDataXGap => "src/kart/missing_data.rs",
             Self::DependentScale => "src/kart/dependent_scale.rs",
             Self::ArcSinhScales => "src/kart/arcsinh_scales.rs",
+            Self::AxisControl => "src/kart/axis_control.rs",
         }
     }
 
@@ -233,6 +239,7 @@ fn grafik_oluştur(kart: KartKimliği, nokta_sayısı: usize) -> Result<Grafik, 
         KartKimliği::MissingDataXGap => missing_data_x_boşluğu_kartı(),
         KartKimliği::DependentScale => dependent_scale_kartı(),
         KartKimliği::ArcSinhScales => arcsinh_scales_kartı(),
+        KartKimliği::AxisControl => axis_control_kartı(),
     }?;
     Grafik::yeni(seçenekler, veri)
 }
@@ -259,6 +266,9 @@ impl Render for ChartListesi {
             KartKimliği::MissingDataXGap => "8 nokta × 1 seri · 2 yol parçası".to_string(),
             KartKimliği::DependentScale => "7 nokta × °F veri · türetilmiş °C ekseni".to_string(),
             KartKimliği::ArcSinhScales => "111 nokta · −1000…1000 ArcSinh".to_string(),
+            KartKimliği::AxisControl => {
+                "500.001 nokta · min/max piksel seyrekleştirme".to_string()
+            }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
@@ -297,6 +307,7 @@ impl Render for ChartListesi {
             KartKimliği::MissingDataXGap => &["Value"],
             KartKimliği::DependentScale => &["blah"],
             KartKimliği::ArcSinhScales => &["Value"],
+            KartKimliği::AxisControl => &["sin(x)"],
         };
         let lejant = lejant.map_or_else(
             || {
@@ -630,6 +641,20 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::ArcSinhScales, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "kart-axis-control",
+                    "Axis Control",
+                    "axis-control",
+                    aktif_kart == KartKimliği::AxisControl,
+                    "500.001 nokta · sağ Y ekseni",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::AxisControl, cx);
                 })),
             );
 

@@ -93,17 +93,28 @@ impl Grafik {
     ) -> (f32, f32, f32, f32) {
         let genişlik_px = genişlik_px.max(160) as f32;
         let yükseklik_px = yükseklik_px.max(120) as f32;
-        let sağ_pay = if self
-            .seçenekler
-            .y_ölçekleri
-            .iter()
-            .any(|ölçek| ölçek.anahtar != self.seçenekler.birincil_y_ölçeği && ölçek.sağda)
+        let sağ_pay = if self.seçenekler.birincil_y_sağda
+            || self
+                .seçenekler
+                .y_ölçekleri
+                .iter()
+                .any(|ölçek| ölçek.anahtar != self.seçenekler.birincil_y_ölçeği && ölçek.sağda)
         {
             72.0
         } else {
             24.0
         };
-        (64.0, genişlik_px - sağ_pay, 48.0, yükseklik_px - 48.0)
+        let sol_pay = if self.seçenekler.birincil_y_sağda {
+            24.0
+        } else {
+            64.0
+        };
+        let alt_pay = if self.seçenekler.x_eksen_etiketi.is_empty() {
+            48.0
+        } else {
+            68.0
+        };
+        (sol_pay, genişlik_px - sağ_pay, 48.0, yükseklik_px - alt_pay)
     }
 
     pub fn yakınlaştırılmış(&self) -> bool {
@@ -413,11 +424,43 @@ impl Grafik {
                 kalınlık: 1.0,
             });
             sahne.ekle(Komut::Metin {
-                konum: Nokta::yeni(sol - 8.0, y + 4.0),
+                konum: Nokta::yeni(
+                    if self.seçenekler.birincil_y_sağda {
+                        sağ + 8.0
+                    } else {
+                        sol - 8.0
+                    },
+                    y + 4.0,
+                ),
                 içerik: eksen_değerini_birimle_yaz(y_değeri, y_artımı, birincil_birim),
-                renk: "#4b5563".to_string(),
+                renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
                 boyut: 11.0,
-                hiza: MetinHizası::Bitiş,
+                hiza: if self.seçenekler.birincil_y_sağda {
+                    MetinHizası::Başlangıç
+                } else {
+                    MetinHizası::Bitiş
+                },
+            });
+        }
+
+        if !self.seçenekler.y_eksen_etiketi.is_empty() {
+            sahne.ekle(Komut::Metin {
+                konum: Nokta::yeni(
+                    if self.seçenekler.birincil_y_sağda {
+                        sağ
+                    } else {
+                        sol
+                    },
+                    üst - 12.0,
+                ),
+                içerik: self.seçenekler.y_eksen_etiketi.clone(),
+                renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                boyut: 12.0,
+                hiza: if self.seçenekler.birincil_y_sağda {
+                    MetinHizası::Bitiş
+                } else {
+                    MetinHizası::Başlangıç
+                },
             });
         }
 
@@ -472,6 +515,16 @@ impl Grafik {
             });
         }
 
+        if !self.seçenekler.x_eksen_etiketi.is_empty() {
+            sahne.ekle(Komut::Metin {
+                konum: Nokta::yeni((sol + sağ) / 2.0, alt + 42.0),
+                içerik: self.seçenekler.x_eksen_etiketi.clone(),
+                renk: "#4b5563".to_string(),
+                boyut: 12.0,
+                hiza: MetinHizası::Orta,
+            });
+        }
+
         for (seri_indeksi, değerler) in self.veri.seriler().iter().enumerate() {
             let Some(seri) = self.seçenekler.seriler.get(seri_indeksi) else {
                 continue;
@@ -485,7 +538,12 @@ impl Grafik {
             let mut parça = Vec::<Nokta>::new();
             let mut görünür_noktalar = Vec::<Nokta>::new();
             let mut önceki_x = None::<f64>;
-            for (indeks, değer) in değerler.iter().enumerate() {
+            let çizilecek_indeksler =
+                çizilecek_indeksler(self.veri.x(), değerler, x_aralığı, genişlik);
+            for indeks in çizilecek_indeksler {
+                let Some(değer) = değerler.get(indeks) else {
+                    continue;
+                };
                 let Some(x_değeri) = self.veri.x().get(indeks) else {
                     continue;
                 };
@@ -706,6 +764,70 @@ impl Grafik {
             })
             .collect()
     }
+}
+
+fn çizilecek_indeksler(
+    x: &[f64],
+    y: &[Option<f64>],
+    aralık: Aralık,
+    piksel_genişliği: f32,
+) -> Vec<usize> {
+    let eşik = (piksel_genişliği.max(1.0) as usize).saturating_mul(4);
+    if y.len() <= eşik || y.iter().any(Option::is_none) {
+        return (0..y.len()).collect();
+    }
+
+    let mut sonuç = Vec::with_capacity(eşik);
+    let mut kova = None::<(usize, usize, usize, usize, usize, f64, f64)>;
+    for (indeks, (x_değeri, y_değeri)) in x.iter().zip(y.iter()).enumerate() {
+        if *x_değeri < aralık.en_az || *x_değeri > aralık.en_çok {
+            continue;
+        }
+        let Some(y_değeri) = y_değeri else {
+            continue;
+        };
+        let oran = (*x_değeri - aralık.en_az) / (aralık.en_çok - aralık.en_az);
+        let yeni_kova = (oran * f64::from(piksel_genişliği)).floor().max(0.0) as usize;
+        match kova.as_mut() {
+            Some((kimlik, _ilk, son, en_az_i, en_çok_i, en_az, en_çok)) if *kimlik == yeni_kova =>
+            {
+                *son = indeks;
+                if *y_değeri < *en_az {
+                    *en_az = *y_değeri;
+                    *en_az_i = indeks;
+                }
+                if *y_değeri > *en_çok {
+                    *en_çok = *y_değeri;
+                    *en_çok_i = indeks;
+                }
+            }
+            _ => {
+                if let Some((_, ilk, son, en_az_i, en_çok_i, _, _)) = kova.take() {
+                    kova_indekslerini_ekle(&mut sonuç, ilk, en_az_i, en_çok_i, son);
+                }
+                kova = Some((
+                    yeni_kova, indeks, indeks, indeks, indeks, *y_değeri, *y_değeri,
+                ));
+            }
+        }
+    }
+    if let Some((_, ilk, son, en_az_i, en_çok_i, _, _)) = kova {
+        kova_indekslerini_ekle(&mut sonuç, ilk, en_az_i, en_çok_i, son);
+    }
+    sonuç
+}
+
+fn kova_indekslerini_ekle(
+    sonuç: &mut Vec<usize>,
+    ilk: usize,
+    en_az: usize,
+    en_çok: usize,
+    son: usize,
+) {
+    let mut adaylar = vec![ilk, en_az, en_çok, son];
+    adaylar.sort_unstable();
+    adaylar.dedup();
+    sonuç.extend(adaylar);
 }
 
 /// uPlot'un sayısal eksen yaklaşımı gibi görünür aralık ve piksel yoğunluğuna
