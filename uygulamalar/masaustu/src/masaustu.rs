@@ -9,8 +9,8 @@ use ortak_bilesenler::{
 };
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
-    AREA_FILL_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik, UplotHatası, area_fill_kartı,
-    ortak_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
+    AREA_FILL_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik, RESIZE_KART_TANIM_ÖRNEĞİ,
+    UplotHatası, area_fill_kartı, ortak_kart_etkileşimleri, resize_kartı,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -38,8 +38,15 @@ impl KartKimliği {
 
     fn tanım(self) -> &'static str {
         match self {
-            Self::Resize => İLK_KART_TANIM_ÖRNEĞİ,
+            Self::Resize => RESIZE_KART_TANIM_ÖRNEĞİ,
             Self::AreaFill => AREA_FILL_KART_TANIM_ÖRNEĞİ,
+        }
+    }
+
+    fn tanım_yolu(self) -> &'static str {
+        match self {
+            Self::Resize => "src/kart/resize.rs",
+            Self::AreaFill => "src/kart/area_fill.rs",
         }
     }
 
@@ -140,7 +147,7 @@ impl ChartListesi {
 
 fn grafik_oluştur(kart: KartKimliği, nokta_sayısı: usize) -> Result<Grafik, UplotHatası> {
     let (seçenekler, veri) = match kart {
-        KartKimliği::Resize => sinüs_kartı(nokta_sayısı),
+        KartKimliği::Resize => resize_kartı(nokta_sayısı),
         KartKimliği::AreaFill => area_fill_kartı(),
     }?;
     Grafik::yeni(seçenekler, veri)
@@ -159,6 +166,11 @@ impl Render for ChartListesi {
             KartKimliği::AreaFill => "30 sabit nokta × 3 seri".to_string(),
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
+        let kart_tanımı_etiketi = SharedString::from(format!(
+            "{} Kart tanımı · {}",
+            if kart_tanımı_açık { "▾" } else { "▸" },
+            aktif_kart.tanım_yolu()
+        ));
         let tekerlek_anahtarı = self.tekerlek_anahtarı.clone();
         let (geri_var, yakınlaştırılmış, etkileşimler, lejant, bileşen_hatası) =
             self.grafik.as_ref().map_or_else(
@@ -425,11 +437,7 @@ impl Render for ChartListesi {
                     .child(
                         Dugme::yeni(
                             "kart-tanimi-toggle",
-                            if kart_tanımı_açık {
-                                "▾ Kart tanımı · src/kart.rs"
-                            } else {
-                                "▸ Kart tanımı · src/kart.rs"
-                            },
+                            kart_tanımı_etiketi,
                         )
                         .boyutu(DugmeBoyutu::Kucuk)
                         .turu(DugmeTuru::Hayalet)

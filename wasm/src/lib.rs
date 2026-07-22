@@ -3,8 +3,8 @@
 #![allow(confusable_idents)]
 
 use uplot_rs::{
-    AREA_FILL_KART_TANIM_ÖRNEĞİ, Grafik, UplotHatası, area_fill_kartı, ortak_kart_etkileşimleri,
-    sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
+    AREA_FILL_KART_TANIM_ÖRNEĞİ, Grafik, RESIZE_KART_TANIM_ÖRNEĞİ, UplotHatası, area_fill_kartı,
+    ortak_kart_etkileşimleri, resize_kartı,
 };
 use wasm_bindgen::prelude::*;
 
@@ -20,7 +20,7 @@ impl KartOturumu {
     #[wasm_bindgen(constructor)]
     pub fn yeni(kart_kimliği: &str, nokta_sayısı: usize) -> Result<KartOturumu, JsValue> {
         let (seçenekler, veri) = match kart_kimliği {
-            "resize" => sinüs_kartı(nokta_sayısı),
+            "resize" => resize_kartı(nokta_sayısı),
             "area-fill" => area_fill_kartı(),
             kimlik => Err(UplotHatası::BilinmeyenKart {
                 kimlik: kimlik.to_string(),
@@ -150,8 +150,8 @@ pub fn kart_sayisi() -> usize {
 }
 
 #[wasm_bindgen]
-pub fn ilk_kart_tanim_ornegi() -> String {
-    İLK_KART_TANIM_ÖRNEĞİ.to_string()
+pub fn resize_kart_tanim_ornegi() -> String {
+    RESIZE_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -194,7 +194,7 @@ mod testler {
     use super::*;
 
     #[test]
-    fn ilk_kart_wasm_svg_üretir() {
+    fn resize_kartı_wasm_svg_üretir() {
         let oturum = KartOturumu::yeni("resize", 100);
         assert!(oturum.is_ok());
         let Ok(mut oturum) = oturum else {
@@ -204,7 +204,7 @@ mod testler {
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
         assert_eq!(kart_sayisi(), 2);
-        assert!(ilk_kart_tanim_ornegi().contains("GrafikSeçenekleri::yeni"));
+        assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
         let yakın = oturum.svg(800, 400);

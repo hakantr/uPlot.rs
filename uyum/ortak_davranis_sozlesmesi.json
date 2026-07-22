@@ -48,7 +48,7 @@
       "başlık": "Dinamik eksen ve ızgara",
       "tür": "dogrudan_port",
       "açıklama": "Yakınlaştırma ve taşıma sonrasında bölmeler görünür aralıktan yeniden hesaplanır ve sıfıra hizalanır.",
-      "kanıt_dosyaları": ["src/grafik.rs", "tests/ilk_kart.rs"]
+      "kanıt_dosyaları": ["src/grafik.rs", "tests/resize.rs"]
     },
     {
       "id": "surekli-imlec-izleme",
@@ -76,7 +76,7 @@
       "başlık": "Sürükleyerek seçim ve yakınlaştırma",
       "tür": "dogrudan_port",
       "açıklama": "Yatay seçim bırakıldığında seçilen görünür X aralığına yakınlaştırılır ve kart seçeneğiyle kapatılabilir.",
-      "kanıt_dosyaları": ["src/etkilesim.rs", "tests/ilk_kart.rs"]
+      "kanıt_dosyaları": ["src/etkilesim.rs", "tests/resize.rs"]
     },
     {
       "id": "cift-tik-tam-gorunum",
@@ -90,27 +90,27 @@
       "başlık": "Fare odaklı tekerlek yakınlaştırma",
       "tür": "resmi_eklenti_portu",
       "açıklama": "Açıldığında X/Y görünümü fare konumunu odakta tutarak yakınlaştırır ve tam veri aralığında sınırlar.",
-      "kanıt_dosyaları": ["src/etkilesim.rs", "tests/ilk_kart.rs"]
+      "kanıt_dosyaları": ["src/etkilesim.rs", "tests/resize.rs"]
     },
     {
       "id": "uyarlanabilir-hassas-tekerlek",
       "başlık": "Magic Mouse ve klasik tekerlek normalizasyonu",
       "tür": "uplot_rs_uzantısı",
       "açıklama": "Piksel tabanlı hassas akış ile satır tabanlı ayrık tekerlek otomatik ayrılır.",
-      "kanıt_dosyaları": ["src/secenek.rs", "src/etkilesim.rs", "tests/ilk_kart.rs"]
+      "kanıt_dosyaları": ["src/secenek.rs", "src/etkilesim.rs", "tests/resize.rs"]
     },
     {
       "id": "dokunma-yakinlastirma-tasima",
       "başlık": "Dokunma ile yakınlaştırma ve taşıma",
       "tür": "resmi_eklenti_portu",
       "açıklama": "Açıldığında iki parmakla X/Y yakınlaştırma ve tek parmakla taşıma çekirdekte uygulanır.",
-      "kanıt_dosyaları": ["src/etkilesim.rs", "wasm/src/lib.rs", "tests/ilk_kart.rs"]
+      "kanıt_dosyaları": ["src/etkilesim.rs", "wasm/src/lib.rs", "tests/resize.rs"]
     },
     {
       "id": "bosluk-sol-surukleme-tasima",
       "başlık": "Boşluk ve sol sürüklemeyle taşıma",
       "tür": "giris_uyarlaması",
-      "açıklama": "Yakınlaştırılmış masaüstü/web görünümü boşluk basılıyken sol sürüklemeyle X/Y yönünde taşınır.",
+      "açıklama": "Yakınlaştırılmış masaüstü/web görünümü boşluk basılıyken sol sürüklemeyle X/Y yönünde taşınır; boşluğa basma ile grafik alanına girme sırası davranışı değiştirmez.",
       "kanıt_dosyaları": ["src/etkilesim.rs", "src/gpui.rs", "wasm/www/index.html"]
     },
     {
@@ -118,7 +118,7 @@
       "başlık": "Hareket bazlı görünüm geçmişi",
       "tür": "uplot_rs_uzantısı",
       "açıklama": "Açıldığında seçim, tekerlek ve taşıma hareketleri geri alınabilir görünüm adımları üretir.",
-      "kanıt_dosyaları": ["src/etkilesim.rs", "tests/ilk_kart.rs"]
+      "kanıt_dosyaları": ["src/etkilesim.rs", "tests/resize.rs"]
     },
     {
       "id": "gorunur-geri-ve-tam-gorunum-kontrolleri",

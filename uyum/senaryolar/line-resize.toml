@@ -1,6 +1,6 @@
 id = "line-resize"
 kaynak = "../uPlot/demos/resize.html"
-fixture = "src/kart.rs#ilk_kart"
+fixture = "src/kart/resize.rs#resize_kartı"
 viewport = [800, 400]
 device_pixel_ratio = 1
 durum = "etkileşimli"
@@ -47,6 +47,7 @@ dokunma_tek_parmak_taşıma = true
 dokunma_kaynağı = "demos/zoom-touch.html#touchZoomPlugin"
 dokunma_uyum_türü = "resmi_plugin_portu"
 masaüstü_boşluk_sol_sürükle_taşıma = true
+boşluk_ve_grafiğe_giriş_sırası_bağımsız = true
 masaüstü_taşıma_uyum_türü = "resmi_matematik_girdi_uyarlaması"
 önceki_görünüme_dön = true
 önceki_görünüm_uyum_türü = "uplot_rs_uzantısı"

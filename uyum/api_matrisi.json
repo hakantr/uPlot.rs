@@ -7,55 +7,55 @@
       "kaynak_yolu": "AlignedData",
       "rust_karşılığı": "HizalıVeri",
       "durum": "kısmi",
-      "test": "tests/ilk_kart.rs"
+      "test": "tests/resize.rs"
     },
     {
       "kaynak_yolu": "Options.width",
       "rust_karşılığı": "GrafikSeçenekleri::genişlik",
       "durum": "tam_kanıtlı",
-      "test": "tests/ilk_kart.rs"
+      "test": "tests/resize.rs"
     },
     {
       "kaynak_yolu": "Options.height",
       "rust_karşılığı": "GrafikSeçenekleri::yükseklik",
       "durum": "tam_kanıtlı",
-      "test": "tests/ilk_kart.rs"
+      "test": "tests/resize.rs"
     },
     {
       "kaynak_yolu": "Options.title",
       "rust_karşılığı": "GrafikSeçenekleri::başlık",
       "durum": "kısmi",
-      "test": "tests/ilk_kart.rs"
+      "test": "tests/resize.rs"
     },
     {
       "kaynak_yolu": "Options.series",
       "rust_karşılığı": "GrafikSeçenekleri::seriler",
       "durum": "kısmi",
-      "test": "tests/ilk_kart.rs"
+      "test": "tests/resize.rs"
     },
     {
       "kaynak_yolu": "Scale.time",
       "rust_karşılığı": "GrafikSeçenekleri::x_zaman",
       "durum": "kısmi",
-      "test": "tests/ilk_kart.rs"
+      "test": "tests/resize.rs"
     },
     {
       "kaynak_yolu": "Scale.range",
       "rust_karşılığı": "Aralık",
       "durum": "kısmi",
-      "test": "tests/ilk_kart.rs"
+      "test": "tests/resize.rs"
     },
     {
       "kaynak_yolu": "Series.stroke",
       "rust_karşılığı": "SeriSeçenekleri::renk",
       "durum": "kısmi",
-      "test": "tests/ilk_kart.rs"
+      "test": "tests/resize.rs"
     },
     {
       "kaynak_yolu": "Series.width",
       "rust_karşılığı": "SeriSeçenekleri::çizgi_kalınlığı",
       "durum": "kısmi",
-      "test": "tests/ilk_kart.rs"
+      "test": "tests/resize.rs"
     },
     {
       "kaynak_yolu": "Series.fill",
@@ -73,7 +73,7 @@
       "kaynak_yolu": "Series.paths.linear",
       "rust_karşılığı": "Grafik::çiz",
       "durum": "uygulandı_kanıt_bekliyor",
-      "test": "tests/ilk_kart.rs"
+      "test": "tests/resize.rs"
     }
   ]
 }

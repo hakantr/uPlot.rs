@@ -24,8 +24,8 @@ pub use cizim::{Komut, MetinHizası, Nokta, Sahne};
 pub use grafik::Grafik;
 pub use hata::UplotHatası;
 pub use kart::{
-    AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, ilk_kart,
-    ilk_kart_etkileşimleri, ortak_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
+    AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ, area_fill_kartı,
+    ortak_kart_etkileşimleri, resize_kartı,
 };
 pub use olcek::Aralık;
 pub use secenek::{

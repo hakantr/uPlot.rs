@@ -31,6 +31,7 @@ tekerlek_girdi_kipi = "otomatik_satır_ve_hassas_piksel"
 dokunma_xy_yakınlaştır = true
 dokunma_tek_parmak_taşıma = true
 masaüstü_boşluk_sol_sürükle_taşıma = true
+boşluk_ve_grafiğe_giriş_sırası_bağımsız = true
 önceki_görünüme_dön = true
 ortak_davranış_profili = "resize-temeli-v1"
 

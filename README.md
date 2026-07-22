@@ -140,7 +140,7 @@ ikonu gömülü `uplot-rs.exe` içerir.
 
 ```sh
 cargo test
-cargo run --example ilk_kart
+cargo run --example resize
 cargo run --example area_fill
 cargo run -p uplot-rs-chart-listesi
 npm --prefix tools/uyum run envanter
@@ -156,7 +156,7 @@ arayüzleri hatayı kart üzerinde kullanıcıya bildirir. Bu kural
 workspace lintleri ve CI Clippy adımıyla her değişiklikte denetlenir.
 
 İlk komut testleri çalıştırır; iki örnek komutu sırasıyla
-`target/ilk-kart.svg` ve `target/area-fill.svg` çıktılarını üretir. Masaüstü
+`target/resize.svg` ve `target/area-fill.svg` çıktılarını üretir. Masaüstü
 komutu canlı GPUI listesini açar. Envanter komutu kaynak/API/demo dökümlerini
 yeniden üretir; denetim komutu [uPlot kaynak deposunun](https://github.com/leeoniya/uPlot)
 aynı üst dizine `uPlot` adıyla klonlanmış yerel kopyasında commit/sürüm/dosya

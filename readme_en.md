@@ -141,7 +141,7 @@ Windows `uplot-rs.exe` with the icon embedded.
 
 ```sh
 cargo test
-cargo run --example ilk_kart
+cargo run --example resize
 cargo run --example area_fill
 cargo run -p uplot-rs-chart-listesi
 npm --prefix tools/uyum run envanter
@@ -157,7 +157,7 @@ verification UIs show errors on the chart card. Workspace
 lints and the CI Clippy step enforce this policy on every change.
 
 The first command runs the tests; the two example commands generate
-`target/ilk-kart.svg` and `target/area-fill.svg`. The desktop command opens the
+`target/resize.svg` and `target/area-fill.svg`. The desktop command opens the
 live GPUI chart list. The inventory command regenerates the source/API/demo
 inventories, and the verification command checks the commit, version, and file
 hashes in a local checkout of the

@@ -25,14 +25,14 @@
           "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba"
         }
       ],
-      "fixture": "src/kart.rs#ilk_kart",
-      "örnek": "examples/ilk_kart.rs",
+      "fixture": "src/kart/resize.rs#resize_kartı",
+      "örnek": "examples/resize.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
       "senaryo": "uyum/senaryolar/line-resize.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
-        "uygulama": "src/kart.rs#ortak_kart_etkileşimleri",
+        "uygulama": "src/kart/resize.rs#ortak_kart_etkileşimleri",
         "kararlar": {
           "kaynak-veri-esligi": "devralındı",
           "cekirdek-davranis-sahipligi": "devralındı",

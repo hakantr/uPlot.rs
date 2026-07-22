@@ -108,7 +108,7 @@
       </header>
       <section id="chart" aria-live="polite"><span>WASM yükleniyor…</span></section>
       <details class="kod-örneği">
-        <summary>Kart tanımı · src/kart.rs</summary>
+        <summary id="kart-tanım-başlığı">Kart tanımı · src/kart/resize.rs</summary>
         <pre><code id="kart-tanım-kodu">Kod örneği yükleniyor…</code></pre>
       </details>
       <p id="hata" role="alert"></p>
@@ -118,7 +118,7 @@
     import init, {
       KartOturumu,
       area_fill_kart_tanim_ornegi,
-      ilk_kart_tanim_ornegi,
+      resize_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -133,6 +133,7 @@
     const değer = document.getElementById("nokta-değeri");
     const hata = document.getElementById("hata");
     const kartTanımKodu = document.getElementById("kart-tanım-kodu");
+    const kartTanımBaşlığı = document.getElementById("kart-tanım-başlığı");
     const görünümGeri = document.getElementById("gorunum-geri");
     const tamGörünüm = document.getElementById("tam-gorunum");
     const tekerlekEtkileşimi = document.getElementById("tekerlek-etkilesimi");
@@ -148,7 +149,8 @@
           · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-wheel.html">zoom-wheel.html</a>
           · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-touch.html">zoom-touch.html</a>
           <br>Çekirdek: seçim + çift tık · Resmî eklentiler: tekerlek + taşıma matematiği · uPlot.rs: boşluk + sol sürükleme bağı`,
-        tanım: () => ilk_kart_tanim_ornegi(),
+        tanım: () => resize_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/resize.rs",
         seriler: [{ etiket: "sin(x)", renk: "#dc2626" }],
         yardım: "Sürükle: seç · boşluk + sürükle: taşı · iki parmak: yakınlaştır · tek parmak: taşı · çift tıkla: tam görünüm",
         değişkenNokta: true,
@@ -166,6 +168,7 @@
           <br>Kaynakla aynı 1…30 x dizisi, −10…10 değer havuzu ve üç örnekleme serisi · kanıtta ortak açık tohum
           <br>Ortak Resize profili: wheel/touch eklenti portları · uPlot.rs: hassas tekerlek, boşlukla taşıma ve görünüm geçmişi`,
         tanım: () => area_fill_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/area_fill.rs",
         seriler: [
           { etiket: "1", renk: "#ff0000" },
           { etiket: "2", renk: "#008000" },
@@ -456,14 +459,15 @@
     });
     chart.addEventListener("pointerenter", () => {
       grafikÜzerinde = true;
+      taşımaİmleciniGüncelle();
     });
     chart.addEventListener("pointerleave", () => {
       grafikÜzerinde = false;
     });
     document.addEventListener("keydown", olay => {
-      if (olay.code !== "Space" || !grafikÜzerinde) return;
+      if (olay.code !== "Space") return;
       boşlukBasılı = true;
-      olay.preventDefault();
+      if (grafikÜzerinde) olay.preventDefault();
       taşımaİmleciniGüncelle();
     });
     document.addEventListener("keyup", olay => {
@@ -528,6 +532,7 @@
         kartBaşlığı.textContent = kart.başlık;
         kartKaynağı.innerHTML = kart.kaynak;
         kartTanımKodu.textContent = kart.tanım();
+        kartTanımBaşlığı.textContent = `Kart tanımı · ${kart.tanımYolu}`;
         noktaKontrolü.hidden = !kart.değişkenNokta;
         etkileşimler = kart.etkileşimler();
         tekerlekEtkileşimi.checked = etkileşimler.tekerlek;

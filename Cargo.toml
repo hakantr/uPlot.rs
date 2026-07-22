@@ -46,7 +46,7 @@ gpui = { version = "0.2.2", path = "../gpui/crates/gpui", optional = true }
 web-time = "1.1.0"
 
 [[example]]
-name = "ilk_kart"
+name = "resize"
 required-features = ["svg"]
 
 [[example]]
