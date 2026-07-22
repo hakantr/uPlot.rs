@@ -28,22 +28,22 @@ jobs:
           - os: macos-14
             target: aarch64-apple-darwin
             artifact: uplot-rs-macos-arm64
-            binary: target/aarch64-apple-darwin/release/examples/chart_listesi
+            binary: target/aarch64-apple-darwin/release/chart_listesi
             package: dist/uplot-rs-macos-arm64
           - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             artifact: uplot-rs-linux-arm64
-            binary: target/aarch64-unknown-linux-gnu/release/examples/chart_listesi
+            binary: target/aarch64-unknown-linux-gnu/release/chart_listesi
             package: dist/uplot-rs-linux-arm64
           - os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             artifact: uplot-rs-linux-x86_64
-            binary: target/x86_64-unknown-linux-gnu/release/examples/chart_listesi
+            binary: target/x86_64-unknown-linux-gnu/release/chart_listesi
             package: dist/uplot-rs-linux-x86_64
           - os: windows-2025
             target: x86_64-pc-windows-msvc
             artifact: uplot-rs-windows-x86_64
-            binary: target/x86_64-pc-windows-msvc/release/examples/chart_listesi.exe
+            binary: target/x86_64-pc-windows-msvc/release/chart_listesi.exe
             package: dist/uplot-rs-windows-x86_64
     steps:
       - name: uPlot.rs
@@ -73,7 +73,7 @@ jobs:
           targets: ${{ matrix.target }}
       - name: Masaüstü chart listesini derle
         working-directory: uPlot.rs
-        run: cargo build --release --example chart_listesi --target ${{ matrix.target }}
+        run: cargo build -p uplot-rs-chart-listesi --release --target ${{ matrix.target }}
       - name: macOS uygulama paketini hazırla
         if: runner.os == 'macOS'
         working-directory: uPlot.rs

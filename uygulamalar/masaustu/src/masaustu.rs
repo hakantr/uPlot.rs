@@ -1,10 +1,7 @@
 //! GPUI masaüstü chart listesi ve sahne adaptörü.
 
 use std::cell::Cell;
-use std::collections::VecDeque;
-use std::f64::consts::PI;
 use std::rc::Rc;
-use std::time::{Duration, Instant};
 
 use gpui::{
     App, BorderStyle, Bounds, Context, Entity, FontWeight, Hsla, IntoElement, MouseButton,
@@ -16,9 +13,9 @@ use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, PlatformPencere,
 };
 
-use crate::{
-    Aralık, EtkileşimSeçenekleri, Grafik, Komut, MetinHizası, Nokta, Sahne, TekerlekKipi,
-    UplotHatası, ilk_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
+use uplot_rs::{
+    Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne, UplotHatası, ilk_kart_etkileşimleri,
+    sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
 };
 
 #[derive(Clone, Copy)]
@@ -30,17 +27,13 @@ struct İmleçDurumu {
 
 pub struct ChartListesi {
     nokta_sayısı: usize,
-    x_aralığı: Option<Aralık>,
+    grafik: Option<Grafik>,
     imleç: Option<İmleçDurumu>,
     seçim: Option<(f32, f32)>,
     hata: Option<String>,
     kart_tanımı_açık: bool,
-    görünüm_geçmişi: VecDeque<Option<Aralık>>,
-    etkileşimler: EtkileşimSeçenekleri,
+    tekerlek_etkin: bool,
     tekerlek_anahtarı: Entity<Anahtar>,
-    son_tekerlek_olayı: Option<Instant>,
-    tekerlek_hareketi_kaydedildi: bool,
-    birikmiş_hassas_delta: f64,
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
 }
 
@@ -56,33 +49,35 @@ impl ChartListesi {
         });
         cx.subscribe(&tekerlek_anahtarı, |bu, _, olay: &AnahtarOlayi, cx| {
             let AnahtarOlayi::Degisti(etkin) = *olay;
-            bu.etkileşimler.tekerlek_etkileşimi = etkin;
-            bu.tekerlek_hareketini_sıfırla();
+            if let Some(grafik) = bu.grafik.as_mut() {
+                grafik.tekerlek_etkileşimi_ayarla(etkin);
+            }
+            bu.tekerlek_etkin = etkin;
             cx.notify();
         })
         .detach();
+        let (grafik, hata) = grafik_oluştur(100).map_or_else(
+            |hata| (None, Some(format!("Grafik oluşturulamadı: {hata}"))),
+            |grafik| (Some(grafik), None),
+        );
         Self {
             nokta_sayısı: 100,
-            x_aralığı: None,
+            grafik,
             imleç: None,
             seçim: None,
-            hata: None,
+            hata,
             kart_tanımı_açık: false,
-            görünüm_geçmişi: VecDeque::new(),
-            etkileşimler,
+            tekerlek_etkin: etkileşimler.tekerlek_etkileşimi,
             tekerlek_anahtarı,
-            son_tekerlek_olayı: None,
-            tekerlek_hareketi_kaydedildi: false,
-            birikmiş_hassas_delta: 0.0,
             çizim_sınırları: Rc::new(Cell::new(None)),
         }
     }
 
-    fn sahne(&self) -> Result<Sahne, UplotHatası> {
-        let (seçenekler, veri) = sinüs_kartı(self.nokta_sayısı)?;
-        let mut sahne = Grafik::yeni(seçenekler, veri)?.çiz_aralıkta(self.x_aralığı);
-        let x_aralığı = self.geçerli_x_aralığı();
-        let y_aralığı = görünür_y_aralığı(self.nokta_sayısı, x_aralığı);
+    fn sahne(&self) -> Option<Sahne> {
+        let grafik = self.grafik.as_ref()?;
+        let mut sahne = grafik.çiz();
+        let x_aralığı = grafik.görünür_x_aralığı();
+        let y_aralığı = grafik.görünür_y_aralığı();
         if let Some(imleç) = self.imleç {
             let nokta_x = ölçekle(imleç.veri_x, x_aralığı, 64.0, 712.0);
             let nokta_y = 352.0 - ölçekle(imleç.veri_y, y_aralığı, 0.0, 304.0);
@@ -118,23 +113,18 @@ impl ChartListesi {
                 kalınlık: 1.0,
             });
         }
-        Ok(sahne)
-    }
-
-    fn geçerli_x_aralığı(&self) -> Aralık {
-        self.x_aralığı
-            .unwrap_or_else(|| tam_x_aralığı(self.nokta_sayısı))
+        Some(sahne)
     }
 
     fn sahne_konumu(&self, pencere_konumu: gpui::Point<Pixels>) -> Option<Nokta> {
-        let sınırlar = self.çizim_sınırları.get()?;
-        let ölçek = (f32::from(sınırlar.size.width) / 800.0)
-            .min(f32::from(sınırlar.size.height) / 400.0)
+        let çizim_alanı = self.çizim_sınırları.get()?;
+        let ölçek = (f32::from(çizim_alanı.size.width) / 800.0)
+            .min(f32::from(çizim_alanı.size.height) / 400.0)
             .max(0.01);
-        let köken_x =
-            f32::from(sınırlar.origin.x) + (f32::from(sınırlar.size.width) - 800.0 * ölçek) / 2.0;
-        let köken_y =
-            f32::from(sınırlar.origin.y) + (f32::from(sınırlar.size.height) - 400.0 * ölçek) / 2.0;
+        let köken_x = f32::from(çizim_alanı.origin.x)
+            + (f32::from(çizim_alanı.size.width) - 800.0 * ölçek) / 2.0;
+        let köken_y = f32::from(çizim_alanı.origin.y)
+            + (f32::from(çizim_alanı.size.height) - 400.0 * ölçek) / 2.0;
         Some(Nokta::yeni(
             (f32::from(pencere_konumu.x) - köken_x) / ölçek,
             (f32::from(pencere_konumu.y) - köken_y) / ölçek,
@@ -150,57 +140,40 @@ impl ChartListesi {
             self.imleç = None;
             return;
         }
-        let aralık = self.geçerli_x_aralığı();
-        let ham_x = ters_ölçekle(fare.x, aralık, 64.0, 712.0);
-        let adım = 2.0 * PI / self.nokta_sayısı as f64;
-        let indeks = (ham_x / adım)
-            .round()
-            .clamp(0.0, self.nokta_sayısı.saturating_sub(1) as f64);
-        let x_değeri = indeks * adım;
+        let oran = f64::from((fare.x - 64.0) / 712.0);
+        let Some((x_değeri, y_değeri)) = self
+            .grafik
+            .as_ref()
+            .and_then(|grafik| grafik.en_yakın_nokta(oran, 0))
+        else {
+            self.imleç = None;
+            return;
+        };
         self.imleç = Some(İmleçDurumu {
             fare,
             veri_x: x_değeri,
-            veri_y: x_değeri.sin(),
+            veri_y: y_değeri,
         });
     }
 
-    fn görünümü_uygula(&mut self, yeni: Option<Aralık>) {
-        self.tekerlek_hareketini_sıfırla();
-        self.görünümü_uygula_kayıtla(yeni, true);
-    }
-
-    fn tekerlek_hareketini_sıfırla(&mut self) {
-        self.son_tekerlek_olayı = None;
-        self.tekerlek_hareketi_kaydedildi = false;
-        self.birikmiş_hassas_delta = 0.0;
-    }
-
-    fn görünümü_uygula_kayıtla(&mut self, yeni: Option<Aralık>, geçmişe_ekle: bool) {
-        if self.x_aralığı == yeni {
-            return;
-        }
-        if geçmişe_ekle && self.etkileşimler.görünüm_geçmişi {
-            if self.görünüm_geçmişi.len() >= 100 {
-                self.görünüm_geçmişi.pop_front();
+    fn grafiği_yenile(&mut self, nokta_sayısı: usize) {
+        self.nokta_sayısı = nokta_sayısı;
+        match grafik_oluştur(nokta_sayısı) {
+            Ok(mut grafik) => {
+                grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+                self.grafik = Some(grafik);
+                self.hata = None;
             }
-            self.görünüm_geçmişi.push_back(self.x_aralığı);
+            Err(hata) => {
+                self.grafik = None;
+                self.hata = Some(format!("Grafik oluşturulamadı: {hata}"));
+            }
         }
-        self.x_aralığı = yeni;
-        self.hata = None;
-    }
-
-    fn önceki_görünüme_dön(&mut self) {
-        if let Some(önceki) = self.görünüm_geçmişi.pop_back() {
-            self.x_aralığı = önceki;
-            self.hata = None;
-            self.tekerlek_hareketini_sıfırla();
-        }
+        self.imleç = None;
+        self.seçim = None;
     }
 
     fn tekerlek_yakınlaştır(&mut self, olay: &ScrollWheelEvent) {
-        if !self.etkileşimler.tekerlek_etkileşimi {
-            return;
-        }
         let Some(fare) = self.sahne_konumu(olay.position) else {
             return;
         };
@@ -211,59 +184,22 @@ impl ChartListesi {
             ScrollDelta::Pixels(delta) => (f64::from(f32::from(delta.y)), true),
             ScrollDelta::Lines(delta) => (f64::from(delta.y), false),
         };
-        if !ham_delta.is_finite() || ham_delta.abs() <= f64::EPSILON {
+        let oran = f64::from((fare.x - 64.0) / 712.0);
+        let Some(grafik) = self.grafik.as_mut() else {
             return;
-        }
-
-        let ayarlar = self.etkileşimler.tekerlek_ayarları;
-        let hassas = match ayarlar.kip {
-            TekerlekKipi::Otomatik => platform_hassas,
-            TekerlekKipi::Ayrık => false,
-            TekerlekKipi::Hassas => true,
         };
-        let şimdi = Instant::now();
-        let yeni_hareket = self.son_tekerlek_olayı.is_none_or(|önceki| {
-            şimdi.duration_since(önceki) >= Duration::from_millis(ayarlar.hareket_birleştirme_ms)
-        });
-        if yeni_hareket {
-            self.tekerlek_hareketi_kaydedildi = false;
-            self.birikmiş_hassas_delta = 0.0;
-        }
-        self.son_tekerlek_olayı = Some(şimdi);
-
-        let delta = if hassas {
-            if self.birikmiş_hassas_delta.signum() != ham_delta.signum() {
-                self.birikmiş_hassas_delta = 0.0;
-            }
-            self.birikmiş_hassas_delta += ham_delta;
-            if self.birikmiş_hassas_delta.abs() < ayarlar.hassas_ölü_bölge {
-                return;
-            }
-            let birikmiş = self.birikmiş_hassas_delta;
-            self.birikmiş_hassas_delta = 0.0;
-            birikmiş
-        } else {
-            self.birikmiş_hassas_delta = 0.0;
-            ham_delta
-        };
-
-        let tam = tam_x_aralığı(self.nokta_sayısı);
-        let mevcut = self.geçerli_x_aralığı();
-        let odak = ters_ölçekle(fare.x, mevcut, 64.0, 712.0);
-        match mevcut.uyarlanabilir_tekerlek_yakınlaştır(tam, odak, delta, hassas, ayarlar) {
-            Ok(aralık) => {
-                let yeni = (aralık != tam).then_some(aralık);
-                let değişti = self.x_aralığı != yeni;
-                self.görünümü_uygula_kayıtla(yeni, !self.tekerlek_hareketi_kaydedildi);
-                if değişti {
-                    self.tekerlek_hareketi_kaydedildi = true;
-                }
-            }
+        match grafik.tekerlek(oran, ham_delta, platform_hassas) {
+            Ok(_) => self.hata = None,
             Err(hata) => {
                 self.hata = Some(format!("Tekerlek yakınlaştırması uygulanamadı: {hata}"));
             }
         }
     }
+}
+
+fn grafik_oluştur(nokta_sayısı: usize) -> Result<Grafik, UplotHatası> {
+    let (seçenekler, veri) = sinüs_kartı(nokta_sayısı)?;
+    Grafik::yeni(seçenekler, veri)
 }
 
 impl Render for ChartListesi {
@@ -273,10 +209,8 @@ impl Render for ChartListesi {
         let metin = rgb(0x111827);
         let soluk = rgb(0x6b7280);
         let vurgu = rgb(0xdc2626);
-        let (sahne, çizim_hatası) = match self.sahne() {
-            Ok(sahne) => (Some(sahne), self.hata.clone()),
-            Err(hata) => (None, Some(format!("Grafik çizilemedi: {hata}"))),
-        };
+        let sahne = self.sahne();
+        let çizim_hatası = self.hata.clone();
         let nokta_yazısı = SharedString::from(format!("{} nokta", self.nokta_sayısı));
         let lejant = self.imleç.map_or_else(
             || "x: --    □ sin(x): --".to_string(),
@@ -284,8 +218,12 @@ impl Render for ChartListesi {
         );
         let çizim_sınırları = self.çizim_sınırları.clone();
         let kart_tanımı_açık = self.kart_tanımı_açık;
-        let geri_var = !self.görünüm_geçmişi.is_empty();
-        let yakınlaştırılmış = self.x_aralığı.is_some();
+        let geri_var = self.grafik.as_ref().is_some_and(Grafik::geri_var);
+        let yakınlaştırılmış = self.grafik.as_ref().is_some_and(Grafik::yakınlaştırılmış);
+        let etkileşimler = self
+            .grafik
+            .as_ref()
+            .map_or_else(ilk_kart_etkileşimleri, Grafik::etkileşim_seçenekleri);
         let tekerlek_anahtarı = self.tekerlek_anahtarı.clone();
 
         let çizim = div()
@@ -320,10 +258,15 @@ impl Render for ChartListesi {
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(|bu, olay: &MouseDownEvent, _, cx| {
-                    if olay.click_count >= 2 && bu.etkileşimler.çift_tıkla_tam_görünüm {
-                        bu.görünümü_uygula(None);
+                    let etkileşimler = bu.grafik.as_ref().map(Grafik::etkileşim_seçenekleri);
+                    if olay.click_count >= 2
+                        && etkileşimler.is_some_and(|ayarlar| ayarlar.çift_tıkla_tam_görünüm)
+                    {
+                        if let Some(grafik) = bu.grafik.as_mut() {
+                            grafik.tam_görünüm();
+                        }
                         bu.seçim = None;
-                    } else if bu.etkileşimler.seçim_yakınlaştır
+                    } else if etkileşimler.is_some_and(|ayarlar| ayarlar.seçim_yakınlaştır)
                         && let Some(konum) = bu.sahne_konumu(olay.position)
                         && (64.0..=776.0).contains(&konum.x)
                         && (48.0..=352.0).contains(&konum.y)
@@ -339,16 +282,18 @@ impl Render for ChartListesi {
                     if let Some((baş, son)) = bu.seçim.take()
                         && (son - baş).abs() >= 4.0
                     {
-                        let eski = bu.geçerli_x_aralığı();
-                        let en_az = ters_ölçekle(baş.min(son), eski, 64.0, 712.0);
-                        let en_çok = ters_ölçekle(baş.max(son), eski, 64.0, 712.0);
-                        match Aralık::yeni(en_az, en_çok) {
-                            Ok(aralık) => {
-                                bu.görünümü_uygula(Some(aralık));
-                            }
-                            Err(hata) => {
+                        let başlangıç = f64::from((baş - 64.0) / 712.0);
+                        let bitiş = f64::from((son - 64.0) / 712.0);
+                        let sonuç = bu
+                            .grafik
+                            .as_mut()
+                            .map(|grafik| grafik.seçim_yakınlaştır(başlangıç, bitiş));
+                        match sonuç {
+                            Some(Ok(_)) => bu.hata = None,
+                            Some(Err(hata)) => {
                                 bu.hata = Some(format!("Seçilen aralık uygulanamadı: {hata}"));
                             }
+                            None => {}
                         }
                     }
                     cx.notify();
@@ -438,11 +383,7 @@ impl Render for ChartListesi {
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Ikincil)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        bu.nokta_sayısı = bu.nokta_sayısı.saturating_sub(10).max(10);
-                        bu.x_aralığı = None;
-                        bu.görünüm_geçmişi.clear();
-                        bu.tekerlek_hareketini_sıfırla();
-                        bu.imleç = None;
+                        bu.grafiği_yenile(bu.nokta_sayısı.saturating_sub(10).max(10));
                         cx.notify();
                     })),
             )
@@ -451,11 +392,7 @@ impl Render for ChartListesi {
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Ikincil)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        bu.nokta_sayısı = bu.nokta_sayısı.saturating_add(10).min(10_000);
-                        bu.x_aralığı = None;
-                        bu.görünüm_geçmişi.clear();
-                        bu.tekerlek_hareketini_sıfırla();
-                        bu.imleç = None;
+                        bu.grafiği_yenile(bu.nokta_sayısı.saturating_add(10).min(10_000));
                         cx.notify();
                     })),
             )
@@ -463,9 +400,11 @@ impl Render for ChartListesi {
                 Dugme::yeni("gorunum-geri", "↶ Geri")
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Hayalet)
-                    .devre_disi(!geri_var || !self.etkileşimler.görünüm_geçmişi)
+                    .devre_disi(!geri_var || !etkileşimler.görünüm_geçmişi)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        bu.önceki_görünüme_dön();
+                        if let Some(grafik) = bu.grafik.as_mut() {
+                            grafik.önceki_görünüm();
+                        }
                         cx.notify();
                     })),
             )
@@ -473,9 +412,11 @@ impl Render for ChartListesi {
                 Dugme::yeni("tam-gorunum", "Tam görünüm")
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Hayalet)
-                    .devre_disi(!yakınlaştırılmış || !self.etkileşimler.çift_tıkla_tam_görünüm)
+                    .devre_disi(!yakınlaştırılmış || !etkileşimler.çift_tıkla_tam_görünüm)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        bu.görünümü_uygula(None);
+                        if let Some(grafik) = bu.grafik.as_mut() {
+                            grafik.tam_görünüm();
+                        }
                         cx.notify();
                     })),
             )
@@ -484,11 +425,7 @@ impl Render for ChartListesi {
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Hayalet)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        bu.nokta_sayısı = 100;
-                        bu.x_aralığı = None;
-                        bu.görünüm_geçmişi.clear();
-                        bu.tekerlek_hareketini_sıfırla();
-                        bu.imleç = None;
+                        bu.grafiği_yenile(100);
                         cx.notify();
                     })),
             );
@@ -603,7 +540,7 @@ fn sahneyi_boya(
     let köken_x = f32::from(sınırlar.origin.x) + (f32::from(sınırlar.size.width) - içerik_g) / 2.0;
     let köken_y = f32::from(sınırlar.origin.y) + (f32::from(sınırlar.size.height) - içerik_y) / 2.0;
     let dönüştür =
-        |nokta: crate::Nokta| point(px(köken_x + nokta.x * ölçek), px(köken_y + nokta.y * ölçek));
+        |nokta: Nokta| point(px(köken_x + nokta.x * ölçek), px(köken_y + nokta.y * ölçek));
 
     for komut in sahne.komutlar() {
         match komut {
@@ -746,45 +683,6 @@ fn renk_çöz(kod: &str) -> Hsla {
     rgb(sayı).into()
 }
 
-fn tam_x_aralığı(nokta_sayısı: usize) -> Aralık {
-    let nokta_sayısı = nokta_sayısı.max(2);
-    Aralık {
-        en_az: 0.0,
-        en_çok: 2.0 * PI * nokta_sayısı.saturating_sub(1) as f64 / nokta_sayısı as f64,
-    }
-}
-
-fn görünür_y_aralığı(nokta_sayısı: usize, x_aralığı: Aralık) -> Aralık {
-    let nokta_sayısı = nokta_sayısı.max(2);
-    let adım = 2.0 * PI / nokta_sayısı as f64;
-    let mut en_az = f64::INFINITY;
-    let mut en_çok = f64::NEG_INFINITY;
-    for indeks in 0..nokta_sayısı {
-        let x = indeks as f64 * adım;
-        if x >= x_aralığı.en_az && x <= x_aralığı.en_çok {
-            let y = x.sin();
-            en_az = en_az.min(y);
-            en_çok = en_çok.max(y);
-        }
-    }
-    if en_az == en_çok {
-        let pay = en_az.abs().max(1.0) * 0.1;
-        return Aralık {
-            en_az: en_az - pay,
-            en_çok: en_çok + pay,
-        };
-    }
-    let pay = (en_çok - en_az) * 0.1;
-    Aralık {
-        en_az: en_az - pay,
-        en_çok: en_çok + pay,
-    }
-}
-
 fn ölçekle(değer: f64, aralık: Aralık, başlangıç: f32, uzunluk: f32) -> f32 {
     başlangıç + ((değer - aralık.en_az) / (aralık.en_çok - aralık.en_az)) as f32 * uzunluk
-}
-
-fn ters_ölçekle(konum: f32, aralık: Aralık, başlangıç: f32, uzunluk: f32) -> f64 {
-    aralık.en_az + f64::from((konum - başlangıç) / uzunluk) * (aralık.en_çok - aralık.en_az)
 }

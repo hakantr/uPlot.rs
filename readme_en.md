@@ -32,6 +32,12 @@ compatibility card:
 The first card also ports the source demo's conditional hollow points, filled
 hover marker, live legend, and drag-to-zoom interaction on the X axis.
 
+The GPUI chart list is not part of the distributed `uplot-rs` library. It is a
+separate, unpublished verification application under `uygulamalar/masaustu`.
+Selection, wheel zoom, full-view reset, and view history are implemented in
+the core. Library users only provide data, colors, and feature switches;
+unspecified features retain their core defaults.
+
 ## Behavior that differs from upstream
 
 Required port changes, API adaptations, and uPlot.rs-specific extensions live
@@ -77,7 +83,7 @@ Windows `uplot-rs.exe` with the icon embedded.
 ```sh
 cargo test
 cargo run --example ilk_kart
-cargo run --example chart_listesi
+cargo run -p uplot-rs-chart-listesi
 npm --prefix tools/uyum run denetle
 ```
 
@@ -85,8 +91,8 @@ npm --prefix tools/uyum run denetle
 
 Production Rust code forbids `panic!`, `unwrap`, `expect`, unchecked slice
 indexing, `todo!`, `unimplemented!`, and `unreachable!`. Validation failures
-are returned to callers as typed `UplotHatası` values; the desktop UI shows
-errors on the chart card, while the WASM UI returns a safe error SVG. Workspace
+are returned to callers as typed `UplotHatası` values; the desktop and WASM
+verification UIs show errors on the chart card. Workspace
 lints and the CI Clippy step enforce this policy on every change.
 
 The first command runs the tests, the second generates `target/ilk-kart.svg`,
@@ -102,7 +108,9 @@ beside this repository. See
 - `src/olcek.rs`: scale and range mathematics
 - `src/cizim.rs`: surface-independent scene commands and SVG output
 - `src/grafik.rs`: initial rendering pipeline
+- `src/etkilesim.rs`: chart interaction state, zooming, and view history
 - `src/kart.rs`: verifiable card fixtures
+- `uygulamalar/masaustu/`: GPUI verification app excluded from distribution
 - `uyum/`: machine-readable source and evidence inventory
 - `tools/uyum/`: reproducibility and verification tooling
 - `RESMI_DEPO_FARKLILIKLARI.md`: direct-port versus uPlot.rs-extension inventory

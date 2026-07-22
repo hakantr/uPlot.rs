@@ -1,0 +1,23 @@
+[package]
+name = "uplot-rs-chart-listesi"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+
+[[bin]]
+name = "chart_listesi"
+path = "src/main.rs"
+
+[dependencies]
+gpui = { path = "../../../gpui/crates/gpui" }
+gpui_platform = { path = "../../../gpui/crates/gpui_platform", features = ["font-kit", "wayland", "x11"] }
+image = { version = "0.25.1", default-features = false, features = ["png"] }
+ortak_bilesenler = { path = "../../../gpui_kutuphanesi/kutuphaneler/ortak_bilesenler", features = ["varsayilan_tema"] }
+uplot-rs = { path = "../.." }
+
+[build-dependencies]
+embed-resource = "3.0"
+
+[lints]
+workspace = true

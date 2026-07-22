@@ -1,77 +1,92 @@
 //! Tarayıcı chart listesinin WASM köprüsü.
 
+#![allow(confusable_idents)]
+
 use uplot_rs::{
-    Aralık, Grafik, ilk_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ
+    Grafik, UplotHatası, ilk_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ
 };
 use wasm_bindgen::prelude::*;
 
+/// Tarayıcı yüzeyinin yalnız olayları ilettiği, bütün kart durumunu çekirdekte
+/// tutan ilk kart oturumu.
 #[wasm_bindgen]
-pub fn ilk_kart_svg(nokta_sayısı: usize) -> String {
-    let sonuç = sinüs_kartı(nokta_sayısı)
-        .and_then(|(seçenekler, veri)| Grafik::yeni(seçenekler, veri))
-        .map(|grafik| grafik.çiz().svg());
-    sonuç.unwrap_or_else(|hata| hata_svg(&hata.to_string()))
+pub struct IlkKartOturumu {
+    grafik: Grafik,
 }
 
 #[wasm_bindgen]
-pub fn ilk_kart_svg_aralik(
-    nokta_sayısı: usize,
-    genişlik: u32,
-    yükseklik: u32,
-    x_en_az: f64,
-    x_en_çok: f64,
-) -> String {
-    let sonuç = sinüs_kartı(nokta_sayısı).and_then(|(seçenekler, veri)| {
-        let aralık = Aralık::yeni(x_en_az, x_en_çok)?;
-        Grafik::yeni(seçenekler, veri)
-            .map(|grafik| grafik.çiz_boyutta(genişlik, yükseklik, Some(aralık)).svg())
-    });
-    sonuç.unwrap_or_else(|hata| hata_svg(&hata.to_string()))
+impl IlkKartOturumu {
+    #[wasm_bindgen(constructor)]
+    pub fn yeni(nokta_sayısı: usize) -> Result<IlkKartOturumu, JsValue> {
+        let (seçenekler, veri) = sinüs_kartı(nokta_sayısı).map_err(js_hatası)?;
+        let grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
+        Ok(Self { grafik })
+    }
+
+    pub fn svg(&self, genişlik: u32, yükseklik: u32) -> String {
+        self.grafik.çiz_görünür_boyutta(genişlik, yükseklik).svg()
+    }
+
+    pub fn tekerlek(
+        &mut self,
+        odak_oranı: f64,
+        delta: f64,
+        hassas_girdi: bool,
+    ) -> Result<bool, JsValue> {
+        self.grafik
+            .tekerlek(odak_oranı, delta, hassas_girdi)
+            .map_err(js_hatası)
+    }
+
+    pub fn secim_yakinlastir(
+        &mut self,
+        başlangıç_oranı: f64,
+        bitiş_oranı: f64,
+    ) -> Result<bool, JsValue> {
+        self.grafik
+            .seçim_yakınlaştır(başlangıç_oranı, bitiş_oranı)
+            .map_err(js_hatası)
+    }
+
+    pub fn tam_gorunum(&mut self) -> bool {
+        self.grafik.tam_görünüm()
+    }
+
+    pub fn onceki_gorunum(&mut self) -> bool {
+        self.grafik.önceki_görünüm()
+    }
+
+    pub fn tekerlek_etkilesimi_ayarla(&mut self, etkin: bool) {
+        self.grafik.tekerlek_etkileşimi_ayarla(etkin);
+    }
+
+    pub fn gorunur_x_araligi(&self) -> Vec<f64> {
+        let aralık = self.grafik.görünür_x_aralığı();
+        vec![aralık.en_az, aralık.en_çok]
+    }
+
+    pub fn gorunur_y_araligi(&self) -> Vec<f64> {
+        let aralık = self.grafik.görünür_y_aralığı();
+        vec![aralık.en_az, aralık.en_çok]
+    }
+
+    pub fn en_yakin_nokta(&self, yatay_oran: f64) -> Vec<f64> {
+        self.grafik
+            .en_yakın_nokta(yatay_oran, 0)
+            .map_or_else(Vec::new, |(x, y)| vec![x, y])
+    }
+
+    pub fn yakinlastirilmis(&self) -> bool {
+        self.grafik.yakınlaştırılmış()
+    }
+
+    pub fn geri_var(&self) -> bool {
+        self.grafik.geri_var()
+    }
 }
 
-#[wasm_bindgen]
-pub fn tekerlek_x_araligi(
-    mevcut_en_az: f64,
-    mevcut_en_çok: f64,
-    tam_en_az: f64,
-    tam_en_çok: f64,
-    odak: f64,
-    yakınlaştır: bool,
-) -> Result<Vec<f64>, JsValue> {
-    let mevcut = Aralık::yeni(mevcut_en_az, mevcut_en_çok)
-        .map_err(|hata| JsValue::from_str(&hata.to_string()))?;
-    let tam =
-        Aralık::yeni(tam_en_az, tam_en_çok).map_err(|hata| JsValue::from_str(&hata.to_string()))?;
-    mevcut
-        .tekerlek_yakınlaştır(tam, odak, yakınlaştır)
-        .map(|aralık| vec![aralık.en_az, aralık.en_çok])
-        .map_err(|hata| JsValue::from_str(&hata.to_string()))
-}
-
-#[wasm_bindgen]
-pub fn uyarlanabilir_tekerlek_x_araligi(
-    mevcut_en_az: f64,
-    mevcut_en_çok: f64,
-    tam_en_az: f64,
-    tam_en_çok: f64,
-    odak: f64,
-    delta: f64,
-    hassas_girdi: bool,
-) -> Result<Vec<f64>, JsValue> {
-    let mevcut = Aralık::yeni(mevcut_en_az, mevcut_en_çok)
-        .map_err(|hata| JsValue::from_str(&hata.to_string()))?;
-    let tam =
-        Aralık::yeni(tam_en_az, tam_en_çok).map_err(|hata| JsValue::from_str(&hata.to_string()))?;
-    mevcut
-        .uyarlanabilir_tekerlek_yakınlaştır(
-            tam,
-            odak,
-            delta,
-            hassas_girdi,
-            ilk_kart_etkileşimleri().tekerlek_ayarları,
-        )
-        .map(|aralık| vec![aralık.en_az, aralık.en_çok])
-        .map_err(|hata| JsValue::from_str(&hata.to_string()))
+fn js_hatası(hata: UplotHatası) -> JsValue {
+    JsValue::from_str(&hata.to_string())
 }
 
 #[wasm_bindgen]
@@ -87,14 +102,6 @@ pub fn ilk_kart_tanim_ornegi() -> String {
 #[wasm_bindgen]
 pub fn ilk_kart_tekerlek_etkilesimi() -> bool {
     ilk_kart_etkileşimleri().tekerlek_etkileşimi
-}
-
-#[wasm_bindgen]
-pub fn ilk_kart_tekerlek_hareket_birlestirme_ms() -> u32 {
-    ilk_kart_etkileşimleri()
-        .tekerlek_ayarları
-        .hareket_birleştirme_ms
-        .min(u64::from(u32::MAX)) as u32
 }
 
 #[wasm_bindgen]
@@ -117,29 +124,25 @@ pub fn kaynak_commit() -> String {
     "0e5812c504430f5c804e0f993376d8999b26cc34".to_string()
 }
 
-fn hata_svg(metin: &str) -> String {
-    let güvenli = metin
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;");
-    format!(
-        "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"800\" height=\"400\"><rect width=\"100%\" height=\"100%\" fill=\"#fff\"/><text x=\"24\" y=\"48\" fill=\"#b91c1c\">{güvenli}</text></svg>"
-    )
-}
-
 #[cfg(test)]
 mod testler {
     use super::*;
 
     #[test]
     fn ilk_kart_wasm_svg_üretir() {
-        let svg = ilk_kart_svg(100);
+        let oturum = IlkKartOturumu::yeni(100);
+        assert!(oturum.is_ok());
+        let Ok(mut oturum) = oturum else {
+            return;
+        };
+        let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("İlk kart · sin(x)"));
         assert_eq!(kart_sayisi(), 1);
         assert!(ilk_kart_tanim_ornegi().contains("GrafikSeçenekleri::yeni"));
 
-        let yakın = ilk_kart_svg_aralik(100, 800, 400, 1.0, 2.0);
+        assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
+        let yakın = oturum.svg(800, 400);
         assert!(yakın.contains("<circle"));
     }
 }

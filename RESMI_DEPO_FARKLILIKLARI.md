@@ -20,6 +20,7 @@ uyarlama ve uzantıların birbirine karışmaması için tutulur.
 | Tam görünüme dönüş | Çekirdekte çift tıklama `autoScaleX()` çağırır | Çift tıklamaya ek olarak görünür “Tam görünüm” düğmesi sunar | Keşfedilebilirlik uyarlaması |
 | Görünüm geçmişi | Adımlı geri alma geçmişi bulunmaz | Hareket başına kayıt tutan “Geri” kontrolü vardır | uPlot.rs uzantısı |
 | Örnek kataloğu | Bağımsız HTML demoları | Aynı kart tanımını kullanan masaüstü ve WASM chart listeleri | Port sunumu |
+| Örnek/çekirdek sınırı | Demolar dağıtımdan ayrı HTML girişleridir | GPUI kataloğu ayrı ve yayınlanmayan workspace uygulamasıdır; bütün davranış çekirdektedir | Rust paket uyarlaması |
 
 ### Hassas tekerlek normalizasyonu
 
@@ -28,7 +29,7 @@ uyarlama ve uzantıların birbirine karışmaması için tutulur.
 - satır tabanlı klasik mouse tekerleğinde resmî `0.75` adımı korunur;
 - piksel tabanlı girdide 100 piksel toplam hareket bir resmî adıma eşlenir;
 - 1.5 piksel altındaki küçük hareketler ölü bölgede tutulur;
-- WASM olayları animasyon karesi başına birleştirilir;
+- masaüstü ve WASM aynı çekirdek denetleyicisine yalnız normalize olay girdisi iletir;
 - tekerlek geçmişi olay başına değil, 140 ms ile gruplanan hareket başına yazılır.
 
 Bu normalizasyon resmî `wheelZoomPlugin`in parçası değildir. Eklentinin fare
@@ -81,11 +82,12 @@ This inventory separates direct ports from uPlot.rs-specific adaptations.
 | Full-range reset | Core double-click calls `autoScaleX()` | Also exposes a visible Full view button | Discoverability adaptation |
 | View history | No stepwise view undo | Gesture-level Back history | uPlot.rs extension |
 | Demo catalog | Independent HTML demos | Desktop and WASM chart lists sharing one card definition | Port presentation |
+| Demo/core boundary | Demos are separate HTML entry points | The GPUI catalog is a separate unpublished workspace app; all behavior lives in core | Rust packaging adaptation |
 
 In automatic wheel mode, traditional line-based wheels keep the official
 `0.75` step. Precise input maps 100 pixels to one official step, applies a
-1.5-pixel dead zone, coalesces WASM events per animation frame, and stores one
-history entry per 140 ms gesture. This normalization is not part of the
+1.5-pixel dead zone, and stores one history entry per 140 ms gesture. Desktop
+and WASM pass only normalized event input to the same core controller. This normalization is not part of the
 official plugin; cursor anchoring and full-range clamping remain ported
 behavior.
 

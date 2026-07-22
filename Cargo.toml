@@ -8,7 +8,7 @@ license = "Apache-2.0"
 repository = "https://github.com/hakantr/uPlot.rs"
 
 [workspace]
-members = ["wasm"]
+members = ["wasm", "uygulamalar/masaustu"]
 resolver = "3"
 
 [workspace.lints.rust]
@@ -35,22 +35,8 @@ unimplemented = "deny"
 unreachable = "deny"
 indexing_slicing = "deny"
 
-[features]
-default = ["desktop"]
-desktop = ["dep:gpui", "dep:gpui_platform", "dep:ortak_bilesenler"]
-
 [dependencies]
-gpui = { path = "../gpui/crates/gpui", optional = true }
-gpui_platform = { path = "../gpui/crates/gpui_platform", optional = true, features = ["font-kit", "wayland", "x11"] }
-image = { version = "0.25.1", default-features = false, features = ["png"] }
-ortak_bilesenler = { path = "../gpui_kutuphanesi/kutuphaneler/ortak_bilesenler", optional = true, features = ["varsayilan_tema"] }
-
-[build-dependencies]
-embed-resource = "3.0"
+web-time = "1.1.0"
 
 [[example]]
 name = "ilk_kart"
-
-[[example]]
-name = "chart_listesi"
-required-features = ["desktop"]

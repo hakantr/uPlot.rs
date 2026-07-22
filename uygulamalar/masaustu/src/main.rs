@@ -1,9 +1,13 @@
+#![allow(confusable_idents)]
+
 use std::sync::Arc;
+
+mod masaustu;
 
 use gpui::{App, AppContext, Bounds, px, size};
 use gpui_platform::application;
+use masaustu::ChartListesi;
 use ortak_bilesenler::{OrtakBilesenAyarlari, PencereKurulumAyarlari, baslat, pencere_secenekleri};
-use uplot_rs::masaustu::ChartListesi;
 
 fn main() {
     application().run(|cx: &mut App| {
@@ -35,7 +39,7 @@ fn main() {
 
 fn uygulama_ikonu() -> Result<Arc<image::RgbaImage>, image::ImageError> {
     image::load_from_memory_with_format(
-        include_bytes!("../assets/icons/uplot-rs.png"),
+        include_bytes!("../../../assets/icons/uplot-rs.png"),
         image::ImageFormat::Png,
     )
     .map(|görsel| Arc::new(görsel.into_rgba8()))

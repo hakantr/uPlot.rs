@@ -22,7 +22,8 @@ pub const İLK_KART_TANIM_ÖRNEĞİ: &str = r##"let seçenekler = GrafikSeçenek
 let veri = HizalıVeri::yeni(x, vec![y])?;
 let grafik = Grafik::yeni(seçenekler, veri)?;"##;
 
-/// `../uPlot/demos/resize.html` kaynaklı ilk uyum kartı.
+/// <https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/resize.html>
+/// kaynaklı ilk uyum kartı.
 pub fn ilk_kart() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
     sinüs_kartı(100)
 }

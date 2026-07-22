@@ -31,6 +31,12 @@ Port şu anda Faz 0 altyapısı ve ilk dikey uyum kartını içerir:
 İlk kart, kaynak demonun koşullu boş noktalarını, dolu hover noktasını, canlı
 lejantını ve X ekseninde sürükle-bırak yakınlaştırmasını da taşır.
 
+GPUI chart listesi dağıtılan `uplot-rs` kütüphanesinin parçası değildir;
+`uygulamalar/masaustu` altındaki ayrı, yayınlanmayan bir doğrulama uygulamasıdır.
+Kartın seçim, tekerlek, tam görünüm ve geçmiş davranışları çekirdekte çözülür.
+Kütüphane kullanıcısı yalnız veriyi, renk düzenini ve açık/kapalı özellikleri
+tanımlar; belirtilmeyen özellikler çekirdek varsayılanlarını kullanır.
+
 ## Resmî depodan farklı işleyişler
 
 Port zorunlulukları, API uyarlamaları ve uPlot.rs'e özgü uzantılar ana README'yi
@@ -75,7 +81,7 @@ ikonu gömülü `uplot-rs.exe` içerir.
 ```sh
 cargo test
 cargo run --example ilk_kart
-cargo run --example chart_listesi
+cargo run -p uplot-rs-chart-listesi
 npm --prefix tools/uyum run denetle
 ```
 
@@ -83,8 +89,8 @@ npm --prefix tools/uyum run denetle
 
 Üretim Rust kodunda `panic!`, `unwrap`, `expect`, kontrolsüz dilim indeksleme,
 `todo!`, `unimplemented!` ve `unreachable!` yasaktır. Doğrulama hataları tipli
-`UplotHatası` değerleriyle çağırana döner; masaüstü arayüzü hatayı kart üzerinde,
-WASM arayüzü ise güvenli bir hata SVG'siyle kullanıcıya bildirir. Bu kural
+`UplotHatası` değerleriyle çağırana döner; masaüstü ve WASM doğrulama
+arayüzleri hatayı kart üzerinde kullanıcıya bildirir. Bu kural
 workspace lintleri ve CI Clippy adımıyla her değişiklikte denetlenir.
 
 İlk komut testleri, ikinci komut `target/ilk-kart.svg` çıktısını, üçüncü komut
@@ -99,7 +105,9 @@ hash kilidini doğrular. Tarayıcı listesi için
 - `src/olcek.rs`: ölçek ve aralık matematiği
 - `src/cizim.rs`: yüzeyden bağımsız sahne komutları ve SVG çıktısı
 - `src/grafik.rs`: ilk çizim hattı
+- `src/etkilesim.rs`: kartın etkileşim durumu, yakınlaştırma ve görünüm geçmişi
 - `src/kart.rs`: kanıtlanabilir kart fixture'ları
+- `uygulamalar/masaustu/`: dağıtıma girmeyen GPUI doğrulama uygulaması
 - `uyum/`: makine-okunur kaynak ve kanıt envanteri
 - `tools/uyum/`: yeniden üretim/denetim araçları
 - `RESMI_DEPO_FARKLILIKLARI.md`: resmî port ile uPlot.rs uzantılarının ayrımı

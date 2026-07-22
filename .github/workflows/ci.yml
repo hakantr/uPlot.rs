@@ -54,10 +54,10 @@ jobs:
         run: cargo fmt --all --check
       - name: Clippy
         working-directory: uPlot.rs
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Testler
         working-directory: uPlot.rs
-        run: cargo test --all-targets
+        run: cargo test --workspace --all-targets
       - name: İlk kart smoke testi
         working-directory: uPlot.rs
         run: cargo run --example ilk_kart

@@ -5728,11 +5728,19 @@ checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
 name = "uplot-rs"
 version = "0.1.0"
 dependencies = [
+ "web-time",
+]
+
+[[package]]
+name = "uplot-rs-chart-listesi"
+version = "0.1.0"
+dependencies = [
  "embed-resource",
  "gpui",
  "gpui_platform",
  "image",
  "ortak_bilesenler",
+ "uplot-rs",
 ]
 
 [[package]]

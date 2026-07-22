@@ -96,3 +96,26 @@ fn tekerlek_uzaklaştırması_tam_aralıkta_sınırlanır() -> Result<(), UplotH
     assert_eq!(uzak.tekerlek_yakınlaştır(tam, 30.0, false)?, tam);
     Ok(())
 }
+
+#[test]
+fn grafik_etkileşim_durumunu_çekirdekte_yönetir() -> Result<(), UplotHatası> {
+    let (seçenekler, veri) = ilk_kart()?;
+    let mut grafik = Grafik::yeni(seçenekler, veri)?;
+    let tam = grafik.görünür_x_aralığı();
+
+    assert!(grafik.seçim_yakınlaştır(0.25, 0.75)?);
+    let seçilen = grafik.görünür_x_aralığı();
+    assert!(grafik.yakınlaştırılmış());
+    assert!(grafik.geri_var());
+    assert!(seçilen.en_az > tam.en_az);
+    assert!(seçilen.en_çok < tam.en_çok);
+
+    assert!(grafik.önceki_görünüm());
+    assert_eq!(grafik.görünür_x_aralığı(), tam);
+    assert!(!grafik.yakınlaştırılmış());
+
+    grafik.tekerlek_etkileşimi_ayarla(false);
+    assert!(!grafik.tekerlek(0.5, 1.0, false)?);
+    assert_eq!(grafik.görünür_x_aralığı(), tam);
+    Ok(())
+}

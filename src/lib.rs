@@ -1,15 +1,14 @@
 //! uPlot'un küçük ve hızlı çizim modelini Rust'a taşıyan çekirdek.
 //!
-//! İlk altyapı dilimi, GPUI'den bağımsız veri doğrulama, ölçekleme, çizim
-//! komutları ve SVG çıktısı sağlar. GPUI yüzeyi aynı sahne komutlarını tüketen
-//! ayrı bir adaptör olarak sonraki fazda eklenecektir.
+//! Çekirdek; GPUI'den bağımsız veri doğrulama, ölçekleme, etkileşim durumu,
+//! çizim komutları ve SVG çıktısı sağlar. GPUI ve WASM doğrulama uygulamaları
+//! yalnız platform olaylarını çekirdeğe ileten ayrı yüzey adaptörleridir.
 
 pub mod cizim;
+mod etkilesim;
 pub mod grafik;
 pub mod hata;
 pub mod kart;
-#[cfg(feature = "desktop")]
-pub mod masaustu;
 pub mod olcek;
 pub mod secenek;
 pub mod veri;

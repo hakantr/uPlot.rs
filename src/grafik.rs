@@ -1,10 +1,12 @@
 use crate::cizim::{Komut, MetinHizası, Nokta, Sahne};
+use crate::etkilesim::EtkileşimDenetleyicisi;
 use crate::{Aralık, GrafikSeçenekleri, HizalıVeri, UplotHatası};
 
 /// Doğrulanmış seçenek ve veriyi taşıyan çizelge örneği.
 pub struct Grafik {
     seçenekler: GrafikSeçenekleri,
     veri: HizalıVeri,
+    etkileşim: EtkileşimDenetleyicisi,
 }
 
 impl Grafik {
@@ -15,11 +17,97 @@ impl Grafik {
                 bulunan: seçenekler.seriler.len(),
             });
         }
-        Ok(Self { seçenekler, veri })
+        let tam = veri
+            .x()
+            .first()
+            .zip(veri.x().last())
+            .and_then(|(ilk, son)| Aralık::yeni(*ilk, *son).ok())
+            .ok_or(UplotHatası::YetersizVeri {
+                uzunluk: veri.x().len(),
+            })?;
+        let etkileşim = EtkileşimDenetleyicisi::yeni(tam, seçenekler.etkileşimler);
+        Ok(Self {
+            seçenekler,
+            veri,
+            etkileşim,
+        })
     }
 
     pub fn çiz(&self) -> Sahne {
-        self.çiz_aralıkta(None)
+        self.çiz_aralıkta(
+            self.etkileşim
+                .yakınlaştırılmış()
+                .then(|| self.etkileşim.görünür()),
+        )
+    }
+
+    pub fn görünür_x_aralığı(&self) -> Aralık {
+        self.etkileşim.görünür()
+    }
+
+    pub fn yakınlaştırılmış(&self) -> bool {
+        self.etkileşim.yakınlaştırılmış()
+    }
+
+    pub fn geri_var(&self) -> bool {
+        self.etkileşim.geri_var()
+    }
+
+    pub fn etkileşim_seçenekleri(&self) -> crate::EtkileşimSeçenekleri {
+        self.etkileşim.ayarlar()
+    }
+
+    pub fn tekerlek_etkileşimi_ayarla(&mut self, etkin: bool) {
+        self.etkileşim.tekerlek_etkileşimi_ayarla(etkin);
+    }
+
+    pub fn tekerlek(
+        &mut self,
+        odak_oranı: f64,
+        delta: f64,
+        hassas: bool,
+    ) -> Result<bool, UplotHatası> {
+        self.etkileşim.tekerlek(odak_oranı, delta, hassas)
+    }
+
+    pub fn seçim_yakınlaştır(
+        &mut self,
+        başlangıç_oranı: f64,
+        bitiş_oranı: f64,
+    ) -> Result<bool, UplotHatası> {
+        self.etkileşim
+            .seçim_yakınlaştır(başlangıç_oranı, bitiş_oranı)
+    }
+
+    pub fn tam_görünüm(&mut self) -> bool {
+        self.etkileşim.tam_görünüm()
+    }
+
+    pub fn önceki_görünüm(&mut self) -> bool {
+        self.etkileşim.geri()
+    }
+
+    /// Geçerli X görünümündeki veriden hesaplanan Y aralığını döndürür.
+    pub fn görünür_y_aralığı(&self) -> Aralık {
+        self.y_aralığı(self.görünür_x_aralığı())
+    }
+
+    /// Geçerli görünümde, normalize edilmiş yatay konuma en yakın seri noktasını bulur.
+    pub fn en_yakın_nokta(&self, yatay_oran: f64, seri_indeksi: usize) -> Option<(f64, f64)> {
+        if !yatay_oran.is_finite() {
+            return None;
+        }
+        let seri = self.veri.seriler().get(seri_indeksi)?;
+        let aralık = self.görünür_x_aralığı();
+        let hedef = aralık.en_az + yatay_oran.clamp(0.0, 1.0) * (aralık.en_çok - aralık.en_az);
+        self.veri
+            .x()
+            .iter()
+            .copied()
+            .zip(seri.iter().copied())
+            .filter_map(|(x, y)| y.map(|y| (x, y)))
+            .filter(|(x, _)| *x >= aralık.en_az && *x <= aralık.en_çok)
+            .min_by(|(x_a, _), (x_b, _)| (x_a - hedef).abs().total_cmp(&(x_b - hedef).abs()))
     }
 
     /// Grafiği belirli bir görünür X aralığında çizer.
@@ -29,6 +117,12 @@ impl Grafik {
             self.seçenekler.yükseklik,
             görünür_x,
         )
+    }
+
+    /// Etkileşim denetleyicisindeki güncel görünümü hedef yüzey boyutunda çizer.
+    pub fn çiz_görünür_boyutta(&self, genişlik_px: u32, yükseklik_px: u32) -> Sahne {
+        let görünür = self.yakınlaştırılmış().then(|| self.görünür_x_aralığı());
+        self.çiz_boyutta(genişlik_px, yükseklik_px, görünür)
     }
 
     /// Resize demosundaki gibi hedef yüzey boyutuna göre yeniden yerleşim yapar.
@@ -79,21 +173,7 @@ impl Grafik {
                 .ok()
             })
             .unwrap_or(tam_x_aralığı);
-        let y_aralığı = self.seçenekler.y_aralığı.unwrap_or_else(|| {
-            let görünür = self
-                .veri
-                .x()
-                .iter()
-                .enumerate()
-                .filter(|(_, x)| **x >= x_aralığı.en_az && **x <= x_aralığı.en_çok)
-                .flat_map(|(indeks, _)| {
-                    self.veri
-                        .seriler()
-                        .iter()
-                        .filter_map(move |seri| seri.get(indeks))
-                });
-            Aralık::otomatik(görünür)
-        });
+        let y_aralığı = self.y_aralığı(x_aralığı);
 
         let bölme = 4_u32;
         for sıra in 0..=bölme {
@@ -190,5 +270,23 @@ impl Grafik {
         }
 
         sahne
+    }
+
+    fn y_aralığı(&self, x_aralığı: Aralık) -> Aralık {
+        self.seçenekler.y_aralığı.unwrap_or_else(|| {
+            let görünür = self
+                .veri
+                .x()
+                .iter()
+                .enumerate()
+                .filter(|(_, x)| **x >= x_aralığı.en_az && **x <= x_aralığı.en_çok)
+                .flat_map(|(indeks, _)| {
+                    self.veri
+                        .seriler()
+                        .iter()
+                        .filter_map(move |seri| seri.get(indeks))
+                });
+            Aralık::otomatik(görünür)
+        })
     }
 }
