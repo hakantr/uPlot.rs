@@ -12,7 +12,8 @@ use gpui::{
 use ortak_bilesenler::{CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, PlatformPencere};
 
 use crate::{
-    Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ
+    Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne, UplotHatası, sinüs_kartı,
+    İLK_KART_TANIM_ÖRNEĞİ,
 };
 
 #[derive(Clone, Copy)]
@@ -27,6 +28,7 @@ pub struct ChartListesi {
     x_aralığı: Option<Aralık>,
     imleç: Option<İmleçDurumu>,
     seçim: Option<(f32, f32)>,
+    hata: Option<String>,
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
 }
 
@@ -37,15 +39,14 @@ impl ChartListesi {
             x_aralığı: None,
             imleç: None,
             seçim: None,
+            hata: None,
             çizim_sınırları: Rc::new(Cell::new(None)),
         }
     }
 
-    fn sahne(&self) -> Option<Sahne> {
-        let (seçenekler, veri) = sinüs_kartı(self.nokta_sayısı).ok()?;
-        let mut sahne = Grafik::yeni(seçenekler, veri)
-            .ok()?
-            .çiz_aralıkta(self.x_aralığı);
+    fn sahne(&self) -> Result<Sahne, UplotHatası> {
+        let (seçenekler, veri) = sinüs_kartı(self.nokta_sayısı)?;
+        let mut sahne = Grafik::yeni(seçenekler, veri)?.çiz_aralıkta(self.x_aralığı);
         let x_aralığı = self.geçerli_x_aralığı();
         let y_aralığı = görünür_y_aralığı(self.nokta_sayısı, x_aralığı);
         if let Some(imleç) = self.imleç {
@@ -83,7 +84,7 @@ impl ChartListesi {
                 kalınlık: 1.0,
             });
         }
-        Some(sahne)
+        Ok(sahne)
     }
 
     fn geçerli_x_aralığı(&self) -> Aralık {
@@ -120,7 +121,7 @@ impl ChartListesi {
         let adım = 2.0 * PI / self.nokta_sayısı as f64;
         let indeks = (ham_x / adım)
             .round()
-            .clamp(0.0, (self.nokta_sayısı - 1) as f64);
+            .clamp(0.0, self.nokta_sayısı.saturating_sub(1) as f64);
         let x_değeri = indeks * adım;
         self.imleç = Some(İmleçDurumu {
             fare,
@@ -137,7 +138,10 @@ impl Render for ChartListesi {
         let metin = rgb(0x111827);
         let soluk = rgb(0x6b7280);
         let vurgu = rgb(0xdc2626);
-        let sahne = self.sahne();
+        let (sahne, çizim_hatası) = match self.sahne() {
+            Ok(sahne) => (Some(sahne), self.hata.clone()),
+            Err(hata) => (None, Some(format!("Grafik çizilemedi: {hata}"))),
+        };
         let nokta_yazısı = SharedString::from(format!("{} nokta", self.nokta_sayısı));
         let lejant = self.imleç.map_or_else(
             || "x: --    □ sin(x): --".to_string(),
@@ -194,7 +198,15 @@ impl Render for ChartListesi {
                         let eski = bu.geçerli_x_aralığı();
                         let en_az = ters_ölçekle(baş.min(son), eski, 64.0, 712.0);
                         let en_çok = ters_ölçekle(baş.max(son), eski, 64.0, 712.0);
-                        bu.x_aralığı = Aralık::yeni(en_az, en_çok).ok();
+                        match Aralık::yeni(en_az, en_çok) {
+                            Ok(aralık) => {
+                                bu.x_aralığı = Some(aralık);
+                                bu.hata = None;
+                            }
+                            Err(hata) => {
+                                bu.hata = Some(format!("Seçilen aralık uygulanamadı: {hata}"));
+                            }
+                        }
                     }
                     cx.notify();
                 }),
@@ -336,6 +348,18 @@ impl Render for ChartListesi {
             )
             .child(araçlar)
             .child(div().mb_2().text_xs().text_color(vurgu).child(lejant))
+            .when_some(çizim_hatası, |öğe, hata| {
+                öğe.child(
+                    div()
+                        .mb_2()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xfef2f2))
+                        .text_sm()
+                        .text_color(rgb(0xb91c1c))
+                        .child(hata),
+                )
+            })
             .child(çizim)
             .child(
                 div()
@@ -540,13 +564,15 @@ fn renk_çöz(kod: &str) -> Hsla {
 }
 
 fn tam_x_aralığı(nokta_sayısı: usize) -> Aralık {
+    let nokta_sayısı = nokta_sayısı.max(2);
     Aralık {
         en_az: 0.0,
-        en_çok: 2.0 * PI * (nokta_sayısı - 1) as f64 / nokta_sayısı as f64,
+        en_çok: 2.0 * PI * nokta_sayısı.saturating_sub(1) as f64 / nokta_sayısı as f64,
     }
 }
 
 fn görünür_y_aralığı(nokta_sayısı: usize, x_aralığı: Aralık) -> Aralık {
+    let nokta_sayısı = nokta_sayısı.max(2);
     let adım = 2.0 * PI / nokta_sayısı as f64;
     let mut en_az = f64::INFINITY;
     let mut en_çok = f64::NEG_INFINITY;

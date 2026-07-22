@@ -18,7 +18,8 @@ fn main() {
         let sonuç = cx.open_window(seçenekler, |_, cx| cx.new(ChartListesi::yeni));
         if let Err(hata) = sonuç {
             eprintln!("Chart listesi açılamadı: {hata}");
-            std::process::exit(1);
+            cx.quit();
+            return;
         }
         cx.on_window_closed(|cx, _| cx.quit()).detach();
         cx.activate(true);

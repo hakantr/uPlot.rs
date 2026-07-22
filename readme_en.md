@@ -5,8 +5,8 @@
 This project is a port of [uPlot](https://github.com/leeoniya/uPlot) 1.6.32's
 small, fast, and memory-efficient charting approach to Rust, GPUI, and WASM.
 It is not an independently invented charting engine. The normative source is
-commit `0e5812c504430f5c804e0f993376d8999b26cc34` of the sibling `../uPlot`
-repository; uPlot defines the behavioral, API, and visual compatibility target.
+[commit `0e5812c` in the uPlot repository](https://github.com/leeoniya/uPlot/commit/0e5812c504430f5c804e0f993376d8999b26cc34);
+uPlot defines the behavioral, API, and visual compatibility target.
 
 The codebase uses Rust 2024 edition and requires Rust 1.95 or newer. New
 modules use `foo.rs` and, when needed, `foo/submodule.rs` instead of `mod.rs`.
@@ -65,9 +65,19 @@ cargo run --example chart_listesi
 npm --prefix tools/uyum run denetle
 ```
 
+## Error handling
+
+Production Rust code forbids `panic!`, `unwrap`, `expect`, unchecked slice
+indexing, `todo!`, `unimplemented!`, and `unreachable!`. Validation failures
+are returned to callers as typed `UplotHatası` values; the desktop UI shows
+errors on the chart card, while the WASM UI returns a safe error SVG. Workspace
+lints and the CI Clippy step enforce this policy on every change.
+
 The first command runs the tests, the second generates `target/ilk-kart.svg`,
 and the third opens the live GPUI chart list. The final command verifies the
-locked sibling `../uPlot` commit, version, and file hashes. See
+commit, version, and file hashes in a local checkout of the
+[uPlot source repository](https://github.com/leeoniya/uPlot), cloned as `uPlot`
+beside this repository. See
 [wasm/README.md](wasm/README.md) for browser instructions.
 
 ## Source layout

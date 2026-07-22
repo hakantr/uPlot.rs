@@ -5,8 +5,8 @@
 Bu proje, [uPlot](https://github.com/leeoniya/uPlot) 1.6.32'nin küçük, hızlı ve
 bellek-verimli çizim yaklaşımını Rust'a, GPUI'ye ve WASM'e taşıyan bir porttur.
 Bağımsız olarak ortaya çıkarılmış yeni bir grafik motoru değildir. Normatif
-kaynak `../uPlot` deposunun `0e5812c504430f5c804e0f993376d8999b26cc34`
-commit'idir; davranış, API ve görsel uyum kararlarında uPlot esas alınır.
+kaynak, [uPlot deposundaki `0e5812c` commit'idir](https://github.com/leeoniya/uPlot/commit/0e5812c504430f5c804e0f993376d8999b26cc34);
+davranış, API ve görsel uyum kararlarında uPlot esas alınır.
 
 Kod tabanı Rust 2024 edition kullanır ve en az Rust 1.95 gerektirir. Yeni
 modüller `mod.rs` yerine `foo.rs` + gerektiğinde `foo/alt_modul.rs` düzenini
@@ -63,9 +63,18 @@ cargo run --example chart_listesi
 npm --prefix tools/uyum run denetle
 ```
 
+## Hata yönetimi
+
+Üretim Rust kodunda `panic!`, `unwrap`, `expect`, kontrolsüz dilim indeksleme,
+`todo!`, `unimplemented!` ve `unreachable!` yasaktır. Doğrulama hataları tipli
+`UplotHatası` değerleriyle çağırana döner; masaüstü arayüzü hatayı kart üzerinde,
+WASM arayüzü ise güvenli bir hata SVG'siyle kullanıcıya bildirir. Bu kural
+workspace lintleri ve CI Clippy adımıyla her değişiklikte denetlenir.
+
 İlk komut testleri, ikinci komut `target/ilk-kart.svg` çıktısını, üçüncü komut
-canlı GPUI listesini açar. Son komut kardeş `../uPlot` deposunun
-commit/sürüm/dosya hash kilidini doğrular. Tarayıcı listesi için
+canlı GPUI listesini açar. Son komut, [uPlot kaynak deposunun](https://github.com/leeoniya/uPlot)
+aynı üst dizine `uPlot` adıyla klonlanmış yerel kopyasında commit/sürüm/dosya
+hash kilidini doğrular. Tarayıcı listesi için
 [wasm/README.md](wasm/README.md) yönergelerini kullanın.
 
 ## Kaynak düzeni
