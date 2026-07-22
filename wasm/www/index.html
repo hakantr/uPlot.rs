@@ -94,6 +94,11 @@
         <small>zoom-wheel</small>
         <div class="durum">Resmî tekerlek eklentisi · 2 seri</div>
       </article>
+      <article class="kart" data-kart="zoom-touch" aria-current="false" tabindex="0">
+        <strong>Pinch Zoom &amp; Pan</strong>
+        <small>zoom-touch</small>
+        <div class="durum">Resmî touch eklentisi · 2 seri</div>
+      </article>
     </aside>
     <main>
       <header>
@@ -133,6 +138,7 @@
       resize_kart_tanim_ornegi,
       scale_padding_kart_tanim_ornegi,
       zoom_wheel_kart_tanim_ornegi,
+      zoom_touch_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -231,6 +237,27 @@
           { etiket: "Two", renk: "#0000ff" },
         ],
         yardım: "Tekerlek: fare odağında X/Y yakınlaştır · sürükle: seç · boşluk + sürükle: taşı · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ({
+          tekerlek: ortak_kart_tekerlek_etkilesimi(),
+          seçim: ortak_kart_secim_yakinlastir(),
+          çiftTık: ortak_kart_cift_tikla_tam_gorunum(),
+          geçmiş: ortak_kart_gorunum_gecmisi(),
+          dokunma: ortak_kart_dokunma_etkilesimi(),
+        }),
+      },
+      "zoom-touch": {
+        başlık: "Pinch Zoom & Pan",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-touch.html">zoom-touch.html</a>
+          <br>Kaynakla aynı 7 X noktası ve One/Two serileri; ekran genişliği katalog yüzeyine duyarlı çizilir.
+          <br>Resmî touch eklentisinin kıstırarak X/Y yakınlaştırması ve tek parmak taşıması çekirdektedir.`,
+        tanım: () => zoom_touch_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/zoom_touch.rs",
+        seriler: [
+          { etiket: "One", renk: "#ff0000" },
+          { etiket: "Two", renk: "#0000ff" },
+        ],
+        yardım: "İki parmak: kıstırarak X/Y yakınlaştır · tek parmak: taşı · çift tıkla: tam görünüm",
         değişkenNokta: false,
         etkileşimler: () => ({
           tekerlek: ortak_kart_tekerlek_etkilesimi(),

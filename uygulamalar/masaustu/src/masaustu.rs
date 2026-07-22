@@ -10,8 +10,9 @@ use ortak_bilesenler::{
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
     AREA_FILL_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı,
-    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_wheel_kartı,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -20,6 +21,7 @@ enum KartKimliği {
     AreaFill,
     ScalePadding,
     ZoomWheel,
+    ZoomTouch,
 }
 
 impl KartKimliği {
@@ -29,6 +31,7 @@ impl KartKimliği {
             Self::AreaFill => "Area Fill",
             Self::ScalePadding => "Scale Padding · Flat",
             Self::ZoomWheel => "Wheel Zoom & Drag",
+            Self::ZoomTouch => "Pinch Zoom & Pan",
         }
     }
 
@@ -42,6 +45,7 @@ impl KartKimliği {
                 "scale-padding.html · 13 düz seri · kaynakla aynı değer düzeyleri"
             }
             Self::ZoomWheel => "zoom-wheel.html · resmî 0.75 katsayılı tekerlek eklentisi",
+            Self::ZoomTouch => "zoom-touch.html · resmî kıstırma ve tek parmak taşıma eklentisi",
         }
     }
 
@@ -51,6 +55,7 @@ impl KartKimliği {
             Self::AreaFill => AREA_FILL_KART_TANIM_ÖRNEĞİ,
             Self::ScalePadding => SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
             Self::ZoomWheel => ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+            Self::ZoomTouch => ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
         }
     }
 
@@ -60,6 +65,7 @@ impl KartKimliği {
             Self::AreaFill => "src/kart/area_fill.rs",
             Self::ScalePadding => "src/kart/scale_padding.rs",
             Self::ZoomWheel => "src/kart/zoom_wheel.rs",
+            Self::ZoomTouch => "src/kart/zoom_touch.rs",
         }
     }
 
@@ -164,6 +170,7 @@ fn grafik_oluştur(kart: KartKimliği, nokta_sayısı: usize) -> Result<Grafik, 
         KartKimliği::AreaFill => area_fill_kartı(),
         KartKimliği::ScalePadding => scale_padding_kartı(),
         KartKimliği::ZoomWheel => zoom_wheel_kartı(),
+        KartKimliği::ZoomTouch => zoom_touch_kartı(),
     }?;
     Grafik::yeni(seçenekler, veri)
 }
@@ -181,6 +188,7 @@ impl Render for ChartListesi {
             KartKimliği::AreaFill => "30 sabit nokta × 3 seri".to_string(),
             KartKimliği::ScalePadding => "10 nokta × 13 düz seri".to_string(),
             KartKimliği::ZoomWheel => "7 nokta × 2 seri".to_string(),
+            KartKimliği::ZoomTouch => "7 nokta × 2 seri".to_string(),
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
@@ -212,6 +220,7 @@ impl Render for ChartListesi {
                 "0.105", "9500", "10000", "10500",
             ],
             KartKimliği::ZoomWheel => &["One", "Two"],
+            KartKimliği::ZoomTouch => &["One", "Two"],
         };
         let lejant = lejant.map_or_else(
             || {
@@ -411,6 +420,42 @@ impl Render for ChartListesi {
                             .text_xs()
                             .text_color(vurgu)
                             .child("Resmî tekerlek eklentisi · 2 seri"),
+                    ),
+            )
+            .child(
+                div()
+                    .id("kart-zoom-touch")
+                    .cursor_pointer()
+                    .mt_2()
+                    .p_3()
+                    .rounded_lg()
+                    .border_1()
+                    .border_color(if aktif_kart == KartKimliği::ZoomTouch {
+                        vurgu
+                    } else {
+                        rgb(0xd1d5db)
+                    })
+                    .bg(if aktif_kart == KartKimliği::ZoomTouch {
+                        rgb(0xfef2f2)
+                    } else {
+                        panel
+                    })
+                    .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                        bu.kartı_seç(KartKimliği::ZoomTouch, cx);
+                    }))
+                    .child(
+                        div()
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .text_color(metin)
+                            .child("Pinch Zoom & Pan"),
+                    )
+                    .child(div().mt_1().text_xs().text_color(soluk).child("zoom-touch"))
+                    .child(
+                        div()
+                            .mt_2()
+                            .text_xs()
+                            .text_color(vurgu)
+                            .child("Resmî touch eklentisi · 2 seri"),
                     ),
             );
 

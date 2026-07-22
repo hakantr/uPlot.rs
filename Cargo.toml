@@ -60,3 +60,7 @@ required-features = ["svg"]
 [[example]]
 name = "zoom_wheel"
 required-features = ["svg"]
+
+[[example]]
+name = "zoom_touch"
+required-features = ["svg"]
