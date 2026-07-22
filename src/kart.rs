@@ -1,5 +1,17 @@
 use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
 
+/// Masaüstü ve WASM kataloglarında gösterilen, çalıştırılabilir API biçimiyle
+/// aynı kalan kart tanım örneği.
+pub const İLK_KART_TANIM_ÖRNEĞİ: &str = r##"let seçenekler = GrafikSeçenekleri::yeni(800, 400)?
+    .başlık("İlk kart · sin(x)")
+    .x_zaman(false)
+    .seri(SeriSeçenekleri::yeni("sin(x)")
+        .renk("#dc2626")
+        .çizgi_kalınlığı(1.5));
+
+let veri = HizalıVeri::yeni(x, vec![y])?;
+let grafik = Grafik::yeni(seçenekler, veri)?;"##;
+
 /// `../uPlot/demos/resize.html` kaynaklı ilk uyum kartı.
 pub fn ilk_kart() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
     sinüs_kartı(100)

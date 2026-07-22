@@ -11,7 +11,9 @@ use gpui::{
 };
 use ortak_bilesenler::{CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, PlatformPencere};
 
-use crate::{Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne, sinüs_kartı};
+use crate::{
+    Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ
+};
 
 #[derive(Clone, Copy)]
 struct İmleçDurumu {
@@ -334,7 +336,31 @@ impl Render for ChartListesi {
             )
             .child(araçlar)
             .child(div().mb_2().text_xs().text_color(vurgu).child(lejant))
-            .child(çizim);
+            .child(çizim)
+            .child(
+                div()
+                    .mt_3()
+                    .p_3()
+                    .rounded_lg()
+                    .border_1()
+                    .border_color(rgb(0xd1d5db))
+                    .bg(rgb(0x111827))
+                    .child(
+                        div()
+                            .mb_2()
+                            .text_xs()
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .text_color(rgb(0x93c5fd))
+                            .child("Kart tanımı · src/kart.rs"),
+                    )
+                    .child(
+                        div()
+                            .text_xs()
+                            .font_family("SF Mono")
+                            .text_color(rgb(0xe5e7eb))
+                            .child(İLK_KART_TANIM_ÖRNEĞİ),
+                    ),
+            );
 
         let içerik = div()
             .size_full()

@@ -17,7 +17,7 @@ pub mod veri;
 pub use cizim::{Komut, MetinHizası, Nokta, Sahne};
 pub use grafik::Grafik;
 pub use hata::UplotHatası;
-pub use kart::{ilk_kart, sinüs_kartı};
+pub use kart::{ilk_kart, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ};
 pub use olcek::Aralık;
 pub use secenek::{GrafikSeçenekleri, SeriSeçenekleri};
 pub use veri::HizalıVeri;

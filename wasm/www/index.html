@@ -36,6 +36,13 @@
              border: 1px solid #dc2626; vertical-align: -1px; }
     .yardım { position: absolute; right: 20px; top: 17px; color: #6b7280;
               font-size: 11px; pointer-events: none; }
+    .kod-örneği { margin-top: 14px; border: 1px solid #d1d5db; border-radius: 10px;
+                  background: #111827; color: #e5e7eb; overflow: hidden; }
+    .kod-örneği summary { padding: 9px 12px; color: #93c5fd; cursor: pointer;
+                          font-size: 12px; font-weight: 650; }
+    .kod-örneği pre { max-height: 150px; margin: 0; padding: 0 12px 12px;
+                      overflow: auto; white-space: pre; font: 11px/1.45 "SFMono-Regular",
+                      Consolas, monospace; }
     #hata { color: #b91c1c; }
     @media (max-width: 760px) {
       .uygulama { height: auto; min-height: 100vh; grid-template-columns: 1fr; overflow: visible; }
@@ -67,17 +74,22 @@
           <output id="nokta-değeri">100 nokta</output>
         </label>
       </header>
+      <details class="kod-örneği" open>
+        <summary>Kart tanımı · src/kart.rs</summary>
+        <pre><code id="kart-tanım-kodu">Kod örneği yükleniyor…</code></pre>
+      </details>
       <section id="chart" aria-live="polite"><span>WASM yükleniyor…</span></section>
       <p id="hata" role="alert"></p>
     </main>
   </div>
   <script type="module">
-    import init, { ilk_kart_svg_aralik, kart_sayisi, kaynak_commit } from "../pkg/uplot_rs_wasm.js";
+    import init, { ilk_kart_svg_aralik, ilk_kart_tanim_ornegi, kart_sayisi, kaynak_commit } from "../pkg/uplot_rs_wasm.js";
 
     const chart = document.getElementById("chart");
     const nokta = document.getElementById("nokta");
     const değer = document.getElementById("nokta-değeri");
     const hata = document.getElementById("hata");
+    const kartTanımKodu = document.getElementById("kart-tanım-kodu");
 
     const TAM_X = 2 * Math.PI;
     let xAralığı = [0, TAM_X * 99 / 100];
@@ -219,6 +231,7 @@
       await init();
       document.documentElement.dataset.kartSayısı = String(kart_sayisi());
       document.documentElement.dataset.kaynakCommit = kaynak_commit();
+      kartTanımKodu.textContent = ilk_kart_tanim_ornegi();
       nokta.addEventListener("input", () => {
         const sayı = Number(nokta.value);
         xAralığı = [0, TAM_X * (sayı - 1) / sayı];

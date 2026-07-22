@@ -1,6 +1,6 @@
 //! Tarayıcı chart listesinin WASM köprüsü.
 
-use uplot_rs::{Aralık, Grafik, sinüs_kartı};
+use uplot_rs::{Aralık, Grafik, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -33,6 +33,11 @@ pub fn kart_sayisi() -> usize {
 }
 
 #[wasm_bindgen]
+pub fn ilk_kart_tanim_ornegi() -> String {
+    İLK_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
 pub fn kaynak_commit() -> String {
     "0e5812c504430f5c804e0f993376d8999b26cc34".to_string()
 }
@@ -57,6 +62,7 @@ mod testler {
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("İlk kart · sin(x)"));
         assert_eq!(kart_sayisi(), 1);
+        assert!(ilk_kart_tanim_ornegi().contains("GrafikSeçenekleri::yeni"));
 
         let yakın = ilk_kart_svg_aralik(100, 800, 400, 1.0, 2.0);
         assert!(yakın.contains("<circle"));

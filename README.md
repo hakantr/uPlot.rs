@@ -20,6 +20,7 @@ Port şu anda Faz 0 altyapısı ve ilk dikey uyum kartını içerir:
 - bağımlılıksız SVG yüzeyi;
 - `../gpui_kutuphanesi` title bar/düğmelerini kullanan GPUI masaüstü chart listesi;
 - 8081 portunda çalışan etkileşimli WASM chart listesi;
+- masaüstü ve WASM'de ortak Rust kart tanımı örneği;
 - kaynak kilidi, API matrisi, demo manifesti ve senaryo kaydı;
 - ilk kart: `demos/resize.html` tabanlı 100 noktalı `sin(x)` çizgisi.
 
