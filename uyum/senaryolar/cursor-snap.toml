@@ -1,0 +1,35 @@
+id = "cursor-snap"
+kaynak = "../uPlot/demos/cursor-snap.html"
+fixture = "src/kart/cursor_snap.rs#cursor_snap_kartı"
+viewport = [1920, 600]
+device_pixel_ratio = 1
+durum = "etkileşimli"
+
+[veri]
+x_değerleri = "1..=30"
+değer_havuzu = "-10..=10"
+seri_sayısı = 3
+seri_uzunluğu = 30
+kanıt_rastgele_üreteci = "mulberry32"
+kanıt_tohumu = 1397637456
+
+[imleç]
+kaynak_callback = "cursor.move"
+ızgara_x_piksel = 10.0
+ızgara_y_piksel = 10.0
+sahiplik = "çekirdek"
+gpui_adaptörü = true
+wasm_adaptörü = true
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/cursor-snap.svg"

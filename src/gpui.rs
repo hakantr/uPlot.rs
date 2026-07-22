@@ -199,14 +199,27 @@ impl GpuiGrafik {
             self.imleç = None;
             return;
         }
-        let (sol, sağ, _, _) = self.çizim_alanı();
-        let oran = f64::from((fare.x - sol) / (sağ - sol));
-        let Some((veri_x, seri_değerleri)) = self.grafik.en_yakın_noktalar(oran) else {
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        let yatay = f64::from((fare.x - sol) / (sağ - sol));
+        let dikey = f64::from((fare.y - üst) / (alt - üst));
+        let Some((yatay, dikey)) = self.grafik.imleç_oranlarını_uyarla(
+            yatay,
+            dikey,
+            f64::from(sağ - sol),
+            f64::from(alt - üst),
+        ) else {
+            self.imleç = None;
+            return;
+        };
+        let Some((veri_x, seri_değerleri)) = self.grafik.en_yakın_noktalar(yatay) else {
             self.imleç = None;
             return;
         };
         self.imleç = Some(İmleçDurumu {
-            fare,
+            fare: Nokta::yeni(
+                sol + (yatay as f32) * (sağ - sol),
+                üst + (dikey as f32) * (alt - üst),
+            ),
             veri_x,
             seri_değerleri,
         });

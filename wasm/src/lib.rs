@@ -3,11 +3,11 @@
 #![allow(confusable_idents)]
 
 use uplot_rs::{
-    AREA_FILL_KART_TANIM_ÖRNEĞİ, Grafik, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, months_artık_yıllı_kartı,
-    months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı,
-    zoom_touch_kartı, zoom_wheel_kartı,
+    AREA_FILL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, Grafik, MONTHS_KART_TANIM_ÖRNEĞİ,
+    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, cursor_snap_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı,
 };
 use wasm_bindgen::prelude::*;
 
@@ -30,6 +30,7 @@ impl KartOturumu {
             "zoom-touch" => zoom_touch_kartı(),
             "months-no-leap" => months_artık_yılsız_kartı(),
             "months-leap" => months_artık_yıllı_kartı(),
+            "cursor-snap" => cursor_snap_kartı(),
             kimlik => Err(UplotHatası::BilinmeyenKart {
                 kimlik: kimlik.to_string(),
             }),
@@ -139,6 +140,18 @@ impl KartOturumu {
             })
     }
 
+    pub fn imlec_oranlarini_uyarla(
+        &self,
+        yatay_oran: f64,
+        dikey_oran: f64,
+        çizim_genişliği: f64,
+        çizim_yüksekliği: f64,
+    ) -> Vec<f64> {
+        self.grafik
+            .imleç_oranlarını_uyarla(yatay_oran, dikey_oran, çizim_genişliği, çizim_yüksekliği)
+            .map_or_else(Vec::new, |(x, y)| vec![x, y])
+    }
+
     pub fn yakinlastirilmis(&self) -> bool {
         self.grafik.yakınlaştırılmış()
     }
@@ -154,7 +167,7 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    7
+    8
 }
 
 #[wasm_bindgen]
@@ -185,6 +198,11 @@ pub fn zoom_touch_kart_tanim_ornegi() -> String {
 #[wasm_bindgen]
 pub fn months_kart_tanim_ornegi() -> String {
     MONTHS_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
+pub fn cursor_snap_kart_tanim_ornegi() -> String {
+    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -231,7 +249,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 7);
+        assert_eq!(kart_sayisi(), 8);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -256,7 +274,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 7);
+        assert_eq!(kart_sayisi(), 8);
     }
 
     #[test]
@@ -309,5 +327,18 @@ mod testler {
             assert!(svg.contains("20"));
             assert!(svg.contains("<path"));
         }
+    }
+
+    #[test]
+    fn cursor_snap_wasm_ızgara_oranını_çekirdekten_alır() {
+        let oturum = KartOturumu::yeni("cursor-snap", 100);
+        assert!(oturum.is_ok());
+        let Ok(oturum) = oturum else {
+            return;
+        };
+        assert_eq!(
+            oturum.imlec_oranlarini_uyarla(0.14, 0.16, 100.0, 100.0),
+            vec![0.1, 0.2]
+        );
     }
 }

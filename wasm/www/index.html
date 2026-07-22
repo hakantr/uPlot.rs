@@ -109,6 +109,11 @@
         <small>months-leap</small>
         <div class="durum">UTC ay ekseni · months.html</div>
       </article>
+      <article class="kart" data-kart="cursor-snap" aria-current="false" tabindex="0">
+        <strong>Cursor Snap</strong>
+        <small>cursor-snap</small>
+        <div class="durum">10×10 piksel çekirdek ızgarası</div>
+      </article>
     </aside>
     <main>
       <header>
@@ -150,6 +155,7 @@
       zoom_wheel_kart_tanim_ornegi,
       zoom_touch_kart_tanim_ornegi,
       months_kart_tanim_ornegi,
+      cursor_snap_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -300,6 +306,22 @@
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       },
+      "cursor-snap": {
+        başlık: "Cursor Snap · 10×10 grid",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/cursor-snap.html">cursor-snap.html</a>
+          <br>Kaynakla aynı 1…30 X dizisi, −10…10 değer havuzu, üç seri ve alan dolguları.
+          <br>İmleç konumu 10×10 piksel ızgarasına çekirdekte oturtulur; GPUI ve WASM aynı sonucu kullanır.`,
+        tanım: () => cursor_snap_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/cursor_snap.rs",
+        seriler: [
+          { etiket: "1", renk: "#ff0000" },
+          { etiket: "2", renk: "#008000" },
+          { etiket: "3", renk: "#0000ff" },
+        ],
+        yardım: "İmleç: 10×10 piksel ızgarasına oturur · sürükle: seç · boşluk + sürükle: taşı",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
     };
 
     function ortakEtkileşimler() {
@@ -397,16 +419,24 @@
     }
 
     function imleciGüncelle(olay) {
-      const { x, y, svg, view } = svgKonumu(olay);
+      const { x: hamX, y: hamY, svg, view } = svgKonumu(olay);
       const sol = 64, sağ = view.width - 24, üst = 48, alt = view.height - 48;
       const çizgiler = ["imleç-x", "imleç-y"].map(id => svg.querySelector(`#${id}`));
       const noktalar = kartlar[aktifKart].seriler.map((_, indeks) => svg.querySelector(`#imleç-nokta-${indeks}`));
       const öğeler = [...çizgiler, ...noktalar];
-      if (x < sol || x > sağ || y < üst || y > alt) {
+      if (hamX < sol || hamX > sağ || hamY < üst || hamY > alt) {
         öğeler.forEach(öğe => öğe?.setAttribute("visibility", "hidden"));
         return;
       }
-      const oran = Math.max(0, Math.min(1, (x - sol) / (sağ - sol)));
+      const hamOranX = Math.max(0, Math.min(1, (hamX - sol) / (sağ - sol)));
+      const hamOranY = Math.max(0, Math.min(1, (hamY - üst) / (alt - üst)));
+      const uyarlanmış = oturum?.imlec_oranlarini_uyarla(
+        hamOranX, hamOranY, sağ - sol, alt - üst
+      ) ?? [];
+      if (uyarlanmış.length !== 2) return;
+      const [oran, dikeyOran] = uyarlanmış;
+      const x = sol + oran * (sağ - sol);
+      const y = üst + dikeyOran * (alt - üst);
       const enYakın = oturum?.en_yakin_noktalar(oran) ?? [];
       if (enYakın.length < 2) return;
       const [gerçekX, ...seriDeğerleri] = enYakın;
@@ -414,8 +444,8 @@
       const noktaX = sol + (gerçekX - xAralığı[0]) / (xAralığı[1] - xAralığı[0]) * (sağ - sol);
       const [yMin, yMax] = oturum.gorunur_y_araligi();
       const [dikey, yatay] = çizgiler;
-      // İmleç çizgileri fareyi kesintisiz izler; yalnız seri noktası en yakın
-      // veri örneğine kilitlenir.
+      // Varsayılan kartlarda kesintisiz; cursor-snap kartında çekirdek ayarının
+      // döndürdüğü 10×10 piksel ızgarasına bağlı hareket eder.
       dikey.setAttribute("x1", x); dikey.setAttribute("x2", x);
       dikey.setAttribute("y1", üst); dikey.setAttribute("y2", alt);
       yatay.setAttribute("x1", sol); yatay.setAttribute("x2", sağ);

@@ -434,6 +434,73 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "bekliyor"
       }
+    },
+    {
+      "sıra": 7,
+      "id": "cursor-snap",
+      "başlık": {
+        "en": "Cursor Snap",
+        "tr": "Izgaraya Oturan İmleç"
+      },
+      "kaynak": "demos/cursor-snap.html",
+      "kaynak_sha256": "10f202039b47c84db8b12f3e715ced88e9c9e9081e32fbc3b06256835be7c04c",
+      "ek_kaynaklar": [
+        {
+          "yol": "src/uPlot.js",
+          "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645"
+        }
+      ],
+      "fixture": "src/kart/cursor_snap.rs#cursor_snap_kartı",
+      "örnek": "examples/cursor_snap.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/cursor-snap.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/cursor_snap.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı",
+          "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
+          "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "kartta_kapalı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "devralındı"
+        },
+        "gerekçeler": {
+          "surekli-imlec-izleme": "Resmî cursor-snap kartı imleci bilinçli olarak 10×10 piksel ızgaraya oturtur."
+        }
+      },
+      "sahip_faz": 4,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-equivalent-xs-and-value-pool",
+        "seeded-reference-random-stream",
+        "three-filled-linear-series",
+        "core-owned-cursor-move-transform",
+        "10x10-pixel-cursor-grid",
+        "gpui-wasm-cursor-equivalence",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "kısmi",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "bekliyor"
+      }
     }
   ]
 }

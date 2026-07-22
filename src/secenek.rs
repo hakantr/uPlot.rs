@@ -147,6 +147,9 @@ pub struct GrafikSeçenekleri {
     pub yükseklik: u32,
     pub x_zaman: bool,
     pub y_aralığı: Option<Aralık>,
+    /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
+    /// imleci kare ızgaraya oturtan isteğe bağlı adım.
+    pub imleç_ızgara_adımı: Option<f32>,
     pub etkileşimler: EtkileşimSeçenekleri,
     pub seriler: Vec<SeriSeçenekleri>,
 }
@@ -165,6 +168,7 @@ impl GrafikSeçenekleri {
             yükseklik,
             x_zaman: true,
             y_aralığı: None,
+            imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
         })
@@ -182,6 +186,13 @@ impl GrafikSeçenekleri {
 
     pub fn y_aralığı(mut self, aralık: Aralık) -> Self {
         self.y_aralığı = Some(aralık);
+        self
+    }
+
+    pub fn imleç_ızgara_adımı(mut self, piksel: f32) -> Self {
+        if piksel.is_finite() && piksel > 0.0 {
+            self.imleç_ızgara_adımı = Some(piksel);
+        }
         self
     }
 

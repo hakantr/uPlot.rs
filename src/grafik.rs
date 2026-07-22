@@ -74,6 +74,34 @@ impl Grafik {
         &self.seçenekler.seriler
     }
 
+    /// Yüzey imlecinin normalize edilmiş konumunu kartın çekirdek ayarına göre
+    /// uyarlar. Izgara kapalıysa oranlar kesintisiz biçimde geri döner.
+    pub fn imleç_oranlarını_uyarla(
+        &self,
+        yatay_oran: f64,
+        dikey_oran: f64,
+        çizim_genişliği: f64,
+        çizim_yüksekliği: f64,
+    ) -> Option<(f64, f64)> {
+        if !yatay_oran.is_finite()
+            || !dikey_oran.is_finite()
+            || !çizim_genişliği.is_finite()
+            || !çizim_yüksekliği.is_finite()
+            || çizim_genişliği <= 0.0
+            || çizim_yüksekliği <= 0.0
+        {
+            return None;
+        }
+        let yatay = yatay_oran.clamp(0.0, 1.0);
+        let dikey = dikey_oran.clamp(0.0, 1.0);
+        let Some(adım) = self.seçenekler.imleç_ızgara_adımı.map(f64::from) else {
+            return Some((yatay, dikey));
+        };
+        let x = ((yatay * çizim_genişliği / adım).round() * adım) / çizim_genişliği;
+        let y = ((dikey * çizim_yüksekliği / adım).round() * adım) / çizim_yüksekliği;
+        Some((x.clamp(0.0, 1.0), y.clamp(0.0, 1.0)))
+    }
+
     pub fn tekerlek_etkileşimi_ayarla(&mut self, etkin: bool) {
         self.etkileşim.tekerlek_etkileşimi_ayarla(etkin);
     }
