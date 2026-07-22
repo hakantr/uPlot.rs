@@ -124,6 +124,11 @@
         <small>missing-data-x-gap</small>
         <div class="durum">X farkı &gt; 1 olduğunda yolu böl</div>
       </article>
+      <article class="kart" data-kart="dependent-scale" aria-current="false" tabindex="0">
+        <strong>Derived Scale</strong>
+        <small>dependent-scale</small>
+        <div class="durum">Fahrenheit → Celsius sağ ekseni</div>
+      </article>
     </aside>
     <main>
       <header>
@@ -167,6 +172,7 @@
       months_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
+      dependent_scale_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -356,6 +362,17 @@
         tanımYolu: "src/kart/missing_data.rs",
         seriler: [{ etiket: "Value", renk: "#ff0000" }],
         yardım: "Büyük X boşluğu görünür · sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
+      "dependent-scale": {
+        başlık: "Derived Scale",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/dependent-scale.html">dependent-scale.html</a>
+          <br>Kaynaktaki 7 Fahrenheit noktası ve z.from = y Celsius dönüşümü çekirdekte uygulanır.`,
+        tanım: () => dependent_scale_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/dependent_scale.rs",
+        seriler: [{ etiket: "blah", renk: "#008000" }],
+        yardım: "Sol eksen: °F · sağ eksen: türetilmiş °C · tekerlek/seçim/touch ortak profili",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       },

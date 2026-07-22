@@ -1,0 +1,31 @@
+id = "dependent-scale"
+kaynak = "../uPlot/demos/dependent-scale.html"
+fixture = "src/kart/dependent_scale.rs#dependent_scale_kartı"
+viewport = [600, 400]
+device_pixel_ratio = 1
+durum = "etkileşimli"
+
+[veri]
+x = [1, 2, 3, 4, 5, 6, 7]
+fahrenheit = [40, 43, 60, 65, 71, 73, 80]
+
+[türetilmiş_ölçek]
+kaynak = "y"
+hedef = "z"
+çarpan = 0.5555555555555556
+kaydırma = -17.77777777777778
+sol_birim = "° F"
+sağ_birim = "° C"
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/dependent-scale.svg"

@@ -1,5 +1,6 @@
 mod area_fill;
 mod cursor_snap;
+mod dependent_scale;
 mod missing_data;
 mod months;
 mod ortak;
@@ -13,6 +14,7 @@ pub use area_fill::{AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ, area
 pub use cursor_snap::{
     CURSOR_SNAP_KANIT_TOHUMU, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, cursor_snap_kartı
 };
+pub use dependent_scale::{DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, dependent_scale_kartı};
 pub use missing_data::{
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
 };

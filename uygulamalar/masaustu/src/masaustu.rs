@@ -9,13 +9,13 @@ use ortak_bilesenler::{
 };
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
-    AREA_FILL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
-    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, cursor_snap_kartı, missing_data_null_kartı,
-    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı,
+    AREA_FILL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
+    EtkileşimSeçenekleri, Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ,
+    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, cursor_snap_kartı,
+    dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -30,6 +30,7 @@ enum KartKimliği {
     CursorSnap,
     MissingDataNull,
     MissingDataXGap,
+    DependentScale,
 }
 
 impl KartKimliği {
@@ -45,6 +46,7 @@ impl KartKimliği {
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::MissingDataNull => "Missing Data · null values",
             Self::MissingDataXGap => "Missing Data · adjacent X gap",
+            Self::DependentScale => "Derived Scale · °F / °C",
         }
     }
 
@@ -66,6 +68,9 @@ impl KartKimliği {
             Self::MissingDataNull | Self::MissingDataXGap => {
                 "missing-data.html · resmî veri ve iki kaynak alt grafiği"
             }
+            Self::DependentScale => {
+                "dependent-scale.html · Fahrenheit'tan türetilen Celsius ekseni"
+            }
         }
     }
 
@@ -79,6 +84,7 @@ impl KartKimliği {
             Self::MonthsNoLeap | Self::MonthsLeap => MONTHS_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::MissingDataNull | Self::MissingDataXGap => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
+            Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
         }
     }
 
@@ -92,6 +98,7 @@ impl KartKimliği {
             Self::MonthsNoLeap | Self::MonthsLeap => "src/kart/months.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::MissingDataNull | Self::MissingDataXGap => "src/kart/missing_data.rs",
+            Self::DependentScale => "src/kart/dependent_scale.rs",
         }
     }
 
@@ -202,6 +209,7 @@ fn grafik_oluştur(kart: KartKimliği, nokta_sayısı: usize) -> Result<Grafik, 
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::MissingDataNull => missing_data_null_kartı(),
         KartKimliği::MissingDataXGap => missing_data_x_boşluğu_kartı(),
+        KartKimliği::DependentScale => dependent_scale_kartı(),
     }?;
     Grafik::yeni(seçenekler, veri)
 }
@@ -226,6 +234,7 @@ impl Render for ChartListesi {
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
             KartKimliği::MissingDataNull => "200 nokta × 3 seri · % + MB".to_string(),
             KartKimliği::MissingDataXGap => "8 nokta × 1 seri · 2 yol parçası".to_string(),
+            KartKimliği::DependentScale => "7 nokta × °F veri · türetilmiş °C ekseni".to_string(),
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
@@ -262,6 +271,7 @@ impl Render for ChartListesi {
             KartKimliği::CursorSnap => &["1", "2", "3"],
             KartKimliği::MissingDataNull => &["CPU", "RAM", "TCP Out"],
             KartKimliği::MissingDataXGap => &["Value"],
+            KartKimliği::DependentScale => &["blah"],
         };
         let lejant = lejant.map_or_else(
             || {
@@ -567,6 +577,20 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::MissingDataXGap, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "kart-dependent-scale",
+                    "Derived Scale",
+                    "dependent-scale",
+                    aktif_kart == KartKimliği::DependentScale,
+                    "Fahrenheit → Celsius sağ ekseni",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::DependentScale, cx);
                 })),
             );
 

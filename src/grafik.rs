@@ -523,6 +523,22 @@ impl Grafik {
     }
 
     fn y_aralığı_ölçek(&self, anahtar: &str, x_aralığı: Aralık) -> Aralık {
+        if let Some(ölçek) = self.ölçek_seçeneği(anahtar)
+            && let Some(kaynak) = ölçek.kaynak.as_deref()
+            && kaynak != anahtar
+        {
+            let kaynak_aralığı = self.ham_y_aralığı_ölçek(kaynak, x_aralığı);
+            let dönüştür = |değer: f64| değer * ölçek.dönüşüm_çarpanı + ölçek.dönüşüm_kaydırması;
+            let ilk = dönüştür(kaynak_aralığı.en_az);
+            let son = dönüştür(kaynak_aralığı.en_çok);
+            if let Ok(aralık) = Aralık::yeni(ilk.min(son), ilk.max(son)) {
+                return aralık;
+            }
+        }
+        self.ham_y_aralığı_ölçek(anahtar, x_aralığı)
+    }
+
+    fn ham_y_aralığı_ölçek(&self, anahtar: &str, x_aralığı: Aralık) -> Aralık {
         self.ölçek_seçeneği(anahtar)
             .and_then(|ölçek| ölçek.aralık)
             .or_else(|| {

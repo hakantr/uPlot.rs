@@ -10,6 +10,9 @@ pub struct YÖlçekSeçenekleri {
     pub sağda: bool,
     pub ızgara: bool,
     pub birim: String,
+    pub kaynak: Option<String>,
+    pub dönüşüm_çarpanı: f64,
+    pub dönüşüm_kaydırması: f64,
 }
 
 impl YÖlçekSeçenekleri {
@@ -20,6 +23,9 @@ impl YÖlçekSeçenekleri {
             sağda: false,
             ızgara: true,
             birim: String::new(),
+            kaynak: None,
+            dönüşüm_çarpanı: 1.0,
+            dönüşüm_kaydırması: 0.0,
         }
     }
 
@@ -40,6 +46,22 @@ impl YÖlçekSeçenekleri {
 
     pub fn birim(mut self, birim: impl Into<String>) -> Self {
         self.birim = birim.into();
+        self
+    }
+
+    /// uPlot `scale.from` ve `scale.range` birleşiminin doğrusal karşılığıdır.
+    /// `çıktı = kaynak * çarpan + kaydırma` dönüşümünü uygular.
+    pub fn kaynak_dönüşümü(
+        mut self,
+        kaynak: impl Into<String>,
+        çarpan: f64,
+        kaydırma: f64,
+    ) -> Self {
+        if çarpan.is_finite() && çarpan.abs() > f64::EPSILON && kaydırma.is_finite() {
+            self.kaynak = Some(kaynak.into());
+            self.dönüşüm_çarpanı = çarpan;
+            self.dönüşüm_kaydırması = kaydırma;
+        }
         self
     }
 }

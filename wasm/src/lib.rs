@@ -3,13 +3,13 @@
 #![allow(confusable_idents)]
 
 use uplot_rs::{
-    AREA_FILL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, Grafik,
-    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
+    AREA_FILL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
+    Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
     SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, cursor_snap_kartı, missing_data_null_kartı,
-    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, cursor_snap_kartı, dependent_scale_kartı,
+    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
+    months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı,
+    zoom_touch_kartı, zoom_wheel_kartı,
 };
 use wasm_bindgen::prelude::*;
 
@@ -35,6 +35,7 @@ impl KartOturumu {
             "cursor-snap" => cursor_snap_kartı(),
             "missing-data-null" => missing_data_null_kartı(),
             "missing-data-x-gap" => missing_data_x_boşluğu_kartı(),
+            "dependent-scale" => dependent_scale_kartı(),
             kimlik => Err(UplotHatası::BilinmeyenKart {
                 kimlik: kimlik.to_string(),
             }),
@@ -187,7 +188,7 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    10
+    11
 }
 
 #[wasm_bindgen]
@@ -228,6 +229,11 @@ pub fn cursor_snap_kart_tanim_ornegi() -> String {
 #[wasm_bindgen]
 pub fn missing_data_kart_tanim_ornegi() -> String {
     MISSING_DATA_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
+pub fn dependent_scale_kart_tanim_ornegi() -> String {
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -274,7 +280,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 10);
+        assert_eq!(kart_sayisi(), 11);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -299,7 +305,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 10);
+        assert_eq!(kart_sayisi(), 11);
     }
 
     #[test]
@@ -384,5 +390,17 @@ mod testler {
             return;
         };
         assert!(boşluk.svg(960, 400).contains("adjacent points"));
+    }
+
+    #[test]
+    fn dependent_scale_wasm_iki_sıcaklık_eksenini_üretir() {
+        let oturum = KartOturumu::yeni("dependent-scale", 100);
+        assert!(oturum.is_ok());
+        let Ok(oturum) = oturum else {
+            return;
+        };
+        let svg = oturum.svg(600, 400);
+        assert!(svg.contains("° F"));
+        assert!(svg.contains("° C"));
     }
 }
