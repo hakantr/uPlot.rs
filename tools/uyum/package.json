@@ -1,0 +1,8 @@
+{
+  "name": "uplot-rs-uyum-araclari",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "denetle": "node denetle.mjs"
+  }
+}

@@ -1,0 +1,25 @@
+# Normatif kaynak görüntüsü. tools/uyum/denetle.mjs tarafından doğrulanır.
+manifest_sürümü = 1
+snapshot_tarihi = "2026-07-22"
+
+[uplot]
+sürüm = "1.6.32"
+commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+yol = "../uPlot"
+lisans = "MIT"
+
+[uplot_dosyaları]
+tip_bildirimi = "c9fb5d1fe8f2084b44690c841e84ab63402549d9420535a6081b389a461fefe5"
+çekirdek = "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645"
+
+[gpui]
+commit = "5566476024607a4c6999ab7b91d0218633a9b96c"
+yol = "../gpui"
+durum = "Faz 1 adaptörü bekliyor"
+
+[render_profili]
+viewport = [800, 400]
+device_pixel_ratio = 1
+font = "Arial"
+locale = "en"
+saat_dilimi = "UTC"

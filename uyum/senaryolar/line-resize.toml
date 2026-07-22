@@ -1,0 +1,35 @@
+id = "line-resize"
+kaynak = "../uPlot/demos/resize.html"
+fixture = "src/kart.rs#ilk_kart"
+viewport = [800, 400]
+device_pixel_ratio = 1
+durum = "etkileşimli"
+
+[veri]
+nokta_sayısı = 100
+x_en_az = 0.0
+x_en_çok_hariç = 6.283185307179586
+y_fonksiyonu = "sin(x)"
+
+[ölçekler.x]
+zaman = false
+
+[ölçekler.y]
+otomatik = true
+
+[etkileşim]
+koşullu_boş_noktalar = true
+hover_dolu_nokta = true
+kesikli_imleç = true
+canlı_lejant = true
+x_sürükle_yakınlaştır = true
+çift_tıkla_sıfırla = true
+
+[web]
+port = 8081
+kanıt = "target/wasm-resize-etkilesim.png"
+
+[beklenti]
+seri_sayısı = 1
+çizim_komutu_sayısı = 23
+svg_başlığı = "İlk kart · sin(x)"

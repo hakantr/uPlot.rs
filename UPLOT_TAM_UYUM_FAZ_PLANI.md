@@ -16,6 +16,10 @@ Hedef repo Apache-2.0 olarak yayımlanacaktır. uPlot'tan uyarlanan MIT kaynakla
 için özgün telif/lisans bildirimi `NOTICE` ve dağıtım içinde eksiksiz korunur;
 örnek verileri, fontlar ve diğer varlıklar da lisans envanterine girer.
 
+Kod tabanı Rust 2024 edition kullanır; asgari ve sabit geliştirme araç zinciri
+Rust 1.95.0'dır. Tasarım daha eski Rust sürümlerinin sınırlamaları gözetilerek
+geriye çekilmez.
+
 | Kaynak | Kilit | Yerel yol | Rol |
 |---|---|---|---|
 | uPlot | `1.6.32`, commit `0e5812c504430f5c804e0f993376d8999b26cc34` | `../uPlot` | Tek normatif davranış ve algoritma kaynağı |
@@ -108,10 +112,10 @@ Rust seçenekleri + hizalı veri
 ```text
 src/
   veri.rs, secenek.rs, hata.rs
-  olcek/{mod,aralik,dogrusal,log,asinh,zaman}.rs
+  olcek.rs, olcek/{aralik,dogrusal,log,asinh,zaman}.rs
   yerlesim/{eksen,izgara,gosterge}.rs
   yol/{dogrusal,basamak,spline,monoton,catmull_rom,sutun,nokta,bant}.rs
-  cizim/{komut,yuzey,kayit,piksel,gpui}.rs
+  cizim.rs, cizim/{komut,yuzey,kayit,piksel,gpui}.rs
   etkilesim/{imlec,secim,odak,senkron}.rs
   kanca.rs, eklenti.rs, zaman.rs, grafik.rs, lib.rs
 uyum/

@@ -1,0 +1,42 @@
+{
+  "şema_sürümü": 1,
+  "kaynak_commit": "0e5812c504430f5c804e0f993376d8999b26cc34",
+  "kartlar": [
+    {
+      "sıra": 1,
+      "id": "line-resize",
+      "başlık": {
+        "en": "Resize",
+        "tr": "İlk kart · sin(x)"
+      },
+      "kaynak": "demos/resize.html",
+      "kaynak_sha256": "f9e5d8eba64cb8be7c3222a006b261a2dc234592478b54f5eedd453b852f3593",
+      "fixture": "src/kart.rs#ilk_kart",
+      "örnek": "examples/ilk_kart.rs",
+      "masaüstü_örneği": "examples/chart_listesi.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/line-resize.toml",
+      "sahip_faz": 1,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "aligned-data",
+        "numeric-x-scale",
+        "auto-y-scale",
+        "linear-path",
+        "svg-surface",
+        "conditional-hollow-points",
+        "cursor-hover",
+        "live-legend",
+        "x-drag-zoom",
+        "responsive-resize"
+      ],
+      "kanıt": {
+        "api": "kısmi",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "kısmi"
+      }
+    }
+  ]
+}

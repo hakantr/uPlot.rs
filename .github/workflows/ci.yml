@@ -1,0 +1,58 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  cekirdek:
+    runs-on: ubuntu-latest
+    steps:
+      - name: uPlot.rs
+        uses: actions/checkout@v4
+        with:
+          path: uPlot.rs
+      - name: Kilitli uPlot
+        uses: actions/checkout@v4
+        with:
+          repository: leeoniya/uPlot
+          ref: 0e5812c504430f5c804e0f993376d8999b26cc34
+          path: uPlot
+      - name: Kilitli GPUI
+        uses: actions/checkout@v4
+        with:
+          repository: hakantr/gpui
+          ref: 5566476024607a4c6999ab7b91d0218633a9b96c
+          path: gpui
+      - name: Kilitli GPUI bileşen kütüphanesi
+        uses: actions/checkout@v4
+        with:
+          repository: hakantr/gpui_kutuphanesi
+          ref: c97926c3c15ab99091b51f7ed88bd98f357de409
+          path: gpui_kutuphanesi
+      - uses: dtolnay/rust-toolchain@1.95
+        with:
+          components: clippy,rustfmt
+          targets: wasm32-unknown-unknown
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Kaynak kilidi ve uyum envanteri
+        working-directory: uPlot.rs
+        run: npm --prefix tools/uyum run denetle
+      - name: Biçim
+        working-directory: uPlot.rs
+        run: cargo fmt --all --check
+      - name: Clippy
+        working-directory: uPlot.rs
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Testler
+        working-directory: uPlot.rs
+        run: cargo test --all-targets
+      - name: İlk kart smoke testi
+        working-directory: uPlot.rs
+        run: cargo run --example ilk_kart
+      - name: WASM çekirdeği
+        working-directory: uPlot.rs
+        run: cargo check -p uplot-rs-wasm --target wasm32-unknown-unknown
