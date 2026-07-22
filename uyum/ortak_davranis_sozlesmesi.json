@@ -26,7 +26,7 @@
       "id": "gpui-wasm-yuzey-esdegerligi",
       "başlık": "GPUI ve WASM yüzey eşdeğerliği",
       "tür": "mimari_kural",
-      "açıklama": "İki katalog aynı Rust kartını ve ortak sahne semantiğini kullanır.",
+      "açıklama": "İki katalog aynı Rust kartını ve ortak sahne semantiğini kullanır. Kataloglardan biri için istenen sunum veya etkileşim değişikliği, platform destekliyorsa aynı çalışma kapsamında diğerine de uygulanır; gerçek platform istisnası açıkça belgelenir.",
       "kanıt_dosyaları": ["src/gpui.rs", "wasm/src/lib.rs"]
     },
     {

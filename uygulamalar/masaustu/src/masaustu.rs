@@ -363,9 +363,12 @@ impl Render for ChartListesi {
         );
 
         let liste = div()
+            .id("kart-listesi")
             .w(px(280.0))
             .h_full()
+            .min_h_0()
             .flex_none()
+            .overflow_y_scroll()
             .p_4()
             .bg(panel)
             .border_r_1()

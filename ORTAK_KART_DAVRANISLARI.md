@@ -25,6 +25,9 @@ yapılmadan yeni kart eklenemez.
 1. Resmî demonun sabit verisi, üretici algoritması, seri sırası ve kaynakta sabitse boyutu korunur.
 2. Veri, ölçek, yakınlaştırma, taşıma ve diğer kart davranışları çekirdekte çözülür; kataloglar bunları yeniden yazmaz.
 3. GPUI ve WASM aynı Rust kart tanımını ve aynı sahne semantiğini kullanır.
+   Kataloglardan biri için istenen sunum/etkileşim değişikliği platformca
+   destekleniyorsa aynı çalışma kapsamında diğerine de uygulanır; yalnız gerçek
+   platform kısıtları açıkça belgelenmiş istisna olabilir.
 4. Grafik yüzey boyutuna duyarlı yeniden çizilir.
 5. Seri yolları ve dolguları çizim dikdörtgeninin dört sınırında kırpılır.
 6. Eksen ve ızgara yakınlaştırma/taşıma sonrasında görünür aralıktan yeniden hesaplanır; sıfır hizası korunur.
