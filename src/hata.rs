@@ -33,6 +33,9 @@ pub enum UplotHatası {
         beklenen: usize,
         bulunan: usize,
     },
+    BilinmeyenKart {
+        kimlik: String,
+    },
 }
 
 impl Display for UplotHatası {
@@ -74,6 +77,7 @@ impl Display for UplotHatası {
                 f,
                 "veri için {beklenen} seri seçeneği gerekir; bulunan: {bulunan}"
             ),
+            Self::BilinmeyenKart { kimlik } => write!(f, "bilinmeyen kart kimliği: {kimlik}"),
         }
     }
 }

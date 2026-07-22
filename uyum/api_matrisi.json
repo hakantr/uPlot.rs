@@ -58,6 +58,18 @@
       "test": "tests/ilk_kart.rs"
     },
     {
+      "kaynak_yolu": "Series.fill",
+      "rust_karşılığı": "SeriSeçenekleri::dolgu",
+      "durum": "tam_kanıtlı",
+      "test": "tests/area_fill.rs"
+    },
+    {
+      "kaynak_yolu": "Series.fillTo",
+      "rust_karşılığı": "SeriSeçenekleri::dolgu_tabanı",
+      "durum": "kısmi",
+      "test": "tests/area_fill.rs"
+    },
+    {
       "kaynak_yolu": "Series.paths.linear",
       "rust_karşılığı": "Grafik::çiz",
       "durum": "uygulandı_kanıt_bekliyor",

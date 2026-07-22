@@ -1,0 +1,31 @@
+id = "area-fill"
+kaynak = "../uPlot/demos/area-fill.html"
+fixture = "src/kart/area_fill.rs#area_fill_kartı"
+viewport = [1920, 600]
+device_pixel_ratio = 1
+durum = "etkileşimli"
+
+[veri]
+x_değerleri = "1..=30"
+değer_havuzu = "-10..=10"
+seri_sayısı = 3
+seri_uzunluğu = 30
+kaynak_örnekleme = "vals[Math.floor(random * vals.length)]"
+kanıt_rastgele_üreteci = "mulberry32"
+kanıt_tohumu = 3235779124
+
+[seri]
+çizgi_renkleri = ["#ff0000", "#008000", "#0000ff"]
+dolgu_renkleri = ["#ff00001a", "#00ff001a", "#0000ff1a"]
+dolgu_tabanı = 0.0
+
+[etkileşim]
+cursor = true
+canlı_lejant = true
+x_sürükle_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/area-fill.svg"

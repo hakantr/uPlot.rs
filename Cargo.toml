@@ -48,3 +48,7 @@ web-time = "1.1.0"
 [[example]]
 name = "ilk_kart"
 required-features = ["svg"]
+
+[[example]]
+name = "area_fill"
+required-features = ["svg"]

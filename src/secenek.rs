@@ -1,5 +1,9 @@
 use crate::{Aralık, UplotHatası};
 
+mod seri;
+
+pub use seri::SeriSeçenekleri;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TekerlekKipi {
     /// Piksel ve satır olaylarını giriş aygıtına göre ayrı işler.
@@ -132,35 +136,6 @@ impl EtkileşimSeçenekleri {
 
     pub fn dokunma_etkileşimi(mut self, etkin: bool) -> Self {
         self.dokunma_etkileşimi = etkin;
-        self
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct SeriSeçenekleri {
-    pub etiket: String,
-    pub renk: String,
-    pub çizgi_kalınlığı: f32,
-    pub göster: bool,
-}
-
-impl SeriSeçenekleri {
-    pub fn yeni(etiket: impl Into<String>) -> Self {
-        Self {
-            etiket: etiket.into(),
-            renk: "#000000".to_string(),
-            çizgi_kalınlığı: 1.0,
-            göster: true,
-        }
-    }
-
-    pub fn renk(mut self, renk: impl Into<String>) -> Self {
-        self.renk = renk.into();
-        self
-    }
-
-    pub fn çizgi_kalınlığı(mut self, kalınlık: f32) -> Self {
-        self.çizgi_kalınlığı = kalınlık.max(0.0);
         self
     }
 }

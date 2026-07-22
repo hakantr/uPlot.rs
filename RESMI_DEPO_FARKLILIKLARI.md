@@ -52,6 +52,12 @@ Aşağıdakiler uPlot.rs'e özgü özellik olarak değerlendirilmez:
 - çift tıklamayla tam X aralığına dönme;
 - resmî `wheelZoomPlugin`in `0.75` temel katsayısı, fare odağı ve aralık sınırı.
 - resmî `zoom-touch` eklentisinin X/Y ölçek yakınlaştırma ve taşıma matematiği.
+- `area-fill.html` içindeki 30 X değeri, değer havuzu, üç seri örnekleme sırası,
+  çizgi renkleri ve `%10` dolgular.
+
+Rastgele veri kullanan resmî demoların tekrar üretilebilir görsel kanıtında,
+aynı açık tohum hem JavaScript referansına hem Rust portuna verilir. Bu yalnızca
+kanıt düzeneğidir; demo algoritması ve veri dağılımı değiştirilmez.
 
 Kaynaklar:
 
@@ -110,7 +116,13 @@ plot rectangle, drag selection, double-click reset, and the official wheel
 plugin's base mathematics are direct ports and are not claimed as uPlot.rs
 extensions. The same applies to the X/Y scale mathematics ported from the
 official `zoom-touch` demo; only the Space + left-drag desktop binding is an
-input adaptation.
+input adaptation. The 30 X values, value pool, three-series sampling order,
+stroke colors, and 10% fills from `area-fill.html` are also direct ports.
+
+For reproducible visual evidence of official demos that use random data, the
+same explicit seed is supplied to both the JavaScript reference and Rust port.
+This is evidence-harness behavior only; it does not alter the demo algorithm or
+data distribution.
 
 The normative uPlot checkout is commit/hash locked. GPUI dependencies remain
 live by project policy; this is a development-policy distinction rather than

@@ -16,7 +16,7 @@ izler.
 derlemede kardeş çalışma ağaçlarının mevcut durumunu, CI ise depoların güncel
 varsayılan dallarını kullanır. Yalnız normatif uPlot kaynağı commit kilitlidir.
 
-Port şu anda Faz 0 altyapısı ve ilk dikey uyum kartını içerir:
+Port, ortak altyapı üzerine tamamlanan ilk iki dikey uyum kartını içerir:
 
 - doğrulanmış sütunlu/hizalı veri modeli;
 - sayısal x ve sabit/otomatik y aralığı;
@@ -25,8 +25,11 @@ Port şu anda Faz 0 altyapısı ve ilk dikey uyum kartını içerir:
 - `../gpui_kutuphanesi` title bar/düğmelerini kullanan GPUI masaüstü chart listesi;
 - 8081 portunda çalışan etkileşimli WASM chart listesi;
 - masaüstü ve WASM'de ortak Rust kart tanımı örneği;
-- kaynak kilidi, API matrisi, demo manifesti ve senaryo kaydı;
+- 18 kaynak dosyası, 304 genel API üyesi, 28 veri varlığı ve 73 demonun
+  hash-kilitli envanteri;
 - `Resize` kartı: `demos/resize.html` tabanlı 100 noktalı `sin(x)` çizgisi.
+- `Area Fill` kartı: kaynaktaki 1…30 x dizisi, −10…10 değer havuzu, üç seri,
+  sıfıra dolgu ve çoklu cursor/lejant davranışı.
 
 `Resize` kartı, kaynak demonun koşullu boş noktalarını, dolu hover noktasını, canlı
 lejantını, görünür aralığa göre yeniden hizalanan sayısal ızgarasını ve X
@@ -72,6 +75,9 @@ let yüzey = cx.new(|_| GpuiGrafik::yeni(grafik));
 ```
 
 GPUI katalog uygulaması bu bileşeni kullanır fakat kütüphane paketine girmez.
+Ortak sahne modeli GPUI'nin GPU hızlandırmasını kaldırmaz; `gpui` yüzeyi
+komutları GPUI'nin GPU destekli `paint_path`/`paint_quad` hattına verir. SVG ve
+WASM aynı sahneyi kendi yüzeylerinde boyar.
 
 ## Kart etkileşimleri
 
@@ -135,7 +141,9 @@ ikonu gömülü `uplot-rs.exe` içerir.
 ```sh
 cargo test
 cargo run --example ilk_kart
+cargo run --example area_fill
 cargo run -p uplot-rs-chart-listesi
+npm --prefix tools/uyum run envanter
 npm --prefix tools/uyum run denetle
 ```
 
@@ -147,8 +155,10 @@ npm --prefix tools/uyum run denetle
 arayüzleri hatayı kart üzerinde kullanıcıya bildirir. Bu kural
 workspace lintleri ve CI Clippy adımıyla her değişiklikte denetlenir.
 
-İlk komut testleri, ikinci komut `target/ilk-kart.svg` çıktısını, üçüncü komut
-canlı GPUI listesini açar. Son komut, [uPlot kaynak deposunun](https://github.com/leeoniya/uPlot)
+İlk komut testleri çalıştırır; iki örnek komutu sırasıyla
+`target/ilk-kart.svg` ve `target/area-fill.svg` çıktılarını üretir. Masaüstü
+komutu canlı GPUI listesini açar. Envanter komutu kaynak/API/demo dökümlerini
+yeniden üretir; denetim komutu [uPlot kaynak deposunun](https://github.com/leeoniya/uPlot)
 aynı üst dizine `uPlot` adıyla klonlanmış yerel kopyasında commit/sürüm/dosya
 hash kilidini doğrular. Tarayıcı listesi için
 [wasm/README.md](wasm/README.md) yönergelerini kullanın.
@@ -157,18 +167,19 @@ hash kilidini doğrular. Tarayıcı listesi için
 
 - `src/veri.rs`: uPlot hizalı sütun veri sözleşmesi
 - `src/olcek.rs`: ölçek ve aralık matematiği
-- `src/cizim.rs`: yüzeyden bağımsız sahne komutları ve SVG çıktısı
+- `src/cizim.rs` + `src/cizim/`: sahne komutları, SVG çıktısı ve kırpma
 - `src/grafik.rs`: ilk çizim hattı
 - `src/etkilesim.rs`: kartın etkileşim durumu, yakınlaştırma ve görünüm geçmişi
 - `src/gpui.rs`: `gpui` feature'ıyla açılan hazır GPUI grafik bileşeni
 - `src/svg.rs`: `svg`/`wasm` feature'larının SVG yüzeyi
-- `src/kart.rs`: kanıtlanabilir kart fixture'ları
+- `src/kart.rs` + `src/kart/`: kaynak verisini koruyan kart fixture'ları
+- `src/secenek.rs` + `src/secenek/`: ilişkili seçenek türleri
 - `uygulamalar/masaustu/`: dağıtıma girmeyen GPUI doğrulama uygulaması
 - `uyum/`: makine-okunur kaynak ve kanıt envanteri
 - `tools/uyum/`: yeniden üretim/denetim araçları
 - `RESMI_DEPO_FARKLILIKLARI.md`: resmî port ile uPlot.rs uzantılarının ayrımı
 
-Ayrıntılı yol haritası için [UPLOT_TAM_UYUM_FAZ_PLANI.md](UPLOT_TAM_UYUM_FAZ_PLANI.md)
+Ayrıntılı yol haritası için [uPlot.rs tam port faz planı](UPlot_TAM_PORT_FAZI.md)
 dosyasına bakın.
 
 ## Atıf ve teşekkür

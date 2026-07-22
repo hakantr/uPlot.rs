@@ -13,11 +13,11 @@ use ::gpui::{
 
 use crate::{Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne};
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct İmleçDurumu {
     fare: Nokta,
     veri_x: f64,
-    veri_y: f64,
+    seri_değerleri: Vec<Option<f64>>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -65,7 +65,20 @@ impl GpuiGrafik {
     }
 
     pub fn lejant(&self) -> Option<(f64, f64)> {
-        self.imleç.map(|imleç| (imleç.veri_x, imleç.veri_y))
+        self.imleç.as_ref().and_then(|imleç| {
+            imleç
+                .seri_değerleri
+                .first()
+                .copied()
+                .flatten()
+                .map(|y| (imleç.veri_x, y))
+        })
+    }
+
+    pub fn lejant_değerleri(&self) -> Option<(f64, Vec<Option<f64>>)> {
+        self.imleç
+            .as_ref()
+            .map(|imleç| (imleç.veri_x, imleç.seri_değerleri.clone()))
     }
 
     pub fn grafiği_ayarla(&mut self, grafik: Grafik, cx: &mut Context<Self>) {
@@ -110,9 +123,8 @@ impl GpuiGrafik {
         let (sol, sağ, üst, alt) = self.çizim_alanı();
         let x_aralığı = self.grafik.görünür_x_aralığı();
         let y_aralığı = self.grafik.görünür_y_aralığı();
-        if let Some(imleç) = self.imleç {
+        if let Some(imleç) = self.imleç.as_ref() {
             let nokta_x = ölçekle(imleç.veri_x, x_aralığı, sol, sağ - sol);
-            let nokta_y = alt - ölçekle(imleç.veri_y, y_aralığı, 0.0, alt - üst);
             sahne.ekle(Komut::KesikliÇizgi {
                 başlangıç: Nokta::yeni(imleç.fare.x, üst),
                 bitiş: Nokta::yeni(imleç.fare.x, alt),
@@ -127,13 +139,22 @@ impl GpuiGrafik {
                 kalınlık: 1.0,
                 kesik: 4.0,
             });
-            sahne.ekle(Komut::Daire {
-                merkez: Nokta::yeni(nokta_x, nokta_y),
-                yarıçap: 2.5,
-                dolgu: "#dc2626".to_string(),
-                çizgi: "#dc2626".to_string(),
-                kalınlık: 0.0,
-            });
+            for (seri_indeksi, değer) in imleç.seri_değerleri.iter().enumerate() {
+                let Some(değer) = değer else {
+                    continue;
+                };
+                let Some(seri) = self.grafik.seri_seçenekleri().get(seri_indeksi) else {
+                    continue;
+                };
+                let nokta_y = alt - ölçekle(*değer, y_aralığı, 0.0, alt - üst);
+                sahne.ekle(Komut::Daire {
+                    merkez: Nokta::yeni(nokta_x, nokta_y),
+                    yarıçap: 2.5,
+                    dolgu: seri.renk.clone(),
+                    çizgi: seri.renk.clone(),
+                    kalınlık: 0.0,
+                });
+            }
         }
         if let Some((başlangıç, bitiş)) = self.seçim {
             sahne.ekle(Komut::Dikdörtgen {
@@ -180,14 +201,14 @@ impl GpuiGrafik {
         }
         let (sol, sağ, _, _) = self.çizim_alanı();
         let oran = f64::from((fare.x - sol) / (sağ - sol));
-        let Some((veri_x, veri_y)) = self.grafik.en_yakın_nokta(oran, 0) else {
+        let Some((veri_x, seri_değerleri)) = self.grafik.en_yakın_noktalar(oran) else {
             self.imleç = None;
             return;
         };
         self.imleç = Some(İmleçDurumu {
             fare,
             veri_x,
-            veri_y,
+            seri_değerleri,
         });
     }
 
@@ -493,6 +514,24 @@ pub fn sahneyi_boya(
                     pencere.paint_path(yol, renk_çöz(renk));
                 }
             }
+            Komut::Alan { çokgenler, dolgu } => {
+                let mut yol = PathBuilder::fill();
+                for çokgen in çokgenler {
+                    let mut noktalar = çokgen.iter();
+                    if let Some(ilk) = noktalar.next() {
+                        yol.move_to(dönüştür(*ilk));
+                    }
+                    for nokta in noktalar {
+                        yol.line_to(dönüştür(*nokta));
+                    }
+                    if çokgen.len() >= 3 {
+                        yol.close();
+                    }
+                }
+                if let Ok(yol) = yol.build() {
+                    pencere.paint_path(yol, renk_çöz(dolgu));
+                }
+            }
             Komut::Daire {
                 merkez,
                 yarıçap,
@@ -574,14 +613,16 @@ pub fn sahneyi_boya(
 }
 
 fn renk_çöz(kod: &str) -> Hsla {
-    if kod == "#3b82f633" {
-        return rgba(0x3b82f633).into();
+    let Some(ham) = kod.strip_prefix('#') else {
+        return rgb(0x000000).into();
+    };
+    match ham.len() {
+        8 => u32::from_str_radix(ham, 16)
+            .map_or_else(|_| rgb(0x000000).into(), |sayı| rgba(sayı).into()),
+        6 => u32::from_str_radix(ham, 16)
+            .map_or_else(|_| rgb(0x000000).into(), |sayı| rgb(sayı).into()),
+        _ => rgb(0x000000).into(),
     }
-    let sayı = kod
-        .strip_prefix('#')
-        .and_then(|ham| u32::from_str_radix(ham, 16).ok())
-        .unwrap_or(0x000000);
-    rgb(sayı).into()
 }
 
 fn ölçekle(değer: f64, aralık: Aralık, başlangıç: f32, uzunluk: f32) -> f32 {

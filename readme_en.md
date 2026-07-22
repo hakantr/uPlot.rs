@@ -16,8 +16,8 @@ builds use the current sibling worktrees through path dependencies, while CI
 uses the current default branches of both repositories. Only the normative
 uPlot source is commit-locked.
 
-The port currently contains the Phase 0 foundation and the first vertical
-compatibility card:
+The port currently contains the shared foundation and its first two vertical
+compatibility cards:
 
 - validated aligned/columnar data model;
 - numeric X scales and fixed/automatic Y ranges;
@@ -26,8 +26,11 @@ compatibility card:
 - GPUI desktop chart list using the `../gpui_kutuphanesi` title bar and buttons;
 - interactive WASM chart list served on development port 8081;
 - one shared Rust card-definition example shown in desktop and WASM UIs;
-- source lock, API matrix, demo manifest, and scenario record;
+- hash-locked inventories for 18 source files, 304 public API members, 28 data
+  assets, and all 73 demos;
 - `Resize` card: a 100-point `sin(x)` line based on `demos/resize.html`.
+- `Area Fill` card: the source 1…30 X values, −10…10 value pool, three sampled
+  series, zero-baseline fills, and multi-series cursor/legend behavior.
 
 The `Resize` card also ports the source demo's conditional hollow points, filled
 hover marker, live legend, numeric grid aligned to the visible range, and
@@ -73,6 +76,9 @@ let surface = cx.new(|_| GpuiGrafik::yeni(chart));
 ```
 
 The GPUI catalog uses this component but is not included in the library package.
+The shared scene model does not disable GPUI GPU acceleration: the `gpui`
+surface submits commands through GPUI's GPU-backed `paint_path`/`paint_quad`
+pipeline. SVG and WASM render the same scene through their own surfaces.
 
 ## Chart interactions
 
@@ -136,7 +142,9 @@ Windows `uplot-rs.exe` with the icon embedded.
 ```sh
 cargo test
 cargo run --example ilk_kart
+cargo run --example area_fill
 cargo run -p uplot-rs-chart-listesi
+npm --prefix tools/uyum run envanter
 npm --prefix tools/uyum run denetle
 ```
 
@@ -148,9 +156,11 @@ are returned to callers as typed `UplotHatası` values; the desktop and WASM
 verification UIs show errors on the chart card. Workspace
 lints and the CI Clippy step enforce this policy on every change.
 
-The first command runs the tests, the second generates `target/ilk-kart.svg`,
-and the third opens the live GPUI chart list. The final command verifies the
-commit, version, and file hashes in a local checkout of the
+The first command runs the tests; the two example commands generate
+`target/ilk-kart.svg` and `target/area-fill.svg`. The desktop command opens the
+live GPUI chart list. The inventory command regenerates the source/API/demo
+inventories, and the verification command checks the commit, version, and file
+hashes in a local checkout of the
 [uPlot source repository](https://github.com/leeoniya/uPlot), cloned as `uPlot`
 beside this repository. See
 [wasm/README.md](wasm/README.md) for browser instructions.
@@ -159,18 +169,19 @@ beside this repository. See
 
 - `src/veri.rs`: uPlot-compatible aligned column data contract
 - `src/olcek.rs`: scale and range mathematics
-- `src/cizim.rs`: surface-independent scene commands and SVG output
+- `src/cizim.rs` + `src/cizim/`: scene commands, SVG output, and clipping
 - `src/grafik.rs`: initial rendering pipeline
 - `src/etkilesim.rs`: chart interaction state, zooming, and view history
 - `src/gpui.rs`: ready GPUI chart component behind the `gpui` feature
 - `src/svg.rs`: SVG surface used by the `svg` and `wasm` features
-- `src/kart.rs`: verifiable card fixtures
+- `src/kart.rs` + `src/kart/`: card fixtures preserving upstream data
+- `src/secenek.rs` + `src/secenek/`: grouped option types
 - `uygulamalar/masaustu/`: GPUI verification app excluded from distribution
 - `uyum/`: machine-readable source and evidence inventory
 - `tools/uyum/`: reproducibility and verification tooling
 - `RESMI_DEPO_FARKLILIKLARI.md`: direct-port versus uPlot.rs-extension inventory
 
-See [UPLOT_TAM_UYUM_FAZ_PLANI.md](UPLOT_TAM_UYUM_FAZ_PLANI.md) for the detailed
+See the [uPlot.rs full-port phase plan](UPlot_TAM_PORT_FAZI.md) for the detailed
 roadmap.
 
 ## Attribution and thanks

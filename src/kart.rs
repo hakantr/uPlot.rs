@@ -3,6 +3,11 @@ use crate::{
     TekerlekKipi, UplotHatası,
 };
 
+mod area_fill;
+mod veri_uretici;
+
+pub use area_fill::{AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ, area_fill_kartı};
+
 /// Masaüstü ve WASM kataloglarında gösterilen, çalıştırılabilir API biçimiyle
 /// aynı kalan kart tanım örneği.
 pub const İLK_KART_TANIM_ÖRNEĞİ: &str = r##"let seçenekler = GrafikSeçenekleri::yeni(800, 400)?

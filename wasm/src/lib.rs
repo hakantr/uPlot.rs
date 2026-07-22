@@ -3,22 +3,30 @@
 #![allow(confusable_idents)]
 
 use uplot_rs::{
-    Grafik, UplotHatası, ilk_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ
+    AREA_FILL_KART_TANIM_ÖRNEĞİ, Grafik, UplotHatası, area_fill_kartı, ilk_kart_etkileşimleri,
+    sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
 };
 use wasm_bindgen::prelude::*;
 
-/// Tarayıcı yüzeyinin yalnız olayları ilettiği, bütün kart durumunu çekirdekte
-/// tutan ilk kart oturumu.
+/// Tarayıcı yüzeyinin yalnız olayları ilettiği, seçilen kartın bütün durumunu
+/// çekirdekte tutan ortak oturum.
 #[wasm_bindgen]
-pub struct IlkKartOturumu {
+pub struct KartOturumu {
     grafik: Grafik,
 }
 
 #[wasm_bindgen]
-impl IlkKartOturumu {
+impl KartOturumu {
     #[wasm_bindgen(constructor)]
-    pub fn yeni(nokta_sayısı: usize) -> Result<IlkKartOturumu, JsValue> {
-        let (seçenekler, veri) = sinüs_kartı(nokta_sayısı).map_err(js_hatası)?;
+    pub fn yeni(kart_kimliği: &str, nokta_sayısı: usize) -> Result<KartOturumu, JsValue> {
+        let (seçenekler, veri) = match kart_kimliği {
+            "resize" => sinüs_kartı(nokta_sayısı),
+            "area-fill" => area_fill_kartı(),
+            kimlik => Err(UplotHatası::BilinmeyenKart {
+                kimlik: kimlik.to_string(),
+            }),
+        }
+        .map_err(js_hatası)?;
         let grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
         Ok(Self { grafik })
     }
@@ -112,6 +120,17 @@ impl IlkKartOturumu {
             .map_or_else(Vec::new, |(x, y)| vec![x, y])
     }
 
+    pub fn en_yakin_noktalar(&self, yatay_oran: f64) -> Vec<f64> {
+        self.grafik
+            .en_yakın_noktalar(yatay_oran)
+            .map_or_else(Vec::new, |(x, değerler)| {
+                let mut sonuç = Vec::with_capacity(değerler.len().saturating_add(1));
+                sonuç.push(x);
+                sonuç.extend(değerler.into_iter().map(|değer| değer.unwrap_or(f64::NAN)));
+                sonuç
+            })
+    }
+
     pub fn yakinlastirilmis(&self) -> bool {
         self.grafik.yakınlaştırılmış()
     }
@@ -127,12 +146,17 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    1
+    2
 }
 
 #[wasm_bindgen]
 pub fn ilk_kart_tanim_ornegi() -> String {
     İLK_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
+pub fn area_fill_kart_tanim_ornegi() -> String {
+    AREA_FILL_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -171,7 +195,7 @@ mod testler {
 
     #[test]
     fn ilk_kart_wasm_svg_üretir() {
-        let oturum = IlkKartOturumu::yeni(100);
+        let oturum = KartOturumu::yeni("resize", 100);
         assert!(oturum.is_ok());
         let Ok(mut oturum) = oturum else {
             return;
@@ -179,7 +203,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 1);
+        assert_eq!(kart_sayisi(), 2);
         assert!(ilk_kart_tanim_ornegi().contains("GrafikSeçenekleri::yeni"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -192,5 +216,18 @@ mod testler {
         assert!(oturum.tasimayi_baslat());
         assert!(oturum.tasi(0.05, 0.05).is_ok());
         oturum.tasimayi_bitir();
+    }
+
+    #[test]
+    fn area_fill_wasm_üç_dolgu_üretir() {
+        let oturum = KartOturumu::yeni("area-fill", 100);
+        assert!(oturum.is_ok());
+        let Ok(oturum) = oturum else {
+            return;
+        };
+        let svg = oturum.svg(960, 400);
+        assert!(svg.contains("Area Fill"));
+        assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
+        assert_eq!(kart_sayisi(), 2);
     }
 }

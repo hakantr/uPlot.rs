@@ -1,6 +1,8 @@
 #[cfg(feature = "svg")]
 use std::fmt::Write as _;
 
+pub(crate) mod kirpma;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Nokta {
     pub x: f32,
@@ -42,6 +44,10 @@ pub enum Komut {
         parçalar: Vec<Vec<Nokta>>,
         renk: String,
         kalınlık: f32,
+    },
+    Alan {
+        çokgenler: Vec<Vec<Nokta>>,
+        dolgu: String,
     },
     Daire {
         merkez: Nokta,
@@ -166,6 +172,24 @@ impl Sahne {
                         d.trim_end(),
                         kaçış(renk),
                         sayı(*kalınlık)
+                    );
+                }
+                Komut::Alan { çokgenler, dolgu } => {
+                    let mut d = String::new();
+                    for çokgen in çokgenler {
+                        for (indeks, nokta) in çokgen.iter().enumerate() {
+                            let işlem = if indeks == 0 { 'M' } else { 'L' };
+                            let _ = write!(d, "{işlem}{} {} ", sayı(nokta.x), sayı(nokta.y));
+                        }
+                        if çokgen.len() >= 3 {
+                            d.push_str("Z ");
+                        }
+                    }
+                    let _ = writeln!(
+                        çıktı,
+                        "  <path d=\"{}\" fill=\"{}\" stroke=\"none\"/>",
+                        d.trim_end(),
+                        kaçış(dolgu)
                     );
                 }
                 Komut::Daire {

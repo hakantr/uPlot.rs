@@ -60,6 +60,51 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "kısmi"
       }
+    },
+    {
+      "sıra": 2,
+      "id": "area-fill",
+      "başlık": {
+        "en": "Area Fill",
+        "tr": "Area Fill"
+      },
+      "kaynak": "demos/area-fill.html",
+      "kaynak_sha256": "10db19c3c92aed800c35cd77067672975d834787e14e2050186522e042066bdd",
+      "ek_kaynaklar": [
+        {
+          "yol": "src/paths/linear.js",
+          "sha256": "8f5002721c15f9a965b0e56522c58378c5b412856356c85188c74066ffba6749"
+        },
+        {
+          "yol": "src/paths/utils.js",
+          "sha256": "7636973ddf67ca47993ae86a4b53b1e7a6ea5ebd90483e0c305e84d558c38e13"
+        }
+      ],
+      "fixture": "src/kart/area_fill.rs#area_fill_kartı",
+      "örnek": "examples/area_fill.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/area-fill.toml",
+      "sahip_faz": 1,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-equivalent-xs-and-value-pool",
+        "seeded-reference-random-stream",
+        "three-aligned-series",
+        "linear-path",
+        "series-fill-to-zero",
+        "rgba-area-fill",
+        "multi-series-cursor-legend",
+        "x-drag-zoom",
+        "core-dblclick-full-range-reset"
+      ],
+      "kanıt": {
+        "api": "kısmi",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "bekliyor"
+      }
     }
   ]
 }

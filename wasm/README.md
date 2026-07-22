@@ -1,7 +1,8 @@
 # uPlot.rs WASM chart listesi
 
-Masaüstü chart listesiyle aynı `sinüs_kartı → Grafik → Sahne → SVG` hattını
-tarayıcıya açar.
+Masaüstü grafik listesiyle aynı `kart tanımı → Grafik → Sahne → SVG` hattını
+tarayıcıya açar. Katalog şu anda `Resize` ve `Area Fill` kaynak kartlarını
+içerir; yeni portlar aynı oturum ve kart seçme sözleşmesine eklenir.
 
 ## Derleme ve çalıştırma
 
@@ -13,9 +14,10 @@ wasm-bindgen --target web --out-dir wasm/pkg \
 python3 -m http.server 8081
 ```
 
-Ardından `http://localhost:8081/wasm/www/` adresini açın. Nokta sürgüsü aynı
-Rust kartını yeniden üretir; böylece farklı veri yoğunlukları görsel olarak
-doğrulanabilir.
+Ardından `http://localhost:8081/wasm/www/` adresini açın. `Resize` kartındaki
+nokta sürgüsü aynı Rust kartını yeniden üretir; böylece farklı veri
+yoğunlukları görsel olarak doğrulanabilir. `Area Fill`, resmî demonun üç
+serisini ve dolgu modelini gösterir.
 
 Web portunun geliştirme sözleşmesi **8081**'dir. Grafik üzerinde hover canlı
 değerleri gösterir; yatay sürükleme X aralığına yakınlaştırır, çift tıklama tam

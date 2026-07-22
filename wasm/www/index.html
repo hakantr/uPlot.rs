@@ -7,6 +7,7 @@
   <title>uPlot.rs · WASM Chart Listesi</title>
   <style>
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     body { margin: 0; min-height: 100vh; font-family: Inter, system-ui, sans-serif;
            color: #111827; background: #f3f4f6; }
     .uygulama { width: 100%; height: 100vh; display: grid; grid-template-columns: 280px 1fr;
@@ -15,7 +16,10 @@
     h1 { margin: 0; font-size: 22px; }
     .alt { margin: 5px 0 24px; color: #6b7280; font-size: 13px; }
     .kart { padding: 14px; border: 1px solid #dc2626; border-radius: 12px;
-            background: #fef2f2; cursor: pointer; }
+            background: #fff; cursor: pointer; }
+    .kart + .kart { margin-top: 10px; }
+    .kart[aria-current="true"] { background: #fef2f2; }
+    .kart[aria-current="false"] { border-color: #d1d5db; }
     .kart strong { display: block; }
     .kart small { color: #6b7280; }
     .durum { margin-top: 10px; color: #dc2626; font-size: 12px; }
@@ -68,17 +72,22 @@
     <aside>
       <h1>uPlot.rs Grafik Kataloğu</h1>
       <p class="alt">WASM görsel doğrulaması</p>
-      <article class="kart" aria-current="true">
+      <article class="kart" data-kart="resize" aria-current="true" tabindex="0">
         <strong>Resize</strong>
         <small>line-resize</small>
         <div class="durum">Fixture bağlı · masaüstü/WASM ortak sahne</div>
+      </article>
+      <article class="kart" data-kart="area-fill" aria-current="false" tabindex="0">
+        <strong>Area Fill</strong>
+        <small>area-fill</small>
+        <div class="durum">Kaynak veri üreteci · 3 alan serisi</div>
       </article>
     </aside>
     <main>
       <header>
         <div>
-          <h2>Resize · sayısal x ölçeği</h2>
-          <div class="kaynak">Kaynak:
+          <h2 id="kart-başlığı">Resize · sayısal x ölçeği</h2>
+          <div class="kaynak" id="kart-kaynağı">Kaynak:
             <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/resize.html">resize.html</a>
             · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-wheel.html">zoom-wheel.html</a>
             · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-touch.html">zoom-touch.html</a>
@@ -91,7 +100,7 @@
           <label class="eklenti-anahtarı">
             <input id="tekerlek-etkilesimi" type="checkbox"> Tekerlek eklentisi · Otomatik
           </label>
-          <label>Nokta
+          <label id="nokta-kontrolü">Nokta
             <input id="nokta" type="range" min="10" max="1000" step="10" value="100">
             <output id="nokta-değeri">100 nokta</output>
           </label>
@@ -107,7 +116,8 @@
   </div>
   <script type="module">
     import init, {
-      IlkKartOturumu,
+      KartOturumu,
+      area_fill_kart_tanim_ornegi,
       ilk_kart_tanim_ornegi,
       ilk_kart_tekerlek_etkilesimi,
       ilk_kart_secim_yakinlastir,
@@ -126,8 +136,48 @@
     const görünümGeri = document.getElementById("gorunum-geri");
     const tamGörünüm = document.getElementById("tam-gorunum");
     const tekerlekEtkileşimi = document.getElementById("tekerlek-etkilesimi");
+    const kartBaşlığı = document.getElementById("kart-başlığı");
+    const kartKaynağı = document.getElementById("kart-kaynağı");
+    const noktaKontrolü = document.getElementById("nokta-kontrolü");
+
+    const kartlar = {
+      resize: {
+        başlık: "Resize · sayısal x ölçeği",
+        kaynak: `Kaynak:
+          <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/resize.html">resize.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-wheel.html">zoom-wheel.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-touch.html">zoom-touch.html</a>
+          <br>Çekirdek: seçim + çift tık · Resmî eklentiler: tekerlek + taşıma matematiği · uPlot.rs: boşluk + sol sürükleme bağı`,
+        tanım: () => ilk_kart_tanim_ornegi(),
+        seriler: [{ etiket: "sin(x)", renk: "#dc2626" }],
+        yardım: "Sürükle: seç · boşluk + sürükle: taşı · iki parmak: yakınlaştır · tek parmak: taşı · çift tıkla: tam görünüm",
+        değişkenNokta: true,
+        etkileşimler: () => ({
+          tekerlek: ilk_kart_tekerlek_etkilesimi(),
+          seçim: ilk_kart_secim_yakinlastir(),
+          çiftTık: ilk_kart_cift_tikla_tam_gorunum(),
+          geçmiş: ilk_kart_gorunum_gecmisi(),
+          dokunma: ilk_kart_dokunma_etkilesimi(),
+        }),
+      },
+      "area-fill": {
+        başlık: "Area Fill",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/area-fill.html">area-fill.html</a>
+          <br>Kaynakla aynı 1…30 x dizisi, −10…10 değer havuzu ve üç örnekleme serisi · kanıtta ortak açık tohum`,
+        tanım: () => area_fill_kart_tanim_ornegi(),
+        seriler: [
+          { etiket: "1", renk: "#ff0000" },
+          { etiket: "2", renk: "#008000" },
+          { etiket: "3", renk: "#0000ff" },
+        ],
+        yardım: "Sürükle: seç · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ({ tekerlek: false, seçim: true, çiftTık: true, geçmiş: false, dokunma: false }),
+      },
+    };
 
     let oturum = null;
+    let aktifKart = "resize";
     let sürükleme = null;
     let taşıma = null;
     let boşlukBasılı = false;
@@ -176,17 +226,24 @@
       const svg = chart.querySelector("svg");
       if (!svg) return;
       svg.dataset.etkileşim = "hover-x-zoom";
+      const kart = kartlar[aktifKart];
+      const imleçNoktaları = kart.seriler.map((seri, indeks) =>
+        `<circle id="imleç-nokta-${indeks}" visibility="hidden" r="2.5" fill="${seri.renk}"/>`
+      ).join("");
       svg.insertAdjacentHTML("beforeend", `
         <g id="etkileşim" pointer-events="none">
           <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
           <line id="imleç-x" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
           <line id="imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
-          <circle id="imleç-nokta" visibility="hidden" r="2.5" fill="#dc2626"/>
+          ${imleçNoktaları}
         </g>`);
+      const lejantSerileri = kart.seriler.map((seri, indeks) =>
+        `<span><i class="örnek" style="border-color:${seri.renk}"></i>${seri.etiket}: <b id="seri-değeri-${indeks}">--</b></span>`
+      ).join("");
       chart.insertAdjacentHTML("beforeend", `
-        <div class="yardım">Sürükle: seç · boşluk + sürükle: taşı · iki parmak: yakınlaştır · tek parmak: taşı · çift tıkla: tam görünüm</div>
+        <div class="yardım">${kart.yardım}</div>
         <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
-        <span><i class="örnek"></i>sin(x): <b id="y-değeri">--</b></span></div>`);
+        ${lejantSerileri}</div>`);
       kontrolleriGüncelle();
       taşımaİmleciniGüncelle();
     }
@@ -206,30 +263,44 @@
     function imleciGüncelle(olay) {
       const { x, y, svg, view } = svgKonumu(olay);
       const sol = 64, sağ = view.width - 24, üst = 48, alt = view.height - 48;
-      const öğeler = ["imleç-x", "imleç-y", "imleç-nokta"].map(id => svg.querySelector(`#${id}`));
+      const çizgiler = ["imleç-x", "imleç-y"].map(id => svg.querySelector(`#${id}`));
+      const noktalar = kartlar[aktifKart].seriler.map((_, indeks) => svg.querySelector(`#imleç-nokta-${indeks}`));
+      const öğeler = [...çizgiler, ...noktalar];
       if (x < sol || x > sağ || y < üst || y > alt) {
         öğeler.forEach(öğe => öğe?.setAttribute("visibility", "hidden"));
         return;
       }
       const oran = Math.max(0, Math.min(1, (x - sol) / (sağ - sol)));
-      const enYakın = oturum?.en_yakin_nokta(oran) ?? [];
+      const enYakın = oturum?.en_yakin_noktalar(oran) ?? [];
       if (enYakın.length < 2) return;
-      const [gerçekX, gerçekY] = enYakın;
+      const [gerçekX, ...seriDeğerleri] = enYakın;
       const xAralığı = oturum.gorunur_x_araligi();
       const noktaX = sol + (gerçekX - xAralığı[0]) / (xAralığı[1] - xAralığı[0]) * (sağ - sol);
       const [yMin, yMax] = oturum.gorunur_y_araligi();
-      const noktaY = alt - (gerçekY - yMin) / (yMax - yMin) * (alt - üst);
-      const [dikey, yatay, imleçNoktası] = öğeler;
+      const [dikey, yatay] = çizgiler;
       // İmleç çizgileri fareyi kesintisiz izler; yalnız seri noktası en yakın
       // veri örneğine kilitlenir.
       dikey.setAttribute("x1", x); dikey.setAttribute("x2", x);
       dikey.setAttribute("y1", üst); dikey.setAttribute("y2", alt);
       yatay.setAttribute("x1", sol); yatay.setAttribute("x2", sağ);
       yatay.setAttribute("y1", y); yatay.setAttribute("y2", y);
-      imleçNoktası.setAttribute("cx", noktaX); imleçNoktası.setAttribute("cy", noktaY);
-      öğeler.forEach(öğe => öğe.setAttribute("visibility", "visible"));
+      çizgiler.forEach(öğe => öğe?.setAttribute("visibility", "visible"));
+      noktalar.forEach((nokta, indeks) => {
+        const seriDeğeri = seriDeğerleri[indeks];
+        if (!nokta || !Number.isFinite(seriDeğeri)) {
+          nokta?.setAttribute("visibility", "hidden");
+          return;
+        }
+        const noktaY = alt - (seriDeğeri - yMin) / (yMax - yMin) * (alt - üst);
+        nokta.setAttribute("cx", noktaX); nokta.setAttribute("cy", noktaY);
+        nokta.setAttribute("visibility", "visible");
+      });
       chart.querySelector("#x-değeri").textContent = gerçekX.toLocaleString("tr-TR", {maximumFractionDigits: 3});
-      chart.querySelector("#y-değeri").textContent = gerçekY.toLocaleString("tr-TR", {maximumFractionDigits: 3});
+      seriDeğerleri.forEach((seriDeğeri, indeks) => {
+        const hedef = chart.querySelector(`#seri-değeri-${indeks}`);
+        if (hedef) hedef.textContent = Number.isFinite(seriDeğeri)
+          ? seriDeğeri.toLocaleString("tr-TR", {maximumFractionDigits: 3}) : "--";
+      });
     }
 
     chart.addEventListener("pointermove", olay => {
@@ -439,22 +510,34 @@
       await init();
       document.documentElement.dataset.kartSayısı = String(kart_sayisi());
       document.documentElement.dataset.kaynakCommit = kaynak_commit();
-      kartTanımKodu.textContent = ilk_kart_tanim_ornegi();
-      etkileşimler = {
-        tekerlek: ilk_kart_tekerlek_etkilesimi(),
-        seçim: ilk_kart_secim_yakinlastir(),
-        çiftTık: ilk_kart_cift_tikla_tam_gorunum(),
-        geçmiş: ilk_kart_gorunum_gecmisi(),
-        dokunma: ilk_kart_dokunma_etkilesimi(),
-      };
-      tekerlekEtkileşimi.checked = etkileşimler.tekerlek;
-      oturum = new IlkKartOturumu(Number(nokta.value));
-      oturum.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
-      nokta.addEventListener("input", () => {
-        oturum.free();
-        oturum = new IlkKartOturumu(Number(nokta.value));
+      function kartıSeç(kimlik) {
+        const kart = kartlar[kimlik];
+        if (!kart) return;
+        oturum?.free();
+        aktifKart = kimlik;
+        document.querySelectorAll("[data-kart]").forEach(öğe =>
+          öğe.setAttribute("aria-current", String(öğe.dataset.kart === kimlik))
+        );
+        kartBaşlığı.textContent = kart.başlık;
+        kartKaynağı.innerHTML = kart.kaynak;
+        kartTanımKodu.textContent = kart.tanım();
+        noktaKontrolü.hidden = !kart.değişkenNokta;
+        etkileşimler = kart.etkileşimler();
+        tekerlekEtkileşimi.checked = etkileşimler.tekerlek;
+        tekerlekEtkileşimi.closest("label").hidden = kimlik !== "resize";
+        oturum = new KartOturumu(kimlik, Number(nokta.value));
         oturum.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
         çiz();
+      }
+      document.querySelectorAll("[data-kart]").forEach(öğe => {
+        öğe.addEventListener("click", () => kartıSeç(öğe.dataset.kart));
+        öğe.addEventListener("keydown", olay => {
+          if (olay.key === "Enter" || olay.key === " ") kartıSeç(öğe.dataset.kart);
+        });
+      });
+      kartıSeç("resize");
+      nokta.addEventListener("input", () => {
+        if (aktifKart === "resize") kartıSeç("resize");
       });
       new ResizeObserver(çiz).observe(chart);
       çiz();

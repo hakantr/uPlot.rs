@@ -1,18 +1,56 @@
 //! GPUI masaüstü chart kataloğu; dağıtılan bileşeni kullanan örnek uygulama.
 
 use gpui::{
-    Context, Entity, FontWeight, IntoElement, Render, SharedString, Window, div, prelude::*, px,
-    rgb,
+    ClickEvent, Context, Entity, FontWeight, IntoElement, Render, SharedString, Window, div,
+    prelude::*, px, rgb,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, PlatformPencere,
 };
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
-    Grafik, UplotHatası, ilk_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ
+    AREA_FILL_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik, UplotHatası, area_fill_kartı,
+    ilk_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
 };
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum KartKimliği {
+    Resize,
+    AreaFill,
+}
+
+impl KartKimliği {
+    fn başlık(self) -> &'static str {
+        match self {
+            Self::Resize => "Resize · sayısal x ölçeği",
+            Self::AreaFill => "Area Fill",
+        }
+    }
+
+    fn kaynak(self) -> &'static str {
+        match self {
+            Self::Resize => "resize.html + zoom-wheel.html + zoom-touch.html",
+            Self::AreaFill => "area-fill.html · kaynakla aynı veri üreteci",
+        }
+    }
+
+    fn tanım(self) -> &'static str {
+        match self {
+            Self::Resize => İLK_KART_TANIM_ÖRNEĞİ,
+            Self::AreaFill => AREA_FILL_KART_TANIM_ÖRNEĞİ,
+        }
+    }
+
+    fn etkileşimler(self) -> EtkileşimSeçenekleri {
+        match self {
+            Self::Resize => ilk_kart_etkileşimleri(),
+            Self::AreaFill => EtkileşimSeçenekleri::default(),
+        }
+    }
+}
+
 pub struct ChartListesi {
+    aktif_kart: KartKimliği,
     nokta_sayısı: usize,
     grafik: Option<Entity<GpuiGrafik>>,
     hata: Option<String>,
@@ -43,7 +81,7 @@ impl ChartListesi {
         })
         .detach();
 
-        let (grafik, hata) = grafik_oluştur(100).map_or_else(
+        let (grafik, hata) = grafik_oluştur(KartKimliği::Resize, 100).map_or_else(
             |hata| (None, Some(format!("Grafik oluşturulamadı: {hata}"))),
             |grafik| (Some(cx.new(|_| GpuiGrafik::yeni(grafik))), None),
         );
@@ -52,6 +90,7 @@ impl ChartListesi {
                 .detach();
         }
         Self {
+            aktif_kart: KartKimliği::Resize,
             nokta_sayısı: 100,
             grafik,
             hata,
@@ -63,7 +102,7 @@ impl ChartListesi {
 
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
-        match grafik_oluştur(nokta_sayısı) {
+        match grafik_oluştur(self.aktif_kart, nokta_sayısı) {
             Ok(mut yeni) => {
                 yeni.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
                 if let Some(grafik) = &self.grafik {
@@ -83,10 +122,28 @@ impl ChartListesi {
         }
         cx.notify();
     }
+
+    fn kartı_seç(&mut self, kart: KartKimliği, cx: &mut Context<Self>) {
+        if self.aktif_kart == kart {
+            return;
+        }
+        self.aktif_kart = kart;
+        self.kart_tanımı_açık = false;
+        let etkileşimler = kart.etkileşimler();
+        self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
+        self.tekerlek_anahtarı.update(cx, |anahtar, cx| {
+            anahtar.ayarla(etkileşimler.tekerlek_etkileşimi, cx);
+            anahtar.devre_disi_ayarla(kart != KartKimliği::Resize, cx);
+        });
+        self.grafiği_yenile(self.nokta_sayısı, cx);
+    }
 }
 
-fn grafik_oluştur(nokta_sayısı: usize) -> Result<Grafik, UplotHatası> {
-    let (seçenekler, veri) = sinüs_kartı(nokta_sayısı)?;
+fn grafik_oluştur(kart: KartKimliği, nokta_sayısı: usize) -> Result<Grafik, UplotHatası> {
+    let (seçenekler, veri) = match kart {
+        KartKimliği::Resize => sinüs_kartı(nokta_sayısı),
+        KartKimliği::AreaFill => area_fill_kartı(),
+    }?;
     Grafik::yeni(seçenekler, veri)
 }
 
@@ -97,27 +154,52 @@ impl Render for ChartListesi {
         let metin = rgb(0x111827);
         let soluk = rgb(0x6b7280);
         let vurgu = rgb(0xdc2626);
-        let nokta_yazısı = SharedString::from(format!("{} nokta", self.nokta_sayısı));
+        let aktif_kart = self.aktif_kart;
+        let nokta_yazısı = SharedString::from(match aktif_kart {
+            KartKimliği::Resize => format!("{} nokta", self.nokta_sayısı),
+            KartKimliği::AreaFill => "30 sabit nokta × 3 seri".to_string(),
+        });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let tekerlek_anahtarı = self.tekerlek_anahtarı.clone();
         let (geri_var, yakınlaştırılmış, etkileşimler, lejant, bileşen_hatası) =
             self.grafik.as_ref().map_or_else(
-                || (false, false, ilk_kart_etkileşimleri(), None, None),
+                || (false, false, aktif_kart.etkileşimler(), None, None),
                 |grafik| {
                     let grafik = grafik.read(cx);
                     (
                         grafik.grafik().geri_var(),
                         grafik.grafik().yakınlaştırılmış(),
                         grafik.grafik().etkileşim_seçenekleri(),
-                        grafik.lejant(),
+                        grafik.lejant_değerleri(),
                         grafik.hata().map(str::to_string),
                     )
                 },
             );
         let çizim_hatası = self.hata.clone().or(bileşen_hatası);
+        let seri_adları: &[&str] = match aktif_kart {
+            KartKimliği::Resize => &["sin(x)"],
+            KartKimliği::AreaFill => &["1", "2", "3"],
+        };
         let lejant = lejant.map_or_else(
-            || "x: --    □ sin(x): --".to_string(),
-            |(x, y)| format!("x: {x:.3}    □ sin(x): {y:.3}"),
+            || {
+                let seriler = seri_adları
+                    .iter()
+                    .map(|ad| format!("□ {ad}: --"))
+                    .collect::<Vec<_>>()
+                    .join("    ");
+                format!("x: --    {seriler}")
+            },
+            |(x, değerler)| {
+                let seriler = seri_adları
+                    .iter()
+                    .zip(değerler.iter())
+                    .map(|(ad, değer)| {
+                        değer.map_or_else(|| format!("□ {ad}: --"), |y| format!("□ {ad}: {y:.3}"))
+                    })
+                    .collect::<Vec<_>>()
+                    .join("    ");
+                format!("x: {x:.3}    {seriler}")
+            },
         );
 
         let liste = div()
@@ -146,11 +228,23 @@ impl Render for ChartListesi {
             .child(
                 div()
                     .id("kart-line-resize")
+                    .cursor_pointer()
                     .p_3()
                     .rounded_lg()
                     .border_1()
-                    .border_color(vurgu)
-                    .bg(rgb(0xfef2f2))
+                    .border_color(if aktif_kart == KartKimliği::Resize {
+                        vurgu
+                    } else {
+                        rgb(0xd1d5db)
+                    })
+                    .bg(if aktif_kart == KartKimliği::Resize {
+                        rgb(0xfef2f2)
+                    } else {
+                        panel
+                    })
+                    .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                        bu.kartı_seç(KartKimliği::Resize, cx);
+                    }))
                     .child(
                         div()
                             .font_weight(FontWeight::SEMIBOLD)
@@ -171,6 +265,42 @@ impl Render for ChartListesi {
                             .text_color(vurgu)
                             .child("uplot-rs/gpui feature bileşeni"),
                     ),
+            )
+            .child(
+                div()
+                    .id("kart-area-fill")
+                    .cursor_pointer()
+                    .mt_2()
+                    .p_3()
+                    .rounded_lg()
+                    .border_1()
+                    .border_color(if aktif_kart == KartKimliği::AreaFill {
+                        vurgu
+                    } else {
+                        rgb(0xd1d5db)
+                    })
+                    .bg(if aktif_kart == KartKimliği::AreaFill {
+                        rgb(0xfef2f2)
+                    } else {
+                        panel
+                    })
+                    .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                        bu.kartı_seç(KartKimliği::AreaFill, cx);
+                    }))
+                    .child(
+                        div()
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .text_color(metin)
+                            .child("Area Fill"),
+                    )
+                    .child(div().mt_1().text_xs().text_color(soluk).child("area-fill"))
+                    .child(
+                        div()
+                            .mt_2()
+                            .text_xs()
+                            .text_color(vurgu)
+                            .child("3 alan serisi · kaynak veri üreteci"),
+                    ),
             );
 
         let araçlar = div()
@@ -190,6 +320,7 @@ impl Render for ChartListesi {
                 Dugme::yeni("nokta-azalt", "− Nokta")
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Ikincil)
+                    .devre_disi(aktif_kart != KartKimliği::Resize)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
                         bu.grafiği_yenile(bu.nokta_sayısı.saturating_sub(10).max(10), cx);
                     })),
@@ -198,6 +329,7 @@ impl Render for ChartListesi {
                 Dugme::yeni("nokta-artir", "＋ Nokta")
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Ikincil)
+                    .devre_disi(aktif_kart != KartKimliği::Resize)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
                         bu.grafiği_yenile(bu.nokta_sayısı.saturating_add(10).min(10_000), cx);
                     })),
@@ -262,23 +394,18 @@ impl Render for ChartListesi {
                             .text_lg()
                             .font_weight(FontWeight::BOLD)
                             .text_color(metin)
-                            .child("Resize · sayısal x ölçeği"),
+                            .child(aktif_kart.başlık()),
                     )
-                    .child(
-                        div()
-                            .text_sm()
-                            .text_color(soluk)
-                            .child("Hazır GPUI yüzeyi · davranışlar uplot-rs çekirdeğinde"),
-                    ),
+                    .child(div().text_sm().text_color(soluk).child(aktif_kart.kaynak())),
             )
             .child(araçlar)
-            .child(
-                div()
-                    .mb_2()
-                    .text_xs()
-                    .text_color(soluk)
-                    .child("Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır"),
-            )
+            .child(div().mb_2().text_xs().text_color(soluk).child(
+                if aktif_kart == KartKimliği::Resize {
+                    "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır"
+                } else {
+                    "Sürükle: seç · çift tıkla: tam görünüm"
+                },
+            ))
             .child(div().mb_2().text_xs().text_color(vurgu).child(lejant))
             .when_some(çizim_hatası, |öğe, hata| {
                 öğe.child(
@@ -324,7 +451,7 @@ impl Render for ChartListesi {
                                 .text_xs()
                                 .font_family("SF Mono")
                                 .text_color(rgb(0xe5e7eb))
-                                .child(İLK_KART_TANIM_ÖRNEĞİ),
+                                .child(aktif_kart.tanım()),
                         )
                     }),
             );
