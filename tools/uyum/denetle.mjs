@@ -46,6 +46,25 @@ const davranışSözleşmesi = JSON.parse(
   readFileSync(resolve(kok, "uyum/ortak_davranis_sozlesmesi.json"), "utf8"),
 );
 
+const masaüstüKataloğu = readFileSync(
+  resolve(kok, "uygulamalar/masaustu/src/masaustu.rs"),
+  "utf8",
+);
+const wasmKataloğu = readFileSync(resolve(kok, "wasm/www/index.html"), "utf8");
+if (
+  !masaüstüKataloğu.includes('.id("kart-listesi")') ||
+  !masaüstüKataloğu.includes(".min_h_0()") ||
+  !masaüstüKataloğu.includes(".overflow_y_scroll()")
+) {
+  hata("masaüstü kart listesi dikey kaydırma sözleşmesini uygulamıyor");
+}
+if (
+  !wasmKataloğu.includes("overflow-y: auto") ||
+  !wasmKataloğu.includes("overscroll-behavior: contain")
+) {
+  hata("WASM kart listesi dikey kaydırma sözleşmesini uygulamıyor");
+}
+
 const davranışKimlikleri = new Set();
 for (const davranış of davranışSözleşmesi.davranışlar) {
   if (davranışKimlikleri.has(davranış.id)) {
