@@ -9,10 +9,11 @@ use ortak_bilesenler::{
 };
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
-    AREA_FILL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
-    EtkileşimSeçenekleri, Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ,
-    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası,
-    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, cursor_snap_kartı,
+    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, cursor_snap_kartı,
     dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
     scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı,
@@ -31,6 +32,7 @@ enum KartKimliği {
     MissingDataNull,
     MissingDataXGap,
     DependentScale,
+    ArcSinhScales,
 }
 
 impl KartKimliği {
@@ -47,6 +49,7 @@ impl KartKimliği {
             Self::MissingDataNull => "Missing Data · null values",
             Self::MissingDataXGap => "Missing Data · adjacent X gap",
             Self::DependentScale => "Derived Scale · °F / °C",
+            Self::ArcSinhScales => "ArcSinh Y Scale",
         }
     }
 
@@ -71,6 +74,7 @@ impl KartKimliği {
             Self::DependentScale => {
                 "dependent-scale.html · Fahrenheit'tan türetilen Celsius ekseni"
             }
+            Self::ArcSinhScales => "arcsinh-scales.html · değiştirilebilir doğrusal merkez eşiği",
         }
     }
 
@@ -85,6 +89,7 @@ impl KartKimliği {
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::MissingDataNull | Self::MissingDataXGap => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
             Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
+            Self::ArcSinhScales => ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
         }
     }
 
@@ -99,6 +104,7 @@ impl KartKimliği {
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::MissingDataNull | Self::MissingDataXGap => "src/kart/missing_data.rs",
             Self::DependentScale => "src/kart/dependent_scale.rs",
+            Self::ArcSinhScales => "src/kart/arcsinh_scales.rs",
         }
     }
 
@@ -115,6 +121,7 @@ pub struct ChartListesi {
     kart_tanımı_açık: bool,
     tekerlek_etkin: bool,
     tekerlek_anahtarı: Entity<Anahtar>,
+    arcsinh_kuvvet: i32,
 }
 
 impl ChartListesi {
@@ -155,6 +162,7 @@ impl ChartListesi {
             kart_tanımı_açık: false,
             tekerlek_etkin: etkileşimler.tekerlek_etkileşimi,
             tekerlek_anahtarı,
+            arcsinh_kuvvet: 0,
         }
     }
 
@@ -187,6 +195,7 @@ impl ChartListesi {
         }
         self.aktif_kart = kart;
         self.kart_tanımı_açık = false;
+        self.arcsinh_kuvvet = 0;
         let etkileşimler = kart.etkileşimler();
         self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
         self.tekerlek_anahtarı.update(cx, |anahtar, cx| {
@@ -194,6 +203,19 @@ impl ChartListesi {
             anahtar.devre_disi_ayarla(false, cx);
         });
         self.grafiği_yenile(self.nokta_sayısı, cx);
+    }
+
+    fn arcsinh_kuvvetini_ayarla(&mut self, kuvvet: i32, cx: &mut Context<Self>) {
+        let kuvvet = kuvvet.clamp(-3, 3);
+        let eşik = 10_f64.powi(kuvvet);
+        let Some(grafik) = &self.grafik else {
+            return;
+        };
+        grafik.update(cx, |grafik, cx| {
+            grafik.y_arcsinh_eşiği_ayarla("y", eşik, cx);
+        });
+        self.arcsinh_kuvvet = kuvvet;
+        cx.notify();
     }
 }
 
@@ -210,6 +232,7 @@ fn grafik_oluştur(kart: KartKimliği, nokta_sayısı: usize) -> Result<Grafik, 
         KartKimliği::MissingDataNull => missing_data_null_kartı(),
         KartKimliği::MissingDataXGap => missing_data_x_boşluğu_kartı(),
         KartKimliği::DependentScale => dependent_scale_kartı(),
+        KartKimliği::ArcSinhScales => arcsinh_scales_kartı(),
     }?;
     Grafik::yeni(seçenekler, veri)
 }
@@ -235,6 +258,7 @@ impl Render for ChartListesi {
             KartKimliği::MissingDataNull => "200 nokta × 3 seri · % + MB".to_string(),
             KartKimliği::MissingDataXGap => "8 nokta × 1 seri · 2 yol parçası".to_string(),
             KartKimliği::DependentScale => "7 nokta × °F veri · türetilmiş °C ekseni".to_string(),
+            KartKimliği::ArcSinhScales => "111 nokta · −1000…1000 ArcSinh".to_string(),
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
@@ -272,6 +296,7 @@ impl Render for ChartListesi {
             KartKimliği::MissingDataNull => &["CPU", "RAM", "TCP Out"],
             KartKimliği::MissingDataXGap => &["Value"],
             KartKimliği::DependentScale => &["blah"],
+            KartKimliği::ArcSinhScales => &["Value"],
         };
         let lejant = lejant.map_or_else(
             || {
@@ -592,6 +617,20 @@ impl Render for ChartListesi {
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::DependentScale, cx);
                 })),
+            )
+            .child(
+                katalog_kartı(
+                    "kart-arcsinh-scales",
+                    "ArcSinh Y Scale",
+                    "arcsinh-scales",
+                    aktif_kart == KartKimliği::ArcSinhScales,
+                    "Doğrusal eşik: 10⁻³…10³",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::ArcSinhScales, cx);
+                })),
             );
 
         let araçlar = div()
@@ -607,6 +646,31 @@ impl Render for ChartListesi {
                     .child(nokta_yazısı),
             )
             .child(tekerlek_anahtarı)
+            .when(aktif_kart == KartKimliği::ArcSinhScales, |öğe| {
+                öğe
+                    .child(
+                        Dugme::yeni("arcsinh-azalt", "− Eşik")
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Ikincil)
+                            .devre_disi(self.arcsinh_kuvvet <= -3)
+                            .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                bu.arcsinh_kuvvetini_ayarla(bu.arcsinh_kuvvet - 1, cx);
+                            })),
+                    )
+                    .child(div().text_xs().text_color(soluk).child(format!(
+                        "Doğrusal eşik: {}",
+                        10_f64.powi(self.arcsinh_kuvvet)
+                    )))
+                    .child(
+                        Dugme::yeni("arcsinh-artir", "+ Eşik")
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Ikincil)
+                            .devre_disi(self.arcsinh_kuvvet >= 3)
+                            .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                bu.arcsinh_kuvvetini_ayarla(bu.arcsinh_kuvvet + 1, cx);
+                            })),
+                    )
+            })
             .child(
                 Dugme::yeni("nokta-azalt", "− Nokta")
                     .boyutu(DugmeBoyutu::Kucuk)

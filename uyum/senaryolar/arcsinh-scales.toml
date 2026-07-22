@@ -1,0 +1,32 @@
+id = "arcsinh-scales"
+kaynak = "../uPlot/demos/arcsinh-scales.html"
+fixture = "src/kart/arcsinh_scales.rs#arcsinh_scales_kartı"
+viewport = [1600, 600]
+device_pixel_ratio = 1
+durum = "etkileşimli"
+
+[veri]
+nokta_sayısı = 111
+en_az = -1000.0
+merkez = 0.0
+en_çok = 1000.0
+magnitüdler = [-3, -2, -1, 0, 1, 2]
+
+[arcsinh]
+dağılım = 4
+başlangıç_eşiği = 1.0
+eşik_kuvvetleri = [-3, -2, -1, 0, 1, 2, 3]
+sahiplik = "çekirdek"
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/arcsinh-scales.svg"

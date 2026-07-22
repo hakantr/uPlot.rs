@@ -3,7 +3,7 @@ use crate::cizim::kirpma::{
 };
 use crate::cizim::{Komut, MetinHizası, Nokta, Sahne};
 use crate::etkilesim::EtkileşimDenetleyicisi;
-use crate::{Aralık, GrafikSeçenekleri, HizalıVeri, UplotHatası};
+use crate::{Aralık, GrafikSeçenekleri, HizalıVeri, UplotHatası, YÖlçekDağılımı};
 
 /// Doğrulanmış seçenek ve veriyi taşıyan çizelge örneği.
 pub struct Grafik {
@@ -154,6 +154,27 @@ impl Grafik {
         self.etkileşim.tekerlek_etkileşimi_ayarla(etkin);
     }
 
+    /// ArcSinh ölçeğinin doğrusal merkez eşiğini çalışma anında değiştirir.
+    /// Platform yüzeyleri yalnız bu çekirdek API'sini çağırır.
+    pub fn y_arcsinh_eşiği_ayarla(&mut self, anahtar: &str, eşik: f64) -> bool {
+        if !eşik.is_finite() || eşik <= 0.0 {
+            return false;
+        }
+        let Some(ölçek) = self
+            .seçenekler
+            .y_ölçekleri
+            .iter_mut()
+            .find(|ölçek| ölçek.anahtar == anahtar)
+        else {
+            return false;
+        };
+        if !matches!(ölçek.dağılım, YÖlçekDağılımı::ArcSinh { .. }) {
+            return false;
+        }
+        ölçek.dağılım = YÖlçekDağılımı::ArcSinh { eşik };
+        true
+    }
+
     pub fn tekerlek(
         &mut self,
         yatay_odak_oranı: f64,
@@ -233,6 +254,21 @@ impl Grafik {
             self.görünür_x_aralığı(),
             self.etkileşim.görünür_y(),
         ))
+    }
+
+    pub fn seri_y_konum_oranı(&self, seri_indeksi: usize, değer: f64) -> Option<f64> {
+        if !değer.is_finite() {
+            return None;
+        }
+        let seri = self.seçenekler.seriler.get(seri_indeksi)?;
+        let aralık = self.seri_görünür_y_aralığı(seri_indeksi)?;
+        Some(f64::from(self.y_konumu(
+            &seri.ölçek,
+            aralık,
+            değer,
+            0.0,
+            1.0,
+        )))
     }
 
     /// Geçerli görünümde, normalize edilmiş yatay konuma en yakın seri noktasını bulur.
@@ -359,8 +395,17 @@ impl Grafik {
             .map_or("", |ölçek| ölçek.birim.as_str());
 
         let y_artımı = uygun_artım(y_aralığı, yükseklik, 30.0);
-        for y_değeri in eksen_bölmeleri(y_aralığı, yükseklik, 30.0) {
-            let y = üst + yükseklik - y_aralığı.konum(y_değeri, 0.0, yükseklik);
+        for y_değeri in
+            self.y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, y_aralığı, yükseklik)
+        {
+            let y = üst + yükseklik
+                - self.y_konumu(
+                    &self.seçenekler.birincil_y_ölçeği,
+                    y_aralığı,
+                    y_değeri,
+                    0.0,
+                    yükseklik,
+                );
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(sol, y),
                 bitiş: Nokta::yeni(sağ, y),
@@ -384,8 +429,8 @@ impl Grafik {
         {
             let aralık = self.görünür_ölçek_aralığı(&ölçek.anahtar, x_aralığı, görünür_y);
             let artım = uygun_artım(aralık, yükseklik, 30.0);
-            for değer in eksen_bölmeleri(aralık, yükseklik, 30.0) {
-                let y = alt - aralık.konum(değer, 0.0, yükseklik);
+            for değer in self.y_eksen_bölmeleri(&ölçek.anahtar, aralık, yükseklik) {
+                let y = alt - self.y_konumu(&ölçek.anahtar, aralık, değer, 0.0, yükseklik);
                 if ölçek.ızgara {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(sol, y),
@@ -454,7 +499,8 @@ impl Grafik {
                             ham_parçalar.push(std::mem::take(&mut parça));
                         }
                         let x = x_aralığı.konum(*x_değeri, sol, genişlik);
-                        let y = alt - seri_y_aralığı.konum(*y_değeri, 0.0, yükseklik);
+                        let y = alt
+                            - self.y_konumu(&seri.ölçek, seri_y_aralığı, *y_değeri, 0.0, yükseklik);
                         let nokta = Nokta::yeni(x, y);
                         parça.push(nokta);
                         önceki_x = Some(*x_değeri);
@@ -474,7 +520,14 @@ impl Grafik {
             }
             let parçalar = yolu_dikdörtgene_kırp(&ham_parçalar, sol, sağ, üst, alt);
             if let Some(dolgu) = &seri.dolgu {
-                let taban = alt - seri_y_aralığı.konum(seri.dolgu_tabanı, 0.0, yükseklik);
+                let taban = alt
+                    - self.y_konumu(
+                        &seri.ölçek,
+                        seri_y_aralığı,
+                        seri.dolgu_tabanı,
+                        0.0,
+                        yükseklik,
+                    );
                 let taban = taban.clamp(üst, alt);
                 let çokgenler = ham_parçalar
                     .iter()
@@ -611,6 +664,47 @@ impl Grafik {
             .y_ölçekleri
             .iter()
             .find(|ölçek| ölçek.anahtar == anahtar)
+    }
+
+    fn y_konumu(
+        &self,
+        anahtar: &str,
+        aralık: Aralık,
+        değer: f64,
+        başlangıç: f32,
+        uzunluk: f32,
+    ) -> f32 {
+        match self.ölçek_seçeneği(anahtar).map(|ölçek| ölçek.dağılım) {
+            Some(YÖlçekDağılımı::ArcSinh { eşik }) if eşik.is_finite() && eşik > 0.0 => {
+                let dönüştür = |sayı: f64| (sayı / eşik).asinh();
+                let en_az = dönüştür(aralık.en_az);
+                let en_çok = dönüştür(aralık.en_çok);
+                let değer = dönüştür(değer);
+                let oran = (değer - en_az) / (en_çok - en_az);
+                başlangıç + oran as f32 * uzunluk
+            }
+            _ => aralık.konum(değer, başlangıç, uzunluk),
+        }
+    }
+
+    fn y_eksen_bölmeleri(&self, anahtar: &str, aralık: Aralık, boyut: f32) -> Vec<f64> {
+        let Some(YÖlçekDağılımı::ArcSinh { eşik }) =
+            self.ölçek_seçeneği(anahtar).map(|ölçek| ölçek.dağılım)
+        else {
+            return eksen_bölmeleri(aralık, boyut, 30.0);
+        };
+        if !eşik.is_finite() || eşik <= 0.0 {
+            return eksen_bölmeleri(aralık, boyut, 30.0);
+        }
+        let en_az = (aralık.en_az / eşik).asinh();
+        let en_çok = (aralık.en_çok / eşik).asinh();
+        let adım_sayısı = (boyut / 55.0).round().clamp(3.0, 12.0) as u32;
+        (0..=adım_sayısı)
+            .map(|indeks| {
+                let oran = f64::from(indeks) / f64::from(adım_sayısı);
+                eşik * (en_az + (en_çok - en_az) * oran).sinh()
+            })
+            .collect()
     }
 }
 

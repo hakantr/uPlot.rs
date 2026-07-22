@@ -1,3 +1,4 @@
+mod arcsinh_scales;
 mod area_fill;
 mod cursor_snap;
 mod dependent_scale;
@@ -10,6 +11,7 @@ mod veri_uretici;
 mod zoom_touch;
 mod zoom_wheel;
 
+pub use arcsinh_scales::{ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı};
 pub use area_fill::{AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ, area_fill_kartı};
 pub use cursor_snap::{
     CURSOR_SNAP_KANIT_TOHUMU, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, cursor_snap_kartı

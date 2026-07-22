@@ -80,3 +80,7 @@ required-features = ["svg"]
 [[example]]
 name = "dependent_scale"
 required-features = ["svg"]
+
+[[example]]
+name = "arcsinh_scales"
+required-features = ["svg"]

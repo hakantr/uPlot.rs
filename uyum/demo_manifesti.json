@@ -632,6 +632,64 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "bekliyor"
       }
+    },
+    {
+      "sıra": 10,
+      "id": "arcsinh-scales",
+      "başlık": { "en": "ArcSinh Scales", "tr": "ArcSinh Ölçekleri" },
+      "kaynak": "demos/arcsinh-scales.html",
+      "kaynak_sha256": "d7529582d6f9cc4f959338397227e80bac09506b7c93496a9d45d3b7f64e298c",
+      "ek_kaynaklar": [
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
+      ],
+      "fixture": "src/kart/arcsinh_scales.rs#arcsinh_scales_kartı",
+      "örnek": "examples/arcsinh_scales.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/arcsinh-scales.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/arcsinh_scales.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı",
+          "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
+          "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "devralındı"
+        },
+        "gerekçeler": {}
+      },
+      "sahip_faz": 2,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-equivalent-symmetric-111-point-data",
+        "arcsinh-y-distribution",
+        "runtime-linear-threshold-control",
+        "nonlinear-axis-and-cursor-mapping",
+        "gpui-wasm-threshold-controls",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "kısmi",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "bekliyor"
+      }
     }
   ]
 }

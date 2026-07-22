@@ -3,13 +3,14 @@
 #![allow(confusable_idents)]
 
 use uplot_rs::{
-    AREA_FILL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
-    Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, cursor_snap_kartı, dependent_scale_kartı,
-    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
-    months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı,
-    zoom_touch_kartı, zoom_wheel_kartı,
+    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
+    MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı,
+    area_fill_kartı, cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
+    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
+    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
+    zoom_wheel_kartı,
 };
 use wasm_bindgen::prelude::*;
 
@@ -36,6 +37,7 @@ impl KartOturumu {
             "missing-data-null" => missing_data_null_kartı(),
             "missing-data-x-gap" => missing_data_x_boşluğu_kartı(),
             "dependent-scale" => dependent_scale_kartı(),
+            "arcsinh-scales" => arcsinh_scales_kartı(),
             kimlik => Err(UplotHatası::BilinmeyenKart {
                 kimlik: kimlik.to_string(),
             }),
@@ -134,6 +136,16 @@ impl KartOturumu {
             .map_or_else(Vec::new, |aralık| vec![aralık.en_az, aralık.en_çok])
     }
 
+    pub fn seri_y_konum_orani(&self, seri_indeksi: usize, değer: f64) -> f64 {
+        self.grafik
+            .seri_y_konum_oranı(seri_indeksi, değer)
+            .unwrap_or(f64::NAN)
+    }
+
+    pub fn y_arcsinh_esigi_ayarla(&mut self, anahtar: &str, eşik: f64) -> bool {
+        self.grafik.y_arcsinh_eşiği_ayarla(anahtar, eşik)
+    }
+
     pub fn cizim_alani(&self, genişlik: u32, yükseklik: u32) -> Vec<f64> {
         let (sol, sağ, üst, alt) = self.grafik.çizim_alanı_boyutta(genişlik, yükseklik);
         vec![
@@ -188,7 +200,7 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    11
+    12
 }
 
 #[wasm_bindgen]
@@ -237,6 +249,11 @@ pub fn dependent_scale_kart_tanim_ornegi() -> String {
 }
 
 #[wasm_bindgen]
+pub fn arcsinh_scales_kart_tanim_ornegi() -> String {
+    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
 pub fn ortak_kart_tekerlek_etkilesimi() -> bool {
     ortak_kart_etkileşimleri().tekerlek_etkileşimi
 }
@@ -280,7 +297,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 11);
+        assert_eq!(kart_sayisi(), 12);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -305,7 +322,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 11);
+        assert_eq!(kart_sayisi(), 12);
     }
 
     #[test]
@@ -402,5 +419,17 @@ mod testler {
         let svg = oturum.svg(600, 400);
         assert!(svg.contains("° F"));
         assert!(svg.contains("° C"));
+    }
+
+    #[test]
+    fn arcsinh_wasm_eşiği_çekirdekte_değiştirir() {
+        let oturum = KartOturumu::yeni("arcsinh-scales", 100);
+        assert!(oturum.is_ok());
+        let Ok(mut oturum) = oturum else {
+            return;
+        };
+        let önce = oturum.svg(960, 400);
+        assert!(oturum.y_arcsinh_esigi_ayarla("y", 0.001));
+        assert_ne!(oturum.svg(960, 400), önce);
     }
 }

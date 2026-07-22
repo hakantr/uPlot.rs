@@ -97,6 +97,19 @@ impl GpuiGrafik {
         Self::bildir(cx);
     }
 
+    pub fn y_arcsinh_eşiği_ayarla(
+        &mut self,
+        anahtar: &str,
+        eşik: f64,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let değişti = self.grafik.y_arcsinh_eşiği_ayarla(anahtar, eşik);
+        if değişti {
+            Self::bildir(cx);
+        }
+        değişti
+    }
+
     pub fn önceki_görünüm(&mut self, cx: &mut Context<Self>) -> bool {
         let değişti = self.grafik.önceki_görünüm();
         if değişti {
@@ -145,11 +158,10 @@ impl GpuiGrafik {
                 let Some(seri) = self.grafik.seri_seçenekleri().get(seri_indeksi) else {
                     continue;
                 };
-                let Some(y_aralığı) = self.grafik.seri_görünür_y_aralığı(seri_indeksi)
-                else {
+                let Some(y_oranı) = self.grafik.seri_y_konum_oranı(seri_indeksi, *değer) else {
                     continue;
                 };
-                let nokta_y = alt - ölçekle(*değer, y_aralığı, 0.0, alt - üst);
+                let nokta_y = alt - y_oranı as f32 * (alt - üst);
                 sahne.ekle(Komut::Daire {
                     merkez: Nokta::yeni(nokta_x, nokta_y),
                     yarıçap: 2.5,

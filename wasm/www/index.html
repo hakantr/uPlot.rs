@@ -129,6 +129,11 @@
         <small>dependent-scale</small>
         <div class="durum">Fahrenheit → Celsius sağ ekseni</div>
       </article>
+      <article class="kart" data-kart="arcsinh-scales" aria-current="false" tabindex="0">
+        <strong>ArcSinh Y Scale</strong>
+        <small>arcsinh-scales</small>
+        <div class="durum">Doğrusal eşik: 10⁻³…10³</div>
+      </article>
     </aside>
     <main>
       <header>
@@ -150,6 +155,10 @@
           <label id="nokta-kontrolü">Nokta
             <input id="nokta" type="range" min="10" max="1000" step="10" value="100">
             <output id="nokta-değeri">100 nokta</output>
+          </label>
+          <label id="arcsinh-kontrolü" hidden>Doğrusal eşik
+            <input id="arcsinh-esigi" type="range" min="-3" max="3" step="1" value="0">
+            <output id="arcsinh-degeri">1</output>
           </label>
         </div>
       </header>
@@ -173,6 +182,7 @@
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
+      arcsinh_scales_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -194,6 +204,9 @@
     const kartBaşlığı = document.getElementById("kart-başlığı");
     const kartKaynağı = document.getElementById("kart-kaynağı");
     const noktaKontrolü = document.getElementById("nokta-kontrolü");
+    const arcsinhKontrolü = document.getElementById("arcsinh-kontrolü");
+    const arcsinhEşiği = document.getElementById("arcsinh-esigi");
+    const arcsinhDeğeri = document.getElementById("arcsinh-degeri");
 
     const kartlar = {
       resize: {
@@ -376,6 +389,17 @@
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       },
+      "arcsinh-scales": {
+        başlık: "ArcSinh Y Scale",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/arcsinh-scales.html">arcsinh-scales.html</a>
+          <br>Kaynaktaki 111 simetrik değer ve 10⁻³…10³ doğrusal merkez eşiği çekirdekte uygulanır.`,
+        tanım: () => arcsinh_scales_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/arcsinh_scales.rs",
+        seriler: [{ etiket: "Value", renk: "#0000ff" }],
+        yardım: "Eşik denetimi: ArcSinh doğrusal merkezini değiştir · ortak yakınlaştırma profili etkin",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
     };
 
     function ortakEtkileşimler() {
@@ -515,12 +539,12 @@
           nokta?.setAttribute("visibility", "hidden");
           return;
         }
-        const [yMin, yMax] = oturum.seri_gorunur_y_araligi(indeks);
-        if (!Number.isFinite(yMin) || !Number.isFinite(yMax) || yMin === yMax) {
+        const yOranı = oturum.seri_y_konum_orani(indeks, seriDeğeri);
+        if (!Number.isFinite(yOranı)) {
           nokta.setAttribute("visibility", "hidden");
           return;
         }
-        const noktaY = alt - (seriDeğeri - yMin) / (yMax - yMin) * (alt - üst);
+        const noktaY = alt - yOranı * (alt - üst);
         nokta.setAttribute("cx", noktaX); nokta.setAttribute("cy", noktaY);
         nokta.setAttribute("visibility", "visible");
       });
@@ -764,6 +788,9 @@
         kartTanımKodu.textContent = kart.tanım();
         kartTanımBaşlığı.textContent = `Kart tanımı · ${kart.tanımYolu}`;
         noktaKontrolü.hidden = !kart.değişkenNokta;
+        arcsinhKontrolü.hidden = kimlik !== "arcsinh-scales";
+        arcsinhEşiği.value = "0";
+        arcsinhDeğeri.value = "1";
         etkileşimler = kart.etkileşimler();
         tekerlekEtkileşimi.checked = etkileşimler.tekerlek;
         tekerlekEtkileşimi.closest("label").hidden = false;
@@ -781,6 +808,12 @@
       kartıSeç("resize");
       nokta.addEventListener("input", () => {
         if (aktifKart === "resize") kartıSeç("resize");
+      });
+      arcsinhEşiği.addEventListener("input", () => {
+        if (aktifKart !== "arcsinh-scales" || !oturum) return;
+        const eşik = 10 ** Number(arcsinhEşiği.value);
+        arcsinhDeğeri.value = String(eşik);
+        if (oturum.y_arcsinh_esigi_ayarla("y", eşik)) çiz();
       });
       new ResizeObserver(çiz).observe(chart);
       çiz();

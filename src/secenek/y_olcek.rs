@@ -1,5 +1,11 @@
 use crate::Aralık;
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum YÖlçekDağılımı {
+    Doğrusal,
+    ArcSinh { eşik: f64 },
+}
+
 /// uPlot'un adlandırılmış Y ölçekleri ve bunlara bağlı eksenlerinin çekirdek
 /// karşılığıdır. `y` anahtarı birincil sol eksendir; diğer ölçekler sağda
 /// gösterilebilir.
@@ -13,6 +19,7 @@ pub struct YÖlçekSeçenekleri {
     pub kaynak: Option<String>,
     pub dönüşüm_çarpanı: f64,
     pub dönüşüm_kaydırması: f64,
+    pub dağılım: YÖlçekDağılımı,
 }
 
 impl YÖlçekSeçenekleri {
@@ -26,6 +33,7 @@ impl YÖlçekSeçenekleri {
             kaynak: None,
             dönüşüm_çarpanı: 1.0,
             dönüşüm_kaydırması: 0.0,
+            dağılım: YÖlçekDağılımı::Doğrusal,
         }
     }
 
@@ -61,6 +69,14 @@ impl YÖlçekSeçenekleri {
             self.kaynak = Some(kaynak.into());
             self.dönüşüm_çarpanı = çarpan;
             self.dönüşüm_kaydırması = kaydırma;
+        }
+        self
+    }
+
+    /// uPlot `distr: 4` ve `asinh` doğrusal eşik ayarını etkinleştirir.
+    pub fn arcsinh(mut self, eşik: f64) -> Self {
+        if eşik.is_finite() && eşik > 0.0 {
+            self.dağılım = YÖlçekDağılımı::ArcSinh { eşik };
         }
         self
     }

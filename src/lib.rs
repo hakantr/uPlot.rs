@@ -25,18 +25,18 @@ pub use cizim::{Komut, MetinHizası, Nokta, Sahne};
 pub use grafik::Grafik;
 pub use hata::UplotHatası;
 pub use kart::{
-    AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KANIT_TOHUMU,
-    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
+    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ,
+    CURSOR_SNAP_KANIT_TOHUMU, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KANIT_TOHUMU, MONTHS_KART_TANIM_ÖRNEĞİ,
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, cursor_snap_kartı, dependent_scale_kartı,
-    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
-    months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı,
-    zoom_touch_kartı, zoom_wheel_kartı,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, cursor_snap_kartı,
+    dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı,
 };
 pub use olcek::Aralık;
 pub use secenek::{
     EtkileşimSeçenekleri, GrafikSeçenekleri, SeriSeçenekleri, TekerlekAyarları, TekerlekKipi,
-    YÖlçekSeçenekleri,
+    YÖlçekDağılımı, YÖlçekSeçenekleri,
 };
 pub use veri::HizalıVeri;
