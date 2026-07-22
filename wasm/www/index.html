@@ -139,6 +139,11 @@
         <small>axis-control</small>
         <div class="durum">500.001 nokta · sağ Y ekseni</div>
       </article>
+      <article class="kart" data-kart="axis-autosize" aria-current="false" tabindex="0">
+        <strong>Axis AutoSize</strong>
+        <small>axis-autosize</small>
+        <div class="durum">501 nokta · dinamik eksen ölçümü</div>
+      </article>
     </aside>
     <main>
       <header>
@@ -165,6 +170,10 @@
             <input id="arcsinh-esigi" type="range" min="-3" max="3" step="1" value="0">
             <output id="arcsinh-degeri">1</output>
           </label>
+          <label id="autosize-kontrolü" hidden>Çarpan
+            <input id="autosize-kuvvet" type="range" min="0" max="9" step="1" value="0">
+            <output id="autosize-degeri">1</output>
+          </label>
         </div>
       </header>
       <section id="chart" tabindex="0" aria-label="Etkileşimli grafik" aria-live="polite"><span>WASM yükleniyor…</span></section>
@@ -189,6 +198,7 @@
       dependent_scale_kart_tanim_ornegi,
       arcsinh_scales_kart_tanim_ornegi,
       axis_control_kart_tanim_ornegi,
+      axis_autosize_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -213,6 +223,9 @@
     const arcsinhKontrolü = document.getElementById("arcsinh-kontrolü");
     const arcsinhEşiği = document.getElementById("arcsinh-esigi");
     const arcsinhDeğeri = document.getElementById("arcsinh-degeri");
+    const autosizeKontrolü = document.getElementById("autosize-kontrolü");
+    const autosizeKuvvet = document.getElementById("autosize-kuvvet");
+    const autosizeDeğeri = document.getElementById("autosize-degeri");
 
     const kartlar = {
       resize: {
@@ -417,6 +430,17 @@
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       },
+      "axis-autosize": {
+        başlık: "Axis AutoSize",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/axis-autosize.html">axis-autosize.html</a>
+          <br>Kaynaktaki 501 noktalı formül ve 500 ms arayla 1…10⁹ büyüyen veri korunur. X/Y eksen payları her veri değişiminde çekirdek tarafından yeniden ölçülür.`,
+        tanım: () => axis_autosize_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/axis_autosize.rs",
+        seriler: [{ etiket: "sin(x)", renk: "#ff0000" }],
+        yardım: "Kaynak animasyonu: her 500 ms’de 10× · kaydırıcıyla çarpan elle de doğrulanabilir",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
     };
 
     function ortakEtkileşimler() {
@@ -437,6 +461,7 @@
     let grafikÜzerinde = false;
     const dokunmalar = new Map();
     let kıstırma = null;
+    let autosizeZamanlayıcı = null;
     let etkileşimler = {
       tekerlek: false,
       seçim: false,
@@ -806,14 +831,40 @@
         kartTanımBaşlığı.textContent = `Kart tanımı · ${kart.tanımYolu}`;
         noktaKontrolü.hidden = !kart.değişkenNokta;
         arcsinhKontrolü.hidden = kimlik !== "arcsinh-scales";
+        autosizeKontrolü.hidden = kimlik !== "axis-autosize";
         arcsinhEşiği.value = "0";
         arcsinhDeğeri.value = "1";
+        autosizeKuvvet.value = "0";
+        autosizeDeğeri.value = "1";
+        if (autosizeZamanlayıcı !== null) {
+          clearInterval(autosizeZamanlayıcı);
+          autosizeZamanlayıcı = null;
+        }
         etkileşimler = kart.etkileşimler();
         tekerlekEtkileşimi.checked = etkileşimler.tekerlek;
         tekerlekEtkileşimi.closest("label").hidden = false;
         oturum = new KartOturumu(kimlik, Number(nokta.value));
         oturum.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
         çiz();
+        if (kimlik === "axis-autosize") {
+          autosizeZamanlayıcı = setInterval(() => {
+            const sonraki = Number(autosizeKuvvet.value) + 1;
+            if (sonraki > 9 || aktifKart !== "axis-autosize" || !oturum) {
+              clearInterval(autosizeZamanlayıcı);
+              autosizeZamanlayıcı = null;
+              return;
+            }
+            autosizeKuvvet.value = String(sonraki);
+            const çarpan = 10 ** sonraki;
+            autosizeDeğeri.value = String(çarpan);
+            try {
+              oturum.axis_autosize_carpani_ayarla(çarpan);
+              çiz();
+            } catch (neden) {
+              hata.textContent = `Axis AutoSize güncellenemedi: ${String(neden)}`;
+            }
+          }, 500);
+        }
       }
       document.querySelectorAll("[data-kart]").forEach(öğe => {
         öğe.addEventListener("click", () => kartıSeç(öğe.dataset.kart));
@@ -831,6 +882,17 @@
         const eşik = 10 ** Number(arcsinhEşiği.value);
         arcsinhDeğeri.value = String(eşik);
         if (oturum.y_arcsinh_esigi_ayarla("y", eşik)) çiz();
+      });
+      autosizeKuvvet.addEventListener("input", () => {
+        if (aktifKart !== "axis-autosize" || !oturum) return;
+        const çarpan = 10 ** Number(autosizeKuvvet.value);
+        autosizeDeğeri.value = String(çarpan);
+        try {
+          oturum.axis_autosize_carpani_ayarla(çarpan);
+          çiz();
+        } catch (neden) {
+          hata.textContent = `Axis AutoSize güncellenemedi: ${String(neden)}`;
+        }
       });
       new ResizeObserver(çiz).observe(chart);
       çiz();

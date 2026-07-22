@@ -1,5 +1,6 @@
 mod arcsinh_scales;
 mod area_fill;
+mod axis_autosize;
 mod axis_control;
 mod cursor_snap;
 mod dependent_scale;
@@ -14,6 +15,9 @@ mod zoom_wheel;
 
 pub use arcsinh_scales::{ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı};
 pub use area_fill::{AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ, area_fill_kartı};
+pub use axis_autosize::{
+    AXIS_AUTOSIZE_KANIT_TOHUMU, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ, axis_autosize_kartı,
+};
 pub use axis_control::{
     AXIS_CONTROL_KANIT_TOHUMU, AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, axis_control_kartı,
 };

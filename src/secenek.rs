@@ -155,6 +155,9 @@ pub struct GrafikSeçenekleri {
     pub y_eksen_etiketi: String,
     pub birincil_y_sağda: bool,
     pub birincil_y_eksen_rengi: String,
+    pub x_eksen_değer_çarpanı: f64,
+    pub otomatik_x_sağ_pay: bool,
+    pub otomatik_y_eksen_genişliği: bool,
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
     pub imleç_ızgara_adımı: Option<f32>,
@@ -182,6 +185,9 @@ impl GrafikSeçenekleri {
             y_eksen_etiketi: String::new(),
             birincil_y_sağda: false,
             birincil_y_eksen_rengi: "#4b5563".to_string(),
+            x_eksen_değer_çarpanı: 1.0,
+            otomatik_x_sağ_pay: false,
+            otomatik_y_eksen_genişliği: false,
             imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
@@ -238,6 +244,23 @@ impl GrafikSeçenekleri {
 
     pub fn birincil_y_eksen_rengi(mut self, renk: impl Into<String>) -> Self {
         self.birincil_y_eksen_rengi = renk.into();
+        self
+    }
+
+    pub fn x_eksen_değer_çarpanı(mut self, çarpan: f64) -> Self {
+        if çarpan.is_finite() && çarpan > 0.0 {
+            self.x_eksen_değer_çarpanı = çarpan;
+        }
+        self
+    }
+
+    pub fn otomatik_x_sağ_pay(mut self, etkin: bool) -> Self {
+        self.otomatik_x_sağ_pay = etkin;
+        self
+    }
+
+    pub fn otomatik_y_eksen_genişliği(mut self, etkin: bool) -> Self {
+        self.otomatik_y_eksen_genişliği = etkin;
         self
     }
 

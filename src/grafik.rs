@@ -93,7 +93,7 @@ impl Grafik {
     ) -> (f32, f32, f32, f32) {
         let genişlik_px = genişlik_px.max(160) as f32;
         let yükseklik_px = yükseklik_px.max(120) as f32;
-        let sağ_pay = if self.seçenekler.birincil_y_sağda
+        let mut sağ_pay: f32 = if self.seçenekler.birincil_y_sağda
             || self
                 .seçenekler
                 .y_ölçekleri
@@ -104,11 +104,37 @@ impl Grafik {
         } else {
             24.0
         };
-        let sol_pay = if self.seçenekler.birincil_y_sağda {
+        if self.seçenekler.otomatik_x_sağ_pay {
+            let x_artımı = uygun_artım(self.görünür_x_aralığı(), genişlik_px, 50.0);
+            let son_etiket = eksen_değerini_yaz(
+                self.görünür_x_aralığı().en_çok * self.seçenekler.x_eksen_değer_çarpanı,
+                x_artımı * self.seçenekler.x_eksen_değer_çarpanı,
+            );
+            sağ_pay = sağ_pay.max(8.0 + son_etiket.chars().count() as f32 * 4.0);
+        }
+        let mut sol_pay: f32 = if self.seçenekler.birincil_y_sağda {
             24.0
         } else {
             64.0
         };
+        if self.seçenekler.otomatik_y_eksen_genişliği && !self.seçenekler.birincil_y_sağda {
+            let aralık = self.görünür_y_aralığı();
+            let artım = uygun_artım(aralık, yükseklik_px, 30.0);
+            let birim = self
+                .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
+                .map_or("", |ölçek| ölçek.birim.as_str());
+            let en_uzun = self
+                .y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, aralık, yükseklik_px)
+                .into_iter()
+                .map(|değer| {
+                    eksen_değerini_birimle_yaz(değer, artım, birim)
+                        .chars()
+                        .count()
+                })
+                .max()
+                .unwrap_or(1);
+            sol_pay = sol_pay.max(24.0 + en_uzun as f32 * 7.0);
+        }
         let alt_pay = if self.seçenekler.x_eksen_etiketi.is_empty() {
             48.0
         } else {
@@ -507,7 +533,10 @@ impl Grafik {
                     crate::zaman::eksen_etiketi(x_değeri, x_artımı)
                         .unwrap_or_else(|| eksen_değerini_yaz(x_değeri, x_artımı))
                 } else {
-                    eksen_değerini_yaz(x_değeri, x_artımı)
+                    eksen_değerini_yaz(
+                        x_değeri * self.seçenekler.x_eksen_değer_çarpanı,
+                        x_artımı * self.seçenekler.x_eksen_değer_çarpanı,
+                    )
                 },
                 renk: "#4b5563".to_string(),
                 boyut: 11.0,

@@ -49,6 +49,9 @@ pub enum UplotHatası {
         varlık: &'static str,
         satır: usize,
     },
+    GeçersizÇarpan {
+        değer: f64,
+    },
 }
 
 impl Display for UplotHatası {
@@ -102,6 +105,9 @@ impl Display for UplotHatası {
             }
             Self::GeçersizVarlıkSatırı { varlık, satır } => {
                 write!(f, "{varlık} varlığının {satır}. satırı geçersiz")
+            }
+            Self::GeçersizÇarpan { değer } => {
+                write!(f, "çarpan sonlu ve pozitif olmalı; bulunan: {değer}")
             }
         }
     }

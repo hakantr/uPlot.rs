@@ -9,12 +9,13 @@ use ortak_bilesenler::{
 };
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
-    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
-    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
+    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
+    AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
     SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, axis_control_kartı,
-    cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
+    axis_control_kartı, cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
     missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
     ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
     zoom_wheel_kartı,
@@ -35,6 +36,7 @@ enum KartKimliği {
     DependentScale,
     ArcSinhScales,
     AxisControl,
+    AxisAutosize,
 }
 
 impl KartKimliği {
@@ -53,6 +55,7 @@ impl KartKimliği {
             Self::DependentScale => "Derived Scale · °F / °C",
             Self::ArcSinhScales => "ArcSinh Y Scale",
             Self::AxisControl => "Axis Control",
+            Self::AxisAutosize => "Axis AutoSize",
         }
     }
 
@@ -79,6 +82,7 @@ impl KartKimliği {
             }
             Self::ArcSinhScales => "arcsinh-scales.html · değiştirilebilir doğrusal merkez eşiği",
             Self::AxisControl => "axis-control.html · 500.001 nokta ve sağ Y ekseni",
+            Self::AxisAutosize => "axis-autosize.html · 501 nokta ve 1…10⁹ dinamik eksen ölçümü",
         }
     }
 
@@ -95,6 +99,7 @@ impl KartKimliği {
             Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::ArcSinhScales => ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
             Self::AxisControl => AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
+            Self::AxisAutosize => AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
         }
     }
 
@@ -111,6 +116,7 @@ impl KartKimliği {
             Self::DependentScale => "src/kart/dependent_scale.rs",
             Self::ArcSinhScales => "src/kart/arcsinh_scales.rs",
             Self::AxisControl => "src/kart/axis_control.rs",
+            Self::AxisAutosize => "src/kart/axis_autosize.rs",
         }
     }
 
@@ -128,6 +134,7 @@ pub struct ChartListesi {
     tekerlek_etkin: bool,
     tekerlek_anahtarı: Entity<Anahtar>,
     arcsinh_kuvvet: i32,
+    autosize_kuvvet: i32,
 }
 
 impl ChartListesi {
@@ -152,7 +159,7 @@ impl ChartListesi {
         })
         .detach();
 
-        let (grafik, hata) = grafik_oluştur(KartKimliği::Resize, 100).map_or_else(
+        let (grafik, hata) = grafik_oluştur(KartKimliği::Resize, 100, 0).map_or_else(
             |hata| (None, Some(format!("Grafik oluşturulamadı: {hata}"))),
             |grafik| (Some(cx.new(|_| GpuiGrafik::yeni(grafik))), None),
         );
@@ -169,12 +176,13 @@ impl ChartListesi {
             tekerlek_etkin: etkileşimler.tekerlek_etkileşimi,
             tekerlek_anahtarı,
             arcsinh_kuvvet: 0,
+            autosize_kuvvet: 0,
         }
     }
 
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
-        match grafik_oluştur(self.aktif_kart, nokta_sayısı) {
+        match grafik_oluştur(self.aktif_kart, nokta_sayısı, self.autosize_kuvvet) {
             Ok(mut yeni) => {
                 yeni.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
                 if let Some(grafik) = &self.grafik {
@@ -202,6 +210,7 @@ impl ChartListesi {
         self.aktif_kart = kart;
         self.kart_tanımı_açık = false;
         self.arcsinh_kuvvet = 0;
+        self.autosize_kuvvet = 0;
         let etkileşimler = kart.etkileşimler();
         self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
         self.tekerlek_anahtarı.update(cx, |anahtar, cx| {
@@ -223,9 +232,18 @@ impl ChartListesi {
         self.arcsinh_kuvvet = kuvvet;
         cx.notify();
     }
+
+    fn autosize_kuvvetini_ayarla(&mut self, kuvvet: i32, cx: &mut Context<Self>) {
+        self.autosize_kuvvet = kuvvet.clamp(0, 9);
+        self.grafiği_yenile(self.nokta_sayısı, cx);
+    }
 }
 
-fn grafik_oluştur(kart: KartKimliği, nokta_sayısı: usize) -> Result<Grafik, UplotHatası> {
+fn grafik_oluştur(
+    kart: KartKimliği,
+    nokta_sayısı: usize,
+    autosize_kuvvet: i32,
+) -> Result<Grafik, UplotHatası> {
     let (seçenekler, veri) = match kart {
         KartKimliği::Resize => resize_kartı(nokta_sayısı),
         KartKimliği::AreaFill => area_fill_kartı(),
@@ -240,6 +258,7 @@ fn grafik_oluştur(kart: KartKimliği, nokta_sayısı: usize) -> Result<Grafik, 
         KartKimliği::DependentScale => dependent_scale_kartı(),
         KartKimliği::ArcSinhScales => arcsinh_scales_kartı(),
         KartKimliği::AxisControl => axis_control_kartı(),
+        KartKimliği::AxisAutosize => axis_autosize_kartı(10_f64.powi(autosize_kuvvet)),
     }?;
     Grafik::yeni(seçenekler, veri)
 }
@@ -268,6 +287,9 @@ impl Render for ChartListesi {
             KartKimliği::ArcSinhScales => "111 nokta · −1000…1000 ArcSinh".to_string(),
             KartKimliği::AxisControl => {
                 "500.001 nokta · min/max piksel seyrekleştirme".to_string()
+            }
+            KartKimliği::AxisAutosize => {
+                format!("501 nokta · çarpan 10^{}", self.autosize_kuvvet)
             }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
@@ -308,6 +330,7 @@ impl Render for ChartListesi {
             KartKimliği::DependentScale => &["blah"],
             KartKimliği::ArcSinhScales => &["Value"],
             KartKimliği::AxisControl => &["sin(x)"],
+            KartKimliği::AxisAutosize => &["sin(x)"],
         };
         let lejant = lejant.map_or_else(
             || {
@@ -656,6 +679,20 @@ impl Render for ChartListesi {
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::AxisControl, cx);
                 })),
+            )
+            .child(
+                katalog_kartı(
+                    "kart-axis-autosize",
+                    "Axis AutoSize",
+                    "axis-autosize",
+                    aktif_kart == KartKimliği::AxisAutosize,
+                    "501 nokta · dinamik eksen ölçümü",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::AxisAutosize, cx);
+                })),
             );
 
         let araçlar = div()
@@ -693,6 +730,33 @@ impl Render for ChartListesi {
                             .devre_disi(self.arcsinh_kuvvet >= 3)
                             .tiklaninca(cx.listener(|bu, _, _, cx| {
                                 bu.arcsinh_kuvvetini_ayarla(bu.arcsinh_kuvvet + 1, cx);
+                            })),
+                    )
+            })
+            .when(aktif_kart == KartKimliği::AxisAutosize, |öğe| {
+                öğe
+                    .child(
+                        Dugme::yeni("autosize-azalt", "− 10×")
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Ikincil)
+                            .devre_disi(self.autosize_kuvvet <= 0)
+                            .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                bu.autosize_kuvvetini_ayarla(bu.autosize_kuvvet - 1, cx);
+                            })),
+                    )
+                    .child(
+                        div()
+                            .text_xs()
+                            .text_color(soluk)
+                            .child(format!("Çarpan: {}", 10_f64.powi(self.autosize_kuvvet))),
+                    )
+                    .child(
+                        Dugme::yeni("autosize-artir", "+ 10×")
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Ikincil)
+                            .devre_disi(self.autosize_kuvvet >= 9)
+                            .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                bu.autosize_kuvvetini_ayarla(bu.autosize_kuvvet + 1, cx);
                             })),
                     )
             })

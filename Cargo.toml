@@ -88,3 +88,7 @@ required-features = ["svg"]
 [[example]]
 name = "axis_control"
 required-features = ["svg"]
+
+[[example]]
+name = "axis_autosize"
+required-features = ["svg"]
