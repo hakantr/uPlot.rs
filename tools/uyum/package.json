@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "denetle": "node denetle.mjs"
+    "denetle": "node denetle.mjs",
+    "envanter": "node envanter_uret.mjs"
   }
 }

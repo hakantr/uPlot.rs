@@ -1,0 +1,1542 @@
+{
+  "şema_sürümü": 1,
+  "kaynak_commit": "0e5812c504430f5c804e0f993376d8999b26cc34",
+  "kaynaklar": [
+    {
+      "yol": "src/dom.js",
+      "sha256": "3a12fa3474915d30bffeff07cd783ad3d1e6011d6ba8dce3e6f59e46344a4681",
+      "satır_sayısı": 124
+    },
+    {
+      "yol": "src/domClasses.js",
+      "sha256": "da540b51bfcfcf5be749c273305e45552916c199d8ebf7d2c84f0cccc617967c",
+      "satır_sayısı": 22
+    },
+    {
+      "yol": "src/feats.js",
+      "sha256": "5dcce8aa97ab6bc37bdb2162c456b2bc909d1302393a87dcbf0e1b16f75b2650",
+      "satır_sayısı": 13
+    },
+    {
+      "yol": "src/fmtDate.js",
+      "sha256": "e7867482a11abe4cd9e015d3610b7e8b6ab1d55409e06acd7550dd57348f9d3b",
+      "satır_sayısı": 398
+    },
+    {
+      "yol": "src/opts.js",
+      "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba",
+      "satır_sayısı": 844
+    },
+    {
+      "yol": "src/paths/bars.js",
+      "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56",
+      "satır_sayısı": 252
+    },
+    {
+      "yol": "src/paths/catmullRomCentrip.js",
+      "sha256": "c3b516e915ac86f3936ed31db6dde529dd6df5e5032b012f6cead79c6e981f82",
+      "satır_sayısı": 125
+    },
+    {
+      "yol": "src/paths/linear.js",
+      "sha256": "8f5002721c15f9a965b0e56522c58378c5b412856356c85188c74066ffba6749",
+      "satır_sayısı": 170
+    },
+    {
+      "yol": "src/paths/monotoneCubic.js",
+      "sha256": "913743f98c9ff49607c8c384050da65eb9cd6a9e48409993c1f37a799ca88b15",
+      "satır_sayısı": 68
+    },
+    {
+      "yol": "src/paths/points.js",
+      "sha256": "dfe1a48e0f35df9b82e9783d89254ce7cf981632e8726acdee3632639c33ea66",
+      "satır_sayısı": 66
+    },
+    {
+      "yol": "src/paths/spline.js",
+      "sha256": "73f29178227e0b17b8a433348495f555c8d42dbdc49032a3972747f4f906dbe9",
+      "satır_sayısı": 104
+    },
+    {
+      "yol": "src/paths/stepped.js",
+      "sha256": "7a11e94e31462f173d25810b371ced0c30652e39df5fbd23668a0a4059f2e2a7",
+      "satır_sayısı": 124
+    },
+    {
+      "yol": "src/paths/utils.js",
+      "sha256": "7636973ddf67ca47993ae86a4b53b1e7a6ea5ebd90483e0c305e84d558c38e13",
+      "satır_sayısı": 301
+    },
+    {
+      "yol": "src/strings.js",
+      "sha256": "389d7d33b0636711aa9586dac0ca7ff6f70b361c869a5cad04734f466947bf9b",
+      "satır_sayısı": 22
+    },
+    {
+      "yol": "src/sync.js",
+      "sha256": "fbd0f583838cfd7082791f0bab247d75dc981f913500516263bcdd7255e52c57",
+      "satır_sayısı": 27
+    },
+    {
+      "yol": "src/uPlot.js",
+      "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645",
+      "satır_sayısı": 3549
+    },
+    {
+      "yol": "src/utils.js",
+      "sha256": "8df33192e0ab7b4f4cf64fae9829fc0dc0300a618668699f43c5881ed8a0553c",
+      "satır_sayısı": 692
+    },
+    {
+      "yol": "dist/uPlot.d.ts",
+      "sha256": "c9fb5d1fe8f2084b44690c841e84ab63402549d9420535a6081b389a461fefe5",
+      "satır_sayısı": 1226
+    }
+  ],
+  "veri_varlıkları": [
+    {
+      "yol": "demos/data/AAPL.csv",
+      "sha256": "98234671bef0115df32622cc8ae03361fe0882d05209c53971c8b40d3f9223b4"
+    },
+    {
+      "yol": "demos/data/AMD.csv",
+      "sha256": "e043af38b6e7ad0e62041fbad1ed24f5c5622b4eff692b910257ef4ccf871a61"
+    },
+    {
+      "yol": "demos/data/AMZN.csv",
+      "sha256": "2ee3ea2f370430e8870159eaace809a15d13935d3ed6c65ebf9826f30b7dbb16"
+    },
+    {
+      "yol": "demos/data/CSCO.csv",
+      "sha256": "821b72ebf53d7e8a80997c54eaf459f16b14a4676499735a537f721d089d58cd"
+    },
+    {
+      "yol": "demos/data/FB.csv",
+      "sha256": "484aa0ff0d08f84f4c4338595a4fa6b4b96eb2e712b6d9fe77839157940254b6"
+    },
+    {
+      "yol": "demos/data/ms_spectrum.csv",
+      "sha256": "691066ca6e086006ab2a084c82fc3db16c1d37dd9f299670f4eddfc128ead3b5"
+    },
+    {
+      "yol": "demos/data/MSFT.csv",
+      "sha256": "796fc39808d667e0c134e9193c23c376e215a50093043efb4b073da2020373f8"
+    },
+    {
+      "yol": "demos/data/QCOM.csv",
+      "sha256": "db912bb49501a322197ccec15aeb385176189f9ed90c58ff371d5aa766455ff3"
+    },
+    {
+      "yol": "demos/data/results.json",
+      "sha256": "424daf68791f929a2136e4388b279b54f6dfc4aa098593f233aa45fa5d4ba931"
+    },
+    {
+      "yol": "demos/data/rustc-perf.json",
+      "sha256": "b2e16eb649b525ad2bb504680f2d925453a8ff31f2bf912640d1ca43ad0e0934"
+    },
+    {
+      "yol": "demos/data/SBUX.csv",
+      "sha256": "7387186179825fbf0654657a8788c070a368481022db9b07f491f7a2ba4d630e"
+    },
+    {
+      "yol": "demos/data/sparse.json",
+      "sha256": "5a6765b1aacb846fb125b404cc491d5ae1635fa3460b2fb43fd0d376607801d4"
+    },
+    {
+      "yol": "demos/data/taxi-trips.json",
+      "sha256": "77049382a98b18a499c9a750809d43c3269eadc33d4606f1fa696202aa007993"
+    },
+    {
+      "yol": "demos/data/traffic.json",
+      "sha256": "dcfcee18ee45395716a53967e44746588a1e80b5e84b5410af87d0e41e253d02"
+    },
+    {
+      "yol": "demos/data/TSLA.csv",
+      "sha256": "4252b8850602b4208bf109eee71652e2c4f8e2b9eb50e5f808954c88864d756d"
+    },
+    {
+      "yol": "demos/data/ZNGA.csv",
+      "sha256": "895f534a58e2e533945a3a534b324a571c2e76e784a8f373774281ef0b6d3c10"
+    },
+    {
+      "yol": "demos/lib/ASAP-optimized.js",
+      "sha256": "b01779c308e9a12bb3ea2d430038bacb84480de998874f77706fa9cf8b09933e"
+    },
+    {
+      "yol": "demos/lib/ASAP-simple.js",
+      "sha256": "3c32b5cbd0fadaef580b5181c3aa1dd4367680423bbce7d50ea36c6380df2255"
+    },
+    {
+      "yol": "demos/lib/distr.js",
+      "sha256": "5db925d392e7d429688133eadb4a2ee908e38362be0709e200a29c0067120736"
+    },
+    {
+      "yol": "demos/lib/placement.min.js",
+      "sha256": "f74af88ebe70db955a9b1785b8c5f00f617d4484baf237f0c52ddc5f435da4f5"
+    },
+    {
+      "yol": "demos/lib/quadtree.js",
+      "sha256": "b538fad72f5c4687c536992f2ce55ecb990c32ac0c784bafceddb57c39fc0670"
+    },
+    {
+      "yol": "demos/lib/rand.js",
+      "sha256": "ba4edd3853959cff66ff73e3c20c5e0d5b58019dfbcdc14ade02ef6ffc0d857c"
+    },
+    {
+      "yol": "demos/lib/randomWalk.js",
+      "sha256": "4fab620adf2bb9e84a142b4aa1547a47997e80c77fc67d350bda28b4e364a417"
+    },
+    {
+      "yol": "demos/lib/sgg.js",
+      "sha256": "4bfbe56ba214eedbfe7d91c40e99faa3824e401fc52487b877d46fff12889606"
+    },
+    {
+      "yol": "demos/lib/stats.js",
+      "sha256": "c592c5bf8d50cad0da371151d447aed1f000485b05c7fc486c0c8e0433751d46"
+    },
+    {
+      "yol": "demos/lib/uDSV.iife.min.js",
+      "sha256": "177612e3999555b4cdaa0b15a642a325214d7e79fa89c621f005ac13546a9330"
+    },
+    {
+      "yol": "bench/data.json",
+      "sha256": "620ec683dfb856af79185dc1e42536c5e39a1fb1deebcff9202c7a660e54bf41"
+    },
+    {
+      "yol": "bench/results.json",
+      "sha256": "b8129fc0e5892b47db6e95a72de9e0a4950d6e33b79fcb6feb22773eed27fba7"
+    }
+  ],
+  "genel_api": [
+    {
+      "sembol": "Axis.align",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.alignTo",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.border",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.filter",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.font",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.gap",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.grid",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.incrs",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.label",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.labelFont",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.labelGap",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.labelSize",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.lineGap",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.rotate",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.scale",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.show",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.side",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.size",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.space",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.splits",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.stroke",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.ticks",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Axis.values",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Band.dir",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Band.fill",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Band.series",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderDisplay.fill",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderDisplay.size",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderDisplay.stroke",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderDisplay.x0",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderDisplay.y0",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderDisplay.y1",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderFacet.kind",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderFacet.unit",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderFacet.values",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderOpts.align",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderOpts.disp",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderOpts.each",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderOpts.gap",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderOpts.radius",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BarsPathBuilderOpts.size",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BBox.height",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BBox.left",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BBox.show",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BBox.top",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "BBox.width",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Bind.click",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Bind.dblclick",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Bind.mousedown",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Bind.mouseenter",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Bind.mouseleave",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Bind.mousemove",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Bind.mouseup",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Config.max",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Config.min",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.bind",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.dataIdx",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.drag",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.event",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.focus",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.hover",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.idx",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.idxs",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.left",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.lock",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.move",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.points",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.show",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.sync",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.top",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.x",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Cursor.y",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "DateNames.MMM",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "DateNames.MMMM",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "DateNames.WWW",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "DateNames.WWWW",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "DateZoned.setTimeZone",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "DateZoned.tz",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.addSeries",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.delSeries",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.destroy",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.draw",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.drawAxes",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.drawClear",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.drawSeries",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.init",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.ready",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.setCursor",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.setData",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.setLegend",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.setScale",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.setSelect",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.setSeries",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.setSize",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Defs.syncRect",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Drag.click",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Drag.dist",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Drag.setScale",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Drag.uni",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Drag.x",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Drag.y",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Facet.auto",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Facet.scale",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Facet.sorted",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "FilterableOrthoLines.filter",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Filters.pub",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Filters.sub",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Focus.alpha",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Focus.bias",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Focus.dist",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Focus.prox",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Hover.bias",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Hover.prox",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Hover.skip",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Legend.idx",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Legend.idxs",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Legend.isolate",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Legend.live",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Legend.markers",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Legend.mount",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Legend.show",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Legend.values",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Limit.hard",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Limit.mode",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Limit.pad",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Limit.soft",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "LinearPathBuilderOpts.alignGaps",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Markers.dash",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Markers.fill",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Markers.show",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Markers.stroke",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Markers.width",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.axes",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.bands",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.cache",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.class",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.cursor",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.data",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.drawOrder",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.fmtDate",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.focus",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.height",
+      "durum": "kısmi_veya_uygulandı"
+    },
+    {
+      "sembol": "Options.hooks",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.id",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.legend",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.mode",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.ms",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.padding",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.plugins",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.pxAlign",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.pxRatio",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.scales",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.select",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.series",
+      "durum": "kısmi_veya_uygulandı"
+    },
+    {
+      "sembol": "Options.title",
+      "durum": "kısmi_veya_uygulandı"
+    },
+    {
+      "sembol": "Options.tzDate",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Options.width",
+      "durum": "kısmi_veya_uygulandı"
+    },
+    {
+      "sembol": "OrthoLines.cap",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "OrthoLines.dash",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "OrthoLines.show",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "OrthoLines.stroke",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "OrthoLines.width",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "PathBuilderFactories.bars",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "PathBuilderFactories.linear",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "PathBuilderFactories.points",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "PathBuilderFactories.spline",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "PathBuilderFactories.stepped",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Paths._fill",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Paths._stroke",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Paths.band",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Paths.clip",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Paths.fill",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Paths.flags",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Paths.gaps",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Paths.stroke",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Paths.width",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Plugin.hooks",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Plugin.opts",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Points.bbox",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Points.cap",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Points.dash",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Points.fill",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Points.filter",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Points.one",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Points.paths",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Points.show",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Points.size",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Points.space",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Points.stroke",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Points.width",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.asinh",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.auto",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.bwd",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.clamp",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.dir",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.distr",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.from",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.fwd",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.key",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.log",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.max",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.min",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.ori",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Scale.range",
+      "durum": "kısmi_veya_uygulandı"
+    },
+    {
+      "sembol": "Scale.time",
+      "durum": "kısmi_veya_uygulandı"
+    },
+    {
+      "sembol": "Select.over",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.alignGaps",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.alpha",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.auto",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.cap",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.class",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.dash",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.facets",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.fill",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.fillTo",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.gaps",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.idxs",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.label",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.max",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.min",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.paths",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.points",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.pxAlign",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.scale",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.show",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.sorted",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.spanGaps",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.stroke",
+      "durum": "kısmi_veya_uygulandı"
+    },
+    {
+      "sembol": "Series.value",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.values",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Series.width",
+      "durum": "kısmi_veya_uygulandı"
+    },
+    {
+      "sembol": "SplinePathBuilderOpts.alignGaps",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "SteppedPathBuilderOpts.align",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "SteppedPathBuilderOpts.alignGaps",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "SteppedPathBuilderOpts.ascDesc",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "SteppedPathBuilderOpts.extend",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Sync.filters",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Sync.key",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Sync.match",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Sync.scales",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Sync.setSeries",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Sync.values",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "SyncPubSub.key",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "SyncPubSub.plots",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "SyncPubSub.pub",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "SyncPubSub.sub",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "SyncPubSub.unsub",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "Ticks.size",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.addBand",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.addGap",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.addSeries",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.assign",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.axes",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.batch",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.bbox",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.clearCache",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.clipGaps",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.constructor",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.ctx",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.cursor",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.data",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.delBand",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.delSeries",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.destroy",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.fmtDate",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.fmtNum",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.height",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.hooks",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.join",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.legend",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.opts",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.orient",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.over",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.paths",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.posToIdx",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.posToVal",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.pxRatio",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.rangeAsinh",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.rangeLog",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.rangeNum",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.rect",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.redraw",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.root",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.scales",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.select",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.series",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.setBand",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.setCursor",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.setData",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.setLegend",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.setPxRatio",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.setScale",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.setSelect",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.setSeries",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.setSize",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.status",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.sync",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.syncRect",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.targ",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.tzDate",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.under",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.valToIdx",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.valToPos",
+      "durum": "araştırılacak"
+    },
+    {
+      "sembol": "uPlot.width",
+      "durum": "araştırılacak"
+    }
+  ],
+  "yerleşik_yol_üreteçleri": [
+    {
+      "sembol": "bars",
+      "kaynak": "src/paths/bars.js"
+    },
+    {
+      "sembol": "catmullRomCentrip",
+      "kaynak": "src/paths/catmullRomCentrip.js"
+    },
+    {
+      "sembol": "linear",
+      "kaynak": "src/paths/linear.js"
+    },
+    {
+      "sembol": "monotoneCubic",
+      "kaynak": "src/paths/monotoneCubic.js"
+    },
+    {
+      "sembol": "points",
+      "kaynak": "src/paths/points.js"
+    },
+    {
+      "sembol": "splineInterp",
+      "kaynak": "src/paths/spline.js"
+    },
+    {
+      "sembol": "stepped",
+      "kaynak": "src/paths/stepped.js"
+    },
+    {
+      "sembol": "BAND_CLIP_FILL",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "BAND_CLIP_STROKE",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "orient",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "bandFillClipDirs",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "seriesFillTo",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "clipBandLine",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "clipGaps",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "addGap",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "findGaps",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "pxRoundGen",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "costlyLerp",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "moveToH",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "moveToV",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "lineToH",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "lineToV",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "rectH",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "rectV",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "arcH",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "arcV",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "bezierCurveToH",
+      "kaynak": "src/paths/utils.js"
+    },
+    {
+      "sembol": "bezierCurveToV",
+      "kaynak": "src/paths/utils.js"
+    }
+  ]
+}

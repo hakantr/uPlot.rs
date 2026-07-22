@@ -1,0 +1,996 @@
+{
+  "şema_sürümü": 1,
+  "kaynak_commit": "0e5812c504430f5c804e0f993376d8999b26cc34",
+  "demo_sayısı": 73,
+  "durum_özeti": {
+    "uygulandı_kanıtlı": 2,
+    "çekirdek_davranışı_port_edildi_kart_bekliyor": 2,
+    "bekliyor": 69
+  },
+  "demolar": [
+    {
+      "sıra": 1,
+      "id": "add-del-series",
+      "başlık": "Add/Delete Series",
+      "kaynak": "demos/add-del-series.html",
+      "kaynak_sha256": "7beea536b6750c60325a7dade8c2c7e8df9e51e3af612d7cb230501597cb18fc",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 5,
+      "faz": "Çoklu grafik, senkronizasyon ve canlı veri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 2,
+      "id": "align-data",
+      "başlık": "Alignment Cost",
+      "kaynak": "demos/align-data.html",
+      "kaynak_sha256": "f16bc0405d64f219082a0b9a17645f05667e54952bb1a10cda898a3ad1920338",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 3,
+      "id": "annotations",
+      "başlık": "Annotations",
+      "kaynak": "demos/annotations.html",
+      "kaynak_sha256": "5db660696108c0ee78af4ca261a0ce5b5d16efc5da6f7ab9fc7257198222384d",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 4,
+      "id": "arcsinh-scales",
+      "başlık": "ArcSinh Scales",
+      "kaynak": "demos/arcsinh-scales.html",
+      "kaynak_sha256": "d7529582d6f9cc4f959338397227e80bac09506b7c93496a9d45d3b7f64e298c",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 5,
+      "id": "area-fill",
+      "başlık": "Area Fill",
+      "kaynak": "demos/area-fill.html",
+      "kaynak_sha256": "10db19c3c92aed800c35cd77067672975d834787e14e2050186522e042066bdd",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "uygulandı_kanıtlı"
+    },
+    {
+      "sıra": 6,
+      "id": "axis-autosize",
+      "başlık": "Axis Autosize",
+      "kaynak": "demos/axis-autosize.html",
+      "kaynak_sha256": "950cf05428d7b654d62d2c9bc3126f7080f8bee5c6da7cfbab4178063a6e2ed4",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 7,
+      "id": "axis-control",
+      "başlık": "Axis Control",
+      "kaynak": "demos/axis-control.html",
+      "kaynak_sha256": "c9ec70f9c113d2ff5581a5c20583bac048864fc1dc8b6a59eebce9f36adcfe15",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 8,
+      "id": "axis-indicators",
+      "başlık": "Axis indicators",
+      "kaynak": "demos/axis-indicators.html",
+      "kaynak_sha256": "a16f8d73fec37b8ad37bb54274c8524cd1664b287bf5898b5db999c17e1f331d",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 9,
+      "id": "bars-grouped-stacked",
+      "başlık": "Bars (Grouped or Stacked)",
+      "kaynak": "demos/bars-grouped-stacked.html",
+      "kaynak_sha256": "41d90aa0dbab8cb8fe17caed59feef22f006d12f0a73a1fd8ba38d3e4cca4503",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/lib/distr.js",
+          "sha256": "5db925d392e7d429688133eadb4a2ee908e38362be0709e200a29c0067120736"
+        },
+        {
+          "yol": "demos/lib/quadtree.js",
+          "sha256": "b538fad72f5c4687c536992f2ce55ecb990c32ac0c784bafceddb57c39fc0670"
+        }
+      ],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 10,
+      "id": "bars-values-autosize",
+      "başlık": "Bars values autosize",
+      "kaynak": "demos/bars-values-autosize.html",
+      "kaynak_sha256": "70af3b8b8ef67e798ba6095aec1ccbd31f127c2f0ed4ca3f79c83d0a47feb303",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 11,
+      "id": "box-whisker",
+      "başlık": "Box & Whisker",
+      "kaynak": "demos/box-whisker.html",
+      "kaynak_sha256": "4aaf1793a8b6d3578d0fd3ddd322f45b30fa0fc228d61787caf5db1082f8e586",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/data/results.json",
+          "sha256": "424daf68791f929a2136e4388b279b54f6dfc4aa098593f233aa45fa5d4ba931"
+        },
+        {
+          "yol": "demos/lib/stats.js",
+          "sha256": "c592c5bf8d50cad0da371151d447aed1f000485b05c7fc486c0c8e0433751d46"
+        }
+      ],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 12,
+      "id": "candlestick-ohlc",
+      "başlık": "Candlestick Chart",
+      "kaynak": "demos/candlestick-ohlc.html",
+      "kaynak_sha256": "c4c08d95c8f4d7a4ae44733e7a8a2d2a65b70d440ab8c3512586969564135af9",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 13,
+      "id": "cursor-bind",
+      "başlık": "Cursor Bind",
+      "kaynak": "demos/cursor-bind.html",
+      "kaynak_sha256": "ed4a7388a7fe15ace3d8811d222dff11f5d89dc84ec95d2bedf6e01c3c8b24eb",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 14,
+      "id": "cursor-snap",
+      "başlık": "Cursor Snap",
+      "kaynak": "demos/cursor-snap.html",
+      "kaynak_sha256": "10f202039b47c84db8b12f3e715ced88e9c9e9081e32fbc3b06256835be7c04c",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 15,
+      "id": "cursor-tooltip",
+      "başlık": "Cursor Tooltip w/placement.js",
+      "kaynak": "demos/cursor-tooltip.html",
+      "kaynak_sha256": "5edd54fc9ea2d2cdb691210e6eb300e65a251b9426fe5eb4bf2ad342336a7325",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/lib/placement.min.js",
+          "sha256": "f74af88ebe70db955a9b1785b8c5f00f617d4484baf237f0c52ddc5f435da4f5"
+        }
+      ],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 16,
+      "id": "custom-scales",
+      "başlık": "Custom Scales",
+      "kaynak": "demos/custom-scales.html",
+      "kaynak_sha256": "96892d33285f700260ef804b60171876c67cdb9056e1deec6c46aa397eedec53",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 17,
+      "id": "data-smoothing",
+      "başlık": "ASAP Smoothing",
+      "kaynak": "demos/data-smoothing.html",
+      "kaynak_sha256": "290b916d0a7ac45fba501fdcd19e9c5299c221c7aab66f7cb29842ee7d8bc837",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/data/taxi-trips.json",
+          "sha256": "77049382a98b18a499c9a750809d43c3269eadc33d4606f1fa696202aa007993"
+        },
+        {
+          "yol": "demos/lib/ASAP-optimized.js",
+          "sha256": "b01779c308e9a12bb3ea2d430038bacb84480de998874f77706fa9cf8b09933e"
+        },
+        {
+          "yol": "demos/lib/sgg.js",
+          "sha256": "4bfbe56ba214eedbfe7d91c40e99faa3824e401fc52487b877d46fff12889606"
+        }
+      ],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 18,
+      "id": "dependent-scale",
+      "başlık": "Dependent Scale",
+      "kaynak": "demos/dependent-scale.html",
+      "kaynak_sha256": "d16465dedbf818e66679e70609389820d23ee08437931c668beaa4c7115475e3",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 19,
+      "id": "draw-hooks",
+      "başlık": "Draw Hooks",
+      "kaynak": "demos/draw-hooks.html",
+      "kaynak_sha256": "100c8bb7a71d99812ee5b30098b21ac35d6302c383acb088fced80a3c28413af",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 20,
+      "id": "focus-cursor",
+      "başlık": "Cursor Focus",
+      "kaynak": "demos/focus-cursor.html",
+      "kaynak_sha256": "5a3cc6a710d25a695d2de67d715ff036992173dd41380e48bbcd4e0d86f2ac03",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 21,
+      "id": "gradients",
+      "başlık": "Gradients",
+      "kaynak": "demos/gradients.html",
+      "kaynak_sha256": "f7cf616e1f796cdaea16ee97a8956d093259d4f484147be5814dcc8180c37067",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 22,
+      "id": "grid-over-series",
+      "başlık": "Grid Over Series",
+      "kaynak": "demos/grid-over-series.html",
+      "kaynak_sha256": "67d1ea81b11b936d47d098ca3897bbe97a3a48251007fdcae2be3d22e0462a85",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 23,
+      "id": "high-low-bands",
+      "başlık": "High/Low Bands",
+      "kaynak": "demos/high-low-bands.html",
+      "kaynak_sha256": "ae03f984dc48417ad6737ff02089ba461d42dbe81e4c307f2fa769b5edc90515",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 24,
+      "id": "latency-heatmap",
+      "başlık": "Latency Heatmap",
+      "kaynak": "demos/latency-heatmap.html",
+      "kaynak_sha256": "9a461c98a8714fa0aafc73fd0cc770e73249325a269a12b404521201e4ce77b4",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/lib/rand.js",
+          "sha256": "ba4edd3853959cff66ff73e3c20c5e0d5b58019dfbcdc14ade02ef6ffc0d857c"
+        }
+      ],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 25,
+      "id": "line-paths",
+      "başlık": "Line Paths",
+      "kaynak": "demos/line-paths.html",
+      "kaynak_sha256": "75a334657a6450c7218aeb6ebe6a3bed6bb7f1155d2c2006b49270cd0a13ee21",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 26,
+      "id": "log-scales",
+      "başlık": "Log Scales",
+      "kaynak": "demos/log-scales.html",
+      "kaynak_sha256": "2292b8dad1fe0f34f3b2ff6a751fb9358d4bef24ec7db00e53a81c23b9e9d62a",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 27,
+      "id": "log-scales2",
+      "başlık": "Log Scales 2",
+      "kaynak": "demos/log-scales2.html",
+      "kaynak_sha256": "d28720abddb4d662082938de54f70131472a0b3c206fc9bd37992dac59f3cdff",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 28,
+      "id": "mass-spectrum",
+      "başlık": "Mass Spectrum",
+      "kaynak": "demos/mass-spectrum.html",
+      "kaynak_sha256": "1208cc5ee8349d9bb4ba48e5768f3bd432d1ad2bae0bab3a6918f6f3a5f46c0a",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/data/ms_spectrum.csv",
+          "sha256": "691066ca6e086006ab2a084c82fc3db16c1d37dd9f299670f4eddfc128ead3b5"
+        }
+      ],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 29,
+      "id": "measure-datums",
+      "başlık": "Measure / Datums",
+      "kaynak": "demos/measure-datums.html",
+      "kaynak_sha256": "786a15ef41df4aad0c5ca5ee3630f7088d906fd2feb75706ab8d1868d15d89a2",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 30,
+      "id": "missing-data",
+      "başlık": "Missing Data",
+      "kaynak": "demos/missing-data.html",
+      "kaynak_sha256": "2e55fc511aa44f73bd5a054092e0b924abd548a6dddbc693a6c88745d4d3be48",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 31,
+      "id": "months-ru",
+      "başlık": "Months (Russian)",
+      "kaynak": "demos/months-ru.html",
+      "kaynak_sha256": "3137154295717282cc3ff83c63b20668f174960807d93d047f232bebab1db51a",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 32,
+      "id": "months",
+      "başlık": "Months",
+      "kaynak": "demos/months.html",
+      "kaynak_sha256": "17dfad5be063eaaa2103f168524139ec8d19e1b5d05a1ba2b6c53039b38efc0d",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 33,
+      "id": "multi-bars",
+      "başlık": "Multi-Bars",
+      "kaynak": "demos/multi-bars.html",
+      "kaynak_sha256": "090f2e73ae46864261b2542337e0664cc5d42ac84787c642c8ac482c070188da",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [
+        {
+          "yol": "bench/results.json",
+          "sha256": "b8129fc0e5892b47db6e95a72de9e0a4950d6e33b79fcb6feb22773eed27fba7"
+        },
+        {
+          "yol": "demos/lib/distr.js",
+          "sha256": "5db925d392e7d429688133eadb4a2ee908e38362be0709e200a29c0067120736"
+        },
+        {
+          "yol": "demos/lib/quadtree.js",
+          "sha256": "b538fad72f5c4687c536992f2ce55ecb990c32ac0c784bafceddb57c39fc0670"
+        }
+      ],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 34,
+      "id": "nearest-non-null",
+      "başlık": "Nearest Non-Null",
+      "kaynak": "demos/nearest-non-null.html",
+      "kaynak_sha256": "25b26de2abf98dff1583259d06e766da1dace15806d1ff7921a6fab044b26359",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 35,
+      "id": "nice-scale",
+      "başlık": "Nice Scale & Ticks",
+      "kaynak": "demos/nice-scale.html",
+      "kaynak_sha256": "806a93c3904b653f5faf1e9af02ebbbbc1ea5f5a97d7748d693e18aebbd70865",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 36,
+      "id": "no-data",
+      "başlık": "No Data",
+      "kaynak": "demos/no-data.html",
+      "kaynak_sha256": "09affb6f801e5f329c36874114d04972c007ab5da6f0710e59eb3bb18f8d8396",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 37,
+      "id": "path-gap-clip",
+      "başlık": "Path & Gap Clipping",
+      "kaynak": "demos/path-gap-clip.html",
+      "kaynak_sha256": "25ea25911f052ae494feeff6b65c3e5ec851cd4e69be5853d495d3b730e4bcd8",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 38,
+      "id": "pixel-align",
+      "başlık": "Pixel align",
+      "kaynak": "demos/pixel-align.html",
+      "kaynak_sha256": "38eb95e80e1a5046091853dccd25f457f4f0940c0ee4e1d4c1690837d8ee7441",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 39,
+      "id": "points",
+      "başlık": "Points",
+      "kaynak": "demos/points.html",
+      "kaynak_sha256": "0072d98e884cfaabe9e902436ee505864ad2d5990035d2b5f72c8afd117328dc",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/lib/randomWalk.js",
+          "sha256": "4fab620adf2bb9e84a142b4aa1547a47997e80c77fc67d350bda28b4e364a417"
+        }
+      ],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 40,
+      "id": "resize",
+      "başlık": "Resize",
+      "kaynak": "demos/resize.html",
+      "kaynak_sha256": "f9e5d8eba64cb8be7c3222a006b261a2dc234592478b54f5eedd453b852f3593",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 0,
+      "faz": "Envanter ve ortak sözleşme",
+      "durum": "uygulandı_kanıtlı"
+    },
+    {
+      "sıra": 41,
+      "id": "scale-padding",
+      "başlık": "Scale Padding",
+      "kaynak": "demos/scale-padding.html",
+      "kaynak_sha256": "e886f3c98e84c59bacf70dd99743a29505f3842fcacd2073be4124dd183774d1",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 42,
+      "id": "scales-dir-ori",
+      "başlık": "Scales Direction & Orientation",
+      "kaynak": "demos/scales-dir-ori.html",
+      "kaynak_sha256": "7e466f8b120222c7f08ee71d1869354aa03dc77bced4442a906afea4595da1bc",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 43,
+      "id": "scatter",
+      "başlık": "Scatter & Bubble",
+      "kaynak": "demos/scatter.html",
+      "kaynak_sha256": "dab2c42e9135cc5b85b6166d559a60d478a09c0c2f72c4e710f3157ce01c17b7",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/lib/quadtree.js",
+          "sha256": "b538fad72f5c4687c536992f2ce55ecb990c32ac0c784bafceddb57c39fc0670"
+        }
+      ],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 44,
+      "id": "scroll-sync",
+      "başlık": "Scroll syncRect()",
+      "kaynak": "demos/scroll-sync.html",
+      "kaynak_sha256": "6d38e06614412947a854e8adef30a1f4809dec58a7709607f968cd953f6a1e51",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 5,
+      "faz": "Çoklu grafik, senkronizasyon ve canlı veri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 45,
+      "id": "sine-stream",
+      "başlık": "Sine Stream",
+      "kaynak": "demos/sine-stream.html",
+      "kaynak_sha256": "0c7be78404ece1eeb16d8184e2ac6c4a9300f88ca150fe69db3e476f9a1326ab",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 5,
+      "faz": "Çoklu grafik, senkronizasyon ve canlı veri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 46,
+      "id": "soft-minmax",
+      "başlık": "Soft Min/Max",
+      "kaynak": "demos/soft-minmax.html",
+      "kaynak_sha256": "8902682fb0c2ae9c8a160173ee42680aeab8db8bea0241949f9a6c0f5e683e3c",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 47,
+      "id": "sparklines-bars",
+      "başlık": "Sparkline + Floating Bars + Gradients",
+      "kaynak": "demos/sparklines-bars.html",
+      "kaynak_sha256": "eae034b26d8bccac45fa442ac2d800d7f22c29a809b8fe509eeadfdbac513a2b",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 48,
+      "id": "sparklines",
+      "başlık": "Sparklines",
+      "kaynak": "demos/sparklines.html",
+      "kaynak_sha256": "dbef789abb7f271c77f374f1090c8c1ccc7c54bd79101262088edad90f4d5f8d",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/lib/uDSV.iife.min.js",
+          "sha256": "177612e3999555b4cdaa0b15a642a325214d7e79fa89c621f005ac13546a9330"
+        }
+      ],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 49,
+      "id": "sparse",
+      "başlık": "Sparse Data",
+      "kaynak": "demos/sparse.html",
+      "kaynak_sha256": "b6afdac0598d3a569f0a1a8b8b25f23d90b877222fd8c7632d83f412a4a670e2",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/data/sparse.json",
+          "sha256": "5a6765b1aacb846fb125b404cc491d5ae1635fa3460b2fb43fd0d376607801d4"
+        }
+      ],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 50,
+      "id": "stacked-series",
+      "başlık": "Stacked Series",
+      "kaynak": "demos/stacked-series.html",
+      "kaynak_sha256": "bdfe35295edb8e4adac88ee77e6457abee127af0d38b43fc9562559b8eb11825",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 51,
+      "id": "stream-data",
+      "başlık": "Data Stream",
+      "kaynak": "demos/stream-data.html",
+      "kaynak_sha256": "c4afb71842bf43b76b12b208299e0d4c9a9d6d0094acdfd52f7a28709c48ac70",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [
+        {
+          "yol": "bench/data.json",
+          "sha256": "620ec683dfb856af79185dc1e42536c5e39a1fb1deebcff9202c7a660e54bf41"
+        }
+      ],
+      "sahip_faz": 5,
+      "faz": "Çoklu grafik, senkronizasyon ve canlı veri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 52,
+      "id": "svg-image",
+      "başlık": "uPlot to image PoC",
+      "kaynak": "demos/svg-image.html",
+      "kaynak_sha256": "059ea753395d1302b1441badc1fea075b6eb59f82b0ae2228904f5f7403612c0",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 53,
+      "id": "sync-cursor",
+      "başlık": "Sync Cursor",
+      "kaynak": "demos/sync-cursor.html",
+      "kaynak_sha256": "bd239c085e3f1b5b32edabfc371df2d0599a77a01b887e4f1a99c449feb84cc2",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [
+        {
+          "yol": "bench/data.json",
+          "sha256": "620ec683dfb856af79185dc1e42536c5e39a1fb1deebcff9202c7a660e54bf41"
+        }
+      ],
+      "sahip_faz": 5,
+      "faz": "Çoklu grafik, senkronizasyon ve canlı veri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 54,
+      "id": "sync-y-zero",
+      "başlık": "Sync Y Zero",
+      "kaynak": "demos/sync-y-zero.html",
+      "kaynak_sha256": "31a81fa28e85674b40ee46fd73a89f779f785c5eac30b6c97ac6dfda42da2c5f",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 55,
+      "id": "thin-bars-stroke-fill",
+      "başlık": "Thin bar stroke & fill",
+      "kaynak": "demos/thin-bars-stroke-fill.html",
+      "kaynak_sha256": "da27d806fe208d22021639db7e00b03a467c7c0a140bfea69d1be99506ad3280",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 56,
+      "id": "time-periods",
+      "başlık": "Time Periods",
+      "kaynak": "demos/time-periods.html",
+      "kaynak_sha256": "10f61148702b464a31c1441185c11439c663dd35c8b0b4573bb3372a7a6f8575",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/data/traffic.json",
+          "sha256": "dcfcee18ee45395716a53967e44746588a1e80b5e84b5410af87d0e41e253d02"
+        }
+      ],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 57,
+      "id": "timeline-discrete",
+      "başlık": "Timeline / Discrete",
+      "kaynak": "demos/timeline-discrete.html",
+      "kaynak_sha256": "8a88e0b1b8e40c91c0dcd2d3a210bdd326df0f5e4e3adbbcb54098c488d73bef",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/lib/distr.js",
+          "sha256": "5db925d392e7d429688133eadb4a2ee908e38362be0709e200a29c0067120736"
+        },
+        {
+          "yol": "demos/lib/quadtree.js",
+          "sha256": "b538fad72f5c4687c536992f2ce55ecb990c32ac0c784bafceddb57c39fc0670"
+        }
+      ],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 58,
+      "id": "timeseries-discrete",
+      "başlık": "TimeSeries + Discrete",
+      "kaynak": "demos/timeseries-discrete.html",
+      "kaynak_sha256": "e0babfa1970d87e4662d88e00bb8c5f2c3f119844bc335ae6b985e3e1278ce39",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 59,
+      "id": "timezones-dst",
+      "başlık": "Timezones & DST",
+      "kaynak": "demos/timezones-dst.html",
+      "kaynak_sha256": "f95106c44b035eeb232e80ce88238af9512c572e9a66a5c98e8394db34de0bc6",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 60,
+      "id": "tooltips-closest",
+      "başlık": "Tooltips (closest)",
+      "kaynak": "demos/tooltips-closest.html",
+      "kaynak_sha256": "475bb74005349e962d12f9e6a6c8c261c1845628cadad3623462897b1240f0a3",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [
+        {
+          "yol": "demos/data/rustc-perf.json",
+          "sha256": "b2e16eb649b525ad2bb504680f2d925453a8ff31f2bf912640d1ca43ad0e0934"
+        }
+      ],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 61,
+      "id": "tooltips",
+      "başlık": "Tooltips",
+      "kaynak": "demos/tooltips.html",
+      "kaynak_sha256": "e6fb640a1669783d07f974e0bd66c0d7743131787f9ed3276c20a4a1ddb06dbe",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 62,
+      "id": "trendlines",
+      "başlık": "Trendlines",
+      "kaynak": "demos/trendlines.html",
+      "kaynak_sha256": "8baa9845e6a52127c5eaa33059264f6dec218aecf4c9cbb171038898cc2c3794",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 63,
+      "id": "update-cursor-select-resize",
+      "başlık": "Keep selection and cursor in sync with resize (test)",
+      "kaynak": "demos/update-cursor-select-resize.html",
+      "kaynak_sha256": "4ad655ff9b5f59aa289c19e46c94df68228511e1eb60f2b582344194ed947e69",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 5,
+      "faz": "Çoklu grafik, senkronizasyon ve canlı veri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 64,
+      "id": "wind-direction",
+      "başlık": "Wind Direction",
+      "kaynak": "demos/wind-direction.html",
+      "kaynak_sha256": "64ffd974a03d6f7ecf4cac8969bdf180252c55142a513d5191d9826e09430b44",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 3,
+      "faz": "Özel çizim ve seri eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 65,
+      "id": "y-scale-drag",
+      "başlık": "Draggable y scales",
+      "kaynak": "demos/y-scale-drag.html",
+      "kaynak_sha256": "ae964a87fdb8ad477dd65da3b42a6cb4e3afbed4aa64928c98e07e6cd1ce4605",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 2,
+      "faz": "Ölçekler, eksenler ve zaman",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 66,
+      "id": "y-shifted-series",
+      "başlık": "Y-shifted Series",
+      "kaynak": "demos/y-shifted-series.html",
+      "kaynak_sha256": "4374a88696d9bf8d60a04daa416e4aefeb3dfb294d50c06a96ffad7713bb8fc4",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 1,
+      "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 67,
+      "id": "zoom-fetch",
+      "başlık": "Fetch Zoom",
+      "kaynak": "demos/zoom-fetch.html",
+      "kaynak_sha256": "42481654ab45eddabc8a9030862faac90036dce5cb65e34651043f49e203c92c",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 68,
+      "id": "zoom-ranger-grips",
+      "başlık": "Zoom Ranger Grips",
+      "kaynak": "demos/zoom-ranger-grips.html",
+      "kaynak_sha256": "e2b3e0d5fd28d51dfabe7787b9fa07e5226c63b74c2897543eddcb5fe5d4d2ed",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 69,
+      "id": "zoom-ranger-xy",
+      "başlık": "Zoom Ranger XY",
+      "kaynak": "demos/zoom-ranger-xy.html",
+      "kaynak_sha256": "1f3551db91cdc3dd07f147c62ec96addf1a08c31e994cfa7ad215f1cc52ca83a",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 70,
+      "id": "zoom-ranger",
+      "başlık": "Zoom Ranger",
+      "kaynak": "demos/zoom-ranger.html",
+      "kaynak_sha256": "bb2d35b4f0d5818510294514373e8858fb46641a9f659f3683ee8526429d7f24",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 71,
+      "id": "zoom-touch",
+      "başlık": "Pinch Zoom & Pan",
+      "kaynak": "demos/zoom-touch.html",
+      "kaynak_sha256": "099e85e0076c683bb852cb49abf0cbf2b1dc1c2304f780eb08b8876032ce9c59",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "çekirdek_davranışı_port_edildi_kart_bekliyor"
+    },
+    {
+      "sıra": 72,
+      "id": "zoom-variations",
+      "başlık": "Zoom Variations",
+      "kaynak": "demos/zoom-variations.html",
+      "kaynak_sha256": "f48090f461832dec31788f26cd92413784d2ff02393ee0bb7ad82c450eda5f50",
+      "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
+      "veri_kaynakları": [],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "bekliyor"
+    },
+    {
+      "sıra": 73,
+      "id": "zoom-wheel",
+      "başlık": "Wheel Zoom & Drag",
+      "kaynak": "demos/zoom-wheel.html",
+      "kaynak_sha256": "a9da7c0c6dcd8f446790ee7ed151736ea505d949b7872ea6385cf2eab8a01a90",
+      "veri_politikası": "kaynak_veri_aynen",
+      "veri_kaynakları": [],
+      "sahip_faz": 4,
+      "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
+      "durum": "çekirdek_davranışı_port_edildi_kart_bekliyor"
+    }
+  ]
+}

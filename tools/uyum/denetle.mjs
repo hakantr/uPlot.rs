@@ -36,6 +36,40 @@ const manifest = JSON.parse(
 const matris = JSON.parse(
   readFileSync(resolve(kok, "uyum/api_matrisi.json"), "utf8"),
 );
+const demoEnvanteri = JSON.parse(
+  readFileSync(resolve(kok, "uyum/demo_envanteri.json"), "utf8"),
+);
+const kaynakEnvanteri = JSON.parse(
+  readFileSync(resolve(kok, "uyum/kaynak_envanteri.json"), "utf8"),
+);
+
+if (demoEnvanteri.demo_sayısı !== 73 || demoEnvanteri.demolar.length !== 73) {
+  hata(`demo envanteri 73 kayıt içermiyor: ${demoEnvanteri.demolar.length}`);
+}
+for (const demo of demoEnvanteri.demolar) {
+  if (sha256(resolve(kaynak, demo.kaynak)) !== demo.kaynak_sha256) {
+    hata(`demo envanteri kaynak hash'i değişti: ${demo.kaynak}`);
+  }
+  for (const veri of demo.veri_kaynakları) {
+    if (sha256(resolve(kaynak, veri.yol)) !== veri.sha256) {
+      hata(`demo veri hash'i değişti: ${veri.yol}`);
+    }
+  }
+}
+
+if (kaynakEnvanteri.genel_api.length < 250) {
+  hata(`genel API envanteri beklenenden küçük: ${kaynakEnvanteri.genel_api.length}`);
+}
+for (const dosya of kaynakEnvanteri.kaynaklar) {
+  if (sha256(resolve(kaynak, dosya.yol)) !== dosya.sha256) {
+    hata(`uPlot kaynak hash'i değişti: ${dosya.yol}`);
+  }
+}
+for (const dosya of kaynakEnvanteri.veri_varlıkları) {
+  if (sha256(resolve(kaynak, dosya.yol)) !== dosya.sha256) {
+    hata(`uPlot veri varlığı hash'i değişti: ${dosya.yol}`);
+  }
+}
 
 const kimlikler = new Set();
 for (const kart of manifest.kartlar) {
