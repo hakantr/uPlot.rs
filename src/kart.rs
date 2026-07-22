@@ -2,6 +2,7 @@ mod arcsinh_scales;
 mod area_fill;
 mod axis_autosize;
 mod axis_control;
+mod axis_indicators;
 mod cursor_snap;
 mod dependent_scale;
 mod missing_data;
@@ -20,6 +21,9 @@ pub use axis_autosize::{
 };
 pub use axis_control::{
     AXIS_CONTROL_KANIT_TOHUMU, AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, axis_control_kartı,
+};
+pub use axis_indicators::{
+    AXIS_INDICATORS_KANIT_TOHUMU, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, axis_indicators_kartı,
 };
 pub use cursor_snap::{
     CURSOR_SNAP_KANIT_TOHUMU, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, cursor_snap_kartı

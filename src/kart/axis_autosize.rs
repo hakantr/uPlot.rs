@@ -18,7 +18,13 @@ pub fn axis_autosize_kartı(
     if !çarpan.is_finite() || çarpan <= 0.0 {
         return Err(UplotHatası::GeçersizÇarpan { değer: çarpan });
     }
-    let mut rastgele = KanıtRastgele::yeni(AXIS_AUTOSIZE_KANIT_TOHUMU);
+    // Kaynak her `setData(getData(...))` çağrısında Math.random akışını
+    // ilerletir. Çarpan bitlerini temel tohuma katarak her aşamada farklı,
+    // fakat yeniden üretilebilir bir kanıt geometrisi elde edilir.
+    let çarpan_bitleri = çarpan.to_bits();
+    let aşama_tohumu =
+        AXIS_AUTOSIZE_KANIT_TOHUMU ^ çarpan_bitleri as u32 ^ (çarpan_bitleri >> 32) as u32;
+    let mut rastgele = KanıtRastgele::yeni(aşama_tohumu);
     let mut x = Vec::with_capacity(NOKTA_SAYISI);
     let mut y = Vec::with_capacity(NOKTA_SAYISI);
     for indeks in 0..NOKTA_SAYISI {
@@ -54,9 +60,16 @@ mod testler {
     #[test]
     fn çarpan_veriyi_etiketleri_ve_eksen_paylarını_büyütür() -> Result<(), UplotHatası> {
         let (küçük_seçenekler, küçük_veri) = axis_autosize_kartı(1.0)?;
+        let küçük_normalize = ilk_y(&küçük_veri);
         let küçük = Grafik::yeni(küçük_seçenekler, küçük_veri)?;
         let (büyük_seçenekler, büyük_veri) = axis_autosize_kartı(1e9)?;
+        let büyük_normalize = ilk_y(&büyük_veri).map(|değer| değer / 1e9);
         let büyük = Grafik::yeni(büyük_seçenekler, büyük_veri)?;
+        assert!(
+            küçük_normalize
+                .zip(büyük_normalize)
+                .is_some_and(|(a, b)| a != b)
+        );
         assert_eq!(küçük_veri_uzunluğu(&küçük), NOKTA_SAYISI);
         let (küçük_sol, küçük_sağ, _, _) = küçük.çizim_alanı_boyutta(1048, 600);
         let (büyük_sol, büyük_sağ, _, _) = büyük.çizim_alanı_boyutta(1048, 600);
@@ -66,6 +79,10 @@ mod testler {
             |komut| matches!(komut, Komut::Metin { içerik, .. } if içerik == "500000000000.00")
         ));
         Ok(())
+    }
+
+    fn ilk_y(veri: &HizalıVeri) -> Option<f64> {
+        veri.seriler().first()?.first().copied().flatten()
     }
 
     fn küçük_veri_uzunluğu(grafik: &Grafik) -> usize {

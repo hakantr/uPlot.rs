@@ -10,15 +10,15 @@ use ortak_bilesenler::{
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
-    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
+    AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
+    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
     SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
     ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
-    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı,
+    axis_control_kartı, axis_indicators_kartı, cursor_snap_kartı, dependent_scale_kartı,
+    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
+    months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı,
+    zoom_touch_kartı, zoom_wheel_kartı,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -37,6 +37,7 @@ enum KartKimliği {
     ArcSinhScales,
     AxisControl,
     AxisAutosize,
+    AxisIndicators,
 }
 
 impl KartKimliği {
@@ -56,6 +57,7 @@ impl KartKimliği {
             Self::ArcSinhScales => "ArcSinh Y Scale",
             Self::AxisControl => "Axis Control",
             Self::AxisAutosize => "Axis AutoSize",
+            Self::AxisIndicators => "Axis indicators",
         }
     }
 
@@ -83,6 +85,7 @@ impl KartKimliği {
             Self::ArcSinhScales => "arcsinh-scales.html · değiştirilebilir doğrusal merkez eşiği",
             Self::AxisControl => "axis-control.html · 500.001 nokta ve sağ Y ekseni",
             Self::AxisAutosize => "axis-autosize.html · 501 nokta ve 1…10⁹ dinamik eksen ölçümü",
+            Self::AxisIndicators => "axis-indicators.html · üç renkli eksen ve imleç göstergeleri",
         }
     }
 
@@ -100,6 +103,7 @@ impl KartKimliği {
             Self::ArcSinhScales => ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
             Self::AxisControl => AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
             Self::AxisAutosize => AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
+            Self::AxisIndicators => AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
         }
     }
 
@@ -117,6 +121,7 @@ impl KartKimliği {
             Self::ArcSinhScales => "src/kart/arcsinh_scales.rs",
             Self::AxisControl => "src/kart/axis_control.rs",
             Self::AxisAutosize => "src/kart/axis_autosize.rs",
+            Self::AxisIndicators => "src/kart/axis_indicators.rs",
         }
     }
 
@@ -259,6 +264,7 @@ fn grafik_oluştur(
         KartKimliği::ArcSinhScales => arcsinh_scales_kartı(),
         KartKimliği::AxisControl => axis_control_kartı(),
         KartKimliği::AxisAutosize => axis_autosize_kartı(10_f64.powi(autosize_kuvvet)),
+        KartKimliği::AxisIndicators => axis_indicators_kartı(),
     }?;
     Grafik::yeni(seçenekler, veri)
 }
@@ -291,6 +297,7 @@ impl Render for ChartListesi {
             KartKimliği::AxisAutosize => {
                 format!("501 nokta · çarpan 10^{}", self.autosize_kuvvet)
             }
+            KartKimliği::AxisIndicators => "30 nokta × 3 bağımsız Y ekseni".to_string(),
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
@@ -331,6 +338,7 @@ impl Render for ChartListesi {
             KartKimliği::ArcSinhScales => &["Value"],
             KartKimliği::AxisControl => &["sin(x)"],
             KartKimliği::AxisAutosize => &["sin(x)"],
+            KartKimliği::AxisIndicators => &["1", "2", "3"],
         };
         let lejant = lejant.map_or_else(
             || {
@@ -692,6 +700,20 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::AxisAutosize, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "kart-axis-indicators",
+                    "Axis indicators",
+                    "axis-indicators",
+                    aktif_kart == KartKimliği::AxisIndicators,
+                    "3 renkli eksen · canlı değer rozetleri",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::AxisIndicators, cx);
                 })),
             );
 

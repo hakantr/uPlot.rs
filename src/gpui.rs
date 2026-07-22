@@ -144,13 +144,31 @@ impl GpuiGrafik {
                 kalınlık: 1.0,
                 kesik: 4.0,
             });
-            sahne.ekle(Komut::KesikliÇizgi {
-                başlangıç: Nokta::yeni(sol, imleç.fare.y),
-                bitiş: Nokta::yeni(sağ, imleç.fare.y),
-                renk: "#6b7280".to_string(),
-                kalınlık: 1.0,
-                kesik: 4.0,
-            });
+            if !self.grafik.eksen_göstergeleri_etkin() {
+                sahne.ekle(Komut::KesikliÇizgi {
+                    başlangıç: Nokta::yeni(sol, imleç.fare.y),
+                    bitiş: Nokta::yeni(sağ, imleç.fare.y),
+                    renk: "#6b7280".to_string(),
+                    kalınlık: 1.0,
+                    kesik: 4.0,
+                });
+            } else {
+                sahne.ekle(Komut::Dikdörtgen {
+                    konum: Nokta::yeni(nokta_x - 24.0, alt + 6.0),
+                    genişlik: 48.0,
+                    yükseklik: 22.0,
+                    dolgu: "#111111".to_string(),
+                    çizgi: "#111111".to_string(),
+                    kalınlık: 0.0,
+                });
+                sahne.ekle(Komut::Metin {
+                    konum: Nokta::yeni(nokta_x, alt + 21.0),
+                    içerik: format!("{:.2}", imleç.veri_x),
+                    renk: "#ffffff".to_string(),
+                    boyut: 11.0,
+                    hiza: MetinHizası::Orta,
+                });
+            }
             for (seri_indeksi, değer) in imleç.seri_değerleri.iter().enumerate() {
                 let Some(değer) = değer else {
                     continue;
@@ -162,6 +180,31 @@ impl GpuiGrafik {
                     continue;
                 };
                 let nokta_y = alt - y_oranı as f32 * (alt - üst);
+                if self.grafik.eksen_göstergeleri_etkin() {
+                    sahne.ekle(Komut::KesikliÇizgi {
+                        başlangıç: Nokta::yeni(sol, nokta_y),
+                        bitiş: Nokta::yeni(sağ, nokta_y),
+                        renk: seri.renk.clone(),
+                        kalınlık: 1.0,
+                        kesik: 4.0,
+                    });
+                    let rozet_x = sol - 50.0 - seri_indeksi as f32 * 56.0;
+                    sahne.ekle(Komut::Dikdörtgen {
+                        konum: Nokta::yeni(rozet_x, nokta_y - 11.0),
+                        genişlik: 44.0,
+                        yükseklik: 22.0,
+                        dolgu: seri.renk.clone(),
+                        çizgi: seri.renk.clone(),
+                        kalınlık: 0.0,
+                    });
+                    sahne.ekle(Komut::Metin {
+                        konum: Nokta::yeni(rozet_x + 22.0, nokta_y + 4.0),
+                        içerik: format!("{değer:.2}"),
+                        renk: "#ffffff".to_string(),
+                        boyut: 11.0,
+                        hiza: MetinHizası::Orta,
+                    });
+                }
                 sahne.ekle(Komut::Daire {
                     merkez: Nokta::yeni(nokta_x, nokta_y),
                     yarıçap: 2.5,

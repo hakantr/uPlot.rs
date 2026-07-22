@@ -158,6 +158,7 @@ pub struct GrafikSeçenekleri {
     pub x_eksen_değer_çarpanı: f64,
     pub otomatik_x_sağ_pay: bool,
     pub otomatik_y_eksen_genişliği: bool,
+    pub eksen_göstergeleri: bool,
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
     pub imleç_ızgara_adımı: Option<f32>,
@@ -188,6 +189,7 @@ impl GrafikSeçenekleri {
             x_eksen_değer_çarpanı: 1.0,
             otomatik_x_sağ_pay: false,
             otomatik_y_eksen_genişliği: false,
+            eksen_göstergeleri: false,
             imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
@@ -261,6 +263,11 @@ impl GrafikSeçenekleri {
 
     pub fn otomatik_y_eksen_genişliği(mut self, etkin: bool) -> Self {
         self.otomatik_y_eksen_genişliği = etkin;
+        self
+    }
+
+    pub fn eksen_göstergeleri(mut self, etkin: bool) -> Self {
+        self.eksen_göstergeleri = etkin;
         self
     }
 

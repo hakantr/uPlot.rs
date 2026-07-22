@@ -11,6 +11,7 @@ nokta_sayısı = 501
 güncelleme_ms = 500
 formül = "(random()-0.5 + sin(x*0.00002)*40 + sin(x*0.001)*5 + sin(x*0.1)*2) * mult"
 kanıt_tohumu = "0xA170_512E"
+her_aşamada_yeni_rastgele_geometri = true
 
 [eksen]
 x_etiketi = "X Axis Label"

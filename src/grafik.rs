@@ -93,14 +93,26 @@ impl Grafik {
     ) -> (f32, f32, f32, f32) {
         let genişlik_px = genişlik_px.max(160) as f32;
         let yükseklik_px = yükseklik_px.max(120) as f32;
-        let mut sağ_pay: f32 = if self.seçenekler.birincil_y_sağda
-            || self
-                .seçenekler
-                .y_ölçekleri
-                .iter()
-                .any(|ölçek| ölçek.anahtar != self.seçenekler.birincil_y_ölçeği && ölçek.sağda)
-        {
-            72.0
+        let sağ_eksen_sayısı = self
+            .seçenekler
+            .y_ölçekleri
+            .iter()
+            .filter(|ölçek| ölçek.anahtar != self.seçenekler.birincil_y_ölçeği && ölçek.sağda)
+            .count();
+        let sol_eksen_sayısı = self
+            .seçenekler
+            .y_ölçekleri
+            .iter()
+            .filter(|ölçek| {
+                ölçek.anahtar != self.seçenekler.birincil_y_ölçeği
+                    && ölçek.eksen_görünür
+                    && !ölçek.sağda
+            })
+            .count();
+        let mut sağ_pay: f32 = if self.seçenekler.birincil_y_sağda {
+            72.0 + sağ_eksen_sayısı as f32 * 56.0
+        } else if sağ_eksen_sayısı > 0 {
+            24.0 + sağ_eksen_sayısı as f32 * 56.0
         } else {
             24.0
         };
@@ -113,9 +125,9 @@ impl Grafik {
             sağ_pay = sağ_pay.max(8.0 + son_etiket.chars().count() as f32 * 4.0);
         }
         let mut sol_pay: f32 = if self.seçenekler.birincil_y_sağda {
-            24.0
+            24.0 + sol_eksen_sayısı as f32 * 56.0
         } else {
-            64.0
+            64.0 + sol_eksen_sayısı as f32 * 56.0
         };
         if self.seçenekler.otomatik_y_eksen_genişliği && !self.seçenekler.birincil_y_sağda {
             let aralık = self.görünür_y_aralığı();
@@ -157,6 +169,10 @@ impl Grafik {
 
     pub fn seri_seçenekleri(&self) -> &[crate::SeriSeçenekleri] {
         &self.seçenekler.seriler
+    }
+
+    pub fn eksen_göstergeleri_etkin(&self) -> bool {
+        self.seçenekler.eksen_göstergeleri
     }
 
     /// Yüzey imlecinin normalize edilmiş konumunu kartın çekirdek ayarına göre
@@ -490,12 +506,21 @@ impl Grafik {
             });
         }
 
-        for ölçek in self
-            .seçenekler
-            .y_ölçekleri
-            .iter()
-            .filter(|ölçek| ölçek.anahtar != self.seçenekler.birincil_y_ölçeği && ölçek.sağda)
-        {
+        let mut sol_ikincil = 0_usize;
+        let mut sağ_ikincil = 0_usize;
+        for ölçek in self.seçenekler.y_ölçekleri.iter().filter(|ölçek| {
+            ölçek.anahtar != self.seçenekler.birincil_y_ölçeği
+                && (ölçek.sağda || ölçek.eksen_görünür)
+        }) {
+            let eksen_x = if ölçek.sağda {
+                let x = sağ + 8.0 + sağ_ikincil as f32 * 56.0;
+                sağ_ikincil += 1;
+                x
+            } else {
+                let x = sol - 8.0 - sol_ikincil as f32 * 56.0;
+                sol_ikincil += 1;
+                x
+            };
             let aralık = self.görünür_ölçek_aralığı(&ölçek.anahtar, x_aralığı, görünür_y);
             let artım = uygun_artım(aralık, yükseklik, 30.0);
             for değer in self.y_eksen_bölmeleri(&ölçek.anahtar, aralık, yükseklik) {
@@ -509,11 +534,15 @@ impl Grafik {
                     });
                 }
                 sahne.ekle(Komut::Metin {
-                    konum: Nokta::yeni(sağ + 8.0, y + 4.0),
+                    konum: Nokta::yeni(eksen_x, y + 4.0),
                     içerik: eksen_değerini_birimle_yaz(değer, artım, &ölçek.birim),
-                    renk: "#4b5563".to_string(),
+                    renk: ölçek.eksen_rengi.clone(),
                     boyut: 11.0,
-                    hiza: MetinHizası::Başlangıç,
+                    hiza: if ölçek.sağda {
+                        MetinHizası::Başlangıç
+                    } else {
+                        MetinHizası::Bitiş
+                    },
                 });
             }
         }

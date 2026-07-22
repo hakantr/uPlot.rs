@@ -794,10 +794,69 @@
       "özellikler": [
         "source-equivalent-501-point-generator",
         "dynamic-power-of-ten-data-updates",
+        "fresh-deterministic-random-geometry-per-update",
         "multiplied-x-axis-values",
         "automatic-y-axis-width",
         "automatic-right-x-padding",
         "gpui-wasm-dynamic-controls",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "kısmi",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "uygulandı_kanıtlı"
+      }
+    },
+    {
+      "sıra": 13,
+      "id": "axis-indicators",
+      "başlık": { "en": "Axis indicators", "tr": "Eksen Göstergeleri" },
+      "kaynak": "demos/axis-indicators.html",
+      "kaynak_sha256": "a16f8d73fec37b8ad37bb54274c8524cd1664b287bf5898b5db999c17e1f331d",
+      "ek_kaynaklar": [
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
+      ],
+      "fixture": "src/kart/axis_indicators.rs#axis_indicators_kartı",
+      "örnek": "examples/axis_indicators.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/axis-indicators.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/axis_indicators.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı",
+          "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
+          "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "devralındı"
+        },
+        "gerekçeler": {}
+      },
+      "sahip_faz": 2,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-equivalent-three-series-data",
+        "source-null-gap-indices-13-through-15",
+        "three-independent-colored-y-axes",
+        "axis-indicator-plugin-port",
+        "gpui-wasm-live-axis-badges",
         "common-interaction-profile"
       ],
       "kanıt": {

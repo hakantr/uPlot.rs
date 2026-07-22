@@ -146,6 +146,11 @@
         <small>axis-autosize</small>
         <div class="durum">501 nokta · dinamik eksen ölçümü</div>
       </article>
+      <article class="kart" data-kart="axis-indicators" aria-current="false" tabindex="0">
+        <strong>Axis indicators</strong>
+        <small>axis-indicators</small>
+        <div class="durum">3 renkli eksen · canlı değer rozetleri</div>
+      </article>
     </aside>
     <main>
       <header>
@@ -201,6 +206,7 @@
       arcsinh_scales_kart_tanim_ornegi,
       axis_control_kart_tanim_ornegi,
       axis_autosize_kart_tanim_ornegi,
+      axis_indicators_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -435,12 +441,28 @@
       "axis-autosize": {
         başlık: "Axis AutoSize",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/axis-autosize.html">axis-autosize.html</a>
-          <br>Kaynaktaki 501 noktalı formül ve 500 ms arayla 1…10⁹ büyüyen veri korunur. X/Y eksen payları her veri değişiminde çekirdek tarafından yeniden ölçülür.`,
+          <br>Kaynaktaki 501 noktalı formül ve 500 ms arayla 1…10⁹ büyüyen veri korunur. Her aşamada rastgele bileşen yeniden üretilir; X/Y eksen payları da çekirdek tarafından yeniden ölçülür.`,
         tanım: () => axis_autosize_kart_tanim_ornegi(),
         tanımYolu: "src/kart/axis_autosize.rs",
         seriler: [{ etiket: "sin(x)", renk: "#ff0000" }],
         yardım: "Kaynak animasyonu: her 500 ms’de 10× · kaydırıcıyla çarpan elle de doğrulanabilir",
         değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
+      "axis-indicators": {
+        başlık: "Axis indicators",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/axis-indicators.html">axis-indicators.html</a>
+          <br>Üç bağımsız renkli Y ölçeği, ilk serinin 13–15 indekslerindeki null boşluğu ve axisIndicsPlugin rozet davranışı korunur.`,
+        tanım: () => axis_indicators_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/axis_indicators.rs",
+        seriler: [
+          { etiket: "1", renk: "#ff0000" },
+          { etiket: "2", renk: "#008000" },
+          { etiket: "3", renk: "#0000ff" },
+        ],
+        yardım: "İmleci hareket ettir: X ve üç Y ekseninde canlı değer rozetleri",
+        değişkenNokta: false,
+        eksenGöstergeleri: true,
         etkileşimler: () => ortakEtkileşimler(),
       },
     };
@@ -510,12 +532,24 @@
       const imleçNoktaları = kart.seriler.map((seri, indeks) =>
         `<circle id="imleç-nokta-${indeks}" visibility="hidden" r="2.5" fill="${seri.renk}"/>`
       ).join("");
+      const eksenGöstergeleri = kart.eksenGöstergeleri ? `
+        <g id="eksen-gosterge-x" class="eksen-gosterge" visibility="hidden">
+          <rect width="48" height="22" rx="3" fill="#111111"/>
+          <text fill="#ffffff" font-size="11" text-anchor="middle"></text>
+        </g>
+        ${kart.seriler.map((seri, indeks) => `
+          <g id="eksen-gosterge-y-${indeks}" class="eksen-gosterge" visibility="hidden">
+            <line stroke="${seri.renk}" stroke-dasharray="4 4"/>
+            <rect width="44" height="22" rx="3" fill="${seri.renk}"/>
+            <text fill="#ffffff" font-size="11" text-anchor="middle"></text>
+          </g>`).join("")}` : "";
       svg.insertAdjacentHTML("beforeend", `
         <g id="etkileşim" pointer-events="none">
           <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
           <line id="imleç-x" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
           <line id="imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
           ${imleçNoktaları}
+          ${eksenGöstergeleri}
         </g>`);
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         `<span><i class="örnek" style="border-color:${seri.renk}"></i>${seri.etiket}: <b id="seri-değeri-${indeks}">--</b></span>`
@@ -553,6 +587,7 @@
       const öğeler = [...çizgiler, ...noktalar];
       if (hamX < sol || hamX > sağ || hamY < üst || hamY > alt) {
         öğeler.forEach(öğe => öğe?.setAttribute("visibility", "hidden"));
+        svg.querySelectorAll(".eksen-gosterge").forEach(öğe => öğe.setAttribute("visibility", "hidden"));
         return;
       }
       const hamOranX = Math.max(0, Math.min(1, (hamX - sol) / (sağ - sol)));
@@ -576,11 +611,25 @@
       dikey.setAttribute("y1", üst); dikey.setAttribute("y2", alt);
       yatay.setAttribute("x1", sol); yatay.setAttribute("x2", sağ);
       yatay.setAttribute("y1", y); yatay.setAttribute("y2", y);
-      çizgiler.forEach(öğe => öğe?.setAttribute("visibility", "visible"));
+      dikey?.setAttribute("visibility", "visible");
+      yatay?.setAttribute("visibility", kartlar[aktifKart].eksenGöstergeleri ? "hidden" : "visible");
+      if (kartlar[aktifKart].eksenGöstergeleri) {
+        const xGösterge = svg.querySelector("#eksen-gosterge-x");
+        const xDikdörtgen = xGösterge?.querySelector("rect");
+        const xMetin = xGösterge?.querySelector("text");
+        xDikdörtgen?.setAttribute("x", noktaX - 24);
+        xDikdörtgen?.setAttribute("y", alt + 5);
+        xMetin?.setAttribute("x", noktaX);
+        xMetin?.setAttribute("y", alt + 20);
+        if (xMetin) xMetin.textContent = gerçekX.toLocaleString("tr-TR", {maximumFractionDigits: 3});
+        xGösterge?.setAttribute("visibility", "visible");
+      }
       noktalar.forEach((nokta, indeks) => {
         const seriDeğeri = seriDeğerleri[indeks];
+        const yGösterge = svg.querySelector(`#eksen-gosterge-y-${indeks}`);
         if (!nokta || !Number.isFinite(seriDeğeri)) {
           nokta?.setAttribute("visibility", "hidden");
+          yGösterge?.setAttribute("visibility", "hidden");
           return;
         }
         const yOranı = oturum.seri_y_konum_orani(indeks, seriDeğeri);
@@ -591,6 +640,18 @@
         const noktaY = alt - yOranı * (alt - üst);
         nokta.setAttribute("cx", noktaX); nokta.setAttribute("cy", noktaY);
         nokta.setAttribute("visibility", "visible");
+        if (yGösterge) {
+          const rozetX = sol - 50 - indeks * 56;
+          const çizgi = yGösterge.querySelector("line");
+          const dikdörtgen = yGösterge.querySelector("rect");
+          const metin = yGösterge.querySelector("text");
+          çizgi?.setAttribute("x1", rozetX + 44); çizgi?.setAttribute("x2", sağ);
+          çizgi?.setAttribute("y1", noktaY); çizgi?.setAttribute("y2", noktaY);
+          dikdörtgen?.setAttribute("x", rozetX); dikdörtgen?.setAttribute("y", noktaY - 11);
+          metin?.setAttribute("x", rozetX + 22); metin?.setAttribute("y", noktaY + 4);
+          if (metin) metin.textContent = seriDeğeri.toLocaleString("tr-TR", {maximumFractionDigits: 3});
+          yGösterge.setAttribute("visibility", "visible");
+        }
       });
       chart.querySelector("#x-değeri").textContent = gerçekX.toLocaleString("tr-TR", {maximumFractionDigits: 3});
       seriDeğerleri.forEach((seriDeğeri, indeks) => {

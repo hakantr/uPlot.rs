@@ -15,6 +15,8 @@ pub struct YÖlçekSeçenekleri {
     pub aralık: Option<Aralık>,
     pub sağda: bool,
     pub ızgara: bool,
+    pub eksen_görünür: bool,
+    pub eksen_rengi: String,
     pub birim: String,
     pub kaynak: Option<String>,
     pub dönüşüm_çarpanı: f64,
@@ -29,6 +31,8 @@ impl YÖlçekSeçenekleri {
             aralık: None,
             sağda: false,
             ızgara: true,
+            eksen_görünür: false,
+            eksen_rengi: "#4b5563".to_string(),
             birim: String::new(),
             kaynak: None,
             dönüşüm_çarpanı: 1.0,
@@ -49,6 +53,16 @@ impl YÖlçekSeçenekleri {
 
     pub fn ızgara(mut self, görünür: bool) -> Self {
         self.ızgara = görünür;
+        self
+    }
+
+    pub fn eksen(mut self, görünür: bool) -> Self {
+        self.eksen_görünür = görünür;
+        self
+    }
+
+    pub fn eksen_rengi(mut self, renk: impl Into<String>) -> Self {
+        self.eksen_rengi = renk.into();
         self
     }
 

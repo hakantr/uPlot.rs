@@ -1,0 +1,33 @@
+id = "axis-indicators"
+kaynak = "../uPlot/demos/axis-indicators.html"
+fixture = "src/kart/axis_indicators.rs#axis_indicators_kartı"
+viewport = [1920, 600]
+device_pixel_ratio = 1
+durum = "etkileşimli"
+
+[veri]
+nokta_sayısı = 30
+seri_sayısı = 3
+değer_aralığı = [-10, 10]
+birinci_seri_null_indeksleri = [13, 14, 15]
+kanıt_tohumu = "0xA815_1D1C"
+
+[eksen]
+ölçekler = ["y", "y2", "y3"]
+renkler = ["#ff0000", "#008000", "#0000ff"]
+ızgara = false
+göstergeler = true
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+eksen_göstergeleri = true
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/axis-indicators.svg"
