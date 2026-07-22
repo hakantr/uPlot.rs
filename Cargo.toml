@@ -43,6 +43,8 @@ gpui = ["dep:gpui"]
 
 [dependencies]
 gpui = { version = "0.2.2", path = "../gpui/crates/gpui", optional = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 web-time = "1.1.0"
 
 [[example]]
@@ -103,4 +105,8 @@ required-features = ["svg"]
 
 [[example]]
 name = "bars_values_autosize"
+required-features = ["svg"]
+
+[[example]]
+name = "box_whisker"
 required-features = ["svg"]

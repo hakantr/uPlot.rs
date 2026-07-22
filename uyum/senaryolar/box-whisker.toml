@@ -1,0 +1,32 @@
+id = "box-whisker"
+kaynak = "../uPlot/demos/box-whisker.html"
+fixture = "src/kart/box_whisker.rs#box_whisker_kartı"
+viewport = [800, 400]
+device_pixel_ratio = 1
+durum = "on-yedi-benchmark"
+
+[veri]
+kaynak = "src/kart/veri/box_whisker_results.json"
+kaynak_sha256 = "424daf68791f929a2136e4388b279b54f6dfc4aa098593f233aa45fa5d4ba931"
+benchmark_sayısı = 17
+azami_framework = 30
+non_keyed_haric = true
+yüzdelik_algoritması = "demos/lib/stats.js"
+ayrık_değer_eşiği = "1.5 * IQR"
+
+[düzen]
+gövde_genişlik_oranı = 0.7
+gövde_dolgusu = "#eeeeee"
+bıyık_rengi = "#000000"
+bıyık_kesik = 4
+ayrık_değer_boyutu = 8
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+sütun_vurgusu = "rgba(51,204,255,0.3)"
+çekirdek_vuruş_testi = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg_dizini = "target/box-whisker"

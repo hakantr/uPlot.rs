@@ -1003,6 +1003,72 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "uygulandı_kanıtlı"
       }
+    },
+    {
+      "sıra": 16,
+      "id": "box-whisker",
+      "başlık": { "en": "Box & Whisker", "tr": "Kutu ve Bıyık" },
+      "kaynak": "demos/box-whisker.html",
+      "kaynak_sha256": "4aaf1793a8b6d3578d0fd3ddd322f45b30fa0fc228d61787caf5db1082f8e586",
+      "ek_kaynaklar": [
+        { "yol": "demos/data/results.json", "sha256": "424daf68791f929a2136e4388b279b54f6dfc4aa098593f233aa45fa5d4ba931" },
+        { "yol": "demos/lib/stats.js", "sha256": "c592c5bf8d50cad0da371151d447aed1f000485b05c7fc486c0c8e0433751d46" },
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
+      ],
+      "fixture": "src/kart/box_whisker.rs#box_whisker_kartı",
+      "örnek": "examples/box_whisker.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/box-whisker.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/box_whisker.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı",
+          "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
+          "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "devralındı"
+        },
+        "gerekçeler": {
+          "kosullu-bos-ve-dolu-noktalar": "Kutu-bıyık eklentisi normal seri noktaları yerine ayrık değer kareleri çizer."
+        }
+      },
+      "sahip_faz": 3,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-results-json",
+        "source-stats-js-percentiles",
+        "all-seventeen-benchmark-charts",
+        "keyed-framework-filter",
+        "median-sorted-top-thirty",
+        "quartile-body-and-whiskers",
+        "one-point-five-iqr-outliers",
+        "column-highlight-hit-testing",
+        "gpui-wasm-catalog-parity",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "kısmi",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "uygulandı_kanıtlı"
+      }
     }
   ]
 }

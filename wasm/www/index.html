@@ -221,6 +221,7 @@
       axis_indicators_kart_tanim_ornegi,
       bars_grouped_stacked_kart_tanim_ornegi,
       bars_values_autosize_kart_tanim_ornegi,
+      box_whisker_kart_tanim_ornegi,
       ortak_kart_tekerlek_etkilesimi,
       ortak_kart_secim_yakinlastir,
       ortak_kart_cift_tikla_tam_gorunum,
@@ -527,6 +528,35 @@
       };
     }
 
+    const kutuBıyıkBenchmarkleri = [
+      "01_run1k", "02_replace1k", "03_update10th1k_x16", "04_select1k", "05_swap1k",
+      "06_remove-one-1k", "07_create10k", "08_create1k-after1k_x2", "09_clear1k_x8",
+      "21_ready-memory", "22_run-memory", "23_update5-memory", "24_run5-memory",
+      "25_run-clear-memory", "31_startup-ci", "32_startup-bt", "34_startup-totalbytes",
+    ];
+    for (const benchmark of kutuBıyıkBenchmarkleri) {
+      const kimlik = `box-whisker-${benchmark}`;
+      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>Box &amp; Whisker · ${benchmark}</strong><small>${kimlik}</small>
+          <div class="durum">İlk 30 keyed framework · 1,5×IQR</div>
+        </article>`);
+      kartlar[kimlik] = {
+        başlık: benchmark,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/box-whisker.html">box-whisker.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/results.json">results.json</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/stats.js">stats.js</a>
+          <br>Keyed framework sonuçları kaynak yüzdelik algoritmasıyla sıralanır; ilk 30 medyan, çeyrek, bıyık ve ayrık değer olarak çizilir.`,
+        tanım: () => box_whisker_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/box_whisker.rs",
+        seriler: ["Median", "q1", "q3", "min", "max"].map(etiket => ({ etiket, renk: "#000000" })),
+        yardım: "İmleci hareket ettir: kaynak columnHighlightPlugin eşdeğeri sütunu vurgular",
+        değişkenNokta: false,
+        kutuBıyık: true,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+
     function ortakEtkileşimler() {
       return {
         tekerlek: ortak_kart_tekerlek_etkilesimi(),
@@ -607,6 +637,7 @@
         <g id="etkileşim" pointer-events="none">
           <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
           <rect id="çubuk-vurgu" visibility="hidden" fill="rgba(255,255,255,.3)" stroke="none"/>
+          <rect id="kutu-biyik-vurgu" visibility="hidden" fill="rgba(51,204,255,.3)" stroke="none"/>
           <line id="imleç-x" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
           <line id="imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
           ${imleçNoktaları}
@@ -659,6 +690,25 @@
         kartlar[aktifKart].seriler.forEach((_, seriİndeksi) => {
           const hedef = chart.querySelector(`#seri-değeri-${seriİndeksi}`);
           if (hedef) hedef.textContent = seriİndeksi === seri ? String(değer) : "--";
+        });
+        return;
+      }
+      if (kartlar[aktifKart].kutuBıyık) {
+        const vurgu = svg.querySelector("#kutu-biyik-vurgu");
+        const vuruş = oturum?.kutu_biyik_vurusu(view.width, view.height, hamX, hamY) ?? [];
+        if (vuruş.length !== 10) {
+          vurgu?.setAttribute("visibility", "hidden");
+          return;
+        }
+        const [indeks, x, y, genişlik, yükseklik, ...değerler] = vuruş;
+        vurgu?.setAttribute("x", x); vurgu?.setAttribute("y", y);
+        vurgu?.setAttribute("width", genişlik); vurgu?.setAttribute("height", yükseklik);
+        vurgu?.setAttribute("visibility", "visible");
+        const xHedefi = chart.querySelector("#x-değeri");
+        if (xHedefi) xHedefi.textContent = String(indeks + 1);
+        değerler.forEach((değer, seriİndeksi) => {
+          const hedef = chart.querySelector(`#seri-değeri-${seriİndeksi}`);
+          if (hedef) hedef.textContent = Number(değer).toFixed(2);
         });
         return;
       }

@@ -6,15 +6,15 @@ use uplot_rs::{
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
     BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, Grafik,
-    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
-    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, Grafik, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
+    MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı,
+    area_fill_kartı, axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı,
+    bars_grouped_stacked_kartı, bars_values_autosize_kartı, box_whisker_kartı, cursor_snap_kartı,
+    dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -47,6 +47,9 @@ impl KartOturumu {
             "axis-indicators" => axis_indicators_kartı(),
             "bars-values-autosize-vertical" => bars_values_autosize_kartı(ÇubukYönü::Dikey),
             "bars-values-autosize-horizontal" => bars_values_autosize_kartı(ÇubukYönü::Yatay),
+            kimlik if kimlik.starts_with("box-whisker-") => {
+                box_whisker_kartı(kimlik.trim_start_matches("box-whisker-"))
+            }
             kimlik => ÇubukÖrneği::kimlikten(kimlik).map_or_else(
                 || {
                     Err(UplotHatası::BilinmeyenKart {
@@ -189,6 +192,22 @@ impl KartOturumu {
             )
     }
 
+    pub fn kutu_biyik_vurusu(&self, genişlik: u32, yükseklik: u32, x: f32, y: f32) -> Vec<f64> {
+        self.grafik
+            .kutu_bıyık_vuruşu(genişlik, yükseklik, x, y)
+            .map_or_else(Vec::new, |(indeks, konum, kutu_g, kutu_y, değerler)| {
+                let mut sonuç = vec![
+                    indeks as f64,
+                    f64::from(konum.x),
+                    f64::from(konum.y),
+                    f64::from(kutu_g),
+                    f64::from(kutu_y),
+                ];
+                sonuç.extend(değerler);
+                sonuç
+            })
+    }
+
     pub fn cizim_alani(&self, genişlik: u32, yükseklik: u32) -> Vec<f64> {
         let (sol, sağ, üst, alt) = self.grafik.çizim_alanı_boyutta(genişlik, yükseklik);
         vec![
@@ -243,7 +262,7 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    27
+    44
 }
 
 #[wasm_bindgen]
@@ -322,6 +341,11 @@ pub fn bars_values_autosize_kart_tanim_ornegi() -> String {
 }
 
 #[wasm_bindgen]
+pub fn box_whisker_kart_tanim_ornegi() -> String {
+    BOX_WHISKER_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
 pub fn ortak_kart_tekerlek_etkilesimi() -> bool {
     ortak_kart_etkileşimleri().tekerlek_etkileşimi
 }
@@ -365,7 +389,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 27);
+        assert_eq!(kart_sayisi(), 44);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -390,7 +414,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 27);
+        assert_eq!(kart_sayisi(), 44);
     }
 
     #[test]
@@ -574,5 +598,18 @@ mod testler {
             assert!(svg.contains("#00ff0022"));
             assert!(svg.matches("#00000033").count() >= 12);
         }
+    }
+
+    #[test]
+    fn box_whisker_wasm_kaynak_kutusunu_ve_vurgu_sütununu_üretir() {
+        let oturum = KartOturumu::yeni("box-whisker-01_run1k", 100);
+        assert!(oturum.is_ok());
+        let Ok(oturum) = oturum else {
+            return;
+        };
+        let svg = oturum.svg(800, 400);
+        assert!(svg.contains("stroke-dasharray=\"4.00 4.00\""));
+        let vuruş = oturum.kutu_biyik_vurusu(800, 400, 76.0, 120.0);
+        assert!(vuruş.is_empty() || vuruş.len() == 10);
     }
 }

@@ -155,6 +155,25 @@ impl GpuiGrafik {
             if self.grafik.çubuk_grafiği() {
                 return sahne;
             }
+            if let Some((_, konum, genişlik, yükseklik, _)) = self.grafik.kutu_bıyık_vuruşu(
+                self.grafik.boyut().0,
+                self.grafik.boyut().1,
+                imleç.fare.x,
+                imleç.fare.y,
+            ) {
+                sahne.ekle(Komut::Dikdörtgen {
+                    konum,
+                    genişlik,
+                    yükseklik,
+                    dolgu: "#33ccff4d".to_string(),
+                    çizgi: "#33ccff00".to_string(),
+                    kalınlık: 0.0,
+                });
+                return sahne;
+            }
+            if self.grafik.kutu_bıyık_grafiği() {
+                return sahne;
+            }
             let nokta_x = ölçekle(imleç.veri_x, x_aralığı, sol, sağ - sol);
             sahne.ekle(Komut::KesikliÇizgi {
                 başlangıç: Nokta::yeni(imleç.fare.x, üst),

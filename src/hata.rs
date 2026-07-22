@@ -52,6 +52,10 @@ pub enum UplotHatası {
     GeçersizÇarpan {
         değer: f64,
     },
+    GeçersizKaynakVeri {
+        varlık: &'static str,
+        açıklama: String,
+    },
 }
 
 impl Display for UplotHatası {
@@ -108,6 +112,11 @@ impl Display for UplotHatası {
             }
             Self::GeçersizÇarpan { değer } => {
                 write!(f, "çarpan sonlu ve pozitif olmalı; bulunan: {değer}")
+            }
+            Self::GeçersizKaynakVeri {
+                varlık, açıklama
+            } => {
+                write!(f, "{varlık} kaynak verisi çözümlenemedi: {açıklama}")
             }
         }
     }

@@ -12,6 +12,28 @@ pub enum ÇubukYönü {
     Yatay,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct KutuBıyıkDüzeni {
+    pub ayrık_değerler: Vec<Vec<f64>>,
+    pub gövde_genişlik_oranı: f32,
+}
+
+impl KutuBıyıkDüzeni {
+    pub fn yeni(ayrık_değerler: Vec<Vec<f64>>) -> Self {
+        Self {
+            ayrık_değerler,
+            gövde_genişlik_oranı: 0.7,
+        }
+    }
+
+    pub fn gövde_genişlik_oranı(mut self, oran: f32) -> Self {
+        if oran.is_finite() {
+            self.gövde_genişlik_oranı = oran.clamp(0.1, 1.0);
+        }
+        self
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ÇubukDüzeni {
     pub yön: ÇubukYönü,
@@ -201,6 +223,7 @@ pub struct GrafikSeçenekleri {
     pub eksen_göstergeleri: bool,
     pub kategoriler: Vec<String>,
     pub çubuk_düzeni: Option<ÇubukDüzeni>,
+    pub kutu_bıyık_düzeni: Option<KutuBıyıkDüzeni>,
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
     pub imleç_ızgara_adımı: Option<f32>,
@@ -234,6 +257,7 @@ impl GrafikSeçenekleri {
             eksen_göstergeleri: false,
             kategoriler: Vec::new(),
             çubuk_düzeni: None,
+            kutu_bıyık_düzeni: None,
             imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
@@ -326,6 +350,11 @@ impl GrafikSeçenekleri {
 
     pub fn çubuk_düzeni(mut self, düzen: ÇubukDüzeni) -> Self {
         self.çubuk_düzeni = Some(düzen);
+        self
+    }
+
+    pub fn kutu_bıyık_düzeni(mut self, düzen: KutuBıyıkDüzeni) -> Self {
+        self.kutu_bıyık_düzeni = Some(düzen);
         self
     }
 
