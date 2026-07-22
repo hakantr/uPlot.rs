@@ -25,7 +25,7 @@ pub use grafik::Grafik;
 pub use hata::UplotHatası;
 pub use kart::{
     AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ, area_fill_kartı, ilk_kart,
-    ilk_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
+    ilk_kart_etkileşimleri, ortak_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
 };
 pub use olcek::Aralık;
 pub use secenek::{

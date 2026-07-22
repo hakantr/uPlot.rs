@@ -36,6 +36,12 @@ pub fn ilk_kart() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
 }
 
 pub fn ilk_kart_etkileşimleri() -> EtkileşimSeçenekleri {
+    ortak_kart_etkileşimleri()
+}
+
+/// Resize doğrulamasında olgunlaştırılan ve kaynak kart açıkça aksini
+/// gerektirmedikçe bütün port kartlarının devraldığı ortak etkileşim profili.
+pub fn ortak_kart_etkileşimleri() -> EtkileşimSeçenekleri {
     EtkileşimSeçenekleri::default()
         .tekerlek_etkileşimi(true)
         .tekerlek_ayarları(TekerlekAyarları::default().kip(TekerlekKipi::Otomatik))

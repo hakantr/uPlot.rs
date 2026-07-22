@@ -24,6 +24,14 @@ cursor = true
 canlı_lejant = true
 x_sürükle_yakınlaştır = true
 çift_tıkla_tam_görünüm = true
+tekerlek_x_yakınlaştır = true
+tekerlek_canlı_anahtar = true
+tekerlek_girdi_kipi = "otomatik_satır_ve_hassas_piksel"
+dokunma_xy_yakınlaştır = true
+dokunma_tek_parmak_taşıma = true
+masaüstü_boşluk_sol_sürükle_taşıma = true
+önceki_görünüme_dön = true
+ortak_davranış_profili = "resize-temeli-v1"
 
 [kanıt]
 masaüstü = "uygulamalar/masaustu/src/masaustu.rs"

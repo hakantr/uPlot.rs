@@ -26,3 +26,27 @@ fn area_fill_kaynak_verisini_ve_dolgularını_korur() -> Result<(), UplotHatası
     assert!(svg.contains("fill=\"#0000ff1a\""));
     Ok(())
 }
+
+#[test]
+fn area_fill_ortak_yakinlastirma_ve_gecmis_davranislarini_devralir() -> Result<(), UplotHatası> {
+    let (seçenekler, veri) = area_fill_kartı()?;
+    let mut grafik = Grafik::yeni(seçenekler, veri)?;
+    let tam = grafik.görünür_x_aralığı();
+
+    assert!(grafik.seçim_yakınlaştır(0.2, 0.8)?);
+    assert!(grafik.yakınlaştırılmış());
+    assert!(grafik.geri_var());
+    assert!(grafik.önceki_görünüm());
+    assert_eq!(grafik.görünür_x_aralığı(), tam);
+
+    assert!(grafik.tekerlek(0.5, 0.5, 1.0, false)?);
+    assert!(grafik.yakınlaştırılmış());
+    assert!(grafik.tam_görünüm());
+    assert_eq!(grafik.görünür_x_aralığı(), tam);
+
+    assert!(grafik.dokunmayı_başlat());
+    assert!(grafik.dokunma_yakınlaştır(0.5, 0.5, 1.25)?);
+    grafik.dokunmayı_bitir();
+    assert!(grafik.yakınlaştırılmış());
+    Ok(())
+}

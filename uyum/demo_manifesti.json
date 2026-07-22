@@ -32,6 +32,7 @@
       "senaryo": "uyum/senaryolar/line-resize.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
+        "uygulama": "src/kart.rs#ortak_kart_etkileşimleri",
         "kararlar": {
           "kaynak-veri-esligi": "devralındı",
           "cekirdek-davranis-sahipligi": "devralındı",
@@ -112,6 +113,7 @@
       "senaryo": "uyum/senaryolar/area-fill.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
+        "uygulama": "src/kart/area_fill.rs#ortak_kart_etkileşimleri",
         "kararlar": {
           "kaynak-veri-esligi": "devralındı",
           "cekirdek-davranis-sahipligi": "devralındı",
@@ -124,21 +126,17 @@
           "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
           "secim-yakinlastirma": "kartta_etkin",
           "cift-tik-tam-gorunum": "kartta_etkin",
-          "tekerlek-yakinlastirma": "kartta_kapalı",
-          "uyarlanabilir-hassas-tekerlek": "uygulanamaz",
-          "dokunma-yakinlastirma-tasima": "kartta_kapalı",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
           "bosluk-sol-surukleme-tasima": "devralındı",
-          "gorunum-gecmisi": "kartta_kapalı",
+          "gorunum-gecmisi": "kartta_etkin",
           "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
           "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
           "paniksiz-hata-bildirimi": "devralındı"
         },
         "gerekçeler": {
-          "kosullu-bos-ve-dolu-noktalar": "Resmî area-fill kartı seri noktalarını varsayılan olarak çizmez.",
-          "tekerlek-yakinlastirma": "Resmî area-fill demosu wheelZoomPlugin kurmaz; yetenek çekirdekte kart seçeneği olarak mevcuttur.",
-          "uyarlanabilir-hassas-tekerlek": "Tekerlek etkileşimi bu kaynak kartta kapalı olduğu için normalizasyon çalıştırılmaz.",
-          "dokunma-yakinlastirma-tasima": "Resmî area-fill demosu zoom-touch eklentisini kurmaz; yetenek çekirdekte kart seçeneği olarak mevcuttur.",
-          "gorunum-gecmisi": "uPlot.rs uzantısı bu doğrudan kaynak kartında varsayılan olarak açılmamıştır."
+          "kosullu-bos-ve-dolu-noktalar": "Resmî area-fill kartı seri noktalarını varsayılan olarak çizmez."
         }
       },
       "sahip_faz": 1,
@@ -152,7 +150,12 @@
         "rgba-area-fill",
         "multi-series-cursor-legend",
         "x-drag-zoom",
-        "core-dblclick-full-range-reset"
+        "core-dblclick-full-range-reset",
+        "official-wheel-zoom-plugin",
+        "adaptive-precise-wheel-normalization",
+        "official-touch-xy-zoom-pan-plugin",
+        "space-left-drag-xy-pan-adaptation",
+        "uplot-rs-view-history-extension"
       ],
       "kanıt": {
         "api": "kısmi",

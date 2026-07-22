@@ -3,7 +3,7 @@
 #![allow(confusable_idents)]
 
 use uplot_rs::{
-    AREA_FILL_KART_TANIM_ÖRNEĞİ, Grafik, UplotHatası, area_fill_kartı, ilk_kart_etkileşimleri,
+    AREA_FILL_KART_TANIM_ÖRNEĞİ, Grafik, UplotHatası, area_fill_kartı, ortak_kart_etkileşimleri,
     sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
 };
 use wasm_bindgen::prelude::*;
@@ -160,28 +160,28 @@ pub fn area_fill_kart_tanim_ornegi() -> String {
 }
 
 #[wasm_bindgen]
-pub fn ilk_kart_tekerlek_etkilesimi() -> bool {
-    ilk_kart_etkileşimleri().tekerlek_etkileşimi
+pub fn ortak_kart_tekerlek_etkilesimi() -> bool {
+    ortak_kart_etkileşimleri().tekerlek_etkileşimi
 }
 
 #[wasm_bindgen]
-pub fn ilk_kart_secim_yakinlastir() -> bool {
-    ilk_kart_etkileşimleri().seçim_yakınlaştır
+pub fn ortak_kart_secim_yakinlastir() -> bool {
+    ortak_kart_etkileşimleri().seçim_yakınlaştır
 }
 
 #[wasm_bindgen]
-pub fn ilk_kart_cift_tikla_tam_gorunum() -> bool {
-    ilk_kart_etkileşimleri().çift_tıkla_tam_görünüm
+pub fn ortak_kart_cift_tikla_tam_gorunum() -> bool {
+    ortak_kart_etkileşimleri().çift_tıkla_tam_görünüm
 }
 
 #[wasm_bindgen]
-pub fn ilk_kart_gorunum_gecmisi() -> bool {
-    ilk_kart_etkileşimleri().görünüm_geçmişi
+pub fn ortak_kart_gorunum_gecmisi() -> bool {
+    ortak_kart_etkileşimleri().görünüm_geçmişi
 }
 
 #[wasm_bindgen]
-pub fn ilk_kart_dokunma_etkilesimi() -> bool {
-    ilk_kart_etkileşimleri().dokunma_etkileşimi
+pub fn ortak_kart_dokunma_etkilesimi() -> bool {
+    ortak_kart_etkileşimleri().dokunma_etkileşimi
 }
 
 #[wasm_bindgen]
@@ -209,7 +209,7 @@ mod testler {
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
         let yakın = oturum.svg(800, 400);
         assert!(yakın.contains("<circle"));
-        assert!(ilk_kart_dokunma_etkilesimi());
+        assert!(ortak_kart_dokunma_etkilesimi());
         assert!(oturum.dokunmayi_baslat());
         assert!(oturum.dokunma_yakinlastir(0.5, 0.5, 1.25).is_ok());
         oturum.dokunmayi_bitir();

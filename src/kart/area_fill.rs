@@ -1,9 +1,12 @@
+use super::ortak_kart_etkileşimleri;
 use super::veri_uretici::KanıtRastgele;
 use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
 
 pub const AREA_FILL_KANIT_TOHUMU: u32 = 0xC0DE_1234;
 
 pub const AREA_FILL_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = area_fill_kartı()?;
+// Seçim, çift tık, tekerlek, touch, taşıma ve görünüm geçmişi
+// ortak kart profiliyle çekirdekte hazır gelir.
 let grafik = Grafik::yeni(seçenekler, veri)?;"##;
 
 /// `demos/area-fill.html` içindeki `xs`, `vals`, üç seri, stroke ve %10
@@ -29,6 +32,7 @@ pub fn area_fill_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHata
     let seçenekler = GrafikSeçenekleri::yeni(1920, 600)?
         .başlık("Area Fill")
         .x_zaman(false)
+        .etkileşimler(ortak_kart_etkileşimleri())
         .seri(
             SeriSeçenekleri::yeni("1")
                 .renk("#ff0000")
@@ -61,6 +65,11 @@ mod testler {
         assert_eq!(veri.x().last().copied(), Some(30.0));
         assert_eq!(veri.seriler().len(), 3);
         assert!(veri.seriler().iter().all(|seri| seri.len() == 30));
+        assert!(seçenekler.etkileşimler.tekerlek_etkileşimi);
+        assert!(seçenekler.etkileşimler.seçim_yakınlaştır);
+        assert!(seçenekler.etkileşimler.çift_tıkla_tam_görünüm);
+        assert!(seçenekler.etkileşimler.görünüm_geçmişi);
+        assert!(seçenekler.etkileşimler.dokunma_etkileşimi);
 
         let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
         let alan_sayısı = sahne

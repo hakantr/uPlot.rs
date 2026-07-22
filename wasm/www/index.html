@@ -119,11 +119,11 @@
       KartOturumu,
       area_fill_kart_tanim_ornegi,
       ilk_kart_tanim_ornegi,
-      ilk_kart_tekerlek_etkilesimi,
-      ilk_kart_secim_yakinlastir,
-      ilk_kart_cift_tikla_tam_gorunum,
-      ilk_kart_gorunum_gecmisi,
-      ilk_kart_dokunma_etkilesimi,
+      ortak_kart_tekerlek_etkilesimi,
+      ortak_kart_secim_yakinlastir,
+      ortak_kart_cift_tikla_tam_gorunum,
+      ortak_kart_gorunum_gecmisi,
+      ortak_kart_dokunma_etkilesimi,
       kart_sayisi,
       kaynak_commit,
     } from "../pkg/uplot_rs_wasm.js";
@@ -153,26 +153,33 @@
         yardım: "Sürükle: seç · boşluk + sürükle: taşı · iki parmak: yakınlaştır · tek parmak: taşı · çift tıkla: tam görünüm",
         değişkenNokta: true,
         etkileşimler: () => ({
-          tekerlek: ilk_kart_tekerlek_etkilesimi(),
-          seçim: ilk_kart_secim_yakinlastir(),
-          çiftTık: ilk_kart_cift_tikla_tam_gorunum(),
-          geçmiş: ilk_kart_gorunum_gecmisi(),
-          dokunma: ilk_kart_dokunma_etkilesimi(),
+          tekerlek: ortak_kart_tekerlek_etkilesimi(),
+          seçim: ortak_kart_secim_yakinlastir(),
+          çiftTık: ortak_kart_cift_tikla_tam_gorunum(),
+          geçmiş: ortak_kart_gorunum_gecmisi(),
+          dokunma: ortak_kart_dokunma_etkilesimi(),
         }),
       },
       "area-fill": {
         başlık: "Area Fill",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/area-fill.html">area-fill.html</a>
-          <br>Kaynakla aynı 1…30 x dizisi, −10…10 değer havuzu ve üç örnekleme serisi · kanıtta ortak açık tohum`,
+          <br>Kaynakla aynı 1…30 x dizisi, −10…10 değer havuzu ve üç örnekleme serisi · kanıtta ortak açık tohum
+          <br>Ortak Resize profili: wheel/touch eklenti portları · uPlot.rs: hassas tekerlek, boşlukla taşıma ve görünüm geçmişi`,
         tanım: () => area_fill_kart_tanim_ornegi(),
         seriler: [
           { etiket: "1", renk: "#ff0000" },
           { etiket: "2", renk: "#008000" },
           { etiket: "3", renk: "#0000ff" },
         ],
-        yardım: "Sürükle: seç · çift tıkla: tam görünüm",
+        yardım: "Sürükle: seç · boşluk + sürükle: taşı · iki parmak: yakınlaştır · tek parmak: taşı · çift tıkla: tam görünüm",
         değişkenNokta: false,
-        etkileşimler: () => ({ tekerlek: false, seçim: true, çiftTık: true, geçmiş: false, dokunma: false }),
+        etkileşimler: () => ({
+          tekerlek: ortak_kart_tekerlek_etkilesimi(),
+          seçim: ortak_kart_secim_yakinlastir(),
+          çiftTık: ortak_kart_cift_tikla_tam_gorunum(),
+          geçmiş: ortak_kart_gorunum_gecmisi(),
+          dokunma: ortak_kart_dokunma_etkilesimi(),
+        }),
       },
     };
 
@@ -524,7 +531,7 @@
         noktaKontrolü.hidden = !kart.değişkenNokta;
         etkileşimler = kart.etkileşimler();
         tekerlekEtkileşimi.checked = etkileşimler.tekerlek;
-        tekerlekEtkileşimi.closest("label").hidden = kimlik !== "resize";
+        tekerlekEtkileşimi.closest("label").hidden = false;
         oturum = new KartOturumu(kimlik, Number(nokta.value));
         oturum.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
         çiz();

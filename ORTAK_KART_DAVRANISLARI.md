@@ -15,8 +15,10 @@ davranışlar için kararını kaydetmek zorundadır. Karar değerleri:
 
 Son iki karar açıklamalı bir gerekçe gerektirir. `npm --prefix tools/uyum run
 denetle`, eksik veya bilinmeyen davranışı, sözleşme sürümü uyuşmazlığını,
-gerekçesiz istisnayı ve kayıp kanıt dosyasını hata sayar. Bu komut CI'da her
-değişiklikte çalıştığı için sözleşme kaydı yapılmadan yeni kart eklenemez.
+gerekçesiz istisnayı, kayıp kanıt dosyasını ve kart kaynağında
+`ortak_kart_etkileşimleri` profilinin uygulanmamasını hata sayar. Bu komut
+CI'da her değişiklikte çalıştığı için sözleşme kaydı ve gerçek profil çağrısı
+yapılmadan yeni kart eklenemez.
 
 ## Davranış listesi
 

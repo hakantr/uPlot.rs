@@ -10,7 +10,7 @@ use ortak_bilesenler::{
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
     AREA_FILL_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik, UplotHatası, area_fill_kartı,
-    ilk_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
+    ortak_kart_etkileşimleri, sinüs_kartı, İLK_KART_TANIM_ÖRNEĞİ,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -30,7 +30,9 @@ impl KartKimliği {
     fn kaynak(self) -> &'static str {
         match self {
             Self::Resize => "resize.html + zoom-wheel.html + zoom-touch.html",
-            Self::AreaFill => "area-fill.html · kaynakla aynı veri üreteci",
+            Self::AreaFill => {
+                "area-fill.html · kaynakla aynı veri üreteci · ortak Resize etkileşim profili"
+            }
         }
     }
 
@@ -42,10 +44,7 @@ impl KartKimliği {
     }
 
     fn etkileşimler(self) -> EtkileşimSeçenekleri {
-        match self {
-            Self::Resize => ilk_kart_etkileşimleri(),
-            Self::AreaFill => EtkileşimSeçenekleri::default(),
-        }
+        ortak_kart_etkileşimleri()
     }
 }
 
@@ -61,7 +60,7 @@ pub struct ChartListesi {
 
 impl ChartListesi {
     pub fn yeni(cx: &mut Context<Self>) -> Self {
-        let etkileşimler = ilk_kart_etkileşimleri();
+        let etkileşimler = ortak_kart_etkileşimleri();
         let tekerlek_anahtarı = cx.new(|cx| {
             Anahtar::yeni(
                 "Tekerlek eklentisi · Otomatik",
@@ -133,7 +132,7 @@ impl ChartListesi {
         self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
         self.tekerlek_anahtarı.update(cx, |anahtar, cx| {
             anahtar.ayarla(etkileşimler.tekerlek_etkileşimi, cx);
-            anahtar.devre_disi_ayarla(kart != KartKimliği::Resize, cx);
+            anahtar.devre_disi_ayarla(false, cx);
         });
         self.grafiği_yenile(self.nokta_sayısı, cx);
     }
@@ -400,11 +399,7 @@ impl Render for ChartListesi {
             )
             .child(araçlar)
             .child(div().mb_2().text_xs().text_color(soluk).child(
-                if aktif_kart == KartKimliği::Resize {
-                    "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır"
-                } else {
-                    "Sürükle: seç · çift tıkla: tam görünüm"
-                },
+                "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır · çift tıkla: tam görünüm",
             ))
             .child(div().mb_2().text_xs().text_color(vurgu).child(lejant))
             .when_some(çizim_hatası, |öğe, hata| {

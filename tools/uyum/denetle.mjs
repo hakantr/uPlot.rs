@@ -121,6 +121,13 @@ for (const kart of manifest.kartlar) {
     hata(`${kart.id} ortak davranış sözleşmesi sürümü eksik veya güncel değil`);
     continue;
   }
+  const [profilDosyası, profilSembolü] =
+    kartSözleşmesi.uygulama?.split("#") ?? [];
+  if (!profilDosyası || profilSembolü !== "ortak_kart_etkileşimleri") {
+    hata(`${kart.id} ortak davranış profili uygulama kaydı eksik`);
+  } else if (!readFileSync(resolve(kok, profilDosyası), "utf8").includes(profilSembolü)) {
+    hata(`${kart.id} ortak davranış profili kart kaynağında uygulanmamış`);
+  }
   const kararlar = kartSözleşmesi.kararlar ?? {};
   const gerekçeler = kartSözleşmesi.gerekçeler ?? {};
   for (const davranışKimliği of davranışKimlikleri) {
