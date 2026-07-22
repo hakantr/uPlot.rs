@@ -110,7 +110,7 @@
       "id": "bosluk-sol-surukleme-tasima",
       "başlık": "Boşluk ve sol sürüklemeyle taşıma",
       "tür": "giris_uyarlaması",
-      "açıklama": "Yakınlaştırılmış masaüstü/web görünümü boşluk basılıyken sol sürüklemeyle X/Y yönünde taşınır; boşluğa basma ile grafik alanına girme sırası davranışı değiştirmez.",
+      "açıklama": "Yakınlaştırılmış masaüstü/web görünümü boşluk basılıyken sol sürüklemeyle X/Y yönünde taşınır; boşluğa basma ile grafik alanına girme sırası davranışı değiştirmez ve başarılı zoom grafik yüzeyini odaklar.",
       "kanıt_dosyaları": ["src/etkilesim.rs", "src/gpui.rs", "wasm/www/index.html"]
     },
     {

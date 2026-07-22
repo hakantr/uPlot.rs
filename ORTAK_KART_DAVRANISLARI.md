@@ -37,7 +37,8 @@ yapılmadan yeni kart eklenemez.
 13. Magic Mouse/trackpad piksel akışı ile klasik mouse tekerleği otomatik ve ayrı normalize edilir.
 14. Resmî touch eklentisi açıldığında iki parmakla yakınlaştırma ve tek parmakla taşıma çalışır.
 15. Yakın görünümde boşluk + sol sürükleme X/Y taşıma sağlar; boşluğa grafiğe
-    girmeden önce veya sonra basılması davranışı değiştirmez ve ayrıca açılması gerekmez.
+    girmeden önce veya sonra basılması davranışı değiştirmez, başarılı zoom
+    grafik yüzeyini otomatik odaklar ve ayrıca bir seçenek açılması gerekmez.
 16. İstenirse hareket bazlı görünüm geçmişi ve geri alma sağlanır.
 17. Kataloglar görünür `Geri` ve `Tam görünüm` kontrolleri sunar.
 18. Bilgi satırı başlık altında/çizim üstünde, Rust tanımı kart altında ve varsayılan kapalıdır.

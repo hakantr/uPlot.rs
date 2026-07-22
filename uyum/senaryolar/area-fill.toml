@@ -32,6 +32,7 @@ dokunma_xy_yakınlaştır = true
 dokunma_tek_parmak_taşıma = true
 masaüstü_boşluk_sol_sürükle_taşıma = true
 boşluk_ve_grafiğe_giriş_sırası_bağımsız = true
+zoom_sonrası_grafik_otomatik_odak = true
 önceki_görünüme_dön = true
 ortak_davranış_profili = "resize-temeli-v1"
 
