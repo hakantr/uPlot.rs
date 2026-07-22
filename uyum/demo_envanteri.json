@@ -3,9 +3,9 @@
   "kaynak_commit": "0e5812c504430f5c804e0f993376d8999b26cc34",
   "demo_sayısı": 73,
   "durum_özeti": {
-    "uygulandı_kanıtlı": 2,
-    "çekirdek_davranışı_port_edildi_kart_bekliyor": 2,
-    "bekliyor": 69
+    "uygulandı_kanıtlı": 20,
+    "çekirdek_davranışı_port_edildi_kart_bekliyor": 0,
+    "bekliyor": 53
   },
   "demolar": [
     {
@@ -18,7 +18,7 @@
       "veri_kaynakları": [],
       "sahip_faz": 5,
       "faz": "Çoklu grafik, senkronizasyon ve canlı veri",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 2,
@@ -54,7 +54,7 @@
       "veri_kaynakları": [],
       "sahip_faz": 2,
       "faz": "Ölçekler, eksenler ve zaman",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 5,
@@ -192,7 +192,7 @@
       "veri_kaynakları": [],
       "sahip_faz": 4,
       "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 15,
@@ -258,7 +258,7 @@
       "veri_kaynakları": [],
       "sahip_faz": 2,
       "faz": "Ölçekler, eksenler ve zaman",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 19,
@@ -412,7 +412,7 @@
       "veri_kaynakları": [],
       "sahip_faz": 1,
       "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 31,
@@ -436,7 +436,7 @@
       "veri_kaynakları": [],
       "sahip_faz": 2,
       "faz": "Ölçekler, eksenler ve zaman",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 33,
@@ -562,7 +562,7 @@
       "veri_kaynakları": [],
       "sahip_faz": 1,
       "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 42,
@@ -966,7 +966,7 @@
       "veri_kaynakları": [],
       "sahip_faz": 4,
       "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
-      "durum": "çekirdek_davranışı_port_edildi_kart_bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 72,
@@ -990,7 +990,7 @@
       "veri_kaynakları": [],
       "sahip_faz": 4,
       "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
-      "durum": "çekirdek_davranışı_port_edildi_kart_bekliyor"
+      "durum": "uygulandı_kanıtlı"
     }
   ]
 }

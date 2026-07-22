@@ -33,6 +33,11 @@ pub enum UplotHatası {
         beklenen: usize,
         bulunan: usize,
     },
+    GeçersizSeriİndeksi {
+        indeks: usize,
+        seri_sayısı: usize,
+        ekleme: bool,
+    },
     BilinmeyenKart {
         kimlik: String,
     },
@@ -96,6 +101,15 @@ impl Display for UplotHatası {
             Self::SeriSeçeneğiEksik { beklenen, bulunan } => write!(
                 f,
                 "veri için {beklenen} seri seçeneği gerekir; bulunan: {bulunan}"
+            ),
+            Self::GeçersizSeriİndeksi {
+                indeks,
+                seri_sayısı,
+                ekleme,
+            } => write!(
+                f,
+                "{} için geçersiz Y-serisi indeksi: {indeks}; seri sayısı: {seri_sayısı}",
+                if *ekleme { "seri ekleme" } else { "seri silme" }
             ),
             Self::BilinmeyenKart { kimlik } => write!(f, "bilinmeyen kart kimliği: {kimlik}"),
             Self::GeçersizTarih { yıl, ay, gün } => {

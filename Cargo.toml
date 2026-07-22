@@ -52,6 +52,10 @@ name = "resize"
 required-features = ["svg"]
 
 [[example]]
+name = "add_del_series"
+required-features = ["svg"]
+
+[[example]]
 name = "area_fill"
 required-features = ["svg"]
 

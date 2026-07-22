@@ -202,6 +202,10 @@
             <input id="autosize-kuvvet" type="range" min="0" max="9" step="1" value="0">
             <output id="autosize-degeri">1</output>
           </label>
+          <span id="dinamik-seri-kontrolleri" hidden>
+            <button id="dinamik-seri-ekle" type="button">Seri ekle</button>
+            <button id="dinamik-seri-sil" type="button">Seri sil</button>
+          </span>
         </div>
       </header>
       <section id="chart" tabindex="0" aria-label="Etkileşimli grafik" aria-live="polite"><span>WASM yükleniyor…</span></section>
@@ -227,6 +231,7 @@
   <script type="module">
     import init, {
       KartOturumu,
+      add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
       scale_padding_kart_tanim_ornegi,
@@ -274,6 +279,9 @@
     const autosizeDeğeri = document.getElementById("autosize-degeri");
     const açıklamaDiyaloğu = document.getElementById("açıklama-diyaloğu");
     const açıklamaMetni = document.getElementById("açıklama-metni");
+    const dinamikSeriKontrolleri = document.getElementById("dinamik-seri-kontrolleri");
+    const dinamikSeriEkle = document.getElementById("dinamik-seri-ekle");
+    const dinamikSeriSil = document.getElementById("dinamik-seri-sil");
 
     const kartlar = {
       resize: {
@@ -619,6 +627,28 @@
       değişkenNokta: false,
       etkileşimler: () => ({ ...ortakEtkileşimler(), ctrlAçıklama: true }),
     };
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="add-del-series" aria-current="false" tabindex="0">
+        <strong>Add/Delete Series</strong><small>add-del-series</small>
+        <div class="durum">Dinamik addSeries / delSeries / setData</div>
+      </article>`);
+    kartlar["add-del-series"] = {
+      başlık: "Add/Delete Series",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/add-del-series.html">add-del-series.html</a>
+        <br>Grafik başlığı kaynakla aynı “Area Fill”; 1…30 X değerleri ve −10…10 havuzundan üç başlangıç serisi sabit kanıt tohumu ile üretilir.
+        <br>Seri ekle/sil, resmî sidx=2 konumunu Rust Y-serisi indeksi 1 olarak atomik ve paniksiz uygular; ölçekler setData gibi yeniden hesaplanır.`,
+      tanım: () => add_del_series_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/add_del_series.rs",
+      seriler: [
+        { etiket: "Red", renk: "#ff0000" },
+        { etiket: "Green", renk: "#008000" },
+        { etiket: "Blue", renk: "#0000ff" },
+      ],
+      yardım: "Seri ekle: turuncu seriyi kaynak indeksi 2'ye ekle · Seri sil: aynı indeksi kaldır",
+      değişkenNokta: false,
+      dinamikSeri: true,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     function ortakEtkileşimler() {
       return {
@@ -659,6 +689,7 @@
     function kontrolleriGüncelle() {
       görünümGeri.disabled = !etkileşimler.geçmiş || !oturum?.geri_var();
       tamGörünüm.disabled = !etkileşimler.çiftTık || !oturum?.yakinlastirilmis();
+      dinamikSeriSil.disabled = !oturum || oturum.seri_sayisi() < 2;
     }
 
     function boyutlar() {
@@ -684,6 +715,14 @@
       if (!svg) return;
       svg.dataset.etkileşim = "hover-x-zoom";
       const kart = kartlar[aktifKart];
+      if (kart.dinamikSeri) {
+        const etiketler = oturum.seri_etiketleri();
+        const renkler = oturum.seri_renkleri();
+        kart.seriler = etiketler.map((etiket, indeks) => ({
+          etiket,
+          renk: renkler[indeks] ?? "#000000",
+        }));
+      }
       const imleçNoktaları = kart.seriler.map((seri, indeks) =>
         `<circle id="imleç-nokta-${indeks}" visibility="hidden" r="2.5" fill="${seri.renk}"/>`
       ).join("");
@@ -1085,6 +1124,24 @@
       etkileşimler.tekerlek = tekerlekEtkileşimi.checked;
       oturum?.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
     });
+    dinamikSeriEkle.addEventListener("click", () => {
+      if (aktifKart !== "add-del-series" || !oturum) return;
+      try {
+        if (oturum.add_del_seri_ekle()) çiz();
+        hata.textContent = "";
+      } catch (neden) {
+        hata.textContent = `Seri eklenemedi: ${String(neden)}`;
+      }
+    });
+    dinamikSeriSil.addEventListener("click", () => {
+      if (aktifKart !== "add-del-series" || !oturum) return;
+      try {
+        if (oturum.add_del_seri_sil()) çiz();
+        hata.textContent = "";
+      } catch (neden) {
+        hata.textContent = `Seri silinemedi: ${String(neden)}`;
+      }
+    });
 
     try {
       await init();
@@ -1105,6 +1162,7 @@
         noktaKontrolü.hidden = !kart.değişkenNokta;
         arcsinhKontrolü.hidden = kimlik !== "arcsinh-scales";
         autosizeKontrolü.hidden = kimlik !== "axis-autosize";
+        dinamikSeriKontrolleri.hidden = kimlik !== "add-del-series";
         arcsinhEşiği.value = "0";
         arcsinhDeğeri.value = "1";
         autosizeKuvvet.value = "0";

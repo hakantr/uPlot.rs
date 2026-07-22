@@ -9,25 +9,26 @@ use ortak_bilesenler::{
 };
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
-    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
-    BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ,
-    CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
-    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
+    ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
+    AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ, AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
+    AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ,
+    BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ, BOX_WHISKER_BENCHMARKLERİ,
+    BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
+    CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, Grafik,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
-    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum KartKimliği {
+    AddDelSeries,
     Resize,
     AreaFill,
     ScalePadding,
@@ -53,6 +54,7 @@ enum KartKimliği {
 impl KartKimliği {
     fn başlık(self) -> &'static str {
         match self {
+            Self::AddDelSeries => "Add/Delete Series",
             Self::Resize => "Resize · sayısal x ölçeği",
             Self::AreaFill => "Area Fill",
             Self::ScalePadding => "Scale Padding · Flat",
@@ -79,6 +81,9 @@ impl KartKimliği {
 
     fn kaynak(self) -> &'static str {
         match self {
+            Self::AddDelSeries => {
+                "add-del-series.html · addSeries/delSeries/setData · kaynak Y indeksi 1"
+            }
             Self::Resize => "resize.html + zoom-wheel.html + zoom-touch.html",
             Self::AreaFill => {
                 "area-fill.html · kaynakla aynı veri üreteci · ortak Resize etkileşim profili"
@@ -116,6 +121,7 @@ impl KartKimliği {
 
     fn tanım(self) -> &'static str {
         match self {
+            Self::AddDelSeries => ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ,
             Self::Resize => RESIZE_KART_TANIM_ÖRNEĞİ,
             Self::AreaFill => AREA_FILL_KART_TANIM_ÖRNEĞİ,
             Self::ScalePadding => SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
@@ -139,6 +145,7 @@ impl KartKimliği {
 
     fn tanım_yolu(self) -> &'static str {
         match self {
+            Self::AddDelSeries => "src/kart/add_del_series.rs",
             Self::Resize => "src/kart/resize.rs",
             Self::AreaFill => "src/kart/area_fill.rs",
             Self::ScalePadding => "src/kart/scale_padding.rs",
@@ -184,6 +191,7 @@ pub struct ChartListesi {
     arcsinh_kuvvet: i32,
     autosize_kuvvet: i32,
     açıklama_istendi: bool,
+    dinamik_seri_sayacı: u32,
 }
 
 impl ChartListesi {
@@ -232,6 +240,7 @@ impl ChartListesi {
             arcsinh_kuvvet: 0,
             autosize_kuvvet: 0,
             açıklama_istendi: false,
+            dinamik_seri_sayacı: 0,
         }
     }
 
@@ -272,6 +281,7 @@ impl ChartListesi {
         self.arcsinh_kuvvet = 0;
         self.autosize_kuvvet = 0;
         self.açıklama_istendi = false;
+        self.dinamik_seri_sayacı = 0;
         let etkileşimler = kart.etkileşimler();
         self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
         self.tekerlek_anahtarı.update(cx, |anahtar, cx| {
@@ -298,6 +308,46 @@ impl ChartListesi {
         self.autosize_kuvvet = kuvvet.clamp(0, 9);
         self.grafiği_yenile(self.nokta_sayısı, cx);
     }
+
+    fn dinamik_seri_ekle(&mut self, cx: &mut Context<Self>) {
+        let Some(grafik) = &self.grafik else {
+            self.hata = Some("Dinamik seri eklemek için grafik bulunamadı".to_string());
+            cx.notify();
+            return;
+        };
+        let değerler = add_del_series_ek_verisi(self.dinamik_seri_sayacı);
+        let sonuç = grafik.update(cx, |grafik, cx| {
+            grafik.seri_ekle(
+                1,
+                SeriSeçenekleri::yeni("Orange")
+                    .renk("#ffa500")
+                    .dolgu("#ffa5001a"),
+                değerler,
+                cx,
+            )
+        });
+        match sonuç {
+            Ok(()) => {
+                self.dinamik_seri_sayacı = self.dinamik_seri_sayacı.wrapping_add(1);
+                self.hata = None;
+            }
+            Err(hata) => self.hata = Some(format!("Seri eklenemedi: {hata}")),
+        }
+        cx.notify();
+    }
+
+    fn dinamik_seri_sil(&mut self, cx: &mut Context<Self>) {
+        let Some(grafik) = &self.grafik else {
+            self.hata = Some("Dinamik seri silmek için grafik bulunamadı".to_string());
+            cx.notify();
+            return;
+        };
+        match grafik.update(cx, |grafik, cx| grafik.seri_sil(1, cx)) {
+            Ok(()) => self.hata = None,
+            Err(hata) => self.hata = Some(format!("Seri silinemedi: {hata}")),
+        }
+        cx.notify();
+    }
 }
 
 fn grafik_oluştur(
@@ -306,6 +356,7 @@ fn grafik_oluştur(
     autosize_kuvvet: i32,
 ) -> Result<Grafik, UplotHatası> {
     let (seçenekler, veri) = match kart {
+        KartKimliği::AddDelSeries => add_del_series_kartı(),
         KartKimliği::Resize => resize_kartı(nokta_sayısı),
         KartKimliği::AreaFill => area_fill_kartı(),
         KartKimliği::ScalePadding => scale_padding_kartı(),
@@ -338,7 +389,13 @@ impl Render for ChartListesi {
         let soluk = rgb(0x6b7280);
         let vurgu = rgb(0xdc2626);
         let aktif_kart = self.aktif_kart;
+        let mevcut_seri_sayısı = self.grafik.as_ref().map_or(0, |grafik| {
+            grafik.read(cx).grafik().seri_seçenekleri().len()
+        });
         let nokta_yazısı = SharedString::from(match aktif_kart {
+            KartKimliği::AddDelSeries => {
+                format!("30 nokta × {mevcut_seri_sayısı} dinamik seri")
+            }
             KartKimliği::Resize => format!("{} nokta", self.nokta_sayısı),
             KartKimliği::AreaFill => "30 sabit nokta × 3 seri".to_string(),
             KartKimliği::ScalePadding => "10 nokta × 13 düz seri".to_string(),
@@ -391,31 +448,15 @@ impl Render for ChartListesi {
                 },
             );
         let çizim_hatası = self.hata.clone().or(bileşen_hatası);
-        let seri_adları: &[&str] = match aktif_kart {
-            KartKimliği::Resize => &["sin(x)"],
-            KartKimliği::AreaFill => &["1", "2", "3"],
-            KartKimliği::ScalePadding => &[
-                "-10500", "-10000", "-9500", "-0.105", "-0.1", "-0.095", "0", "0.095", "0.1",
-                "0.105", "9500", "10000", "10500",
-            ],
-            KartKimliği::ZoomWheel => &["One", "Two"],
-            KartKimliği::ZoomTouch => &["One", "Two"],
-            KartKimliği::MonthsNoLeap | KartKimliği::MonthsLeap => &["Value"],
-            KartKimliği::CursorBind => &["Red", "Green", "Blue"],
-            KartKimliği::CursorSnap => &["1", "2", "3"],
-            KartKimliği::MissingDataNull => &["CPU", "RAM", "TCP Out"],
-            KartKimliği::MissingDataXGap => &["Value"],
-            KartKimliği::DependentScale => &["blah"],
-            KartKimliği::ArcSinhScales => &["Value"],
-            KartKimliği::AxisControl => &["sin(x)"],
-            KartKimliği::AxisAutosize => &["sin(x)"],
-            KartKimliği::AxisIndicators => &["1", "2", "3"],
-            KartKimliği::Bars(örnek) if örnek.seri_sayısı() == 1 => &["Metric 1"],
-            KartKimliği::Bars(_) => &["Metric 1", "Metric 2", "Metric 3"],
-            KartKimliği::BarsValuesAutosize(_) => &["Value"],
-            KartKimliği::BoxWhisker(_) => &["Median", "q1", "q3", "min", "max"],
-            KartKimliği::Candlestick => &["Open", "High", "Low", "Close", "Volume"],
-        };
+        let seri_adları = self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
+            grafik
+                .read(cx)
+                .grafik()
+                .seri_seçenekleri()
+                .iter()
+                .map(|seri| seri.etiket.clone())
+                .collect::<Vec<_>>()
+        });
         let lejant = lejant.map_or_else(
             || {
                 let seriler = seri_adları
@@ -463,6 +504,20 @@ impl Render for ChartListesi {
                     .text_sm()
                     .text_color(soluk)
                     .child("Canlı masaüstü doğrulaması"),
+            )
+            .child(
+                katalog_kartı(
+                    "add-del-series",
+                    "Add/Delete Series",
+                    "add-del-series",
+                    aktif_kart == KartKimliği::AddDelSeries,
+                    "Dinamik addSeries / delSeries / setData",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::AddDelSeries, cx);
+                })),
             )
             .child(
                 div()
@@ -881,6 +936,22 @@ impl Render for ChartListesi {
                     .child(nokta_yazısı),
             )
             .child(tekerlek_anahtarı)
+            .when(aktif_kart == KartKimliği::AddDelSeries, |öğe| {
+                öğe
+                    .child(
+                        Dugme::yeni("dinamik-seri-ekle", "Seri ekle")
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Ikincil)
+                            .tiklaninca(cx.listener(|bu, _, _, cx| bu.dinamik_seri_ekle(cx))),
+                    )
+                    .child(
+                        Dugme::yeni("dinamik-seri-sil", "Seri sil")
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Ikincil)
+                            .devre_disi(mevcut_seri_sayısı < 2)
+                            .tiklaninca(cx.listener(|bu, _, _, cx| bu.dinamik_seri_sil(cx))),
+                    )
+            })
             .when(aktif_kart == KartKimliği::ArcSinhScales, |öğe| {
                 öğe
                     .child(
@@ -997,10 +1068,16 @@ impl Render for ChartListesi {
             .overflow_hidden()
             .when_some(self.grafik.clone(), |öğe, grafik| öğe.child(grafik));
 
-        let yardım = if aktif_kart == KartKimliği::CursorBind {
-            "Sürükle: yakınlaştır · Ctrl+sürükle: sarı açıklama seçimi · açıklama seçimi zoom yapmaz"
-        } else {
-            "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır · çift tıkla: tam görünüm"
+        let yardım = match aktif_kart {
+            KartKimliği::AddDelSeries => {
+                "Seri ekle: turuncu seriyi kaynak indeksi 2'ye ekle · Seri sil: aynı indeksi kaldır"
+            }
+            KartKimliği::CursorBind => {
+                "Sürükle: yakınlaştır · Ctrl+sürükle: sarı açıklama seçimi · açıklama seçimi zoom yapmaz"
+            }
+            _ => {
+                "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır · çift tıkla: tam görünüm"
+            }
         };
         let açıklama_istendi = self.açıklama_istendi;
         let ayrıntı = div()

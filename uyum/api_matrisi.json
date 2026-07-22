@@ -74,6 +74,24 @@
       "rust_karşılığı": "Grafik::çiz",
       "durum": "uygulandı_kanıt_bekliyor",
       "test": "tests/resize.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.addSeries",
+      "rust_karşılığı": "Grafik::seri_ekle",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/add_del_series.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.delSeries",
+      "rust_karşılığı": "Grafik::seri_sil",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/add_del_series.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.setData",
+      "rust_karşılığı": "Grafik::veriyi_ayarla",
+      "durum": "kısmi",
+      "test": "src/kart/add_del_series.rs"
     }
   ]
 }

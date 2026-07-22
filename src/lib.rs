@@ -25,6 +25,7 @@ pub use cizim::{Komut, MetinHizası, Nokta, Sahne};
 pub use grafik::{Grafik, SeçimEylemi};
 pub use hata::UplotHatası;
 pub use kart::{
+    ADD_DEL_SERIES_KANIT_TOHUMU, ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ,
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ,
     AXIS_AUTOSIZE_KANIT_TOHUMU, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ, AXIS_CONTROL_KANIT_TOHUMU,
     AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KANIT_TOHUMU,
@@ -35,13 +36,13 @@ pub use kart::{
     CURSOR_SNAP_KANIT_TOHUMU, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KANIT_TOHUMU, MONTHS_KART_TANIM_ÖRNEĞİ,
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, dependent_scale_kartı, missing_data_null_kartı,
-    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukÖrneği,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    dependent_scale_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
 };
 pub use olcek::Aralık;
 pub use secenek::{

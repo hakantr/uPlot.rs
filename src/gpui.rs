@@ -11,7 +11,9 @@ use ::gpui::{
     size,
 };
 
-use crate::{Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne, SeçimEylemi};
+use crate::{
+    Aralık, Grafik, Komut, MetinHizası, Nokta, Sahne, SeriSeçenekleri, SeçimEylemi, UplotHatası,
+};
 
 #[derive(Clone)]
 struct İmleçDurumu {
@@ -95,6 +97,30 @@ impl GpuiGrafik {
         self.boşluk_basılı = false;
         self.hata = None;
         Self::bildir(cx);
+    }
+
+    pub fn seri_ekle(
+        &mut self,
+        indeks: usize,
+        seçenek: SeriSeçenekleri,
+        değerler: Vec<Option<f64>>,
+        cx: &mut Context<Self>,
+    ) -> Result<(), UplotHatası> {
+        self.grafik.seri_ekle(indeks, seçenek, değerler)?;
+        self.imleç = None;
+        self.seçim = None;
+        self.açıklama_seçimi = false;
+        Self::bildir(cx);
+        Ok(())
+    }
+
+    pub fn seri_sil(&mut self, indeks: usize, cx: &mut Context<Self>) -> Result<(), UplotHatası> {
+        self.grafik.seri_sil(indeks)?;
+        self.imleç = None;
+        self.seçim = None;
+        self.açıklama_seçimi = false;
+        Self::bildir(cx);
+        Ok(())
     }
 
     pub fn tekerlek_etkileşimi_ayarla(&mut self, etkin: bool, cx: &mut Context<Self>) {

@@ -1,3 +1,4 @@
+mod add_del_series;
 mod arcsinh_scales;
 mod area_fill;
 mod axis_autosize;
@@ -19,6 +20,10 @@ mod veri_uretici;
 mod zoom_touch;
 mod zoom_wheel;
 
+pub use add_del_series::{
+    ADD_DEL_SERIES_KANIT_TOHUMU, ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı,
+};
 pub use arcsinh_scales::{ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı};
 pub use area_fill::{AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ, area_fill_kartı};
 pub use axis_autosize::{

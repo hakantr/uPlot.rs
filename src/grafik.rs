@@ -108,6 +108,65 @@ impl Grafik {
         (self.seçenekler.genişlik, self.seçenekler.yükseklik)
     }
 
+    /// uPlot `setData(data)` karşılığı olarak hizalı veriyi doğrular, uygular
+    /// ve otomatik ölçeklerle etkileşim görünümünü tam aralığa sıfırlar.
+    pub fn veriyi_ayarla(&mut self, veri: HizalıVeri) -> Result<(), UplotHatası> {
+        let mut seçenekler = self.seçenekler.clone();
+        seçenekler.etkileşimler = self.etkileşim.ayarlar();
+        let yeni = Self::yeni(seçenekler, veri)?;
+        *self = yeni;
+        Ok(())
+    }
+
+    /// Y-serisi seçeneğini ve hizalı değerlerini tek, doğrulanmış işlemle ekler.
+    /// İndeks yalnız Y serilerini sayar; uPlot'un X dahil `seriesIdx = 2`
+    /// değeri burada `indeks = 1` olur.
+    pub fn seri_ekle(
+        &mut self,
+        indeks: usize,
+        seçenek: crate::SeriSeçenekleri,
+        değerler: Vec<Option<f64>>,
+    ) -> Result<(), UplotHatası> {
+        let seri_sayısı = self.veri.seriler().len();
+        if indeks > seri_sayısı {
+            return Err(UplotHatası::GeçersizSeriİndeksi {
+                indeks,
+                seri_sayısı,
+                ekleme: true,
+            });
+        }
+        let mut seriler = self.veri.seriler().to_vec();
+        seriler.insert(indeks, değerler);
+        let veri = HizalıVeri::yeni(self.veri.x().to_vec(), seriler)?;
+        let mut seçenekler = self.seçenekler.clone();
+        seçenekler.etkileşimler = self.etkileşim.ayarlar();
+        seçenekler.seriler.insert(indeks, seçenek);
+        let yeni = Self::yeni(seçenekler, veri)?;
+        *self = yeni;
+        Ok(())
+    }
+
+    /// Y-serisi seçeneğini ve hizalı değerlerini aynı anda siler.
+    pub fn seri_sil(&mut self, indeks: usize) -> Result<(), UplotHatası> {
+        let seri_sayısı = self.veri.seriler().len();
+        if indeks >= seri_sayısı {
+            return Err(UplotHatası::GeçersizSeriİndeksi {
+                indeks,
+                seri_sayısı,
+                ekleme: false,
+            });
+        }
+        let mut seriler = self.veri.seriler().to_vec();
+        seriler.remove(indeks);
+        let veri = HizalıVeri::yeni(self.veri.x().to_vec(), seriler)?;
+        let mut seçenekler = self.seçenekler.clone();
+        seçenekler.etkileşimler = self.etkileşim.ayarlar();
+        seçenekler.seriler.remove(indeks);
+        let yeni = Self::yeni(seçenekler, veri)?;
+        *self = yeni;
+        Ok(())
+    }
+
     /// Başlık ve eksen payları çıkarıldıktan sonraki gerçek çizim alanını
     /// `(sol, sağ, üst, alt)` olarak döndürür. Yüzey adaptörleri sabit sayı
     /// çoğaltmak yerine bu çekirdek geometrisini kullanır.
