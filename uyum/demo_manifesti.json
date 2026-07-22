@@ -38,6 +38,7 @@
         "auto-y-scale",
         "visible-range-aligned-numeric-axis-splits",
         "linear-path",
+        "plot-rectangle-series-clipping",
         "svg-surface",
         "conditional-hollow-points",
         "cursor-hover",

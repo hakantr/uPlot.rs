@@ -47,6 +47,7 @@ Aşağıdakiler uPlot.rs'e özgü özellik olarak değerlendirilmez:
 - fareyi kesintisiz izleyen cursor çizgileri ve canlı lejant;
 - görünür aralık ve piksel yoğunluğundan uygun sayısal artımı seçen, artım
   katlarına hizalı dinamik eksen bölmeleri;
+- seri çizgisinin eksenler arasında kalan çizim dikdörtgeninde kırpılması;
 - X ekseninde sürükleyerek seçim/yakınlaştırma;
 - çift tıklamayla tam X aralığına dönme;
 - resmî `wheelZoomPlugin`in `0.75` temel katsayısı, fare odağı ve aralık sınırı.
@@ -104,7 +105,8 @@ official plugin; cursor anchoring and full-range clamping remain ported
 behavior.
 
 Conditional hollow points, filled hover markers, continuous cursor lines,
-live legends, visible-range-aligned numeric axis splits, drag selection, double-click reset, and the official wheel
+live legends, visible-range-aligned numeric axis splits, series clipping at the
+plot rectangle, drag selection, double-click reset, and the official wheel
 plugin's base mathematics are direct ports and are not claimed as uPlot.rs
 extensions. The same applies to the X/Y scale mathematics ported from the
 official `zoom-touch` demo; only the Space + left-drag desktop binding is an

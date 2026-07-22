@@ -27,6 +27,7 @@ canlı_lejant = true
 sayısal_eksen_artım_ailesi = "1_2_2.5_5_x_10n"
 eksen_bölmeleri_görünür_aralığa_hizalı = true
 sıfır_bölmesi_korunur = true
+seri_yolu_çizim_dikdörtgenine_kırpılır = true
 x_sürükle_yakınlaştır = true
 çift_tıkla_sıfırla = true
 çift_tıkla_tam_görünüm_kaynağı = "src/uPlot.js#dblClick"
