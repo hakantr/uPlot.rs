@@ -23,7 +23,7 @@ mod zaman;
 pub mod svg;
 
 pub use cizim::{DoğrusalGradyan, GradyanRenkDurağı, Komut, MetinHizası, Nokta, Sahne};
-pub use grafik::{DağılımVuruşu, Grafik, SeçimEylemi};
+pub use grafik::{DağılımVuruşu, Grafik, SeçimEylemi, TimelineVuruşu};
 pub use hata::UplotHatası;
 #[cfg(feature = "svg")]
 pub use kart::svg_image_belgesi;
@@ -61,8 +61,10 @@ pub use kart::{
     ScatterÖrneği, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği,
     SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı,
     StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği, SyncYZeroAşaması,
-    THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ, ThinBarsYoğunluk,
-    ThinBarsÖrneği, TimePeriodsÖrneği, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+    THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
+    TIMELINE_DISCRETE_KANIT_TOHUMU, TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,
+    TIMELINE_DISCRETE_ZAMAN_ÇAPASI, ThinBarsYoğunluk, ThinBarsÖrneği, TimePeriodsÖrneği,
+    TimelineDiscreteÖrneği, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
     add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
     align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, asap_yumuşat,
     axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
@@ -78,7 +80,7 @@ pub use kart::{
     soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
     stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
     sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
-    zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
+    timeline_discrete_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
 };
 pub use olcek::{Aralık, SayısalAralıkAyarları, SayısalAralıkParçası, YumuşakSınırKipi};
 pub use secenek::{
@@ -86,9 +88,9 @@ pub use secenek::{
     GradyanEkseni, GradyanKonumu, GrafikSeçenekleri, GüzelÖlçekDüzeni, IsıHaritasıDüzeni,
     IsıHücresi, IsıHücresiBoyutu, KutuBıyıkDüzeni, MumDüzeni, NoktaFiltreKipi, NoktaKatmanı,
     NoktaŞekli, OdakDüzeni, OdakStili, SeriBandı, SeriSeçenekleri, SeriÇizimTürü, TarihAdları,
-    TekerlekAyarları, TekerlekKipi, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi,
-    YÖlçekSeçenekleri, ÇizimKancasıDüzeni, ÇizimSırası, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı,
-    İkincilXEksen,
+    TekerlekAyarları, TekerlekKipi, TimelineDüzeni, TimelineHücresi, XÖlçekDağılımı,
+    YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri, ÇizimKancasıDüzeni, ÇizimSırası,
+    ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı, İkincilXEksen,
 };
 pub use veri::{BoşlukKipi, HizalıDeğer, HizalıVeri, hizalı_verileri_birleştir};
 pub use yuzey::YüzeyDikdörtgeni;

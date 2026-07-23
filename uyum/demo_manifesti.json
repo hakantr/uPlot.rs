@@ -2878,6 +2878,56 @@
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
         "performans": "kısmi"
       }
+    },
+    {
+      "sıra": 54,
+      "id": "timeline-discrete",
+      "başlık": { "en": "Timeline / Discrete", "tr": "Zaman Şeritleri / Ayrık Durumlar" },
+      "kaynak": "demos/timeline-discrete.html",
+      "kaynak_sha256": "8a88e0b1b8e40c91c0dcd2d3a210bdd326df0f5e4e3adbbcb54098c488d73bef",
+      "ek_kaynaklar": [
+        { "yol": "demos/lib/distr.js", "sha256": "5db925d392e7d429688133eadb4a2ee908e38362be0709e200a29c0067120736" },
+        { "yol": "demos/lib/quadtree.js", "sha256": "b538fad72f5c4687c536992f2ce55ecb990c32ac0c784bafceddb57c39fc0670" },
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
+      ],
+      "fixture": "src/kart/timeline_discrete.rs#timeline_discrete_kartı",
+      "örnek": "examples/timeline_discrete.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/timeline-discrete.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/timeline_discrete.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin", "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin", "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "kartta_etkin", "dinamik-eksen-izgara": "kartta_etkin",
+          "surekli-imlec-izleme": "kartta_etkin", "canli-coklu-seri-lejanti": "kartta_etkin",
+          "kosullu-bos-ve-dolu-noktalar": "uygulanamaz", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "kartta_etkin", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {
+          "kosullu-bos-ve-dolu-noktalar": "Resmî timeline eklentisi nokta katmanı yerine durum kutuları çizer."
+        }
+      },
+      "sahip_faz": 3,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-four-surfaces", "deterministic-time-anchor-and-generator",
+        "space-between-three-lane-layout", "semantic-span-width", "periodic-cell-width",
+        "null-undefined-semantics", "consecutive-state-merge", "per-state-fill-and-stroke",
+        "whole-cell-cursor-highlight", "source-axis-and-grid-modes", "gpui-wasm-parity",
+        "common-interaction-profile", "panic-free-timeline-geometry"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
+        "performans": "kısmi"
+      }
     }
   ]
 }

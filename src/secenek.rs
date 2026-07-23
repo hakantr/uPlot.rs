@@ -4,6 +4,7 @@ mod dagilim;
 mod gradyan;
 mod isi_haritasi;
 mod seri;
+mod timeline;
 mod y_olcek;
 mod zaman;
 
@@ -11,6 +12,7 @@ pub use dagilim::{DağılımDüzeni, DağılımNoktası, DağılımSerisi};
 pub use gradyan::{GradyanDurağı, GradyanEkseni, GradyanKonumu, ÖlçekGradyanı};
 pub use isi_haritasi::{IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu};
 pub use seri::{NoktaFiltreKipi, NoktaŞekli, SeriSeçenekleri, SeriÇizimTürü};
+pub use timeline::{TimelineDüzeni, TimelineHücresi};
 pub use y_olcek::{
     GüzelÖlçekDüzeni, YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri
 };
@@ -540,6 +542,7 @@ pub struct GrafikSeçenekleri {
     pub kutu_bıyık_düzeni: Option<KutuBıyıkDüzeni>,
     pub mum_düzeni: Option<MumDüzeni>,
     pub ısı_haritası_düzeni: Option<IsıHaritasıDüzeni>,
+    pub timeline_düzeni: Option<TimelineDüzeni>,
     pub dağılım_düzeni: Option<DağılımDüzeni>,
     pub bantlar: Vec<SeriBandı>,
     pub nokta_katmanları: Vec<NoktaKatmanı>,
@@ -607,6 +610,7 @@ impl GrafikSeçenekleri {
             kutu_bıyık_düzeni: None,
             mum_düzeni: None,
             ısı_haritası_düzeni: None,
+            timeline_düzeni: None,
             dağılım_düzeni: None,
             bantlar: Vec::new(),
             nokta_katmanları: Vec::new(),
@@ -894,6 +898,11 @@ impl GrafikSeçenekleri {
 
     pub fn ısı_haritası_düzeni(mut self, düzen: IsıHaritasıDüzeni) -> Self {
         self.ısı_haritası_düzeni = Some(düzen);
+        self
+    }
+
+    pub fn timeline_düzeni(mut self, düzen: TimelineDüzeni) -> Self {
+        self.timeline_düzeni = Some(düzen);
         self
     }
 

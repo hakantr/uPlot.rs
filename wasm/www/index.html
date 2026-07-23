@@ -340,6 +340,7 @@
       sync_y_zero_kart_tanim_ornegi,
       thin_bars_stroke_fill_kart_tanim_ornegi,
       time_periods_kart_tanim_ornegi,
+      timeline_discrete_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1335,6 +1336,43 @@
               { etiket: "2017", renk: "rgba(255, 0, 0, 1)" },
             ],
         yardım: "Kaynak trafik dönemi · sürükle: seç · tekerlek: yakınlaştır · boşluk+sürükle: taşı",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+
+    const timelineYüzeyleri = [
+      ["timeline-discrete-state-timeline", "State timeline, duty cycles & transitions (semantic x width)", "3 şerit · semantic süre"],
+      ["timeline-discrete-periodic-history", "Status history, periodic samples - (non-semantic x width)", "30 saat · periyodik hücre"],
+      ["timeline-discrete-repeating-states", "Repeating consecutive states", "28 x · null/undefined"],
+      ["timeline-discrete-merged-states", "Merged same consecutive states", "ardışık durum birleştirme"],
+    ];
+    let timelineEklemeNoktası =
+      document.querySelector('[data-kart="time-periods-daily-users"]');
+    for (const [kimlik, başlık, durum] of timelineYüzeyleri) {
+      timelineEklemeNoktası?.insertAdjacentHTML(
+        "afterend",
+        `<article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>${kimlik}</small><div class="durum">${durum}</div>
+        </article>`
+      );
+      timelineEklemeNoktası = document.querySelector(`[data-kart="${kimlik}"]`);
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak:
+          <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/timeline-discrete.html">timeline-discrete.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/distr.js">distr.js</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/quadtree.js">quadtree.js</a>
+          <br>Üç şeritli özel timeline yolu; semantic süreler, periyodik hücreler,
+          null/undefined ayrımı ve ardışık durum birleştirmesi Rust çekirdeğindedir.`,
+        tanım: () => timeline_discrete_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/timeline_discrete.rs",
+        seriler: [
+          { etiket: "Device A", renk: "green" },
+          { etiket: "Device B", renk: "orange" },
+          { etiket: "Device C", renk: "cyan" },
+        ],
+        yardım: "Şeritler: Device A/B/C · sürükle: seç · tekerlek: yakınlaştır · boşluk+sürükle: taşı",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       };
@@ -2347,6 +2385,7 @@
           <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
           <rect id="çubuk-vurgu" visibility="hidden" fill="rgba(255,255,255,.3)" stroke="none"/>
           <rect id="kutu-biyik-vurgu" visibility="hidden" fill="rgba(51,204,255,.3)" stroke="none"/>
+          <g id="timeline-vurgu" visibility="hidden"></g>
           <line id="imleç-x" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
           <line id="imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
           ${imleçNoktaları}
@@ -2515,6 +2554,42 @@
           bilgiKutusu.style.left = `${Math.min(hamX + 12, chart.clientWidth - 300)}px`;
           bilgiKutusu.style.top = `${Math.min(hamY + 12, chart.clientHeight - 50)}px`;
         }
+        return;
+      }
+      if (aktifKart.startsWith("timeline-discrete-")) {
+        const vurgu = svg.querySelector("#timeline-vurgu");
+        const dikey = svg.querySelector("#imleç-x");
+        const yatay = svg.querySelector("#imleç-y");
+        if (hamX < sol || hamX > sağ || hamY < üst || hamY > alt) {
+          vurgu?.setAttribute("visibility", "hidden");
+          dikey?.setAttribute("visibility", "hidden");
+          yatay?.setAttribute("visibility", "hidden");
+          return;
+        }
+        const oran = Math.max(0, Math.min(1, (hamX - sol) / (sağ - sol)));
+        const vuruşlar = oturum?.timeline_vuruslari(oran) ?? [];
+        const şeritYüksekliği = (alt - üst) * 0.9 / 3;
+        const şeritBoşluğu = (alt - üst) * 0.1 / 2;
+        if (vurgu) {
+          vurgu.innerHTML = "";
+          for (let i = 0; i + 3 < vuruşlar.length; i += 4) {
+            const [seri, , başlangıç, bitiş] = vuruşlar.slice(i, i + 4);
+            const x0 = sol + oturum.x_konum_orani(başlangıç) * (sağ - sol);
+            const x1 = sol + oturum.x_konum_orani(bitiş) * (sağ - sol);
+            const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            rect.setAttribute("x", Math.max(sol, x0));
+            rect.setAttribute("y", üst + seri * (şeritYüksekliği + şeritBoşluğu));
+            rect.setAttribute("width", Math.max(0, Math.min(sağ, x1) - Math.max(sol, x0)));
+            rect.setAttribute("height", şeritYüksekliği);
+            rect.setAttribute("fill", "rgba(0,0,0,.3)");
+            vurgu.appendChild(rect);
+          }
+          vurgu.setAttribute("visibility", vuruşlar.length ? "visible" : "hidden");
+        }
+        dikey?.setAttribute("x1", hamX); dikey?.setAttribute("x2", hamX);
+        dikey?.setAttribute("y1", üst); dikey?.setAttribute("y2", alt);
+        dikey?.setAttribute("visibility", "visible");
+        yatay?.setAttribute("visibility", "hidden");
         return;
       }
       const çizgiler = ["imleç-x", "imleç-y"].map(id => svg.querySelector(`#${id}`));
@@ -2803,6 +2878,7 @@
       if (oturum?.imlec_odagini_temizle()) çiz();
       const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
       if (bilgiKutusu) bilgiKutusu.hidden = true;
+      chart.querySelector("#timeline-vurgu")?.setAttribute("visibility", "hidden");
     });
     document.addEventListener("keydown", olay => {
       if (olay.code !== "Space") return;

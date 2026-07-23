@@ -171,6 +171,11 @@ path = "examples/time_periods.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "timeline-discrete"
+path = "examples/timeline_discrete.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

@@ -626,6 +626,30 @@
       "rust_karşılığı": "time_periods_traffic.json / saatlik_veri / aylık_veri",
       "durum": "tam_kanıtlı",
       "test": "src/kart/time_periods.rs"
+    },
+    {
+      "kaynak_yolu": "timelinePlugin walk / distr SPACE_BETWEEN",
+      "rust_karşılığı": "TimelineDüzeni::şerit_oranı / Grafik::timeline_çiz",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timeline_discrete.rs"
+    },
+    {
+      "kaynak_yolu": "timelinePlugin mode 1 semantic spans",
+      "rust_karşılığı": "semantic_hücreler / TimelineHücresi başlangıç-bitiş",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timeline_discrete.rs"
+    },
+    {
+      "kaynak_yolu": "timelinePlugin mode 2 size [0.9, 100]",
+      "rust_karşılığı": "periyodik_hücreler / TimelineHücresi::azami_genişlik",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timeline_discrete.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.join null retain/expand + unsetSameFutureValues",
+      "rust_karşılığı": "HizalıDeğer / BoşlukKipi / ardışıkları_birleştir",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timeline_discrete.rs"
     }
   ]
 }

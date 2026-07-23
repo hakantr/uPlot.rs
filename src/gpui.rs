@@ -264,6 +264,44 @@ impl GpuiGrafik {
         let mut sahne = self.grafik.çiz();
         let (sol, sağ, üst, alt) = self.çizim_alanı();
         if let Some(imleç) = self.imleç.as_ref() {
+            let timeline_sayısı = self.grafik.timeline_seri_sayısı();
+            if timeline_sayısı > 0 {
+                let yatay_oran = f64::from(
+                    ((imleç.fare.x - sol) / (sağ - sol).max(f32::EPSILON)).clamp(0.0, 1.0),
+                );
+                let şerit_yüksekliği = (alt - üst) * 0.9 / timeline_sayısı as f32;
+                let şerit_boşluğu = if timeline_sayısı > 1 {
+                    (alt - üst) * 0.1 / timeline_sayısı.saturating_sub(1) as f32
+                } else {
+                    0.0
+                };
+                for vuruş in self.grafik.timeline_vuruşları(yatay_oran) {
+                    let x0 = self
+                        .grafik
+                        .x_konum_oranı(vuruş.başlangıç)
+                        .map_or(sol, |oran| sol + oran as f32 * (sağ - sol))
+                        .clamp(sol, sağ);
+                    let x1 = self
+                        .grafik
+                        .x_konum_oranı(vuruş.bitiş)
+                        .map_or(sağ, |oran| sol + oran as f32 * (sağ - sol))
+                        .clamp(sol, sağ);
+                    if x1 > x0 {
+                        sahne.ekle(Komut::Dikdörtgen {
+                            konum: Nokta::yeni(
+                                x0,
+                                üst + vuruş.seri as f32 * (şerit_yüksekliği + şerit_boşluğu),
+                            ),
+                            genişlik: x1 - x0,
+                            yükseklik: şerit_yüksekliği,
+                            dolgu: "#0000004d".to_string(),
+                            çizgi: "#00000000".to_string(),
+                            kalınlık: 0.0,
+                        });
+                    }
+                }
+                return sahne;
+            }
             if let Some(vuruş) = &imleç.dağılım {
                 sahne.ekle(Komut::Daire {
                     merkez: vuruş.merkez,

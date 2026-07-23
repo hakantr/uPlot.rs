@@ -1,6 +1,7 @@
 mod bant;
 mod isi_haritasi;
 mod seri_geometrisi;
+mod timeline;
 
 use seri_geometrisi::seri_yol_noktaları;
 
@@ -35,6 +36,15 @@ pub struct DağılımVuruşu {
     pub y: f64,
     pub değer: Option<f64>,
     pub etiket: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct TimelineVuruşu {
+    pub seri: usize,
+    pub indeks: usize,
+    pub başlangıç: f64,
+    pub bitiş: f64,
+    pub değer: String,
 }
 
 /// Doğrulanmış seçenek ve veriyi taşıyan çizelge örneği.
@@ -83,6 +93,16 @@ impl Grafik {
             return Err(UplotHatası::GeçersizKaynakVeri {
                 varlık: "IsıHaritasıDüzeni",
                 açıklama: "hücre konumu, boyutu veya rengi geçersiz".to_string(),
+            });
+        }
+        if seçenekler
+            .timeline_düzeni
+            .as_ref()
+            .is_some_and(|düzen| !düzen.geçerli_mi(veri.seriler().len()))
+        {
+            return Err(UplotHatası::GeçersizKaynakVeri {
+                varlık: "TimelineDüzeni",
+                açıklama: "şerit, hücre sınırı, renk veya boyut geçersiz".to_string(),
             });
         }
         if seçenekler
@@ -449,6 +469,10 @@ impl Grafik {
         } else {
             64.0 + sol_eksen_sayısı as f32 * 56.0
         };
+        if self.seçenekler.timeline_düzeni.is_some() {
+            // Kaynak timelinePlugin axes[1].size=70 ve gap=15 kullanır.
+            sol_pay = sol_pay.max(85.0);
+        }
         if self.seçenekler.otomatik_y_eksen_genişliği && !self.seçenekler.birincil_y_sağda {
             let aralık = self.görünür_y_aralığı();
             let artım = uygun_artım(aralık, yükseklik_px, 30.0);
@@ -915,6 +939,38 @@ impl Grafik {
         }
         let aralık = self.görünür_x_aralığı();
         Some(f64::from(self.x_konumu(aralık, değer, 0.0, 1.0)))
+    }
+
+    /// Timeline eklentisinin kaynak quadtree hover davranışı gibi, geçerli
+    /// X konumunu kapsayan her şeridin tam hücresini döndürür.
+    pub fn timeline_vuruşları(&self, yatay_oran: f64) -> Vec<TimelineVuruşu> {
+        if !yatay_oran.is_finite() {
+            return Vec::new();
+        }
+        let Some(düzen) = self.seçenekler.timeline_düzeni.as_ref() else {
+            return Vec::new();
+        };
+        let aralık = self.görünür_x_aralığı();
+        let hedef = self.x_değeri_orandan(aralık, yatay_oran.clamp(0.0, 1.0));
+        düzen
+            .hücreler
+            .iter()
+            .filter(|hücre| hedef >= hücre.başlangıç && hedef <= hücre.bitiş)
+            .map(|hücre| TimelineVuruşu {
+                seri: hücre.seri_indeksi,
+                indeks: hücre.veri_indeksi,
+                başlangıç: hücre.başlangıç,
+                bitiş: hücre.bitiş,
+                değer: hücre.değer.clone(),
+            })
+            .collect()
+    }
+
+    pub fn timeline_seri_sayısı(&self) -> usize {
+        self.seçenekler
+            .timeline_düzeni
+            .as_ref()
+            .map_or(0, |düzen| düzen.seri_etiketleri.len())
     }
 
     /// Geçerli görünümde, normalize edilmiş yatay konuma en yakın seri noktasını bulur.
@@ -1733,6 +1789,9 @@ impl Grafik {
                 üst,
                 alt,
             );
+        }
+        if let Some(düzen) = &self.seçenekler.timeline_düzeni {
+            self.timeline_çiz(&mut sahne, düzen, x_aralığı, sol, sağ, üst, alt);
         }
         if let Some(düzen) = &self.seçenekler.dağılım_düzeni {
             for seri in &düzen.seriler {
