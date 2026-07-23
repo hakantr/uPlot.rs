@@ -1096,6 +1096,69 @@ impl Grafik {
         self.seçenekler.en_yakın_tooltip.is_some()
     }
 
+    pub fn tooltip_bilgileri(
+        &self,
+        yatay_oran: f64,
+        dikey_oran: f64,
+    ) -> Vec<crate::TooltipBilgisi> {
+        let Some(düzen) = self.seçenekler.tooltip else {
+            return Vec::new();
+        };
+        if !yatay_oran.is_finite() || !dikey_oran.is_finite() {
+            return Vec::new();
+        }
+        let yatay_oran = yatay_oran.clamp(0.0, 1.0);
+        let dikey_oran = dikey_oran.clamp(0.0, 1.0);
+        let mut bilgiler = Vec::with_capacity(self.seçenekler.seriler.len().saturating_add(1));
+        if düzen.imleç_değeri {
+            let x = self.x_değeri_orandan(self.görünür_x_aralığı(), yatay_oran);
+            let y_aralığı = self.görünür_y_aralığı();
+            let y = y_aralığı.en_çok - dikey_oran * (y_aralığı.en_çok - y_aralığı.en_az);
+            bilgiler.push(crate::TooltipBilgisi {
+                seri: None,
+                metin: format!("({x:.2}, {y:.2})"),
+                yatay_oran,
+                dikey_oran,
+                arka_plan_rengi: "#0000ff1a".to_string(),
+                metin_rengi: "#111111".to_string(),
+            });
+        }
+        if !düzen.seri_değerleri {
+            return bilgiler;
+        }
+        let Some((x, değerler)) = self.en_yakın_noktalar(yatay_oran) else {
+            return bilgiler;
+        };
+        let Some(x_oranı) = self.x_konum_oranı(x) else {
+            return bilgiler;
+        };
+        for (seri, değer) in değerler.into_iter().enumerate() {
+            let Some(seçenek) = self.seçenekler.seriler.get(seri) else {
+                continue;
+            };
+            if !seçenek.göster {
+                continue;
+            }
+            let Some(y) = değer else { continue };
+            let Some(y_oranı) = self.seri_y_konum_oranı(seri, y) else {
+                continue;
+            };
+            bilgiler.push(crate::TooltipBilgisi {
+                seri: Some(seri),
+                metin: format!("({x}, {y})"),
+                yatay_oran: x_oranı,
+                dikey_oran: 1.0 - y_oranı,
+                arka_plan_rengi: "#0000001a".to_string(),
+                metin_rengi: seçenek.renk.clone(),
+            });
+        }
+        bilgiler
+    }
+
+    pub fn tooltip_düzeni(&self) -> Option<crate::TooltipDüzeni> {
+        self.seçenekler.tooltip
+    }
+
     pub fn lejant_canlı(&self) -> bool {
         self.seçenekler.lejant_canlı
     }

@@ -191,6 +191,11 @@ path = "examples/tooltips_closest.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "tooltips"
+path = "examples/tooltips.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

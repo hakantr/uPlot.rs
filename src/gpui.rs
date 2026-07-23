@@ -163,15 +163,24 @@ impl GpuiGrafik {
     }
 
     pub fn grafiği_ayarla(&mut self, grafik: Grafik, cx: &mut Context<Self>) {
+        let imleci_koru = self
+            .grafik
+            .tooltip_düzeni()
+            .is_some_and(|düzen| düzen.imleç_durumunu_koru)
+            && grafik
+                .tooltip_düzeni()
+                .is_some_and(|düzen| düzen.imleç_durumunu_koru);
+        let korunmuş_imleç = imleci_koru.then(|| self.imleç.clone()).flatten();
+        let korunmuş_kilit = imleci_koru && self.imleç_kilitli;
         self.grafik = grafik;
-        self.imleç = None;
+        self.imleç = korunmuş_imleç;
         self.seçim = None;
         self.açıklama_seçimi = false;
         self.taşıma_başlangıcı = None;
         self.dokunma_kaydırma = None;
         self.boşluk_basılı = false;
         self.hata = None;
-        self.imleç_kilitli = false;
+        self.imleç_kilitli = korunmuş_kilit;
         Self::bildir(cx);
     }
 
@@ -669,6 +678,7 @@ impl Render for GpuiGrafik {
             .imleç
             .as_ref()
             .filter(|_| self.grafik.etkileşim_seçenekleri().imleç_bilgi_kutusu)
+            .filter(|_| self.grafik.tooltip_düzeni().is_none())
             .and_then(|imleç| {
                 let seri_indeksi = self.grafik.odak_serisi().or_else(|| {
                     (!self.grafik.en_yakın_tooltip_etkin())
@@ -747,6 +757,46 @@ impl Render for GpuiGrafik {
                     bağlantı,
                 ))
             });
+        let tooltip_kutuları = self
+            .imleç
+            .as_ref()
+            .filter(|_| self.grafik.etkileşim_seçenekleri().imleç_bilgi_kutusu)
+            .and_then(|imleç| {
+                let sınırlar = self.çizim_sınırları.get()?;
+                let (kaynak_g, kaynak_y) = self.grafik.boyut();
+                let ölçek = (f32::from(sınırlar.size.width) / kaynak_g as f32)
+                    .min(f32::from(sınırlar.size.height) / kaynak_y as f32)
+                    .max(0.01);
+                let yatay_pay = (f32::from(sınırlar.size.width) - kaynak_g as f32 * ölçek) / 2.0;
+                let dikey_pay = (f32::from(sınırlar.size.height) - kaynak_y as f32 * ölçek) / 2.0;
+                let (sol, sağ, üst, alt) = self.çizim_alanı();
+                let yatay_oran = f64::from(((imleç.fare.x - sol) / (sağ - sol)).clamp(0.0, 1.0));
+                let dikey_oran = f64::from(((imleç.fare.y - üst) / (alt - üst)).clamp(0.0, 1.0));
+                Some(
+                    self.grafik
+                        .tooltip_bilgileri(yatay_oran, dikey_oran)
+                        .into_iter()
+                        .map(|bilgi| {
+                            let kaynak_x =
+                                sol + (sağ - sol) * bilgi.yatay_oran.clamp(0.0, 1.0) as f32;
+                            let kaynak_y =
+                                üst + (alt - üst) * bilgi.dikey_oran.clamp(0.0, 1.0) as f32;
+                            let kutu_sol = (yatay_pay + kaynak_x * ölçek + 10.0)
+                                .clamp(4.0, (f32::from(sınırlar.size.width) - 112.0).max(4.0));
+                            let kutu_üst = (dikey_pay + kaynak_y * ölçek + 10.0)
+                                .clamp(4.0, (f32::from(sınırlar.size.height) - 32.0).max(4.0));
+                            (
+                                kutu_sol,
+                                kutu_üst,
+                                bilgi.metin,
+                                bilgi.arka_plan_rengi,
+                                bilgi.metin_rengi,
+                            )
+                        })
+                        .collect::<Vec<_>>(),
+                )
+            })
+            .unwrap_or_default();
         div()
             .id("uplot-rs-gpui-grafik")
             .relative()
@@ -957,6 +1007,21 @@ impl Render for GpuiGrafik {
                     )
                 },
             )
+            .children(tooltip_kutuları.into_iter().map(
+                |(sol, üst, metin, arka_plan, metin_rengi)| {
+                    div()
+                        .absolute()
+                        .left(px(sol))
+                        .top(px(üst))
+                        .px_2()
+                        .py_1()
+                        .rounded_sm()
+                        .bg(renk_çöz(&arka_plan))
+                        .text_color(renk_çöz(&metin_rengi))
+                        .text_xs()
+                        .child(metin)
+                },
+            ))
     }
 }
 

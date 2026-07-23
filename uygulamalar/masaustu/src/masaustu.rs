@@ -37,11 +37,12 @@ use uplot_rs::{
     SyncCursorÖrneği, SyncYZeroAşaması, THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ,
     TIME_PERIODS_KART_TANIM_ÖRNEĞİ, TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,
     TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ, TIMEZONES_DST_KART_TANIM_ÖRNEĞİ,
-    TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği, TimePeriodsÖrneği, TimelineDiscreteÖrneği,
-    TimeseriesDiscreteÖrneği, TimezonesDstÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
-    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ, TOOLTIPS_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği,
+    TimePeriodsÖrneği, TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği, TimezonesDstÖrneği,
+    UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
+    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
+    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
     bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
     cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
     dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
@@ -54,7 +55,8 @@ use uplot_rs::{
     stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
     sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
     timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
-    tooltips_closest_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    tooltips_closest_kartı, tooltips_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü,
+    ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -94,6 +96,7 @@ enum KartKimliği {
     TimeseriesDiscrete,
     TimezonesDst(TimezonesDstÖrneği),
     TooltipsClosest,
+    Tooltips,
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -159,6 +162,7 @@ impl KartKimliği {
             Self::TimeseriesDiscrete => "TimeSeries + Discrete",
             Self::TimezonesDst(_) => "Timezones & DST",
             Self::TooltipsClosest => "Summary-opt",
+            Self::Tooltips => "Tooltips",
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -264,6 +268,9 @@ impl KartKimliği {
             Self::TooltipsClosest => {
                 "tooltips-closest.html · rustc-perf.json · en yakın seri ve commit karşılaştırması"
             }
+            Self::Tooltips => {
+                "tooltips.html · imleç ve görünür seri kutuları · 2 sn imleç durum koruması"
+            }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -347,6 +354,7 @@ impl KartKimliği {
             Self::TimeseriesDiscrete => TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
             Self::TimezonesDst(_) => TIMEZONES_DST_KART_TANIM_ÖRNEĞİ,
             Self::TooltipsClosest => TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ,
+            Self::Tooltips => TOOLTIPS_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -408,6 +416,7 @@ impl KartKimliği {
             Self::TimeseriesDiscrete => "src/kart/timeseries_discrete.rs",
             Self::TimezonesDst(_) => "src/kart/timezones_dst.rs",
             Self::TooltipsClosest => "src/kart/tooltips_closest.rs",
+            Self::Tooltips => "src/kart/tooltips.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -969,6 +978,35 @@ impl ChartListesi {
                     }
                 }
             }));
+        } else if kart == KartKimliği::Tooltips {
+            let yeniden_kurma_ms = self.grafik.as_ref().and_then(|grafik| {
+                grafik
+                    .read(cx)
+                    .grafik()
+                    .tooltip_düzeni()
+                    .and_then(|düzen| düzen.yeniden_kurma_ms)
+            });
+            if let Some(yeniden_kurma_ms) = yeniden_kurma_ms {
+                self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
+                    loop {
+                        cx.background_executor()
+                            .timer(Duration::from_millis(yeniden_kurma_ms))
+                            .await;
+                        let devam = bu
+                            .update(cx, |bu, cx| {
+                                if bu.aktif_kart != KartKimliği::Tooltips {
+                                    return false;
+                                }
+                                bu.grafiği_yenile(bu.nokta_sayısı, cx);
+                                true
+                            })
+                            .unwrap_or(false);
+                        if !devam {
+                            break;
+                        }
+                    }
+                }));
+            }
         } else if matches!(kart, KartKimliği::SyncYZero(_)) {
             self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
                 for aşama in [SyncYZeroAşaması::Simetrik, SyncYZeroAşaması::SıfırHizalı] {
@@ -1193,6 +1231,7 @@ fn grafik_oluştur(
         }
         KartKimliği::TimezonesDst(örnek) => timezones_dst_kartı(örnek),
         KartKimliği::TooltipsClosest => tooltips_closest_kartı(),
+        KartKimliği::Tooltips => tooltips_kartı(),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -1490,6 +1529,9 @@ impl Render for ChartListesi {
             KartKimliği::TooltipsClosest => {
                 "234 commit × 4 Opt serisi · 100 interpolasyon işareti".to_string()
             }
+            KartKimliği::Tooltips => {
+                "7 nokta × 2 seri · Two gizli · 2 sn yeniden kurulum".to_string()
+            }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
@@ -1779,6 +1821,20 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::TooltipsClosest, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "tooltips",
+                    "Tooltips",
+                    "tooltips",
+                    aktif_kart == KartKimliği::Tooltips,
+                    "7 nokta · ham imleç + görünür seri kutuları",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::Tooltips, cx);
                 })),
             )
             .child(

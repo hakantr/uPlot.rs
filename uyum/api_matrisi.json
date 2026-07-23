@@ -740,6 +740,36 @@
       "rust_karşılığı": "EnYakınTooltipBilgisi::karşılaştırma_url / GPUI ve WASM bağdaştırıcıları",
       "durum": "tam_kanıtlı",
       "test": "wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "tooltips data [1..7] / One / hidden Two",
+      "rust_karşılığı": "tooltips_kartı / HizalıVeri / SeriSeçenekleri::göster",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/tooltips.rs"
+    },
+    {
+      "kaynak_yolu": "cursor tooltip posToVal left/top with toFixed(2)",
+      "rust_karşılığı": "Grafik::tooltip_bilgileri ham imleç girdisi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/tooltips.rs"
+    },
+    {
+      "kaynak_yolu": "series tooltip nearest dataIdx and visible series only",
+      "rust_karşılığı": "Grafik::tooltip_bilgileri görünür seri çözümlemesi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/tooltips.rs"
+    },
+    {
+      "kaynak_yolu": "cursor mouseenter/mouseleave tooltip visibility",
+      "rust_karşılığı": "GpuiGrafik ve WASM pointer yaşam döngüsü",
+      "durum": "tam_kanıtlı",
+      "test": "wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "destroy/recreate every 2000ms with cursor state memo",
+      "rust_karşılığı": "TooltipDüzeni yeniden kurma ve imleç durumu koruma",
+      "durum": "tam_kanıtlı",
+      "test": "wasm/src/lib.rs"
     }
   ]
 }

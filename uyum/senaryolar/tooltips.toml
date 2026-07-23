@@ -1,0 +1,29 @@
+id = "tooltips"
+kaynak = "../uPlot/demos/tooltips.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/tooltips.rs#tooltips_kartı"
+viewport = [600, 400]
+durum = "ham_imleç_ve_görünür_seri_tooltipleri"
+
+[veri]
+kaynak_sha256 = "e6fb640a1669783d07f974e0bd66c0d7743131787f9ed3276c20a4a1ddb06dbe"
+x = [1, 2, 3, 4, 5, 6, 7]
+one = [40, 43, 60, 65, 71, 73, 80]
+two = [18, 24, 37, 55, 55, 60, 63]
+two_varsayılan_gizli = true
+
+[tooltip]
+ham_imleç_iki_ondalık = true
+görünür_seri_en_yakın_nokta = true
+gizli_seri_atlanır = true
+fare_çıkışında_gizlenir = true
+imleç_durumu_yeniden_kurmada_korunur = true
+yeniden_kurma_ms = 2000
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+örnek = "examples/tooltips.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

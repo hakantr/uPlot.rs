@@ -106,6 +106,9 @@
     .imlec-bilgi-kutusu.en-yakin { max-width: 280px; border: 2px solid transparent;
                                    color: #111; background: #fff; cursor: pointer;
                                    pointer-events: auto; white-space: pre-line; }
+    .coklu-tooltip { position: absolute; z-index: 13; max-width: 190px; padding: 5px 7px;
+                     border-radius: 4px; font-size: 12px; line-height: 1.25;
+                     pointer-events: none; white-space: nowrap; }
     .kod-örneği { margin-top: 14px; border: 1px solid #d1d5db; border-radius: 10px;
                   background: #111827; color: #e5e7eb; overflow: hidden; }
     .kod-örneği summary { padding: 9px 12px; color: #93c5fd; cursor: pointer;
@@ -354,6 +357,7 @@
       timeseries_discrete_kart_tanim_ornegi,
       timezones_dst_kart_tanim_ornegi,
       tooltips_closest_kart_tanim_ornegi,
+      tooltips_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1517,6 +1521,30 @@
       enYakınTooltip: true,
       etkileşimler: () => ortakEtkileşimler(),
     };
+    document.querySelector('[data-kart="tooltips-closest"]')?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="tooltips" aria-current="false" tabindex="0">
+        <strong>Tooltips</strong><small>tooltips</small>
+        <div class="durum">7 nokta × 2 seri · Two gizli · 2 sn yeniden kurulum</div>
+      </article>`
+    );
+    kartlar.tooltips = {
+      başlık: "Tooltips",
+      kaynak: `Kaynak:
+        <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/tooltips.html">tooltips.html</a>
+        <br>Resmî veri dizileri, ham imleç tooltip'i, yalnız görünür serilerin nokta
+        tooltip'leri ve iki saniyelik yeniden kurmada imleç durumu koruması Rust çekirdeğindedir.`,
+      tanım: () => tooltips_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/tooltips.rs",
+      seriler: [
+        { etiket: "One", renk: "red" },
+        { etiket: "Two", renk: "blue", göster: false },
+      ],
+      yardım: "İmleci hareket ettir: ham X/Y ve görünür seri değeri · Two kaynakta gizli",
+      değişkenNokta: false,
+      çokluTooltip: true,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",
@@ -2044,6 +2072,8 @@
     let sineAnimationFrame = null;
     let streamDataZamanlayıcı = null;
     let softMinMaxZamanlayıcı = null;
+    let tooltipsZamanlayıcı = null;
+    let sonTooltipİmleci = null;
     let syncYZeroZamanlayıcıları = [];
     const syncCursorYüzeyleri = [
       { kimlik: "sync-cursor-cpu", başlık: "CPU", seriler: [["CPU 1", "red"], ["CPU 2", "green"], ["CPU 3", "blue"]] },
@@ -2604,19 +2634,21 @@
         }));
       }
       const imleçNoktaları = kart.seriler.map((seri, indeks) =>
-        `<circle id="imleç-nokta-${indeks}" visibility="hidden" r="2.5" fill="${seri.renk}"/>`
+        oturum.seri_gorunur(indeks)
+          ? `<circle id="imleç-nokta-${indeks}" visibility="hidden" r="2.5" fill="${seri.renk}"/>`
+          : ""
       ).join("");
       const eksenGöstergeleri = kart.eksenGöstergeleri ? `
         <g id="eksen-gosterge-x" class="eksen-gosterge" visibility="hidden">
           <rect width="48" height="22" rx="3" fill="#111111"/>
           <text fill="#ffffff" font-size="11" text-anchor="middle"></text>
         </g>
-        ${kart.seriler.map((seri, indeks) => `
+        ${kart.seriler.map((seri, indeks) => oturum.seri_gorunur(indeks) ? `
           <g id="eksen-gosterge-y-${indeks}" class="eksen-gosterge" visibility="hidden">
             <line stroke="${seri.renk}" stroke-dasharray="4 4"/>
             <rect width="44" height="22" rx="3" fill="${seri.renk}"/>
             <text fill="#ffffff" font-size="11" text-anchor="middle"></text>
-          </g>`).join("")}` : "";
+          </g>` : "").join("")}` : "";
       svg.insertAdjacentHTML("beforeend", `
         <g id="etkileşim" pointer-events="none">
           <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
@@ -2630,8 +2662,10 @@
         </g>`);
       const yığmaLejantı = aktifKart.startsWith("stacked-series-");
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
-        `<span ${yığmaLejantı ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>
-          <i class="örnek" style="border-color:${seri.renk}"></i>${seri.etiket}: <b id="seri-değeri-${indeks}">--</b></span>`
+        oturum.seri_gorunur(indeks) || yığmaLejantı
+          ? `<span ${yığmaLejantı ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>
+              <i class="örnek" style="border-color:${seri.renk}"></i>${seri.etiket}: <b id="seri-değeri-${indeks}">--</b></span>`
+          : ""
       ).join("");
       const arayüzHedefi = kart.scrollSync ? chart.querySelector(".scroll-sync-grafik") : chart;
       arayüzHedefi?.insertAdjacentHTML("beforeend", `
@@ -2721,6 +2755,36 @@
     function çizimAlanı(view) {
       const [sol, sağ, üst, alt] = oturum?.cizim_alani(view.width, view.height) ?? [];
       return { sol, sağ, üst, alt, genişlik: sağ - sol, yükseklik: alt - üst };
+    }
+
+    function çokluTooltipGüncelle(yatayOran, dikeyOran, svg, view) {
+      chart.querySelectorAll(".coklu-tooltip").forEach(öğe => öğe.remove());
+      if (!kartlar[aktifKart].çokluTooltip || !oturum || !svg) return;
+      const bilgiler = Array.from(oturum.tooltip_bilgileri(yatayOran, dikeyOran));
+      if (bilgiler.length === 0 || bilgiler.length % 6 !== 0) return;
+      const alan = çizimAlanı(view);
+      const chartKutusu = chart.getBoundingClientRect();
+      const svgKutusu = svg.getBoundingClientRect();
+      for (let indeks = 0; indeks < bilgiler.length; indeks += 6) {
+        const seri = Number(bilgiler[indeks]);
+        const metin = bilgiler[indeks + 1];
+        const oranX = Number(bilgiler[indeks + 2]);
+        const oranY = Number(bilgiler[indeks + 3]);
+        if (!Number.isFinite(oranX) || !Number.isFinite(oranY)) continue;
+        const kaynakX = alan.sol + oranX * alan.genişlik;
+        const kaynakY = alan.üst + oranY * alan.yükseklik;
+        const pikselX = svgKutusu.left - chartKutusu.left + kaynakX / view.width * svgKutusu.width;
+        const pikselY = svgKutusu.top - chartKutusu.top + kaynakY / view.height * svgKutusu.height;
+        const kutu = document.createElement("div");
+        kutu.className = "coklu-tooltip";
+        kutu.dataset.seri = String(seri);
+        kutu.textContent = metin;
+        kutu.style.background = bilgiler[indeks + 4];
+        kutu.style.color = bilgiler[indeks + 5];
+        chart.appendChild(kutu);
+        kutu.style.left = `${Math.min(pikselX + 10, chart.clientWidth - kutu.offsetWidth - 4)}px`;
+        kutu.style.top = `${Math.min(pikselY + 10, chart.clientHeight - kutu.offsetHeight - 4)}px`;
+      }
     }
 
     function imleciGüncelle(olay) {
@@ -2845,10 +2909,12 @@
         svg.querySelectorAll(".eksen-gosterge").forEach(öğe => öğe.setAttribute("visibility", "hidden"));
         const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
         if (bilgiKutusu) bilgiKutusu.hidden = true;
+        chart.querySelectorAll(".coklu-tooltip").forEach(öğe => öğe.remove());
         return;
       }
       const hamOranX = Math.max(0, Math.min(1, (hamX - sol) / (sağ - sol)));
       const hamOranY = Math.max(0, Math.min(1, (hamY - üst) / (alt - üst)));
+      çokluTooltipGüncelle(hamOranX, hamOranY, svg, view);
       const xDikey = oturum?.x_dikey() ?? false;
       if (oturum?.imlec_odagini_guncelle(
         hamOranX, hamOranY, xDikey ? sağ - sol : alt - üst
@@ -2999,6 +3065,13 @@
         }
         return;
       }
+      if (kartlar[aktifKart].çokluTooltip) {
+        sonTooltipİmleci = {
+          clientX: olay.clientX,
+          clientY: olay.clientY,
+          pointerType: olay.pointerType,
+        };
+      }
       imleciGüncelle(olay);
       if (!sürükleme) return;
       const { x, y, svg, view } = svgKonumu(olay);
@@ -3136,9 +3209,11 @@
     });
     chart.addEventListener("pointerleave", () => {
       grafikÜzerinde = false;
+      sonTooltipİmleci = null;
       if (oturum?.imlec_odagini_temizle()) çiz();
       const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
       if (bilgiKutusu) bilgiKutusu.hidden = true;
+      chart.querySelectorAll(".coklu-tooltip").forEach(öğe => öğe.remove());
       chart.querySelector("#timeline-vurgu")?.setAttribute("visibility", "hidden");
     });
     document.addEventListener("keydown", olay => {
@@ -3318,6 +3393,11 @@
           clearInterval(streamDataZamanlayıcı);
           streamDataZamanlayıcı = null;
         }
+        if (tooltipsZamanlayıcı !== null) {
+          clearInterval(tooltipsZamanlayıcı);
+          tooltipsZamanlayıcı = null;
+        }
+        sonTooltipİmleci = null;
         syncYZeroZamanlayıcıları.forEach(clearTimeout);
         syncYZeroZamanlayıcıları = [];
         oturum?.free();
@@ -3401,6 +3481,28 @@
         oturum = new KartOturumu(kimlik, Number(nokta.value));
         oturum.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
         çiz();
+        const tooltipYenidenKurmaMs = oturum.tooltip_yeniden_kurma_ms();
+        if (tooltipYenidenKurmaMs > 0) {
+          tooltipsZamanlayıcı = setInterval(() => {
+            if (aktifKart !== kimlik || !oturum) {
+              clearInterval(tooltipsZamanlayıcı);
+              tooltipsZamanlayıcı = null;
+              return;
+            }
+            try {
+              const imleciKoru = oturum.tooltip_imlec_durumunu_koru();
+              if (oturum.tooltip_yeniden_kur()) {
+                çiz();
+                if (imleciKoru && sonTooltipİmleci) {
+                  imleciGüncelle(sonTooltipİmleci);
+                }
+              }
+              hata.textContent = "";
+            } catch (neden) {
+              hata.textContent = `Tooltip grafiği yeniden kurulamadı: ${String(neden)}`;
+            }
+          }, tooltipYenidenKurmaMs);
+        }
         if (kimlik === "sync-y-zero") {
           const aşamalar = [
             ["symmetric", 3000, "Aşama: sıfıra göre simetrik aralıklar"],

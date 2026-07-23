@@ -214,6 +214,51 @@ pub struct EnYakınTooltipBilgisi {
     pub metin: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TooltipDüzeni {
+    pub imleç_değeri: bool,
+    pub seri_değerleri: bool,
+    pub imleç_durumunu_koru: bool,
+    pub yeniden_kurma_ms: Option<u64>,
+}
+
+impl TooltipDüzeni {
+    pub const fn yeni() -> Self {
+        Self {
+            imleç_değeri: true,
+            seri_değerleri: true,
+            imleç_durumunu_koru: false,
+            yeniden_kurma_ms: None,
+        }
+    }
+
+    pub const fn imleç_durumunu_koru(mut self, koru: bool) -> Self {
+        self.imleç_durumunu_koru = koru;
+        self
+    }
+
+    pub const fn yeniden_kurma_ms(mut self, milisaniye: u64) -> Self {
+        self.yeniden_kurma_ms = Some(milisaniye);
+        self
+    }
+}
+
+impl Default for TooltipDüzeni {
+    fn default() -> Self {
+        Self::yeni()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct TooltipBilgisi {
+    pub seri: Option<usize>,
+    pub metin: String,
+    pub yatay_oran: f64,
+    pub dikey_oran: f64,
+    pub arka_plan_rengi: String,
+    pub metin_rengi: String,
+}
+
 impl Default for ÇizimKancasıDüzeni {
     fn default() -> Self {
         Self {
@@ -593,6 +638,7 @@ pub struct GrafikSeçenekleri {
     pub çizim_kancaları: Option<ÇizimKancasıDüzeni>,
     pub odak: Option<OdakDüzeni>,
     pub en_yakın_tooltip: Option<EnYakınTooltipDüzeni>,
+    pub tooltip: Option<TooltipDüzeni>,
     pub lejant_canlı: bool,
     pub çizim_sırası: ÇizimSırası,
     /// uPlot `opts.pxAlign` karşılığıdır. `1`, koordinatları tam piksele
@@ -666,6 +712,7 @@ impl GrafikSeçenekleri {
             çizim_kancaları: None,
             odak: None,
             en_yakın_tooltip: None,
+            tooltip: None,
             lejant_canlı: true,
             çizim_sırası: ÇizimSırası::EksenlerSeriler,
             piksel_hizası: 1.0,
@@ -853,6 +900,11 @@ impl GrafikSeçenekleri {
 
     pub fn en_yakın_tooltip(mut self, düzen: EnYakınTooltipDüzeni) -> Self {
         self.en_yakın_tooltip = Some(düzen);
+        self
+    }
+
+    pub fn tooltip(mut self, düzen: TooltipDüzeni) -> Self {
+        self.tooltip = Some(düzen);
         self
     }
 

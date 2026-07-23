@@ -52,6 +52,7 @@ mod time_periods;
 mod timeline_discrete;
 mod timeseries_discrete;
 mod timezones_dst;
+mod tooltips;
 mod tooltips_closest;
 mod veri_uretici;
 mod zoom_touch;
@@ -199,6 +200,7 @@ pub use timeseries_discrete::{
 pub use timezones_dst::{
     TIMEZONES_DST_KART_TANIM_ÖRNEĞİ, TimezonesDstÖrneği, timezones_dst_kartı
 };
+pub use tooltips::{TOOLTIPS_KART_TANIM_ÖRNEĞİ, tooltips_kartı};
 pub use tooltips_closest::{TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ, tooltips_closest_kartı};
 pub use zoom_touch::{ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, zoom_touch_kartı};
 pub use zoom_wheel::{ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, zoom_wheel_kartı};
