@@ -30,10 +30,11 @@ use uplot_rs::{
     SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
     SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ,
     SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS,
-    STREAM_DATA_KART_TANIM_ÖRNEĞİ, SVG_IMAGE_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği,
-    SeriSeçenekleri, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği,
-    SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı,
-    StreamDataÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+    STREAM_DATA_KART_TANIM_ÖRNEĞİ, SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ,
+    ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı, SmoothingÖrneği,
+    SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği,
+    StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği,
+    UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
     add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
     align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
     axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
@@ -47,7 +48,7 @@ use uplot_rs::{
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
     sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
     stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
-    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    sync_cursor_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -79,6 +80,7 @@ enum KartKimliği {
     StackedSeries(StackedSeriesÖrneği),
     StreamData(StreamDataÖrneği),
     SvgImage,
+    SyncCursor,
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -136,6 +138,7 @@ impl KartKimliği {
             Self::StackedSeries(örnek) => örnek.başlık(),
             Self::StreamData(örnek) => örnek.başlık(),
             Self::SvgImage => "uPlot to image PoC",
+            Self::SyncCursor => "Sync Cursor",
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -219,6 +222,7 @@ impl KartKimliği {
             }
             Self::StreamData(_) => "stream-data.html · bench/data.json · setData canlı akışı",
             Self::SvgImage => "svg-image.html · canvas + DOM → bağımsız görüntü PoC",
+            Self::SyncCursor => "sync-cursor.html · sync.js · bench/data.json · 5 eşzamanlı yüzey",
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -294,6 +298,7 @@ impl KartKimliği {
             Self::StackedSeries(_) => STACKED_SERIES_KART_TANIM_ÖRNEĞİ,
             Self::StreamData(_) => STREAM_DATA_KART_TANIM_ÖRNEĞİ,
             Self::SvgImage => SVG_IMAGE_KART_TANIM_ÖRNEĞİ,
+            Self::SyncCursor => SYNC_CURSOR_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -347,6 +352,7 @@ impl KartKimliği {
             Self::StackedSeries(_) => "src/kart/stacked_series.rs",
             Self::StreamData(_) => "src/kart/stream_data.rs",
             Self::SvgImage => "src/kart/svg_image.rs",
+            Self::SyncCursor => "src/kart/sync_cursor.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -409,6 +415,8 @@ pub struct ChartListesi {
     stream_data_akışı: Option<StreamDataAkışı>,
     soft_minmax_akışı: Option<SoftMinMaxAkışı>,
     soft_minmax_çalışıyor: bool,
+    sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
+    sync_cursor_grubu: SyncCursorGrubu,
 }
 
 impl ChartListesi {
@@ -423,7 +431,13 @@ impl ChartListesi {
         });
         cx.subscribe(&tekerlek_anahtarı, |bu, _, olay: &AnahtarOlayi, cx| {
             let AnahtarOlayi::Degisti(etkin) = *olay;
-            if let Some(grafik) = &bu.grafik {
+            if bu.aktif_kart == KartKimliği::SyncCursor {
+                for (_, grafik) in &bu.sync_cursor_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if let Some(grafik) = &bu.grafik {
                 grafik.update(cx, |grafik, cx| {
                     grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                 });
@@ -466,6 +480,8 @@ impl ChartListesi {
             stream_data_akışı: None,
             soft_minmax_akışı: None,
             soft_minmax_çalışıyor: false,
+            sync_cursor_grafikleri: Vec::new(),
+            sync_cursor_grubu: SyncCursorGrubu::yeni(),
         }
     }
 
@@ -501,6 +517,119 @@ impl ChartListesi {
                 self.hata = Some(format!("Grafik oluşturulamadı: {hata}"));
             }
         }
+        cx.notify();
+    }
+
+    fn sync_cursor_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let mut yüzeyler = Vec::with_capacity(SyncCursorÖrneği::TÜMÜ.len());
+        let mut hata = None;
+        for örnek in SyncCursorÖrneği::TÜMÜ {
+            let sonuç = sync_cursor_kartı(örnek)
+                .and_then(|(seçenekler, veri)| Grafik::yeni(seçenekler, veri));
+            let mut grafik = match sonuç {
+                Ok(grafik) => grafik,
+                Err(oluşturma_hatası) => {
+                    hata = Some(format!(
+                        "{} Sync Cursor yüzeyi oluşturulamadı: {oluşturma_hatası}",
+                        örnek.başlık()
+                    ));
+                    break;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, move |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                match olay {
+                    GpuiGrafikOlayı::Açıklamaİstendi => {
+                        bu.açıklama_istendi = true;
+                    }
+                    GpuiGrafikOlayı::İmleçDeğişti => {
+                        let yayın = bu
+                            .sync_cursor_grafikleri
+                            .iter()
+                            .find(|(kimlik, _)| *kimlik == örnek)
+                            .and_then(|(_, grafik)| grafik.read(cx).senkron_yayını());
+                        let hedefler = bu.sync_cursor_grubu.imleç_hedefleri(örnek);
+                        let yüzeyler = bu.sync_cursor_grafikleri.clone();
+                        for hedef in hedefler {
+                            let Some((_, hedef_grafik)) =
+                                yüzeyler.iter().find(|(kimlik, _)| *kimlik == hedef)
+                            else {
+                                continue;
+                            };
+                            if let Some((x, y, kaynak_serisi)) = yayın {
+                                let hedef_serisi = kaynak_serisi.and_then(|indeks| {
+                                    bu.sync_cursor_grubu.seri_hedefi(örnek, hedef, indeks)
+                                });
+                                let dikey = bu
+                                    .sync_cursor_grubu
+                                    .dikey_imleç_senkron_mu(örnek, hedef)
+                                    .then_some(y);
+                                hedef_grafik.update(cx, |grafik, cx| {
+                                    grafik.senkron_imleci_ayarla(x, dikey, hedef_serisi, cx);
+                                });
+                            } else {
+                                hedef_grafik.update(cx, |grafik, cx| {
+                                    grafik.senkron_imleci_temizle(cx);
+                                });
+                            }
+                        }
+                    }
+                    GpuiGrafikOlayı::FareBırakıldı => {
+                        let değişenler = bu.sync_cursor_grubu.fare_bırak(örnek);
+                        let yüzeyler = bu.sync_cursor_grafikleri.clone();
+                        for (kimlik, kilitli) in değişenler {
+                            if let Some((_, hedef)) =
+                                yüzeyler.iter().find(|(hedef, _)| *hedef == kimlik)
+                            {
+                                hedef.update(cx, |grafik, cx| {
+                                    grafik.senkron_kilidi_ayarla(kilitli, cx);
+                                });
+                            }
+                        }
+                    }
+                    GpuiGrafikOlayı::DurumDeğişti => {}
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        if let Some(hata) = hata {
+            self.hata = Some(hata);
+            self.grafik = None;
+            self.sync_cursor_grafikleri.clear();
+        } else {
+            self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+            self.sync_cursor_grafikleri = yüzeyler;
+            self.hata = None;
+        }
+        cx.notify();
+    }
+
+    fn sync_cursor_senkronunu_değiştir(&mut self, cx: &mut Context<Self>) {
+        let etkin = !self.sync_cursor_grubu.senkron();
+        self.sync_cursor_grubu.senkronu_ayarla(etkin);
+        if !etkin {
+            for (örnek, grafik) in &self.sync_cursor_grafikleri {
+                if matches!(
+                    örnek,
+                    SyncCursorÖrneği::Cpu | SyncCursorÖrneği::Ram | SyncCursorÖrneği::Tcp
+                ) {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.senkron_imleci_temizle(cx);
+                        grafik.senkron_kilidi_ayarla(false, cx);
+                    });
+                }
+            }
+        }
+        cx.notify();
+    }
+
+    fn sync_cursor_fare_filtresini_değiştir(&mut self, cx: &mut Context<Self>) {
+        let etkin = !self.sync_cursor_grubu.fare_basma_bırakma_senkron();
+        self.sync_cursor_grubu
+            .fare_basma_bırakma_senkronunu_ayarla(etkin);
         cx.notify();
     }
 
@@ -549,7 +678,13 @@ impl ChartListesi {
             anahtar.ayarla(etkileşimler.tekerlek_etkileşimi, cx);
             anahtar.devre_disi_ayarla(false, cx);
         });
-        self.grafiği_yenile(self.nokta_sayısı, cx);
+        if kart == KartKimliği::SyncCursor {
+            self.sync_cursor_grubu = SyncCursorGrubu::yeni();
+            self.sync_cursor_yüzeylerini_oluştur(cx);
+        } else {
+            self.sync_cursor_grafikleri.clear();
+            self.grafiği_yenile(self.nokta_sayısı, cx);
+        }
         if kart == KartKimliği::AlignDataCost
             || matches!(
                 kart,
@@ -899,6 +1034,7 @@ fn grafik_oluştur(
         KartKimliği::StackedSeries(örnek) => stacked_series_kartı(örnek),
         KartKimliği::StreamData(örnek) => stream_data_kartı(örnek),
         KartKimliği::SvgImage => svg_image_kartı(),
+        KartKimliği::SyncCursor => sync_cursor_kartı(SyncCursorÖrneği::Cpu),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -943,6 +1079,8 @@ impl Render for ChartListesi {
             KartKimliği::SoftMinMax(örnek) if örnek.canlı_mı()
         );
         let soft_minmax_çalışıyor = self.soft_minmax_çalışıyor;
+        let sync_cursor_etkin = self.sync_cursor_grubu.senkron();
+        let sync_cursor_fare_etkin = self.sync_cursor_grubu.fare_basma_bırakma_senkron();
         let mevcut_seri_sayısı = self.grafik.as_ref().map_or(0, |grafik| {
             grafik.read(cx).grafik().seri_seçenekleri().len()
         });
@@ -1051,6 +1189,9 @@ impl Render for ChartListesi {
             }
             KartKimliği::SvgImage => {
                 "3 nokta × 1 seri · 400×200 bağımsız SVG görüntüsü".to_string()
+            }
+            KartKimliği::SyncCursor => {
+                "5 yüzey · 3.004 nokta · iki cursor eşleme grubu".to_string()
             }
             KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
@@ -1173,7 +1314,7 @@ impl Render for ChartListesi {
             aktif_kart.tanım_yolu()
         ));
         let tekerlek_anahtarı = self.tekerlek_anahtarı.clone();
-        let (geri_var, yakınlaştırılmış, etkileşimler, lejant, bileşen_hatası) =
+        let (mut geri_var, mut yakınlaştırılmış, etkileşimler, lejant, bileşen_hatası) =
             self.grafik.as_ref().map_or_else(
                 || (false, false, aktif_kart.etkileşimler(), None, None),
                 |grafik| {
@@ -1187,6 +1328,16 @@ impl Render for ChartListesi {
                     )
                 },
             );
+        if aktif_kart == KartKimliği::SyncCursor {
+            geri_var = self
+                .sync_cursor_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .sync_cursor_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        }
         let çizim_hatası = self.hata.clone().or(bileşen_hatası);
         let seri_adları = self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
             grafik
@@ -1878,6 +2029,20 @@ impl Render for ChartListesi {
             )
             .child(
                 katalog_kartı(
+                    "sync-cursor",
+                    "Sync Cursor",
+                    "sync-cursor",
+                    aktif_kart == KartKimliği::SyncCursor,
+                    "5 yüzey · cursor.pub/sub · seri etiketi eşleme",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::SyncCursor, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
                     "kart-cursor-snap",
                     "Cursor Snap",
                     "cursor-snap",
@@ -2132,6 +2297,39 @@ impl Render for ChartListesi {
                     .child(nokta_yazısı),
             )
             .child(tekerlek_anahtarı)
+            .when(aktif_kart == KartKimliği::SyncCursor, |öğe| {
+                öğe
+                    .child(
+                        Dugme::yeni(
+                            "sync-cursor-toggle",
+                            if sync_cursor_etkin {
+                                "✓ Cursor sync"
+                            } else {
+                                "○ Cursor sync"
+                            },
+                        )
+                        .boyutu(DugmeBoyutu::Kucuk)
+                        .turu(DugmeTuru::Ikincil)
+                        .tiklaninca(cx.listener(|bu, _, _, cx| {
+                            bu.sync_cursor_senkronunu_değiştir(cx);
+                        })),
+                    )
+                    .child(
+                        Dugme::yeni(
+                            "sync-cursor-mouse-toggle",
+                            if sync_cursor_fare_etkin {
+                                "✓ mousedown/up sync"
+                            } else {
+                                "○ mousedown/up sync"
+                            },
+                        )
+                        .boyutu(DugmeBoyutu::Kucuk)
+                        .turu(DugmeTuru::Ikincil)
+                        .tiklaninca(cx.listener(|bu, _, _, cx| {
+                            bu.sync_cursor_fare_filtresini_değiştir(cx);
+                        })),
+                    )
+            })
             .when(soft_minmax_canlı, |öğe| {
                 öğe.child(
                     Dugme::yeni("soft-minmax-baslat", "▶ dataMax++")
@@ -2325,7 +2523,13 @@ impl Render for ChartListesi {
                     .turu(DugmeTuru::Hayalet)
                     .devre_disi(!geri_var || !etkileşimler.görünüm_geçmişi)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        if let Some(grafik) = &bu.grafik {
+                        if bu.aktif_kart == KartKimliği::SyncCursor {
+                            for (_, grafik) in &bu.sync_cursor_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.önceki_görünüm(cx);
+                                });
+                            }
+                        } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
                             });
@@ -2339,7 +2543,13 @@ impl Render for ChartListesi {
                     .turu(DugmeTuru::Hayalet)
                     .devre_disi(!yakınlaştırılmış || !etkileşimler.çift_tıkla_tam_görünüm)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        if let Some(grafik) = &bu.grafik {
+                        if bu.aktif_kart == KartKimliği::SyncCursor {
+                            for (_, grafik) in &bu.sync_cursor_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.tam_görünüm(cx);
+                                });
+                            }
+                        } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.tam_görünüm(cx);
                             });
@@ -2351,7 +2561,14 @@ impl Render for ChartListesi {
                 Dugme::yeni("grafik-sifirla", "Sıfırla")
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Hayalet)
-                    .tiklaninca(cx.listener(|bu, _, _, cx| bu.grafiği_yenile(100, cx))),
+                    .tiklaninca(cx.listener(|bu, _, _, cx| {
+                        if bu.aktif_kart == KartKimliği::SyncCursor {
+                            bu.sync_cursor_grubu = SyncCursorGrubu::yeni();
+                            bu.sync_cursor_yüzeylerini_oluştur(cx);
+                        } else {
+                            bu.grafiği_yenile(100, cx);
+                        }
+                    })),
             );
 
         let çizim_tabanı = div()
@@ -2362,7 +2579,52 @@ impl Render for ChartListesi {
             .border_1()
             .border_color(rgb(0xe5e7eb))
             .bg(panel);
-        let çizim = if aktif_kart == KartKimliği::ScrollSync {
+        let sync_yüzeyi = |örnek| {
+            self.sync_cursor_grafikleri
+                .iter()
+                .find(|(kimlik, _)| *kimlik == örnek)
+                .map(|(_, grafik)| grafik.clone())
+        };
+        let çizim = if aktif_kart == KartKimliği::SyncCursor {
+            let cpu = sync_yüzeyi(SyncCursorÖrneği::Cpu);
+            let ram = sync_yüzeyi(SyncCursorÖrneği::Ram);
+            let tcp = sync_yüzeyi(SyncCursorÖrneği::Tcp);
+            let kırmızı_mavi = sync_yüzeyi(SyncCursorÖrneği::UyumsuzKırmızıMavi);
+            let yeşil_kırmızı = sync_yüzeyi(SyncCursorÖrneği::UyumsuzYeşilKırmızı);
+            çizim_tabanı
+                .flex_none()
+                .h(px(740.0))
+                .overflow_y_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .w_full()
+                        .h(px(220.0))
+                        .when_some(cpu, |öğe, grafik| öğe.child(grafik)),
+                )
+                .child(
+                    div()
+                        .mt_2()
+                        .flex()
+                        .gap_2()
+                        .children([ram, tcp].into_iter().map(|grafik| {
+                            div()
+                                .flex_1()
+                                .min_w_0()
+                                .h(px(220.0))
+                                .when_some(grafik, |öğe, grafik| öğe.child(grafik))
+                        })),
+                )
+                .child(div().mt_2().flex().gap_2().children(
+                    [kırmızı_mavi, yeşil_kırmızı].into_iter().map(|grafik| {
+                        div()
+                            .flex_1()
+                            .min_w_0()
+                            .h(px(220.0))
+                            .when_some(grafik, |öğe, grafik| öğe.child(grafik))
+                    }),
+                ))
+        } else if aktif_kart == KartKimliği::ScrollSync {
             çizim_tabanı
                 .flex_none()
                 .h(px(400.0))
@@ -2399,6 +2661,9 @@ impl Render for ChartListesi {
             }
             KartKimliği::ScrollSync => {
                 "Kutuyu kaydır · grafik üzerinde imleç ve seçim konumu kaydırmadan sonra doğru kalır"
+            }
+            KartKimliği::SyncCursor => {
+                "İmleci beş yüzeyde gezdir · tıkla: cursor kilidi · anahtarlar ilk grubun pub/sub ve mousedown/up filtresini değiştirir"
             }
             _ => {
                 "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır · çift tıkla: tam görünüm"

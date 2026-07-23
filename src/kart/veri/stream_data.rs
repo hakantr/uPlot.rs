@@ -6,18 +6,18 @@ use crate::UplotHatası;
 
 const VARLIK: &str = "bench/data.json";
 const SIKIŞTIRILMIŞ: &str = include_str!("stream_data.b64");
-pub(super) const SATIR_SAYISI: usize = 55_550;
-pub(super) const İLK_EPOCH_DAKİKA: u32 = 26_107_560;
+pub(crate) const SATIR_SAYISI: usize = 55_550;
+pub(crate) const İLK_EPOCH_DAKİKA: u32 = 26_107_560;
 
 #[derive(Clone)]
-pub(super) struct StreamKaynakVerisi {
+pub(crate) struct StreamKaynakVerisi {
     pub x: Vec<f64>,
     pub cpu: Vec<Option<f64>>,
     pub ram: Vec<Option<f64>>,
     pub tcp_out: Vec<Option<f64>>,
 }
 
-pub(super) fn stream_kaynak_verisi() -> Result<StreamKaynakVerisi, UplotHatası> {
+pub(crate) fn stream_kaynak_verisi() -> Result<StreamKaynakVerisi, UplotHatası> {
     let sıkıştırılmış = STANDARD
         .decode(SIKIŞTIRILMIŞ.split_whitespace().collect::<String>())
         .map_err(|hata| kaynak_hatası(format!("base64 çözülemedi: {hata}")))?;

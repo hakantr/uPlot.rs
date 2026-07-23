@@ -1098,6 +1098,15 @@ impl Grafik {
         self.odağı_ayarla(None)
     }
 
+    pub fn imleç_odağını_seriye_ayarla(&mut self, seri: Option<usize>) -> bool {
+        let geçerli = seri.filter(|indeks| *indeks < self.seçenekler.seriler.len());
+        self.odağı_ayarla(geçerli)
+    }
+
+    pub const fn odak_serisi(&self) -> Option<usize> {
+        self.odak_serisi
+    }
+
     fn odağı_ayarla(&mut self, seri: Option<usize>) -> bool {
         if self.odak_serisi == seri {
             return false;

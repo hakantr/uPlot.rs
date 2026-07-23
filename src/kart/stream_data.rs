@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[path = "veri/stream_data.rs"]
-mod kaynak_veri;
+pub(crate) mod kaynak_veri;
 
 use kaynak_veri::{SATIR_SAYISI, StreamKaynakVerisi, stream_kaynak_verisi};
 

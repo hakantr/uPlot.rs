@@ -2683,6 +2683,57 @@
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
         "performans": "uygulanamaz"
       }
+    },
+    {
+      "sıra": 50,
+      "id": "sync-cursor",
+      "başlık": { "en": "Sync Cursor", "tr": "Eşzamanlı İmleç" },
+      "kaynak": "demos/sync-cursor.html",
+      "kaynak_sha256": "bd239c085e3f1b5b32edabfc371df2d0599a77a01b887e4f1a99c449feb84cc2",
+      "ek_kaynaklar": [
+        { "yol": "src/sync.js", "sha256": "fbd0f583838cfd7082791f0bab247d75dc981f913500516263bcdd7255e52c57" },
+        { "yol": "bench/data.json", "sha256": "620ec683dfb856af79185dc1e42536c5e39a1fb1deebcff9202c7a660e54bf41" },
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
+      ],
+      "fixture": "src/kart/sync_cursor.rs#sync_cursor_kartı",
+      "örnek": "examples/sync_cursor.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/sync-cursor.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/sync_cursor.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin", "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin", "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "kartta_etkin", "dinamik-eksen-izgara": "kartta_etkin",
+          "surekli-imlec-izleme": "kartta_etkin", "canli-coklu-seri-lejanti": "kartta_etkin",
+          "kosullu-bos-ve-dolu-noktalar": "kartta_kapalı", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "kartta_etkin", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {
+          "kosullu-bos-ve-dolu-noktalar": "Resmî Sync Cursor yüzeyleri kaynakta nokta işaretlerini etkinleştirmez."
+        }
+      },
+      "sahip_faz": 5,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-five-surfaces", "source-exact-bench-data-slices",
+        "two-keyed-pub-sub-groups", "source-sync-enable-toggle",
+        "source-mousedown-mouseup-publication-filter", "cursor-lock-propagation",
+        "scale-key-aware-vertical-cursor", "x-only-cpu-ram-to-tcp-sync",
+        "series-label-focus-mapping", "mismatched-series-order",
+        "gpui-wasm-parity", "common-interaction-profile", "panic-free-pub-sub"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
+        "performans": "kısmi"
+      }
     }
   ]
 }

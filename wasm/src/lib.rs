@@ -23,24 +23,25 @@ use uplot_rs::{
     SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
     SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ,
     SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_KART_TANIM_ÖRNEĞİ,
-    SVG_IMAGE_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SeçimEylemi,
-    SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği,
-    SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği,
-    UplotHatası, YüzeyDikdörtgeni, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği,
+    SeriSeçenekleri, SeçimEylemi, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği,
+    SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı,
+    StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği, UplotHatası, YüzeyDikdörtgeni,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
     sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
     stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
-    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    sync_cursor_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -187,6 +188,16 @@ impl KartOturumu {
                     stream_data_kartı,
                 ),
             "svg-image" => svg_image_kartı(),
+            "sync-cursor" => sync_cursor_kartı(SyncCursorÖrneği::Cpu),
+            kimlik if kimlik.starts_with("sync-cursor-") => SyncCursorÖrneği::kimlikten(kimlik)
+                .map_or_else(
+                    || {
+                        Err(UplotHatası::BilinmeyenKart {
+                            kimlik: kimlik.to_string(),
+                        })
+                    },
+                    sync_cursor_kartı,
+                ),
             "cursor-bind" => cursor_bind_kartı(),
             "cursor-snap" => cursor_snap_kartı(),
             "cursor-tooltip" => cursor_tooltip_kartı(),
@@ -738,6 +749,18 @@ impl KartOturumu {
         self.grafik.imleç_odağını_temizle()
     }
 
+    pub fn imlec_odagini_seriye_ayarla(&mut self, seri_indeksi: i32) -> bool {
+        let seri = usize::try_from(seri_indeksi).ok();
+        self.grafik.imleç_odağını_seriye_ayarla(seri)
+    }
+
+    pub fn odak_serisi(&self) -> i32 {
+        self.grafik
+            .odak_serisi()
+            .and_then(|indeks| i32::try_from(indeks).ok())
+            .unwrap_or(-1)
+    }
+
     pub fn yakinlastirilmis(&self) -> bool {
         self.grafik.yakınlaştırılmış()
     }
@@ -770,13 +793,136 @@ impl KartOturumu {
     }
 }
 
+/// `src/sync.js` pub/sub, seri etiketi eşleme ve cursor kilidi kurallarını
+/// tarayıcı adaptörüne taşıyan çekirdek köprü.
+#[wasm_bindgen]
+pub struct SyncCursorKoprusu {
+    grup: SyncCursorGrubu,
+}
+
+#[wasm_bindgen]
+impl SyncCursorKoprusu {
+    #[wasm_bindgen(constructor)]
+    pub fn yeni() -> Self {
+        Self {
+            grup: SyncCursorGrubu::yeni(),
+        }
+    }
+
+    pub fn senkron(&self) -> bool {
+        self.grup.senkron()
+    }
+
+    pub fn senkronu_ayarla(&mut self, etkin: bool) -> bool {
+        self.grup.senkronu_ayarla(etkin)
+    }
+
+    pub fn fare_senkronu(&self) -> bool {
+        self.grup.fare_basma_bırakma_senkron()
+    }
+
+    pub fn fare_senkronunu_ayarla(&mut self, etkin: bool) -> bool {
+        self.grup.fare_basma_bırakma_senkronunu_ayarla(etkin)
+    }
+
+    pub fn imlec_hedefleri(&self, kaynak_indeksi: usize) -> Vec<u32> {
+        örnek_from_index(kaynak_indeksi).map_or_else(Vec::new, |kaynak| {
+            self.grup
+                .imleç_hedefleri(kaynak)
+                .into_iter()
+                .filter_map(|hedef| u32::try_from(örnek_index(hedef)).ok())
+                .collect()
+        })
+    }
+
+    pub fn seri_hedefi(
+        &self,
+        kaynak_indeksi: usize,
+        hedef_indeksi: usize,
+        seri_indeksi: usize,
+    ) -> i32 {
+        let Some(kaynak) = örnek_from_index(kaynak_indeksi) else {
+            return -1;
+        };
+        let Some(hedef) = örnek_from_index(hedef_indeksi) else {
+            return -1;
+        };
+        self.grup
+            .seri_hedefi(kaynak, hedef, seri_indeksi)
+            .and_then(|indeks| i32::try_from(indeks).ok())
+            .unwrap_or(-1)
+    }
+
+    pub fn dikey_imlec_senkron_mu(&self, kaynak_indeksi: usize, hedef_indeksi: usize) -> bool {
+        let Some(kaynak) = örnek_from_index(kaynak_indeksi) else {
+            return false;
+        };
+        let Some(hedef) = örnek_from_index(hedef_indeksi) else {
+            return false;
+        };
+        self.grup.dikey_imleç_senkron_mu(kaynak, hedef)
+    }
+
+    /// `[yüzey indeksi, kilit 0/1, ...]` biçiminde değişen yüzeyleri döndürür.
+    pub fn fare_birak(&mut self, kaynak_indeksi: usize) -> Vec<i32> {
+        örnek_from_index(kaynak_indeksi).map_or_else(Vec::new, |kaynak| {
+            self.grup
+                .fare_bırak(kaynak)
+                .into_iter()
+                .flat_map(|(örnek, kilitli)| {
+                    [
+                        i32::try_from(örnek_index(örnek)).unwrap_or(-1),
+                        i32::from(kilitli),
+                    ]
+                })
+                .collect()
+        })
+    }
+
+    pub fn kilitli(&self, yüzey_indeksi: usize) -> bool {
+        örnek_from_index(yüzey_indeksi).is_some_and(|örnek| self.grup.kilitli(örnek))
+    }
+}
+
+impl Default for SyncCursorKoprusu {
+    fn default() -> Self {
+        Self::yeni()
+    }
+}
+
+const fn örnek_from_index(indeks: usize) -> Option<SyncCursorÖrneği> {
+    match indeks {
+        0 => Some(SyncCursorÖrneği::Cpu),
+        1 => Some(SyncCursorÖrneği::Ram),
+        2 => Some(SyncCursorÖrneği::Tcp),
+        3 => Some(SyncCursorÖrneği::UyumsuzKırmızıMavi),
+        4 => Some(SyncCursorÖrneği::UyumsuzYeşilKırmızı),
+        _ => None,
+    }
+}
+
+const fn örnek_index(örnek: SyncCursorÖrneği) -> usize {
+    match örnek {
+        SyncCursorÖrneği::Cpu => 0,
+        SyncCursorÖrneği::Ram => 1,
+        SyncCursorÖrneği::Tcp => 2,
+        SyncCursorÖrneği::UyumsuzKırmızıMavi => 3,
+        SyncCursorÖrneği::UyumsuzYeşilKırmızı => 4,
+    }
+}
+
 fn js_hatası(hata: UplotHatası) -> JsValue {
     JsValue::from_str(&hata.to_string())
 }
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    233
+    238
+}
+
+#[wasm_bindgen]
+pub fn sync_cursor_kart_tanim_ornegi() -> String {
+    SYNC_CURSOR_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -1063,7 +1209,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -1088,7 +1234,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]
@@ -1106,7 +1252,7 @@ mod testler {
             }
         }
         assert!(path_gap_clip_kart_tanim_ornegi().contains("path_gap_clip_kartı"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]
@@ -1122,7 +1268,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(pixel_align_kart_tanim_ornegi().contains("pixel_align_kartı"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]
@@ -1137,7 +1283,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(points_kart_tanim_ornegi().contains("points_kartı"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]
@@ -1153,7 +1299,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(scales_dir_ori_kart_tanim_ornegi().contains("scales_dir_ori_kartı"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]
@@ -1187,7 +1333,7 @@ mod testler {
                 .is_empty()
         );
         assert!(scatter_kart_tanim_ornegi().contains("scatter_kartı"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]
@@ -1218,7 +1364,7 @@ mod testler {
         assert!(oturum.sine_akisini_ilerlet().is_ok_and(|değişti| değişti));
         assert_ne!(oturum.svg(1_920, 600), önce);
         assert!(sine_stream_kart_tanim_ornegi().contains("SineAkışı"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]
@@ -1241,7 +1387,7 @@ mod testler {
             }
         }
         assert!(soft_minmax_kart_tanim_ornegi().contains("SoftMinMaxAkışı"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]
@@ -1259,7 +1405,7 @@ mod testler {
             assert!(svg.contains("<rect") || svg.contains("<polygon"));
         }
         assert!(sparklines_bars_kart_tanim_ornegi().contains("sparklines_bars_kartı"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]
@@ -1277,7 +1423,7 @@ mod testler {
             assert!(svg.contains("#b3e5fc"));
         }
         assert!(sparklines_kart_tanim_ornegi().contains("sparklines_kartı"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]
@@ -1297,7 +1443,7 @@ mod testler {
             }
         }
         assert!(sparse_kart_tanim_ornegi().contains("sparse_kartı"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]
@@ -1314,7 +1460,7 @@ mod testler {
             assert!(svg.contains("<path") || svg.contains("<polygon"));
         }
         assert!(stacked_series_kart_tanim_ornegi().contains("stacked_series_kartı"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
 
         let Ok(mut oturum) = KartOturumu::yeni("stacked-series-stacked-1", 100) else {
             return;
@@ -1346,7 +1492,7 @@ mod testler {
             assert_ne!(oturum.svg(1_600, 600), önce);
         }
         assert!(stream_data_kart_tanim_ornegi().contains("StreamDataAkışı"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]
@@ -1363,7 +1509,33 @@ mod testler {
         assert!(svg.contains("fill=\"pink\""));
         assert!(svg.contains("stroke=\"blue\""));
         assert!(svg_image_kart_tanim_ornegi().contains("bağımsız_svg"));
-        assert_eq!(kart_sayisi(), 233);
+        assert_eq!(kart_sayisi(), 238);
+    }
+
+    #[test]
+    fn sync_cursor_wasm_beş_yüzeyi_ve_pub_sub_kuralını_korur() {
+        for örnek in SyncCursorÖrneği::TÜMÜ {
+            let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
+            assert!(oturum.is_ok(), "{}", örnek.kimlik());
+            let Ok(oturum) = oturum else {
+                continue;
+            };
+            assert!(
+                oturum
+                    .svg(örnek.boyut().0, örnek.boyut().1)
+                    .contains(örnek.başlık())
+            );
+        }
+        let mut köprü = SyncCursorKoprusu::yeni();
+        assert_eq!(köprü.imlec_hedefleri(0), vec![1, 2]);
+        assert!(köprü.dikey_imlec_senkron_mu(0, 1));
+        assert!(!köprü.dikey_imlec_senkron_mu(0, 2));
+        assert_eq!(köprü.seri_hedefi(3, 4, 0), 1);
+        assert_eq!(köprü.seri_hedefi(3, 4, 1), -1);
+        assert_eq!(köprü.fare_birak(0), vec![0, 1, 1, 1, 2, 1]);
+        assert!(köprü.kilitli(2));
+        assert!(sync_cursor_kart_tanim_ornegi().contains("SyncCursorGrubu"));
+        assert_eq!(kart_sayisi(), 238);
     }
 
     #[test]

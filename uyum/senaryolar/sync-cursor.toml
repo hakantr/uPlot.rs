@@ -1,0 +1,38 @@
+id = "sync-cursor"
+kaynak = "../uPlot/demos/sync-cursor.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/sync_cursor.rs#sync_cursor_kartı"
+yüzey_sayısı = 5
+yüzeyler = [
+  "sync-cursor-cpu",
+  "sync-cursor-ram",
+  "sync-cursor-tcp",
+  "sync-cursor-mismatch-red-blue",
+  "sync-cursor-mismatch-green-red",
+]
+boyutlar = [[1920, 400], [940, 400], [940, 400], [600, 400], [600, 400]]
+
+[veri]
+kaynak = "../uPlot/bench/data.json"
+kaynak_dilimi = 1000
+cpu_ram_tcp_serisi = 3
+uyumsuz_x = [0, 1]
+uyumsuz_y = [[0, 5], [5, 0]]
+
+[senkron]
+kaynak = "../uPlot/src/sync.js"
+gruplar = ["moo", "a"]
+ilk_grup_anahtarla_kapanır = true
+fare_basma_bırakma_yayın_filtresi = true
+cursor_kilidi = true
+cpu_ram_dikey = true
+tcp_yalnız_yatay = true
+uyumsuz_seri_etiketine_göre_eşlenir = true
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+örnek = "examples/sync_cursor.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

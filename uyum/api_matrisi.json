@@ -542,6 +542,30 @@
       "rust_karşılığı": "Grafik::çiz().svg / svg_image_belgesi",
       "durum": "tam_kanıtlı",
       "test": "src/kart/svg_image.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.sync(key) / _sync",
+      "rust_karşılığı": "SyncCursorGrubu::imleç_hedefleri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/sync_cursor.rs"
+    },
+    {
+      "kaynak_yolu": "src/sync.js sub / unsub / pub",
+      "rust_karşılığı": "SyncCursorGrubu + GPUI GpuiGrafikOlayı + WASM SyncCursorKoprusu",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/sync_cursor.rs"
+    },
+    {
+      "kaynak_yolu": "Cursor.sync scales / match / filters.pub",
+      "rust_karşılığı": "SyncCursorGrubu::dikey_imleç_senkron_mu / seri_hedefi / senkronu_ayarla",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/sync_cursor.rs"
+    },
+    {
+      "kaynak_yolu": "Cursor.lock + cursor.focus.prox + setSeries",
+      "rust_karşılığı": "SyncCursorGrubu::fare_bırak + Grafik::imleç_odağını_seriye_ayarla",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/sync_cursor.rs"
     }
   ]
 }

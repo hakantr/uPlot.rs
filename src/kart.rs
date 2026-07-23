@@ -45,6 +45,7 @@ mod sparse;
 mod stacked_series;
 mod stream_data;
 mod svg_image;
+mod sync_cursor;
 mod veri_uretici;
 mod zoom_touch;
 mod zoom_wheel;
@@ -167,5 +168,8 @@ pub use stream_data::{
 #[cfg(feature = "svg")]
 pub use svg_image::svg_image_belgesi;
 pub use svg_image::{SVG_IMAGE_KART_TANIM_ÖRNEĞİ, svg_image_kartı};
+pub use sync_cursor::{
+    SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SyncCursorGrubu, SyncCursorÖrneği, sync_cursor_kartı,
+};
 pub use zoom_touch::{ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, zoom_touch_kartı};
 pub use zoom_wheel::{ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, zoom_wheel_kartı};

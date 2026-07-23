@@ -27,6 +27,8 @@ struct İmleçDurumu {
 #[derive(Clone, Copy, Debug)]
 pub enum GpuiGrafikOlayı {
     DurumDeğişti,
+    İmleçDeğişti,
+    FareBırakıldı,
     /// `cursor-bind` Ctrl seçimi tamamlandı; üst uygulama metin UI'si açabilir.
     Açıklamaİstendi,
 }
@@ -46,6 +48,7 @@ pub struct GpuiGrafik {
     hata: Option<String>,
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
     odak: Option<FocusHandle>,
+    imleç_kilitli: bool,
 }
 
 impl GpuiGrafik {
@@ -61,6 +64,7 @@ impl GpuiGrafik {
             hata: None,
             çizim_sınırları: Rc::new(Cell::new(None)),
             odak: None,
+            imleç_kilitli: false,
         }
     }
 
@@ -90,6 +94,71 @@ impl GpuiGrafik {
             .or_else(|| self.grafik.son_değerler())
     }
 
+    pub fn senkron_yayını(&self) -> Option<(f64, f64, Option<usize>)> {
+        let imleç = self.imleç.as_ref()?;
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        let genişlik = sağ - sol;
+        let yükseklik = alt - üst;
+        if genişlik <= 0.0 || yükseklik <= 0.0 {
+            return None;
+        }
+        Some((
+            f64::from((imleç.fare.x - sol) / genişlik),
+            f64::from((imleç.fare.y - üst) / yükseklik),
+            self.grafik.odak_serisi(),
+        ))
+    }
+
+    pub fn senkron_imleci_ayarla(
+        &mut self,
+        yatay_oran: f64,
+        dikey_oran: Option<f64>,
+        odak_serisi: Option<usize>,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        if self.imleç_kilitli || !yatay_oran.is_finite() {
+            return false;
+        }
+        let x_oranı = yatay_oran.clamp(0.0, 1.0);
+        let Some((veri_x, seri_değerleri)) = self.grafik.en_yakın_noktalar(x_oranı) else {
+            return false;
+        };
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        let y = dikey_oran
+            .filter(|oran| oran.is_finite())
+            .map_or(-10.0, |oran| {
+                üst + oran.clamp(0.0, 1.0) as f32 * (alt - üst)
+            });
+        self.imleç = Some(İmleçDurumu {
+            fare: Nokta::yeni(sol + x_oranı as f32 * (sağ - sol), y),
+            veri_x,
+            seri_değerleri,
+            dağılım: None,
+        });
+        self.grafik.imleç_odağını_seriye_ayarla(odak_serisi);
+        cx.notify();
+        true
+    }
+
+    pub fn senkron_imleci_temizle(&mut self, cx: &mut Context<Self>) -> bool {
+        if self.imleç_kilitli || self.imleç.is_none() {
+            return false;
+        }
+        self.imleç = None;
+        self.grafik.imleç_odağını_temizle();
+        cx.notify();
+        true
+    }
+
+    pub fn senkron_kilidi_ayarla(&mut self, kilitli: bool, cx: &mut Context<Self>) -> bool {
+        let değişti = self.imleç_kilitli != kilitli;
+        self.imleç_kilitli = kilitli;
+        if değişti {
+            cx.notify();
+        }
+        değişti
+    }
+
     pub fn grafiği_ayarla(&mut self, grafik: Grafik, cx: &mut Context<Self>) {
         self.grafik = grafik;
         self.imleç = None;
@@ -99,6 +168,7 @@ impl GpuiGrafik {
         self.dokunma_kaydırma = None;
         self.boşluk_basılı = false;
         self.hata = None;
+        self.imleç_kilitli = false;
         Self::bildir(cx);
     }
 
@@ -381,6 +451,9 @@ impl GpuiGrafik {
     }
 
     fn imleci_güncelle(&mut self, pencere_konumu: ::gpui::Point<Pixels>) {
+        if self.imleç_kilitli {
+            return;
+        }
         let Some(fare) = self.sahne_konumu(pencere_konumu) else {
             self.imleç = None;
             self.grafik.imleç_odağını_temizle();
@@ -532,6 +605,11 @@ impl GpuiGrafik {
         cx.emit(GpuiGrafikOlayı::DurumDeğişti);
         cx.notify();
     }
+
+    fn imleç_bildir(cx: &mut Context<Self>) {
+        cx.emit(GpuiGrafikOlayı::İmleçDeğişti);
+        cx.notify();
+    }
 }
 
 impl EventEmitter<GpuiGrafikOlayı> for GpuiGrafik {}
@@ -658,7 +736,7 @@ impl Render for GpuiGrafik {
                     };
                     bu.seçim = Some((başlangıç, eksen_konumu));
                 }
-                GpuiGrafik::bildir(cx);
+                GpuiGrafik::imleç_bildir(cx);
             }))
             .on_scroll_wheel(cx.listener(|bu, olay: &ScrollWheelEvent, _, cx| {
                 bu.tekerlek_yakınlaştır(olay);
@@ -669,9 +747,11 @@ impl Render for GpuiGrafik {
                 GpuiGrafik::bildir(cx);
             }))
             .on_mouse_exit(cx.listener(|bu, _: &MouseExitEvent, _, cx| {
-                if bu.seçim.is_none() && bu.taşıma_başlangıcı.is_none() {
+                if !bu.imleç_kilitli && bu.seçim.is_none() && bu.taşıma_başlangıcı.is_none()
+                {
                     bu.imleç = None;
-                    GpuiGrafik::bildir(cx);
+                    bu.grafik.imleç_odağını_temizle();
+                    GpuiGrafik::imleç_bildir(cx);
                 }
             }))
             .on_mouse_down(
@@ -718,33 +798,36 @@ impl Render for GpuiGrafik {
                         return;
                     }
                     let açıklama_seçimi = std::mem::take(&mut bu.açıklama_seçimi);
-                    if let Some((başlangıç, bitiş)) = bu.seçim.take()
-                        && (bitiş - başlangıç).abs() >= 4.0
-                    {
-                        let (sol, sağ, üst, alt) = bu.çizim_alanı();
-                        let (başlangıç_oranı, bitiş_oranı) = if bu.grafik.x_dikey_mi() {
-                            (
-                                f64::from((alt - başlangıç) / (alt - üst)),
-                                f64::from((alt - bitiş) / (alt - üst)),
-                            )
+                    if let Some((başlangıç, bitiş)) = bu.seçim.take() {
+                        if (bitiş - başlangıç).abs() >= 4.0 {
+                            let (sol, sağ, üst, alt) = bu.çizim_alanı();
+                            let (başlangıç_oranı, bitiş_oranı) = if bu.grafik.x_dikey_mi() {
+                                (
+                                    f64::from((alt - başlangıç) / (alt - üst)),
+                                    f64::from((alt - bitiş) / (alt - üst)),
+                                )
+                            } else {
+                                (
+                                    f64::from((başlangıç - sol) / (sağ - sol)),
+                                    f64::from((bitiş - sol) / (sağ - sol)),
+                                )
+                            };
+                            match bu.grafik.seçimi_bitir(
+                                başlangıç_oranı,
+                                bitiş_oranı,
+                                açıklama_seçimi,
+                            ) {
+                                Ok(SeçimEylemi::Açıklamaİstendi) => {
+                                    bu.hata = None;
+                                    cx.emit(GpuiGrafikOlayı::Açıklamaİstendi);
+                                }
+                                Ok(_) => bu.hata = None,
+                                Err(hata) => {
+                                    bu.hata = Some(format!("Seçilen aralık uygulanamadı: {hata}"));
+                                }
+                            }
                         } else {
-                            (
-                                f64::from((başlangıç - sol) / (sağ - sol)),
-                                f64::from((bitiş - sol) / (sağ - sol)),
-                            )
-                        };
-                        match bu
-                            .grafik
-                            .seçimi_bitir(başlangıç_oranı, bitiş_oranı, açıklama_seçimi)
-                        {
-                            Ok(SeçimEylemi::Açıklamaİstendi) => {
-                                bu.hata = None;
-                                cx.emit(GpuiGrafikOlayı::Açıklamaİstendi);
-                            }
-                            Ok(_) => bu.hata = None,
-                            Err(hata) => {
-                                bu.hata = Some(format!("Seçilen aralık uygulanamadı: {hata}"));
-                            }
+                            cx.emit(GpuiGrafikOlayı::FareBırakıldı);
                         }
                     }
                     GpuiGrafik::bildir(cx);
@@ -971,7 +1054,11 @@ pub fn sahneyi_boya(
                 boyut,
                 hiza,
             } => {
-                let paylaşımlı = SharedString::from(içerik.clone());
+                // GPUI `shape_line` çok satırlı metni panic ile reddeder. Sahne
+                // kaynağı dış veri/başlık içerebildiğinden adaptör sınırında
+                // satır sonlarını güvenli tek satır boşluğuna dönüştürürüz.
+                let tek_satır = içerik.replace(['\r', '\n'], " ");
+                let paylaşımlı = SharedString::from(tek_satır);
                 let koşu = TextRun {
                     len: paylaşımlı.len(),
                     font: pencere.text_style().font(),
