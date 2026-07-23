@@ -512,6 +512,30 @@
       "rust_karşılığı": "stacked_series_kartı_görünür / GPUI ve WASM seri görünürlük kontrolleri",
       "durum": "tam_kanıtlı",
       "test": "src/kart/stacked_series.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.setData sliding/increasing stream slices",
+      "rust_karşılığı": "StreamDataAkışı::ilerlet / Grafik::veriyi_ayarla",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/stream_data.rs"
+    },
+    {
+      "kaynak_yolu": "Scale.auto=false static x/%/mb ranges",
+      "rust_karşılığı": "GrafikSeçenekleri::x_aralığı / YÖlçekSeçenekleri::aralık",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/stream_data.rs"
+    },
+    {
+      "kaynak_yolu": "Cursor.drag.setScale=false / Select.show=false",
+      "rust_karşılığı": "EtkileşimSeçenekleri::seçim_yakınlaştır(false)",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/stream_data.rs"
+    },
+    {
+      "kaynak_yolu": "Series.value latest value when cursor index is null",
+      "rust_karşılığı": "Grafik::son_değerler / GPUI ve WASM lejant köprüleri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/stream_data.rs"
     }
   ]
 }

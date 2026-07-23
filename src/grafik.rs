@@ -967,6 +967,30 @@ impl Grafik {
         Some((x, değerler))
     }
 
+    /// İmleç bulunmadığında uPlot lejantının gösterdiği son hizalı veri satırını döndürür.
+    pub fn son_değerler(&self) -> Option<(f64, Vec<Option<f64>>)> {
+        let indeks = self.veri.uzunluk().checked_sub(1)?;
+        let x = self.veri.x().get(indeks).copied()?;
+        let değerler = self
+            .veri
+            .seriler()
+            .iter()
+            .zip(self.seçenekler.seriler.iter())
+            .map(|(seri, seçenek)| {
+                seçenek
+                    .lejant_değerleri
+                    .as_ref()
+                    .filter(|değerler| değerler.len() == seri.len())
+                    .unwrap_or(seri)
+                    .get(indeks)
+                    .copied()
+                    .flatten()
+                    .map(|değer| değer * seçenek.gösterim_değer_çarpanı)
+            })
+            .collect();
+        Some((x, değerler))
+    }
+
     /// İmleç noktasının rengini seri gradyanının geçerli ölçek duraklarına göre çözer.
     pub fn seri_imleç_rengi(
         &self,

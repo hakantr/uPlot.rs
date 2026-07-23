@@ -1,0 +1,35 @@
+id = "stream-data"
+kaynak = "../uPlot/demos/stream-data.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/stream_data.rs#stream_data_kartı"
+yüzey_sayısı = 3
+yüzeyler = [
+  "stream-data-fixed-sliding",
+  "stream-data-increasing",
+  "stream-data-increasing-static-x",
+]
+boyut = [1600, 600]
+
+[veri]
+kaynak = "../uPlot/bench/data.json"
+satır_sayısı = 55550
+seriler = ["CPU", "RAM", "TCP Out"]
+türetim = ["round3(100-idl)", "round2(100*used/(used+free))", "send"]
+
+[akış]
+aralık_ms = 100
+adım = 10
+sabit_pencere = 3000
+artan_başlangıç = 3000
+sabit_x_artan_başlangıç = 10
+sabit_x_aralığı = [1566453600, 1566813540]
+yüzde_aralığı = [0, 100]
+mb_aralığı = [0, 70]
+
+[etkileşim]
+seçim_yakınlaştırma = false
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

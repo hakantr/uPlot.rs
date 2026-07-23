@@ -2585,6 +2585,58 @@
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
         "performans": "kısmi"
       }
+    },
+    {
+      "sıra": 48,
+      "id": "stream-data",
+      "başlık": { "en": "Data Stream", "tr": "Canlı Veri Akışı" },
+      "kaynak": "demos/stream-data.html",
+      "kaynak_sha256": "c4afb71842bf43b76b12b208299e0d4c9a9d6d0094acdfd52f7a28709c48ac70",
+      "ek_kaynaklar": [
+        { "yol": "bench/data.json", "sha256": "620ec683dfb856af79185dc1e42536c5e39a1fb1deebcff9202c7a660e54bf41" },
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
+      ],
+      "fixture": "src/kart/stream_data.rs#stream_data_kartı",
+      "örnek": "examples/stream_data.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/stream-data.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/stream_data.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin", "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin", "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "kartta_etkin", "dinamik-eksen-izgara": "kartta_etkin",
+          "surekli-imlec-izleme": "kartta_etkin", "canli-coklu-seri-lejanti": "kartta_etkin",
+          "kosullu-bos-ve-dolu-noktalar": "kartta_kapalı", "secim-yakinlastirma": "kartta_kapalı",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "kartta_etkin", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {
+          "kosullu-bos-ve-dolu-noktalar": "Resmî Data Stream yüzeyleri nokta işaretleri çizmez.",
+          "secim-yakinlastirma": "Resmî demo cursor.drag.setScale=false ve select.show=false kullanır."
+        }
+      },
+      "sahip_faz": 5,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-three-1600x600-surfaces", "source-exact-55550-row-data",
+        "lossless-derived-cpu-ram-tcp-values", "fixed-length-sliding-window",
+        "increasing-length-data", "increasing-length-static-x-scale",
+        "100ms-ten-row-set-data", "percent-and-right-mb-axes",
+        "source-latest-value-legend-without-cursor",
+        "source-selection-disabled", "gpui-wasm-parity",
+        "common-interaction-profile", "panic-free-source-decoding"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
+        "performans": "kısmi"
+      }
     }
   ]
 }

@@ -87,6 +87,7 @@ impl GpuiGrafik {
         self.imleç
             .as_ref()
             .map(|imleç| (imleç.veri_x, imleç.seri_değerleri.clone()))
+            .or_else(|| self.grafik.son_değerler())
     }
 
     pub fn grafiği_ayarla(&mut self, grafik: Grafik, cx: &mut Context<Self>) {

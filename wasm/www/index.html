@@ -304,6 +304,7 @@
       sparklines_kart_tanim_ornegi,
       sparse_kart_tanim_ornegi,
       stacked_series_kart_tanim_ornegi,
+      stream_data_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1108,6 +1109,38 @@
         etkileşimler: () => ortakEtkileşimler(),
       };
     }
+    const streamDataYüzeyleri = [
+      ["stream-data-fixed-sliding", "Fixed length / sliding data slices", "3.000 görünür satır · kayan pencere"],
+      ["stream-data-increasing", "Increasing length data", "3.000 satırdan başlayan büyüyen veri"],
+      ["stream-data-increasing-static-x", "Increasing length data, static x scale", "10 satırdan başlayan sabit X/%/MB ölçeği"],
+    ];
+    document.querySelector('[data-kart="stacked-series-joined-mixed"]')?.insertAdjacentHTML(
+      "afterend",
+      streamDataYüzeyleri.map(([kimlik, başlık, durum]) => `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>stream-data</small>
+          <div class="durum">${durum} · 100 ms/10 satır</div>
+        </article>`).join("")
+    );
+    for (const [kimlik, başlık, yardım] of streamDataYüzeyleri) {
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/stream-data.html">stream-data.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/bench/data.json">bench/data.json</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">uPlot.setData()</a>
+          <br>Resmî 55.550 satırlık veri; CPU, RAM ve TCP Out dönüşümleriyle kayıpsız türetilir. Üç 1600×600 yüzey 100 ms'de 10 satır ilerler; seçimle yakınlaştırma kaynakta olduğu gibi kapalıdır.`,
+        tanım: () => stream_data_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/stream_data.rs",
+        seriler: [
+          { etiket: "CPU", renk: "red" },
+          { etiket: "RAM", renk: "blue" },
+          { etiket: "TCP Out", renk: "green" },
+        ],
+        yardım: `${yardım} · canlı setData · tekerlek: yakınlaştır · çift tıkla: tam görünüm`,
+        değişkenNokta: false,
+        etkileşimler: () => ({ ...ortakEtkileşimler(), seçim: false }),
+      };
+    }
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",
@@ -1625,6 +1658,7 @@
     let autosizeZamanlayıcı = null;
     let alignDataZamanlayıcı = null;
     let sineAnimationFrame = null;
+    let streamDataZamanlayıcı = null;
     let softMinMaxZamanlayıcı = null;
     let etkileşimler = {
       tekerlek: false,
@@ -1736,6 +1770,18 @@
         ${kart.scrollSync ? "" : `<div class="yardım">${kart.yardım}</div>`}
         <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
         ${lejantSerileri}</div>`);
+      if (aktifKart.startsWith("stream-data-")) {
+        const [x, ...değerler] = oturum.son_degerler();
+        const xHedefi = chart.querySelector("#x-değeri");
+        if (xHedefi && Number.isFinite(x)) {
+          xHedefi.textContent = x.toLocaleString("tr-TR", { maximumFractionDigits: 3 });
+        }
+        değerler.forEach((değer, indeks) => {
+          const hedef = chart.querySelector(`#seri-değeri-${indeks}`);
+          if (hedef) hedef.textContent = Number.isFinite(değer)
+            ? değer.toLocaleString("tr-TR", { maximumFractionDigits: 3 }) : "--";
+        });
+      }
       chart.querySelectorAll("[data-seri-toggle]").forEach(öğe => {
         const değiştir = () => {
           const indeks = Number(öğe.dataset.seriToggle);
@@ -2270,6 +2316,10 @@
           clearInterval(softMinMaxZamanlayıcı);
           softMinMaxZamanlayıcı = null;
         }
+        if (streamDataZamanlayıcı !== null) {
+          clearInterval(streamDataZamanlayıcı);
+          streamDataZamanlayıcı = null;
+        }
         oturum?.free();
         aktifKart = kimlik;
         document.querySelectorAll("[data-kart]").forEach(öğe =>
@@ -2376,6 +2426,27 @@
             }
           };
           sineAnimationFrame = requestAnimationFrame(sineAdımı);
+        } else if (kimlik.startsWith("stream-data-")) {
+          streamDataZamanlayıcı = setInterval(() => {
+            if (aktifKart !== kimlik || !oturum) {
+              clearInterval(streamDataZamanlayıcı);
+              streamDataZamanlayıcı = null;
+              return;
+            }
+            try {
+              if (oturum.stream_data_ilerlet()) {
+                çiz();
+                hata.textContent = "";
+              } else {
+                clearInterval(streamDataZamanlayıcı);
+                streamDataZamanlayıcı = null;
+              }
+            } catch (neden) {
+              hata.textContent = `Data Stream güncellenemedi: ${String(neden)}`;
+              clearInterval(streamDataZamanlayıcı);
+              streamDataZamanlayıcı = null;
+            }
+          }, 100);
         }
       }
       document.querySelectorAll("[data-kart]").forEach(öğe => {

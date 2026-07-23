@@ -29,9 +29,10 @@ use uplot_rs::{
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
     SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
     SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ,
-    SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği,
-    SeriSeçenekleri, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği,
-    SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği, UplotHatası,
+    SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS,
+    STREAM_DATA_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı,
+    SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği,
+    SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, UplotHatası,
     ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
     add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
     arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
@@ -45,8 +46,8 @@ use uplot_rs::{
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
     sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
-    stacked_series_kartı, stacked_series_kartı_görünür, zoom_touch_kartı, zoom_wheel_kartı,
-    ÇubukYönü, ÇubukÖrneği,
+    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, zoom_touch_kartı,
+    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -76,6 +77,7 @@ enum KartKimliği {
     Sparklines(SparklineÖrneği),
     Sparse(SparseÖrneği),
     StackedSeries(StackedSeriesÖrneği),
+    StreamData(StreamDataÖrneği),
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -131,6 +133,7 @@ impl KartKimliği {
             Self::Sparklines(örnek) => örnek.başlık(),
             Self::Sparse(örnek) => örnek.başlık(),
             Self::StackedSeries(örnek) => örnek.başlık(),
+            Self::StreamData(örnek) => örnek.başlık(),
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -212,6 +215,7 @@ impl KartKimliği {
             Self::StackedSeries(_) => {
                 "stacked-series.html · stack.js · yığma, yüzde, grup ve karma veri"
             }
+            Self::StreamData(_) => "stream-data.html · bench/data.json · setData canlı akışı",
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -285,6 +289,7 @@ impl KartKimliği {
             Self::Sparklines(_) => SPARKLINES_KART_TANIM_ÖRNEĞİ,
             Self::Sparse(_) => SPARSE_KART_TANIM_ÖRNEĞİ,
             Self::StackedSeries(_) => STACKED_SERIES_KART_TANIM_ÖRNEĞİ,
+            Self::StreamData(_) => STREAM_DATA_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -336,6 +341,7 @@ impl KartKimliği {
             Self::Sparklines(_) => "src/kart/sparklines.rs",
             Self::Sparse(_) => "src/kart/sparse.rs",
             Self::StackedSeries(_) => "src/kart/stacked_series.rs",
+            Self::StreamData(_) => "src/kart/stream_data.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -370,6 +376,8 @@ impl KartKimliği {
                 .çift_tıkla_tam_görünüm(false)
         } else if self == Self::CursorBind {
             ortak_kart_etkileşimleri().ctrl_açıklama(true)
+        } else if matches!(self, Self::StreamData(_)) {
+            ortak_kart_etkileşimleri().seçim_yakınlaştır(false)
         } else {
             ortak_kart_etkileşimleri()
         }
@@ -393,6 +401,7 @@ pub struct ChartListesi {
     align_data_zamanlayıcısı: Option<Task<()>>,
     pixel_align_adımı: usize,
     sine_akışı: Option<SineAkışı>,
+    stream_data_akışı: Option<StreamDataAkışı>,
     soft_minmax_akışı: Option<SoftMinMaxAkışı>,
     soft_minmax_çalışıyor: bool,
 }
@@ -449,6 +458,7 @@ impl ChartListesi {
             align_data_zamanlayıcısı: None,
             pixel_align_adımı: 140,
             sine_akışı: None,
+            stream_data_akışı: None,
             soft_minmax_akışı: None,
             soft_minmax_çalışıyor: false,
         }
@@ -508,6 +518,17 @@ impl ChartListesi {
                 Ok(akış) => Some(akış),
                 Err(hata) => {
                     self.hata = Some(format!("Sine Stream başlatılamadı: {hata}"));
+                    None
+                }
+            }
+        } else {
+            None
+        };
+        self.stream_data_akışı = if let KartKimliği::StreamData(örnek) = kart {
+            match StreamDataAkışı::yeni(örnek) {
+                Ok(akış) => Some(akış),
+                Err(hata) => {
+                    self.hata = Some(format!("Data Stream başlatılamadı: {hata}"));
                     None
                 }
             }
@@ -615,6 +636,59 @@ impl ChartListesi {
                                 Err(hata) => {
                                     bu.hata =
                                         Some(format!("Sine Stream verisi üretilemedi: {hata}"));
+                                    false
+                                }
+                            }
+                        })
+                        .unwrap_or(false);
+                    if !devam {
+                        break;
+                    }
+                }
+            }));
+        } else if matches!(kart, KartKimliği::StreamData(_)) {
+            self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
+                loop {
+                    cx.background_executor()
+                        .timer(Duration::from_millis(STREAM_DATA_ARALIK_MS))
+                        .await;
+                    let devam = bu
+                        .update(cx, |bu, cx| {
+                            if bu.aktif_kart != kart {
+                                return false;
+                            }
+                            let sonuç = bu.stream_data_akışı.as_mut().map_or_else(
+                                || {
+                                    Err(UplotHatası::GeçersizKaynakVeri {
+                                        varlık: "StreamDataAkışı",
+                                        açıklama: "masaüstü akış durumu bulunamadı".to_string(),
+                                    })
+                                },
+                                |akış| {
+                                    if !akış.ilerlet() {
+                                        return Ok(None);
+                                    }
+                                    akış.kartı().map(|(_, veri)| Some(veri))
+                                },
+                            );
+                            match sonuç {
+                                Ok(Some(veri)) => {
+                                    if let Some(grafik) = &bu.grafik {
+                                        let güncellendi = grafik.update(cx, |grafik, cx| {
+                                            grafik.veriyi_ayarla(veri, cx)
+                                        });
+                                        if let Err(hata) = güncellendi {
+                                            bu.hata =
+                                                Some(format!("Data Stream güncellenemedi: {hata}"));
+                                            return false;
+                                        }
+                                    }
+                                    true
+                                }
+                                Ok(None) => false,
+                                Err(hata) => {
+                                    bu.hata =
+                                        Some(format!("Data Stream verisi üretilemedi: {hata}"));
                                     false
                                 }
                             }
@@ -818,6 +892,7 @@ fn grafik_oluştur(
         KartKimliği::Sparklines(örnek) => sparklines_kartı(örnek),
         KartKimliği::Sparse(örnek) => sparse_kartı(örnek),
         KartKimliği::StackedSeries(örnek) => stacked_series_kartı(örnek),
+        KartKimliği::StreamData(örnek) => stream_data_kartı(örnek),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -957,6 +1032,16 @@ impl Render for ChartListesi {
             KartKimliği::StackedSeries(örnek) => {
                 let (genişlik, yükseklik) = örnek.boyut();
                 format!("Kaynak yığma yüzeyi · {genişlik}×{yükseklik}")
+            }
+            KartKimliği::StreamData(örnek) => {
+                let (başlangıç, uzunluk) = self
+                    .stream_data_akışı
+                    .as_ref()
+                    .map_or((0, 0), |akış| (akış.başlangıç(), akış.uzunluk()));
+                format!(
+                    "{} · satır {başlangıç} · {uzunluk} görünür · 100 ms/10 satır setData",
+                    örnek.başlık()
+                )
             }
             KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
@@ -1746,6 +1831,21 @@ impl Render for ChartListesi {
                     "stacked-series",
                     aktif_kart == kart,
                     "Yığma · bant · null/undefined · yüzde/grup",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
+            .children(StreamDataÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::StreamData(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "stream-data",
+                    aktif_kart == kart,
+                    "55.550 kaynak satırı · 100 ms/10 satır setData",
                     panel,
                     vurgu,
                 )
