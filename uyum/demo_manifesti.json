@@ -1598,6 +1598,47 @@
         "panic-free-gradient-validation"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+    },
+    {
+      "sıra": 27,
+      "id": "grid-over-series",
+      "başlık": { "en": "Grid Over Series", "tr": "Serilerin Üzerinde Izgara" },
+      "kaynak": "demos/grid-over-series.html",
+      "kaynak_sha256": "67d1ea81b11b936d47d098ca3897bbe97a3a48251007fdcae2be3d22e0462a85",
+      "ek_kaynaklar": [
+        { "yol": "dist/uPlot.d.ts", "sha256": "c9fb5d1fe8f2084b44690c841e84ab63402549d9420535a6081b389a461fefe5" },
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
+      ],
+      "fixture": "src/kart/grid_over_series.rs#grid_over_series_kartı",
+      "örnek": "examples/grid_over_series.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/grid-over-series.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/grid_over_series.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı", "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı", "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı", "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı", "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "devralındı"
+        }
+      },
+      "sahip_faz": 2,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-three-by-thirty-data-generator", "fixed-proof-seed", "source-series-colors",
+        "source-opaque-fills", "series-before-axes-draw-order", "grid-over-series",
+        "core-owned-layer-order", "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "panic-free-layer-reordering"
+      ],
+      "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
     }
   ]
 }

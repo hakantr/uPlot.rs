@@ -896,6 +896,7 @@ impl Grafik {
             .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
             .map_or("", |ölçek| ölçek.birim.as_str());
 
+        let eksen_komutları_başlangıcı = sahne.komutlar().len();
         let y_artımı = uygun_artım(y_aralığı, yükseklik, 30.0);
         for y_değeri in
             self.y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, y_aralığı, yükseklik)
@@ -1043,6 +1044,7 @@ impl Grafik {
                 hiza: MetinHizası::Orta,
             });
         }
+        let eksen_komutları_bitişi = sahne.komutlar().len();
 
         for bant in &self.seçenekler.bantlar {
             let Some(üst_seri) = self.veri.seriler().get(bant.üst_seri) else {
@@ -1339,6 +1341,13 @@ impl Grafik {
                 boyut: 12.0,
                 hiza: MetinHizası::Başlangıç,
             });
+        }
+
+        if self.seçenekler.çizim_sırası == crate::ÇizimSırası::SerilerEksenler {
+            sahne.komut_aralığını_sona_taşı(
+                eksen_komutları_başlangıcı,
+                eksen_komutları_bitişi,
+            );
         }
 
         sahne

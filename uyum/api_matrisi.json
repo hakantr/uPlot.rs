@@ -212,6 +212,12 @@
       "rust_karşılığı": "YÖlçekDağılımı::ArcSinh + ÖlçekGradyanı",
       "durum": "tam_kanıtlı",
       "test": "src/kart/gradients.rs"
+    },
+    {
+      "kaynak_yolu": "Options.drawOrder",
+      "rust_karşılığı": "ÇizimSırası / GrafikSeçenekleri::çizim_sırası",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/grid_over_series.rs"
     }
   ]
 }

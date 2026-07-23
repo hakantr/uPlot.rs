@@ -156,7 +156,7 @@ const uygulanmışDemolar = new Set([
   "bars-grouped-stacked.html", "bars-values-autosize.html", "box-whisker.html",
   "candlestick-ohlc.html", "cursor-bind.html", "cursor-snap.html", "cursor-tooltip.html",
   "custom-scales.html", "data-smoothing.html", "dependent-scale.html", "draw-hooks.html",
-  "focus-cursor.html", "gradients.html",
+  "focus-cursor.html", "gradients.html", "grid-over-series.html",
   "missing-data.html", "months.html", "resize.html", "scale-padding.html", "zoom-touch.html",
   "zoom-wheel.html",
 ]);

@@ -14,6 +14,13 @@ pub enum XÖlçekDağılımı {
     Logaritmik { taban: f64 },
 }
 
+/// uPlot `drawOrder` içindeki iki yerleşik çizim katmanının sırası.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ÇizimSırası {
+    EksenlerSeriler,
+    SerilerEksenler,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ÇubukYönü {
     Dikey,
@@ -426,6 +433,7 @@ pub struct GrafikSeçenekleri {
     pub nokta_katmanları: Vec<NoktaKatmanı>,
     pub çizim_kancaları: Option<ÇizimKancasıDüzeni>,
     pub odak: Option<OdakDüzeni>,
+    pub çizim_sırası: ÇizimSırası,
     pub ızgara_rengi: String,
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
@@ -467,6 +475,7 @@ impl GrafikSeçenekleri {
             nokta_katmanları: Vec::new(),
             çizim_kancaları: None,
             odak: None,
+            çizim_sırası: ÇizimSırası::EksenlerSeriler,
             ızgara_rengi: "#e5e7eb".to_string(),
             imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
@@ -508,6 +517,11 @@ impl GrafikSeçenekleri {
 
     pub fn odak(mut self, düzen: OdakDüzeni) -> Self {
         self.odak = Some(düzen);
+        self
+    }
+
+    pub fn çizim_sırası(mut self, sıra: ÇizimSırası) -> Self {
+        self.çizim_sırası = sıra;
         self
     }
 

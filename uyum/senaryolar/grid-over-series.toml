@@ -1,0 +1,25 @@
+id = "grid-over-series"
+kaynak = "../uPlot/demos/grid-over-series.html"
+fixture = "src/kart/grid_over_series.rs#grid_over_series_kartı"
+viewport = [1920, 600]
+device_pixel_ratio = 1
+durum = "seri-sonra-eksen-katman-sırası"
+
+[veri]
+x = [1, 30]
+nokta_sayısı = 30
+seri_sayısı = 3
+değer_havuzu = [-10, 10]
+kanıt_tohumu = "0x6A120E51"
+y_ölçeği = [-12, 12]
+
+[çizim]
+sıra = ["series", "axes"]
+ızgara = "rgba(0,0,0,0.2)"
+çizgiler = ["#D32F2F", "#2E7D32", "#1565C0"]
+dolgular = ["#E57373", "#66BB6A", "#42A5F5"]
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/grid-over-series/grid-over-series.svg"

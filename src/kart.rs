@@ -18,6 +18,7 @@ mod dependent_scale;
 mod draw_hooks;
 mod focus_cursor;
 mod gradients;
+mod grid_over_series;
 mod missing_data;
 mod months;
 mod ortak;
@@ -77,6 +78,9 @@ pub use dependent_scale::{DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, dependent_scale_
 pub use draw_hooks::{DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, draw_hooks_kartı};
 pub use focus_cursor::{FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, focus_cursor_kartı};
 pub use gradients::{GRADIENTS_KART_TANIM_ÖRNEĞİ, GradientÖrneği, gradients_kartı};
+pub use grid_over_series::{
+    GRID_OVER_SERIES_KANIT_TOHUMU, GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, grid_over_series_kartı,
+};
 pub use missing_data::{
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
 };

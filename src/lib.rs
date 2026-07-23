@@ -36,7 +36,8 @@ pub use kart::{
     CURSOR_SNAP_KANIT_TOHUMU, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
     CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
     DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, DRAW_HOOKS_KART_TANIM_ÖRNEĞİ,
-    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ, GradientÖrneği,
+    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ,
+    GRID_OVER_SERIES_KANIT_TOHUMU, GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KANIT_TOHUMU, MONTHS_KART_TANIM_ÖRNEĞİ,
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SmoothingÖrneği,
     ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
@@ -45,16 +46,16 @@ pub use kart::{
     axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
     box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
     cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
-    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, hareketli_ortalama,
-    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
-    months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı, savitzky_golay,
-    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    hareketli_ortalama, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
+    savitzky_golay, scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
 };
 pub use olcek::Aralık;
 pub use secenek::{
     EtkileşimSeçenekleri, GradyanDurağı, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri,
     KutuBıyıkDüzeni, MumDüzeni, NoktaKatmanı, OdakDüzeni, OdakStili, SeriBandı, SeriSeçenekleri,
     SeriÇizimTürü, TekerlekAyarları, TekerlekKipi, XÖlçekDağılımı, YÖlçekDağılımı,
-    YÖlçekSeçenekleri, ÇizimKancasıDüzeni, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı,
+    YÖlçekSeçenekleri, ÇizimKancasıDüzeni, ÇizimSırası, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı,
 };
 pub use veri::{BoşlukKipi, HizalıVeri, hizalı_verileri_birleştir};

@@ -126,6 +126,14 @@ impl Sahne {
         &self.komutlar
     }
 
+    pub(crate) fn komut_aralığını_sona_taşı(&mut self, başlangıç: usize, bitiş: usize) {
+        if başlangıç >= bitiş || bitiş > self.komutlar.len() {
+            return;
+        }
+        let taşınan = self.komutlar.drain(başlangıç..bitiş).collect::<Vec<_>>();
+        self.komutlar.extend(taşınan);
+    }
+
     pub fn boyut(&self) -> (u32, u32) {
         (self.genişlik, self.yükseklik)
     }

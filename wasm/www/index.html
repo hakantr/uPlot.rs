@@ -241,6 +241,7 @@
       draw_hooks_kart_tanim_ornegi,
       focus_cursor_kart_tanim_ornegi,
       gradients_kart_tanim_ornegi,
+      grid_over_series_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
@@ -836,6 +837,27 @@
         etkileşimler: () => ortakEtkileşimler(),
       };
     }
+
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="grid-over-series" aria-current="false" tabindex="0">
+        <strong>Grid Over Series</strong><small>grid-over-series</small>
+        <div class="durum">30 nokta × 3 seri · ızgara üstte</div>
+      </article>`);
+    kartlar["grid-over-series"] = {
+      başlık: "Grid Over Series",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/grid-over-series.html">grid-over-series.html</a>
+        <br>Resmî drawOrder sırası, rastgele değer havuzu, seri ve dolgu renkleri Rust çekirdeğinde taşınır. Rastgele akış sabit kanıt tohumuyla tekrarlanabilir yapılır.`,
+      tanım: () => grid_over_series_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/grid_over_series.rs",
+      seriler: [
+        { etiket: "1", renk: "#D32F2F" },
+        { etiket: "2", renk: "#2E7D32" },
+        { etiket: "3", renk: "#1565C0" },
+      ],
+      yardım: "Izgara ve eksen çizgileri dolgulu serilerin üzerinde kalır",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     function ortakEtkileşimler() {
       return {
