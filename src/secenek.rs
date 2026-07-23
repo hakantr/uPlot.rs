@@ -9,7 +9,9 @@ mod zaman;
 pub use gradyan::{GradyanDurağı, GradyanEkseni, GradyanKonumu, ÖlçekGradyanı};
 pub use isi_haritasi::{IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu};
 pub use seri::{SeriSeçenekleri, SeriÇizimTürü};
-pub use y_olcek::{YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri};
+pub use y_olcek::{
+    GüzelÖlçekDüzeni, YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri
+};
 pub use zaman::TarihAdları;
 
 #[derive(Debug, Clone, Copy, PartialEq)]

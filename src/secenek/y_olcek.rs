@@ -1,4 +1,28 @@
-use crate::Aralık;
+use crate::{Aralık, UplotHatası};
+
+/// `nice-scale.html` içindeki piksel yüksekliğine bağlı güzel sayı
+/// algoritmasının doğrulanmış ayarları.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct GüzelÖlçekDüzeni {
+    pub(crate) en_az_etiket_boşluğu: f32,
+}
+
+impl GüzelÖlçekDüzeni {
+    pub fn yeni(en_az_etiket_boşluğu: f32) -> Result<Self, UplotHatası> {
+        if !en_az_etiket_boşluğu.is_finite() || en_az_etiket_boşluğu <= 0.0 {
+            return Err(UplotHatası::GeçersizEksenBoşluğu {
+                değer: en_az_etiket_boşluğu,
+            });
+        }
+        Ok(Self {
+            en_az_etiket_boşluğu,
+        })
+    }
+
+    pub fn en_az_etiket_boşluğu(self) -> f32 {
+        self.en_az_etiket_boşluğu
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum YÖlçekDağılımı {
@@ -16,6 +40,7 @@ pub enum YÖlçekDağılımı {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum YÖlçekEtiketBiçimi {
     Otomatik,
+    ArtımaGöre,
     Bilimsel,
     İkiliÜs,
     İkiliŞapka,
@@ -42,6 +67,7 @@ pub struct YÖlçekSeçenekleri {
     pub eksen_değer_çarpanı: f64,
     pub etiket_biçimi: YÖlçekEtiketBiçimi,
     pub log_tam_büyüklükler: bool,
+    pub güzel_ölçek: Option<GüzelÖlçekDüzeni>,
 }
 
 impl YÖlçekSeçenekleri {
@@ -62,6 +88,7 @@ impl YÖlçekSeçenekleri {
             eksen_değer_çarpanı: 1.0,
             etiket_biçimi: YÖlçekEtiketBiçimi::Otomatik,
             log_tam_büyüklükler: true,
+            güzel_ölçek: None,
         }
     }
 
@@ -156,6 +183,11 @@ impl YÖlçekSeçenekleri {
 
     pub fn weibull(mut self) -> Self {
         self.dağılım = YÖlçekDağılımı::Weibull;
+        self
+    }
+
+    pub fn güzel_ölçek(mut self, düzen: GüzelÖlçekDüzeni) -> Self {
+        self.güzel_ölçek = Some(düzen);
         self
     }
 }

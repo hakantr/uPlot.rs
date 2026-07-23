@@ -23,17 +23,18 @@ use uplot_rs::{
     HighLowBandsÖrneği, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ,
     LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
     LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
-    MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-    SeriSeçenekleri, SmoothingÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
-    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
-    months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı,
+    MONTHS_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SmoothingÖrneği, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
     zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
@@ -51,6 +52,7 @@ enum KartKimliği {
     MonthsNoLeap,
     MonthsLeap,
     MonthsRussian,
+    NiceScale,
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -92,6 +94,7 @@ impl KartKimliği {
             Self::MonthsNoLeap => "Months · No leap year",
             Self::MonthsLeap => "Months · 2024 leap year",
             Self::MonthsRussian => "Months · Russian",
+            Self::NiceScale => "Nice Scale & Ticks",
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -142,6 +145,9 @@ impl KartKimliği {
             }
             Self::MonthsRussian => {
                 "months-ru.html · UTC ay ekseni · resmî Rusça fmtDate tarih adları"
+            }
+            Self::NiceScale => {
+                "nice-scale.html · boyuta bağlı niceScale/niceNum Y aralığı ve artımı"
             }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
@@ -202,6 +208,7 @@ impl KartKimliği {
             Self::MonthsNoLeap | Self::MonthsLeap | Self::MonthsRussian => {
                 MONTHS_KART_TANIM_ÖRNEĞİ
             }
+            Self::NiceScale => NICE_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -239,6 +246,7 @@ impl KartKimliği {
             Self::ZoomWheel => "src/kart/zoom_wheel.rs",
             Self::ZoomTouch => "src/kart/zoom_touch.rs",
             Self::MonthsNoLeap | Self::MonthsLeap | Self::MonthsRussian => "src/kart/months.rs",
+            Self::NiceScale => "src/kart/nice_scale.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -514,6 +522,7 @@ fn grafik_oluştur(
         KartKimliği::MonthsNoLeap => months_artık_yılsız_kartı(),
         KartKimliği::MonthsLeap => months_artık_yıllı_kartı(),
         KartKimliği::MonthsRussian => months_rusça_kartı(),
+        KartKimliği::NiceScale => nice_scale_kartı(),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -574,6 +583,9 @@ impl Render for ChartListesi {
             }
             KartKimliği::MonthsRussian => {
                 "36 aylık nokta × 1 seri · Rusça tarih adları".to_string()
+            }
+            KartKimliği::NiceScale => {
+                "6 nokta × 3 seri · boyuta duyarlı güzel Y ölçeği".to_string()
             }
             KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
@@ -1161,6 +1173,20 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::MonthsRussian, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "kart-nice-scale",
+                    "Nice Scale & Ticks",
+                    "nice-scale",
+                    aktif_kart == KartKimliği::NiceScale,
+                    "Boyuta bağlı Y aralığı ve ızgara",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::NiceScale, cx);
                 })),
             )
             .child(

@@ -97,6 +97,21 @@ impl Grafik {
                     _ => Aralık::otomatik(değerler()),
                 }
             });
+        if let Some(düzen) = birincil_ölçek.and_then(|ölçek| ölçek.güzel_ölçek) {
+            let ham_aralık = sonlu_aralık(
+                veri.seriler()
+                    .iter()
+                    .zip(seçenekler.seriler.iter())
+                    .filter(|(_, ayarlar)| ayarlar.ölçek == seçenekler.birincil_y_ölçeği)
+                    .flat_map(|(seri, _)| seri.iter().flatten().copied()),
+            );
+            let çizim_yüksekliği = seçenekler.yükseklik.saturating_sub(96).max(1) as f32;
+            if let Some((aralık, _)) = ham_aralık.and_then(|aralık| {
+                güzel_ölçek(aralık, çizim_yüksekliği, düzen.en_az_etiket_boşluğu)
+            }) {
+                tam_y = aralık;
+            }
+        }
         if let Some(düzen) = &seçenekler.kutu_bıyık_düzeni {
             let mut değerler = veri
                 .seriler()
@@ -925,7 +940,20 @@ impl Grafik {
                 .ok()
             })
             .unwrap_or(tam_x_aralığı);
-        let y_aralığı = görünür_y.unwrap_or_else(|| self.y_aralığı(x_aralığı));
+        let (y_aralığı, güzel_y_artımı) = görünür_y.map_or_else(
+            || {
+                self.güzel_ölçek_aralığı(
+                    &self.seçenekler.birincil_y_ölçeği,
+                    x_aralığı,
+                    yükseklik,
+                )
+                .map_or_else(
+                    || (self.y_aralığı(x_aralığı), None),
+                    |(aralık, artım)| (aralık, Some(artım)),
+                )
+            },
+            |aralık| (aralık, None),
+        );
         let birincil_ölçek = self.ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği);
         let birincil_birim = birincil_ölçek.map_or("", |ölçek| ölçek.birim.as_str());
         let birincil_dağılım = birincil_ölçek.map(|ölçek| ölçek.dağılım);
@@ -934,10 +962,12 @@ impl Grafik {
         let birincil_çarpan = birincil_ölçek.map_or(1.0, |ölçek| ölçek.eksen_değer_çarpanı);
 
         let eksen_komutları_başlangıcı = sahne.komutlar().len();
-        let y_artımı = uygun_artım(y_aralığı, yükseklik, 30.0);
-        for y_değeri in
-            self.y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, y_aralığı, yükseklik)
-        {
+        let y_artımı = güzel_y_artımı.unwrap_or_else(|| uygun_artım(y_aralığı, yükseklik, 30.0));
+        let y_bölmeleri = güzel_y_artımı.map_or_else(
+            || self.y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, y_aralığı, yükseklik),
+            |artım| eksen_bölmeleri_artımla(y_aralığı, artım),
+        );
+        for y_değeri in y_bölmeleri {
             let y = üst + yükseklik
                 - self.y_konumu(
                     &self.seçenekler.birincil_y_ölçeği,
@@ -2165,6 +2195,37 @@ impl Grafik {
         }
     }
 
+    fn güzel_ölçek_aralığı(
+        &self,
+        anahtar: &str,
+        x_aralığı: Aralık,
+        çizim_yüksekliği: f32,
+    ) -> Option<(Aralık, f64)> {
+        let ölçek = self.ölçek_seçeneği(anahtar)?;
+        let düzen = ölçek.güzel_ölçek?;
+        if ölçek.aralık.is_some()
+            || (anahtar == self.seçenekler.birincil_y_ölçeği && self.seçenekler.y_aralığı.is_some())
+        {
+            return None;
+        }
+        let ham_aralık = sonlu_aralık(
+            self.veri
+                .x()
+                .iter()
+                .enumerate()
+                .filter(|(_, x)| **x >= x_aralığı.en_az && **x <= x_aralığı.en_çok)
+                .flat_map(|(indeks, _)| {
+                    self.veri
+                        .seriler()
+                        .iter()
+                        .zip(self.seçenekler.seriler.iter())
+                        .filter(move |(_, ayarlar)| ayarlar.ölçek == anahtar)
+                        .filter_map(move |(seri, _)| seri.get(indeks).copied().flatten())
+                }),
+        )?;
+        güzel_ölçek(ham_aralık, çizim_yüksekliği, düzen.en_az_etiket_boşluğu)
+    }
+
     fn y_aralığı(&self, x_aralığı: Aralık) -> Aralık {
         self.y_aralığı_ölçek(&self.seçenekler.birincil_y_ölçeği, x_aralığı)
     }
@@ -2194,6 +2255,12 @@ impl Grafik {
                     .flatten()
             })
             .unwrap_or_else(|| {
+                let nominal_yükseklik = self.seçenekler.yükseklik.saturating_sub(96).max(1) as f32;
+                if let Some((aralık, _)) =
+                    self.güzel_ölçek_aralığı(anahtar, x_aralığı, nominal_yükseklik)
+                {
+                    return aralık;
+                }
                 let görünür = || {
                     self.veri
                         .x()
@@ -2805,8 +2872,88 @@ fn uygun_artım(aralık: Aralık, boyut: f32, en_az_boşluk: f32) -> f64 {
     hedef
 }
 
+fn sonlu_aralık(değerler: impl Iterator<Item = f64>) -> Option<Aralık> {
+    let mut en_az = f64::INFINITY;
+    let mut en_çok = f64::NEG_INFINITY;
+    for değer in değerler.filter(|değer| değer.is_finite()) {
+        en_az = en_az.min(değer);
+        en_çok = en_çok.max(değer);
+    }
+    Aralık::yeni(en_az, en_çok).ok()
+}
+
+fn güzel_sayı(fark: f64, yuvarla: bool) -> Option<f64> {
+    if !fark.is_finite() || fark <= 0.0 {
+        return None;
+    }
+    let üs = fark.log10().floor();
+    let kuvvet = 10_f64.powf(üs);
+    if !kuvvet.is_finite() || kuvvet <= 0.0 {
+        return None;
+    }
+    let kesir = fark / kuvvet;
+    let güzel_kesir = if yuvarla {
+        if kesir < 1.5 {
+            1.0
+        } else if kesir < 3.0 {
+            if kesir > 2.25 { 2.5 } else { 2.0 }
+        } else if kesir < 7.0 {
+            5.0
+        } else {
+            10.0
+        }
+    } else if kesir <= 1.0 {
+        1.0
+    } else if kesir <= 2.0 {
+        2.0
+    } else if kesir <= 5.0 {
+        5.0
+    } else {
+        10.0
+    };
+    let sonuç = güzel_kesir * kuvvet;
+    (sonuç.is_finite() && sonuç > 0.0).then_some(sonuç)
+}
+
+fn güzel_ölçek(
+    veri_aralığı: Aralık, boyut: f32, en_az_boşluk: f32
+) -> Option<(Aralık, f64)> {
+    if !boyut.is_finite() || boyut <= 0.0 || !en_az_boşluk.is_finite() || en_az_boşluk <= 0.0 {
+        return None;
+    }
+    let en_az = veri_aralığı.en_az
+        * if veri_aralığı.en_az < 0.0 {
+            1.02
+        } else if veri_aralığı.en_az > 0.0 {
+            0.98
+        } else {
+            1.0
+        };
+    let en_çok = veri_aralığı.en_çok
+        * if veri_aralığı.en_çok < 0.0 {
+            0.98
+        } else if veri_aralığı.en_çok > 0.0 {
+            1.02
+        } else {
+            1.0
+        };
+    let en_fazla_etiket = (boyut / en_az_boşluk).floor().clamp(2.0, 10_000.0) as u32;
+    let güzel_aralık = güzel_sayı(en_çok - en_az, false)?;
+    let artım = güzel_sayı(güzel_aralık / f64::from(en_fazla_etiket - 1), true)?;
+    let alt = artıma_yuvarla((en_az / artım).floor() * artım, artım);
+    let üst = artıma_yuvarla((en_çok / artım).ceil() * artım, artım);
+    Some((Aralık::yeni(alt, üst).ok()?, artım))
+}
+
 fn eksen_bölmeleri(aralık: Aralık, boyut: f32, en_az_boşluk: f32) -> Vec<f64> {
     let artım = uygun_artım(aralık, boyut, en_az_boşluk);
+    eksen_bölmeleri_artımla(aralık, artım)
+}
+
+fn eksen_bölmeleri_artımla(aralık: Aralık, artım: f64) -> Vec<f64> {
+    if !artım.is_finite() || artım <= 0.0 {
+        return Vec::new();
+    }
     let tolerans = artım.abs() * 1e-9;
     let mut değer = ((aralık.en_az - tolerans) / artım).ceil() * artım;
     let mut bölmeler = Vec::new();
@@ -2844,6 +2991,11 @@ fn ondalık_basamak(artım: f64) -> u32 {
 
 fn eksen_değerini_yaz(değer: f64, artım: f64) -> String {
     let basamak = usize::try_from(ondalık_basamak(artım).max(2)).unwrap_or(12);
+    format!("{değer:.basamak$}")
+}
+
+fn eksen_değerini_artıma_göre_yaz(değer: f64, artım: f64) -> String {
+    let basamak = usize::try_from(ondalık_basamak(artım)).unwrap_or(12);
     format!("{değer:.basamak$}")
 }
 
@@ -2900,6 +3052,7 @@ fn ölçek_eksen_değerini_yaz(
     biçim: YÖlçekEtiketBiçimi,
 ) -> String {
     let sayı = match biçim {
+        YÖlçekEtiketBiçimi::ArtımaGöre => eksen_değerini_artıma_göre_yaz(değer, artım),
         YÖlçekEtiketBiçimi::Bilimsel => format!("{değer:e}"),
         YÖlçekEtiketBiçimi::İkiliÜs => ikili_üs_etiketi(değer),
         YÖlçekEtiketBiçimi::İkiliŞapka => ikili_şapka_etiketi(değer),
@@ -3141,6 +3294,17 @@ mod eksen_testleri {
                 .zip(çift.get(1))
                 .is_some_and(|(sol, sağ)| sol < sağ)
         }));
+    }
+
+    #[test]
+    fn güzel_sayı_kaynak_eşiklerini_korur() {
+        assert_eq!(güzel_sayı(225.0, true), Some(200.0));
+        assert_eq!(güzel_sayı(226.0, true), Some(250.0));
+        assert_eq!(güzel_sayı(300.0, true), Some(500.0));
+        assert_eq!(güzel_sayı(700.0, true), Some(1_000.0));
+        assert_eq!(güzel_sayı(200.0, false), Some(200.0));
+        assert_eq!(güzel_sayı(201.0, false), Some(500.0));
+        assert_eq!(güzel_sayı(0.0, false), None);
     }
 
     #[test]

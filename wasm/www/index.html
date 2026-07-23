@@ -135,6 +135,11 @@
         <small>months-russian</small>
         <div class="durum">Rusça tarih adları · months-ru.html</div>
       </article>
+      <article class="kart" data-kart="nice-scale" aria-current="false" tabindex="0">
+        <strong>Nice Scale &amp; Ticks</strong>
+        <small>nice-scale</small>
+        <div class="durum">Boyuta bağlı Y aralığı ve ızgara</div>
+      </article>
       <article class="kart" data-kart="cursor-snap" aria-current="false" tabindex="0">
         <strong>Cursor Snap</strong>
         <small>cursor-snap</small>
@@ -273,6 +278,7 @@
       zoom_wheel_kart_tanim_ornegi,
       zoom_touch_kart_tanim_ornegi,
       months_kart_tanim_ornegi,
+      nice_scale_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -459,6 +465,22 @@
         tanımYolu: "src/kart/months.rs",
         seriler: [{ etiket: "Value", renk: "#ff0000" }],
         yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
+      "nice-scale": {
+        başlık: "Nice Scale & Ticks",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/nice-scale.html">nice-scale.html</a>
+          <br>Resmî <code>niceScale</code>/<code>niceNum</code> algoritması, üç kaynak seri ve 30 piksellik asgari Y etiketi aralığı çekirdektedir.
+          <br>Kart yüksekliği değiştiğinde Y sınırları, artım, ızgara ve değer etiketleri birlikte yeniden hesaplanır.`,
+        tanım: () => nice_scale_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/nice_scale.rs",
+        seriler: [
+          { etiket: "1", renk: "#ff0000" },
+          { etiket: "2", renk: "#008000" },
+          { etiket: "3", renk: "#0000ff" },
+        ],
+        yardım: "Pencereyi yeniden boyutlandır: Y ölçeğini güncelle · sürükle: seç · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       },

@@ -1906,6 +1906,50 @@
         "panic-free-calendar-conversion"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+    },
+    {
+      "sıra": 34,
+      "id": "nice-scale",
+      "başlık": { "en": "Nice Scale & Ticks", "tr": "Güzel Ölçek ve Bölmeler" },
+      "kaynak": "demos/nice-scale.html",
+      "kaynak_sha256": "806a93c3904b653f5faf1e9af02ebbbbc1ea5f5a97d7748d693e18aebbd70865",
+      "ek_kaynaklar": [
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" },
+        { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" },
+        { "yol": "src/utils.js", "sha256": "8df33192e0ab7b4f4cf64fae9829fc0dc0300a618668699f43c5881ed8a0553c" }
+      ],
+      "fixture": "src/kart/nice_scale.rs#nice_scale_kartı",
+      "örnek": "examples/nice_scale.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/nice-scale.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/nice_scale.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı", "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı", "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı", "dinamik-eksen-izgara": "kartta_etkin",
+          "surekli-imlec-izleme": "devralındı", "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "devralındı"
+        }
+      },
+      "sahip_faz": 2,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-three-series", "source-nice-scale-algorithm", "source-nice-num-thresholds",
+        "source-two-percent-range-padding", "source-thirty-pixel-axis-space",
+        "responsive-range-and-increment", "responsive-grid-and-labels",
+        "one-two-two-point-five-five-ten-increments", "translucent-series-fills",
+        "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "panic-free-invalid-layout-feedback"
+      ],
+      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
     }
   ]
 }

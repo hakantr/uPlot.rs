@@ -344,6 +344,24 @@
       "rust_karşılığı": "zaman::utc_zaman_damgası / zaman::utc_alanları",
       "durum": "tam_kanıtlı",
       "test": "src/zaman.rs"
+    },
+    {
+      "kaynak_yolu": "Scale.range(self, dataMin, dataMax) dynamic nice scale",
+      "rust_karşılığı": "YÖlçekSeçenekleri::güzel_ölçek / grafik::güzel_ölçek",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/nice_scale.rs"
+    },
+    {
+      "kaynak_yolu": "Axis.incrs(self) / Axis.space",
+      "rust_karşılığı": "GüzelÖlçekDüzeni::en_az_etiket_boşluğu / grafik::güzel_sayı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/nice_scale.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.setSize({width, height})",
+      "rust_karşılığı": "Grafik::çiz_boyutta / Grafik::çiz_görünür_boyutta",
+      "durum": "kısmi",
+      "test": "src/kart/nice_scale.rs"
     }
   ]
 }

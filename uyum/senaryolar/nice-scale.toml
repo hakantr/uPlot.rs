@@ -1,0 +1,35 @@
+id = "nice-scale"
+kaynak = "../uPlot/demos/nice-scale.html"
+fixture = "src/kart/nice_scale.rs#nice_scale_kartı"
+viewport = [1920, 600]
+dar_viewport = [600, 240]
+device_pixel_ratio = 1
+durum = "yeniden_boyutlandirilabilir_etkilesimli"
+
+[veri]
+x = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
+seri_1 = [-5.0, -2.0, 1.0, 7.0, 9.0, 13.0]
+seri_2 = [-123.0, 4.0, 29.0, 37.0, 217.0, 230.0]
+seri_3 = [0.5, 0.1, -7.0, -9.0, -13.0, 1.0]
+
+[olcek]
+algoritma = "niceScale/niceNum"
+veri_pay_oranı = 0.02
+asgari_etiket_boşluğu = 30.0
+geniş_aralık = [-150.0, 250.0]
+geniş_artım = 50.0
+dar_aralık = [-200.0, 400.0]
+dar_artım = 200.0
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/nice-scale.svg"

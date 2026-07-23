@@ -57,6 +57,9 @@ pub enum UplotHatası {
     GeçersizÇarpan {
         değer: f64,
     },
+    GeçersizEksenBoşluğu {
+        değer: f32,
+    },
     GeçersizKaynakVeri {
         varlık: &'static str,
         açıklama: String,
@@ -129,6 +132,12 @@ impl Display for UplotHatası {
             }
             Self::GeçersizÇarpan { değer } => {
                 write!(f, "çarpan sonlu ve pozitif olmalı; bulunan: {değer}")
+            }
+            Self::GeçersizEksenBoşluğu { değer } => {
+                write!(
+                    f,
+                    "asgari eksen etiketi boşluğu sonlu ve pozitif olmalı; bulunan: {değer}"
+                )
             }
             Self::GeçersizKaynakVeri {
                 varlık, açıklama
