@@ -146,6 +146,11 @@ path = "examples/stream_data.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "svg-image"
+path = "examples/svg_image.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

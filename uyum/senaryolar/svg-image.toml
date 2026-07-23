@@ -1,0 +1,27 @@
+id = "svg-image"
+kaynak = "../uPlot/demos/svg-image.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/svg_image.rs#svg_image_kartı"
+yüzey_sayısı = 1
+boyut = [400, 200]
+başlık = "test chart"
+
+[veri]
+x = [1, 2, 3]
+y = [4, 5, 6]
+seri_rengi = "blue"
+arka_plan = "pink"
+
+[görüntü]
+kaynak_yaklaşımı = "canvas + u.root.outerHTML + CSS → canvas"
+rust_yaklaşımı = "başlık + eksenler + seri → tek bağımsız SVG belgesi"
+wasm_indirme_kontrolü = true
+wasm_canlı_ve_dışa_aktarılmış_çift_görünüm = true
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+örnek = "examples/svg_image.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

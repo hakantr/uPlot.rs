@@ -536,6 +536,12 @@
       "rust_karşılığı": "Grafik::son_değerler / GPUI ve WASM lejant köprüleri",
       "durum": "tam_kanıtlı",
       "test": "src/kart/stream_data.rs"
+    },
+    {
+      "kaynak_yolu": "u.root.outerHTML + canvas drawImage image export PoC",
+      "rust_karşılığı": "Grafik::çiz().svg / svg_image_belgesi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/svg_image.rs"
     }
   ]
 }

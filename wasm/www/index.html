@@ -63,6 +63,16 @@
     #chart.scroll-sync-yüzeyi .scroll-sync-grafik svg { width: 400px; height: 200px; }
     #chart.scroll-sync-yüzeyi .scroll-sync-grafik .lejant { position: static; min-height: 24px;
                                                             margin-top: 2px; }
+    #chart.svg-image-yüzeyi { display: flex; flex-direction: column; justify-content: flex-start;
+                              gap: 10px; overflow: auto; }
+    #chart.svg-image-yüzeyi > svg,
+    #chart.svg-image-yüzeyi .svg-image-çıktısı svg {
+      flex: 0 0 auto; width: 400px; height: 200px; background: pink;
+    }
+    #chart.svg-image-yüzeyi .lejant { position: static; min-height: 18px; }
+    .svg-image-çıktısı { display: grid; gap: 4px; justify-items: center; padding-top: 8px;
+                         border-top: 1px dashed #d1d5db; }
+    .svg-image-çıktısı strong { color: #6b7280; font-size: 11px; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -244,6 +254,7 @@
             <button id="dinamik-seri-sil" type="button">Seri sil</button>
           </span>
           <button id="soft-minmax-baslat" type="button" hidden>▶ dataMax++</button>
+          <button id="svg-indir" type="button" hidden>SVG görüntüsünü indir</button>
         </div>
       </header>
       <section id="chart" tabindex="0" aria-label="Etkileşimli grafik" aria-live="polite"><span>WASM yükleniyor…</span></section>
@@ -305,6 +316,7 @@
       sparse_kart_tanim_ornegi,
       stacked_series_kart_tanim_ornegi,
       stream_data_kart_tanim_ornegi,
+      svg_image_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -353,6 +365,7 @@
     const açıklamaMetni = document.getElementById("açıklama-metni");
     const dinamikSeriKontrolleri = document.getElementById("dinamik-seri-kontrolleri");
     const softMinMaxBaşlat = document.getElementById("soft-minmax-baslat");
+    const svgİndir = document.getElementById("svg-indir");
     const dinamikSeriEkle = document.getElementById("dinamik-seri-ekle");
     const dinamikSeriSil = document.getElementById("dinamik-seri-sil");
 
@@ -1141,6 +1154,24 @@
         etkileşimler: () => ({ ...ortakEtkileşimler(), seçim: false }),
       };
     }
+    document.querySelector('[data-kart="stream-data-increasing-static-x"]')?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="svg-image" aria-current="false" tabindex="0">
+        <strong>uPlot to image PoC</strong><small>svg-image</small>
+        <div class="durum">400×200 · bağımsız SVG görüntüsü</div>
+      </article>`
+    );
+    kartlar["svg-image"] = {
+      başlık: "uPlot to image PoC",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/svg-image.html">svg-image.html</a>
+        <br>Resmî PoC canvas ve DOM katmanlarını sonradan bir görüntüde birleştirir. Rust sahnesi başlığı, eksenleri ve mavi seriyi doğrudan tek bir taşınabilir SVG belgesinde üretir.`,
+      tanım: () => svg_image_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/svg_image.rs",
+      seriler: [{ etiket: "Value", renk: "blue" }],
+      yardım: "3 kaynak noktası · bağımsız SVG · sürükle: seç · tekerlek: yakınlaştır",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",
@@ -1686,6 +1717,9 @@
       if (aktifKart === "scroll-sync") {
         return { genişlik: 400, yükseklik: 200 };
       }
+      if (aktifKart === "svg-image") {
+        return { genişlik: 400, yükseklik: 200 };
+      }
       if (kartlar[aktifKart]?.kompakt === true) {
         return { genişlik: 150, yükseklik: 30 };
       }
@@ -1708,6 +1742,7 @@
       chart.dataset.yEnCok = String(yAralığı[1]);
       const kart = kartlar[aktifKart];
       chart.classList.toggle("scroll-sync-yüzeyi", kart.scrollSync === true);
+      chart.classList.toggle("svg-image-yüzeyi", aktifKart === "svg-image");
       chart.dataset.kompakt = String(kart.kompakt === true);
       chart.dataset.cokluLejant = kart.seriler.length > 6 ? "true" : "false";
       const { genişlik, yükseklik } = boyutlar();
@@ -1781,6 +1816,15 @@
           if (hedef) hedef.textContent = Number.isFinite(değer)
             ? değer.toLocaleString("tr-TR", { maximumFractionDigits: 3 }) : "--";
         });
+      }
+      if (aktifKart === "svg-image") {
+        chart.insertAdjacentHTML(
+          "beforeend",
+          `<div class="svg-image-çıktısı">
+            <strong>Bağımsız SVG çıktısı</strong>
+            ${oturum.svg(400, 200)}
+          </div>`
+        );
       }
       chart.querySelectorAll("[data-seri-toggle]").forEach(öğe => {
         const değiştir = () => {
@@ -2298,6 +2342,23 @@
         }
       }, 50);
     });
+    svgİndir.addEventListener("click", () => {
+      if (aktifKart !== "svg-image" || !oturum) return;
+      try {
+        const belge = oturum.svg(400, 200);
+        const url = URL.createObjectURL(
+          new Blob([belge], { type: "image/svg+xml;charset=utf-8" })
+        );
+        const bağlantı = document.createElement("a");
+        bağlantı.href = url;
+        bağlantı.download = "uplot-rs-test-chart.svg";
+        bağlantı.click();
+        URL.revokeObjectURL(url);
+        hata.textContent = "";
+      } catch (neden) {
+        hata.textContent = `SVG görüntüsü üretilemedi: ${String(neden)}`;
+      }
+    });
 
     try {
       await init({
@@ -2335,6 +2396,7 @@
         latencyHistogramKontrolü.hidden = !kimlik.startsWith("latency-histogram-");
         dinamikSeriKontrolleri.hidden = kimlik !== "add-del-series";
         softMinMaxBaşlat.hidden = !kart.softMinMaxCanlı;
+        svgİndir.hidden = kimlik !== "svg-image";
         softMinMaxBaşlat.disabled = false;
         arcsinhEşiği.value = "0";
         arcsinhDeğeri.value = "1";

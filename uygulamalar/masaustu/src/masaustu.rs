@@ -30,24 +30,24 @@ use uplot_rs::{
     SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
     SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ,
     SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS,
-    STREAM_DATA_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı,
-    SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği,
-    SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, UplotHatası,
-    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
-    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
-    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
-    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
-    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
-    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
-    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
-    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    STREAM_DATA_KART_TANIM_ÖRNEĞİ, SVG_IMAGE_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği,
+    SeriSeçenekleri, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği,
+    SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı,
+    StreamDataÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
+    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
+    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
+    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
+    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
+    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
     sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
-    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
+    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -78,6 +78,7 @@ enum KartKimliği {
     Sparse(SparseÖrneği),
     StackedSeries(StackedSeriesÖrneği),
     StreamData(StreamDataÖrneği),
+    SvgImage,
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -134,6 +135,7 @@ impl KartKimliği {
             Self::Sparse(örnek) => örnek.başlık(),
             Self::StackedSeries(örnek) => örnek.başlık(),
             Self::StreamData(örnek) => örnek.başlık(),
+            Self::SvgImage => "uPlot to image PoC",
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -216,6 +218,7 @@ impl KartKimliği {
                 "stacked-series.html · stack.js · yığma, yüzde, grup ve karma veri"
             }
             Self::StreamData(_) => "stream-data.html · bench/data.json · setData canlı akışı",
+            Self::SvgImage => "svg-image.html · canvas + DOM → bağımsız görüntü PoC",
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -290,6 +293,7 @@ impl KartKimliği {
             Self::Sparse(_) => SPARSE_KART_TANIM_ÖRNEĞİ,
             Self::StackedSeries(_) => STACKED_SERIES_KART_TANIM_ÖRNEĞİ,
             Self::StreamData(_) => STREAM_DATA_KART_TANIM_ÖRNEĞİ,
+            Self::SvgImage => SVG_IMAGE_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -342,6 +346,7 @@ impl KartKimliği {
             Self::Sparse(_) => "src/kart/sparse.rs",
             Self::StackedSeries(_) => "src/kart/stacked_series.rs",
             Self::StreamData(_) => "src/kart/stream_data.rs",
+            Self::SvgImage => "src/kart/svg_image.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -893,6 +898,7 @@ fn grafik_oluştur(
         KartKimliği::Sparse(örnek) => sparse_kartı(örnek),
         KartKimliği::StackedSeries(örnek) => stacked_series_kartı(örnek),
         KartKimliği::StreamData(örnek) => stream_data_kartı(örnek),
+        KartKimliği::SvgImage => svg_image_kartı(),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -1042,6 +1048,9 @@ impl Render for ChartListesi {
                     "{} · satır {başlangıç} · {uzunluk} görünür · 100 ms/10 satır setData",
                     örnek.başlık()
                 )
+            }
+            KartKimliği::SvgImage => {
+                "3 nokta × 1 seri · 400×200 bağımsız SVG görüntüsü".to_string()
             }
             KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
@@ -1853,6 +1862,20 @@ impl Render for ChartListesi {
                     bu.kartı_seç(kart, cx);
                 }))
             }))
+            .child(
+                katalog_kartı(
+                    "svg-image",
+                    "uPlot to image PoC",
+                    "svg-image",
+                    aktif_kart == KartKimliği::SvgImage,
+                    "400×200 · tek bağımsız SVG belgesi",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::SvgImage, cx);
+                })),
+            )
             .child(
                 katalog_kartı(
                     "kart-cursor-snap",
