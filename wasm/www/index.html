@@ -299,6 +299,7 @@
       scroll_sync_kart_tanim_ornegi,
       sine_stream_kart_tanim_ornegi,
       soft_minmax_kart_tanim_ornegi,
+      sparklines_bars_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -956,6 +957,43 @@
           : "Düz sıfır verisi · soft min/max −1…1",
         değişkenNokta: false,
         softMinMaxCanlı: yüzey.canlı,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+    const sparklinesBarsYüzeyleri = [
+      {
+        kimlik: "sparklines-bars-gradient",
+        başlık: "Sparkline + Floating Bars · gradient",
+        yardım: "Çizgi alanı ve yüzen çubuklar ölçek konumlu kırmızı/yeşil gradyan kullanır",
+      },
+      {
+        kimlik: "sparklines-bars-explicit-colors",
+        başlık: "Sparkline + Floating Bars · explicit colors",
+        yardım: "Her çubuk, alt ve üst ucuna göre kırmızı veya yeşil seçilir",
+      },
+    ];
+    document.querySelector('[data-kart="soft-minmax-flat-zero"]')?.insertAdjacentHTML(
+      "afterend",
+      sparklinesBarsYüzeyleri.map(yüzey => `
+        <article class="kart" data-kart="${yüzey.kimlik}" aria-current="false" tabindex="0">
+          <strong>${yüzey.başlık}</strong><small>sparklines-bars</small>
+          <div class="durum">16 nokta · sparkline + 16 yüzen çubuk</div>
+        </article>`).join("")
+    );
+    for (const yüzey of sparklinesBarsYüzeyleri) {
+      kartlar[yüzey.kimlik] = {
+        başlık: yüzey.başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/sparklines-bars.html">sparklines-bars.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/bars.js">paths/bars.js</a>
+          <br>Resmî iki 800×400 yüzeyin aynı 16 değerli veri seti, yüzen alt/üst uçları, sıfır ızgarası ve renk kuralları Rust çekirdeğinde uygulanır.`,
+        tanım: () => sparklines_bars_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/sparklines_bars.rs",
+        seriler: [
+          { etiket: "Value", renk: "green" },
+          { etiket: "Floating Bars", renk: yüzey.kimlik.endsWith("gradient") ? "green" : "red" },
+        ],
+        yardım: yüzey.yardım,
+        değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       };
     }

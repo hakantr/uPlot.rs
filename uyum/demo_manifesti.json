@@ -2386,6 +2386,53 @@
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
         "performans": "kısmi"
       }
+    },
+    {
+      "sıra": 44,
+      "id": "sparklines-bars",
+      "başlık": { "en": "Sparkline + Floating Bars + Gradients", "tr": "Mini Çizgi + Yüzen Çubuklar + Gradyanlar" },
+      "kaynak": "demos/sparklines-bars.html",
+      "kaynak_sha256": "eae034b26d8bccac45fa442ac2d800d7f22c29a809b8fe509eeadfdbac513a2b",
+      "ek_kaynaklar": [
+        { "yol": "src/paths/bars.js", "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56" },
+        { "yol": "src/utils.js", "sha256": "8df33192e0ab7b4f4cf64fae9829fc0dc0300a618668699f43c5881ed8a0553c" },
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" },
+        { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" }
+      ],
+      "fixture": "src/kart/sparklines_bars.rs#sparklines_bars_kartı",
+      "örnek": "examples/sparklines_bars.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/sparklines-bars.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/sparklines_bars.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin", "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin", "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "kartta_etkin", "dinamik-eksen-izgara": "kartta_etkin",
+          "surekli-imlec-izleme": "devralındı", "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "kartta_etkin"
+        }
+      },
+      "sahip_faz": 3,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-two-800x400-surfaces", "source-exact-sixteen-point-data",
+        "floating-bars-y0-y1", "scale-positioned-area-and-bar-gradients",
+        "per-point-red-green-bar-fills", "hidden-axes-single-dashed-zero-grid",
+        "gpui-wasm-parity", "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
+        "performans": "kısmi"
+      }
     }
   ]
 }

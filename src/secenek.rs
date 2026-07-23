@@ -446,6 +446,8 @@ pub struct GrafikSeçenekleri {
     /// X eksenini yönelimine göre karşı tarafa taşır: standart düzende üst,
     /// değiştirilmiş düzende sağ.
     pub x_eksen_karşıda: bool,
+    pub x_eksen_görünür: bool,
+    pub x_ızgara_görünür: bool,
     pub x_aralığı: Option<Aralık>,
     pub y_aralığı: Option<Aralık>,
     pub y_ölçekleri: Vec<YÖlçekSeçenekleri>,
@@ -460,6 +462,10 @@ pub struct GrafikSeçenekleri {
     /// Birincil Y eksenini yönelimine göre karşı tarafa taşır. Standart
     /// düzende sağ, değiştirilmiş düzende alt taraftır.
     pub birincil_y_karşıda: bool,
+    pub birincil_y_eksen_görünür: bool,
+    pub birincil_y_ızgara_görünür: bool,
+    pub birincil_y_sabit_bölmeler: Option<Vec<f64>>,
+    pub birincil_y_ızgara_kesik: Option<f32>,
     pub birincil_y_eksen_rengi: String,
     pub x_eksen_değer_çarpanı: f64,
     pub otomatik_x_sağ_pay: bool,
@@ -508,6 +514,8 @@ impl GrafikSeçenekleri {
             x_ters_yön: false,
             x_dikey: false,
             x_eksen_karşıda: false,
+            x_eksen_görünür: true,
+            x_ızgara_görünür: true,
             x_aralığı: None,
             y_aralığı: None,
             y_ölçekleri: Vec::new(),
@@ -519,6 +527,10 @@ impl GrafikSeçenekleri {
             y_eksen_etiketi: String::new(),
             birincil_y_sağda: false,
             birincil_y_karşıda: false,
+            birincil_y_eksen_görünür: true,
+            birincil_y_ızgara_görünür: true,
+            birincil_y_sabit_bölmeler: None,
+            birincil_y_ızgara_kesik: None,
             birincil_y_eksen_rengi: "#4b5563".to_string(),
             x_eksen_değer_çarpanı: 1.0,
             otomatik_x_sağ_pay: false,
@@ -604,6 +616,40 @@ impl GrafikSeçenekleri {
 
     pub fn x_eksen_karşıda(mut self, karşıda: bool) -> Self {
         self.x_eksen_karşıda = karşıda;
+        self
+    }
+
+    pub fn x_ekseni_göster(mut self, görünür: bool) -> Self {
+        self.x_eksen_görünür = görünür;
+        self
+    }
+
+    pub fn x_ızgarası_göster(mut self, görünür: bool) -> Self {
+        self.x_ızgara_görünür = görünür;
+        self
+    }
+
+    pub fn y_ekseni_göster(mut self, görünür: bool) -> Self {
+        self.birincil_y_eksen_görünür = görünür;
+        self
+    }
+
+    pub fn y_ızgarası_göster(mut self, görünür: bool) -> Self {
+        self.birincil_y_ızgara_görünür = görünür;
+        self
+    }
+
+    pub fn y_sabit_bölmeler(mut self, bölmeler: Vec<f64>) -> Self {
+        if bölmeler.iter().all(|değer| değer.is_finite()) {
+            self.birincil_y_sabit_bölmeler = Some(bölmeler);
+        }
+        self
+    }
+
+    pub fn y_ızgara_kesik(mut self, kesik: f32) -> Self {
+        if kesik.is_finite() && kesik > 0.0 {
+            self.birincil_y_ızgara_kesik = Some(kesik);
+        }
         self
     }
 

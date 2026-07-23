@@ -36,6 +36,11 @@ pub struct SeriSeçenekleri {
     pub çubuk_genişlik_oranı: f32,
     pub azami_çubuk_genişliği: f32,
     pub çubuk_hizası: i8,
+    /// `uPlot.paths.bars({disp: {y1}})` karşılığı olarak, bu serideki
+    /// değerleri çubuk alt ucu; belirtilen veri serisini üst uç yapar.
+    pub yüzen_çubuk_üst_serisi: Option<usize>,
+    /// `disp.fill.values` karşılığı nokta başına çubuk dolguları.
+    pub çubuk_dolguları: Vec<String>,
     pub gösterim_değer_çarpanı: f64,
     /// uPlot `series.pxAlign` karşılığıdır. `None`, grafik düzeyindeki
     /// `pxAlign` değerini devralır; `Some(0.0)` hizalamayı kapatır.
@@ -69,6 +74,8 @@ impl SeriSeçenekleri {
             çubuk_genişlik_oranı: 0.6,
             azami_çubuk_genişliği: f32::INFINITY,
             çubuk_hizası: 0,
+            yüzen_çubuk_üst_serisi: None,
+            çubuk_dolguları: Vec::new(),
             gösterim_değer_çarpanı: 1.0,
             piksel_hizası: None,
             noktaları_göster: None,
@@ -125,6 +132,20 @@ impl SeriSeçenekleri {
 
     pub fn ölçek(mut self, anahtar: impl Into<String>) -> Self {
         self.ölçek = anahtar.into();
+        self
+    }
+
+    pub fn yüzen_çubuk_üst_serisi(mut self, seri_indeksi: usize) -> Self {
+        self.yüzen_çubuk_üst_serisi = Some(seri_indeksi);
+        self
+    }
+
+    pub fn çubuk_dolguları<I, S>(mut self, dolgular: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.çubuk_dolguları = dolgular.into_iter().map(Into::into).collect();
         self
     }
 

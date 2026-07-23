@@ -119,6 +119,11 @@ path = "examples/soft_minmax.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "sparklines-bars"
+path = "examples/sparklines_bars.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

@@ -65,6 +65,15 @@ impl Grafik {
                     anahtar: ayarlar.ölçek.clone(),
                 });
             }
+            if let Some(üst_seri) = ayarlar.yüzen_çubuk_üst_serisi
+                && üst_seri >= veri.seriler().len()
+            {
+                return Err(UplotHatası::GeçersizSeriİndeksi {
+                    indeks: üst_seri,
+                    seri_sayısı: veri.seriler().len(),
+                    ekleme: false,
+                });
+            }
         }
         if seçenekler
             .ısı_haritası_düzeni
@@ -344,22 +353,34 @@ impl Grafik {
             return (72.0, genişlik_px - 72.0, 48.0, yükseklik_px - 48.0);
         }
         if self.seçenekler.x_dikey {
-            let sol_pay = if self.seçenekler.x_eksen_karşıda {
+            let sol_pay = if !self.seçenekler.x_eksen_görünür {
+                8.0
+            } else if self.seçenekler.x_eksen_karşıda {
                 24.0
             } else {
                 64.0
             };
-            let sağ_pay = if self.seçenekler.x_eksen_karşıda {
+            let sağ_pay = if !self.seçenekler.x_eksen_görünür {
+                8.0
+            } else if self.seçenekler.x_eksen_karşıda {
                 64.0
             } else {
                 24.0
             };
-            let üst_pay = if self.seçenekler.birincil_y_karşıda {
+            let üst_pay = if !self.seçenekler.birincil_y_eksen_görünür {
+                if self.seçenekler.başlık.is_empty() {
+                    8.0
+                } else {
+                    48.0
+                }
+            } else if self.seçenekler.birincil_y_karşıda {
                 48.0
             } else {
                 68.0
             };
-            let alt_pay = if self.seçenekler.birincil_y_karşıda {
+            let alt_pay = if !self.seçenekler.birincil_y_eksen_görünür {
+                8.0
+            } else if self.seçenekler.birincil_y_karşıda {
                 48.0
             } else {
                 24.0
@@ -387,7 +408,10 @@ impl Grafik {
                     && !ölçek.sağda
             })
             .count();
-        let mut sağ_pay: f32 = if self.seçenekler.birincil_y_sağda {
+        let mut sağ_pay: f32 = if !self.seçenekler.birincil_y_eksen_görünür && sağ_eksen_sayısı == 0
+        {
+            8.0
+        } else if self.seçenekler.birincil_y_sağda {
             72.0 + sağ_eksen_sayısı as f32 * 56.0
         } else if sağ_eksen_sayısı > 0 {
             24.0 + sağ_eksen_sayısı as f32 * 56.0
@@ -402,7 +426,10 @@ impl Grafik {
             );
             sağ_pay = sağ_pay.max(8.0 + son_etiket.chars().count() as f32 * 4.0);
         }
-        let mut sol_pay: f32 = if self.seçenekler.birincil_y_sağda {
+        let mut sol_pay: f32 = if !self.seçenekler.birincil_y_eksen_görünür && sol_eksen_sayısı == 0
+        {
+            8.0
+        } else if self.seçenekler.birincil_y_sağda {
             24.0 + sol_eksen_sayısı as f32 * 56.0
         } else {
             64.0 + sol_eksen_sayısı as f32 * 56.0
@@ -427,14 +454,22 @@ impl Grafik {
                 .unwrap_or(1);
             sol_pay = sol_pay.max(24.0 + en_uzun as f32 * 7.0);
         }
-        let alt_pay = if self.seçenekler.x_eksen_karşıda {
+        let alt_pay = if !self.seçenekler.x_eksen_görünür {
+            8.0
+        } else if self.seçenekler.x_eksen_karşıda {
             24.0
         } else if self.seçenekler.x_eksen_etiketi.is_empty() {
             48.0
         } else {
             68.0
         };
-        let üst_pay = if self.seçenekler.x_eksen_karşıda {
+        let üst_pay = if !self.seçenekler.x_eksen_görünür {
+            if self.seçenekler.başlık.is_empty() {
+                8.0
+            } else {
+                48.0
+            }
+        } else if self.seçenekler.x_eksen_karşıda {
             if self.seçenekler.x_eksen_etiketi.is_empty() {
                 68.0
             } else {
@@ -1098,13 +1133,15 @@ impl Grafik {
             }
         }
 
-        sahne.ekle(Komut::Metin {
-            konum: Nokta::yeni(genişlik_px as f32 / 2.0, 26.0),
-            içerik: self.seçenekler.başlık.clone(),
-            renk: self.seçenekler.başlık_rengi.clone(),
-            boyut: 18.0,
-            hiza: MetinHizası::Orta,
-        });
+        if !self.seçenekler.başlık.is_empty() {
+            sahne.ekle(Komut::Metin {
+                konum: Nokta::yeni(genişlik_px as f32 / 2.0, 26.0),
+                içerik: self.seçenekler.başlık.clone(),
+                renk: self.seçenekler.başlık_rengi.clone(),
+                boyut: 18.0,
+                hiza: MetinHizası::Orta,
+            });
+        }
 
         // uPlot'un ölçek `range()` sonucu `[null, null]` olan boş veri
         // yüzeyi yalnız başlığı taşır. Özel X/Y aralığı tanımlanan boş
@@ -1195,10 +1232,25 @@ impl Grafik {
             yükseklik
         };
         let y_artımı = güzel_y_artımı.unwrap_or_else(|| uygun_artım(y_aralığı, y_boyutu, 30.0));
-        let y_bölmeleri = güzel_y_artımı.map_or_else(
-            || self.y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, y_aralığı, y_boyutu),
-            |artım| eksen_bölmeleri_artımla(y_aralığı, artım),
-        );
+        let y_bölmeleri = self
+            .seçenekler
+            .birincil_y_sabit_bölmeler
+            .clone()
+            .unwrap_or_else(|| {
+                güzel_y_artımı.map_or_else(
+                    || {
+                        self.y_eksen_bölmeleri(
+                            &self.seçenekler.birincil_y_ölçeği,
+                            y_aralığı,
+                            y_boyutu,
+                        )
+                    },
+                    |artım| eksen_bölmeleri_artımla(y_aralığı, artım),
+                )
+            })
+            .into_iter()
+            .filter(|değer| *değer >= y_aralığı.en_az && *değer <= y_aralığı.en_çok)
+            .collect::<Vec<_>>();
         for y_değeri in y_bölmeleri {
             if self.seçenekler.x_dikey {
                 let x = piksele_hizala(
@@ -1211,19 +1263,22 @@ impl Grafik {
                     ),
                     self.seçenekler.piksel_hizası,
                 );
-                sahne.ekle(Komut::Çizgi {
-                    başlangıç: Nokta::yeni(x, üst),
-                    bitiş: Nokta::yeni(x, alt),
-                    renk: self.seçenekler.ızgara_rengi.clone(),
-                    kalınlık: 1.0,
-                });
-                if log_etiketi_göster(
-                    y_değeri,
-                    y_aralığı,
-                    genişlik,
-                    birincil_dağılım,
-                    birincil_biçim,
-                ) {
+                if self.seçenekler.birincil_y_ızgara_görünür {
+                    self.birincil_y_ızgara_çizgisini_ekle(
+                        &mut sahne,
+                        Nokta::yeni(x, üst),
+                        Nokta::yeni(x, alt),
+                    );
+                }
+                if self.seçenekler.birincil_y_eksen_görünür
+                    && log_etiketi_göster(
+                        y_değeri,
+                        y_aralığı,
+                        genişlik,
+                        birincil_dağılım,
+                        birincil_biçim,
+                    )
+                {
                     sahne.ekle(Komut::Metin {
                         konum: Nokta::yeni(
                             x,
@@ -1258,19 +1313,22 @@ impl Grafik {
                     ),
                 self.seçenekler.piksel_hizası,
             );
-            sahne.ekle(Komut::Çizgi {
-                başlangıç: Nokta::yeni(sol, y),
-                bitiş: Nokta::yeni(sağ, y),
-                renk: self.seçenekler.ızgara_rengi.clone(),
-                kalınlık: 1.0,
-            });
-            if log_etiketi_göster(
-                y_değeri,
-                y_aralığı,
-                yükseklik,
-                birincil_dağılım,
-                birincil_biçim,
-            ) {
+            if self.seçenekler.birincil_y_ızgara_görünür {
+                self.birincil_y_ızgara_çizgisini_ekle(
+                    &mut sahne,
+                    Nokta::yeni(sol, y),
+                    Nokta::yeni(sağ, y),
+                );
+            }
+            if self.seçenekler.birincil_y_eksen_görünür
+                && log_etiketi_göster(
+                    y_değeri,
+                    y_aralığı,
+                    yükseklik,
+                    birincil_dağılım,
+                    birincil_biçim,
+                )
+            {
                 sahne.ekle(Komut::Metin {
                     konum: Nokta::yeni(
                         if self.seçenekler.birincil_y_karşıda {
@@ -1427,12 +1485,14 @@ impl Grafik {
                     alt - self.x_konumu(x_aralığı, x_değeri, 0.0, yükseklik),
                     self.seçenekler.piksel_hizası,
                 );
-                sahne.ekle(Komut::Çizgi {
-                    başlangıç: Nokta::yeni(sol, y),
-                    bitiş: Nokta::yeni(sağ, y),
-                    renk: self.seçenekler.ızgara_rengi.clone(),
-                    kalınlık: 1.0,
-                });
+                if self.seçenekler.x_ızgara_görünür {
+                    sahne.ekle(Komut::Çizgi {
+                        başlangıç: Nokta::yeni(sol, y),
+                        bitiş: Nokta::yeni(sağ, y),
+                        renk: self.seçenekler.ızgara_rengi.clone(),
+                        kalınlık: 1.0,
+                    });
+                }
                 (
                     Nokta::yeni(
                         if self.seçenekler.x_eksen_karşıda {
@@ -1453,12 +1513,14 @@ impl Grafik {
                     self.x_konumu(x_aralığı, x_değeri, sol, genişlik),
                     self.seçenekler.piksel_hizası,
                 );
-                sahne.ekle(Komut::Çizgi {
-                    başlangıç: Nokta::yeni(x, üst),
-                    bitiş: Nokta::yeni(x, alt),
-                    renk: self.seçenekler.ızgara_rengi.clone(),
-                    kalınlık: 1.0,
-                });
+                if self.seçenekler.x_ızgara_görünür {
+                    sahne.ekle(Komut::Çizgi {
+                        başlangıç: Nokta::yeni(x, üst),
+                        bitiş: Nokta::yeni(x, alt),
+                        renk: self.seçenekler.ızgara_rengi.clone(),
+                        kalınlık: 1.0,
+                    });
+                }
                 (
                     Nokta::yeni(
                         x,
@@ -1471,42 +1533,44 @@ impl Grafik {
                     MetinHizası::Orta,
                 )
             };
-            sahne.ekle(Komut::Metin {
-                konum: etiket_konumu,
-                içerik: if self.seçenekler.x_zaman {
-                    let birim = if self.seçenekler.x_zaman_milisaniye {
-                        1_000.0
+            if self.seçenekler.x_eksen_görünür {
+                sahne.ekle(Komut::Metin {
+                    konum: etiket_konumu,
+                    içerik: if self.seçenekler.x_zaman {
+                        let birim = if self.seçenekler.x_zaman_milisaniye {
+                            1_000.0
+                        } else {
+                            1.0
+                        };
+                        crate::zaman::yerel_eksen_etiketi(
+                            x_değeri / birim,
+                            x_artımı / birim,
+                            &self.seçenekler.x_tarih_adları,
+                            önceki_x_yılı,
+                        )
+                        .map_or_else(
+                            || eksen_değerini_yaz(x_değeri, x_artımı),
+                            |(etiket, yıl)| {
+                                önceki_x_yılı = Some(yıl);
+                                etiket
+                            },
+                        )
                     } else {
-                        1.0
-                    };
-                    crate::zaman::yerel_eksen_etiketi(
-                        x_değeri / birim,
-                        x_artımı / birim,
-                        &self.seçenekler.x_tarih_adları,
-                        önceki_x_yılı,
-                    )
-                    .map_or_else(
-                        || eksen_değerini_yaz(x_değeri, x_artımı),
-                        |(etiket, yıl)| {
-                            önceki_x_yılı = Some(yıl);
-                            etiket
-                        },
-                    )
-                } else {
-                    let değer = x_değeri * self.seçenekler.x_eksen_değer_çarpanı;
-                    let artım = x_artımı * self.seçenekler.x_eksen_değer_çarpanı;
-                    match self.seçenekler.x_eksen_etiket_biçimi {
-                        YÖlçekEtiketBiçimi::Otomatik => eksen_değerini_yaz(değer, artım),
-                        biçim => ölçek_eksen_değerini_yaz(değer, artım, "", None, biçim),
-                    }
-                },
-                renk: self.seçenekler.x_eksen_rengi.clone(),
-                boyut: 11.0,
-                hiza: etiket_hizası,
-            });
+                        let değer = x_değeri * self.seçenekler.x_eksen_değer_çarpanı;
+                        let artım = x_artımı * self.seçenekler.x_eksen_değer_çarpanı;
+                        match self.seçenekler.x_eksen_etiket_biçimi {
+                            YÖlçekEtiketBiçimi::Otomatik => eksen_değerini_yaz(değer, artım),
+                            biçim => ölçek_eksen_değerini_yaz(değer, artım, "", None, biçim),
+                        }
+                    },
+                    renk: self.seçenekler.x_eksen_rengi.clone(),
+                    boyut: 11.0,
+                    hiza: etiket_hizası,
+                });
+            }
         }
 
-        if !self.seçenekler.x_eksen_etiketi.is_empty() {
+        if self.seçenekler.x_eksen_görünür && !self.seçenekler.x_eksen_etiketi.is_empty() {
             sahne.ekle(Komut::Metin {
                 konum: if self.seçenekler.x_dikey {
                     Nokta::yeni(
@@ -1972,6 +2036,30 @@ impl Grafik {
         sahne
     }
 
+    fn birincil_y_ızgara_çizgisini_ekle(
+        &self,
+        sahne: &mut Sahne,
+        başlangıç: Nokta,
+        bitiş: Nokta,
+    ) {
+        if let Some(kesik) = self.seçenekler.birincil_y_ızgara_kesik {
+            sahne.ekle(Komut::KesikliÇizgi {
+                başlangıç,
+                bitiş,
+                renk: self.seçenekler.ızgara_rengi.clone(),
+                kalınlık: 1.0,
+                kesik,
+            });
+        } else {
+            sahne.ekle(Komut::Çizgi {
+                başlangıç,
+                bitiş,
+                renk: self.seçenekler.ızgara_rengi.clone(),
+                kalınlık: 1.0,
+            });
+        }
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn karma_çubuk_serisini_çiz(
         &self,
@@ -2012,18 +2100,36 @@ impl Grafik {
             * f64::from(genişlik)
             * f64::from(seri.çubuk_genişlik_oranı)) as f32;
         let çubuk_genişliği = çubuk_genişliği.min(seri.azami_çubuk_genişliği);
-        let taban =
-            (alt - self.y_konumu(&seri.ölçek, y_aralığı, 0.0, 0.0, yükseklik)).clamp(üst, alt);
-        let dolgu = seri.dolgu.as_ref().unwrap_or(&seri.renk);
-        for (x_değeri, değer) in self.veri.x().iter().zip(değerler.iter()) {
-            let Some(değer) = değer else {
+        let üst_değerler = seri
+            .yüzen_çubuk_üst_serisi
+            .and_then(|indeks| self.veri.seriler().get(indeks));
+        let varsayılan_dolgu = seri.dolgu.as_ref().unwrap_or(&seri.renk);
+        let mut gradyan_çokgenleri = Vec::new();
+        for (indeks, (x_değeri, değer)) in self.veri.x().iter().zip(değerler.iter()).enumerate()
+        {
+            let Some(alt_değer) = değer else {
                 continue;
+            };
+            let üst_değer = if let Some(üst_değerler) = üst_değerler {
+                let Some(üst_değer) = üst_değerler.get(indeks).copied().flatten() else {
+                    continue;
+                };
+                üst_değer
+            } else {
+                *alt_değer
+            };
+            let taban_değer = if üst_değerler.is_some() {
+                *alt_değer
+            } else {
+                0.0
             };
             if *x_değeri < x_aralığı.en_az || *x_değeri > x_aralığı.en_çok {
                 continue;
             }
             let merkez = self.x_konumu(x_aralığı, *x_değeri, sol, genişlik);
-            let y = (alt - self.y_konumu(&seri.ölçek, y_aralığı, *değer, 0.0, yükseklik))
+            let y0 = (alt - self.y_konumu(&seri.ölçek, y_aralığı, taban_değer, 0.0, yükseklik))
+                .clamp(üst, alt);
+            let y1 = (alt - self.y_konumu(&seri.ölçek, y_aralığı, üst_değer, 0.0, yükseklik))
                 .clamp(üst, alt);
             let (ham_x0, ham_x1) = match seri.çubuk_hizası {
                 1 => (merkez, merkez + çubuk_genişliği),
@@ -2035,13 +2141,47 @@ impl Grafik {
             };
             let x0 = ham_x0.clamp(sol, sağ);
             let x1 = ham_x1.clamp(sol, sağ);
-            sahne.ekle(Komut::Dikdörtgen {
-                konum: Nokta::yeni(x0, y.min(taban)),
-                genişlik: (x1 - x0).max(0.0),
-                yükseklik: (taban - y).abs(),
-                dolgu: dolgu.clone(),
-                çizgi: seri.renk.clone(),
-                kalınlık: seri.çizgi_kalınlığı,
+            let çubuk_üst = y1.min(y0);
+            let çubuk_alt = y1.max(y0);
+            if x1 <= x0 || çubuk_alt <= çubuk_üst {
+                continue;
+            }
+            if seri.dolgu_gradyanı.is_some() {
+                gradyan_çokgenleri.push(vec![
+                    Nokta::yeni(x0, çubuk_üst),
+                    Nokta::yeni(x1, çubuk_üst),
+                    Nokta::yeni(x1, çubuk_alt),
+                    Nokta::yeni(x0, çubuk_alt),
+                ]);
+            } else {
+                let dolgu = seri.çubuk_dolguları.get(indeks).unwrap_or(varsayılan_dolgu);
+                sahne.ekle(Komut::Dikdörtgen {
+                    konum: Nokta::yeni(x0, çubuk_üst),
+                    genişlik: x1 - x0,
+                    yükseklik: çubuk_alt - çubuk_üst,
+                    dolgu: dolgu.clone(),
+                    çizgi: seri.renk.clone(),
+                    kalınlık: seri.çizgi_kalınlığı,
+                });
+            }
+        }
+        if !gradyan_çokgenleri.is_empty()
+            && let Some(gradyan) = seri.dolgu_gradyanı.as_ref().and_then(|düzen| {
+                self.ölçek_gradyanını_çöz(
+                    düzen,
+                    &seri.ölçek,
+                    x_aralığı,
+                    y_aralığı,
+                    sol,
+                    üst,
+                    genişlik,
+                    yükseklik,
+                )
+            })
+        {
+            sahne.ekle(Komut::GradyanAlan {
+                çokgenler: gradyan_çokgenleri,
+                gradyan,
             });
         }
     }

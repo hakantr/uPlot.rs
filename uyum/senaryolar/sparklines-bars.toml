@@ -1,0 +1,17 @@
+id = "sparklines-bars"
+kaynak = "../uPlot/demos/sparklines-bars.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/sparklines_bars.rs#sparklines_bars_kartı"
+yüzeyler = ["sparklines-bars-gradient", "sparklines-bars-explicit-colors"]
+boyut = [800, 400]
+nokta_sayısı = 16
+y_aralığı = [-25.0, 20.0]
+
+[kanıt]
+veri = "kaynak_veri_aynen"
+yüzen_çubuklar = "alt_seri_1_üst_seri_2"
+gradyan = "ölçek_değer_konumlu"
+nokta_başı_dolgu = "alt_ve_üst_negatiflik_kuralı"
+ızgara = "yalnız_y_sıfır_gri_kesik_3"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
