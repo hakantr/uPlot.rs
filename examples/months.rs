@@ -1,6 +1,8 @@
 use std::error::Error;
 use std::path::PathBuf;
-use uplot_rs::{Grafik, months_artık_yıllı_kartı, months_artık_yılsız_kartı};
+use uplot_rs::{
+    Grafik, months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı
+};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let dizin = std::env::args()
@@ -14,6 +16,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             months_artık_yılsız_kartı as fn() -> Result<_, _>,
         ),
         ("2024-leap-year.svg", months_artık_yıllı_kartı),
+        ("russian.svg", months_rusça_kartı),
     ] {
         let (seçenekler, veri) = kurucu()?;
         let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();

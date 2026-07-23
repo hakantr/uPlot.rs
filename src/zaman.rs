@@ -28,19 +28,30 @@ pub(crate) fn utc_zaman_damgası(yıl: i64, ay: u32, gün: u32) -> Option<f64> {
     Some(((çağ * 146_097 + çağ_günü - 719_468) * 86_400) as f64)
 }
 
-pub(crate) fn eksen_etiketi(zaman_damgası: f64, artım: f64) -> Option<String> {
+pub(crate) fn yerel_eksen_etiketi(
+    zaman_damgası: f64,
+    artım: f64,
+    adlar: &crate::TarihAdları,
+    önceki_yıl: Option<i64>,
+) -> Option<(String, i64)> {
     let (yıl, ay, gün, saat, dakika, saniye) = utc_alanları(zaman_damgası)?;
-    if artım >= 28.0 * 86_400.0 {
-        Some(format!("{yıl:04}-{ay:02}"))
+    let içerik = if artım >= 28.0 * 86_400.0 {
+        let ay_adı = adlar.kısa_ay(ay)?;
+        if önceki_yıl == Some(yıl) {
+            ay_adı.to_string()
+        } else {
+            format!("{ay_adı}\n{yıl:04}")
+        }
     } else if artım >= 86_400.0 {
-        Some(format!("{ay:02}-{gün:02}"))
+        format!("{ay:02}-{gün:02}")
     } else if artım >= 60.0 && saat == 0 && dakika == 0 {
-        Some(format!("{ay:02}-{gün:02} {saat:02}:{dakika:02}"))
+        format!("{ay:02}-{gün:02} {saat:02}:{dakika:02}")
     } else if artım >= 60.0 {
-        Some(format!("{saat:02}:{dakika:02}"))
+        format!("{saat:02}:{dakika:02}")
     } else {
-        Some(format!("{saat:02}:{dakika:02}:{saniye:02}"))
-    }
+        format!("{saat:02}:{dakika:02}:{saniye:02}")
+    };
+    Some((içerik, yıl))
 }
 
 fn günlerden_tarihe(gün: i64) -> (i64, u32, u32) {
@@ -70,12 +81,22 @@ mod testler {
         let zaman = utc_zaman_damgası(2024, 2, 1);
         assert_eq!(zaman.and_then(utc_alanları), Some((2024, 2, 1, 0, 0, 0)));
         assert_eq!(
-            zaman.and_then(|z| eksen_etiketi(z, 31.0 * 86_400.0)),
-            Some("2024-02".to_string())
+            zaman.and_then(|z| {
+                yerel_eksen_etiketi(z, 31.0 * 86_400.0, &crate::TarihAdları::ingilizce(), None)
+            }),
+            Some(("Feb\n2024".to_string(), 2024))
         );
         assert_eq!(
-            zaman.and_then(|z| eksen_etiketi(z, 3_600.0)),
-            Some("02-01 00:00".to_string())
+            zaman.and_then(|z| {
+                yerel_eksen_etiketi(z, 3_600.0, &crate::TarihAdları::ingilizce(), None)
+            }),
+            Some(("02-01 00:00".to_string(), 2024))
+        );
+        assert_eq!(
+            zaman.and_then(|z| {
+                yerel_eksen_etiketi(z, 31.0 * 86_400.0, &crate::TarihAdları::rusça(), None)
+            }),
+            Some(("Февр\n2024".to_string(), 2024))
         );
     }
 }

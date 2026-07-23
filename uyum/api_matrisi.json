@@ -329,9 +329,21 @@
     },
     {
       "kaynak_yolu": "_timeAxisSplits / timeAxisVals",
-      "rust_karşılığı": "grafik::zaman_bölmeleri / zaman::eksen_etiketi",
+      "rust_karşılığı": "grafik::zaman_bölmeleri / zaman::yerel_eksen_etiketi",
       "durum": "kısmi",
       "test": "src/grafik.rs"
+    },
+    {
+      "kaynak_yolu": "fmtDate(tpl, names)",
+      "rust_karşılığı": "TarihAdları / zaman::yerel_eksen_etiketi",
+      "durum": "kısmi",
+      "test": "src/kart/months.rs"
+    },
+    {
+      "kaynak_yolu": "tzDate(date, 'Etc/UTC')",
+      "rust_karşılığı": "zaman::utc_zaman_damgası / zaman::utc_alanları",
+      "durum": "tam_kanıtlı",
+      "test": "src/zaman.rs"
     }
   ]
 }

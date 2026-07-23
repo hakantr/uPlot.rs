@@ -130,6 +130,11 @@
         <small>months-leap</small>
         <div class="durum">UTC ay ekseni · months.html</div>
       </article>
+      <article class="kart" data-kart="months-russian" aria-current="false" tabindex="0">
+        <strong>Months · Russian</strong>
+        <small>months-russian</small>
+        <div class="durum">Rusça tarih adları · months-ru.html</div>
+      </article>
       <article class="kart" data-kart="cursor-snap" aria-current="false" tabindex="0">
         <strong>Cursor Snap</strong>
         <small>cursor-snap</small>
@@ -439,6 +444,17 @@
         başlık: "Months · 2024 leap year",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months.html">months.html</a>
           <br>2024–2026 arasındaki 36 UTC ay başlangıcı; Şubat 2024 artık yıl takviminde korunur.`,
+        tanım: () => months_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/months.rs",
+        seriler: [{ etiket: "Value", renk: "#ff0000" }],
+        yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
+      "months-russian": {
+        başlık: "Months · Russian",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months-ru.html">months-ru.html</a>
+          <br>Resmî örnekteki 2017–2019 UTC ay başlangıçları, aynı 0…10 veri üretimi ve Rusça <code>fmtDate</code> adları.`,
         tanım: () => months_kart_tanim_ornegi(),
         tanımYolu: "src/kart/months.rs",
         seriler: [{ etiket: "Value", renk: "#ff0000" }],

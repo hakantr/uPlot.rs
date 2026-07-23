@@ -1,0 +1,41 @@
+id = "months-ru"
+kaynak = "../uPlot/demos/months-ru.html"
+fixture = "src/kart/months.rs#months_rusça_kartı"
+viewport = [1920, 600]
+device_pixel_ratio = 1
+durum = "yerellestirilmis_etkilesimli"
+
+[veri]
+ay_sayısı = 36
+yıllar = [2017, 2018, 2019]
+ilk_değer = 5.0
+değer_havuzu = "0..=10"
+kanıt_rastgele_üreteci = "mulberry32"
+kanıt_tohumu = 1381322063
+y_aralığı = [0.0, 11.0]
+
+[zaman]
+saat_dilimi = "Etc/UTC"
+ay_günü = 1
+saat = "00:00:00"
+etiket = "Rusça kısa ay adı ve yıl"
+takvim_bölmeleri = "gerçek UTC ay başlangıçları"
+
+[yerelleştirme]
+uzun_aylar = "ruNames.MMMM"
+kısa_aylar = "ruNames.MMM"
+uzun_hafta_günleri = "ruNames.WWWW"
+kısa_hafta_günleri = "ruNames.WWW"
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/months/russian.svg"

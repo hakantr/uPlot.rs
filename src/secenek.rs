@@ -4,11 +4,13 @@ mod gradyan;
 mod isi_haritasi;
 mod seri;
 mod y_olcek;
+mod zaman;
 
 pub use gradyan::{GradyanDurağı, GradyanEkseni, GradyanKonumu, ÖlçekGradyanı};
 pub use isi_haritasi::{IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu};
 pub use seri::{SeriSeçenekleri, SeriÇizimTürü};
 pub use y_olcek::{YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri};
+pub use zaman::TarihAdları;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum XÖlçekDağılımı {
@@ -431,6 +433,7 @@ pub struct GrafikSeçenekleri {
     pub yükseklik: u32,
     pub x_zaman: bool,
     pub x_zaman_milisaniye: bool,
+    pub x_tarih_adları: TarihAdları,
     pub x_dağılımı: XÖlçekDağılımı,
     pub y_aralığı: Option<Aralık>,
     pub y_ölçekleri: Vec<YÖlçekSeçenekleri>,
@@ -478,6 +481,7 @@ impl GrafikSeçenekleri {
             yükseklik,
             x_zaman: true,
             x_zaman_milisaniye: false,
+            x_tarih_adları: TarihAdları::default(),
             x_dağılımı: XÖlçekDağılımı::Doğrusal,
             y_aralığı: None,
             y_ölçekleri: Vec::new(),
@@ -535,6 +539,11 @@ impl GrafikSeçenekleri {
 
     pub fn x_zaman_milisaniye(mut self, milisaniye: bool) -> Self {
         self.x_zaman_milisaniye = milisaniye;
+        self
+    }
+
+    pub fn x_tarih_adları(mut self, adlar: TarihAdları) -> Self {
+        self.x_tarih_adları = adlar;
         self
     }
 

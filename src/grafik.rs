@@ -1078,6 +1078,7 @@ impl Grafik {
                 uygun_artım(x_aralığı, genişlik, 50.0),
             ),
         };
+        let mut önceki_x_yılı = None;
         for x_değeri in x_bölmeleri {
             let x = self.x_konumu(x_aralığı, x_değeri, sol, genişlik);
             sahne.ekle(Komut::Çizgi {
@@ -1094,8 +1095,19 @@ impl Grafik {
                     } else {
                         1.0
                     };
-                    crate::zaman::eksen_etiketi(x_değeri / birim, x_artımı / birim)
-                        .unwrap_or_else(|| eksen_değerini_yaz(x_değeri, x_artımı))
+                    crate::zaman::yerel_eksen_etiketi(
+                        x_değeri / birim,
+                        x_artımı / birim,
+                        &self.seçenekler.x_tarih_adları,
+                        önceki_x_yılı,
+                    )
+                    .map_or_else(
+                        || eksen_değerini_yaz(x_değeri, x_artımı),
+                        |(etiket, yıl)| {
+                            önceki_x_yılı = Some(yıl);
+                            etiket
+                        },
+                    )
                 } else {
                     eksen_değerini_yaz(
                         x_değeri * self.seçenekler.x_eksen_değer_çarpanı,
@@ -2582,6 +2594,16 @@ fn zaman_bölmeleri(
         .map(|adım| adım * birim)
         .find(|adım| *adım >= hedef)
         .unwrap_or(63_072_000.0 * birim);
+    let saniye_adımı = adım / birim;
+    if saniye_adımı >= 2_592_000.0 {
+        let ay_adımı = if saniye_adımı >= 31_536_000.0 {
+            let yıl_adımı = (saniye_adımı / 31_536_000.0).round().max(1.0) as i64;
+            yıl_adımı.saturating_mul(12)
+        } else {
+            (saniye_adımı / 2_592_000.0).round().max(1.0) as i64
+        };
+        return (takvim_ay_bölmeleri(aralık, birim, ay_adımı), adım);
+    }
     let ilk = (aralık.en_az / adım).ceil() * adım;
     let mut sonuç = Vec::new();
     let mut değer = ilk;
@@ -2590,6 +2612,40 @@ fn zaman_bölmeleri(
         değer += adım;
     }
     (sonuç, adım)
+}
+
+fn takvim_ay_bölmeleri(aralık: Aralık, birim: f64, ay_adımı: i64) -> Vec<f64> {
+    if !birim.is_finite() || birim <= 0.0 || ay_adımı <= 0 {
+        return Vec::new();
+    }
+    let en_az = aralık.en_az / birim;
+    let en_çok = aralık.en_çok / birim;
+    let Some((yıl, ay, _, _, _, _)) = crate::zaman::utc_alanları(en_az) else {
+        return Vec::new();
+    };
+    let mut ay_indeksi = yıl
+        .saturating_mul(12)
+        .saturating_add(i64::from(ay).saturating_sub(1));
+    ay_indeksi = ay_indeksi.div_euclid(ay_adımı).saturating_mul(ay_adımı);
+    let mut sonuç = Vec::new();
+    for _ in 0..10_000 {
+        let bölme_yılı = ay_indeksi.div_euclid(12);
+        let ay_sıfır = ay_indeksi.rem_euclid(12);
+        let Ok(bölme_ayı) = u32::try_from(ay_sıfır.saturating_add(1)) else {
+            break;
+        };
+        let Some(zaman) = crate::zaman::utc_zaman_damgası(bölme_yılı, bölme_ayı, 1) else {
+            break;
+        };
+        if zaman > en_çok {
+            break;
+        }
+        if zaman >= en_az {
+            sonuç.push(zaman * birim);
+        }
+        ay_indeksi = ay_indeksi.saturating_add(ay_adımı);
+    }
+    sonuç
 }
 
 fn logaritmik_bölmeler(aralık: Aralık, taban: f64) -> Vec<f64> {
@@ -3177,5 +3233,19 @@ mod eksen_testleri {
                 .iter()
                 .all(|değer| (*değer % 3_600.0).abs() <= f64::EPSILON)
         );
+    }
+
+    #[test]
+    fn aylık_zaman_bölmeleri_gerçek_takvim_sınırlarına_hizalanır() {
+        let aralık = Aralık::yeni(1_483_228_800.0, 1_575_158_400.0);
+        let Ok(aralık) = aralık else { return };
+        let (bölmeler, adım) = zaman_bölmeleri(aralık, 1_850.0, 50.0, false);
+        assert_eq!(adım, 2_592_000.0);
+        assert!(!bölmeler.is_empty());
+        assert!(bölmeler.iter().all(|değer| {
+            crate::zaman::utc_alanları(*değer).is_some_and(|(_, _, gün, saat, dakika, saniye)| {
+                gün == 1 && saat == 0 && dakika == 0 && saniye == 0
+            })
+        }));
     }
 }

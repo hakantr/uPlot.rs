@@ -158,8 +158,8 @@ const uygulanmışDemolar = new Set([
   "custom-scales.html", "data-smoothing.html", "dependent-scale.html", "draw-hooks.html",
   "focus-cursor.html", "gradients.html", "grid-over-series.html", "high-low-bands.html",
   "latency-heatmap.html", "line-paths.html", "log-scales.html", "log-scales2.html",
-  "missing-data.html", "months.html", "resize.html", "scale-padding.html", "zoom-touch.html",
-  "zoom-wheel.html",
+  "missing-data.html", "months-ru.html", "months.html", "resize.html", "scale-padding.html",
+  "zoom-touch.html", "zoom-wheel.html",
 ]);
 
 const demolar = dosyalar.map((dosya, indeks) => {

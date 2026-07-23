@@ -103,8 +103,8 @@ pub use missing_data::{
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
 };
 pub use months::{
-    MONTHS_KANIT_TOHUMU, MONTHS_KART_TANIM_ÖRNEĞİ, months_artık_yıllı_kartı,
-    months_artık_yılsız_kartı,
+    MONTHS_KANIT_TOHUMU, MONTHS_KART_TANIM_ÖRNEĞİ, MONTHS_RU_KANIT_TOHUMU,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı,
 };
 pub use ortak::ortak_kart_etkileşimleri;
 pub use resize::{RESIZE_KART_TANIM_ÖRNEĞİ, resize_kartı};

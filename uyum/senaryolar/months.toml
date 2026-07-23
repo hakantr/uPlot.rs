@@ -19,7 +19,7 @@ kanıt_tohumu = 1297043028
 saat_dilimi = "Etc/UTC"
 ay_günü = 1
 saat = "00:00:00"
-etiket = "YYYY-MM"
+etiket = "İngilizce kısa ay adı ve yıl"
 artık_yıl_kanıtı = "2024-02-01T00:00:00Z"
 
 [etkileşim]
