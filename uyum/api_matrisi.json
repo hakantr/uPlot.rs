@@ -392,6 +392,18 @@
       "rust_karşılığı": "no_data_kartı tek nokta X aralığı",
       "durum": "tam_kanıtlı",
       "test": "src/kart/no_data.rs"
+    },
+    {
+      "kaynak_yolu": "Options.pxAlign / pxRoundGen",
+      "rust_karşılığı": "GrafikSeçenekleri::piksel_hizası / grafik::piksele_hizala",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/pixel_align.rs"
+    },
+    {
+      "kaynak_yolu": "Series.pxAlign / Series.points.show",
+      "rust_karşılığı": "SeriSeçenekleri::piksel_hizası / noktaları_göster",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/pixel_align.rs"
     }
   ]
 }

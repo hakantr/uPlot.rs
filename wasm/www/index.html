@@ -281,6 +281,7 @@
       nice_scale_kart_tanim_ornegi,
       no_data_kart_tanim_ornegi,
       path_gap_clip_kart_tanim_ornegi,
+      pixel_align_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -684,6 +685,38 @@
         tanımYolu: "src/kart/path_gap_clip.rs",
         seriler: seriler.map(([etiket, renk]) => ({etiket, renk})),
         yardım: "Kaynak boşluk/kırpma yüzeyi · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+
+    const pixelAlignYüzeyleri = [
+      ["pixel-align-default", "pxAlign: 1 (default)"],
+      ["pixel-align-off", "pxAlign: 0 (off)"],
+    ];
+    document.querySelector('[data-kart="path-gap-clip-undefined"]')?.insertAdjacentHTML(
+      "afterend",
+      pixelAlignYüzeyleri.map(([kimlik, başlık]) => `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>${kimlik}</small>
+          <div class="durum">Canlı tam piksel / alt piksel karşılaştırması</div>
+        </article>`).join("")
+    );
+    for (const [kimlik, başlık] of pixelAlignYüzeyleri) {
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/pixel-align.html">pixel-align.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/utils.js">paths/utils.js</a>
+          <br>120 saniyelik pencere, 1000 örneklik halka ve bir saniyelik güncelleme kaynakla aynıdır.
+          <br><code>pxAlign</code> ve seri düzeyindeki piksel hizası Rust çekirdeğinde çözülür.`,
+        tanım: () => pixel_align_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/pixel_align.rs",
+        seriler: [
+          { etiket: "Linear", renk: "red" },
+          { etiket: "Spline", renk: "blue" },
+          { etiket: "Stepped", renk: "purple" },
+        ],
+        yardım: "Canlı akış · tam pikselde tırtıl etkisi / alt pikselde yumuşak hareket",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       };
@@ -1783,6 +1816,22 @@
             boşluklarıBirleştir = !boşluklarıBirleştir;
             oturum.bosluklari_birlestir_ayarla(boşluklarıBirleştir);
             çiz();
+          }, 1000);
+        } else if (kimlik.startsWith("pixel-align-")) {
+          let pixelAlignAdımı = 140;
+          alignDataZamanlayıcı = setInterval(() => {
+            if (aktifKart !== kimlik || !oturum) {
+              clearInterval(alignDataZamanlayıcı);
+              alignDataZamanlayıcı = null;
+              return;
+            }
+            pixelAlignAdımı = Math.min(pixelAlignAdımı + 1, 10000);
+            try {
+              if (oturum.pixel_align_adimi_ayarla(pixelAlignAdımı)) çiz();
+              hata.textContent = "";
+            } catch (neden) {
+              hata.textContent = `Pixel Align akışı güncellenemedi: ${String(neden)}`;
+            }
           }, 1000);
         }
       }

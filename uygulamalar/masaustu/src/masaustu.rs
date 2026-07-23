@@ -24,19 +24,19 @@ use uplot_rs::{
     LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
     LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
     MONTHS_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
-    NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SmoothingÖrneği, UplotHatası,
-    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
-    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
-    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
-    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
-    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
-    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
-    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
-    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
+    PathGapClipÖrneği, PixelAlignÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    SeriSeçenekleri, SmoothingÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
+    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
+    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
+    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
+    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
+    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
-    no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, resize_kartı,
+    no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, resize_kartı,
     scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
@@ -56,6 +56,7 @@ enum KartKimliği {
     NiceScale,
     NoData(NoDataÖrneği),
     PathGapClip(PathGapClipÖrneği),
+    PixelAlign(PixelAlignÖrneği),
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -100,6 +101,7 @@ impl KartKimliği {
             Self::NiceScale => "Nice Scale & Ticks",
             Self::NoData(örnek) => örnek.başlık(),
             Self::PathGapClip(örnek) => örnek.başlık(),
+            Self::PixelAlign(örnek) => örnek.başlık(),
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -157,6 +159,9 @@ impl KartKimliği {
             Self::NoData(_) => "no-data.html · 33 boş, tek noktalı, düz ve hassas ölçek yüzeyi",
             Self::PathGapClip(_) => {
                 "path-gap-clip.html · 15 null/undefined, band, stepped ve piksel yüzeyi"
+            }
+            Self::PixelAlign(_) => {
+                "pixel-align.html · aynı canlı veriyle tam piksel ve alt piksel karşılaştırması"
             }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
@@ -220,6 +225,7 @@ impl KartKimliği {
             Self::NiceScale => NICE_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::NoData(_) => NO_DATA_KART_TANIM_ÖRNEĞİ,
             Self::PathGapClip(_) => PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
+            Self::PixelAlign(_) => PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -260,6 +266,7 @@ impl KartKimliği {
             Self::NiceScale => "src/kart/nice_scale.rs",
             Self::NoData(_) => "src/kart/no_data.rs",
             Self::PathGapClip(_) => "src/kart/path_gap_clip.rs",
+            Self::PixelAlign(_) => "src/kart/pixel_align.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -315,6 +322,7 @@ pub struct ChartListesi {
     açıklama_istendi: bool,
     dinamik_seri_sayacı: u32,
     align_data_zamanlayıcısı: Option<Task<()>>,
+    pixel_align_adımı: usize,
 }
 
 impl ChartListesi {
@@ -339,7 +347,7 @@ impl ChartListesi {
         })
         .detach();
 
-        let (grafik, hata) = grafik_oluştur(KartKimliği::Resize, 100, 0, 5, 0).map_or_else(
+        let (grafik, hata) = grafik_oluştur(KartKimliği::Resize, 100, 0, 5, 0, 140).map_or_else(
             |hata| (None, Some(format!("Grafik oluşturulamadı: {hata}"))),
             |grafik| (Some(cx.new(|_| GpuiGrafik::yeni(grafik))), None),
         );
@@ -367,6 +375,7 @@ impl ChartListesi {
             açıklama_istendi: false,
             dinamik_seri_sayacı: 0,
             align_data_zamanlayıcısı: None,
+            pixel_align_adımı: 140,
         }
     }
 
@@ -378,6 +387,7 @@ impl ChartListesi {
             self.autosize_kuvvet,
             self.latency_kova,
             self.latency_ofset,
+            self.pixel_align_adımı,
         ) {
             Ok(mut yeni) => {
                 yeni.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
@@ -417,6 +427,7 @@ impl ChartListesi {
         self.açıklama_istendi = false;
         self.dinamik_seri_sayacı = 0;
         self.align_data_zamanlayıcısı = None;
+        self.pixel_align_adımı = 140;
         let etkileşimler = kart.etkileşimler();
         self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
         self.tekerlek_anahtarı.update(cx, |anahtar, cx| {
@@ -450,6 +461,26 @@ impl ChartListesi {
                                     grafik.boşlukları_birleştir_ayarla(etkin, cx);
                                 });
                             }
+                            true
+                        })
+                        .unwrap_or(false);
+                    if !devam {
+                        break;
+                    }
+                }
+            }));
+        } else if matches!(kart, KartKimliği::PixelAlign(_)) {
+            self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
+                loop {
+                    cx.background_executor().timer(Duration::from_secs(1)).await;
+                    let devam = bu
+                        .update(cx, |bu, cx| {
+                            if bu.aktif_kart != kart {
+                                return false;
+                            }
+                            bu.pixel_align_adımı =
+                                bu.pixel_align_adımı.saturating_add(1).min(10_000);
+                            bu.grafiği_yenile(bu.nokta_sayısı, cx);
                             true
                         })
                         .unwrap_or(false);
@@ -532,6 +563,7 @@ fn grafik_oluştur(
     autosize_kuvvet: i32,
     latency_kova: u8,
     latency_ofset: u8,
+    pixel_align_adımı: usize,
 ) -> Result<Grafik, UplotHatası> {
     let (seçenekler, veri) = match kart {
         KartKimliği::AddDelSeries => add_del_series_kartı(),
@@ -548,6 +580,7 @@ fn grafik_oluştur(
         KartKimliği::NiceScale => nice_scale_kartı(),
         KartKimliği::NoData(örnek) => no_data_kartı(örnek),
         KartKimliği::PathGapClip(örnek) => path_gap_clip_kartı(örnek),
+        KartKimliği::PixelAlign(örnek) => pixel_align_kartı(örnek, pixel_align_adımı),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -627,6 +660,12 @@ impl Render for ChartListesi {
                 format!(
                     "{} nokta · null/undefined boşluk ve kırpma yüzeyi",
                     örnek.nokta_sayısı()
+                )
+            }
+            KartKimliği::PixelAlign(_) => {
+                format!(
+                    "{} canlı örnek × 3 seri · 120 sn görünür pencere",
+                    self.pixel_align_adımı.min(1_000)
                 )
             }
             KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
@@ -1254,6 +1293,21 @@ impl Render for ChartListesi {
                     "path-gap-clip",
                     aktif_kart == kart,
                     "null/undefined · boşluk ve yol kırpması",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
+            .children(PixelAlignÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::PixelAlign(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "pixel-align",
+                    aktif_kart == kart,
+                    "Canlı pxAlign 1 / 0 karşılaştırması",
                     panel,
                     vurgu,
                 )

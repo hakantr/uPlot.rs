@@ -988,14 +988,17 @@ impl Grafik {
             |artım| eksen_bölmeleri_artımla(y_aralığı, artım),
         );
         for y_değeri in y_bölmeleri {
-            let y = üst + yükseklik
-                - self.y_konumu(
-                    &self.seçenekler.birincil_y_ölçeği,
-                    y_aralığı,
-                    y_değeri,
-                    0.0,
-                    yükseklik,
-                );
+            let y = piksele_hizala(
+                üst + yükseklik
+                    - self.y_konumu(
+                        &self.seçenekler.birincil_y_ölçeği,
+                        y_aralığı,
+                        y_değeri,
+                        0.0,
+                        yükseklik,
+                    ),
+                self.seçenekler.piksel_hizası,
+            );
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(sol, y),
                 bitiş: Nokta::yeni(sağ, y),
@@ -1075,7 +1078,10 @@ impl Grafik {
             let aralık = self.görünür_ölçek_aralığı(&ölçek.anahtar, x_aralığı, görünür_y);
             let artım = uygun_artım(aralık, yükseklik, 30.0);
             for değer in self.y_eksen_bölmeleri(&ölçek.anahtar, aralık, yükseklik) {
-                let y = alt - self.y_konumu(&ölçek.anahtar, aralık, değer, 0.0, yükseklik);
+                let y = piksele_hizala(
+                    alt - self.y_konumu(&ölçek.anahtar, aralık, değer, 0.0, yükseklik),
+                    self.seçenekler.piksel_hizası,
+                );
                 if ölçek.ızgara {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(sol, y),
@@ -1130,7 +1136,10 @@ impl Grafik {
         };
         let mut önceki_x_yılı = None;
         for x_değeri in x_bölmeleri {
-            let x = self.x_konumu(x_aralığı, x_değeri, sol, genişlik);
+            let x = piksele_hizala(
+                self.x_konumu(x_aralığı, x_değeri, sol, genişlik),
+                self.seçenekler.piksel_hizası,
+            );
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(x, üst),
                 bitiş: Nokta::yeni(x, alt),
@@ -1242,6 +1251,7 @@ impl Grafik {
             let mut parça = Vec::<Nokta>::new();
             let mut görünür_noktalar = Vec::<(Nokta, f64, f64)>::new();
             let mut önceki_x = None::<f64>;
+            let piksel_hizası = seri.piksel_hizası.unwrap_or(self.seçenekler.piksel_hizası);
             let çizilecek_indeksler =
                 çizilecek_indeksler(self.veri.x(), değerler, x_aralığı, genişlik);
             for indeks in çizilecek_indeksler {
@@ -1260,9 +1270,20 @@ impl Grafik {
                         {
                             ham_parçalar.push(std::mem::take(&mut parça));
                         }
-                        let x = self.x_konumu(x_aralığı, *x_değeri, sol, genişlik);
-                        let y = alt
-                            - self.y_konumu(&seri.ölçek, seri_y_aralığı, *y_değeri, 0.0, yükseklik);
+                        let x = piksele_hizala(
+                            self.x_konumu(x_aralığı, *x_değeri, sol, genişlik),
+                            piksel_hizası,
+                        );
+                        let y = piksele_hizala(
+                            alt - self.y_konumu(
+                                &seri.ölçek,
+                                seri_y_aralığı,
+                                *y_değeri,
+                                0.0,
+                                yükseklik,
+                            ),
+                            piksel_hizası,
+                        );
                         let nokta = Nokta::yeni(x, y);
                         parça.push(nokta);
                         önceki_x = Some(*x_değeri);
@@ -1387,8 +1408,9 @@ impl Grafik {
                         dolgu: seri_rengi.clone(),
                     });
                 }
-            } else if seri.çizim_türü == crate::SeriÇizimTürü::Noktalar || ortalama_boşluk >= 10.0
-            {
+            } else if seri.noktaları_göster.unwrap_or(
+                seri.çizim_türü == crate::SeriÇizimTürü::Noktalar || ortalama_boşluk >= 10.0,
+            ) {
                 for (nokta, x_değeri, y_değeri) in &görünür_noktalar {
                     let nokta_rengi = self
                         .seri_imleç_rengi(seri_indeksi, *x_değeri, *y_değeri)
@@ -3301,6 +3323,14 @@ fn yıldız_çokgeni(merkez: Nokta, uçlar: usize, dış: f32, iç: f32) -> Vec<
         ));
     }
     noktalar
+}
+
+fn piksele_hizala(değer: f32, adım: f32) -> f32 {
+    if adım > 0.0 && adım.is_finite() && değer.is_finite() {
+        (değer / adım).round() * adım
+    } else {
+        değer
+    }
 }
 
 #[cfg(test)]

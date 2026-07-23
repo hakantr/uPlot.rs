@@ -1,0 +1,34 @@
+id = "pixel-align"
+kaynak = "../uPlot/demos/pixel-align.html"
+fixture = "src/kart/pixel_align.rs#pixel_align_kartı"
+viewport = [1300, 1200]
+device_pixel_ratio = 1
+durum = "iki_canlı_yüzey"
+
+[veri]
+pencere_ms = 120000
+aralık_ms = 1000
+azami_örnek = 1000
+seri_sayısı = 3
+kanıt_tohumu = "0x50495845"
+
+[yollar]
+doğrusal = true
+spline = true
+basamak_sonra = true
+noktalar = true
+piksel_hizası = [1, 0]
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+canlı_güncelleme_ms = 1000
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+svg_dizini = "target/pixel-align"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

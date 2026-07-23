@@ -88,6 +88,10 @@ name = "path_gap_clip"
 required-features = ["svg"]
 
 [[example]]
+name = "pixel_align"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

@@ -462,6 +462,9 @@ pub struct GrafikSeçenekleri {
     pub çizim_kancaları: Option<ÇizimKancasıDüzeni>,
     pub odak: Option<OdakDüzeni>,
     pub çizim_sırası: ÇizimSırası,
+    /// uPlot `opts.pxAlign` karşılığıdır. `1`, koordinatları tam piksele
+    /// yuvarlar; `0`, canlı akışlarda alt piksel hareketini korur.
+    pub piksel_hizası: f32,
     pub ızgara_rengi: String,
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
@@ -513,6 +516,7 @@ impl GrafikSeçenekleri {
             çizim_kancaları: None,
             odak: None,
             çizim_sırası: ÇizimSırası::EksenlerSeriler,
+            piksel_hizası: 1.0,
             ızgara_rengi: "#e5e7eb".to_string(),
             imleç_ızgara_adımı: None,
             etkileşimler: EtkileşimSeçenekleri::default(),
@@ -595,6 +599,14 @@ impl GrafikSeçenekleri {
 
     pub fn çizim_sırası(mut self, sıra: ÇizimSırası) -> Self {
         self.çizim_sırası = sıra;
+        self
+    }
+
+    /// Grafik düzeyindeki uPlot `pxAlign` değerini belirler.
+    pub fn piksel_hizası(mut self, adım: f32) -> Self {
+        if adım.is_finite() && adım >= 0.0 {
+            self.piksel_hizası = adım;
+        }
         self
     }
 

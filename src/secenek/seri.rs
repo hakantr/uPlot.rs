@@ -28,6 +28,12 @@ pub struct SeriSeçenekleri {
     pub azami_çubuk_genişliği: f32,
     pub çubuk_hizası: i8,
     pub gösterim_değer_çarpanı: f64,
+    /// uPlot `series.pxAlign` karşılığıdır. `None`, grafik düzeyindeki
+    /// `pxAlign` değerini devralır; `Some(0.0)` hizalamayı kapatır.
+    pub piksel_hizası: Option<f32>,
+    /// uPlot `series.points.show` karşılığıdır. `None`, çekirdeğin koşullu
+    /// varsayılanını; `Some(true/false)` açık geliştirici kararını kullanır.
+    pub noktaları_göster: Option<bool>,
 }
 
 impl SeriSeçenekleri {
@@ -50,6 +56,8 @@ impl SeriSeçenekleri {
             azami_çubuk_genişliği: f32::INFINITY,
             çubuk_hizası: 0,
             gösterim_değer_çarpanı: 1.0,
+            piksel_hizası: None,
+            noktaları_göster: None,
         }
     }
 
@@ -177,6 +185,20 @@ impl SeriSeçenekleri {
         if çarpan.is_finite() && çarpan.abs() > f64::EPSILON {
             self.gösterim_değer_çarpanı = çarpan;
         }
+        self
+    }
+
+    /// Seri yol ve nokta koordinatlarının hangi piksel adımına
+    /// yuvarlanacağını belirler. `0`, uPlot'taki gibi yuvarlamayı kapatır.
+    pub fn piksel_hizası(mut self, adım: f32) -> Self {
+        if adım.is_finite() && adım >= 0.0 {
+            self.piksel_hizası = Some(adım);
+        }
+        self
+    }
+
+    pub fn noktaları_göster(mut self, göster: bool) -> Self {
+        self.noktaları_göster = Some(göster);
         self
     }
 }
