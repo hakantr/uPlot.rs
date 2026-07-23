@@ -1,9 +1,11 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SeriÇizimTürü {
     Çizgi,
+    Noktalar,
     BasamakÖnce,
     BasamakSonra,
     Eğri,
+    CatmullRom,
     Çubuk,
 }
 
@@ -24,6 +26,7 @@ pub struct SeriSeçenekleri {
     pub çizim_türü: SeriÇizimTürü,
     pub çubuk_genişlik_oranı: f32,
     pub azami_çubuk_genişliği: f32,
+    pub çubuk_hizası: i8,
 }
 
 impl SeriSeçenekleri {
@@ -44,6 +47,7 @@ impl SeriSeçenekleri {
             çizim_türü: SeriÇizimTürü::Çizgi,
             çubuk_genişlik_oranı: 0.6,
             azami_çubuk_genişliği: f32::INFINITY,
+            çubuk_hizası: 0,
         }
     }
 
@@ -140,6 +144,16 @@ impl SeriSeçenekleri {
         self
     }
 
+    pub fn catmull_rom(mut self) -> Self {
+        self.çizim_türü = SeriÇizimTürü::CatmullRom;
+        self
+    }
+
+    pub fn yalnız_noktalar(mut self) -> Self {
+        self.çizim_türü = SeriÇizimTürü::Noktalar;
+        self
+    }
+
     pub fn çubuk_boyutu(mut self, oran: f32, azami: f32) -> Self {
         if oran.is_finite() && (0.0..=1.0).contains(&oran) {
             self.çubuk_genişlik_oranı = oran;
@@ -147,6 +161,11 @@ impl SeriSeçenekleri {
         if azami.is_finite() && azami > 0.0 {
             self.azami_çubuk_genişliği = azami;
         }
+        self
+    }
+
+    pub fn çubuk_hizası(mut self, hiza: i8) -> Self {
+        self.çubuk_hizası = hiza.clamp(-1, 1);
         self
     }
 }

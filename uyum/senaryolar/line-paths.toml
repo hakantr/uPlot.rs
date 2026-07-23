@@ -1,0 +1,20 @@
+id = "line-paths"
+kaynak = "../uPlot/demos/line-paths.html"
+fixture = "src/kart/line_paths.rs#line_paths_kartı"
+device_pixel_ratio = 1
+alt_grafik_sayısı = 8
+
+[veri]
+nokta_sayısı = 101
+null_indeksleri = [22, 23, 24, 25]
+
+[davranış]
+etkin_yollar = ["points-only", "linear", "monotone-cubic", "step-after", "step-before", "bars-center", "bars-left", "bars-right"]
+yorumlu_kaynak_yeteneği = "catmull-rom-centripetal"
+arka_plan = "#141619"
+ızgara = "#2c3235"
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/line-paths/line-paths-monotone-cubic.svg"

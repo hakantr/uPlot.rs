@@ -824,7 +824,7 @@ impl Grafik {
         let yükseklik_px = yükseklik_px.max(120);
         let mut sahne = Sahne::yeni(genişlik_px, yükseklik_px);
         sahne.ekle(Komut::ArkaPlan {
-            renk: "#ffffff".to_string(),
+            renk: self.seçenekler.arka_plan_rengi.clone(),
         });
 
         let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
@@ -855,7 +855,7 @@ impl Grafik {
         sahne.ekle(Komut::Metin {
             konum: Nokta::yeni(genişlik_px as f32 / 2.0, 26.0),
             içerik: self.seçenekler.başlık.clone(),
-            renk: "#111111".to_string(),
+            renk: self.seçenekler.başlık_rengi.clone(),
             boyut: 18.0,
             hiza: MetinHizası::Orta,
         });
@@ -1050,7 +1050,7 @@ impl Grafik {
                         x_artımı * self.seçenekler.x_eksen_değer_çarpanı,
                     )
                 },
-                renk: "#4b5563".to_string(),
+                renk: self.seçenekler.x_eksen_rengi.clone(),
                 boyut: 11.0,
                 hiza: MetinHizası::Orta,
             });
@@ -1060,7 +1060,7 @@ impl Grafik {
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni((sol + sağ) / 2.0, alt + 42.0),
                 içerik: self.seçenekler.x_eksen_etiketi.clone(),
-                renk: "#4b5563".to_string(),
+                renk: self.seçenekler.x_eksen_rengi.clone(),
                 boyut: 12.0,
                 hiza: MetinHizası::Orta,
             });
@@ -1171,7 +1171,10 @@ impl Grafik {
                 .map(|parça| seri_yol_noktaları(&parça, seri.çizim_türü))
                 .collect::<Vec<_>>();
             let parçalar = yolu_dikdörtgene_kırp(&ham_parçalar, sol, sağ, üst, alt);
-            if !bant_dolgusu && (seri_dolgusu.is_some() || seri.dolgu_gradyanı.is_some()) {
+            if !bant_dolgusu
+                && seri.çizim_türü != crate::SeriÇizimTürü::Noktalar
+                && (seri_dolgusu.is_some() || seri.dolgu_gradyanı.is_some())
+            {
                 let taban = alt
                     - self.y_konumu(
                         &seri.ölçek,
@@ -1215,7 +1218,9 @@ impl Grafik {
                     });
                 }
             }
-            if let Some(gradyan) = seri.çizgi_gradyanı.as_ref().and_then(|düzen| {
+            if seri.çizim_türü == crate::SeriÇizimTürü::Noktalar {
+                // Resmî null path: yalnız koşullu veri noktaları çizilir.
+            } else if let Some(gradyan) = seri.çizgi_gradyanı.as_ref().and_then(|düzen| {
                 self.ölçek_gradyanını_çöz(
                     düzen,
                     &seri.ölçek,
@@ -1266,7 +1271,8 @@ impl Grafik {
                         dolgu: seri_rengi.clone(),
                     });
                 }
-            } else if ortalama_boşluk >= 10.0 {
+            } else if seri.çizim_türü == crate::SeriÇizimTürü::Noktalar || ortalama_boşluk >= 10.0
+            {
                 for (nokta, x_değeri, y_değeri) in &görünür_noktalar {
                     let nokta_rengi = self
                         .seri_imleç_rengi(seri_indeksi, *x_değeri, *y_değeri)
@@ -1417,8 +1423,16 @@ impl Grafik {
             let merkez = self.x_konumu(x_aralığı, *x_değeri, sol, genişlik);
             let y = (alt - self.y_konumu(&seri.ölçek, y_aralığı, *değer, 0.0, yükseklik))
                 .clamp(üst, alt);
-            let x0 = (merkez - çubuk_genişliği / 2.0).clamp(sol, sağ);
-            let x1 = (merkez + çubuk_genişliği / 2.0).clamp(sol, sağ);
+            let (ham_x0, ham_x1) = match seri.çubuk_hizası {
+                1 => (merkez, merkez + çubuk_genişliği),
+                -1 => (merkez - çubuk_genişliği, merkez),
+                _ => (
+                    merkez - çubuk_genişliği / 2.0,
+                    merkez + çubuk_genişliği / 2.0,
+                ),
+            };
+            let x0 = ham_x0.clamp(sol, sağ);
+            let x1 = ham_x1.clamp(sol, sağ);
             sahne.ekle(Komut::Dikdörtgen {
                 konum: Nokta::yeni(x0, y.min(taban)),
                 genişlik: (x1 - x0).max(0.0),

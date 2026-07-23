@@ -21,6 +21,7 @@ mod gradients;
 mod grid_over_series;
 mod high_low_bands;
 mod latency_heatmap;
+mod line_paths;
 mod missing_data;
 mod months;
 mod ortak;
@@ -91,6 +92,7 @@ pub use latency_heatmap::{
     LATENCY_HEATMAP_KANIT_TOHUMU, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
     latency_heatmap_kartı,
 };
+pub use line_paths::{LINE_PATHS_KART_TANIM_ÖRNEĞİ, LinePathsÖrneği, line_paths_kartı};
 pub use missing_data::{
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
 };

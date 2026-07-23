@@ -425,6 +425,8 @@ impl EtkileşimSeçenekleri {
 #[derive(Debug, Clone, PartialEq)]
 pub struct GrafikSeçenekleri {
     pub başlık: String,
+    pub arka_plan_rengi: String,
+    pub başlık_rengi: String,
     pub genişlik: u32,
     pub yükseklik: u32,
     pub x_zaman: bool,
@@ -434,6 +436,7 @@ pub struct GrafikSeçenekleri {
     pub y_ölçekleri: Vec<YÖlçekSeçenekleri>,
     pub birincil_y_ölçeği: String,
     pub x_eksen_etiketi: String,
+    pub x_eksen_rengi: String,
     pub y_eksen_etiketi: String,
     pub birincil_y_sağda: bool,
     pub birincil_y_eksen_rengi: String,
@@ -469,6 +472,8 @@ impl GrafikSeçenekleri {
         }
         Ok(Self {
             başlık: String::new(),
+            arka_plan_rengi: "#ffffff".to_string(),
+            başlık_rengi: "#111111".to_string(),
             genişlik,
             yükseklik,
             x_zaman: true,
@@ -478,6 +483,7 @@ impl GrafikSeçenekleri {
             y_ölçekleri: Vec::new(),
             birincil_y_ölçeği: "y".to_string(),
             x_eksen_etiketi: String::new(),
+            x_eksen_rengi: "#4b5563".to_string(),
             y_eksen_etiketi: String::new(),
             birincil_y_sağda: false,
             birincil_y_eksen_rengi: "#4b5563".to_string(),
@@ -504,6 +510,21 @@ impl GrafikSeçenekleri {
 
     pub fn başlık(mut self, başlık: impl Into<String>) -> Self {
         self.başlık = başlık.into();
+        self
+    }
+
+    pub fn arka_plan_rengi(mut self, renk: impl Into<String>) -> Self {
+        self.arka_plan_rengi = renk.into();
+        self
+    }
+
+    pub fn başlık_rengi(mut self, renk: impl Into<String>) -> Self {
+        self.başlık_rengi = renk.into();
+        self
+    }
+
+    pub fn x_eksen_rengi(mut self, renk: impl Into<String>) -> Self {
+        self.x_eksen_rengi = renk.into();
         self
     }
 

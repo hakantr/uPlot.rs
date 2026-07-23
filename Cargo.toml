@@ -124,6 +124,10 @@ name = "latency_heatmap"
 required-features = ["svg"]
 
 [[example]]
+name = "line_paths"
+required-features = ["svg"]
+
+[[example]]
 name = "missing_data"
 required-features = ["svg"]
 

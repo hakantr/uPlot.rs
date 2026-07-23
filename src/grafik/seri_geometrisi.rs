@@ -4,13 +4,18 @@ pub(super) fn seri_yol_noktaları(noktalar: &[Nokta], tür: crate::SeriÇizimTü
     if noktalar.len() < 2
         || matches!(
             tür,
-            crate::SeriÇizimTürü::Çizgi | crate::SeriÇizimTürü::Çubuk
+            crate::SeriÇizimTürü::Çizgi
+                | crate::SeriÇizimTürü::Noktalar
+                | crate::SeriÇizimTürü::Çubuk
         )
     {
         return noktalar.to_vec();
     }
     if tür == crate::SeriÇizimTürü::Eğri {
         return monoton_eğri_noktaları(noktalar);
+    }
+    if tür == crate::SeriÇizimTürü::CatmullRom {
+        return catmull_rom_noktaları(noktalar);
     }
     let mut sonuç = Vec::with_capacity(noktalar.len().saturating_mul(8));
     if let Some(ilk) = noktalar.first().copied() {
@@ -32,8 +37,10 @@ pub(super) fn seri_yol_noktaları(noktalar: &[Nokta], tür: crate::SeriÇizimTü
                 sonuç.push(Nokta::yeni(p1.x, p0.y));
                 sonuç.push(p1);
             }
-            crate::SeriÇizimTürü::Eğri => sonuç.push(p1),
-            crate::SeriÇizimTürü::Çizgi | crate::SeriÇizimTürü::Çubuk => sonuç.push(p1),
+            crate::SeriÇizimTürü::Eğri | crate::SeriÇizimTürü::CatmullRom => sonuç.push(p1),
+            crate::SeriÇizimTürü::Çizgi
+            | crate::SeriÇizimTürü::Noktalar
+            | crate::SeriÇizimTürü::Çubuk => sonuç.push(p1),
         }
     }
     sonuç
@@ -48,9 +55,9 @@ pub(super) fn seri_ara_değeri(
     let başlangıç = değerler.get(indeks).copied().flatten()?;
     let bitiş = değerler.get(indeks + 1).copied().flatten()?;
     match tür {
-        crate::SeriÇizimTürü::Çizgi | crate::SeriÇizimTürü::Çubuk => {
-            Some(başlangıç + (bitiş - başlangıç) * t)
-        }
+        crate::SeriÇizimTürü::Çizgi
+        | crate::SeriÇizimTürü::Noktalar
+        | crate::SeriÇizimTürü::Çubuk => Some(başlangıç + (bitiş - başlangıç) * t),
         crate::SeriÇizimTürü::BasamakÖnce => Some(if t <= f64::EPSILON {
             başlangıç
         } else {
@@ -61,7 +68,7 @@ pub(super) fn seri_ara_değeri(
         } else {
             başlangıç
         }),
-        crate::SeriÇizimTürü::Eğri => {
+        crate::SeriÇizimTürü::Eğri | crate::SeriÇizimTürü::CatmullRom => {
             let m0 = monoton_eğim_f64(değerler, indeks)?;
             let m1 = monoton_eğim_f64(değerler, indeks + 1)?;
             let t2 = t * t;
@@ -74,6 +81,79 @@ pub(super) fn seri_ara_değeri(
             )
         }
     }
+}
+
+fn catmull_rom_noktaları(noktalar: &[Nokta]) -> Vec<Nokta> {
+    if noktalar.len() < 3 {
+        return noktalar.to_vec();
+    }
+    let mut sonuç = Vec::with_capacity(noktalar.len().saturating_mul(8));
+    if let Some(ilk) = noktalar.first().copied() {
+        sonuç.push(ilk);
+    }
+    for indeks in 0..noktalar.len().saturating_sub(1) {
+        let Some(p1) = noktalar.get(indeks).copied() else {
+            continue;
+        };
+        let Some(p2) = noktalar.get(indeks + 1).copied() else {
+            continue;
+        };
+        let p0 = indeks
+            .checked_sub(1)
+            .and_then(|önceki| noktalar.get(önceki))
+            .copied()
+            .unwrap_or(p1);
+        let p3 = noktalar.get(indeks + 2).copied().unwrap_or(p2);
+        let (kontrol1, kontrol2) = catmull_kontrol_noktaları(p0, p1, p2, p3);
+        for adım in 1..=8 {
+            let t = adım as f32 / 8.0;
+            let ters = 1.0 - t;
+            let x = ters.powi(3) * p1.x
+                + 3.0 * ters.powi(2) * t * kontrol1.x
+                + 3.0 * ters * t.powi(2) * kontrol2.x
+                + t.powi(3) * p2.x;
+            let y = ters.powi(3) * p1.y
+                + 3.0 * ters.powi(2) * t * kontrol1.y
+                + 3.0 * ters * t.powi(2) * kontrol2.y
+                + t.powi(3) * p2.y;
+            sonuç.push(Nokta::yeni(x, y));
+        }
+    }
+    sonuç
+}
+
+fn catmull_kontrol_noktaları(p0: Nokta, p1: Nokta, p2: Nokta, p3: Nokta) -> (Nokta, Nokta) {
+    let d1 = uzaklık(p0, p1);
+    let d2 = uzaklık(p1, p2);
+    let d3 = uzaklık(p2, p3);
+    let d1a = d1.sqrt();
+    let d2a = d2.sqrt();
+    let d3a = d3.sqrt();
+    let n = 3.0 * d1a * (d1a + d2a);
+    let m = 3.0 * d3a * (d3a + d2a);
+    let a = 2.0 * d1 + 3.0 * d1a * d2a + d2;
+    let b = 2.0 * d3 + 3.0 * d3a * d2a + d2;
+    let kontrol1 = if n > f32::EPSILON {
+        Nokta::yeni(
+            (-d2 * p0.x + a * p1.x + d1 * p2.x) / n,
+            (-d2 * p0.y + a * p1.y + d1 * p2.y) / n,
+        )
+    } else {
+        p1
+    };
+    let kontrol2 = if m > f32::EPSILON {
+        Nokta::yeni(
+            (d3 * p1.x + b * p2.x - d2 * p3.x) / m,
+            (d3 * p1.y + b * p2.y - d2 * p3.y) / m,
+        )
+    } else {
+        p2
+    };
+    (kontrol1, kontrol2)
+}
+
+fn uzaklık(a: Nokta, b: Nokta) -> f32 {
+    ((a.x - b.x).powi(2) + (a.y - b.y).powi(2)).sqrt()
 }
 
 pub(super) fn bant_yönünde(fark: f64, yön: crate::BantYönü) -> bool {
@@ -236,5 +316,30 @@ fn monoton_eğim_f64(değerler: &[Option<f64>], indeks: usize) -> Option<f64> {
             }
         }
         (None, None) => Some(0.0),
+    }
+}
+
+#[cfg(test)]
+mod catmull_rom_testleri {
+    use super::*;
+
+    #[test]
+    fn merkezcil_catmull_rom_uçları_korur_ve_sonlu_örnekler_üretir() {
+        let kaynak = [
+            Nokta::yeni(0.0, 0.0),
+            Nokta::yeni(1.0, 2.0),
+            Nokta::yeni(2.0, 1.0),
+            Nokta::yeni(4.0, 3.0),
+        ];
+        let sonuç = catmull_rom_noktaları(&kaynak);
+
+        assert_eq!(sonuç.len(), 25);
+        assert_eq!(sonuç.first(), kaynak.first());
+        assert_eq!(sonuç.last(), kaynak.last());
+        assert!(
+            sonuç
+                .iter()
+                .all(|nokta| nokta.x.is_finite() && nokta.y.is_finite())
+        );
     }
 }

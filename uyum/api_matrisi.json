@@ -272,6 +272,24 @@
       "rust_karşılığı": "latency_heatmap::histogram_say",
       "durum": "tam_kanıtlı",
       "test": "src/kart/latency_heatmap.rs"
+    },
+    {
+      "kaynak_yolu": "Series.paths: null",
+      "rust_karşılığı": "SeriÇizimTürü::Noktalar",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/line_paths.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.paths.spline2 / catmullRomCentrip",
+      "rust_karşılığı": "SeriÇizimTürü::CatmullRom / catmull_rom_noktaları",
+      "durum": "tam_kanıtlı",
+      "test": "src/grafik/seri_geometrisi.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.paths.bars({align})",
+      "rust_karşılığı": "SeriSeçenekleri::çubuk_hizası",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/line_paths.rs"
     }
   ]
 }

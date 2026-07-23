@@ -257,6 +257,7 @@
       grid_over_series_kart_tanim_ornegi,
       high_low_bands_kart_tanim_ornegi,
       latency_heatmap_kart_tanim_ornegi,
+      line_paths_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
@@ -930,6 +931,34 @@
         tanımYolu: "src/kart/latency_heatmap.rs",
         seriler: seriler.map(([etiket, renk]) => ({ etiket, renk })),
         yardım: "Sürükleyerek X/Y alanı seç · tekerlekle fare odağında yakınlaştır · boşlukla taşı",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+
+    for (const [kimlik, başlık, renk] of [
+      ["line-paths-points-only", "null path (points only)", "#FFFFFF"],
+      ["line-paths-linear", "linear", "#7EB26D"],
+      ["line-paths-monotone-cubic", "spline (Monotone Cubic)", "#1F78C1"],
+      ["line-paths-step-after", "stepped {align: 1}", "#6ED0E0"],
+      ["line-paths-step-before", "stepped {align: -1}", "#EF843C"],
+      ["line-paths-bars-center", "bars {align: 0}", "#E24D42"],
+      ["line-paths-bars-left", "bars {align: 1}", "#008080"],
+      ["line-paths-bars-right", "bars {align: -1}", "#DA70D6"],
+    ]) {
+      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>line-paths</small>
+          <div class="durum">101 nokta · 4 null boşluğu</div>
+        </article>`);
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/line-paths.html">line-paths.html</a>
+          <br>Sekiz etkin resmî yol aynı veriyle çizilir. HTML'de yorumlu spline2 yeteneği kaynak catmullRomCentrip.js üzerinden çekirdekte ayrıca korunur.`,
+        tanım: () => line_paths_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/line_paths.rs",
+        seriler: [{ etiket: "Y", renk }],
+        yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       };
