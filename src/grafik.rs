@@ -1,3 +1,8 @@
+mod bant;
+mod seri_geometrisi;
+
+use seri_geometrisi::seri_yol_noktaları;
+
 use crate::cizim::kirpma::{
     nokta_dikdörtgende, yolu_dikdörtgene_kırp, çokgeni_dikdörtgene_kırp
 };
@@ -1021,7 +1026,12 @@ impl Grafik {
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(x, alt + 20.0),
                 içerik: if self.seçenekler.x_zaman {
-                    crate::zaman::eksen_etiketi(x_değeri, x_artımı)
+                    let birim = if self.seçenekler.x_zaman_milisaniye {
+                        1_000.0
+                    } else {
+                        1.0
+                    };
+                    crate::zaman::eksen_etiketi(x_değeri / birim, x_artımı / birim)
                         .unwrap_or_else(|| eksen_değerini_yaz(x_değeri, x_artımı))
                 } else {
                     eksen_değerini_yaz(
@@ -1046,50 +1056,6 @@ impl Grafik {
         }
         let eksen_komutları_bitişi = sahne.komutlar().len();
 
-        for bant in &self.seçenekler.bantlar {
-            let Some(üst_seri) = self.veri.seriler().get(bant.üst_seri) else {
-                continue;
-            };
-            let Some(alt_seri) = self.veri.seriler().get(bant.alt_seri) else {
-                continue;
-            };
-            let Some(seri) = self.seçenekler.seriler.get(bant.üst_seri) else {
-                continue;
-            };
-            let y_aralığı = self.görünür_ölçek_aralığı(&seri.ölçek, x_aralığı, görünür_y);
-            let mut üst_noktalar = Vec::new();
-            let mut alt_noktalar = Vec::new();
-            for (indeks, x_değeri) in self.veri.x().iter().copied().enumerate() {
-                if x_değeri < x_aralığı.en_az || x_değeri > x_aralığı.en_çok {
-                    continue;
-                }
-                let Some(üst_değer) = üst_seri.get(indeks).copied().flatten() else {
-                    continue;
-                };
-                let Some(alt_değer) = alt_seri.get(indeks).copied().flatten() else {
-                    continue;
-                };
-                let x = self.x_konumu(x_aralığı, x_değeri, sol, genişlik);
-                üst_noktalar.push(Nokta::yeni(
-                    x,
-                    alt - self.y_konumu(&seri.ölçek, y_aralığı, üst_değer, 0.0, yükseklik),
-                ));
-                alt_noktalar.push(Nokta::yeni(
-                    x,
-                    alt - self.y_konumu(&seri.ölçek, y_aralığı, alt_değer, 0.0, yükseklik),
-                ));
-            }
-            alt_noktalar.reverse();
-            üst_noktalar.extend(alt_noktalar);
-            let çokgen = çokgeni_dikdörtgene_kırp(&üst_noktalar, sol, sağ, üst, alt);
-            if çokgen.len() >= 3 {
-                sahne.ekle(Komut::Alan {
-                    çokgenler: vec![çokgen],
-                    dolgu: bant.dolgu.clone(),
-                });
-            }
-        }
-
         for (seri_indeksi, değerler) in self.veri.seriler().iter().enumerate() {
             let Some(seri) = self.seçenekler.seriler.get(seri_indeksi) else {
                 continue;
@@ -1101,18 +1067,35 @@ impl Grafik {
                 odaklı_seri_stili(seri, self.seçenekler.odak, self.odak_serisi, seri_indeksi);
             let seri_y_aralığı =
                 self.görünür_ölçek_aralığı(&seri.ölçek, x_aralığı, görünür_y);
+            self.seri_bantlarını_çiz(
+                &mut sahne,
+                seri_indeksi,
+                x_aralığı,
+                seri_y_aralığı,
+                sol,
+                sağ,
+                üst,
+                alt,
+            );
+            let bant_dolgusu = self
+                .seçenekler
+                .bantlar
+                .iter()
+                .any(|bant| bant.üst_seri == seri_indeksi);
             if seri.çizim_türü == crate::SeriÇizimTürü::Çubuk {
-                self.karma_çubuk_serisini_çiz(
-                    &mut sahne,
-                    seri,
-                    değerler,
-                    x_aralığı,
-                    seri_y_aralığı,
-                    sol,
-                    sağ,
-                    üst,
-                    alt,
-                );
+                if !bant_dolgusu {
+                    self.karma_çubuk_serisini_çiz(
+                        &mut sahne,
+                        seri,
+                        değerler,
+                        x_aralığı,
+                        seri_y_aralığı,
+                        sol,
+                        sağ,
+                        üst,
+                        alt,
+                    );
+                }
                 continue;
             }
             let mut ham_parçalar = Vec::<Vec<Nokta>>::new();
@@ -1159,8 +1142,12 @@ impl Grafik {
             if !parça.is_empty() {
                 ham_parçalar.push(parça);
             }
+            let ham_parçalar = ham_parçalar
+                .into_iter()
+                .map(|parça| seri_yol_noktaları(&parça, seri.çizim_türü))
+                .collect::<Vec<_>>();
             let parçalar = yolu_dikdörtgene_kırp(&ham_parçalar, sol, sağ, üst, alt);
-            if seri_dolgusu.is_some() || seri.dolgu_gradyanı.is_some() {
+            if !bant_dolgusu && (seri_dolgusu.is_some() || seri.dolgu_gradyanı.is_some()) {
                 let taban = alt
                     - self.y_konumu(
                         &seri.ölçek,
@@ -1389,8 +1376,10 @@ impl Grafik {
         } else {
             varsayılan_fark
         };
-        let çubuk_genişliği =
-            (veri_farkı / (x_aralığı.en_çok - x_aralığı.en_az) * f64::from(genişlik) * 0.6) as f32;
+        let çubuk_genişliği = (veri_farkı / (x_aralığı.en_çok - x_aralığı.en_az)
+            * f64::from(genişlik)
+            * f64::from(seri.çubuk_genişlik_oranı)) as f32;
+        let çubuk_genişliği = çubuk_genişliği.min(seri.azami_çubuk_genişliği);
         let taban =
             (alt - self.y_konumu(&seri.ölçek, y_aralığı, 0.0, 0.0, yükseklik)).clamp(üst, alt);
         let dolgu = seri.dolgu.as_ref().unwrap_or(&seri.renk);

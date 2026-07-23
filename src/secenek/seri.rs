@@ -1,6 +1,9 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SeriÇizimTürü {
     Çizgi,
+    BasamakÖnce,
+    BasamakSonra,
+    Eğri,
     Çubuk,
 }
 
@@ -19,6 +22,8 @@ pub struct SeriSeçenekleri {
     pub azami_x_boşluğu: Option<f64>,
     pub boşlukları_birleştir: bool,
     pub çizim_türü: SeriÇizimTürü,
+    pub çubuk_genişlik_oranı: f32,
+    pub azami_çubuk_genişliği: f32,
 }
 
 impl SeriSeçenekleri {
@@ -37,6 +42,8 @@ impl SeriSeçenekleri {
             azami_x_boşluğu: None,
             boşlukları_birleştir: false,
             çizim_türü: SeriÇizimTürü::Çizgi,
+            çubuk_genişlik_oranı: 0.6,
+            azami_çubuk_genişliği: f32::INFINITY,
         }
     }
 
@@ -115,6 +122,31 @@ impl SeriSeçenekleri {
         } else {
             SeriÇizimTürü::Çizgi
         };
+        self
+    }
+
+    pub fn basamak_önce(mut self) -> Self {
+        self.çizim_türü = SeriÇizimTürü::BasamakÖnce;
+        self
+    }
+
+    pub fn basamak_sonra(mut self) -> Self {
+        self.çizim_türü = SeriÇizimTürü::BasamakSonra;
+        self
+    }
+
+    pub fn eğri(mut self) -> Self {
+        self.çizim_türü = SeriÇizimTürü::Eğri;
+        self
+    }
+
+    pub fn çubuk_boyutu(mut self, oran: f32, azami: f32) -> Self {
+        if oran.is_finite() && (0.0..=1.0).contains(&oran) {
+            self.çubuk_genişlik_oranı = oran;
+        }
+        if azami.is_finite() && azami > 0.0 {
+            self.azami_çubuk_genişliği = azami;
+        }
         self
     }
 }

@@ -1,0 +1,24 @@
+id = "high-low-bands"
+kaynak = "../uPlot/demos/high-low-bands.html"
+fixture = "src/kart/high_low_bands.rs#high_low_bands_kartı"
+device_pixel_ratio = 1
+alt_grafik_sayısı = 12
+kanıt_tohumu = "0x48494241"
+
+[veri]
+nokta_sayıları = [365, 101, 101, 10, 4, 83, 3, 6, 6, 363, 363, 42]
+kaynak_varlık = "src/kart/veri/high_low_bands.json"
+kaynak_varlık_sha256 = "5f71fb3245493ee55666bdd71833917584f42451d169930d9cf286224d3f3040"
+
+[davranış]
+yollar = ["linear", "step-before", "spline", "step-after", "bars"]
+bant_yönleri = [-1, 1]
+null_boşlukları_birleştir = false
+çubuk_oranı = 0.6
+azami_çubuk_piksel = [100, 200]
+milisaniye_zaman_ekseni = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/high-low-bands/high-low-bands-differing-paths.svg"

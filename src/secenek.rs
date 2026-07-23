@@ -46,6 +46,13 @@ pub struct SeriBandı {
     pub üst_seri: usize,
     pub alt_seri: usize,
     pub dolgu: String,
+    pub yön: BantYönü,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BantYönü {
+    EnAza,
+    EnÇoğa,
 }
 
 impl SeriBandı {
@@ -54,7 +61,13 @@ impl SeriBandı {
             üst_seri,
             alt_seri,
             dolgu: dolgu.into(),
+            yön: BantYönü::EnAza,
         }
+    }
+
+    pub fn yön(mut self, yön: BantYönü) -> Self {
+        self.yön = yön;
+        self
     }
 }
 
@@ -413,6 +426,7 @@ pub struct GrafikSeçenekleri {
     pub genişlik: u32,
     pub yükseklik: u32,
     pub x_zaman: bool,
+    pub x_zaman_milisaniye: bool,
     pub x_dağılımı: XÖlçekDağılımı,
     pub y_aralığı: Option<Aralık>,
     pub y_ölçekleri: Vec<YÖlçekSeçenekleri>,
@@ -455,6 +469,7 @@ impl GrafikSeçenekleri {
             genişlik,
             yükseklik,
             x_zaman: true,
+            x_zaman_milisaniye: false,
             x_dağılımı: XÖlçekDağılımı::Doğrusal,
             y_aralığı: None,
             y_ölçekleri: Vec::new(),
@@ -490,6 +505,11 @@ impl GrafikSeçenekleri {
 
     pub fn x_zaman(mut self, zaman: bool) -> Self {
         self.x_zaman = zaman;
+        self
+    }
+
+    pub fn x_zaman_milisaniye(mut self, milisaniye: bool) -> Self {
+        self.x_zaman_milisaniye = milisaniye;
         self
     }
 

@@ -1639,6 +1639,51 @@
         "panic-free-layer-reordering"
       ],
       "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+    },
+    {
+      "sıra": 28,
+      "id": "high-low-bands",
+      "başlık": { "en": "High/Low Bands", "tr": "Yüksek/Düşük Bantları" },
+      "kaynak": "demos/high-low-bands.html",
+      "kaynak_sha256": "ae03f984dc48417ad6737ff02089ba461d42dbe81e4c307f2fa769b5edc90515",
+      "ek_kaynaklar": [
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" },
+        { "yol": "src/paths/stepped.js", "sha256": "7a11e94e31462f173d25810b371ced0c30652e39df5fbd23668a0a4059f2e2a7" },
+        { "yol": "src/paths/spline.js", "sha256": "73f29178227e0b17b8a433348495f555c8d42dbdc49032a3972747f4f906dbe9" },
+        { "yol": "src/paths/monotoneCubic.js", "sha256": "913743f98c9ff49607c8c384050da65eb9cd6a9e48409993c1f37a799ca88b15" },
+        { "yol": "src/paths/bars.js", "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56" }
+      ],
+      "fixture": "src/kart/high_low_bands.rs#high_low_bands_kartı",
+      "örnek": "examples/high_low_bands.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/high-low-bands.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/high_low_bands.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı", "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı", "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı", "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı", "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "devralındı"
+        }
+      },
+      "sahip_faz": 1,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "twelve-source-subcharts", "source-exact-embedded-datasets", "fixed-proof-seed",
+        "directional-band-clipping", "crossing-band-splitting", "null-gap-band-clipping",
+        "linear-step-before-step-after-spline", "series-bars-with-size-and-max-width",
+        "unaligned-and-very-thin-bar-regressions", "milliseconds-time-axis",
+        "gpui-wasm-catalog-parity", "common-interaction-profile", "panic-free-source-parser"
+      ],
+      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
     }
   ]
 }

@@ -218,6 +218,36 @@
       "rust_karşılığı": "ÇizimSırası / GrafikSeçenekleri::çizim_sırası",
       "durum": "tam_kanıtlı",
       "test": "src/kart/grid_over_series.rs"
+    },
+    {
+      "kaynak_yolu": "Band.dir / band clipping",
+      "rust_karşılığı": "BantYönü / Grafik::seri_bantlarını_çiz",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/high_low_bands.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.paths.stepped({align})",
+      "rust_karşılığı": "SeriÇizimTürü::BasamakÖnce / BasamakSonra",
+      "durum": "kısmi",
+      "test": "src/kart/high_low_bands.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.paths.spline()",
+      "rust_karşılığı": "SeriÇizimTürü::Eğri / Fritsch-Carlson monoton kübik örnekleme",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/high_low_bands.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.paths.bars({size}) series bands",
+      "rust_karşılığı": "SeriSeçenekleri::çubuk_boyutu / çubuk bant çokgenleri",
+      "durum": "kısmi",
+      "test": "src/kart/high_low_bands.rs"
+    },
+    {
+      "kaynak_yolu": "Options.ms",
+      "rust_karşılığı": "GrafikSeçenekleri::x_zaman_milisaniye",
+      "durum": "kısmi",
+      "test": "src/kart/high_low_bands.rs"
     }
   ]
 }

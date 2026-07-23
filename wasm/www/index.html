@@ -47,9 +47,10 @@
     #chart svg { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
     #chart[data-tasima-imleci="hazir"] svg { cursor: grab; }
     #chart[data-tasima-imleci="tasiyor"] svg { cursor: grabbing; }
-    .lejant { position: absolute; left: 50%; bottom: 17px; translate: -50% 0;
-              display: flex; gap: 18px; font-size: 12px; font-weight: 600;
-              pointer-events: none; }
+    .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
+              display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
+              font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
+    .lejant > span { white-space: nowrap; }
     .örnek { display: inline-block; width: 11px; height: 11px; margin-right: 5px;
              border: 1px solid #dc2626; vertical-align: -1px; }
     .yardım { position: absolute; left: 76px; right: 24px; top: 42px;
@@ -242,6 +243,7 @@
       focus_cursor_kart_tanim_ornegi,
       gradients_kart_tanim_ornegi,
       grid_over_series_kart_tanim_ornegi,
+      high_low_bands_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
@@ -858,6 +860,37 @@
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
     };
+
+    for (const [kimlik, başlık, durum, seriler] of [
+      ["high-low-bands-temps-year", "Temps · 365 days", "365 gün · null boşlukları", [["Low", "#008000"], ["High", "#ff0000"], ["Avg", "#0000ff"]]],
+      ["high-low-bands-differing-paths", "Differing Paths", "101 nokta · line/step/spline", [["linear", "#008000"], ["stepBefore", "#ff00ff"], ["spline", "#0000ff"], ["stepAfter", "#ff0000"]]],
+      ["high-low-bands-bars", "Bars", "101 nokta · 4 çubuk bandı", [["bars 1", "#008000"], ["bars 2", "#ff00ff"], ["bars 3", "#0000ff"], ["bars 4", "#ff0000"]]],
+      ["high-low-bands-simple", "High/Low Band", "10 nokta · basit bant", [["High", "#ff0000"], ["Low", "#0000ff"]]],
+      ["high-low-bands-crossing", "Crossing High/Low Band", "4 nokta · kesişen bant", [["High", "#ff0000"], ["Low", "#0000ff"]]],
+      ["high-low-bands-temps-partial", "Temps · partial data", "83 nokta · eksik uçlar", [["Low", "#008000"], ["High", "#ff0000"], ["Avg", "#0000ff"]]],
+      ["high-low-bands-average-only", "Temps · average only", "3 nokta · yalnız ortalama", [["Low", "#008000"], ["High", "#ff0000"], ["Avg", "#0000ff"]]],
+      ["high-low-bands-inverted-lines", "Inverted bands · lines", "6 nokta · iki yön", [["-2", "#ff0000"], ["-1", "#ffa500"], ["1", "#0000ff"], ["2", "#008000"]]],
+      ["high-low-bands-inverted-bars", "Inverted bands · bars", "6 nokta · ters çubuk bantları", [["-2", "#ff0000"], ["-1", "#ffa500"], ["1", "#0000ff"], ["2", "#008000"]]],
+      ["high-low-bands-unaligned-bars", "Unaligned bars + band clipping issue", "363 seyrek nokta", [["Alt", "#ff0000"], ["Üst", "#0000ff"]]],
+      ["high-low-bands-unaligned-stroke", "Unaligned bars · stroke + zero-alpha fill", "363 seyrek nokta · vuruş", [["Alt", "#ff0000"], ["Üst", "#0000ff"]]],
+      ["high-low-bands-very-thin-bars", "Very thin bars", "42 zaman noktası · ms", [["Alt", "#ff0000"], ["Üst", "#0000ff"]]],
+    ]) {
+      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>high-low-bands</small><div class="durum">${durum}</div>
+        </article>`);
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/high-low-bands.html">high-low-bands.html</a>
+          <br>12 resmî alt grafik; yönlü bant, null kırpması, line/step/spline/bar yolları ve aynı veri setleri Rust çekirdeğinde çözülür.`,
+        tanım: () => high_low_bands_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/high_low_bands.rs",
+        seriler: seriler.map(([etiket, renk]) => ({ etiket, renk })),
+        yardım: "Bant dolguları yalnız geçerli yönde ve iki sınır serisinin ortak veri aralıklarında çizilir",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
 
     function ortakEtkileşimler() {
       return {
