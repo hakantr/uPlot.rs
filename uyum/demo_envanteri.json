@@ -3,9 +3,9 @@
   "kaynak_commit": "0e5812c504430f5c804e0f993376d8999b26cc34",
   "demo_sayısı": 73,
   "durum_özeti": {
-    "uygulandı_kanıtlı": 36,
+    "uygulandı_kanıtlı": 37,
     "çekirdek_davranışı_port_edildi_kart_bekliyor": 0,
-    "bekliyor": 37
+    "bekliyor": 36
   },
   "demolar": [
     {
@@ -15,32 +15,7 @@
       "kaynak": "demos/add-del-series.html",
       "kaynak_sha256": "7beea536b6750c60325a7dade8c2c7e8df9e51e3af612d7cb230501597cb18fc",
       "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
-      "veri_kaynakları": [
-        {
-          "yol": "src/uPlot.js",
-          "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645"
-        },
-        {
-          "yol": "src/opts.js",
-          "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba"
-        },
-        {
-          "yol": "src/paths/utils.js",
-          "sha256": "7636973ddf67ca47993ae86a4b53b1e7a6ea5ebd90483e0c305e84d558c38e13"
-        },
-        {
-          "yol": "src/paths/linear.js",
-          "sha256": "8f5002721c15f9a965b0e56522c58378c5b412856356c85188c74066ffba6749"
-        },
-        {
-          "yol": "src/paths/spline.js",
-          "sha256": "73f29178227e0b17b8a433348495f555c8d42dbdc49032a3972747f4f906dbe9"
-        },
-        {
-          "yol": "src/paths/stepped.js",
-          "sha256": "7a11e94e31462f173d25810b371ced0c30652e39df5fbd23668a0a4059f2e2a7"
-        }
-      ],
+      "veri_kaynakları": [],
       "sahip_faz": 5,
       "faz": "Çoklu grafik, senkronizasyon ve canlı veri",
       "durum": "uygulandı_kanıtlı"
@@ -67,7 +42,7 @@
       "veri_kaynakları": [],
       "sahip_faz": 3,
       "faz": "Özel çizim ve seri eklentileri",
-      "durum": "uygulandı_kanıtlı"
+      "durum": "bekliyor"
     },
     {
       "sıra": 4,
@@ -413,7 +388,7 @@
       ],
       "sahip_faz": 3,
       "faz": "Özel çizim ve seri eklentileri",
-      "durum": "uygulandı_kanıtlı"
+      "durum": "bekliyor"
     },
     {
       "sıra": 29,
@@ -560,10 +535,35 @@
       "kaynak": "demos/pixel-align.html",
       "kaynak_sha256": "38eb95e80e1a5046091853dccd25f457f4f0940c0ee4e1d4c1690837d8ee7441",
       "veri_politikası": "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu",
-      "veri_kaynakları": [],
+      "veri_kaynakları": [
+        {
+          "yol": "src/uPlot.js",
+          "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645"
+        },
+        {
+          "yol": "src/opts.js",
+          "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba"
+        },
+        {
+          "yol": "src/paths/utils.js",
+          "sha256": "7636973ddf67ca47993ae86a4b53b1e7a6ea5ebd90483e0c305e84d558c38e13"
+        },
+        {
+          "yol": "src/paths/linear.js",
+          "sha256": "8f5002721c15f9a965b0e56522c58378c5b412856356c85188c74066ffba6749"
+        },
+        {
+          "yol": "src/paths/spline.js",
+          "sha256": "73f29178227e0b17b8a433348495f555c8d42dbdc49032a3972747f4f906dbe9"
+        },
+        {
+          "yol": "src/paths/stepped.js",
+          "sha256": "7a11e94e31462f173d25810b371ced0c30652e39df5fbd23668a0a4059f2e2a7"
+        }
+      ],
       "sahip_faz": 1,
       "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 39,

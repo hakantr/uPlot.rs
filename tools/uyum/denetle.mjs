@@ -86,7 +86,9 @@ const izinliKararlar = new Set(davranışSözleşmesi.izinli_kararlar);
 if (demoEnvanteri.demo_sayısı !== 73 || demoEnvanteri.demolar.length !== 73) {
   hata(`demo envanteri 73 kayıt içermiyor: ${demoEnvanteri.demolar.length}`);
 }
+const gerçekDurumÖzeti = {};
 for (const demo of demoEnvanteri.demolar) {
+  gerçekDurumÖzeti[demo.durum] = (gerçekDurumÖzeti[demo.durum] ?? 0) + 1;
   if (sha256(resolve(kaynak, demo.kaynak)) !== demo.kaynak_sha256) {
     hata(`demo envanteri kaynak hash'i değişti: ${demo.kaynak}`);
   }
@@ -94,6 +96,13 @@ for (const demo of demoEnvanteri.demolar) {
     if (sha256(resolve(kaynak, veri.yol)) !== veri.sha256) {
       hata(`demo veri hash'i değişti: ${veri.yol}`);
     }
+  }
+}
+for (const [durum, sayı] of Object.entries(demoEnvanteri.durum_özeti)) {
+  if ((gerçekDurumÖzeti[durum] ?? 0) !== sayı) {
+    hata(
+      `demo durum özeti tutarsız: ${durum}=${sayı}; gerçek ${gerçekDurumÖzeti[durum] ?? 0}`,
+    );
   }
 }
 
@@ -171,6 +180,17 @@ for (const kart of manifest.kartlar) {
     if (!davranışKimlikleri.has(davranışKimliği)) {
       hata(`${kart.id} bilinmeyen davranış gerekçesi: ${davranışKimliği}`);
     }
+  }
+}
+
+const manifestKaynakları = new Set(manifest.kartlar.map((kart) => kart.kaynak));
+for (const demo of demoEnvanteri.demolar) {
+  const manifestte = manifestKaynakları.has(demo.kaynak);
+  const uygulandı = demo.durum === "uygulandı_kanıtlı";
+  if (manifestte !== uygulandı) {
+    hata(
+      `demo/manifest kapsamı tutarsız: ${demo.id} (${demo.durum}, manifest=${manifestte})`,
+    );
   }
 }
 
