@@ -24,19 +24,20 @@ use uplot_rs::{
     LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
     LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
     MONTHS_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
-    NoDataÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri,
-    SmoothingÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SmoothingÖrneği, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
-    no_data_kartı, ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, resize_kartı,
+    scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -54,6 +55,7 @@ enum KartKimliği {
     MonthsRussian,
     NiceScale,
     NoData(NoDataÖrneği),
+    PathGapClip(PathGapClipÖrneği),
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -97,6 +99,7 @@ impl KartKimliği {
             Self::MonthsRussian => "Months · Russian",
             Self::NiceScale => "Nice Scale & Ticks",
             Self::NoData(örnek) => örnek.başlık(),
+            Self::PathGapClip(örnek) => örnek.başlık(),
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -152,6 +155,9 @@ impl KartKimliği {
                 "nice-scale.html · boyuta bağlı niceScale/niceNum Y aralığı ve artımı"
             }
             Self::NoData(_) => "no-data.html · 33 boş, tek noktalı, düz ve hassas ölçek yüzeyi",
+            Self::PathGapClip(_) => {
+                "path-gap-clip.html · 15 null/undefined, band, stepped ve piksel yüzeyi"
+            }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -213,6 +219,7 @@ impl KartKimliği {
             }
             Self::NiceScale => NICE_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::NoData(_) => NO_DATA_KART_TANIM_ÖRNEĞİ,
+            Self::PathGapClip(_) => PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -252,6 +259,7 @@ impl KartKimliği {
             Self::MonthsNoLeap | Self::MonthsLeap | Self::MonthsRussian => "src/kart/months.rs",
             Self::NiceScale => "src/kart/nice_scale.rs",
             Self::NoData(_) => "src/kart/no_data.rs",
+            Self::PathGapClip(_) => "src/kart/path_gap_clip.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -416,7 +424,17 @@ impl ChartListesi {
             anahtar.devre_disi_ayarla(false, cx);
         });
         self.grafiği_yenile(self.nokta_sayısı, cx);
-        if kart == KartKimliği::AlignDataCost {
+        if kart == KartKimliği::AlignDataCost
+            || matches!(
+                kart,
+                KartKimliği::PathGapClip(
+                    PathGapClipÖrneği::VeriDışınaTaşanÖlçek
+                        | PathGapClipÖrneği::BantBoşlukları
+                        | PathGapClipÖrneği::GenişletilmişHizalama
+                        | PathGapClipÖrneği::SayısalHizalama
+                )
+            )
+        {
             self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
                 let mut etkin = false;
                 loop {
@@ -424,7 +442,7 @@ impl ChartListesi {
                     etkin = !etkin;
                     let devam = bu
                         .update(cx, |bu, cx| {
-                            if bu.aktif_kart != KartKimliği::AlignDataCost {
+                            if bu.aktif_kart != kart {
                                 return false;
                             }
                             if let Some(grafik) = &bu.grafik {
@@ -529,6 +547,7 @@ fn grafik_oluştur(
         KartKimliği::MonthsRussian => months_rusça_kartı(),
         KartKimliği::NiceScale => nice_scale_kartı(),
         KartKimliği::NoData(örnek) => no_data_kartı(örnek),
+        KartKimliği::PathGapClip(örnek) => path_gap_clip_kartı(örnek),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -602,6 +621,12 @@ impl Render for ChartListesi {
                     } else {
                         "rangeNum kenar durumu"
                     }
+                )
+            }
+            KartKimliği::PathGapClip(örnek) => {
+                format!(
+                    "{} nokta · null/undefined boşluk ve kırpma yüzeyi",
+                    örnek.nokta_sayısı()
                 )
             }
             KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
@@ -1214,6 +1239,21 @@ impl Render for ChartListesi {
                     "no-data",
                     aktif_kart == kart,
                     "Boş/tek/düz veri · kaynak rangeNum",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
+            .children(PathGapClipÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::PathGapClip(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "path-gap-clip",
+                    aktif_kart == kart,
+                    "null/undefined · boşluk ve yol kırpması",
                     panel,
                     vurgu,
                 )

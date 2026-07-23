@@ -437,6 +437,7 @@ pub struct GrafikSeçenekleri {
     pub x_zaman_milisaniye: bool,
     pub x_tarih_adları: TarihAdları,
     pub x_dağılımı: XÖlçekDağılımı,
+    pub x_ters_yön: bool,
     pub x_aralığı: Option<Aralık>,
     pub y_aralığı: Option<Aralık>,
     pub y_ölçekleri: Vec<YÖlçekSeçenekleri>,
@@ -487,6 +488,7 @@ impl GrafikSeçenekleri {
             x_zaman_milisaniye: false,
             x_tarih_adları: TarihAdları::default(),
             x_dağılımı: XÖlçekDağılımı::Doğrusal,
+            x_ters_yön: false,
             x_aralığı: None,
             y_aralığı: None,
             y_ölçekleri: Vec::new(),
@@ -562,6 +564,12 @@ impl GrafikSeçenekleri {
         if taban.is_finite() && taban > 1.0 {
             self.x_dağılımı = XÖlçekDağılımı::Logaritmik { taban };
         }
+        self
+    }
+
+    /// uPlot `scales.x.dir = -1` karşılığıdır.
+    pub fn x_ters_yön(mut self, ters: bool) -> Self {
+        self.x_ters_yön = ters;
         self
     }
 

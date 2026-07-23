@@ -1994,6 +1994,54 @@
         "common-interaction-profile", "panic-free-empty-data-feedback"
       ],
       "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+    },
+    {
+      "sıra": 36,
+      "id": "path-gap-clip",
+      "başlık": { "en": "Path & Gap Clipping", "tr": "Yol ve Boşluk Kırpması" },
+      "kaynak": "demos/path-gap-clip.html",
+      "kaynak_sha256": "25ea25911f052ae494feeff6b65c3e5ec851cd4e69be5853d495d3b730e4bcd8",
+      "ek_kaynaklar": [
+        { "yol": "src/paths/linear.js", "sha256": "8f5002721c15f9a965b0e56522c58378c5b412856356c85188c74066ffba6749" },
+        { "yol": "src/paths/stepped.js", "sha256": "7a11e94e31462f173d25810b371ced0c30652e39df5fbd23668a0a4059f2e2a7" },
+        { "yol": "src/paths/spline.js", "sha256": "73f29178227e0b17b8a433348495f555c8d42dbdc49032a3972747f4f906dbe9" },
+        { "yol": "src/paths/utils.js", "sha256": "7636973ddf67ca47993ae86a4b53b1e7a6ea5ebd90483e0c305e84d558c38e13" },
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" },
+        { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" }
+      ],
+      "fixture": "src/kart/path_gap_clip.rs#path_gap_clip_kartı",
+      "örnek": "examples/path_gap_clip.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/path-gap-clip.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/path_gap_clip.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin", "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin", "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "kartta_etkin", "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı", "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "kartta_etkin", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "kartta_etkin"
+        }
+      },
+      "sahip_faz": 1,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-15-active-canvases", "source-exact-data0-and-data3-assets",
+        "explicit-null-vs-undefined-semantics", "join-null-retain-and-expand",
+        "linear-stepped-before-stepped-after-and-spline-paths",
+        "gap-aware-series-fill", "gap-aware-band-fill", "plot-rectangle-clipping",
+        "single-null-pixel-intro-outro-regressions", "reverse-x-scale",
+        "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "panic-free-source-data-feedback"
+      ],
+      "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
     }
   ]
 }

@@ -2588,7 +2588,7 @@ impl Grafik {
     }
 
     fn x_konumu(&self, aralık: Aralık, değer: f64, başlangıç: f32, uzunluk: f32) -> f32 {
-        match self.seçenekler.x_dağılımı {
+        let konum = match self.seçenekler.x_dağılımı {
             XÖlçekDağılımı::Logaritmik { taban }
                 if aralık.en_az > 0.0 && değer > 0.0 && taban > 1.0 =>
             {
@@ -2597,10 +2597,20 @@ impl Grafik {
                 })
             }
             _ => aralık.konum(değer, başlangıç, uzunluk),
+        };
+        if self.seçenekler.x_ters_yön {
+            başlangıç + uzunluk - (konum - başlangıç)
+        } else {
+            konum
         }
     }
 
     fn x_değeri_orandan(&self, aralık: Aralık, oran: f64) -> f64 {
+        let oran = if self.seçenekler.x_ters_yön {
+            1.0 - oran
+        } else {
+            oran
+        };
         match self.seçenekler.x_dağılımı {
             XÖlçekDağılımı::Logaritmik { taban } if aralık.en_az > 0.0 && taban > 1.0 => {
                 let en_az = aralık.en_az.log(taban);

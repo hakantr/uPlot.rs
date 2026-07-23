@@ -280,6 +280,7 @@
       months_kart_tanim_ornegi,
       nice_scale_kart_tanim_ornegi,
       no_data_kart_tanim_ornegi,
+      path_gap_clip_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -642,6 +643,47 @@
         tanımYolu: "src/kart/no_data.rs",
         seriler: [{ etiket: "Value", renk: "#000000" }],
         yardım: "Kaynak ölçek kenar durumu · sürükle: seç · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+
+    const pathGapClipYüzeyleri = [
+      ["path-gap-clip-scale-range", "Scale range exceeds data range (zoom out)", [["Low", "green"], ["High", "green"]]],
+      ["path-gap-clip-band-gaps", "Gaps in a band", [["Low", "red"], ["High", "red"], ["Avg", "green"]]],
+      ["path-gap-clip-stepped-after", "Gaps in stepped after", [["step after", "blue"], ["linear", "red"], ["spline", "orange"]]],
+      ["path-gap-clip-stepped-before", "Gaps in stepped before", [["step before", "red"], ["linear", "blue"], ["spline", "orange"]]],
+      ["path-gap-clip-joined-stepped-after", "Gaps in stepped after", [["on/off", "blue"], ["[0..5]", "red"], ["dataset03", "green"], ["dataset04", "yellow"], ["dataset05 sin", "black"]]],
+      ["path-gap-clip-joined-stepped-before", "Gaps in stepped before", [["on/off", "blue"], ["[0..5]", "red"], ["dataset03", "green"], ["dataset04", "yellow"], ["dataset05 sin", "black"]]],
+      ["path-gap-clip-align-expand", 'Align & null-fill vs "real" null gaps', [["", "red"], ["", "green"]]],
+      ["path-gap-clip-align-numeric", 'Align & null-fill vs "real" null gaps', [["", "red"], ["", "green"], ["", "blue"]]],
+      ["path-gap-clip-single-null-outro", "Single-null pixel-outro bug test", [["Low", "red"]]],
+      ["path-gap-clip-single-null-intro", "Single-null pixel-intro bug test", [["Low", "red"]]],
+      ["path-gap-clip-single-null-3001", "Single-null pixel-intro bug test", [["Low", "red"]]],
+      ["path-gap-clip-single-null-4999", "Single-null pixel-intro bug test", [["Low", "red"]]],
+      ["path-gap-clip-single-null-5001", "Single-null pixel-intro bug test", [["Low", "red"]]],
+      ["path-gap-clip-double-null", "Single-null pixel-intro bug test", [["Low", "red"]]],
+      ["path-gap-clip-undefined", "Undefined", [["", "red"]]],
+    ];
+    document.querySelector('[data-kart="no-data-flat-100"]')?.insertAdjacentHTML(
+      "afterend",
+      pathGapClipYüzeyleri.map(([kimlik, başlık]) => `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>${kimlik}</small>
+          <div class="durum">null/undefined · boşluk ve yol kırpması</div>
+        </article>`).join("")
+    );
+    for (const [kimlik, başlık, seriler] of pathGapClipYüzeyleri) {
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/path-gap-clip.html">path-gap-clip.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/utils.js">paths/utils.js</a>
+          <br>Resmî sayfadaki 15 etkin yüzey, aynı veri setleri ve null/undefined ayrımıyla ayrı ayrı sunulur.
+          <br>Boşluk kırpması, bant, stepped/spline yolları ve ters X ölçeği Rust çekirdeğindedir.`,
+        tanım: () => path_gap_clip_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/path_gap_clip.rs",
+        seriler: seriler.map(([etiket, renk]) => ({etiket, renk})),
+        yardım: "Kaynak boşluk/kırpma yüzeyi · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       };
@@ -1725,10 +1767,15 @@
             }
           }, 500);
         }
-        if (kimlik === "align-data-cost") {
+        if (kimlik === "align-data-cost" || [
+          "path-gap-clip-scale-range",
+          "path-gap-clip-band-gaps",
+          "path-gap-clip-align-expand",
+          "path-gap-clip-align-numeric",
+        ].includes(kimlik)) {
           let boşluklarıBirleştir = false;
           alignDataZamanlayıcı = setInterval(() => {
-            if (aktifKart !== "align-data-cost" || !oturum) {
+            if (aktifKart !== kimlik || !oturum) {
               clearInterval(alignDataZamanlayıcı);
               alignDataZamanlayıcı = null;
               return;

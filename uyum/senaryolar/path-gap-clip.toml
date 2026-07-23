@@ -1,0 +1,35 @@
+id = "path-gap-clip"
+kaynak = "../uPlot/demos/path-gap-clip.html"
+fixture = "src/kart/path_gap_clip.rs#path_gap_clip_kartı"
+viewport = [1200, 600]
+device_pixel_ratio = 1
+durum = "15_kaynak_yüzeyi"
+
+[veri]
+etkin_yüzey_sayısı = 15
+data0_nokta_sayısı = 304
+data3_nokta_sayısı = 2228
+null_ve_undefined_ayrımı = true
+join_null_kipleri = ["NULL_RETAIN", "NULL_EXPAND"]
+
+[yollar]
+doğrusal = true
+basamak_sonra = true
+basamak_önce = true
+spline = true
+bant = true
+çizim_dikdörtgeni_kırpması = true
+ters_x_yönü = true
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg_dizini = "target/path-gap-clip"

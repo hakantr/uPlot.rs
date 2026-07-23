@@ -55,68 +55,93 @@ impl Grafik {
                 )
             } else {
                 let mut çokgenler = Vec::new();
-                for indeks in 0..self.veri.x().len().saturating_sub(1) {
-                    let Some(x0) = self.veri.x().get(indeks).copied() else {
-                        continue;
-                    };
-                    let Some(x1) = self.veri.x().get(indeks + 1).copied() else {
-                        continue;
-                    };
-                    if x1 < x_aralığı.en_az || x0 > x_aralığı.en_çok {
-                        continue;
-                    }
-                    if üst_değerler.get(indeks).copied().flatten().is_none()
-                        || üst_değerler.get(indeks + 1).copied().flatten().is_none()
-                        || alt_değerler.get(indeks).copied().flatten().is_none()
-                        || alt_değerler.get(indeks + 1).copied().flatten().is_none()
-                    {
+                let mut koşular = Vec::<Vec<(f64, f64, f64)>>::new();
+                let mut koşu = Vec::<(f64, f64, f64)>::new();
+                for (indeks, x) in self.veri.x().iter().copied().enumerate() {
+                    let üst_değer = üst_değerler.get(indeks).copied().flatten();
+                    let alt_değer = alt_değerler.get(indeks).copied().flatten();
+                    if let (Some(üst_değer), Some(alt_değer)) = (üst_değer, alt_değer) {
+                        koşu.push((x, üst_değer, alt_değer));
                         continue;
                     }
-                    let mut örnekler = Vec::with_capacity(9);
-                    for adım in 0..=8 {
-                        let t = adım as f64 / 8.0;
-                        let x_değeri = x0 + (x1 - x0) * t;
-                        let Some(üst_değer) =
-                            seri_ara_değeri(üst_değerler, indeks, t, üst_ayarları.çizim_türü)
-                        else {
-                            continue;
-                        };
-                        let Some(alt_değer) =
-                            seri_ara_değeri(alt_değerler, indeks, t, alt_ayarları.çizim_türü)
-                        else {
-                            continue;
-                        };
-                        let x = self.x_konumu(x_aralığı, x_değeri, sol, genişlik);
-                        let üst_y = alt
-                            - self.y_konumu(
-                                &üst_ayarları.ölçek,
-                                y_aralığı,
-                                üst_değer,
-                                0.0,
-                                yükseklik,
-                            );
-                        let alt_y = alt
-                            - self.y_konumu(
-                                &üst_ayarları.ölçek,
-                                y_aralığı,
-                                alt_değer,
-                                0.0,
-                                yükseklik,
-                            );
-                        örnekler.push((x, üst_y, alt_y, üst_değer - alt_değer));
+                    let üst_köprülenir = üst_değer.is_some()
+                        || self.veri.hizalama_eksiği_mi(bant.üst_seri, indeks)
+                        || üst_ayarları.boşlukları_birleştir;
+                    let alt_köprülenir = alt_değer.is_some()
+                        || self.veri.hizalama_eksiği_mi(bant.alt_seri, indeks)
+                        || alt_ayarları.boşlukları_birleştir;
+                    if (!üst_köprülenir || !alt_köprülenir) && !koşu.is_empty() {
+                        koşular.push(std::mem::take(&mut koşu));
                     }
-                    for çift in örnekler.windows(2) {
-                        let Some(a) = çift.first().copied() else {
+                }
+                if !koşu.is_empty() {
+                    koşular.push(koşu);
+                }
+                for koşu in koşular {
+                    let üst_koşu = koşu
+                        .iter()
+                        .map(|(_, üst, _)| Some(*üst))
+                        .collect::<Vec<_>>();
+                    let alt_koşu = koşu
+                        .iter()
+                        .map(|(_, _, alt)| Some(*alt))
+                        .collect::<Vec<_>>();
+                    for indeks in 0..koşu.len().saturating_sub(1) {
+                        let Some((x0, _, _)) = koşu.get(indeks).copied() else {
                             continue;
                         };
-                        let Some(b) = çift.get(1).copied() else {
+                        let Some((x1, _, _)) = koşu.get(indeks + 1).copied() else {
                             continue;
                         };
-                        if let Some(çokgen) = bant_dilim_çokgeni(a, b, bant.yön) {
-                            let kırpılmış =
-                                çokgeni_dikdörtgene_kırp(&çokgen, sol, sağ, üst, alt);
-                            if kırpılmış.len() >= 3 {
-                                çokgenler.push(kırpılmış);
+                        if x1 < x_aralığı.en_az || x0 > x_aralığı.en_çok {
+                            continue;
+                        }
+                        let mut örnekler = Vec::with_capacity(9);
+                        for adım in 0..=8 {
+                            let t = adım as f64 / 8.0;
+                            let x_değeri = x0 + (x1 - x0) * t;
+                            let Some(üst_değer) =
+                                seri_ara_değeri(&üst_koşu, indeks, t, üst_ayarları.çizim_türü)
+                            else {
+                                continue;
+                            };
+                            let Some(alt_değer) =
+                                seri_ara_değeri(&alt_koşu, indeks, t, alt_ayarları.çizim_türü)
+                            else {
+                                continue;
+                            };
+                            let x = self.x_konumu(x_aralığı, x_değeri, sol, genişlik);
+                            let üst_y = alt
+                                - self.y_konumu(
+                                    &üst_ayarları.ölçek,
+                                    y_aralığı,
+                                    üst_değer,
+                                    0.0,
+                                    yükseklik,
+                                );
+                            let alt_y = alt
+                                - self.y_konumu(
+                                    &üst_ayarları.ölçek,
+                                    y_aralığı,
+                                    alt_değer,
+                                    0.0,
+                                    yükseklik,
+                                );
+                            örnekler.push((x, üst_y, alt_y, üst_değer - alt_değer));
+                        }
+                        for çift in örnekler.windows(2) {
+                            let Some(a) = çift.first().copied() else {
+                                continue;
+                            };
+                            let Some(b) = çift.get(1).copied() else {
+                                continue;
+                            };
+                            if let Some(çokgen) = bant_dilim_çokgeni(a, b, bant.yön) {
+                                let kırpılmış =
+                                    çokgeni_dikdörtgene_kırp(&çokgen, sol, sağ, üst, alt);
+                                if kırpılmış.len() >= 3 {
+                                    çokgenler.push(kırpılmış);
+                                }
                             }
                         }
                     }

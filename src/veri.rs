@@ -8,6 +8,17 @@ pub struct HizalıVeri {
     hizalama_eksikleri: Vec<Vec<bool>>,
 }
 
+/// Hizalı bir seri hücresinin uPlot veri anlamı.
+///
+/// JavaScript tarafındaki `null` gerçek bir çizim boşluğudur; `undefined`
+/// ise `uPlot.join()` ile oluşan hizalama eksikliği gibi yolda atlanır.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum HizalıDeğer {
+    Değer(f64),
+    Boş,
+    Tanımsız,
+}
+
 /// uPlot `join()` null kipleri.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BoşlukKipi {
@@ -57,6 +68,30 @@ impl HizalıVeri {
             seriler,
             hizalama_eksikleri,
         })
+    }
+
+    /// Açık `null` ve `undefined` ayrımını koruyarak hizalı veri oluşturur.
+    pub fn anlamlı(x: Vec<f64>, seriler: Vec<Vec<HizalıDeğer>>) -> Result<Self, UplotHatası> {
+        let değerler = seriler
+            .iter()
+            .map(|seri| {
+                seri.iter()
+                    .map(|değer| match değer {
+                        HizalıDeğer::Değer(sayı) => Some(*sayı),
+                        HizalıDeğer::Boş | HizalıDeğer::Tanımsız => None,
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        let maskeler = seriler
+            .iter()
+            .map(|seri| {
+                seri.iter()
+                    .map(|değer| matches!(değer, HizalıDeğer::Tanımsız))
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        Self::hizalama_maskeli(x, değerler, maskeler)
     }
 
     pub fn x(&self) -> &[f64] {

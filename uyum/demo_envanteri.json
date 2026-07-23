@@ -506,10 +506,27 @@
       "kaynak": "demos/path-gap-clip.html",
       "kaynak_sha256": "25ea25911f052ae494feeff6b65c3e5ec851cd4e69be5853d495d3b730e4bcd8",
       "veri_politikası": "kaynak_veri_aynen",
-      "veri_kaynakları": [],
+      "veri_kaynakları": [
+        {
+          "yol": "src/paths/linear.js",
+          "sha256": "8f5002721c15f9a965b0e56522c58378c5b412856356c85188c74066ffba6749"
+        },
+        {
+          "yol": "src/paths/stepped.js",
+          "sha256": "7a11e94e31462f173d25810b371ced0c30652e39df5fbd23668a0a4059f2e2a7"
+        },
+        {
+          "yol": "src/paths/spline.js",
+          "sha256": "73f29178227e0b17b8a433348495f555c8d42dbdc49032a3972747f4f906dbe9"
+        },
+        {
+          "yol": "src/paths/utils.js",
+          "sha256": "7636973ddf67ca47993ae86a4b53b1e7a6ea5ebd90483e0c305e84d558c38e13"
+        }
+      ],
       "sahip_faz": 1,
       "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 38,
