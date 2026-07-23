@@ -52,9 +52,10 @@ pub use kart::{
     SCATTER_KANIT_TOHUMU, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KANIT_TOHUMU,
     SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KANIT_TOHUMU, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
     SINE_STREAM_NOKTA_SAYISI, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ,
-    SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği,
-    SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği,
-    SparklineÖrneği, SparseÖrneği, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+    SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KANIT_TOHUMU,
+    STACKED_SERIES_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SineAkışı,
+    SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği,
+    SparseÖrneği, StackedSeriesÖrneği, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
     add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
     align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, asap_yumuşat,
     axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
@@ -67,8 +68,8 @@ pub use kart::{
     months_rusça_kartı, nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri,
     path_gap_clip_kartı, pixel_align_kartı, points_kartı, resize_kartı, savitzky_golay,
     scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
-    soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukÖrneği,
+    soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
+    stacked_series_kartı_görünür, zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
 };
 pub use olcek::{Aralık, SayısalAralıkAyarları, SayısalAralıkParçası, YumuşakSınırKipi};
 pub use secenek::{

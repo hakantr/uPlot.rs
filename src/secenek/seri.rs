@@ -52,6 +52,9 @@ pub struct SeriSeçenekleri {
     /// `disp.fill.values` karşılığı nokta başına çubuk dolguları.
     pub çubuk_dolguları: Vec<String>,
     pub gösterim_değer_çarpanı: f64,
+    /// Çizim verisi kümülatif/dönüştürülmüş olduğunda cursor ve lejantta
+    /// gösterilecek ham kaynak değerleri. Uzunluk uyuşmazsa güvenle yoksayılır.
+    pub lejant_değerleri: Option<Vec<Option<f64>>>,
     /// uPlot `series.pxAlign` karşılığıdır. `None`, grafik düzeyindeki
     /// `pxAlign` değerini devralır; `Some(0.0)` hizalamayı kapatır.
     pub piksel_hizası: Option<f32>,
@@ -64,6 +67,9 @@ pub struct SeriSeçenekleri {
     pub nokta_dolgusu: Option<String>,
     pub nokta_şekli: NoktaŞekli,
     pub nokta_filtresi: NoktaFiltreKipi,
+    /// Özel `points.filter` oluşturucularının göstereceği kaynak indeksleri.
+    /// `None`, geçerli tüm noktaları kullanır.
+    pub nokta_indeksleri: Option<Vec<usize>>,
 }
 
 impl SeriSeçenekleri {
@@ -89,6 +95,7 @@ impl SeriSeçenekleri {
             yüzen_çubuk_üst_serisi: None,
             çubuk_dolguları: Vec::new(),
             gösterim_değer_çarpanı: 1.0,
+            lejant_değerleri: None,
             piksel_hizası: None,
             noktaları_göster: None,
             nokta_boşluğu: 10.0,
@@ -97,6 +104,7 @@ impl SeriSeçenekleri {
             nokta_dolgusu: None,
             nokta_şekli: NoktaŞekli::Daire,
             nokta_filtresi: NoktaFiltreKipi::Yok,
+            nokta_indeksleri: None,
         }
     }
 
@@ -246,6 +254,11 @@ impl SeriSeçenekleri {
         self
     }
 
+    pub fn lejant_değerleri(mut self, değerler: Vec<Option<f64>>) -> Self {
+        self.lejant_değerleri = Some(değerler);
+        self
+    }
+
     /// Seri yol ve nokta koordinatlarının hangi piksel adımına
     /// yuvarlanacağını belirler. `0`, uPlot'taki gibi yuvarlamayı kapatır.
     pub fn piksel_hizası(mut self, adım: f32) -> Self {
@@ -290,6 +303,11 @@ impl SeriSeçenekleri {
 
     pub fn nokta_şekli(mut self, şekil: NoktaŞekli) -> Self {
         self.nokta_şekli = şekil;
+        self
+    }
+
+    pub fn nokta_indeksleri(mut self, indeksler: Vec<usize>) -> Self {
+        self.nokta_indeksleri = Some(indeksler);
         self
     }
 }

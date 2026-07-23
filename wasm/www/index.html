@@ -303,6 +303,7 @@
       sparklines_bars_kart_tanim_ornegi,
       sparklines_kart_tanim_ornegi,
       sparse_kart_tanim_ornegi,
+      stacked_series_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1057,6 +1058,56 @@
         etkileşimler: () => ortakEtkileşimler(),
       };
     }
+    const stackedSeriesYüzeyleri = [
+      ["stacked-series-stacked-1", "Stacked 1", "800×400 · 30 nokta × 5 seri"],
+      ["stacked-series-stacked-2", "Stacked 2", "800×400 · aynı veri ters seri sırası"],
+      ["stacked-series-bars", "Bars Stacked", "1600×400 · 101 nokta × 4 çubuk seri"],
+      ["stacked-series-interpolated", "Stacked / Interpolated (at magenta x=3)", "1600×400 · ham nokta filtresi"],
+      ["stacked-series-unstacked", "unstacked", "400×300 · ham karşılaştırma"],
+      ["stacked-series-stacked", "stacked", "400×300 · normal yığma"],
+      ["stacked-series-undef-both", "stacked, red=undef, green=undef", "undefined hizalama boşlukları"],
+      ["stacked-series-red-null", "stacked, red=null", "kırmızı gerçek boşluk"],
+      ["stacked-series-green-null", "stacked, green=null", "yeşil gerçek boşluk"],
+      ["stacked-series-both-null", "stacked, red=null, green=null", "iki gerçek boşluk"],
+      ["stacked-series-both-zero", "stacked, red=0, green=0", "sıfır değerleri"],
+      ["stacked-series-negy-null", "unstacked, green negY, green=null, red=null", "negY · null"],
+      ["stacked-series-negy-zero", "unstacked, green negY, green=0, red=0", "negY · sıfır"],
+      ["stacked-series-negative-percent", "neg percent stacked", "pozitif/negatif yüzde yığma"],
+      ["stacked-series-groups", "stacking groups", "A/B bağımsız yığma grupları"],
+      ["stacked-series-joined-mixed", "stacked joined/mixed", "join · çizgi + yığılmış çubuk"],
+    ];
+    document.querySelector('[data-kart="sparse-custom-naive-linear"]')?.insertAdjacentHTML(
+      "afterend",
+      stackedSeriesYüzeyleri.map(([kimlik, başlık, durum]) => `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>stacked-series</small>
+          <div class="durum">${durum}</div>
+        </article>`).join("")
+    );
+    const stackedSeriesStilleri = kimlik => {
+      if (kimlik.endsWith("stacked-1")) return ["purple", "orange", "blue", "green", "red"];
+      if (kimlik.endsWith("stacked-2")) return ["red", "green", "blue", "orange", "purple"];
+      if (kimlik.endsWith("-bars")) return ["green", "magenta", "blue", "red"];
+      if (kimlik.endsWith("-interpolated")) return ["green", "magenta"];
+      if (kimlik.includes("-negy-")) return ["green", "red"];
+      if (kimlik.endsWith("-joined-mixed")) return ["blue", "green", "orange"];
+      return ["blue", "green", "orange", "red"];
+    };
+    for (const [kimlik, başlık, yardım] of stackedSeriesYüzeyleri) {
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/stacked-series.html">stacked-series.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/stack.js">stack.js</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/bars.js">paths/bars.js</a>
+          <br>Resmî 16 yüzey; aynı sabit veriler, yığma algoritmaları, null/undefined/zero ayrımı, ham cursor değerleri, yüzde/grup bantları ve karma join geometrisiyle Rust çekirdeğinde uygulanır. Rastgele çubuk verisi açık kanıt tohumuna bağlanır.`,
+        tanım: () => stacked_series_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/stacked_series.rs",
+        seriler: stackedSeriesStilleri(kimlik).map((renk, indeks) => ({ etiket: `Seri ${indeks + 1}`, renk })),
+        yardım: `${yardım} · sürükle: seç · tekerlek: yakınlaştır · çift tıkla: tam görünüm`,
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",
@@ -1675,14 +1726,36 @@
           ${imleçNoktaları}
           ${eksenGöstergeleri}
         </g>`);
+      const yığmaLejantı = aktifKart.startsWith("stacked-series-");
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
-        `<span><i class="örnek" style="border-color:${seri.renk}"></i>${seri.etiket}: <b id="seri-değeri-${indeks}">--</b></span>`
+        `<span ${yığmaLejantı ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>
+          <i class="örnek" style="border-color:${seri.renk}"></i>${seri.etiket}: <b id="seri-değeri-${indeks}">--</b></span>`
       ).join("");
       const arayüzHedefi = kart.scrollSync ? chart.querySelector(".scroll-sync-grafik") : chart;
       arayüzHedefi?.insertAdjacentHTML("beforeend", `
         ${kart.scrollSync ? "" : `<div class="yardım">${kart.yardım}</div>`}
         <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
         ${lejantSerileri}</div>`);
+      chart.querySelectorAll("[data-seri-toggle]").forEach(öğe => {
+        const değiştir = () => {
+          const indeks = Number(öğe.dataset.seriToggle);
+          if (!Number.isInteger(indeks) || !oturum) return;
+          try {
+            if (oturum.stacked_seri_gorunurlugu_ayarla(indeks, !oturum.seri_gorunur(indeks))) {
+              çiz();
+            }
+          } catch (error) {
+            hata.textContent = String(error);
+          }
+        };
+        öğe.addEventListener("click", değiştir);
+        öğe.addEventListener("keydown", olay => {
+          if (olay.key === "Enter" || olay.key === " ") {
+            olay.preventDefault();
+            değiştir();
+          }
+        });
+      });
       if (kart.bilgiKutusu) {
         chart.insertAdjacentHTML("beforeend", `<div id="imlec-bilgi-kutusu" class="imlec-bilgi-kutusu" hidden></div>`);
       }

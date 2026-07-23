@@ -1,0 +1,26 @@
+id = "stacked-series"
+kaynak = "../uPlot/demos/stacked-series.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/stacked_series.rs#stacked_series_kartı"
+yüzey_sayısı = 16
+yüzeyler = [
+  "stacked-series-stacked-1", "stacked-series-stacked-2",
+  "stacked-series-bars", "stacked-series-interpolated",
+  "stacked-series-unstacked", "stacked-series-stacked",
+  "stacked-series-undef-both", "stacked-series-red-null",
+  "stacked-series-green-null", "stacked-series-both-null",
+  "stacked-series-both-zero", "stacked-series-negy-null",
+  "stacked-series-negy-zero", "stacked-series-negative-percent",
+  "stacked-series-groups", "stacked-series-joined-mixed",
+]
+
+[kanıt]
+algoritmalar = ["stack", "getStackedOpts", "stack2"]
+boyutlar = ["2x800x400", "2x1600x400", "12x400x300"]
+anlamlar = ["null", "undefined", "zero", "negY", "percent", "groups", "join"]
+rastgele_tohum = 1470942933
+ham_lejant = true
+interpolasyon_nokta_filtresi = true
+set_series_yeniden_yığma = true
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

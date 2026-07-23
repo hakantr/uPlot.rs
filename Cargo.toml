@@ -134,6 +134,11 @@ path = "examples/sparse.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "stacked-series"
+path = "examples/stacked_series.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

@@ -953,7 +953,12 @@ impl Grafik {
             .iter()
             .zip(self.seçenekler.seriler.iter())
             .map(|(seri, seçenek)| {
-                seri.get(indeks)
+                seçenek
+                    .lejant_değerleri
+                    .as_ref()
+                    .filter(|değerler| değerler.len() == seri.len())
+                    .unwrap_or(seri)
+                    .get(indeks)
                     .copied()
                     .flatten()
                     .map(|değer| değer * seçenek.gösterim_değer_çarpanı)
@@ -1951,6 +1956,13 @@ impl Grafik {
                             <= nokta_piksel_açıklığı / seri.nokta_boşluğu.max(f32::EPSILON)
                 });
                 for (indeks, nokta, x_değeri, y_değeri) in &görünür_noktalar {
+                    if seri
+                        .nokta_indeksleri
+                        .as_ref()
+                        .is_some_and(|indeksler| indeksler.binary_search(indeks).is_err())
+                    {
+                        continue;
+                    }
                     let filtreli_tekil = !noktalar_görünür
                         && seri.nokta_filtresi
                             == crate::NoktaFiltreKipi::BoşlukArasındakiTekiller

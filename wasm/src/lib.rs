@@ -22,12 +22,13 @@ use uplot_rs::{
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
     SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
     SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ,
-    SPARSE_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SeçimEylemi,
-    SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği,
-    SparklineÖrneği, SparseÖrneği, UplotHatası, YüzeyDikdörtgeni, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
-    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği,
+    SeriSeçenekleri, SeçimEylemi, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği,
+    SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği, UplotHatası,
+    YüzeyDikdörtgeni, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
+    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
+    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
     bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
     cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
     dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
@@ -37,7 +38,8 @@ use uplot_rs::{
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
     sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
-    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    stacked_series_kartı, stacked_series_kartı_görünür, zoom_touch_kartı, zoom_wheel_kartı,
+    ÇubukYönü, ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -163,6 +165,16 @@ impl KartOturumu {
                 },
                 sparse_kartı,
             ),
+            kimlik if kimlik.starts_with("stacked-series-") => {
+                StackedSeriesÖrneği::kimlikten(kimlik).map_or_else(
+                    || {
+                        Err(UplotHatası::BilinmeyenKart {
+                            kimlik: kimlik.to_string(),
+                        })
+                    },
+                    stacked_series_kartı,
+                )
+            }
             "cursor-bind" => cursor_bind_kartı(),
             "cursor-snap" => cursor_snap_kartı(),
             "cursor-tooltip" => cursor_tooltip_kartı(),
@@ -396,6 +408,42 @@ impl KartOturumu {
 
     pub fn seri_sayisi(&self) -> usize {
         self.grafik.seri_seçenekleri().len()
+    }
+
+    pub fn seri_gorunur(&self, seri_indeksi: usize) -> bool {
+        self.grafik
+            .seri_seçenekleri()
+            .get(seri_indeksi)
+            .is_some_and(|seri| seri.göster)
+    }
+
+    pub fn stacked_seri_gorunurlugu_ayarla(
+        &mut self,
+        seri_indeksi: usize,
+        görünür: bool,
+    ) -> Result<bool, JsValue> {
+        let Some(örnek) = StackedSeriesÖrneği::kimlikten(&self.kart_kimliği) else {
+            return Ok(false);
+        };
+        if seri_indeksi >= self.grafik.seri_seçenekleri().len() {
+            return Ok(false);
+        }
+        let mut görünürlük = self
+            .grafik
+            .seri_seçenekleri()
+            .iter()
+            .map(|seri| seri.göster)
+            .collect::<Vec<_>>();
+        if let Some(hedef) = görünürlük.get_mut(seri_indeksi) {
+            *hedef = görünür;
+        }
+        let tekerlek = self.grafik.etkileşim_seçenekleri().tekerlek_etkileşimi;
+        let (seçenekler, veri) =
+            stacked_series_kartı_görünür(örnek, &görünürlük).map_err(js_hatası)?;
+        let mut grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
+        grafik.tekerlek_etkileşimi_ayarla(tekerlek);
+        self.grafik = grafik;
+        Ok(true)
     }
 
     pub fn seri_etiketleri(&self) -> Vec<String> {
@@ -689,7 +737,7 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    213
+    229
 }
 
 #[wasm_bindgen]
@@ -710,6 +758,11 @@ pub fn sparklines_kart_tanim_ornegi() -> String {
 #[wasm_bindgen]
 pub fn sparse_kart_tanim_ornegi() -> String {
     SPARSE_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
+pub fn stacked_series_kart_tanim_ornegi() -> String {
+    STACKED_SERIES_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -961,7 +1014,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 213);
+        assert_eq!(kart_sayisi(), 229);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -986,7 +1039,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 213);
+        assert_eq!(kart_sayisi(), 229);
     }
 
     #[test]
@@ -1004,7 +1057,7 @@ mod testler {
             }
         }
         assert!(path_gap_clip_kart_tanim_ornegi().contains("path_gap_clip_kartı"));
-        assert_eq!(kart_sayisi(), 213);
+        assert_eq!(kart_sayisi(), 229);
     }
 
     #[test]
@@ -1020,7 +1073,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(pixel_align_kart_tanim_ornegi().contains("pixel_align_kartı"));
-        assert_eq!(kart_sayisi(), 213);
+        assert_eq!(kart_sayisi(), 229);
     }
 
     #[test]
@@ -1035,7 +1088,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(points_kart_tanim_ornegi().contains("points_kartı"));
-        assert_eq!(kart_sayisi(), 213);
+        assert_eq!(kart_sayisi(), 229);
     }
 
     #[test]
@@ -1051,7 +1104,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(scales_dir_ori_kart_tanim_ornegi().contains("scales_dir_ori_kartı"));
-        assert_eq!(kart_sayisi(), 213);
+        assert_eq!(kart_sayisi(), 229);
     }
 
     #[test]
@@ -1085,7 +1138,7 @@ mod testler {
                 .is_empty()
         );
         assert!(scatter_kart_tanim_ornegi().contains("scatter_kartı"));
-        assert_eq!(kart_sayisi(), 213);
+        assert_eq!(kart_sayisi(), 229);
     }
 
     #[test]
@@ -1116,7 +1169,7 @@ mod testler {
         assert!(oturum.sine_akisini_ilerlet().is_ok_and(|değişti| değişti));
         assert_ne!(oturum.svg(1_920, 600), önce);
         assert!(sine_stream_kart_tanim_ornegi().contains("SineAkışı"));
-        assert_eq!(kart_sayisi(), 213);
+        assert_eq!(kart_sayisi(), 229);
     }
 
     #[test]
@@ -1139,7 +1192,7 @@ mod testler {
             }
         }
         assert!(soft_minmax_kart_tanim_ornegi().contains("SoftMinMaxAkışı"));
-        assert_eq!(kart_sayisi(), 213);
+        assert_eq!(kart_sayisi(), 229);
     }
 
     #[test]
@@ -1157,7 +1210,7 @@ mod testler {
             assert!(svg.contains("<rect") || svg.contains("<polygon"));
         }
         assert!(sparklines_bars_kart_tanim_ornegi().contains("sparklines_bars_kartı"));
-        assert_eq!(kart_sayisi(), 213);
+        assert_eq!(kart_sayisi(), 229);
     }
 
     #[test]
@@ -1175,7 +1228,7 @@ mod testler {
             assert!(svg.contains("#b3e5fc"));
         }
         assert!(sparklines_kart_tanim_ornegi().contains("sparklines_kartı"));
-        assert_eq!(kart_sayisi(), 213);
+        assert_eq!(kart_sayisi(), 229);
     }
 
     #[test]
@@ -1195,7 +1248,36 @@ mod testler {
             }
         }
         assert!(sparse_kart_tanim_ornegi().contains("sparse_kartı"));
-        assert_eq!(kart_sayisi(), 213);
+        assert_eq!(kart_sayisi(), 229);
+    }
+
+    #[test]
+    fn stacked_series_wasm_on_altı_kaynak_yüzeyini_korur() {
+        for örnek in StackedSeriesÖrneği::TÜMÜ {
+            let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
+            assert!(oturum.is_ok(), "{}", örnek.kimlik());
+            let Ok(oturum) = oturum else {
+                continue;
+            };
+            let (genişlik, yükseklik) = örnek.boyut();
+            let svg = oturum.svg(genişlik, yükseklik);
+            assert!(svg.contains(örnek.başlık()));
+            assert!(svg.contains("<path") || svg.contains("<polygon"));
+        }
+        assert!(stacked_series_kart_tanim_ornegi().contains("stacked_series_kartı"));
+        assert_eq!(kart_sayisi(), 229);
+
+        let Ok(mut oturum) = KartOturumu::yeni("stacked-series-stacked-1", 100) else {
+            return;
+        };
+        let önce = oturum.svg(800, 400);
+        assert!(
+            oturum
+                .stacked_seri_gorunurlugu_ayarla(1, false)
+                .is_ok_and(|değişti| değişti)
+        );
+        assert!(!oturum.seri_gorunur(1));
+        assert_ne!(oturum.svg(800, 400), önce);
     }
 
     #[test]

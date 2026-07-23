@@ -29,22 +29,24 @@ use uplot_rs::{
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
     SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
     SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ,
-    SPARSE_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı,
-    SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği,
-    SparseÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği,
+    SeriSeçenekleri, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği,
+    SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
     sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
-    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    stacked_series_kartı, stacked_series_kartı_görünür, zoom_touch_kartı, zoom_wheel_kartı,
+    ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -73,6 +75,7 @@ enum KartKimliği {
     SparklinesBars(SparklinesBarsÖrneği),
     Sparklines(SparklineÖrneği),
     Sparse(SparseÖrneği),
+    StackedSeries(StackedSeriesÖrneği),
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -127,6 +130,7 @@ impl KartKimliği {
             Self::SparklinesBars(örnek) => örnek.başlık(),
             Self::Sparklines(örnek) => örnek.başlık(),
             Self::Sparse(örnek) => örnek.başlık(),
+            Self::StackedSeries(örnek) => örnek.başlık(),
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -205,6 +209,9 @@ impl KartKimliği {
             }
             Self::Sparklines(_) => "sparklines.html · kaynak CSV · 150×30 eksensiz kompakt yüzey",
             Self::Sparse(_) => "sparse.html · sparse.json · yerleşik/özel nokta/saf moveTo yolları",
+            Self::StackedSeries(_) => {
+                "stacked-series.html · stack.js · yığma, yüzde, grup ve karma veri"
+            }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -277,6 +284,7 @@ impl KartKimliği {
             Self::SparklinesBars(_) => SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ,
             Self::Sparklines(_) => SPARKLINES_KART_TANIM_ÖRNEĞİ,
             Self::Sparse(_) => SPARSE_KART_TANIM_ÖRNEĞİ,
+            Self::StackedSeries(_) => STACKED_SERIES_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -327,6 +335,7 @@ impl KartKimliği {
             Self::SparklinesBars(_) => "src/kart/sparklines_bars.rs",
             Self::Sparklines(_) => "src/kart/sparklines.rs",
             Self::Sparse(_) => "src/kart/sparse.rs",
+            Self::StackedSeries(_) => "src/kart/stacked_series.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -738,6 +747,41 @@ impl ChartListesi {
         }
         cx.notify();
     }
+
+    fn stacked_seriyi_değiştir(&mut self, seri_indeksi: usize, cx: &mut Context<Self>) {
+        let KartKimliği::StackedSeries(örnek) = self.aktif_kart else {
+            return;
+        };
+        let görünürlük = self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
+            grafik
+                .read(cx)
+                .grafik()
+                .seri_seçenekleri()
+                .iter()
+                .map(|seri| seri.göster)
+                .collect::<Vec<_>>()
+        });
+        if seri_indeksi >= görünürlük.len() {
+            return;
+        }
+        let mut yeni_görünürlük = görünürlük;
+        if let Some(hedef) = yeni_görünürlük.get_mut(seri_indeksi) {
+            *hedef = !*hedef;
+        }
+        let sonuç = stacked_series_kartı_görünür(örnek, &yeni_görünürlük)
+            .and_then(|(seçenekler, veri)| Grafik::yeni(seçenekler, veri));
+        match sonuç {
+            Ok(mut yeni) => {
+                yeni.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+                if let Some(grafik) = &self.grafik {
+                    grafik.update(cx, |grafik, cx| grafik.grafiği_ayarla(yeni, cx));
+                }
+                self.hata = None;
+            }
+            Err(hata) => self.hata = Some(format!("Seri görünürlüğü değiştirilemedi: {hata}")),
+        }
+        cx.notify();
+    }
 }
 
 fn grafik_oluştur(
@@ -773,6 +817,7 @@ fn grafik_oluştur(
         KartKimliği::SparklinesBars(örnek) => sparklines_bars_kartı(örnek),
         KartKimliği::Sparklines(örnek) => sparklines_kartı(örnek),
         KartKimliği::Sparse(örnek) => sparse_kartı(örnek),
+        KartKimliği::StackedSeries(örnek) => stacked_series_kartı(örnek),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -820,6 +865,20 @@ impl Render for ChartListesi {
         let mevcut_seri_sayısı = self.grafik.as_ref().map_or(0, |grafik| {
             grafik.read(cx).grafik().seri_seçenekleri().len()
         });
+        let stacked_seriler = if matches!(aktif_kart, KartKimliği::StackedSeries(_)) {
+            self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
+                grafik
+                    .read(cx)
+                    .grafik()
+                    .seri_seçenekleri()
+                    .iter()
+                    .enumerate()
+                    .map(|(indeks, seri)| (indeks, seri.etiket.clone(), seri.göster))
+                    .collect::<Vec<_>>()
+            })
+        } else {
+            Vec::new()
+        };
         let nokta_yazısı = SharedString::from(match aktif_kart {
             KartKimliği::AddDelSeries => {
                 format!("30 nokta × {mevcut_seri_sayısı} dinamik seri")
@@ -895,6 +954,10 @@ impl Render for ChartListesi {
                 format!("{} · {} · 22 nokta · 150×30", örnek.simge(), örnek.ölçüm())
             }
             KartKimliği::Sparse(_) => "13.608 X · 4.608 dolu Y · 622 dolu parça".to_string(),
+            KartKimliği::StackedSeries(örnek) => {
+                let (genişlik, yükseklik) = örnek.boyut();
+                format!("Kaynak yığma yüzeyi · {genişlik}×{yükseklik}")
+            }
             KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
             KartKimliği::CursorTooltip => "7 nokta × 1 seri · canlı bilgi kutusu".to_string(),
@@ -1675,6 +1738,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(kart, cx);
                 }))
             }))
+            .children(StackedSeriesÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::StackedSeries(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "stacked-series",
+                    aktif_kart == kart,
+                    "Yığma · bant · null/undefined · yüzde/grup",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
             .child(
                 katalog_kartı(
                     "kart-cursor-snap",
@@ -1955,6 +2033,30 @@ impl Render for ChartListesi {
                             .devre_disi(mevcut_seri_sayısı < 2)
                             .tiklaninca(cx.listener(|bu, _, _, cx| bu.dinamik_seri_sil(cx))),
                     )
+            })
+            .when(matches!(aktif_kart, KartKimliği::StackedSeries(_)), |öğe| {
+                öğe.children(
+                    stacked_seriler
+                        .into_iter()
+                        .map(|(indeks, etiket, görünür)| {
+                            let ad = if etiket.is_empty() {
+                                format!("Seri {}", indeks + 1)
+                            } else {
+                                etiket
+                            };
+                            Dugme::yeni(
+                                format!("stacked-seri-{indeks}"),
+                                format!("{} {ad}", if görünür { "✓" } else { "○" }),
+                            )
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Ikincil)
+                            .tiklaninca(cx.listener(
+                                move |bu, _, _, cx| {
+                                    bu.stacked_seriyi_değiştir(indeks, cx);
+                                },
+                            ))
+                        }),
+                )
             })
             .when(aktif_kart == KartKimliği::ArcSinhScales, |öğe| {
                 öğe

@@ -488,6 +488,30 @@
       "rust_karşılığı": "SeriSeçenekleri::saf_doğrusal_yol / kesintili Yol geometrisi",
       "durum": "tam_kanıtlı",
       "test": "src/kart/sparse.rs"
+    },
+    {
+      "kaynak_yolu": "demos/stack.js stack / getStackedOpts / stack2",
+      "rust_karşılığı": "stacked_series_kartı / stack2 / SeriBandı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/stacked_series.rs"
+    },
+    {
+      "kaynak_yolu": "Series.value raw values over stacked drawing data",
+      "rust_karşılığı": "SeriSeçenekleri::lejant_değerleri / Grafik::en_yakın_noktalar",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/stacked_series.rs"
+    },
+    {
+      "kaynak_yolu": "Series.points.filter raw non-null indices after interpolation",
+      "rust_karşılığı": "SeriSeçenekleri::nokta_indeksleri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/stacked_series.rs"
+    },
+    {
+      "kaynak_yolu": "Hooks.setSeries restack on visibility toggle",
+      "rust_karşılığı": "stacked_series_kartı_görünür / GPUI ve WASM seri görünürlük kontrolleri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/stacked_series.rs"
     }
   ]
 }

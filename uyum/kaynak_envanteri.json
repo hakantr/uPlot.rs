@@ -858,7 +858,9 @@
     },
     {
       "sembol": "PathBuilderFactories.bars",
-      "durum": "araştırılacak"
+      "durum": "tam_kanıtlı",
+      "rust_karşılığı": "SeriSeçenekleri::çubuk / çubuk_boyutu",
+      "test": "src/kart/stacked_series.rs"
     },
     {
       "sembol": "PathBuilderFactories.linear",
@@ -942,7 +944,9 @@
     },
     {
       "sembol": "Points.filter",
-      "durum": "araştırılacak"
+      "durum": "tam_kanıtlı",
+      "rust_karşılığı": "SeriSeçenekleri::nokta_indeksleri",
+      "test": "src/kart/stacked_series.rs"
     },
     {
       "sembol": "Points.one",
@@ -1128,7 +1132,9 @@
     },
     {
       "sembol": "Series.value",
-      "durum": "araştırılacak"
+      "durum": "tam_kanıtlı",
+      "rust_karşılığı": "SeriSeçenekleri::lejant_değerleri",
+      "test": "src/kart/stacked_series.rs"
     },
     {
       "sembol": "Series.values",
