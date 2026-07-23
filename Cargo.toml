@@ -196,6 +196,11 @@ path = "examples/tooltips.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "trendlines"
+path = "examples/trendlines.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

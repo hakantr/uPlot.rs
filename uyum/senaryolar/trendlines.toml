@@ -1,0 +1,33 @@
+id = "trendlines"
+kaynak = "../uPlot/demos/trendlines.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/trendlines.rs#trendlines_kartı"
+viewport = [800, 600]
+durum = "görünür_seri_uçları_arasında_kesik_trend"
+
+[veri]
+kaynak_sha256 = "8baa9845e6a52127c5eaa33059264f6dec218aecf4c9cbb171038898cc2c3794"
+x_başlangıç = 0
+x_bitiş = 99
+nokta_sayısı = 100
+seri_sayısı = 2
+data_1_ilk_son = [309, 173]
+data_2_ilk_son = [293, 290]
+
+[çizim_kancası]
+kanca = "drawSeries"
+görünür_ilk_son_indeks = true
+kesik = [5, 5]
+seri_rengi_ve_kalınlığı = true
+
+[ölçek]
+x_zaman = false
+seçim_uçları_val_to_idx_ile_yapışır = true
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+örnek = "examples/trendlines.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

@@ -746,8 +746,13 @@ impl Grafik {
         let görünür_y = self.görünür_y_aralığı();
         let (x_oranı, y_oranı) =
             self.fiziksel_oranları_mantıksala(yatay_odak_oranı, dikey_odak_oranı);
-        self.etkileşim
-            .tekerlek(x_oranı, y_oranı, görünür_y, delta, hassas)
+        let değişti = self
+            .etkileşim
+            .tekerlek(x_oranı, y_oranı, görünür_y, delta, hassas)?;
+        if değişti {
+            self.x_aralığını_veriye_yapıştır();
+        }
+        Ok(değişti)
     }
 
     pub fn seçim_yakınlaştır(
@@ -760,8 +765,13 @@ impl Grafik {
         } else {
             (başlangıç_oranı, bitiş_oranı)
         };
-        self.etkileşim
-            .seçim_yakınlaştır(başlangıç_oranı, bitiş_oranı)
+        let değişti = self
+            .etkileşim
+            .seçim_yakınlaştır(başlangıç_oranı, bitiş_oranı)?;
+        if değişti {
+            self.x_aralığını_veriye_yapıştır();
+        }
+        Ok(değişti)
     }
 
     /// Seçim bırakma davranışını kart ayarlarına göre çekirdekte çözümler.
@@ -817,7 +827,11 @@ impl Grafik {
     ) -> Result<bool, UplotHatası> {
         let (x_farkı, y_farkı) =
             self.fiziksel_farkları_mantıksala(yatay_fark_oranı, dikey_fark_oranı);
-        self.etkileşim.taşı(x_farkı, y_farkı)
+        let değişti = self.etkileşim.taşı(x_farkı, y_farkı)?;
+        if değişti {
+            self.x_aralığını_veriye_yapıştır();
+        }
+        Ok(değişti)
     }
 
     pub fn taşımayı_bitir(&mut self) {
@@ -837,7 +851,13 @@ impl Grafik {
     ) -> Result<bool, UplotHatası> {
         let (x_oranı, y_oranı) =
             self.fiziksel_oranları_mantıksala(yatay_odak_oranı, dikey_odak_oranı);
-        self.etkileşim.dokunma_yakınlaştır(x_oranı, y_oranı, çarpan)
+        let değişti = self
+            .etkileşim
+            .dokunma_yakınlaştır(x_oranı, y_oranı, çarpan)?;
+        if değişti {
+            self.x_aralığını_veriye_yapıştır();
+        }
+        Ok(değişti)
     }
 
     /// Yüzeydeki fiziksel oranları uPlot ölçek yönü ve yönelimine göre
@@ -892,6 +912,30 @@ impl Grafik {
 
     pub fn x_dikey_mi(&self) -> bool {
         self.seçenekler.x_dikey
+    }
+
+    fn x_aralığını_veriye_yapıştır(&mut self) {
+        if !self.seçenekler.x_aralığı_veriye_yapışık {
+            return;
+        }
+        let görünür = self.etkileşim.görünür_x();
+        let en_yakın = |hedef: f64| {
+            self.veri
+                .x()
+                .iter()
+                .copied()
+                .min_by(|sol, sağ| (sol - hedef).abs().total_cmp(&(sağ - hedef).abs()))
+        };
+        let (Some(en_az), Some(en_çok)) = (en_yakın(görünür.en_az), en_yakın(görünür.en_çok))
+        else {
+            return;
+        };
+        if en_az >= en_çok {
+            return;
+        }
+        if let Ok(aralık) = Aralık::yeni(en_az, en_çok) {
+            self.etkileşim.görünür_x_ayarla(aralık);
+        }
     }
 
     pub fn dokunmayı_bitir(&mut self) {
@@ -2322,6 +2366,20 @@ impl Grafik {
                         }
                     }
                 }
+            }
+
+            if let Some(düzen) = kanca.filter(|düzen| düzen.seri_uç_trendleri)
+                && let (Some((_, başlangıç, _, _)), Some((_, bitiş, _, _))) =
+                    (görünür_noktalar.first(), görünür_noktalar.last())
+                && başlangıç != bitiş
+            {
+                sahne.ekle(Komut::KesikliÇizgi {
+                    başlangıç: *başlangıç,
+                    bitiş: *bitiş,
+                    renk: seri_rengi.clone(),
+                    kalınlık: seri_kalınlığı,
+                    kesik: düzen.trend_kesik,
+                });
             }
 
             if let Some(düzen) = kanca.filter(|düzen| düzen.seri_medyanları) {

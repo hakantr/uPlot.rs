@@ -56,6 +56,15 @@ impl EtkileşimDenetleyicisi {
         self.görünüm.x.unwrap_or(self.tam_x)
     }
 
+    pub(crate) fn görünür_x_ayarla(&mut self, aralık: Aralık) -> bool {
+        let yeni = (aralık != self.tam_x).then_some(aralık);
+        if self.görünüm.x == yeni {
+            return false;
+        }
+        self.görünüm.x = yeni;
+        true
+    }
+
     pub(crate) fn görünür_y(&self) -> Option<Aralık> {
         self.görünüm.y
     }

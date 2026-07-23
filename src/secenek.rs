@@ -122,6 +122,8 @@ pub struct ÇizimKancasıDüzeni {
     pub yıldız_dış_yarıçapı: f32,
     pub yıldız_iç_yarıçapı: f32,
     pub çizim_süresi_metni: bool,
+    pub seri_uç_trendleri: bool,
+    pub trend_kesik: f32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -270,6 +272,8 @@ impl Default for ÇizimKancasıDüzeni {
             yıldız_dış_yarıçapı: 8.0,
             yıldız_iç_yarıçapı: 4.0,
             çizim_süresi_metni: false,
+            seri_uç_trendleri: false,
+            trend_kesik: 5.0,
         }
     }
 }
@@ -308,6 +312,14 @@ impl ÇizimKancasıDüzeni {
 
     pub fn çizim_süresi_metni(mut self, etkin: bool) -> Self {
         self.çizim_süresi_metni = etkin;
+        self
+    }
+
+    pub fn seri_uç_trendleri(mut self, kesik: f32) -> Self {
+        if kesik.is_finite() && kesik > 0.0 {
+            self.trend_kesik = kesik;
+            self.seri_uç_trendleri = true;
+        }
         self
     }
 }
@@ -599,6 +611,9 @@ pub struct GrafikSeçenekleri {
     pub x_eksen_görünür: bool,
     pub x_ızgara_görünür: bool,
     pub x_aralığı: Option<Aralık>,
+    /// uPlot `scales.x.range` içinde `valToIdx` ile görünür uçları veri
+    /// değerlerine yapıştıran aralık callback'inin karşılığıdır.
+    pub x_aralığı_veriye_yapışık: bool,
     pub y_aralığı: Option<Aralık>,
     pub y_ölçekleri: Vec<YÖlçekSeçenekleri>,
     pub birincil_y_ölçeği: String,
@@ -678,6 +693,7 @@ impl GrafikSeçenekleri {
             x_eksen_görünür: true,
             x_ızgara_görünür: true,
             x_aralığı: None,
+            x_aralığı_veriye_yapışık: false,
             y_aralığı: None,
             y_ölçekleri: Vec::new(),
             birincil_y_ölçeği: "y".to_string(),
@@ -938,6 +954,11 @@ impl GrafikSeçenekleri {
 
     pub fn x_aralığı(mut self, aralık: Aralık) -> Self {
         self.x_aralığı = Some(aralık);
+        self
+    }
+
+    pub fn x_aralığını_veriye_yapıştır(mut self, etkin: bool) -> Self {
+        self.x_aralığı_veriye_yapışık = etkin;
         self
     }
 

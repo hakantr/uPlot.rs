@@ -770,6 +770,36 @@
       "rust_karşılığı": "TooltipDüzeni yeniden kurma ve imleç durumu koruma",
       "durum": "tam_kanıtlı",
       "test": "wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "trendlines aligned data x=0..99 and two 100-value series",
+      "rust_karşılığı": "trendlines_kartı / HizalıVeri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/trendlines.rs"
+    },
+    {
+      "kaynak_yolu": "hooks.drawSeries per visible series",
+      "rust_karşılığı": "ÇizimKancasıDüzeni::seri_uç_trendleri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/trendlines.rs"
+    },
+    {
+      "kaynak_yolu": "series.idxs visible i0/i1 endpoint line",
+      "rust_karşılığı": "Grafik görünür_noktalar first/last trend komutu",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/trendlines.rs"
+    },
+    {
+      "kaynak_yolu": "drawSeries setLineDash [5,5] with series stroke/width",
+      "rust_karşılığı": "Komut::KesikliÇizgi trend_kesik ve seri stili",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/trendlines.rs"
+    },
+    {
+      "kaynak_yolu": "scales.x.range valToIdx min/max data snap",
+      "rust_karşılığı": "GrafikSeçenekleri::x_aralığını_veriye_yapıştır",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/trendlines.rs"
     }
   ]
 }
