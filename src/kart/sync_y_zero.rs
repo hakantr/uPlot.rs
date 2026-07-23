@@ -55,8 +55,7 @@ pub fn sync_y_zero_aralıkları(aşama: SyncYZeroAşaması) -> Result<[Aralık; 
                 .zip(simetrik)
                 .map(|((_, en_çok), mutlak)| (mutlak - en_çok) / (2.0 * mutlak))
                 .fold(f64::INFINITY, f64::min);
-            std::array::from_fn(|indeks| {
-                let mutlak = simetrik[indeks];
+            simetrik.map(|mutlak| {
                 (
                     mutlak - alt_oran * 2.0 * mutlak,
                     mutlak - üst_oran * 2.0 * mutlak,
@@ -64,11 +63,8 @@ pub fn sync_y_zero_aralıkları(aşama: SyncYZeroAşaması) -> Result<[Aralık; 
             })
         }
     };
-    Ok([
-        Aralık::yeni(aralıklar[0].0, aralıklar[0].1)?,
-        Aralık::yeni(aralıklar[1].0, aralıklar[1].1)?,
-        Aralık::yeni(aralıklar[2].0, aralıklar[2].1)?,
-    ])
+    let [ilk, ikinci, üçüncü] = aralıklar.map(|(en_az, en_çok)| Aralık::yeni(en_az, en_çok));
+    Ok([ilk?, ikinci?, üçüncü?])
 }
 
 pub fn sync_y_zero_kartı(
