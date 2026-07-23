@@ -279,6 +279,7 @@
       zoom_touch_kart_tanim_ornegi,
       months_kart_tanim_ornegi,
       nice_scale_kart_tanim_ornegi,
+      no_data_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -587,6 +588,64 @@
         etkileşimler: () => ortakEtkileşimler(),
       },
     };
+
+    const noDataYüzeyleri = [
+      ["no-data-empty-custom", "Plot without data"],
+      ["no-data-empty", "Plot without data 2"],
+      ["no-data-one-time", "1 point (time)"],
+      ["no-data-one-x-neg1-y-neg1", "1 point - [[-1],[-1]]"],
+      ["no-data-one-x-neg1-y-0", "1 point - [[-1],[0]]"],
+      ["no-data-one-x-neg1-y-1", "1 point - [[-1],[1]]"],
+      ["no-data-one-x-0-y-neg1", "1 point - [[0],[-1]]"],
+      ["no-data-one-x-0-y-0", "1 point - [[0],[0]]"],
+      ["no-data-one-x-0-y-1", "1 point - [[0],[1]]"],
+      ["no-data-one-x-1-y-neg1", "1 point - [[1],[-1]]"],
+      ["no-data-one-x-1-y-0", "1 point - [[1],[0]]"],
+      ["no-data-one-x-1-y-1", "1 point - [[1],[1]]"],
+      ["no-data-flatish-36-51", "1 point - [[0,1],[36,51]]"],
+      ["no-data-flatish-10-close", "1 point - [[0,1],[9.999999,10.000001]]"],
+      ["no-data-flatish-10-flat", "1 point - [[0,1],[10,10]]"],
+      ["no-data-flatish-10-precision", "1 point - [[0,1],[9.9999999,10.0000001]]"],
+      ["no-data-flatish-10m-precision", "1 point - [[0,1],[10000000.000027,9999999.999753]]"],
+      ["no-data-flatish-1-precision", "1 point - [[0,1],[1,0.9999999]]"],
+      ["no-data-flatish-neg36-neg51", "1 point - [[0,1],[-36,-51]]"],
+      ["no-data-flatish-neg10-close", "1 point - [[0,1],[-9.999999,-10.000001]]"],
+      ["no-data-flatish-neg10-flat", "1 point - [[0,1],[-10,-10]]"],
+      ["no-data-flatish-neg10-precision", "1 point - [[0,1],[-9.9999999,-10.0000001]]"],
+      ["no-data-flatish-neg10m-precision", "1 point - [[0,1],[-10000000.000027,-9999999.999753]]"],
+      ["no-data-flatish-neg1-precision", "1 point - [[0,1],[-1,-0.9999999]]"],
+      ["no-data-flat-neg100", "1 point - [[0,1],[-100,-100]]"],
+      ["no-data-flat-neg10", "1 point - [[0,1],[-10,-10]]"],
+      ["no-data-flat-neg1", "1 point - [[0,1],[-1,-1]]"],
+      ["no-data-flat-neg01", "1 point - [[0,1],[-0.1,-0.1]]"],
+      ["no-data-flat-0", "1 point - [[0,1],[0,0]]"],
+      ["no-data-flat-01", "1 point - [[0,1],[0.1,0.1]]"],
+      ["no-data-flat-1", "1 point - [[0,1],[1,1]]"],
+      ["no-data-flat-10", "1 point - [[0,1],[10,10]]"],
+      ["no-data-flat-100", "1 point - [[0,1],[100,100]]"],
+    ];
+    document.querySelector('[data-kart="nice-scale"]')?.insertAdjacentHTML(
+      "afterend",
+      noDataYüzeyleri.map(([kimlik, başlık]) => `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>${kimlik}</small>
+          <div class="durum">Boş/tek/düz veri · kaynak rangeNum</div>
+        </article>`).join("")
+    );
+    for (const [kimlik, başlık] of noDataYüzeyleri) {
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/no-data.html">no-data.html</a>
+          <br>Resmî sayfadaki 33 etkin boş, tek noktalı, düz ve kayan nokta hassasiyetli yüzey aynı veriyle ayrı ayrı sunulur.
+          <br><code>rangeNum</code>, tek zaman noktası ve tanımsız boş ölçek davranışları Rust çekirdeğindedir.`,
+        tanım: () => no_data_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/no_data.rs",
+        seriler: [{ etiket: "Value", renk: "#000000" }],
+        yardım: "Kaynak ölçek kenar durumu · sürükle: seç · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",

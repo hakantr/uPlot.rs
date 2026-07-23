@@ -80,6 +80,10 @@ name = "months"
 required-features = ["svg"]
 
 [[example]]
+name = "no_data"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

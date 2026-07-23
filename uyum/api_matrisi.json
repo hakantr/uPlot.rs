@@ -362,6 +362,24 @@
       "rust_karşılığı": "Grafik::çiz_boyutta / Grafik::çiz_görünür_boyutta",
       "durum": "kısmi",
       "test": "src/kart/nice_scale.rs"
+    },
+    {
+      "kaynak_yolu": "rangeNum(min, max, mult, extra)",
+      "rust_karşılığı": "Aralık::uplot_sayısal",
+      "durum": "tam_kanıtlı",
+      "test": "src/olcek.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot(opts, null|[]) / Scale.range(null, null)",
+      "rust_karşılığı": "HizalıVeri::yeni(empty) / Grafik boş ölçek çizimi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/no_data.rs"
+    },
+    {
+      "kaynak_yolu": "autoScaleX equal numeric/time value",
+      "rust_karşılığı": "no_data_kartı tek nokta X aralığı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/no_data.rs"
     }
   ]
 }

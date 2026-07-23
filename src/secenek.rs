@@ -437,11 +437,13 @@ pub struct GrafikSeçenekleri {
     pub x_zaman_milisaniye: bool,
     pub x_tarih_adları: TarihAdları,
     pub x_dağılımı: XÖlçekDağılımı,
+    pub x_aralığı: Option<Aralık>,
     pub y_aralığı: Option<Aralık>,
     pub y_ölçekleri: Vec<YÖlçekSeçenekleri>,
     pub birincil_y_ölçeği: String,
     pub x_eksen_etiketi: String,
     pub x_eksen_rengi: String,
+    pub x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi,
     pub y_eksen_etiketi: String,
     pub birincil_y_sağda: bool,
     pub birincil_y_eksen_rengi: String,
@@ -485,11 +487,13 @@ impl GrafikSeçenekleri {
             x_zaman_milisaniye: false,
             x_tarih_adları: TarihAdları::default(),
             x_dağılımı: XÖlçekDağılımı::Doğrusal,
+            x_aralığı: None,
             y_aralığı: None,
             y_ölçekleri: Vec::new(),
             birincil_y_ölçeği: "y".to_string(),
             x_eksen_etiketi: String::new(),
             x_eksen_rengi: "#4b5563".to_string(),
+            x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi::Otomatik,
             y_eksen_etiketi: String::new(),
             birincil_y_sağda: false,
             birincil_y_eksen_rengi: "#4b5563".to_string(),
@@ -531,6 +535,11 @@ impl GrafikSeçenekleri {
 
     pub fn x_eksen_rengi(mut self, renk: impl Into<String>) -> Self {
         self.x_eksen_rengi = renk.into();
+        self
+    }
+
+    pub fn x_eksen_etiket_biçimi(mut self, biçim: YÖlçekEtiketBiçimi) -> Self {
+        self.x_eksen_etiket_biçimi = biçim;
         self
     }
 
@@ -588,6 +597,11 @@ impl GrafikSeçenekleri {
 
     pub fn y_aralığı(mut self, aralık: Aralık) -> Self {
         self.y_aralığı = Some(aralık);
+        self
+    }
+
+    pub fn x_aralığı(mut self, aralık: Aralık) -> Self {
+        self.x_aralığı = Some(aralık);
         self
     }
 

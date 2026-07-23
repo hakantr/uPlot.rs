@@ -1,0 +1,36 @@
+id = "no-data"
+kaynak = "../uPlot/demos/no-data.html"
+fixture = "src/kart/no_data.rs#no_data_kartı"
+viewport = [800, 400]
+device_pixel_ratio = 1
+durum = "33_kaynak_yüzeyi"
+
+[veri]
+etkin_yüzey_sayısı = 33
+boş_yüzey_sayısı = 2
+tek_zaman_noktası = 1
+tek_sayısal_nokta_yüzeyi = 9
+yakın_ve_düz_iki_nokta_yüzeyi = 21
+
+[olcek]
+algoritma = "rangeNum"
+pay = 0.1
+ek_sıfır_yumuşatma = true
+düzlük_alt_sınırı = 1e-24
+büyüklük_farkı_eşiği = 10
+tek_zaman_x_saniye = 86400
+özel_boş_x = [1566453600.0, 1566497660.0]
+özel_boş_y = [0.0, 100.0]
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg_dizini = "target/no-data"

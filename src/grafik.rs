@@ -64,7 +64,13 @@ impl Grafik {
                 açıklama: "hücre konumu, boyutu veya rengi geçersiz".to_string(),
             });
         }
-        let mut tam = tam_x_aralığı(&veri)?;
+        let mut tam = seçenekler
+            .x_aralığı
+            .or_else(|| tam_x_aralığı(&veri).ok())
+            .unwrap_or(Aralık {
+                en_az: 0.0,
+                en_çok: 1.0,
+            });
         if (seçenekler.çubuk_düzeni.is_some()
             || seçenekler.kutu_bıyık_düzeni.is_some()
             || seçenekler.mum_düzeni.is_some())
@@ -893,6 +899,16 @@ impl Grafik {
             hiza: MetinHizası::Orta,
         });
 
+        // uPlot'un ölçek `range()` sonucu `[null, null]` olan boş veri
+        // yüzeyi yalnız başlığı taşır. Özel X/Y aralığı tanımlanan boş
+        // yüzeyler ise normal eksen ve ızgara çiziminden geçer.
+        if self.veri.x().is_empty()
+            && self.seçenekler.x_aralığı.is_none()
+            && self.seçenekler.y_aralığı.is_none()
+        {
+            return sahne;
+        }
+
         if let Some(düzen) = self.seçenekler.çubuk_düzeni {
             self.çubukları_çiz(
                 &mut sahne,
@@ -927,10 +943,14 @@ impl Grafik {
             return sahne;
         }
 
-        let tam_x_aralığı = tam_x_aralığı(&self.veri).unwrap_or(Aralık {
-            en_az: 0.0,
-            en_çok: 1.0,
-        });
+        let tam_x_aralığı = self
+            .seçenekler
+            .x_aralığı
+            .or_else(|| tam_x_aralığı(&self.veri).ok())
+            .unwrap_or(Aralık {
+                en_az: 0.0,
+                en_çok: 1.0,
+            });
         let x_aralığı = görünür_x
             .and_then(|aralık| {
                 Aralık::yeni(
@@ -1139,10 +1159,12 @@ impl Grafik {
                         },
                     )
                 } else {
-                    eksen_değerini_yaz(
-                        x_değeri * self.seçenekler.x_eksen_değer_çarpanı,
-                        x_artımı * self.seçenekler.x_eksen_değer_çarpanı,
-                    )
+                    let değer = x_değeri * self.seçenekler.x_eksen_değer_çarpanı;
+                    let artım = x_artımı * self.seçenekler.x_eksen_değer_çarpanı;
+                    match self.seçenekler.x_eksen_etiket_biçimi {
+                        YÖlçekEtiketBiçimi::Otomatik => eksen_değerini_yaz(değer, artım),
+                        biçim => ölçek_eksen_değerini_yaz(değer, artım, "", None, biçim),
+                    }
                 },
                 renk: self.seçenekler.x_eksen_rengi.clone(),
                 boyut: 11.0,
@@ -2488,11 +2510,9 @@ impl Grafik {
     }
 
     fn tam_x_aralığı(&self) -> Option<Aralık> {
-        self.veri
-            .x()
-            .first()
-            .zip(self.veri.x().last())
-            .and_then(|(ilk, son)| Aralık::yeni(*ilk, *son).ok())
+        self.seçenekler
+            .x_aralığı
+            .or_else(|| tam_x_aralığı(&self.veri).ok())
     }
 
     fn ölçek_seçeneği(&self, anahtar: &str) -> Option<&crate::YÖlçekSeçenekleri> {
@@ -2996,7 +3016,16 @@ fn eksen_değerini_yaz(değer: f64, artım: f64) -> String {
 
 fn eksen_değerini_artıma_göre_yaz(değer: f64, artım: f64) -> String {
     let basamak = usize::try_from(ondalık_basamak(artım)).unwrap_or(12);
-    format!("{değer:.basamak$}")
+    let mut sayı = format!("{değer:.basamak$}");
+    if sayı.contains('.') {
+        while sayı.ends_with('0') {
+            sayı.pop();
+        }
+        if sayı.ends_with('.') {
+            sayı.pop();
+        }
+    }
+    sayı
 }
 
 fn kompakt_sayı(değer: f64) -> String {

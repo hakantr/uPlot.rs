@@ -21,11 +21,9 @@ pub enum BoşlukKipi {
 
 impl HizalıVeri {
     /// Veriyi doğrular. X değerleri sonlu, benzersiz ve kesin artan olmalıdır.
+    /// uPlot'un `null`, `[]` ve `[[], []]` girdileri, bütün seri sütunları da
+    /// boş olduğunda sıfır uzunluklu hizalı veri olarak korunur.
     pub fn yeni(x: Vec<f64>, seriler: Vec<Vec<Option<f64>>>) -> Result<Self, UplotHatası> {
-        if x.is_empty() {
-            return Err(UplotHatası::YetersizVeri { uzunluk: x.len() });
-        }
-
         for (indeks, değer) in x.iter().enumerate() {
             if !değer.is_finite() {
                 return Err(UplotHatası::SonluOlmayanX { indeks });

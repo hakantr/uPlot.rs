@@ -27,6 +27,7 @@ mod log_scales2;
 mod missing_data;
 mod months;
 mod nice_scale;
+mod no_data;
 mod ortak;
 mod resize;
 mod scale_padding;
@@ -108,6 +109,7 @@ pub use months::{
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı,
 };
 pub use nice_scale::{NICE_SCALE_KART_TANIM_ÖRNEĞİ, nice_scale_kartı};
+pub use no_data::{NO_DATA_KART_TANIM_ÖRNEĞİ, NoDataÖrneği, no_data_kartı};
 pub use ortak::ortak_kart_etkileşimleri;
 pub use resize::{RESIZE_KART_TANIM_ÖRNEĞİ, resize_kartı};
 pub use scale_padding::{SCALE_PADDING_KART_TANIM_ÖRNEĞİ, scale_padding_kartı};
