@@ -10,7 +10,7 @@ mod zaman;
 pub use dagilim::{DağılımDüzeni, DağılımNoktası, DağılımSerisi};
 pub use gradyan::{GradyanDurağı, GradyanEkseni, GradyanKonumu, ÖlçekGradyanı};
 pub use isi_haritasi::{IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu};
-pub use seri::{NoktaFiltreKipi, SeriSeçenekleri, SeriÇizimTürü};
+pub use seri::{NoktaFiltreKipi, NoktaŞekli, SeriSeçenekleri, SeriÇizimTürü};
 pub use y_olcek::{
     GüzelÖlçekDüzeni, YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri
 };

@@ -302,6 +302,7 @@
       soft_minmax_kart_tanim_ornegi,
       sparklines_bars_kart_tanim_ornegi,
       sparklines_kart_tanim_ornegi,
+      sparse_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1025,6 +1026,34 @@
         yardım: `${yüzey.başlık} · kaynak CSV · kompakt yüzey`,
         değişkenNokta: false,
         kompakt: true,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+    const sparseYüzeyleri = [
+      ["sparse-native-linear", "Native linear pathBuilder", "Yerleşik doğrusal yol"],
+      ["sparse-custom-points", "Custom points pathBuilder", "2×2 özel kare noktalar"],
+      ["sparse-custom-naive-linear", "Custom linear pathBuilder - naive w/moveTo()", "Paniksiz moveTo/lineTo yolu"],
+    ];
+    document.querySelector('[data-kart="sparklines-znga-close"]')?.insertAdjacentHTML(
+      "afterend",
+      sparseYüzeyleri.map(([kimlik, başlık, durum]) => `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>sparse</small>
+          <div class="durum">13.608 x · 4.608 değer · ${durum}</div>
+        </article>`).join("")
+    );
+    for (const [kimlik, başlık, yardım] of sparseYüzeyleri) {
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/sparse.html">sparse.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/sparse.json">sparse.json</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/linear.js">paths/linear.js</a>
+          <br>Resmî üç 800×200 yüzey, 13.608 X kaydı, 4.608 dolu Y değeri, 622 kesintisiz parça ve sabit 100…350 Y aralığıyla Rust çekirdeğinde korunur.`,
+        tanım: () => sparse_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/sparse.rs",
+        seriler: [{ etiket: "Value", renk: "red" }],
+        yardım: `${yardım} · sürükle: seç · tekerlek: yakınlaştır · çift tıkla: tam görünüm`,
+        değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       };
     }

@@ -1,0 +1,17 @@
+id = "sparse"
+kaynak = "../uPlot/demos/sparse.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/sparse.rs#sparse_kartı"
+yüzeyler = ["sparse-native-linear", "sparse-custom-points", "sparse-custom-naive-linear"]
+yüzey_sayısı = 3
+boyut = [800, 200]
+y_aralığı = [100, 350]
+
+[kanıt]
+veri = "demos/data/sparse.json_aynen"
+x_sayısı = 13608
+dolu_y_sayısı = 4608
+kesintisiz_parça_sayısı = 622
+yollar = ["yerleşik_doğrusal", "özel_2x2_kare_noktalar", "paniksiz_moveTo_lineTo"]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

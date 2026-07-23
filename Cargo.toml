@@ -129,6 +129,11 @@ path = "examples/sparklines.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "sparse"
+path = "examples/sparse.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

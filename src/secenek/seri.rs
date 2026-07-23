@@ -18,6 +18,13 @@ pub enum NoktaFiltreKipi {
     BoşlukArasındakiTekiller,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum NoktaŞekli {
+    #[default]
+    Daire,
+    Kare,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct SeriSeçenekleri {
     pub etiket: String,
@@ -33,6 +40,9 @@ pub struct SeriSeçenekleri {
     pub azami_x_boşluğu: Option<f64>,
     pub boşlukları_birleştir: bool,
     pub çizim_türü: SeriÇizimTürü,
+    /// Kaynak `Path2D` içinde her null koşusunu `moveTo/lineTo` ile kuran,
+    /// yerleşik yol sadeleştirmesi kullanmayan özel doğrusal yol işaretidir.
+    pub saf_doğrusal_yol: bool,
     pub çubuk_genişlik_oranı: f32,
     pub azami_çubuk_genişliği: f32,
     pub çubuk_hizası: i8,
@@ -52,6 +62,7 @@ pub struct SeriSeçenekleri {
     pub nokta_boyutu: f32,
     pub nokta_kalınlığı: f32,
     pub nokta_dolgusu: Option<String>,
+    pub nokta_şekli: NoktaŞekli,
     pub nokta_filtresi: NoktaFiltreKipi,
 }
 
@@ -71,6 +82,7 @@ impl SeriSeçenekleri {
             azami_x_boşluğu: None,
             boşlukları_birleştir: false,
             çizim_türü: SeriÇizimTürü::Çizgi,
+            saf_doğrusal_yol: false,
             çubuk_genişlik_oranı: 0.6,
             azami_çubuk_genişliği: f32::INFINITY,
             çubuk_hizası: 0,
@@ -83,6 +95,7 @@ impl SeriSeçenekleri {
             nokta_boyutu: 5.0,
             nokta_kalınlığı: 1.0,
             nokta_dolgusu: None,
+            nokta_şekli: NoktaŞekli::Daire,
             nokta_filtresi: NoktaFiltreKipi::Yok,
         }
     }
@@ -204,6 +217,11 @@ impl SeriSeçenekleri {
         self
     }
 
+    pub fn saf_doğrusal_yol(mut self, etkin: bool) -> Self {
+        self.saf_doğrusal_yol = etkin;
+        self
+    }
+
     pub fn çubuk_boyutu(mut self, oran: f32, azami: f32) -> Self {
         if oran.is_finite() && (0.0..=1.0).contains(&oran) {
             self.çubuk_genişlik_oranı = oran;
@@ -267,6 +285,11 @@ impl SeriSeçenekleri {
 
     pub fn nokta_filtresi(mut self, filtre: NoktaFiltreKipi) -> Self {
         self.nokta_filtresi = filtre;
+        self
+    }
+
+    pub fn nokta_şekli(mut self, şekil: NoktaŞekli) -> Self {
+        self.nokta_şekli = şekil;
         self
     }
 }

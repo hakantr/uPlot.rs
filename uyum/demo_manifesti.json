@@ -2487,6 +2487,55 @@
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
         "performans": "kısmi"
       }
+    },
+    {
+      "sıra": 46,
+      "id": "sparse",
+      "başlık": { "en": "Sparse Data", "tr": "Seyrek Veri" },
+      "kaynak": "demos/sparse.html",
+      "kaynak_sha256": "b6afdac0598d3a569f0a1a8b8b25f23d90b877222fd8c7632d83f412a4a670e2",
+      "ek_kaynaklar": [
+        { "yol": "demos/data/sparse.json", "sha256": "5a6765b1aacb846fb125b404cc491d5ae1635fa3460b2fb43fd0d376607801d4" },
+        { "yol": "src/paths/linear.js", "sha256": "8f5002721c15f9a965b0e56522c58378c5b412856356c85188c74066ffba6749" }
+      ],
+      "fixture": "src/kart/sparse.rs#sparse_kartı",
+      "örnek": "examples/sparse.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/sparse.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/sparse.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin", "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin", "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "kartta_etkin", "dinamik-eksen-izgara": "kartta_etkin",
+          "surekli-imlec-izleme": "devralındı", "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "kartta_kapalı", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "kartta_etkin", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {
+          "kosullu-bos-ve-dolu-noktalar": "Resmî sparse yüzeyleri hover için koşullu daire kullanmaz; yalnız özel points pathBuilder yüzeyi her görünür değer için 2×2 kare çizer."
+        }
+      },
+      "sahip_faz": 1,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-three-800x200-surfaces", "source-exact-13608-x-values",
+        "source-exact-4608-non-null-y-values", "source-622-contiguous-runs",
+        "fixed-y-range-100-350", "native-linear-path-builder",
+        "custom-2x2-square-point-builder", "panic-free-naive-moveto-line-builder",
+        "gpui-wasm-parity", "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
+        "performans": "kısmi"
+      }
     }
   ]
 }

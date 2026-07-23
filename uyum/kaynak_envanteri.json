@@ -862,11 +862,15 @@
     },
     {
       "sembol": "PathBuilderFactories.linear",
-      "durum": "araştırılacak"
+      "durum": "tam_kanıtlı",
+      "rust_karşılığı": "YolKipi::Doğrusal / SeriSeçenekleri::saf_doğrusal_yol",
+      "test": "src/kart/sparse.rs"
     },
     {
       "sembol": "PathBuilderFactories.points",
-      "durum": "araştırılacak"
+      "durum": "tam_kanıtlı",
+      "rust_karşılığı": "SeriSeçenekleri::nokta_şekli / NoktaŞekli::Kare",
+      "test": "src/kart/sparse.rs"
     },
     {
       "sembol": "PathBuilderFactories.spline",
@@ -1090,7 +1094,9 @@
     },
     {
       "sembol": "Series.paths",
-      "durum": "araştırılacak"
+      "durum": "tam_kanıtlı",
+      "rust_karşılığı": "YolKipi / NoktaŞekli / saf_doğrusal_yol",
+      "test": "src/kart/sparse.rs"
     },
     {
       "sembol": "Series.points",

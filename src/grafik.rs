@@ -1961,16 +1961,30 @@ impl Grafik {
                     let nokta_rengi = self
                         .seri_imleç_rengi(seri_indeksi, *x_değeri, *y_değeri)
                         .unwrap_or_else(|| seri_rengi.clone());
-                    sahne.ekle(Komut::Daire {
-                        merkez: *nokta,
-                        yarıçap: ((seri.nokta_boyutu - seri.nokta_kalınlığı) / 2.0).max(0.0),
-                        dolgu: seri
-                            .nokta_dolgusu
-                            .clone()
-                            .unwrap_or_else(|| "#ffffff".to_string()),
-                        çizgi: nokta_rengi,
-                        kalınlık: seri.nokta_kalınlığı,
-                    });
+                    let dolgu = seri
+                        .nokta_dolgusu
+                        .clone()
+                        .unwrap_or_else(|| "#ffffff".to_string());
+                    match seri.nokta_şekli {
+                        crate::NoktaŞekli::Daire => sahne.ekle(Komut::Daire {
+                            merkez: *nokta,
+                            yarıçap: ((seri.nokta_boyutu - seri.nokta_kalınlığı) / 2.0).max(0.0),
+                            dolgu,
+                            çizgi: nokta_rengi,
+                            kalınlık: seri.nokta_kalınlığı,
+                        }),
+                        crate::NoktaŞekli::Kare => sahne.ekle(Komut::Dikdörtgen {
+                            konum: Nokta::yeni(
+                                nokta.x - seri.nokta_boyutu / 2.0,
+                                nokta.y - seri.nokta_boyutu / 2.0,
+                            ),
+                            genişlik: seri.nokta_boyutu,
+                            yükseklik: seri.nokta_boyutu,
+                            dolgu,
+                            çizgi: nokta_rengi,
+                            kalınlık: seri.nokta_kalınlığı,
+                        }),
+                    }
                 }
             }
 
