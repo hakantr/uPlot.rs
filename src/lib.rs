@@ -57,9 +57,10 @@ pub use kart::{
     SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KANIT_TOHUMU,
     STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ADIMI, STREAM_DATA_ARALIK_MS,
     STREAM_DATA_KART_TANIM_ÖRNEĞİ, STREAM_DATA_PENCERESİ, SVG_IMAGE_KART_TANIM_ÖRNEĞİ,
-    SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SineAkışı, SmoothingÖrneği,
-    SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği,
-    StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği,
+    SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği,
+    ScatterÖrneği, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği,
+    SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı,
+    StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği, SyncYZeroAşaması,
     ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
     add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
     arcsinh_scales_kartı, area_fill_kartı, asap_yumuşat, axis_autosize_kartı, axis_control_kartı,
@@ -74,8 +75,8 @@ pub use kart::{
     resize_kartı, savitzky_golay, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı,
     scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
     sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
-    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, zoom_touch_kartı, zoom_wheel_kartı,
-    ÇubukÖrneği,
+    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları,
+    sync_y_zero_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
 };
 pub use olcek::{Aralık, SayısalAralıkAyarları, SayısalAralıkParçası, YumuşakSınırKipi};
 pub use secenek::{

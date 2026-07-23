@@ -156,6 +156,11 @@ path = "examples/sync_cursor.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "sync-y-zero"
+path = "examples/sync_y_zero.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

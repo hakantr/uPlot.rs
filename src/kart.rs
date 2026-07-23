@@ -46,6 +46,7 @@ mod stacked_series;
 mod stream_data;
 mod svg_image;
 mod sync_cursor;
+mod sync_y_zero;
 mod veri_uretici;
 mod zoom_touch;
 mod zoom_wheel;
@@ -170,6 +171,9 @@ pub use svg_image::svg_image_belgesi;
 pub use svg_image::{SVG_IMAGE_KART_TANIM_ÖRNEĞİ, svg_image_kartı};
 pub use sync_cursor::{
     SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SyncCursorGrubu, SyncCursorÖrneği, sync_cursor_kartı,
+};
+pub use sync_y_zero::{
+    SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, SyncYZeroAşaması, sync_y_zero_aralıkları, sync_y_zero_kartı,
 };
 pub use zoom_touch::{ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, zoom_touch_kartı};
 pub use zoom_wheel::{ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, zoom_wheel_kartı};

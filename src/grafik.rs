@@ -1451,11 +1451,17 @@ impl Grafik {
                 && (ölçek.sağda || ölçek.eksen_görünür)
         }) {
             let eksen_x = if ölçek.sağda {
-                let x = sağ + 8.0 + sağ_ikincil as f32 * 56.0;
+                let birincil_ofset = usize::from(
+                    self.seçenekler.birincil_y_eksen_görünür && self.seçenekler.birincil_y_sağda,
+                );
+                let x = sağ + 8.0 + (sağ_ikincil + birincil_ofset) as f32 * 56.0;
                 sağ_ikincil += 1;
                 x
             } else {
-                let x = sol - 8.0 - sol_ikincil as f32 * 56.0;
+                let birincil_ofset = usize::from(
+                    self.seçenekler.birincil_y_eksen_görünür && !self.seçenekler.birincil_y_sağda,
+                );
+                let x = sol - 8.0 - (sol_ikincil + birincil_ofset) as f32 * 56.0;
                 sol_ikincil += 1;
                 x
             };

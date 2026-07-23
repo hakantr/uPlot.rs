@@ -337,6 +337,7 @@
       stream_data_kart_tanim_ornegi,
       svg_image_kart_tanim_ornegi,
       sync_cursor_kart_tanim_ornegi,
+      sync_y_zero_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1218,6 +1219,33 @@
       syncCursor: true,
       etkileşimler: () => ortakEtkileşimler(),
     };
+    document.querySelector('[data-kart="sync-cursor"]')?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="sync-y-zero" aria-current="false" tabindex="0">
+        <strong>Sync Y Zero</strong><small>sync-y-zero</small>
+        <div class="durum">3 aşama · 3 sol Y ekseni · ortak sıfır pikseli</div>
+      </article>`
+    );
+    kartlar["sync-y-zero"] = {
+      başlık: "Sync Y Zero",
+      kaynak: `Kaynak:
+        <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/sync-y-zero.html">sync-y-zero.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">valToPos()/posToVal()</a>
+        <br>Resmî örnekteki 0–3 saniye ham aralık, 3–6 saniye sıfıra göre simetrik aralık
+        ve 6. saniyeden sonra üç ölçeğin sıfırını aynı piksele hizalayan syncRange() aşamaları
+        Rust çekirdeğinde aynı veriyle yürütülür.`,
+      tanım: () => sync_y_zero_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/sync_y_zero.rs",
+      seriler: [
+        { etiket: "Data 1", renk: "red" },
+        { etiket: "Data 2", renk: "green" },
+        { etiket: "Data 3", renk: "blue" },
+      ],
+      yardım: "Aşama: bağımsız veri aralıkları · 3 sn: simetrik · 6 sn: ortak sıfır pikseli",
+      değişkenNokta: false,
+      syncYZero: true,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",
@@ -1744,6 +1772,7 @@
     let sineAnimationFrame = null;
     let streamDataZamanlayıcı = null;
     let softMinMaxZamanlayıcı = null;
+    let syncYZeroZamanlayıcıları = [];
     const syncCursorYüzeyleri = [
       { kimlik: "sync-cursor-cpu", başlık: "CPU", seriler: [["CPU 1", "red"], ["CPU 2", "green"], ["CPU 3", "blue"]] },
       { kimlik: "sync-cursor-ram", başlık: "RAM", seriler: [["RAM 1", "red"], ["RAM 2", "green"], ["RAM 3", "blue"]] },
@@ -2855,6 +2884,8 @@
           clearInterval(streamDataZamanlayıcı);
           streamDataZamanlayıcı = null;
         }
+        syncYZeroZamanlayıcıları.forEach(clearTimeout);
+        syncYZeroZamanlayıcıları = [];
         oturum?.free();
         oturum = null;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
@@ -2867,6 +2898,11 @@
         syncCursorKıstırma = null;
         syncCursorDokunmalar.clear();
         aktifKart = kimlik;
+        if (kimlik === "sync-y-zero") {
+          chart.dataset.syncYZeroAsamasi = "raw";
+        } else {
+          delete chart.dataset.syncYZeroAsamasi;
+        }
         document.querySelectorAll("[data-kart]").forEach(öğe =>
           öğe.setAttribute("aria-current", String(öğe.dataset.kart === kimlik))
         );
@@ -2917,6 +2953,26 @@
         oturum = new KartOturumu(kimlik, Number(nokta.value));
         oturum.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
         çiz();
+        if (kimlik === "sync-y-zero") {
+          const aşamalar = [
+            ["symmetric", 3000, "Aşama: sıfıra göre simetrik aralıklar"],
+            ["zero-aligned", 6000, "Aşama: üç Y ölçeğinde ortak sıfır pikseli"],
+          ];
+          syncYZeroZamanlayıcıları = aşamalar.map(([aşama, gecikme, açıklama]) =>
+            setTimeout(() => {
+              if (aktifKart !== "sync-y-zero" || !oturum) return;
+              try {
+                oturum.sync_y_zero_asamasini_ayarla(aşama);
+                çiz();
+                chart.querySelector(".yardım")?.replaceChildren(açıklama);
+                chart.dataset.syncYZeroAsamasi = aşama;
+                hata.textContent = "";
+              } catch (neden) {
+                hata.textContent = `Sync Y Zero aşaması güncellenemedi: ${String(neden)}`;
+              }
+            }, gecikme)
+          );
+        }
         if (kimlik === "axis-autosize") {
           autosizeZamanlayıcı = setInterval(() => {
             const sonraki = Number(autosizeKuvvet.value) + 1;

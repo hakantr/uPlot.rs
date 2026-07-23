@@ -1,0 +1,29 @@
+id = "sync-y-zero"
+kaynak = "../uPlot/demos/sync-y-zero.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/sync_y_zero.rs#sync_y_zero_kartı"
+viewport = [800, 400]
+durum = "üç_aşamalı_canlı_ölçek_hizalama"
+
+[veri]
+x = [0, 1, 2]
+seri_1 = [-10, 35, 100]
+seri_2 = [-150, 1732, -30]
+seri_3 = [3751, 10000, 7389]
+
+[olcek]
+anahtarlar = ["y", "y2", "y3"]
+eksen_renkleri = ["red", "green", "blue"]
+izgara = false
+ham_araliklar = [[-10, 100], [-150, 1732], [3751, 10000]]
+simetrik_araliklar = [[-100, 100], [-1732, 1732], [-10000, 10000]]
+asama_gecikmeleri_ms = [3000, 6000]
+son_asamada_sifir_pikseli_ortak = true
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+örnek = "examples/sync_y_zero.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

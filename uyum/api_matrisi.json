@@ -566,6 +566,24 @@
       "rust_karşılığı": "SyncCursorGrubu::fare_bırak + Grafik::imleç_odağını_seriye_ayarla",
       "durum": "tam_kanıtlı",
       "test": "src/kart/sync_cursor.rs"
+    },
+    {
+      "kaynak_yolu": "Scale.range callback dataMin/dataMax",
+      "rust_karşılığı": "sync_y_zero_aralıkları / SyncYZeroAşaması::Ham",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/sync_y_zero.rs"
+    },
+    {
+      "kaynak_yolu": "symRange max(abs(dataMin), abs(dataMax))",
+      "rust_karşılığı": "sync_y_zero_aralıkları / SyncYZeroAşaması::Simetrik",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/sync_y_zero.rs"
+    },
+    {
+      "kaynak_yolu": "valToPos / posToVal shared zero pixel syncRange",
+      "rust_karşılığı": "sync_y_zero_aralıkları / SyncYZeroAşaması::SıfırHizalı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/sync_y_zero.rs"
     }
   ]
 }
