@@ -453,6 +453,8 @@ pub struct GrafikSeçenekleri {
     pub x_eksen_etiketi: String,
     pub x_eksen_rengi: String,
     pub x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi,
+    /// uPlot `axes[0].space` karşılığı asgari X etiketi piksel boşluğu.
+    pub x_eksen_asgari_etiket_boşluğu: f32,
     pub y_eksen_etiketi: String,
     pub birincil_y_sağda: bool,
     /// Birincil Y eksenini yönelimine göre karşı tarafa taşır. Standart
@@ -513,6 +515,7 @@ impl GrafikSeçenekleri {
             x_eksen_etiketi: String::new(),
             x_eksen_rengi: "#4b5563".to_string(),
             x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi::Otomatik,
+            x_eksen_asgari_etiket_boşluğu: 50.0,
             y_eksen_etiketi: String::new(),
             birincil_y_sağda: false,
             birincil_y_karşıda: false,
@@ -601,6 +604,13 @@ impl GrafikSeçenekleri {
 
     pub fn x_eksen_karşıda(mut self, karşıda: bool) -> Self {
         self.x_eksen_karşıda = karşıda;
+        self
+    }
+
+    pub fn x_eksen_asgari_etiket_boşluğu(mut self, boşluk: f32) -> Self {
+        if boşluk.is_finite() && boşluk > 0.0 {
+            self.x_eksen_asgari_etiket_boşluğu = boşluk;
+        }
         self
     }
 

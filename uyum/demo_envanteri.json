@@ -3,9 +3,9 @@
   "kaynak_commit": "0e5812c504430f5c804e0f993376d8999b26cc34",
   "demo_sayısı": 73,
   "durum_özeti": {
-    "uygulandı_kanıtlı": 41,
+    "uygulandı_kanıtlı": 42,
     "çekirdek_davranışı_port_edildi_kart_bekliyor": 0,
-    "bekliyor": 32
+    "bekliyor": 31
   },
   "demolar": [
     {
@@ -677,7 +677,7 @@
       "veri_kaynakları": [],
       "sahip_faz": 5,
       "faz": "Çoklu grafik, senkronizasyon ve canlı veri",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 46,

@@ -27,20 +27,21 @@ use uplot_rs::{
     NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
     POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
-    SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği,
-    SeriSeçenekleri, SmoothingÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
-    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
+    ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı, SmoothingÖrneği, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
-    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    sine_stream_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -64,6 +65,7 @@ enum KartKimliği {
     ScalesDirOri(ScalesDirOriÖrneği),
     Scatter(ScatterÖrneği),
     ScrollSync,
+    SineStream,
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -113,6 +115,7 @@ impl KartKimliği {
             Self::ScalesDirOri(örnek) => örnek.başlık(),
             Self::Scatter(örnek) => örnek.başlık(),
             Self::ScrollSync => "Scroll syncRect()",
+            Self::SineStream => "6 series x 600 points @ 60fps",
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -182,6 +185,7 @@ impl KartKimliği {
             }
             Self::Scatter(_) => "scatter.html · quadtree.js · mode:2 facet ve bubble vuruşu",
             Self::ScrollSync => "scroll-sync.html · syncRect() · kaydırmada istemci/sahne eşlemesi",
+            Self::SineStream => "sine-stream.html · Box–Muller yürüyüşü · requestAnimationFrame",
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -249,6 +253,7 @@ impl KartKimliği {
             Self::ScalesDirOri(_) => SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
             Self::Scatter(_) => SCATTER_KART_TANIM_ÖRNEĞİ,
             Self::ScrollSync => SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
+            Self::SineStream => SINE_STREAM_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -294,6 +299,7 @@ impl KartKimliği {
             Self::ScalesDirOri(_) => "src/kart/scales_dir_ori.rs",
             Self::Scatter(_) => "src/kart/scatter.rs",
             Self::ScrollSync => "src/kart/scroll_sync.rs",
+            Self::SineStream => "src/kart/sine_stream.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -350,6 +356,7 @@ pub struct ChartListesi {
     dinamik_seri_sayacı: u32,
     align_data_zamanlayıcısı: Option<Task<()>>,
     pixel_align_adımı: usize,
+    sine_akışı: Option<SineAkışı>,
 }
 
 impl ChartListesi {
@@ -403,6 +410,7 @@ impl ChartListesi {
             dinamik_seri_sayacı: 0,
             align_data_zamanlayıcısı: None,
             pixel_align_adımı: 140,
+            sine_akışı: None,
         }
     }
 
@@ -455,6 +463,17 @@ impl ChartListesi {
         self.dinamik_seri_sayacı = 0;
         self.align_data_zamanlayıcısı = None;
         self.pixel_align_adımı = 140;
+        self.sine_akışı = if kart == KartKimliği::SineStream {
+            match SineAkışı::yeni() {
+                Ok(akış) => Some(akış),
+                Err(hata) => {
+                    self.hata = Some(format!("Sine Stream başlatılamadı: {hata}"));
+                    None
+                }
+            }
+        } else {
+            None
+        };
         let etkileşimler = kart.etkileşimler();
         self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
         self.tekerlek_anahtarı.update(cx, |anahtar, cx| {
@@ -509,6 +528,53 @@ impl ChartListesi {
                                 bu.pixel_align_adımı.saturating_add(1).min(10_000);
                             bu.grafiği_yenile(bu.nokta_sayısı, cx);
                             true
+                        })
+                        .unwrap_or(false);
+                    if !devam {
+                        break;
+                    }
+                }
+            }));
+        } else if kart == KartKimliği::SineStream {
+            self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
+                loop {
+                    cx.background_executor()
+                        .timer(Duration::from_millis(16))
+                        .await;
+                    let devam = bu
+                        .update(cx, |bu, cx| {
+                            if bu.aktif_kart != KartKimliği::SineStream {
+                                return false;
+                            }
+                            let sonuç = bu.sine_akışı.as_mut().map_or_else(
+                                || {
+                                    Err(UplotHatası::GeçersizKaynakVeri {
+                                        varlık: "SineAkışı",
+                                        açıklama: "masaüstü akış durumu bulunamadı".to_string(),
+                                    })
+                                },
+                                SineAkışı::ilerlet,
+                            );
+                            match sonuç {
+                                Ok(veri) => {
+                                    if let Some(grafik) = &bu.grafik {
+                                        let güncellendi = grafik.update(cx, |grafik, cx| {
+                                            grafik.veriyi_ayarla(veri, cx)
+                                        });
+                                        if let Err(hata) = güncellendi {
+                                            bu.hata =
+                                                Some(format!("Sine Stream güncellenemedi: {hata}"));
+                                            return false;
+                                        }
+                                    }
+                                    true
+                                }
+                                Err(hata) => {
+                                    bu.hata =
+                                        Some(format!("Sine Stream verisi üretilemedi: {hata}"));
+                                    false
+                                }
+                            }
                         })
                         .unwrap_or(false);
                     if !devam {
@@ -612,6 +678,7 @@ fn grafik_oluştur(
         KartKimliği::ScalesDirOri(örnek) => scales_dir_ori_kartı(örnek),
         KartKimliği::Scatter(örnek) => scatter_kartı(örnek),
         KartKimliği::ScrollSync => scroll_sync_kartı(),
+        KartKimliği::SineStream => sine_stream_kartı(),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -713,6 +780,7 @@ impl Render for ChartListesi {
                 format!("{} nokta × 4 mode-2 facet", örnek.seri_başı_nokta())
             }
             KartKimliği::ScrollSync => "30 nokta × 3 seri · kaydırmada syncRect".to_string(),
+            KartKimliği::SineStream => "600 nokta × 6 seri · 60 FPS setData".to_string(),
             KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
             KartKimliği::CursorTooltip => "7 nokta × 1 seri · canlı bilgi kutusu".to_string(),
@@ -1417,6 +1485,20 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::ScrollSync, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "kart-sine-stream",
+                    "Sine Stream",
+                    "sine-stream",
+                    aktif_kart == KartKimliği::SineStream,
+                    "600 nokta × 6 seri · 60 FPS",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::SineStream, cx);
                 })),
             )
             .child(

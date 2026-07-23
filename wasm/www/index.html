@@ -296,6 +296,7 @@
       scales_dir_ori_kart_tanim_ornegi,
       scatter_kart_tanim_ornegi,
       scroll_sync_kart_tanim_ornegi,
+      sine_stream_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -873,6 +874,30 @@
       scrollSync: true,
       etkileşimler: () => ortakEtkileşimler(),
     };
+    document.querySelector('[data-kart="scroll-sync"]')?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="sine-stream" aria-current="false" tabindex="0">
+        <strong>Sine Stream</strong><small>sine-stream</small>
+        <div class="durum">600 nokta × 6 seri · requestAnimationFrame</div>
+      </article>`
+    );
+    kartlar["sine-stream"] = {
+      başlık: "6 series x 600 points @ 60fps",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/sine-stream.html">sine-stream.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">setData()</a>
+        <br>600 noktalı sinüs ve beş Box–Muller rastgele yürüyüşü, kaynak sınırları ve 5 dakikalık örnek aralığıyla Rust çekirdeğinde tutulur.
+        <br>WASM requestAnimationFrame yalnız <code>sine_akisini_ilerlet()</code> çağırır; veri üretimi ve setData doğrulaması çekirdektedir.`,
+      tanım: () => sine_stream_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/sine_stream.rs",
+      seriler: [
+        { etiket: "Sine", renk: "red" }, { etiket: "1", renk: "green" },
+        { etiket: "2", renk: "blue" }, { etiket: "3", renk: "orange" },
+        { etiket: "4", renk: "magenta" }, { etiket: "5", renk: "purple" },
+      ],
+      yardım: "Canlı 60 FPS kayan pencere · 600 nokta · 6 seri",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",
@@ -1389,6 +1414,7 @@
     let kıstırma = null;
     let autosizeZamanlayıcı = null;
     let alignDataZamanlayıcı = null;
+    let sineAnimationFrame = null;
     let etkileşimler = {
       tekerlek: false,
       seçim: false,
@@ -1978,6 +2004,10 @@
       function kartıSeç(kimlik) {
         const kart = kartlar[kimlik];
         if (!kart) return;
+        if (sineAnimationFrame !== null) {
+          cancelAnimationFrame(sineAnimationFrame);
+          sineAnimationFrame = null;
+        }
         oturum?.free();
         aktifKart = kimlik;
         document.querySelectorAll("[data-kart]").forEach(öğe =>
@@ -2066,6 +2096,22 @@
               hata.textContent = `Pixel Align akışı güncellenemedi: ${String(neden)}`;
             }
           }, 1000);
+        } else if (kimlik === "sine-stream") {
+          const sineAdımı = () => {
+            if (aktifKart !== "sine-stream" || !oturum) {
+              sineAnimationFrame = null;
+              return;
+            }
+            try {
+              if (oturum.sine_akisini_ilerlet()) çiz();
+              hata.textContent = "";
+              sineAnimationFrame = requestAnimationFrame(sineAdımı);
+            } catch (neden) {
+              hata.textContent = `Sine Stream güncellenemedi: ${String(neden)}`;
+              sineAnimationFrame = null;
+            }
+          };
+          sineAnimationFrame = requestAnimationFrame(sineAdımı);
         }
       }
       document.querySelectorAll("[data-kart]").forEach(öğe => {

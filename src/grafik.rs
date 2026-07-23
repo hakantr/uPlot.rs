@@ -1394,20 +1394,21 @@ impl Grafik {
         } else {
             genişlik
         };
+        let x_etiket_boşluğu = self.seçenekler.x_eksen_asgari_etiket_boşluğu;
         let (x_bölmeleri, x_artımı) = match self.seçenekler.x_dağılımı {
             XÖlçekDağılımı::Logaritmik { taban } => (
                 logaritmik_bölmeler(x_aralığı, taban),
-                uygun_artım(x_aralığı, x_boyutu, 50.0),
+                uygun_artım(x_aralığı, x_boyutu, x_etiket_boşluğu),
             ),
             XÖlçekDağılımı::Doğrusal if self.seçenekler.x_zaman => zaman_bölmeleri(
                 x_aralığı,
                 x_boyutu,
-                50.0,
+                x_etiket_boşluğu,
                 self.seçenekler.x_zaman_milisaniye,
             ),
             XÖlçekDağılımı::Doğrusal => (
-                eksen_bölmeleri(x_aralığı, x_boyutu, 50.0),
-                uygun_artım(x_aralığı, x_boyutu, 50.0),
+                eksen_bölmeleri(x_aralığı, x_boyutu, x_etiket_boşluğu),
+                uygun_artım(x_aralığı, x_boyutu, x_etiket_boşluğu),
             ),
         };
         let mut önceki_x_yılı = None;

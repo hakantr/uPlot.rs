@@ -12,8 +12,8 @@ use ::gpui::{
 };
 
 use crate::{
-    DağılımVuruşu, DoğrusalGradyan, Grafik, Komut, MetinHizası, Nokta, Sahne, SeriSeçenekleri,
-    SeçimEylemi, UplotHatası, YüzeyDikdörtgeni,
+    DağılımVuruşu, DoğrusalGradyan, Grafik, HizalıVeri, Komut, MetinHizası, Nokta, Sahne,
+    SeriSeçenekleri, SeçimEylemi, UplotHatası, YüzeyDikdörtgeni,
 };
 
 #[derive(Clone)]
@@ -99,6 +99,18 @@ impl GpuiGrafik {
         self.boşluk_basılı = false;
         self.hata = None;
         Self::bildir(cx);
+    }
+
+    pub fn veriyi_ayarla(
+        &mut self,
+        veri: HizalıVeri,
+        cx: &mut Context<Self>,
+    ) -> Result<(), UplotHatası> {
+        self.grafik.veriyi_ayarla(veri)?;
+        self.imleç = None;
+        self.seçim = None;
+        Self::bildir(cx);
+        Ok(())
     }
 
     pub fn seri_ekle(

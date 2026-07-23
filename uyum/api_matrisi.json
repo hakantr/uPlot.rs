@@ -446,6 +446,18 @@
       "rust_karşılığı": "YüzeyDikdörtgeni::sahne_konumu",
       "durum": "tam_kanıtlı",
       "test": "src/kart/scroll_sync.rs"
+    },
+    {
+      "kaynak_yolu": "requestAnimationFrame(update) / setData sliding window",
+      "rust_karşılığı": "SineAkışı::ilerlet / Grafik::veriyi_ayarla",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/sine_stream.rs"
+    },
+    {
+      "kaynak_yolu": "Axis.space",
+      "rust_karşılığı": "GrafikSeçenekleri::x_eksen_asgari_etiket_boşluğu",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/sine_stream.rs"
     }
   ]
 }

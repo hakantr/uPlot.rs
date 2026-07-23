@@ -109,6 +109,11 @@ path = "examples/scroll_sync.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "sine-stream"
+path = "examples/sine_stream.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

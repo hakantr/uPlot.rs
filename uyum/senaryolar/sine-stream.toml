@@ -1,0 +1,24 @@
+id = "sine-stream"
+kaynak = "../uPlot/demos/sine-stream.html"
+fixture = "src/kart/sine_stream.rs#sine_stream_kartı"
+viewport = [1920, 900]
+device_pixel_ratio = 1
+durum = "altı_seri_60fps_kayan_pencere"
+
+[veri]
+nokta_sayısı = 600
+seri_sayısı = 6
+örnek_aralığı_saniye = 300
+y_aralığı = [-6, 6]
+kanıt_tohumu = "0x51a50045"
+üreteç = "Box-Muller + bounded randomWalk"
+
+[etkileşim]
+güncelleme = "requestAnimationFrame_to_SineAkışı::ilerlet"
+set_data = "Grafik::veriyi_ayarla"
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+svg_dizini = "target/sine-stream"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
