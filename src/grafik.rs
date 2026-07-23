@@ -72,20 +72,28 @@ impl Grafik {
         {
             tam = Aralık::yeni(tam.en_az - 0.5, tam.en_çok + 0.5)?;
         }
-        let mut tam_y = seçenekler
+        let birincil_ölçek = seçenekler
             .y_ölçekleri
             .iter()
-            .find(|ölçek| ölçek.anahtar == seçenekler.birincil_y_ölçeği)
+            .find(|ölçek| ölçek.anahtar == seçenekler.birincil_y_ölçeği);
+        let mut tam_y = birincil_ölçek
             .and_then(|ölçek| ölçek.aralık)
             .or(seçenekler.y_aralığı)
             .unwrap_or_else(|| {
-                Aralık::otomatik(
+                let değerler = || {
                     veri.seriler()
                         .iter()
                         .zip(seçenekler.seriler.iter())
                         .filter(|(_, ayarlar)| ayarlar.ölçek == seçenekler.birincil_y_ölçeği)
-                        .flat_map(|(seri, _)| seri.iter()),
-                )
+                        .flat_map(|(seri, _)| seri.iter())
+                };
+                match birincil_ölçek.map(|ölçek| ölçek.dağılım) {
+                    Some(YÖlçekDağılımı::Logaritmik { taban }) => {
+                        logaritmik_otomatik_aralık(değerler(), taban)
+                            .unwrap_or_else(|| Aralık::otomatik(değerler()))
+                    }
+                    _ => Aralık::otomatik(değerler()),
+                }
             });
         if let Some(düzen) = &seçenekler.kutu_bıyık_düzeni {
             let mut değerler = veri
@@ -262,11 +270,14 @@ impl Grafik {
             let birim = self
                 .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
                 .map_or("", |ölçek| ölçek.birim.as_str());
+            let dağılım = self
+                .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
+                .map(|ölçek| ölçek.dağılım);
             let en_uzun = self
                 .y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, aralık, yükseklik_px)
                 .into_iter()
                 .map(|değer| {
-                    eksen_değerini_birimle_yaz(değer, artım, birim)
+                    ölçek_eksen_değerini_yaz(değer, artım, birim, dağılım)
                         .chars()
                         .count()
                 })
@@ -911,6 +922,9 @@ impl Grafik {
         let birincil_birim = self
             .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
             .map_or("", |ölçek| ölçek.birim.as_str());
+        let birincil_dağılım = self
+            .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
+            .map(|ölçek| ölçek.dağılım);
 
         let eksen_komutları_başlangıcı = sahne.komutlar().len();
         let y_artımı = uygun_artım(y_aralığı, yükseklik, 30.0);
@@ -940,15 +954,12 @@ impl Grafik {
                     },
                     y + 4.0,
                 ),
-                içerik: if matches!(
-                    self.ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
-                        .map(|ölçek| ölçek.dağılım),
-                    Some(YÖlçekDağılımı::Weibull)
-                ) {
-                    format!("{y_değeri:e}")
-                } else {
-                    eksen_değerini_birimle_yaz(y_değeri, y_artımı, birincil_birim)
-                },
+                içerik: ölçek_eksen_değerini_yaz(
+                    y_değeri,
+                    y_artımı,
+                    birincil_birim,
+                    birincil_dağılım,
+                ),
                 renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
                 boyut: 11.0,
                 hiza: if self.seçenekler.birincil_y_sağda {
@@ -1009,7 +1020,12 @@ impl Grafik {
                 }
                 sahne.ekle(Komut::Metin {
                     konum: Nokta::yeni(eksen_x, y + 4.0),
-                    içerik: eksen_değerini_birimle_yaz(değer, artım, &ölçek.birim),
+                    içerik: ölçek_eksen_değerini_yaz(
+                        değer,
+                        artım,
+                        &ölçek.birim,
+                        Some(ölçek.dağılım),
+                    ),
                     renk: ölçek.eksen_rengi.clone(),
                     boyut: 11.0,
                     hiza: if ölçek.sağda {
@@ -1021,10 +1037,21 @@ impl Grafik {
             }
         }
 
-        let x_artımı = uygun_artım(x_aralığı, genişlik, 50.0);
-        let x_bölmeleri = match self.seçenekler.x_dağılımı {
-            XÖlçekDağılımı::Logaritmik { taban } => logaritmik_bölmeler(x_aralığı, taban),
-            XÖlçekDağılımı::Doğrusal => eksen_bölmeleri(x_aralığı, genişlik, 50.0),
+        let (x_bölmeleri, x_artımı) = match self.seçenekler.x_dağılımı {
+            XÖlçekDağılımı::Logaritmik { taban } => (
+                logaritmik_bölmeler(x_aralığı, taban),
+                uygun_artım(x_aralığı, genişlik, 50.0),
+            ),
+            XÖlçekDağılımı::Doğrusal if self.seçenekler.x_zaman => zaman_bölmeleri(
+                x_aralığı,
+                genişlik,
+                50.0,
+                self.seçenekler.x_zaman_milisaniye,
+            ),
+            XÖlçekDağılımı::Doğrusal => (
+                eksen_bölmeleri(x_aralığı, genişlik, 50.0),
+                uygun_artım(x_aralığı, genişlik, 50.0),
+            ),
         };
         for x_değeri in x_bölmeleri {
             let x = self.x_konumu(x_aralığı, x_değeri, sol, genişlik);
@@ -2130,21 +2157,28 @@ impl Grafik {
                     .flatten()
             })
             .unwrap_or_else(|| {
-                let görünür = self
-                    .veri
-                    .x()
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, x)| **x >= x_aralığı.en_az && **x <= x_aralığı.en_çok)
-                    .flat_map(|(indeks, _)| {
-                        self.veri
-                            .seriler()
-                            .iter()
-                            .zip(self.seçenekler.seriler.iter())
-                            .filter(move |(_, ayarlar)| ayarlar.ölçek == anahtar)
-                            .filter_map(move |(seri, _)| seri.get(indeks))
-                    });
-                Aralık::otomatik(görünür)
+                let görünür = || {
+                    self.veri
+                        .x()
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, x)| **x >= x_aralığı.en_az && **x <= x_aralığı.en_çok)
+                        .flat_map(|(indeks, _)| {
+                            self.veri
+                                .seriler()
+                                .iter()
+                                .zip(self.seçenekler.seriler.iter())
+                                .filter(move |(_, ayarlar)| ayarlar.ölçek == anahtar)
+                                .filter_map(move |(seri, _)| seri.get(indeks))
+                        })
+                };
+                match self.ölçek_seçeneği(anahtar).map(|ölçek| ölçek.dağılım) {
+                    Some(YÖlçekDağılımı::Logaritmik { taban }) => {
+                        logaritmik_otomatik_aralık(görünür(), taban)
+                            .unwrap_or_else(|| Aralık::otomatik(görünür()))
+                    }
+                    _ => Aralık::otomatik(görünür()),
+                }
             })
     }
 
@@ -2468,16 +2502,106 @@ fn dönüşmüş_bölmeler(
         .collect()
 }
 
+fn zaman_bölmeleri(
+    aralık: Aralık,
+    boyut: f32,
+    en_az_boşluk: f32,
+    milisaniye: bool,
+) -> (Vec<f64>, f64) {
+    const SANİYE_ADIMLARI: [f64; 25] = [
+        1.0,
+        2.0,
+        5.0,
+        10.0,
+        15.0,
+        30.0,
+        60.0,
+        120.0,
+        300.0,
+        600.0,
+        900.0,
+        1_800.0,
+        3_600.0,
+        7_200.0,
+        10_800.0,
+        21_600.0,
+        43_200.0,
+        86_400.0,
+        172_800.0,
+        604_800.0,
+        2_592_000.0,
+        7_776_000.0,
+        15_552_000.0,
+        31_536_000.0,
+        63_072_000.0,
+    ];
+    let birim = if milisaniye { 1_000.0 } else { 1.0 };
+    let hedef =
+        (aralık.en_çok - aralık.en_az) * f64::from(en_az_boşluk) / f64::from(boyut.max(1.0));
+    let adım = SANİYE_ADIMLARI
+        .into_iter()
+        .map(|adım| adım * birim)
+        .find(|adım| *adım >= hedef)
+        .unwrap_or(63_072_000.0 * birim);
+    let ilk = (aralık.en_az / adım).ceil() * adım;
+    let mut sonuç = Vec::new();
+    let mut değer = ilk;
+    while değer <= aralık.en_çok && sonuç.len() < 10_000 {
+        sonuç.push(değer);
+        değer += adım;
+    }
+    (sonuç, adım)
+}
+
 fn logaritmik_bölmeler(aralık: Aralık, taban: f64) -> Vec<f64> {
     if !taban.is_finite() || taban <= 1.0 || aralık.en_az <= 0.0 {
         return Vec::new();
     }
     let ilk = aralık.en_az.log(taban).floor() as i32;
     let son = aralık.en_çok.log(taban).ceil() as i32;
-    (ilk..=son)
-        .map(|üs| taban.powi(üs))
-        .filter(|değer| *değer >= aralık.en_az && *değer <= aralık.en_çok)
-        .collect()
+    let çarpanlar: &[f64] = if (taban - 10.0).abs() <= f64::EPSILON {
+        &[1.0, 2.0, 5.0]
+    } else {
+        &[1.0]
+    };
+    let mut sonuç = Vec::new();
+    for üs in ilk..=son {
+        let kuvvet = taban.powi(üs);
+        for çarpan in çarpanlar {
+            let değer = kuvvet * çarpan;
+            if değer >= aralık.en_az && değer <= aralık.en_çok {
+                sonuç.push(değer);
+            }
+        }
+    }
+    sonuç
+}
+
+fn logaritmik_otomatik_aralık<'a>(
+    değerler: impl Iterator<Item = &'a Option<f64>>,
+    taban: f64,
+) -> Option<Aralık> {
+    if !taban.is_finite() || taban <= 1.0 {
+        return None;
+    }
+    let mut en_az = f64::INFINITY;
+    let mut en_çok = f64::NEG_INFINITY;
+    for değer in değerler.flatten().filter(|değer| **değer > 0.0) {
+        en_az = en_az.min(*değer);
+        en_çok = en_çok.max(*değer);
+    }
+    if !en_az.is_finite() || !en_çok.is_finite() {
+        return None;
+    }
+    if en_az == en_çok {
+        en_az /= taban;
+        en_çok *= taban;
+    }
+    Aralık::yeni(
+        taban.powf(en_az.log(taban).floor()),
+        taban.powf(en_çok.log(taban).ceil()),
+    )
+    .ok()
 }
 
 fn tam_x_aralığı(veri: &HizalıVeri) -> Result<Aralık, UplotHatası> {
@@ -2664,8 +2788,21 @@ fn kısalt(metin: &str, azami_karakter: usize) -> String {
     }
 }
 
-fn eksen_değerini_birimle_yaz(değer: f64, artım: f64, birim: &str) -> String {
-    let sayı = eksen_değerini_yaz(değer, artım);
+fn ölçek_eksen_değerini_yaz(
+    değer: f64,
+    artım: f64,
+    birim: &str,
+    dağılım: Option<YÖlçekDağılımı>,
+) -> String {
+    let sayı = match dağılım {
+        Some(YÖlçekDağılımı::Logaritmik { .. }) if değer.abs() >= 1.0 => {
+            format!("{değer:.0}")
+        }
+        Some(YÖlçekDağılımı::Logaritmik { .. } | YÖlçekDağılımı::Weibull) => {
+            format!("{değer:e}")
+        }
+        _ => eksen_değerini_yaz(değer, artım),
+    };
     if birim.is_empty() {
         sayı
     } else {
@@ -2825,5 +2962,39 @@ mod eksen_testleri {
         assert_eq!(kompakt_sayı(99_949.0), "99.9K");
         assert_eq!(kompakt_sayı(-1_250.0), "-1.25K");
         assert_eq!(kompakt_sayı(42.0), "42");
+    }
+
+    #[test]
+    fn log10_bölmeleri_kaynak_bir_iki_beş_düzenini_korur() {
+        let aralık = Aralık::yeni(1.0, 1_000.0);
+        let Ok(aralık) = aralık else { return };
+        assert_eq!(
+            logaritmik_bölmeler(aralık, 10.0),
+            [
+                1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1_000.0
+            ]
+        );
+        assert_eq!(
+            ölçek_eksen_değerini_yaz(
+                50_000.0,
+                1.0,
+                "",
+                Some(YÖlçekDağılımı::Logaritmik { taban: 10.0 })
+            ),
+            "50000"
+        );
+    }
+
+    #[test]
+    fn zaman_bölmeleri_saat_sınırlarına_hizalanır() {
+        let aralık = Aralık::yeni(1_594_953_046.0, 1_595_039_415.0);
+        let Ok(aralık) = aralık else { return };
+        let (bölmeler, adım) = zaman_bölmeleri(aralık, 1_400.0, 50.0, false);
+        assert_eq!(adım, 3_600.0);
+        assert!(
+            bölmeler
+                .iter()
+                .all(|değer| (*değer % 3_600.0).abs() <= f64::EPSILON)
+        );
     }
 }

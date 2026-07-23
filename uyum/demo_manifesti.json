@@ -1773,6 +1773,50 @@
         "common-interaction-profile", "panic-free-path-generation"
       ],
       "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+    },
+    {
+      "sıra": 31,
+      "id": "log-scales",
+      "başlık": { "en": "Log Scales", "tr": "Logaritmik Ölçekler" },
+      "kaynak": "demos/log-scales.html",
+      "kaynak_sha256": "2292b8dad1fe0f34f3b2ff6a751fb9358d4bef24ec7db00e53a81c23b9e9d62a",
+      "ek_kaynaklar": [
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" },
+        { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" },
+        { "yol": "src/utils.js", "sha256": "8df33192e0ab7b4f4cf64fae9829fc0dc0300a618668699f43c5881ed8a0553c" }
+      ],
+      "fixture": "src/kart/log_scales.rs#log_scales_kartı",
+      "örnek": "examples/log_scales.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/log-scales.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/log_scales.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı", "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı", "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı", "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı", "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "devralındı"
+        }
+      },
+      "sahip_faz": 2,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "two-source-charts", "source-exact-1440-timestamps", "twelve-server-series",
+        "lossless-delta-varint-source-asset", "source-zero-to-one-log-normalization",
+        "log10-y-scale", "linear-y-scale", "source-span-gaps", "automatic-log-range",
+        "log-axis-1-2-5-splits", "clock-aligned-time-splits", "midnight-date-label",
+        "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "panic-free-source-decoder"
+      ],
+      "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
     }
   ]
 }

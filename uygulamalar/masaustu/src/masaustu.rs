@@ -21,16 +21,17 @@ use uplot_rs::{
     FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ,
     GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği, Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
     HighLowBandsÖrneği, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ,
-    LatencyHeatmapÖrneği, LinePathsÖrneği, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
-    MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-    SeriSeçenekleri, SmoothingÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
-    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
+    LOG_SCALES_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği, LinePathsÖrneği, LogScalesÖrneği,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SmoothingÖrneği, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
     missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
     months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı,
     zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
@@ -60,6 +61,7 @@ enum KartKimliği {
     HighLowBands(HighLowBandsÖrneği),
     LatencyHeatmap(LatencyHeatmapÖrneği),
     LinePaths(LinePathsÖrneği),
+    LogScales(LogScalesÖrneği),
     MissingDataNull,
     MissingDataXGap,
     DependentScale,
@@ -98,6 +100,7 @@ impl KartKimliği {
             Self::HighLowBands(örnek) => örnek.başlık(),
             Self::LatencyHeatmap(örnek) => örnek.başlık(),
             Self::LinePaths(örnek) => örnek.başlık(),
+            Self::LogScales(örnek) => örnek.başlık(),
             Self::MissingDataNull => "Missing Data · null values",
             Self::MissingDataXGap => "Missing Data · adjacent X gap",
             Self::DependentScale => "Derived Scale · °F / °C",
@@ -154,6 +157,9 @@ impl KartKimliği {
             Self::LinePaths(_) => {
                 "line-paths.html · null/linear/spline/stepped/bars + kaynak spline2"
             }
+            Self::LogScales(_) => {
+                "log-scales.html · 12 Minecraft sunucusu · log10 ve doğrusal Y ölçeği"
+            }
             Self::MissingDataNull | Self::MissingDataXGap => {
                 "missing-data.html · resmî veri ve iki kaynak alt grafiği"
             }
@@ -195,6 +201,7 @@ impl KartKimliği {
             Self::HighLowBands(_) => HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
             Self::LatencyHeatmap(_) => LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ,
             Self::LinePaths(_) => LINE_PATHS_KART_TANIM_ÖRNEĞİ,
+            Self::LogScales(_) => LOG_SCALES_KART_TANIM_ÖRNEĞİ,
             Self::MissingDataNull | Self::MissingDataXGap => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
             Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::ArcSinhScales => ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
@@ -230,6 +237,7 @@ impl KartKimliği {
             Self::HighLowBands(_) => "src/kart/high_low_bands.rs",
             Self::LatencyHeatmap(_) => "src/kart/latency_heatmap.rs",
             Self::LinePaths(_) => "src/kart/line_paths.rs",
+            Self::LogScales(_) => "src/kart/log_scales.rs",
             Self::MissingDataNull | Self::MissingDataXGap => "src/kart/missing_data.rs",
             Self::DependentScale => "src/kart/dependent_scale.rs",
             Self::ArcSinhScales => "src/kart/arcsinh_scales.rs",
@@ -504,6 +512,7 @@ fn grafik_oluştur(
             latency_heatmap_kartı(örnek, f64::from(latency_kova), f64::from(latency_ofset))
         }
         KartKimliği::LinePaths(örnek) => line_paths_kartı(örnek),
+        KartKimliği::LogScales(örnek) => log_scales_kartı(örnek),
         KartKimliği::MissingDataNull => missing_data_null_kartı(),
         KartKimliği::MissingDataXGap => missing_data_x_boşluğu_kartı(),
         KartKimliği::DependentScale => dependent_scale_kartı(),
@@ -614,6 +623,9 @@ impl Render for ChartListesi {
                 LatencyHeatmapÖrneği::HistogramBirleşik | LatencyHeatmapÖrneği::HistogramBoşluklu,
             ) => "Tüm örnekler · 5 ms histogram kovaları".to_string(),
             KartKimliği::LinePaths(_) => "101 nokta · 4 null boşluğu · kaynak yol".to_string(),
+            KartKimliği::LogScales(_) => {
+                "1.440 zaman damgası × 12 kaynak sunucu serisi".to_string()
+            }
             KartKimliği::MissingDataNull => "200 nokta × 3 seri · % + MB".to_string(),
             KartKimliği::MissingDataXGap => "8 nokta × 1 seri · 2 yol parçası".to_string(),
             KartKimliği::DependentScale => "7 nokta × °F veri · türetilmiş °C ekseni".to_string(),
@@ -766,6 +778,21 @@ impl Render for ChartListesi {
                     "line-paths",
                     aktif_kart == kart,
                     "101 nokta · null boşluğu · kaynak yol",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
+            .children(LogScalesÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::LogScales(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "log-scales",
+                    aktif_kart == kart,
+                    "1.440 zaman × 12 sunucu · kaynak veri",
                     panel,
                     vurgu,
                 )

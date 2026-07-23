@@ -128,6 +128,10 @@ name = "line_paths"
 required-features = ["svg"]
 
 [[example]]
+name = "log_scales"
+required-features = ["svg"]
+
+[[example]]
 name = "missing_data"
 required-features = ["svg"]
 

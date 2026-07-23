@@ -1,0 +1,22 @@
+id = "log-scales"
+kaynak = "../uPlot/demos/log-scales.html"
+fixture = "src/kart/log_scales.rs#log_scales_kartı"
+device_pixel_ratio = 1
+alt_grafik_sayısı = 2
+
+[veri]
+zaman_sayısı = 1440
+seri_sayısı = 12
+ilk_zaman = 1594953046
+son_zaman = 1595039415
+kaynak_sıfır_dönüşümü = 1
+
+[davranış]
+grafikler = ["log10-y", "linear-y"]
+log_tabanı = 10
+bosluklari_birlestir = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/log-scales/log-scales-log-y.svg"

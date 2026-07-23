@@ -34,6 +34,8 @@ pub(crate) fn eksen_etiketi(zaman_damgası: f64, artım: f64) -> Option<String> 
         Some(format!("{yıl:04}-{ay:02}"))
     } else if artım >= 86_400.0 {
         Some(format!("{ay:02}-{gün:02}"))
+    } else if artım >= 60.0 && saat == 0 && dakika == 0 {
+        Some(format!("{ay:02}-{gün:02} {saat:02}:{dakika:02}"))
     } else if artım >= 60.0 {
         Some(format!("{saat:02}:{dakika:02}"))
     } else {
@@ -70,6 +72,10 @@ mod testler {
         assert_eq!(
             zaman.and_then(|z| eksen_etiketi(z, 31.0 * 86_400.0)),
             Some("2024-02".to_string())
+        );
+        assert_eq!(
+            zaman.and_then(|z| eksen_etiketi(z, 3_600.0)),
+            Some("02-01 00:00".to_string())
         );
     }
 }

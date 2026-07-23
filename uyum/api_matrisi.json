@@ -290,6 +290,30 @@
       "rust_karşılığı": "SeriSeçenekleri::çubuk_hizası",
       "durum": "tam_kanıtlı",
       "test": "src/kart/line_paths.rs"
+    },
+    {
+      "kaynak_yolu": "Scale.distr: 3 / Scale.log",
+      "rust_karşılığı": "YÖlçekDağılımı::Logaritmik / YÖlçekSeçenekleri::logaritmik",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/log_scales.rs"
+    },
+    {
+      "kaynak_yolu": "rangeLog / snapLogY",
+      "rust_karşılığı": "grafik::logaritmik_otomatik_aralık",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/log_scales.rs"
+    },
+    {
+      "kaynak_yolu": "logAxisSplits",
+      "rust_karşılığı": "grafik::logaritmik_bölmeler",
+      "durum": "kısmi",
+      "test": "src/kart/log_scales.rs"
+    },
+    {
+      "kaynak_yolu": "_timeAxisSplits / timeAxisVals",
+      "rust_karşılığı": "grafik::zaman_bölmeleri / zaman::eksen_etiketi",
+      "durum": "kısmi",
+      "test": "src/grafik.rs"
     }
   ]
 }
