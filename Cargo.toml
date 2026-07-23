@@ -166,6 +166,11 @@ path = "examples/thin_bars_stroke_fill.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "time-periods"
+path = "examples/time_periods.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

@@ -34,23 +34,24 @@ use uplot_rs::{
     SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı,
     SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği,
     SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu,
-    SyncCursorÖrneği, SyncYZeroAşaması, THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği,
-    UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    SyncCursorÖrneği, SyncYZeroAşaması, THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ,
+    TIME_PERIODS_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği, TimePeriodsÖrneği, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
     sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
     stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
-    sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
+    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -85,6 +86,7 @@ enum KartKimliği {
     SyncCursor,
     SyncYZero(SyncYZeroAşaması),
     ThinBars(ThinBarsÖrneği),
+    TimePeriods(TimePeriodsÖrneği),
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -145,6 +147,7 @@ impl KartKimliği {
             Self::SyncCursor => "Sync Cursor",
             Self::SyncYZero(_) => "Sync Y Zero",
             Self::ThinBars(_) => "Thin bar stroke & fill",
+            Self::TimePeriods(_) => "Time Periods",
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -235,6 +238,9 @@ impl KartKimliği {
             Self::ThinBars(_) => {
                 "thin-bars-stroke-fill.html · paths/bars.js · 55 vuruş/dolgu geometrisi"
             }
+            Self::TimePeriods(_) => {
+                "time-periods.html · traffic.json · saatlik/aylık/günlük dönem karşılaştırması"
+            }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -313,6 +319,7 @@ impl KartKimliği {
             Self::SyncCursor => SYNC_CURSOR_KART_TANIM_ÖRNEĞİ,
             Self::SyncYZero(_) => SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
             Self::ThinBars(_) => THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ,
+            Self::TimePeriods(_) => TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -369,6 +376,7 @@ impl KartKimliği {
             Self::SyncCursor => "src/kart/sync_cursor.rs",
             Self::SyncYZero(_) => "src/kart/sync_y_zero.rs",
             Self::ThinBars(_) => "src/kart/thin_bars_stroke_fill.rs",
+            Self::TimePeriods(_) => "src/kart/time_periods.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -1072,6 +1080,7 @@ fn grafik_oluştur(
         KartKimliği::SyncCursor => sync_cursor_kartı(SyncCursorÖrneği::Cpu),
         KartKimliği::SyncYZero(aşama) => sync_y_zero_kartı(aşama),
         KartKimliği::ThinBars(örnek) => thin_bars_stroke_fill_kartı(örnek),
+        KartKimliği::TimePeriods(örnek) => time_periods_kartı(örnek),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -1349,6 +1358,9 @@ impl Render for ChartListesi {
             KartKimliği::ThinBars(örnek) => {
                 let (genişlik, yükseklik) = örnek.boyut();
                 format!("{genişlik}×{yükseklik} · {}", örnek.başlık())
+            }
+            KartKimliği::TimePeriods(örnek) => {
+                format!("1920×200 · {}", örnek.başlık())
             }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
@@ -2108,6 +2120,21 @@ impl Render for ChartListesi {
                     "thin-bars-stroke-fill",
                     aktif_kart == kart,
                     format!("{genişlik}×{yükseklik} · paths.bars vuruş/dolgu"),
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
+            .children(TimePeriodsÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::TimePeriods(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "time-periods",
+                    aktif_kart == kart,
+                    "1920×200 · traffic.json kaynak verisi",
                     panel,
                     vurgu,
                 )

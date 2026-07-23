@@ -37,6 +37,9 @@ pub struct SeriSeçenekleri {
     pub dolgu_tabanı: f64,
     pub göster: bool,
     pub ölçek: String,
+    /// Aynı X konumunda başka bir dönemi karşılaştıran serinin bilgi
+    /// kutusunda kullanılacak saniye kaydırması.
+    pub x_zaman_kaydırması: f64,
     pub azami_x_boşluğu: Option<f64>,
     pub boşlukları_birleştir: bool,
     pub çizim_türü: SeriÇizimTürü,
@@ -85,6 +88,7 @@ impl SeriSeçenekleri {
             dolgu_tabanı: 0.0,
             göster: true,
             ölçek: "y".to_string(),
+            x_zaman_kaydırması: 0.0,
             azami_x_boşluğu: None,
             boşlukları_birleştir: false,
             çizim_türü: SeriÇizimTürü::Çizgi,
@@ -153,6 +157,13 @@ impl SeriSeçenekleri {
 
     pub fn ölçek(mut self, anahtar: impl Into<String>) -> Self {
         self.ölçek = anahtar.into();
+        self
+    }
+
+    pub fn x_zaman_kaydırması(mut self, saniye: f64) -> Self {
+        if saniye.is_finite() {
+            self.x_zaman_kaydırması = saniye;
+        }
         self
     }
 

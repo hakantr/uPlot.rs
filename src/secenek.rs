@@ -22,6 +22,27 @@ pub enum XÖlçekDağılımı {
     Logaritmik { taban: f64 },
 }
 
+/// Aynı X konumlarını kaydırılmış bir zaman aralığıyla karşı tarafta gösteren
+/// uPlot `scales.{key}.from = "x"` ve ikinci X ekseni karşılığıdır.
+#[derive(Debug, Clone, PartialEq)]
+pub struct İkincilXEksen {
+    pub zaman_kaydırması: f64,
+    pub renk: String,
+}
+
+impl İkincilXEksen {
+    pub fn yeni(zaman_kaydırması: f64, renk: impl Into<String>) -> Self {
+        Self {
+            zaman_kaydırması: if zaman_kaydırması.is_finite() {
+                zaman_kaydırması
+            } else {
+                0.0
+            },
+            renk: renk.into(),
+        }
+    }
+}
+
 /// uPlot `drawOrder` içindeki iki yerleşik çizim katmanının sırası.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ÇizimSırası {
@@ -497,6 +518,7 @@ pub struct GrafikSeçenekleri {
     pub x_eksen_etiketi: String,
     pub x_eksen_rengi: String,
     pub x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi,
+    pub ikincil_x_eksen: Option<İkincilXEksen>,
     /// uPlot `axes[0].space` karşılığı asgari X etiketi piksel boşluğu.
     pub x_eksen_asgari_etiket_boşluğu: f32,
     pub y_eksen_etiketi: String,
@@ -566,6 +588,7 @@ impl GrafikSeçenekleri {
             x_eksen_etiketi: String::new(),
             x_eksen_rengi: "#4b5563".to_string(),
             x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi::Otomatik,
+            ikincil_x_eksen: None,
             x_eksen_asgari_etiket_boşluğu: 50.0,
             y_eksen_etiketi: String::new(),
             birincil_y_sağda: false,
@@ -635,6 +658,11 @@ impl GrafikSeçenekleri {
 
     pub fn x_eksen_etiket_biçimi(mut self, biçim: YÖlçekEtiketBiçimi) -> Self {
         self.x_eksen_etiket_biçimi = biçim;
+        self
+    }
+
+    pub fn ikincil_x_ekseni(mut self, eksen: İkincilXEksen) -> Self {
+        self.ikincil_x_eksen = Some(eksen);
         self
     }
 

@@ -473,6 +473,8 @@ impl Grafik {
             gizli_eksen_payı
         } else if self.seçenekler.x_eksen_karşıda {
             24.0
+        } else if self.seçenekler.ikincil_x_eksen.is_some() {
+            68.0
         } else if self.seçenekler.x_eksen_etiketi.is_empty() {
             48.0
         } else {
@@ -991,6 +993,16 @@ impl Grafik {
             })
             .collect();
         Some((x, değerler))
+    }
+
+    /// Kaynak `series.values` tarih eşlemesini yüzey adaptörlerine taşır.
+    pub fn seri_zamanı(&self, seri_indeksi: usize, x: f64) -> Option<f64> {
+        x.is_finite().then(|| {
+            self.seçenekler
+                .seriler
+                .get(seri_indeksi)
+                .map_or(x, |seri| x + seri.x_zaman_kaydırması)
+        })
     }
 
     /// İmleç noktasının rengini seri gradyanının geçerli ölçek duraklarına göre çözer.
@@ -1546,6 +1558,7 @@ impl Grafik {
             ),
         };
         let mut önceki_x_yılı = None;
+        let mut önceki_ikincil_x_yılı = None;
         for x_değeri in x_bölmeleri {
             let (etiket_konumu, etiket_hizası) = if self.seçenekler.x_dikey {
                 let y = piksele_hizala(
@@ -1633,6 +1646,43 @@ impl Grafik {
                     renk: self.seçenekler.x_eksen_rengi.clone(),
                     boyut: 11.0,
                     hiza: etiket_hizası,
+                });
+            }
+            if let Some(ikincil) = self
+                .seçenekler
+                .ikincil_x_eksen
+                .as_ref()
+                .filter(|_| self.seçenekler.x_zaman && !self.seçenekler.x_dikey)
+            {
+                let x = piksele_hizala(
+                    self.x_konumu(x_aralığı, x_değeri, sol, genişlik),
+                    self.seçenekler.piksel_hizası,
+                );
+                let birim = if self.seçenekler.x_zaman_milisaniye {
+                    1_000.0
+                } else {
+                    1.0
+                };
+                let kaydırılmış = (x_değeri + ikincil.zaman_kaydırması) / birim;
+                let etiket = crate::zaman::yerel_eksen_etiketi(
+                    kaydırılmış,
+                    x_artımı / birim,
+                    &self.seçenekler.x_tarih_adları,
+                    önceki_ikincil_x_yılı,
+                )
+                .map_or_else(
+                    || eksen_değerini_yaz(kaydırılmış, x_artımı / birim),
+                    |(etiket, yıl)| {
+                        önceki_ikincil_x_yılı = Some(yıl);
+                        etiket
+                    },
+                );
+                sahne.ekle(Komut::Metin {
+                    konum: Nokta::yeni(x, alt + 38.0),
+                    içerik: etiket,
+                    renk: ikincil.renk.clone(),
+                    boyut: 11.0,
+                    hiza: MetinHizası::Orta,
                 });
             }
         }

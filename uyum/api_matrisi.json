@@ -602,6 +602,30 @@
       "rust_karşılığı": "ÇubukDüzeni::ters / minimum 1 piksel / sıfır değer bastırma",
       "durum": "tam_kanıtlı",
       "test": "src/kart/thin_bars_stroke_fill.rs"
+    },
+    {
+      "kaynak_yolu": "time-periods aggDays 24-hour UTC aggregation",
+      "rust_karşılığı": "time_periods::günlük_veri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/time_periods.rs"
+    },
+    {
+      "kaynak_yolu": "scales.x2.from='x' range -31 days / axes side=2",
+      "rust_karşılığı": "İkincilXEksen / Grafik ikinci zaman ekseni",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/time_periods.rs"
+    },
+    {
+      "kaynak_yolu": "series.values per-series comparison timestamp",
+      "rust_karşılığı": "SeriSeçenekleri::x_zaman_kaydırması / Grafik::seri_zamanı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/time_periods.rs"
+    },
+    {
+      "kaynak_yolu": "demos/data/traffic.json hourly and month slices",
+      "rust_karşılığı": "time_periods_traffic.json / saatlik_veri / aylık_veri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/time_periods.rs"
     }
   ]
 }

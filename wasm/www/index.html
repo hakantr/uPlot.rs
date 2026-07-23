@@ -339,6 +339,7 @@
       sync_cursor_kart_tanim_ornegi,
       sync_y_zero_kart_tanim_ornegi,
       thin_bars_stroke_fill_kart_tanim_ornegi,
+      time_periods_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1293,6 +1294,47 @@
         tanımYolu: "src/kart/thin_bars_stroke_fill.rs",
         seriler: [{ etiket: "Value", renk: kimlik.includes("-a") ? "#00f" : "red" }],
         yardım: "Vuruş/dolgu düşümü, hizalama, boşluk ve ters yön çekirdekte çözülür",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+
+    const zamanDönemiYüzeyleri = [
+      ["time-periods-hourly-users", "Hourly Users", "8712 saat · 2019/2018/2017"],
+      ["time-periods-feb-vs-jan-2019", "Feb vs Jan 2019", "743 saat · çift X zaman ekseni"],
+      ["time-periods-daily-users", "Daily Users", "363 UTC gün · saatlik toplam"],
+    ];
+    let zamanDönemiEklemeNoktası =
+      document.querySelector('[data-kart="thin-bars-a-1-w100-g16-d-1-s4"]');
+    for (const [kimlik, başlık, durum] of zamanDönemiYüzeyleri) {
+      zamanDönemiEklemeNoktası?.insertAdjacentHTML(
+        "afterend",
+        `<article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>${kimlik}</small><div class="durum">${durum}</div>
+        </article>`
+      );
+      zamanDönemiEklemeNoktası = document.querySelector(`[data-kart="${kimlik}"]`);
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak:
+          <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/time-periods.html">time-periods.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/traffic.json">data/traffic.json</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/opts.js">src/opts.js</a>
+          <br>Resmî trafik verisinin saatlik üç yıl karşılaştırması, Şubat–Ocak çift
+          zaman ekseni ve UTC günlük toplamı Rust çekirdeğinde aynı dilimlerle üretilir.`,
+        tanım: () => time_periods_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/time_periods.rs",
+        seriler: kimlik.includes("feb-vs-jan")
+          ? [
+              { etiket: "Feb 2019", renk: "rgba(5, 141, 199, 1)" },
+              { etiket: "Jan 2019", renk: "rgba(237, 126, 23, 1)" },
+            ]
+          : [
+              { etiket: "2019", renk: "rgba(5, 141, 199, 1)" },
+              { etiket: "2018", renk: "rgba(237, 126, 23, 1)" },
+              { etiket: "2017", renk: "rgba(255, 0, 0, 1)" },
+            ],
+        yardım: "Kaynak trafik dönemi · sürükle: seç · tekerlek: yakınlaştır · boşluk+sürükle: taşı",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       };

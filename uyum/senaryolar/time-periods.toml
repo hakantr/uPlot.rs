@@ -1,0 +1,42 @@
+id = "time-periods"
+kaynak = "../uPlot/demos/time-periods.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/time_periods.rs#time_periods_kartı"
+viewport = [1920, 200]
+durum = "üç_kaynak_zaman_yüzeyi"
+
+[veri]
+kaynak = "../uPlot/demos/data/traffic.json"
+kaynak_sha256 = "dcfcee18ee45395716a53967e44746588a1e80b5e84b5410af87d0e41e253d02"
+saatlik_nokta = 8712
+aylik_nokta = 743
+gunluk_nokta = 363
+gunluk_baslangic_utc = 1546300800
+
+[yuzeyler]
+basliklar = ["Hourly Users", "Feb vs Jan 2019", "Daily Users"]
+seri_renkleri = [
+  "rgba(5, 141, 199, 1)",
+  "rgba(237, 126, 23, 1)",
+  "rgba(255, 0, 0, 1)",
+]
+
+[aylik_karsilastirma]
+subat_baslangic_indeksi = 744
+subat_bitis_indeksi = 1416
+ocak_uzunlugu = 743
+eksik_subat_degerleri_sifirla_doldur = true
+ikincil_x_eksen_kaydirma_gun = -31
+ikincil_x_eksen_izgara = false
+
+[gunluk_toplama]
+saat_per_gun = 24
+utc_normalizasyonu = true
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+örnek = "examples/time_periods.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
