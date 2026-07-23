@@ -283,6 +283,7 @@
       path_gap_clip_kart_tanim_ornegi,
       pixel_align_kart_tanim_ornegi,
       points_kart_tanim_ornegi,
+      scales_dir_ori_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -751,6 +752,51 @@
         tanımYolu: "src/kart/points.rs",
         seriler: seriler.map(([etiket, renk]) => ({etiket, renk})),
         yardım: "Koşullu noktalar · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+
+    const scalesDirOriYüzeyleri = [
+      ["scales-dir-ori-x-plus-bottom-y-plus-left", "+x bottom, +y left"],
+      ["scales-dir-ori-x-plus-bottom-y-minus-left", "+x bottom, -y left"],
+      ["scales-dir-ori-x-minus-bottom-y-minus-left", "-x bottom, -y left"],
+      ["scales-dir-ori-x-minus-bottom-y-plus-left", "-x bottom, +y left"],
+      ["scales-dir-ori-x-plus-top-y-plus-right", "+x top, +y right"],
+      ["scales-dir-ori-x-plus-top-y-minus-right", "+x top, -y right"],
+      ["scales-dir-ori-x-minus-top-y-minus-right", "-x top, -y right"],
+      ["scales-dir-ori-x-minus-top-y-plus-right", "-x top, +y right"],
+      ["scales-dir-ori-x-plus-left-y-plus-top", "+x left, +y top"],
+      ["scales-dir-ori-x-plus-left-y-minus-top", "+x left, -y top"],
+      ["scales-dir-ori-x-minus-left-y-minus-top", "-x left, -y top"],
+      ["scales-dir-ori-x-minus-left-y-plus-top", "-x left, +y top"],
+      ["scales-dir-ori-x-plus-right-y-plus-bottom", "+x right, +y bottom"],
+      ["scales-dir-ori-x-plus-right-y-minus-bottom", "+x right, -y bottom"],
+      ["scales-dir-ori-x-minus-right-y-minus-bottom", "-x right, -y bottom"],
+      ["scales-dir-ori-x-minus-right-y-plus-bottom", "-x right, +y bottom"],
+    ];
+    document.querySelector('[data-kart="points-sparse"]')?.insertAdjacentHTML(
+      "afterend",
+      scalesDirOriYüzeyleri.map(([kimlik, başlık]) => `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>${kimlik}</small>
+          <div class="durum">scale.dir · scale.ori · axis.side</div>
+        </article>`).join("")
+    );
+    for (const [kimlik, başlık] of scalesDirOriYüzeyleri) {
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/scales-dir-ori.html">scales-dir-ori.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">src/uPlot.js</a>
+          <br>Resmî demodaki 8 yön ve 8 yönelim yüzeyi, aynı 10 X değeri, null konumu ve iki seriyle sunulur.
+          <br><code>scale.dir</code>, <code>scale.ori</code>, eksen tarafı, ızgara ve dolgu dönüşümü Rust çekirdeğinde birlikte çözülür.`,
+        tanım: () => scales_dir_ori_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/scales_dir_ori.rs",
+        seriler: [
+          { etiket: "Red", renk: "red" },
+          { etiket: "Blue", renk: "blue" },
+        ],
+        yardım: "Yön ve yönelim · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       };
@@ -1432,7 +1478,10 @@
       }
       const hamOranX = Math.max(0, Math.min(1, (hamX - sol) / (sağ - sol)));
       const hamOranY = Math.max(0, Math.min(1, (hamY - üst) / (alt - üst)));
-      if (oturum?.imlec_odagini_guncelle(hamOranX, hamOranY, alt - üst)) {
+      const xDikey = oturum?.x_dikey() ?? false;
+      if (oturum?.imlec_odagini_guncelle(
+        hamOranX, hamOranY, xDikey ? sağ - sol : alt - üst
+      )) {
         çiz();
         imleciGüncelle(olay);
         return;
@@ -1444,12 +1493,14 @@
       const [oran, dikeyOran] = uyarlanmış;
       const x = sol + oran * (sağ - sol);
       const y = üst + dikeyOran * (alt - üst);
-      const enYakın = oturum?.en_yakin_noktalar(oran) ?? [];
+      const xEksenOranı = xDikey ? 1 - dikeyOran : oran;
+      const enYakın = oturum?.en_yakin_noktalar(xEksenOranı) ?? [];
       if (enYakın.length < 2) return;
       const [gerçekX, ...seriDeğerleri] = enYakın;
-      const imleçRenkleri = oturum?.imlec_seri_renkleri(oran) ?? [];
+      const imleçRenkleri = oturum?.imlec_seri_renkleri(xEksenOranı) ?? [];
       const xKonumOranı = oturum.x_konum_orani(gerçekX);
       const noktaX = sol + xKonumOranı * (sağ - sol);
+      const noktaXEkseniY = alt - xKonumOranı * (alt - üst);
       const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
       if (bilgiKutusu && Number.isFinite(seriDeğerleri[0])) {
         bilgiKutusu.textContent = `${gerçekX},${seriDeğerleri[0]} at ${Math.round(hamX)},${Math.round(hamY)}`;
@@ -1497,7 +1548,8 @@
           return;
         }
         const noktaY = alt - yOranı * (alt - üst);
-        nokta.setAttribute("cx", noktaX); nokta.setAttribute("cy", noktaY);
+        nokta.setAttribute("cx", xDikey ? sol + yOranı * (sağ - sol) : noktaX);
+        nokta.setAttribute("cy", xDikey ? noktaXEkseniY : noktaY);
         nokta.setAttribute("fill", imleçRenkleri[indeks] ?? kartlar[aktifKart].seriler[indeks]?.renk ?? "#000000");
         nokta.setAttribute("visibility", "visible");
         if (yGösterge) {
@@ -1564,14 +1616,17 @@
       }
       imleciGüncelle(olay);
       if (!sürükleme) return;
-      const { x, svg, view } = svgKonumu(olay);
+      const { x, y, svg, view } = svgKonumu(olay);
       const alan = çizimAlanı(view);
-      sürükleme.son = Math.max(alan.sol, Math.min(alan.sağ, x));
+      const xDikey = oturum?.x_dikey() ?? false;
+      sürükleme.son = xDikey
+        ? Math.max(alan.üst, Math.min(alan.alt, y))
+        : Math.max(alan.sol, Math.min(alan.sağ, x));
       const seçim = svg.querySelector("#seçim");
-      seçim.setAttribute("x", Math.min(sürükleme.baş, sürükleme.son));
-      seçim.setAttribute("y", alan.üst);
-      seçim.setAttribute("width", Math.abs(sürükleme.son - sürükleme.baş));
-      seçim.setAttribute("height", alan.yükseklik);
+      seçim.setAttribute("x", xDikey ? alan.sol : Math.min(sürükleme.baş, sürükleme.son));
+      seçim.setAttribute("y", xDikey ? Math.min(sürükleme.baş, sürükleme.son) : alan.üst);
+      seçim.setAttribute("width", xDikey ? alan.genişlik : Math.abs(sürükleme.son - sürükleme.baş));
+      seçim.setAttribute("height", xDikey ? Math.abs(sürükleme.son - sürükleme.baş) : alan.yükseklik);
       seçim.setAttribute("fill", sürükleme.açıklama ? "rgba(255,255,0,.3)" : "rgba(59,130,246,.18)");
       seçim.setAttribute("stroke", sürükleme.açıklama ? "#d4a800" : "#3b82f6");
       seçim.setAttribute("visibility", "visible");
@@ -1613,11 +1668,12 @@
         return;
       }
       if (!etkileşimler.seçim) return;
-      if (x < alan.sol || x > alan.sağ) return;
+      if (x < alan.sol || x > alan.sağ || y < alan.üst || y > alan.alt) return;
       chart.setPointerCapture(olay.pointerId);
+      const xDikey = oturum?.x_dikey() ?? false;
       sürükleme = {
-        baş: x,
-        son: x,
+        baş: xDikey ? y : x,
+        son: xDikey ? y : x,
         açıklama: etkileşimler.ctrlAçıklama && olay.ctrlKey,
       };
     });
@@ -1652,12 +1708,13 @@
       sürükleme = null;
       const geçerli = Math.abs(seçim.son - seçim.baş) >= 4;
       if (geçerli) {
+        const xDikey = oturum?.x_dikey() ?? false;
         const a = Math.min(seçim.baş, seçim.son);
         const b = Math.max(seçim.baş, seçim.son);
         try {
           const eylem = oturum.secimi_bitir(
-            (a - alan.sol) / alan.genişlik,
-            (b - alan.sol) / alan.genişlik,
+            xDikey ? (alan.alt - b) / alan.yükseklik : (a - alan.sol) / alan.genişlik,
+            xDikey ? (alan.alt - a) / alan.yükseklik : (b - alan.sol) / alan.genişlik,
             seçim.açıklama,
           );
           hata.textContent = "";

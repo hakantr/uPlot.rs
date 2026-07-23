@@ -438,6 +438,12 @@ pub struct GrafikSeçenekleri {
     pub x_tarih_adları: TarihAdları,
     pub x_dağılımı: XÖlçekDağılımı,
     pub x_ters_yön: bool,
+    /// uPlot `scales.x.ori = 1` karşılığıdır. Etkin olduğunda X dikey,
+    /// Y yatay çizilir.
+    pub x_dikey: bool,
+    /// X eksenini yönelimine göre karşı tarafa taşır: standart düzende üst,
+    /// değiştirilmiş düzende sağ.
+    pub x_eksen_karşıda: bool,
     pub x_aralığı: Option<Aralık>,
     pub y_aralığı: Option<Aralık>,
     pub y_ölçekleri: Vec<YÖlçekSeçenekleri>,
@@ -447,6 +453,9 @@ pub struct GrafikSeçenekleri {
     pub x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi,
     pub y_eksen_etiketi: String,
     pub birincil_y_sağda: bool,
+    /// Birincil Y eksenini yönelimine göre karşı tarafa taşır. Standart
+    /// düzende sağ, değiştirilmiş düzende alt taraftır.
+    pub birincil_y_karşıda: bool,
     pub birincil_y_eksen_rengi: String,
     pub x_eksen_değer_çarpanı: f64,
     pub otomatik_x_sağ_pay: bool,
@@ -492,6 +501,8 @@ impl GrafikSeçenekleri {
             x_tarih_adları: TarihAdları::default(),
             x_dağılımı: XÖlçekDağılımı::Doğrusal,
             x_ters_yön: false,
+            x_dikey: false,
+            x_eksen_karşıda: false,
             x_aralığı: None,
             y_aralığı: None,
             y_ölçekleri: Vec::new(),
@@ -501,6 +512,7 @@ impl GrafikSeçenekleri {
             x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi::Otomatik,
             y_eksen_etiketi: String::new(),
             birincil_y_sağda: false,
+            birincil_y_karşıda: false,
             birincil_y_eksen_rengi: "#4b5563".to_string(),
             x_eksen_değer_çarpanı: 1.0,
             otomatik_x_sağ_pay: false,
@@ -574,6 +586,17 @@ impl GrafikSeçenekleri {
     /// uPlot `scales.x.dir = -1` karşılığıdır.
     pub fn x_ters_yön(mut self, ters: bool) -> Self {
         self.x_ters_yön = ters;
+        self
+    }
+
+    /// uPlot ölçek yönelim çiftini `x.ori = 1`, `y.ori = 0` yapar.
+    pub fn x_dikey(mut self, dikey: bool) -> Self {
+        self.x_dikey = dikey;
+        self
+    }
+
+    pub fn x_eksen_karşıda(mut self, karşıda: bool) -> Self {
+        self.x_eksen_karşıda = karşıda;
         self
     }
 
@@ -655,6 +678,15 @@ impl GrafikSeçenekleri {
 
     pub fn birincil_y_sağda(mut self, sağda: bool) -> Self {
         self.birincil_y_sağda = sağda;
+        self.birincil_y_karşıda = sağda;
+        self
+    }
+
+    pub fn birincil_y_karşıda(mut self, karşıda: bool) -> Self {
+        self.birincil_y_karşıda = karşıda;
+        if !self.x_dikey {
+            self.birincil_y_sağda = karşıda;
+        }
         self
     }
 

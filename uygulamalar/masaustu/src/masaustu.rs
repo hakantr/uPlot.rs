@@ -26,19 +26,21 @@ use uplot_rs::{
     MONTHS_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
     NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
     POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
-    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SmoothingÖrneği,
-    UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
+    ScalesDirOriÖrneği, SeriSeçenekleri, SmoothingÖrneği, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
-    resize_kartı, scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, zoom_touch_kartı, zoom_wheel_kartı,
+    ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -59,6 +61,7 @@ enum KartKimliği {
     PathGapClip(PathGapClipÖrneği),
     PixelAlign(PixelAlignÖrneği),
     Points(PointsÖrneği),
+    ScalesDirOri(ScalesDirOriÖrneği),
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -105,6 +108,7 @@ impl KartKimliği {
             Self::PathGapClip(örnek) => örnek.başlık(),
             Self::PixelAlign(örnek) => örnek.başlık(),
             Self::Points(örnek) => örnek.başlık(),
+            Self::ScalesDirOri(örnek) => örnek.başlık(),
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -168,6 +172,9 @@ impl KartKimliği {
             }
             Self::Points(_) => {
                 "points.html · randomWalk.js · points.space, paths:null ve points.filter"
+            }
+            Self::ScalesDirOri(_) => {
+                "scales-dir-ori.html · src/uPlot.js · scale.dir, scale.ori ve axis.side"
             }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
@@ -233,6 +240,7 @@ impl KartKimliği {
             Self::PathGapClip(_) => PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
             Self::PixelAlign(_) => PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
             Self::Points(_) => POINTS_KART_TANIM_ÖRNEĞİ,
+            Self::ScalesDirOri(_) => SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -275,6 +283,7 @@ impl KartKimliği {
             Self::PathGapClip(_) => "src/kart/path_gap_clip.rs",
             Self::PixelAlign(_) => "src/kart/pixel_align.rs",
             Self::Points(_) => "src/kart/points.rs",
+            Self::ScalesDirOri(_) => "src/kart/scales_dir_ori.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -590,6 +599,7 @@ fn grafik_oluştur(
         KartKimliği::PathGapClip(örnek) => path_gap_clip_kartı(örnek),
         KartKimliği::PixelAlign(örnek) => pixel_align_kartı(örnek, pixel_align_adımı),
         KartKimliği::Points(örnek) => points_kartı(örnek),
+        KartKimliği::ScalesDirOri(örnek) => scales_dir_ori_kartı(örnek),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -682,6 +692,10 @@ impl Render for ChartListesi {
                     "{} kaynak indeksi · koşullu nokta görünürlüğü",
                     örnek.nokta_sayısı()
                 )
+            }
+            KartKimliği::ScalesDirOri(örnek) => {
+                let (genişlik, yükseklik) = örnek.boyut();
+                format!("10 nokta × 2 seri · {genişlik}×{yükseklik} · scale.dir/ori")
             }
             KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
@@ -1338,6 +1352,21 @@ impl Render for ChartListesi {
                     "points",
                     aktif_kart == kart,
                     "space · paths:null · tekil boşluk filtresi",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
+            .children(ScalesDirOriÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::ScalesDirOri(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "scales-dir-ori",
+                    aktif_kart == kart,
+                    "scale.dir · scale.ori · axis.side",
                     panel,
                     vurgu,
                 )

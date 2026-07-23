@@ -416,6 +416,18 @@
       "rust_karşılığı": "NoktaFiltreKipi::BoşlukArasındakiTekiller / SeriÇizimTürü::Noktalar",
       "durum": "tam_kanıtlı",
       "test": "src/kart/points.rs"
+    },
+    {
+      "kaynak_yolu": "Scale.dir / Scale.ori",
+      "rust_karşılığı": "GrafikSeçenekleri::x_ters_yön / x_dikey / YÖlçekSeçenekleri::ters_yön",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/scales_dir_ori.rs"
+    },
+    {
+      "kaynak_yolu": "Axis.side (0 top, 1 right, 2 bottom, 3 left)",
+      "rust_karşılığı": "GrafikSeçenekleri::x_eksen_karşıda / birincil_y_karşıda",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/scales_dir_ori.rs"
     }
   ]
 }

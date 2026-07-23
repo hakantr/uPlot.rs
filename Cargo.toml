@@ -96,6 +96,10 @@ name = "points"
 required-features = ["svg"]
 
 [[example]]
+name = "scales_dir_ori"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

@@ -251,6 +251,34 @@ impl Grafik {
         if self.seçenekler.mum_düzeni.is_some() {
             return (72.0, genişlik_px - 72.0, 48.0, yükseklik_px - 48.0);
         }
+        if self.seçenekler.x_dikey {
+            let sol_pay = if self.seçenekler.x_eksen_karşıda {
+                24.0
+            } else {
+                64.0
+            };
+            let sağ_pay = if self.seçenekler.x_eksen_karşıda {
+                64.0
+            } else {
+                24.0
+            };
+            let üst_pay = if self.seçenekler.birincil_y_karşıda {
+                48.0
+            } else {
+                68.0
+            };
+            let alt_pay = if self.seçenekler.birincil_y_karşıda {
+                48.0
+            } else {
+                24.0
+            };
+            return (
+                sol_pay,
+                genişlik_px - sağ_pay,
+                üst_pay,
+                yükseklik_px - alt_pay,
+            );
+        }
         let sağ_eksen_sayısı = self
             .seçenekler
             .y_ölçekleri
@@ -307,12 +335,28 @@ impl Grafik {
                 .unwrap_or(1);
             sol_pay = sol_pay.max(24.0 + en_uzun as f32 * 7.0);
         }
-        let alt_pay = if self.seçenekler.x_eksen_etiketi.is_empty() {
+        let alt_pay = if self.seçenekler.x_eksen_karşıda {
+            24.0
+        } else if self.seçenekler.x_eksen_etiketi.is_empty() {
             48.0
         } else {
             68.0
         };
-        (sol_pay, genişlik_px - sağ_pay, 48.0, yükseklik_px - alt_pay)
+        let üst_pay = if self.seçenekler.x_eksen_karşıda {
+            if self.seçenekler.x_eksen_etiketi.is_empty() {
+                68.0
+            } else {
+                88.0
+            }
+        } else {
+            48.0
+        };
+        (
+            sol_pay,
+            genişlik_px - sağ_pay,
+            üst_pay,
+            yükseklik_px - alt_pay,
+        )
     }
 
     pub fn yakınlaştırılmış(&self) -> bool {
@@ -532,8 +576,10 @@ impl Grafik {
         hassas: bool,
     ) -> Result<bool, UplotHatası> {
         let görünür_y = self.görünür_y_aralığı();
+        let (x_oranı, y_oranı) =
+            self.fiziksel_oranları_mantıksala(yatay_odak_oranı, dikey_odak_oranı);
         self.etkileşim
-            .tekerlek(yatay_odak_oranı, dikey_odak_oranı, görünür_y, delta, hassas)
+            .tekerlek(x_oranı, y_oranı, görünür_y, delta, hassas)
     }
 
     pub fn seçim_yakınlaştır(
@@ -541,6 +587,11 @@ impl Grafik {
         başlangıç_oranı: f64,
         bitiş_oranı: f64,
     ) -> Result<bool, UplotHatası> {
+        let (başlangıç_oranı, bitiş_oranı) = if self.seçenekler.x_ters_yön {
+            (1.0 - başlangıç_oranı, 1.0 - bitiş_oranı)
+        } else {
+            (başlangıç_oranı, bitiş_oranı)
+        };
         self.etkileşim
             .seçim_yakınlaştır(başlangıç_oranı, bitiş_oranı)
     }
@@ -596,7 +647,9 @@ impl Grafik {
         yatay_fark_oranı: f64,
         dikey_fark_oranı: f64,
     ) -> Result<bool, UplotHatası> {
-        self.etkileşim.taşı(yatay_fark_oranı, dikey_fark_oranı)
+        let (x_farkı, y_farkı) =
+            self.fiziksel_farkları_mantıksala(yatay_fark_oranı, dikey_fark_oranı);
+        self.etkileşim.taşı(x_farkı, y_farkı)
     }
 
     pub fn taşımayı_bitir(&mut self) {
@@ -614,8 +667,63 @@ impl Grafik {
         dikey_odak_oranı: f64,
         çarpan: f64,
     ) -> Result<bool, UplotHatası> {
-        self.etkileşim
-            .dokunma_yakınlaştır(yatay_odak_oranı, dikey_odak_oranı, çarpan)
+        let (x_oranı, y_oranı) =
+            self.fiziksel_oranları_mantıksala(yatay_odak_oranı, dikey_odak_oranı);
+        self.etkileşim.dokunma_yakınlaştır(x_oranı, y_oranı, çarpan)
+    }
+
+    /// Yüzeydeki fiziksel oranları uPlot ölçek yönü ve yönelimine göre
+    /// çekirdeğin mantıksal X/Y oranlarına dönüştürür.
+    pub fn fiziksel_oranları_mantıksala(&self, yatay: f64, dikey: f64) -> (f64, f64) {
+        let yatay = yatay.clamp(0.0, 1.0);
+        let dikey = dikey.clamp(0.0, 1.0);
+        let y_ters = self
+            .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
+            .is_some_and(|ölçek| ölçek.ters_yön);
+        if self.seçenekler.x_dikey {
+            let x = if self.seçenekler.x_ters_yön {
+                dikey
+            } else {
+                1.0 - dikey
+            };
+            let y = if y_ters { yatay } else { 1.0 - yatay };
+            (x, y)
+        } else {
+            let x = if self.seçenekler.x_ters_yön {
+                1.0 - yatay
+            } else {
+                yatay
+            };
+            let y = if y_ters { 1.0 - dikey } else { dikey };
+            (x, y)
+        }
+    }
+
+    fn fiziksel_farkları_mantıksala(&self, yatay: f64, dikey: f64) -> (f64, f64) {
+        let y_ters = self
+            .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
+            .is_some_and(|ölçek| ölçek.ters_yön);
+        if self.seçenekler.x_dikey {
+            let x = if self.seçenekler.x_ters_yön {
+                -dikey
+            } else {
+                dikey
+            };
+            let y = if y_ters { -yatay } else { yatay };
+            (x, y)
+        } else {
+            let x = if self.seçenekler.x_ters_yön {
+                -yatay
+            } else {
+                yatay
+            };
+            let y = if y_ters { -dikey } else { dikey };
+            (x, y)
+        }
+    }
+
+    pub fn x_dikey_mi(&self) -> bool {
+        self.seçenekler.x_dikey
     }
 
     pub fn dokunmayı_bitir(&mut self) {
@@ -747,20 +855,28 @@ impl Grafik {
         &mut self,
         yatay_oran: f64,
         dikey_oran: f64,
-        çizim_yüksekliği: f64,
+        çizim_boyutu: f64,
     ) -> bool {
         let Some(düzen) = self.seçenekler.odak else {
             return false;
         };
-        if düzen.yakınlık < 0.0 || !çizim_yüksekliği.is_finite() || çizim_yüksekliği <= 0.0
-        {
+        if düzen.yakınlık < 0.0 || !çizim_boyutu.is_finite() || çizim_boyutu <= 0.0 {
             return self.odağı_ayarla(None);
         }
-        let Some((_, değerler)) = self.en_yakın_noktalar(yatay_oran) else {
+        let x_oranı = if self.seçenekler.x_dikey {
+            1.0 - dikey_oran
+        } else {
+            yatay_oran
+        };
+        let Some((_, değerler)) = self.en_yakın_noktalar(x_oranı) else {
             return self.odağı_ayarla(None);
         };
         let x_aralığı = self.görünür_x_aralığı();
-        let fare_y = dikey_oran.clamp(0.0, 1.0) * çizim_yüksekliği;
+        let fare_y = if self.seçenekler.x_dikey {
+            yatay_oran.clamp(0.0, 1.0) * çizim_boyutu
+        } else {
+            dikey_oran.clamp(0.0, 1.0) * çizim_boyutu
+        };
         let görünür_y = self.görünür_y_aralığı();
         let fare_değeri =
             görünür_y.en_çok - dikey_oran.clamp(0.0, 1.0) * (görünür_y.en_çok - görünür_y.en_az);
@@ -789,14 +905,13 @@ impl Grafik {
                     continue;
                 }
             }
-            let konum = çizim_yüksekliği
-                - f64::from(self.y_konumu(
-                    &seri.ölçek,
-                    aralık,
-                    değer,
-                    0.0,
-                    çizim_yüksekliği as f32,
-                ));
+            let ölçek_konumu =
+                f64::from(self.y_konumu(&seri.ölçek, aralık, değer, 0.0, çizim_boyutu as f32));
+            let konum = if self.seçenekler.x_dikey {
+                ölçek_konumu
+            } else {
+                çizim_boyutu - ölçek_konumu
+            };
             let mesafe = (konum - fare_y).abs();
             if mesafe < en_kısa {
                 en_kısa = mesafe;
@@ -982,12 +1097,64 @@ impl Grafik {
         let birincil_çarpan = birincil_ölçek.map_or(1.0, |ölçek| ölçek.eksen_değer_çarpanı);
 
         let eksen_komutları_başlangıcı = sahne.komutlar().len();
-        let y_artımı = güzel_y_artımı.unwrap_or_else(|| uygun_artım(y_aralığı, yükseklik, 30.0));
+        let y_boyutu = if self.seçenekler.x_dikey {
+            genişlik
+        } else {
+            yükseklik
+        };
+        let y_artımı = güzel_y_artımı.unwrap_or_else(|| uygun_artım(y_aralığı, y_boyutu, 30.0));
         let y_bölmeleri = güzel_y_artımı.map_or_else(
-            || self.y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, y_aralığı, yükseklik),
+            || self.y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, y_aralığı, y_boyutu),
             |artım| eksen_bölmeleri_artımla(y_aralığı, artım),
         );
         for y_değeri in y_bölmeleri {
+            if self.seçenekler.x_dikey {
+                let x = piksele_hizala(
+                    sol + self.y_konumu(
+                        &self.seçenekler.birincil_y_ölçeği,
+                        y_aralığı,
+                        y_değeri,
+                        0.0,
+                        genişlik,
+                    ),
+                    self.seçenekler.piksel_hizası,
+                );
+                sahne.ekle(Komut::Çizgi {
+                    başlangıç: Nokta::yeni(x, üst),
+                    bitiş: Nokta::yeni(x, alt),
+                    renk: self.seçenekler.ızgara_rengi.clone(),
+                    kalınlık: 1.0,
+                });
+                if log_etiketi_göster(
+                    y_değeri,
+                    y_aralığı,
+                    genişlik,
+                    birincil_dağılım,
+                    birincil_biçim,
+                ) {
+                    sahne.ekle(Komut::Metin {
+                        konum: Nokta::yeni(
+                            x,
+                            if self.seçenekler.birincil_y_karşıda {
+                                alt + 20.0
+                            } else {
+                                üst - 8.0
+                            },
+                        ),
+                        içerik: ölçek_eksen_değerini_yaz(
+                            y_değeri * birincil_çarpan,
+                            y_artımı,
+                            birincil_birim,
+                            birincil_dağılım,
+                            birincil_biçim,
+                        ),
+                        renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                        boyut: 11.0,
+                        hiza: MetinHizası::Orta,
+                    });
+                }
+                continue;
+            }
             let y = piksele_hizala(
                 üst + yükseklik
                     - self.y_konumu(
@@ -1014,7 +1181,7 @@ impl Grafik {
             ) {
                 sahne.ekle(Komut::Metin {
                     konum: Nokta::yeni(
-                        if self.seçenekler.birincil_y_sağda {
+                        if self.seçenekler.birincil_y_karşıda {
                             sağ + 8.0
                         } else {
                             sol - 8.0
@@ -1030,7 +1197,7 @@ impl Grafik {
                     ),
                     renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
                     boyut: 11.0,
-                    hiza: if self.seçenekler.birincil_y_sağda {
+                    hiza: if self.seçenekler.birincil_y_karşıda {
                         MetinHizası::Başlangıç
                     } else {
                         MetinHizası::Bitiş
@@ -1042,17 +1209,25 @@ impl Grafik {
         if !self.seçenekler.y_eksen_etiketi.is_empty() {
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(
-                    if self.seçenekler.birincil_y_sağda {
+                    if self.seçenekler.x_dikey {
+                        (sol + sağ) / 2.0
+                    } else if self.seçenekler.birincil_y_karşıda {
                         sağ
                     } else {
                         sol
                     },
-                    üst - 12.0,
+                    if self.seçenekler.x_dikey && self.seçenekler.birincil_y_karşıda {
+                        alt + 40.0
+                    } else {
+                        üst - 12.0
+                    },
                 ),
                 içerik: self.seçenekler.y_eksen_etiketi.clone(),
                 renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
                 boyut: 12.0,
-                hiza: if self.seçenekler.birincil_y_sağda {
+                hiza: if self.seçenekler.x_dikey {
+                    MetinHizası::Orta
+                } else if self.seçenekler.birincil_y_karşıda {
                     MetinHizası::Bitiş
                 } else {
                     MetinHizası::Başlangıç
@@ -1118,36 +1293,80 @@ impl Grafik {
             }
         }
 
+        let x_boyutu = if self.seçenekler.x_dikey {
+            yükseklik
+        } else {
+            genişlik
+        };
         let (x_bölmeleri, x_artımı) = match self.seçenekler.x_dağılımı {
             XÖlçekDağılımı::Logaritmik { taban } => (
                 logaritmik_bölmeler(x_aralığı, taban),
-                uygun_artım(x_aralığı, genişlik, 50.0),
+                uygun_artım(x_aralığı, x_boyutu, 50.0),
             ),
             XÖlçekDağılımı::Doğrusal if self.seçenekler.x_zaman => zaman_bölmeleri(
                 x_aralığı,
-                genişlik,
+                x_boyutu,
                 50.0,
                 self.seçenekler.x_zaman_milisaniye,
             ),
             XÖlçekDağılımı::Doğrusal => (
-                eksen_bölmeleri(x_aralığı, genişlik, 50.0),
-                uygun_artım(x_aralığı, genişlik, 50.0),
+                eksen_bölmeleri(x_aralığı, x_boyutu, 50.0),
+                uygun_artım(x_aralığı, x_boyutu, 50.0),
             ),
         };
         let mut önceki_x_yılı = None;
         for x_değeri in x_bölmeleri {
-            let x = piksele_hizala(
-                self.x_konumu(x_aralığı, x_değeri, sol, genişlik),
-                self.seçenekler.piksel_hizası,
-            );
-            sahne.ekle(Komut::Çizgi {
-                başlangıç: Nokta::yeni(x, üst),
-                bitiş: Nokta::yeni(x, alt),
-                renk: self.seçenekler.ızgara_rengi.clone(),
-                kalınlık: 1.0,
-            });
+            let (etiket_konumu, etiket_hizası) = if self.seçenekler.x_dikey {
+                let y = piksele_hizala(
+                    alt - self.x_konumu(x_aralığı, x_değeri, 0.0, yükseklik),
+                    self.seçenekler.piksel_hizası,
+                );
+                sahne.ekle(Komut::Çizgi {
+                    başlangıç: Nokta::yeni(sol, y),
+                    bitiş: Nokta::yeni(sağ, y),
+                    renk: self.seçenekler.ızgara_rengi.clone(),
+                    kalınlık: 1.0,
+                });
+                (
+                    Nokta::yeni(
+                        if self.seçenekler.x_eksen_karşıda {
+                            sağ + 8.0
+                        } else {
+                            sol - 8.0
+                        },
+                        y + 4.0,
+                    ),
+                    if self.seçenekler.x_eksen_karşıda {
+                        MetinHizası::Başlangıç
+                    } else {
+                        MetinHizası::Bitiş
+                    },
+                )
+            } else {
+                let x = piksele_hizala(
+                    self.x_konumu(x_aralığı, x_değeri, sol, genişlik),
+                    self.seçenekler.piksel_hizası,
+                );
+                sahne.ekle(Komut::Çizgi {
+                    başlangıç: Nokta::yeni(x, üst),
+                    bitiş: Nokta::yeni(x, alt),
+                    renk: self.seçenekler.ızgara_rengi.clone(),
+                    kalınlık: 1.0,
+                });
+                (
+                    Nokta::yeni(
+                        x,
+                        if self.seçenekler.x_eksen_karşıda {
+                            üst - 8.0
+                        } else {
+                            alt + 20.0
+                        },
+                    ),
+                    MetinHizası::Orta,
+                )
+            };
             sahne.ekle(Komut::Metin {
-                konum: Nokta::yeni(x, alt + 20.0),
+                konum: etiket_konumu,
                 içerik: if self.seçenekler.x_zaman {
                     let birim = if self.seçenekler.x_zaman_milisaniye {
                         1_000.0
@@ -1177,17 +1396,41 @@ impl Grafik {
                 },
                 renk: self.seçenekler.x_eksen_rengi.clone(),
                 boyut: 11.0,
-                hiza: MetinHizası::Orta,
+                hiza: etiket_hizası,
             });
         }
 
         if !self.seçenekler.x_eksen_etiketi.is_empty() {
             sahne.ekle(Komut::Metin {
-                konum: Nokta::yeni((sol + sağ) / 2.0, alt + 42.0),
+                konum: if self.seçenekler.x_dikey {
+                    Nokta::yeni(
+                        if self.seçenekler.x_eksen_karşıda {
+                            sağ
+                        } else {
+                            sol
+                        },
+                        üst - 12.0,
+                    )
+                } else {
+                    Nokta::yeni(
+                        (sol + sağ) / 2.0,
+                        if self.seçenekler.x_eksen_karşıda {
+                            üst - 28.0
+                        } else {
+                            alt + 42.0
+                        },
+                    )
+                },
                 içerik: self.seçenekler.x_eksen_etiketi.clone(),
                 renk: self.seçenekler.x_eksen_rengi.clone(),
                 boyut: 12.0,
-                hiza: MetinHizası::Orta,
+                hiza: if self.seçenekler.x_dikey && self.seçenekler.x_eksen_karşıda {
+                    MetinHizası::Bitiş
+                } else if self.seçenekler.x_dikey {
+                    MetinHizası::Başlangıç
+                } else {
+                    MetinHizası::Orta
+                },
             });
         }
         let eksen_komutları_bitişi = sahne.komutlar().len();
@@ -1252,8 +1495,13 @@ impl Grafik {
             let mut görünür_noktalar = Vec::<(usize, Nokta, f64, f64)>::new();
             let mut önceki_x = None::<f64>;
             let piksel_hizası = seri.piksel_hizası.unwrap_or(self.seçenekler.piksel_hizası);
+            let x_piksel_uzunluğu = if self.seçenekler.x_dikey {
+                yükseklik
+            } else {
+                genişlik
+            };
             let çizilecek_indeksler =
-                çizilecek_indeksler(self.veri.x(), değerler, x_aralığı, genişlik);
+                çizilecek_indeksler(self.veri.x(), değerler, x_aralığı, x_piksel_uzunluğu);
             let ilk_görünür = self
                 .veri
                 .x()
@@ -1267,8 +1515,8 @@ impl Grafik {
                 .checked_add(görünür_indeks_sayısı.saturating_sub(1))
                 .and_then(|son| self.veri.x().get(ilk_görünür).zip(self.veri.x().get(son)))
                 .map_or(0.0, |(ilk, son)| {
-                    (self.x_konumu(x_aralığı, *son, sol, genişlik)
-                        - self.x_konumu(x_aralığı, *ilk, sol, genişlik))
+                    (self.x_konumu(x_aralığı, *son, 0.0, x_piksel_uzunluğu)
+                        - self.x_konumu(x_aralığı, *ilk, 0.0, x_piksel_uzunluğu))
                     .abs()
                 });
             for indeks in çizilecek_indeksler {
@@ -1287,20 +1535,41 @@ impl Grafik {
                         {
                             ham_parçalar.push(std::mem::take(&mut parça));
                         }
-                        let x = piksele_hizala(
-                            self.x_konumu(x_aralığı, *x_değeri, sol, genişlik),
-                            piksel_hizası,
-                        );
-                        let y = piksele_hizala(
-                            alt - self.y_konumu(
-                                &seri.ölçek,
-                                seri_y_aralığı,
-                                *y_değeri,
-                                0.0,
-                                yükseklik,
-                            ),
-                            piksel_hizası,
-                        );
+                        let (x, y) = if self.seçenekler.x_dikey {
+                            (
+                                piksele_hizala(
+                                    sol + self.y_konumu(
+                                        &seri.ölçek,
+                                        seri_y_aralığı,
+                                        *y_değeri,
+                                        0.0,
+                                        genişlik,
+                                    ),
+                                    piksel_hizası,
+                                ),
+                                piksele_hizala(
+                                    alt - self.x_konumu(x_aralığı, *x_değeri, 0.0, yükseklik),
+                                    piksel_hizası,
+                                ),
+                            )
+                        } else {
+                            (
+                                piksele_hizala(
+                                    self.x_konumu(x_aralığı, *x_değeri, sol, genişlik),
+                                    piksel_hizası,
+                                ),
+                                piksele_hizala(
+                                    alt - self.y_konumu(
+                                        &seri.ölçek,
+                                        seri_y_aralığı,
+                                        *y_değeri,
+                                        0.0,
+                                        yükseklik,
+                                    ),
+                                    piksel_hizası,
+                                ),
+                            )
+                        };
                         let nokta = Nokta::yeni(x, y);
                         parça.push(nokta);
                         önceki_x = Some(*x_değeri);
@@ -1329,23 +1598,41 @@ impl Grafik {
                 && seri.çizim_türü != crate::SeriÇizimTürü::Noktalar
                 && (seri_dolgusu.is_some() || seri.dolgu_gradyanı.is_some())
             {
-                let taban = alt
-                    - self.y_konumu(
+                let taban = if self.seçenekler.x_dikey {
+                    sol + self.y_konumu(
+                        &seri.ölçek,
+                        seri_y_aralığı,
+                        seri.dolgu_tabanı,
+                        0.0,
+                        genişlik,
+                    )
+                } else {
+                    alt - self.y_konumu(
                         &seri.ölçek,
                         seri_y_aralığı,
                         seri.dolgu_tabanı,
                         0.0,
                         yükseklik,
-                    );
-                let taban = taban.clamp(üst, alt);
+                    )
+                };
+                let taban = if self.seçenekler.x_dikey {
+                    taban.clamp(sol, sağ)
+                } else {
+                    taban.clamp(üst, alt)
+                };
                 let çokgenler = ham_parçalar
                     .iter()
                     .filter_map(|parça| {
                         let ilk = parça.first()?;
                         let son = parça.last()?;
                         let mut çokgen = parça.clone();
-                        çokgen.push(Nokta::yeni(son.x, taban));
-                        çokgen.push(Nokta::yeni(ilk.x, taban));
+                        if self.seçenekler.x_dikey {
+                            çokgen.push(Nokta::yeni(taban, son.y));
+                            çokgen.push(Nokta::yeni(taban, ilk.y));
+                        } else {
+                            çokgen.push(Nokta::yeni(son.x, taban));
+                            çokgen.push(Nokta::yeni(ilk.x, taban));
+                        }
                         let kırpılmış = çokgeni_dikdörtgene_kırp(&çokgen, sol, sağ, üst, alt);
                         (kırpılmış.len() >= 3).then_some(kırpılmış)
                     })

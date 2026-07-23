@@ -309,10 +309,23 @@ impl GpuiGrafik {
             } else {
                 ("#3b82f633", "#3b82f6")
             };
+            let x_dikey = self.grafik.x_dikey_mi();
             sahne.ekle(Komut::Dikdörtgen {
-                konum: Nokta::yeni(başlangıç.min(bitiş), üst),
-                genişlik: (bitiş - başlangıç).abs(),
-                yükseklik: alt - üst,
+                konum: if x_dikey {
+                    Nokta::yeni(sol, başlangıç.min(bitiş))
+                } else {
+                    Nokta::yeni(başlangıç.min(bitiş), üst)
+                },
+                genişlik: if x_dikey {
+                    sağ - sol
+                } else {
+                    (bitiş - başlangıç).abs()
+                },
+                yükseklik: if x_dikey {
+                    (bitiş - başlangıç).abs()
+                } else {
+                    alt - üst
+                },
                 dolgu: dolgu.to_string(),
                 çizgi: çizgi.to_string(),
                 kalınlık: 1.0,
@@ -366,9 +379,18 @@ impl GpuiGrafik {
             self.grafik.imleç_odağını_temizle();
             return;
         };
-        self.grafik
-            .imleç_odağını_güncelle(yatay, dikey, f64::from(alt - üst));
-        let Some((veri_x, seri_değerleri)) = self.grafik.en_yakın_noktalar(yatay) else {
+        let x_dikey = self.grafik.x_dikey_mi();
+        self.grafik.imleç_odağını_güncelle(
+            yatay,
+            dikey,
+            if x_dikey {
+                f64::from(sağ - sol)
+            } else {
+                f64::from(alt - üst)
+            },
+        );
+        let x_oranı = if x_dikey { 1.0 - dikey } else { yatay };
+        let Some((veri_x, seri_değerleri)) = self.grafik.en_yakın_noktalar(x_oranı) else {
             self.imleç = None;
             self.grafik.imleç_odağını_temizle();
             return;
@@ -565,8 +587,13 @@ impl Render for GpuiGrafik {
                     && let Some((başlangıç, _)) = bu.seçim
                     && let Some(konum) = bu.sahne_konumu(olay.position)
                 {
-                    let (sol, sağ, _, _) = bu.çizim_alanı();
-                    bu.seçim = Some((başlangıç, konum.x.clamp(sol, sağ)));
+                    let (sol, sağ, üst, alt) = bu.çizim_alanı();
+                    let eksen_konumu = if bu.grafik.x_dikey_mi() {
+                        konum.y.clamp(üst, alt)
+                    } else {
+                        konum.x.clamp(sol, sağ)
+                    };
+                    bu.seçim = Some((başlangıç, eksen_konumu));
                 }
                 GpuiGrafik::bildir(cx);
             }))
@@ -608,7 +635,12 @@ impl Render for GpuiGrafik {
                         && let Some(konum) = bu.sahne_konumu(olay.position)
                         && bu.grafik_alanında(konum)
                     {
-                        bu.seçim = Some((konum.x, konum.x));
+                        let eksen_konumu = if bu.grafik.x_dikey_mi() {
+                            konum.y
+                        } else {
+                            konum.x
+                        };
+                        bu.seçim = Some((eksen_konumu, eksen_konumu));
                         bu.açıklama_seçimi = ayarlar.ctrl_açıklama && olay.modifiers.control;
                     }
                     GpuiGrafik::bildir(cx);
@@ -626,9 +658,18 @@ impl Render for GpuiGrafik {
                     if let Some((başlangıç, bitiş)) = bu.seçim.take()
                         && (bitiş - başlangıç).abs() >= 4.0
                     {
-                        let (sol, sağ, _, _) = bu.çizim_alanı();
-                        let başlangıç_oranı = f64::from((başlangıç - sol) / (sağ - sol));
-                        let bitiş_oranı = f64::from((bitiş - sol) / (sağ - sol));
+                        let (sol, sağ, üst, alt) = bu.çizim_alanı();
+                        let (başlangıç_oranı, bitiş_oranı) = if bu.grafik.x_dikey_mi() {
+                            (
+                                f64::from((alt - başlangıç) / (alt - üst)),
+                                f64::from((alt - bitiş) / (alt - üst)),
+                            )
+                        } else {
+                            (
+                                f64::from((başlangıç - sol) / (sağ - sol)),
+                                f64::from((bitiş - sol) / (sağ - sol)),
+                            )
+                        };
                         match bu
                             .grafik
                             .seçimi_bitir(başlangıç_oranı, bitiş_oranı, açıklama_seçimi)

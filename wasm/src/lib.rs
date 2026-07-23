@@ -19,19 +19,21 @@ use uplot_rs::{
     MONTHS_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
     NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
     POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
-    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SeçimEylemi,
-    SmoothingÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
+    ScalesDirOriÖrneği, SeriSeçenekleri, SeçimEylemi, SmoothingÖrneği, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
-    resize_kartı, scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, zoom_touch_kartı, zoom_wheel_kartı,
+    ÇubukYönü, ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -97,6 +99,16 @@ impl KartOturumu {
                 },
                 points_kartı,
             ),
+            kimlik if kimlik.starts_with("scales-dir-ori-") => {
+                ScalesDirOriÖrneği::kimlikten(kimlik).map_or_else(
+                    || {
+                        Err(UplotHatası::BilinmeyenKart {
+                            kimlik: kimlik.to_string(),
+                        })
+                    },
+                    scales_dir_ori_kartı,
+                )
+            }
             "cursor-bind" => cursor_bind_kartı(),
             "cursor-snap" => cursor_snap_kartı(),
             "cursor-tooltip" => cursor_tooltip_kartı(),
@@ -199,6 +211,10 @@ impl KartOturumu {
 
     pub fn svg(&self, genişlik: u32, yükseklik: u32) -> String {
         self.grafik.çiz_görünür_boyutta(genişlik, yükseklik).svg()
+    }
+
+    pub fn x_dikey(&self) -> bool {
+        self.grafik.x_dikey_mi()
     }
 
     pub fn tekerlek(
@@ -538,7 +554,7 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    163
+    179
 }
 
 #[wasm_bindgen]
@@ -667,6 +683,11 @@ pub fn points_kart_tanim_ornegi() -> String {
 }
 
 #[wasm_bindgen]
+pub fn scales_dir_ori_kart_tanim_ornegi() -> String {
+    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
 pub fn cursor_snap_kart_tanim_ornegi() -> String {
     CURSOR_SNAP_KART_TANIM_ÖRNEĞİ.to_string()
 }
@@ -770,7 +791,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 163);
+        assert_eq!(kart_sayisi(), 179);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -795,7 +816,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 163);
+        assert_eq!(kart_sayisi(), 179);
     }
 
     #[test]
@@ -813,7 +834,7 @@ mod testler {
             }
         }
         assert!(path_gap_clip_kart_tanim_ornegi().contains("path_gap_clip_kartı"));
-        assert_eq!(kart_sayisi(), 163);
+        assert_eq!(kart_sayisi(), 179);
     }
 
     #[test]
@@ -829,7 +850,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(pixel_align_kart_tanim_ornegi().contains("pixel_align_kartı"));
-        assert_eq!(kart_sayisi(), 163);
+        assert_eq!(kart_sayisi(), 179);
     }
 
     #[test]
@@ -844,7 +865,23 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(points_kart_tanim_ornegi().contains("points_kartı"));
-        assert_eq!(kart_sayisi(), 163);
+        assert_eq!(kart_sayisi(), 179);
+    }
+
+    #[test]
+    fn scales_dir_ori_wasm_on_altı_kaynak_yüzeyini_üretir() {
+        for örnek in ScalesDirOriÖrneği::TÜMÜ {
+            let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
+            assert!(oturum.is_ok(), "{}", örnek.kimlik());
+            let Ok(oturum) = oturum else {
+                continue;
+            };
+            let (genişlik, yükseklik) = örnek.boyut();
+            let svg = oturum.svg(genişlik, yükseklik);
+            assert!(svg.contains(örnek.başlık()));
+        }
+        assert!(scales_dir_ori_kart_tanim_ornegi().contains("scales_dir_ori_kartı"));
+        assert_eq!(kart_sayisi(), 179);
     }
 
     #[test]

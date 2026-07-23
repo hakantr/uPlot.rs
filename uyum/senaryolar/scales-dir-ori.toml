@@ -1,0 +1,32 @@
+id = "scales-dir-ori"
+kaynak = "../uPlot/demos/scales-dir-ori.html"
+fixture = "src/kart/scales_dir_ori.rs#scales_dir_ori_kartı"
+viewport = [1920, 1500]
+device_pixel_ratio = 1
+durum = "on_altı_kaynak_yüzeyi"
+
+[veri]
+x = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6]
+kırmızı_null_indeksi = 7
+seri_sayısı = 2
+
+[yönelim]
+standart_yüzey = 8
+değiştirilmiş_yüzey = 8
+x_yönleri = [1, -1]
+y_yönleri = [1, -1]
+eksen_tarafları = ["top", "right", "bottom", "left"]
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+tekerlek_x_yakınlaştır = true
+seçim_yakınlaştır = true
+çift_tıkla_tam_görünüm = true
+dokunma_xy_yakınlaştır = true
+boşluk_sol_sürükleme_taşıma = true
+yönelim_koordinat_dönüşümü = "çekirdek"
+
+[kanıt]
+svg_dizini = "target/scales-dir-ori"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

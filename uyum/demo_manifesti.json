@@ -2135,6 +2135,76 @@
         "panic-free-source-data-feedback"
       ],
       "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+    },
+    {
+      "sıra": 39,
+      "id": "scales-dir-ori",
+      "başlık": {
+        "en": "Scales Direction & Orientation",
+        "tr": "Ölçek Yönü ve Yönelimi"
+      },
+      "kaynak": "demos/scales-dir-ori.html",
+      "kaynak_sha256": "7e466f8b120222c7f08ee71d1869354aa03dc77bced4442a906afea4595da1bc",
+      "ek_kaynaklar": [
+        {
+          "yol": "src/uPlot.js",
+          "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645"
+        },
+        {
+          "yol": "src/opts.js",
+          "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba"
+        }
+      ],
+      "fixture": "src/kart/scales_dir_ori.rs#scales_dir_ori_kartı",
+      "örnek": "examples/scales_dir_ori.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/scales-dir-ori.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/scales_dir_ori.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin",
+          "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin",
+          "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "kartta_etkin",
+          "dinamik-eksen-izgara": "kartta_etkin",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "kartta_etkin",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "kartta_etkin",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "kartta_etkin"
+        }
+      },
+      "sahip_faz": 2,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-sixteen-surfaces",
+        "source-exact-data-and-null-index",
+        "scale-x-y-direction",
+        "scale-x-y-orientation",
+        "axis-side-placement",
+        "orientation-aware-grid-fill-points",
+        "orientation-aware-wheel-touch-pan",
+        "gpui-wasm-catalog-parity",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "kısmi"
+      }
     }
   ]
 }
