@@ -3,9 +3,9 @@
   "kaynak_commit": "0e5812c504430f5c804e0f993376d8999b26cc34",
   "demo_sayısı": 73,
   "durum_özeti": {
-    "uygulandı_kanıtlı": 37,
+    "uygulandı_kanıtlı": 38,
     "çekirdek_davranışı_port_edildi_kart_bekliyor": 0,
-    "bekliyor": 36
+    "bekliyor": 35
   },
   "demolar": [
     {
@@ -576,11 +576,31 @@
         {
           "yol": "demos/lib/randomWalk.js",
           "sha256": "4fab620adf2bb9e84a142b4aa1547a47997e80c77fc67d350bda28b4e364a417"
+        },
+        {
+          "yol": "src/paths/points.js",
+          "sha256": "dfe1a48e0f35df9b82e9783d89254ce7cf981632e8726acdee3632639c33ea66"
+        },
+        {
+          "yol": "src/paths/linear.js",
+          "sha256": "8f5002721c15f9a965b0e56522c58378c5b412856356c85188c74066ffba6749"
+        },
+        {
+          "yol": "src/paths/utils.js",
+          "sha256": "7636973ddf67ca47993ae86a4b53b1e7a6ea5ebd90483e0c305e84d558c38e13"
+        },
+        {
+          "yol": "src/opts.js",
+          "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba"
+        },
+        {
+          "yol": "src/uPlot.js",
+          "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645"
         }
       ],
       "sahip_faz": 1,
       "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 40,

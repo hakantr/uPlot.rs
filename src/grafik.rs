@@ -1249,11 +1249,28 @@ impl Grafik {
             }
             let mut ham_parçalar = Vec::<Vec<Nokta>>::new();
             let mut parça = Vec::<Nokta>::new();
-            let mut görünür_noktalar = Vec::<(Nokta, f64, f64)>::new();
+            let mut görünür_noktalar = Vec::<(usize, Nokta, f64, f64)>::new();
             let mut önceki_x = None::<f64>;
             let piksel_hizası = seri.piksel_hizası.unwrap_or(self.seçenekler.piksel_hizası);
             let çizilecek_indeksler =
                 çizilecek_indeksler(self.veri.x(), değerler, x_aralığı, genişlik);
+            let ilk_görünür = self
+                .veri
+                .x()
+                .partition_point(|değer| *değer < x_aralığı.en_az);
+            let görünür_bitiş = self
+                .veri
+                .x()
+                .partition_point(|değer| *değer <= x_aralığı.en_çok);
+            let görünür_indeks_sayısı = görünür_bitiş.saturating_sub(ilk_görünür);
+            let nokta_piksel_açıklığı = ilk_görünür
+                .checked_add(görünür_indeks_sayısı.saturating_sub(1))
+                .and_then(|son| self.veri.x().get(ilk_görünür).zip(self.veri.x().get(son)))
+                .map_or(0.0, |(ilk, son)| {
+                    (self.x_konumu(x_aralığı, *son, sol, genişlik)
+                        - self.x_konumu(x_aralığı, *ilk, sol, genişlik))
+                    .abs()
+                });
             for indeks in çizilecek_indeksler {
                 let Some(değer) = değerler.get(indeks) else {
                     continue;
@@ -1288,7 +1305,7 @@ impl Grafik {
                         parça.push(nokta);
                         önceki_x = Some(*x_değeri);
                         if nokta_dikdörtgende(nokta, sol, sağ, üst, alt) {
-                            görünür_noktalar.push((nokta, *x_değeri, *y_değeri));
+                            görünür_noktalar.push((indeks, nokta, *x_değeri, *y_değeri));
                         }
                     }
                     _ if self.veri.hizalama_eksiği_mi(seri_indeksi, indeks)
@@ -1390,14 +1407,13 @@ impl Grafik {
                 });
             }
 
-            // uPlot'un varsayılanı: noktalar ancak ortalama yatay boşluk,
-            // nokta çapının iki katını karşılayabildiğinde görünür.
-            let ortalama_boşluk = genişlik / görünür_noktalar.len().saturating_sub(1).max(1) as f32;
+            // uPlot'un varsayılanı, görünür indeks sayısını çizim genişliğinin
+            // `points.space` kapasitesiyle karşılaştırır.
             let kanca = self.seçenekler.çizim_kancaları.as_ref();
             if let Some((uçlar, düzen)) =
                 kanca.and_then(|düzen| düzen.yıldız_uçları.map(|uçlar| (uçlar, düzen)))
             {
-                for (nokta, _, _) in &görünür_noktalar {
+                for (_, nokta, _, _) in &görünür_noktalar {
                     sahne.ekle(Komut::Alan {
                         çokgenler: vec![yıldız_çokgeni(
                             *nokta,
@@ -1408,19 +1424,32 @@ impl Grafik {
                         dolgu: seri_rengi.clone(),
                     });
                 }
-            } else if seri.noktaları_göster.unwrap_or(
-                seri.çizim_türü == crate::SeriÇizimTürü::Noktalar || ortalama_boşluk >= 10.0,
-            ) {
-                for (nokta, x_değeri, y_değeri) in &görünür_noktalar {
+            } else {
+                let noktalar_görünür = seri.noktaları_göster.unwrap_or_else(|| {
+                    seri.nokta_boşluğu <= 0.0
+                        || görünür_indeks_sayısı.saturating_sub(1) as f32
+                            <= nokta_piksel_açıklığı / seri.nokta_boşluğu.max(f32::EPSILON)
+                });
+                for (indeks, nokta, x_değeri, y_değeri) in &görünür_noktalar {
+                    let filtreli_tekil = !noktalar_görünür
+                        && seri.nokta_filtresi
+                            == crate::NoktaFiltreKipi::BoşlukArasındakiTekiller
+                        && tekil_değer_mi(değerler, *indeks);
+                    if !noktalar_görünür && !filtreli_tekil {
+                        continue;
+                    }
                     let nokta_rengi = self
                         .seri_imleç_rengi(seri_indeksi, *x_değeri, *y_değeri)
                         .unwrap_or_else(|| seri_rengi.clone());
                     sahne.ekle(Komut::Daire {
                         merkez: *nokta,
-                        yarıçap: 2.5,
-                        dolgu: "#ffffff".to_string(),
+                        yarıçap: ((seri.nokta_boyutu - seri.nokta_kalınlığı) / 2.0).max(0.0),
+                        dolgu: seri
+                            .nokta_dolgusu
+                            .clone()
+                            .unwrap_or_else(|| "#ffffff".to_string()),
                         çizgi: nokta_rengi,
-                        kalınlık: 1.0,
+                        kalınlık: seri.nokta_kalınlığı,
                     });
                 }
             }
@@ -3331,6 +3360,17 @@ fn piksele_hizala(değer: f32, adım: f32) -> f32 {
     } else {
         değer
     }
+}
+
+fn tekil_değer_mi(değerler: &[Option<f64>], indeks: usize) -> bool {
+    değerler.get(indeks).is_some_and(Option::is_some)
+        && indeks
+            .checked_sub(1)
+            .and_then(|önceki| değerler.get(önceki))
+            .is_none_or(Option::is_none)
+        && değerler
+            .get(indeks.saturating_add(1))
+            .is_none_or(Option::is_none)
 }
 
 #[cfg(test)]

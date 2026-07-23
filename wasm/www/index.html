@@ -282,6 +282,7 @@
       no_data_kart_tanim_ornegi,
       path_gap_clip_kart_tanim_ornegi,
       pixel_align_kart_tanim_ornegi,
+      points_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -717,6 +718,39 @@
           { etiket: "Stepped", renk: "purple" },
         ],
         yardım: "Canlı akış · tam pikselde tırtıl etkisi / alt pikselde yumuşak hareket",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+
+    const pointsYüzeyleri = [
+      ["points-mixed", "Points", [
+        ["Green", "green"], ["Red", "red"], ["Blue", "blue"], ["Orange", "orange"],
+      ]],
+      ["points-default-density", "Points", [["Green", "green"]]],
+      ["points-too-dense", "Too dense test", [["Green", "green"]]],
+      ["points-sparse", "Sparse Points", [["Magenta", "magenta"]]],
+    ];
+    document.querySelector('[data-kart="pixel-align-off"]')?.insertAdjacentHTML(
+      "afterend",
+      pointsYüzeyleri.map(([kimlik, başlık]) => `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>${kimlik}</small>
+          <div class="durum">space · paths:null · tekil boşluk filtresi</div>
+        </article>`).join("")
+    );
+    for (const [kimlik, başlık, seriler] of pointsYüzeyleri) {
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/points.html">points.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/randomWalk.js">randomWalk.js</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/points.js">paths/points.js</a>
+          <br>Dört etkin kaynak yüzeyi; aynı randomWalk üreteci, null yerleri ve 2761 indeksli seyrek veriyle sunulur.
+          <br>Nokta yoğunluğu, <code>space: 0</code>, <code>paths: null</code> ve tekil-boşluk filtresi Rust çekirdeğindedir.`,
+        tanım: () => points_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/points.rs",
+        seriler: seriler.map(([etiket, renk]) => ({etiket, renk})),
+        yardım: "Koşullu noktalar · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       };

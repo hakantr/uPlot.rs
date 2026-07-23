@@ -404,6 +404,18 @@
       "rust_karşılığı": "SeriSeçenekleri::piksel_hizası / noktaları_göster",
       "durum": "tam_kanıtlı",
       "test": "src/kart/pixel_align.rs"
+    },
+    {
+      "kaynak_yolu": "Series.points.space / size / width / fill",
+      "rust_karşılığı": "SeriSeçenekleri::nokta_boşluğu / nokta_stili",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/points.rs"
+    },
+    {
+      "kaynak_yolu": "Series.points.filter / paths: null",
+      "rust_karşılığı": "NoktaFiltreKipi::BoşlukArasındakiTekiller / SeriÇizimTürü::Noktalar",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/points.rs"
     }
   ]
 }

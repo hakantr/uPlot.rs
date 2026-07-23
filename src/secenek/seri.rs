@@ -9,6 +9,15 @@ pub enum SeriÇizimTürü {
     Çubuk,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NoktaFiltreKipi {
+    Yok,
+    /// uPlot `points.filter` örneğindeki gibi, normal nokta katmanı yoğunluk
+    /// nedeniyle gizliyken yalnız null boşlukları arasındaki tekil değerleri
+    /// görünür tutar.
+    BoşlukArasındakiTekiller,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct SeriSeçenekleri {
     pub etiket: String,
@@ -34,6 +43,11 @@ pub struct SeriSeçenekleri {
     /// uPlot `series.points.show` karşılığıdır. `None`, çekirdeğin koşullu
     /// varsayılanını; `Some(true/false)` açık geliştirici kararını kullanır.
     pub noktaları_göster: Option<bool>,
+    pub nokta_boşluğu: f32,
+    pub nokta_boyutu: f32,
+    pub nokta_kalınlığı: f32,
+    pub nokta_dolgusu: Option<String>,
+    pub nokta_filtresi: NoktaFiltreKipi,
 }
 
 impl SeriSeçenekleri {
@@ -58,6 +72,11 @@ impl SeriSeçenekleri {
             gösterim_değer_çarpanı: 1.0,
             piksel_hizası: None,
             noktaları_göster: None,
+            nokta_boşluğu: 10.0,
+            nokta_boyutu: 5.0,
+            nokta_kalınlığı: 1.0,
+            nokta_dolgusu: None,
+            nokta_filtresi: NoktaFiltreKipi::Yok,
         }
     }
 
@@ -199,6 +218,34 @@ impl SeriSeçenekleri {
 
     pub fn noktaları_göster(mut self, göster: bool) -> Self {
         self.noktaları_göster = Some(göster);
+        self
+    }
+
+    pub fn nokta_boşluğu(mut self, boşluk: f32) -> Self {
+        if boşluk.is_finite() && boşluk >= 0.0 {
+            self.nokta_boşluğu = boşluk;
+        }
+        self
+    }
+
+    pub fn nokta_stili(
+        mut self,
+        boyut: f32,
+        kalınlık: f32,
+        dolgu: Option<impl Into<String>>,
+    ) -> Self {
+        if boyut.is_finite() && boyut > 0.0 {
+            self.nokta_boyutu = boyut;
+        }
+        if kalınlık.is_finite() && kalınlık >= 0.0 {
+            self.nokta_kalınlığı = kalınlık.min(self.nokta_boyutu);
+        }
+        self.nokta_dolgusu = dolgu.map(Into::into);
+        self
+    }
+
+    pub fn nokta_filtresi(mut self, filtre: NoktaFiltreKipi) -> Self {
+        self.nokta_filtresi = filtre;
         self
     }
 }

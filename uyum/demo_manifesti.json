@@ -2088,6 +2088,53 @@
         "common-interaction-profile", "panic-free-update-feedback"
       ],
       "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+    },
+    {
+      "sıra": 38,
+      "id": "points",
+      "başlık": { "en": "Points", "tr": "Noktalar" },
+      "kaynak": "demos/points.html",
+      "kaynak_sha256": "0072d98e884cfaabe9e902436ee505864ad2d5990035d2b5f72c8afd117328dc",
+      "ek_kaynaklar": [
+        { "yol": "demos/lib/randomWalk.js", "sha256": "4fab620adf2bb9e84a142b4aa1547a47997e80c77fc67d350bda28b4e364a417" },
+        { "yol": "src/paths/points.js", "sha256": "dfe1a48e0f35df9b82e9783d89254ce7cf981632e8726acdee3632639c33ea66" },
+        { "yol": "src/paths/linear.js", "sha256": "8f5002721c15f9a965b0e56522c58378c5b412856356c85188c74066ffba6749" },
+        { "yol": "src/paths/utils.js", "sha256": "7636973ddf67ca47993ae86a4b53b1e7a6ea5ebd90483e0c305e84d558c38e13" },
+        { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" },
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
+      ],
+      "fixture": "src/kart/points.rs#points_kartı",
+      "örnek": "examples/points.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/points.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/points.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin", "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin", "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı", "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı", "canli-coklu-seri-lejanti": "kartta_etkin",
+          "kosullu-bos-ve-dolu-noktalar": "kartta_etkin", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "kartta_etkin"
+        }
+      },
+      "sahip_faz": 1,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-four-surfaces", "source-random-walk-generator",
+        "source-exact-sparse-2761-index-data", "source-null-indexes",
+        "conditional-point-density", "points-space-zero", "points-paths-null",
+        "points-fill-size-width", "single-point-between-gaps-filter",
+        "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "panic-free-source-data-feedback"
+      ],
+      "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
     }
   ]
 }

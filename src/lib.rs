@@ -45,7 +45,8 @@ pub use kart::{
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KANIT_TOHUMU, MONTHS_KART_TANIM_ÖRNEĞİ,
     MONTHS_RU_KANIT_TOHUMU, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ, NoDataÖrneği,
     PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_ARALIK_MS, PIXEL_ALIGN_KANIT_TOHUMU,
-    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_PENCERE_MS, PathGapClipÖrneği, PixelAlignÖrneği,
+    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_PENCERE_MS, POINTS_KANIT_TOHUMU,
+    POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SmoothingÖrneği,
     ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
     add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
@@ -57,15 +58,17 @@ pub use kart::{
     hareketli_ortalama, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
     log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
-    no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, resize_kartı,
-    savitzky_golay, scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
+    no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
+    resize_kartı, savitzky_golay, scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı,
+    ÇubukÖrneği,
 };
 pub use olcek::Aralık;
 pub use secenek::{
     BantYönü, EtkileşimSeçenekleri, GradyanDurağı, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri,
     GüzelÖlçekDüzeni, IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu, KutuBıyıkDüzeni, MumDüzeni,
-    NoktaKatmanı, OdakDüzeni, OdakStili, SeriBandı, SeriSeçenekleri, SeriÇizimTürü, TarihAdları,
-    TekerlekAyarları, TekerlekKipi, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi,
-    YÖlçekSeçenekleri, ÇizimKancasıDüzeni, ÇizimSırası, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı,
+    NoktaFiltreKipi, NoktaKatmanı, OdakDüzeni, OdakStili, SeriBandı, SeriSeçenekleri,
+    SeriÇizimTürü, TarihAdları, TekerlekAyarları, TekerlekKipi, XÖlçekDağılımı, YÖlçekDağılımı,
+    YÖlçekEtiketBiçimi, YÖlçekSeçenekleri, ÇizimKancasıDüzeni, ÇizimSırası, ÇubukDüzeni, ÇubukYönü,
+    ÖlçekGradyanı,
 };
 pub use veri::{BoşlukKipi, HizalıDeğer, HizalıVeri, hizalı_verileri_birleştir};

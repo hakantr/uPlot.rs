@@ -31,6 +31,7 @@ mod no_data;
 mod ortak;
 mod path_gap_clip;
 mod pixel_align;
+mod points;
 mod resize;
 mod scale_padding;
 mod veri_uretici;
@@ -120,6 +121,7 @@ pub use pixel_align::{
     PIXEL_ALIGN_ARALIK_MS, PIXEL_ALIGN_KANIT_TOHUMU, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
     PIXEL_ALIGN_PENCERE_MS, PixelAlignÖrneği, pixel_align_kartı,
 };
+pub use points::{POINTS_KANIT_TOHUMU, POINTS_KART_TANIM_ÖRNEĞİ, PointsÖrneği, points_kartı};
 pub use resize::{RESIZE_KART_TANIM_ÖRNEĞİ, resize_kartı};
 pub use scale_padding::{SCALE_PADDING_KART_TANIM_ÖRNEĞİ, scale_padding_kartı};
 pub use zoom_touch::{ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, zoom_touch_kartı};

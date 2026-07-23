@@ -8,7 +8,7 @@ mod zaman;
 
 pub use gradyan::{GradyanDurağı, GradyanEkseni, GradyanKonumu, ÖlçekGradyanı};
 pub use isi_haritasi::{IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu};
-pub use seri::{SeriSeçenekleri, SeriÇizimTürü};
+pub use seri::{NoktaFiltreKipi, SeriSeçenekleri, SeriÇizimTürü};
 pub use y_olcek::{
     GüzelÖlçekDüzeni, YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri
 };
