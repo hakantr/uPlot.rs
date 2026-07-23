@@ -1,0 +1,26 @@
+id = "scatter"
+kaynak = "../uPlot/demos/scatter.html"
+fixture = "src/kart/scatter.rs#scatter_kartı"
+viewport = [1920, 1200]
+device_pixel_ratio = 1
+durum = "iki_mode_iki_yüzeyi"
+
+[veri]
+scatter_seri_sayısı = 4
+scatter_seri_başı_nokta = 10000
+bubble_seri_sayısı = 4
+bubble_seri_başı_nokta = 50
+kanıt_tohumu = "0x5ca77e42"
+koordinat_aralığı = [0, 500]
+balon_değer_aralığı = [1, 10000]
+balon_çap_aralığı = [0, 60]
+
+[etkileşim]
+bubble_vuruşu = "en_küçük_alan_sonra_en_yakın_merkez"
+etiket_alanları = ["Country", "Population", "GDP", "Income"]
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+svg_dizini = "target/scatter"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

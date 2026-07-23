@@ -428,6 +428,18 @@
       "rust_karşılığı": "GrafikSeçenekleri::x_eksen_karşıda / birincil_y_karşıda",
       "durum": "tam_kanıtlı",
       "test": "src/kart/scales_dir_ori.rs"
+    },
+    {
+      "kaynak_yolu": "Options.mode: 2 / Series.facets",
+      "rust_karşılığı": "DağılımDüzeni / DağılımSerisi / DağılımNoktası",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/scatter.rs"
+    },
+    {
+      "kaynak_yolu": "cursor.dataIdx / cursor.points.size / focus.dist",
+      "rust_karşılığı": "Grafik::dağılım_vuruşu_boyutta / DağılımVuruşu",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/scatter.rs"
     }
   ]
 }

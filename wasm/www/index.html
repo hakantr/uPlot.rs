@@ -284,6 +284,7 @@
       pixel_align_kart_tanim_ornegi,
       points_kart_tanim_ornegi,
       scales_dir_ori_kart_tanim_ornegi,
+      scatter_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -798,6 +799,41 @@
         ],
         yardım: "Yön ve yönelim · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
         değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+
+    const scatterYüzeyleri = [
+      ["scatter-points", "Scatter Plot", "10.000 × 4 sabit boyutlu nokta"],
+      ["scatter-bubble", "Bubble Plot", "50 × 4 alan ölçekli, etiketli balon"],
+    ];
+    document.querySelector('[data-kart="scales-dir-ori-x-minus-right-y-plus-bottom"]')?.insertAdjacentHTML(
+      "afterend",
+      scatterYüzeyleri.map(([kimlik, başlık, durum]) => `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>${kimlik}</small><div class="durum">${durum}</div>
+        </article>`).join("")
+    );
+    for (const [kimlik, başlık] of scatterYüzeyleri) {
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/scatter.html">scatter.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/quadtree.js">quadtree.js</a>
+          <br>Resmî mode-2 facet sayıları, 0…500 dağılımı, dört bölge ve balon alanı ölçeklemesi aynı parametrelerle üretilir.
+          <br>Örtüşmede en küçük, eşit alanda merkeze en yakın balon seçimi Rust çekirdeğindedir.`,
+        tanım: () => scatter_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/scatter.rs",
+        seriler: kimlik === "scatter-bubble" ? [
+          {etiket:"Region A",renk:"red"},{etiket:"Region B",renk:"green"},
+          {etiket:"Region C",renk:"blue"},{etiket:"Region E",renk:"orange"},
+        ] : [
+          {etiket:"Value",renk:"red"},{etiket:"Value",renk:"green"},
+          {etiket:"Value",renk:"blue"},{etiket:"Value",renk:"magenta"},
+        ],
+        yardım: kimlik === "scatter-bubble" ? "Balon üzerine gel: Country / Population / GDP / Income" : "40.000 kaynak noktası",
+        değişkenNokta: false,
+        dağılım: true,
+        bubble: kimlik === "scatter-bubble",
         etkileşimler: () => ortakEtkileşimler(),
       };
     }
@@ -1466,6 +1502,43 @@
           const hedef = chart.querySelector(`#seri-değeri-${seriİndeksi}`);
           if (hedef) hedef.textContent = Number(değer).toFixed(2);
         });
+        return;
+      }
+      if (kartlar[aktifKart].dağılım) {
+        const noktalar = kartlar[aktifKart].seriler.map((_, indeks) =>
+          svg.querySelector(`#imleç-nokta-${indeks}`)
+        );
+        noktalar.forEach(nokta => nokta?.setAttribute("visibility", "hidden"));
+        const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
+        if (!kartlar[aktifKart].bubble) {
+          if (bilgiKutusu) bilgiKutusu.hidden = true;
+          return;
+        }
+        const vuruş = oturum?.dagilim_vurusu(view.width, view.height, hamX, hamY) ?? [];
+        if (vuruş.length !== 8) {
+          if (bilgiKutusu) bilgiKutusu.hidden = true;
+          return;
+        }
+        const [seri, , merkezX, merkezY, boyut, veriX, veriY, nüfus] = vuruş;
+        const nokta = noktalar[seri];
+        nokta?.setAttribute("cx", merkezX); nokta?.setAttribute("cy", merkezY);
+        nokta?.setAttribute("r", boyut / 2);
+        nokta?.setAttribute("fill", kartlar[aktifKart].seriler[seri]?.renk ?? "#000");
+        nokta?.setAttribute("fill-opacity", "0.45");
+        nokta?.setAttribute("visibility", "visible");
+        const ülke = oturum?.dagilim_vurus_etiketi(view.width, view.height, hamX, hamY) ?? "";
+        const xHedefi = chart.querySelector("#x-değeri");
+        if (xHedefi) xHedefi.textContent = `$${veriX}`;
+        kartlar[aktifKart].seriler.forEach((_, indeks) => {
+          const hedef = chart.querySelector(`#seri-değeri-${indeks}`);
+          if (hedef) hedef.textContent = indeks === seri ? `${ülke} · ${nüfus} · $${veriY}` : "--";
+        });
+        if (bilgiKutusu) {
+          bilgiKutusu.textContent = `Country: ${ülke} · Population: ${nüfus} · GDP: $${veriX} · Income: $${veriY}`;
+          bilgiKutusu.hidden = false;
+          bilgiKutusu.style.left = `${Math.min(hamX + 12, chart.clientWidth - 300)}px`;
+          bilgiKutusu.style.top = `${Math.min(hamY + 12, chart.clientHeight - 50)}px`;
+        }
         return;
       }
       const çizgiler = ["imleç-x", "imleç-y"].map(id => svg.querySelector(`#${id}`));

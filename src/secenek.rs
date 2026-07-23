@@ -1,11 +1,13 @@
 use crate::{Aralık, UplotHatası};
 
+mod dagilim;
 mod gradyan;
 mod isi_haritasi;
 mod seri;
 mod y_olcek;
 mod zaman;
 
+pub use dagilim::{DağılımDüzeni, DağılımNoktası, DağılımSerisi};
 pub use gradyan::{GradyanDurağı, GradyanEkseni, GradyanKonumu, ÖlçekGradyanı};
 pub use isi_haritasi::{IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu};
 pub use seri::{NoktaFiltreKipi, SeriSeçenekleri, SeriÇizimTürü};
@@ -466,6 +468,7 @@ pub struct GrafikSeçenekleri {
     pub kutu_bıyık_düzeni: Option<KutuBıyıkDüzeni>,
     pub mum_düzeni: Option<MumDüzeni>,
     pub ısı_haritası_düzeni: Option<IsıHaritasıDüzeni>,
+    pub dağılım_düzeni: Option<DağılımDüzeni>,
     pub bantlar: Vec<SeriBandı>,
     pub nokta_katmanları: Vec<NoktaKatmanı>,
     pub çizim_kancaları: Option<ÇizimKancasıDüzeni>,
@@ -523,6 +526,7 @@ impl GrafikSeçenekleri {
             kutu_bıyık_düzeni: None,
             mum_düzeni: None,
             ısı_haritası_düzeni: None,
+            dağılım_düzeni: None,
             bantlar: Vec::new(),
             nokta_katmanları: Vec::new(),
             çizim_kancaları: None,
@@ -607,6 +611,11 @@ impl GrafikSeçenekleri {
 
     pub fn nokta_katmanı(mut self, katman: NoktaKatmanı) -> Self {
         self.nokta_katmanları.push(katman);
+        self
+    }
+
+    pub fn dağılım_düzeni(mut self, düzen: DağılımDüzeni) -> Self {
+        self.dağılım_düzeni = Some(düzen);
         self
     }
 

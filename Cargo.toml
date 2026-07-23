@@ -100,6 +100,10 @@ name = "scales_dir_ori"
 required-features = ["svg"]
 
 [[example]]
+name = "scatter"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

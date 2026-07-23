@@ -25,6 +25,18 @@ pub enum SeçimEylemi {
     Açıklamaİstendi,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct DağılımVuruşu {
+    pub seri: usize,
+    pub indeks: usize,
+    pub merkez: Nokta,
+    pub boyut: f32,
+    pub x: f64,
+    pub y: f64,
+    pub değer: Option<f64>,
+    pub etiket: Option<String>,
+}
+
 /// Doğrulanmış seçenek ve veriyi taşıyan çizelge örneği.
 pub struct Grafik {
     seçenekler: GrafikSeçenekleri,
@@ -62,6 +74,16 @@ impl Grafik {
             return Err(UplotHatası::GeçersizKaynakVeri {
                 varlık: "IsıHaritasıDüzeni",
                 açıklama: "hücre konumu, boyutu veya rengi geçersiz".to_string(),
+            });
+        }
+        if seçenekler
+            .dağılım_düzeni
+            .as_ref()
+            .is_some_and(|düzen| !düzen.geçerli_mi())
+        {
+            return Err(UplotHatası::GeçersizKaynakVeri {
+                varlık: "DağılımDüzeni",
+                açıklama: "seri, nokta koordinatı veya nokta boyutu geçersiz".to_string(),
             });
         }
         let mut tam = seçenekler
@@ -158,6 +180,67 @@ impl Grafik {
 
     pub fn boyut(&self) -> (u32, u32) {
         (self.seçenekler.genişlik, self.seçenekler.yükseklik)
+    }
+
+    pub fn dağılım_vuruşu_boyutta(
+        &self,
+        genişlik_px: u32,
+        yükseklik_px: u32,
+        x: f32,
+        y: f32,
+    ) -> Option<DağılımVuruşu> {
+        let düzen = self.seçenekler.dağılım_düzeni.as_ref()?;
+        if !düzen.vuruş_etkin || !x.is_finite() || !y.is_finite() {
+            return None;
+        }
+        let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
+        if !(sol..=sağ).contains(&x) || !(üst..=alt).contains(&y) {
+            return None;
+        }
+        let x_aralığı = self.görünür_x_aralığı();
+        let görünür_y = self.etkileşim.görünür_y();
+        let genişlik = sağ - sol;
+        let yükseklik = alt - üst;
+        let mut sonuç = None::<(f32, f32, DağılımVuruşu)>;
+        for (seri, seri_düzeni) in düzen.seriler.iter().enumerate() {
+            let y_aralığı =
+                self.görünür_ölçek_aralığı(&seri_düzeni.ölçek, x_aralığı, görünür_y);
+            for (indeks, nokta) in seri_düzeni.noktalar.iter().enumerate() {
+                let merkez = Nokta::yeni(
+                    self.x_konumu(x_aralığı, nokta.x, sol, genişlik),
+                    alt - self.y_konumu(&seri_düzeni.ölçek, y_aralığı, nokta.y, 0.0, yükseklik),
+                );
+                let yarıçap = nokta.boyut / 2.0;
+                let dx = merkez.x - x;
+                let dy = merkez.y - y;
+                let uzaklık_kare = dx * dx + dy * dy;
+                if uzaklık_kare > yarıçap * yarıçap {
+                    continue;
+                }
+                let alan = nokta.boyut * nokta.boyut;
+                let aday = DağılımVuruşu {
+                    seri,
+                    indeks,
+                    merkez,
+                    boyut: nokta.boyut,
+                    x: nokta.x,
+                    y: nokta.y,
+                    değer: nokta.değer,
+                    etiket: nokta.etiket.clone(),
+                };
+                if sonuç
+                    .as_ref()
+                    .is_none_or(|(önceki_alan, önceki_uzaklık, _)| {
+                        alan < *önceki_alan
+                            || ((alan - *önceki_alan).abs() <= f32::EPSILON
+                                && uzaklık_kare <= *önceki_uzaklık)
+                    })
+                {
+                    sonuç = Some((alan, uzaklık_kare, aday));
+                }
+            }
+        }
+        sonuç.map(|(_, _, vuruş)| vuruş)
     }
 
     /// uPlot `setData(data)` karşılığı olarak hizalı veriyi doğrular, uygular
@@ -1291,6 +1374,19 @@ impl Grafik {
                     });
                 }
             }
+            if !ölçek.eksen_etiketi.is_empty() {
+                sahne.ekle(Komut::Metin {
+                    konum: Nokta::yeni(if ölçek.sağda { sağ } else { sol }, üst - 12.0),
+                    içerik: ölçek.eksen_etiketi.clone(),
+                    renk: ölçek.eksen_rengi.clone(),
+                    boyut: 12.0,
+                    hiza: if ölçek.sağda {
+                        MetinHizası::Bitiş
+                    } else {
+                        MetinHizası::Başlangıç
+                    },
+                });
+            }
         }
 
         let x_boyutu = if self.seçenekler.x_dikey {
@@ -1446,6 +1542,48 @@ impl Grafik {
                 üst,
                 alt,
             );
+        }
+        if let Some(düzen) = &self.seçenekler.dağılım_düzeni {
+            for seri in &düzen.seriler {
+                let seri_y_aralığı =
+                    self.görünür_ölçek_aralığı(&seri.ölçek, x_aralığı, görünür_y);
+                for nokta in &seri.noktalar {
+                    if nokta.x < x_aralığı.en_az
+                        || nokta.x > x_aralığı.en_çok
+                        || nokta.y < seri_y_aralığı.en_az
+                        || nokta.y > seri_y_aralığı.en_çok
+                    {
+                        continue;
+                    }
+                    let merkez = Nokta::yeni(
+                        self.x_konumu(x_aralığı, nokta.x, sol, genişlik),
+                        alt - self.y_konumu(&seri.ölçek, seri_y_aralığı, nokta.y, 0.0, yükseklik),
+                    );
+                    let yarıçap = nokta.boyut / 2.0;
+                    if merkez.x - yarıçap >= sol
+                        && merkez.x + yarıçap <= sağ
+                        && merkez.y - yarıçap >= üst
+                        && merkez.y + yarıçap <= alt
+                    {
+                        sahne.ekle(Komut::Daire {
+                            merkez,
+                            yarıçap,
+                            dolgu: seri.dolgu.clone(),
+                            çizgi: seri.renk.clone(),
+                            kalınlık: 1.0,
+                        });
+                    } else {
+                        let çokgen = daire_çokgeni(merkez, yarıçap, 32);
+                        let kırpılmış = çokgeni_dikdörtgene_kırp(&çokgen, sol, sağ, üst, alt);
+                        if kırpılmış.len() >= 3 {
+                            sahne.ekle(Komut::Alan {
+                                çokgenler: vec![kırpılmış],
+                                dolgu: seri.dolgu.clone(),
+                            });
+                        }
+                    }
+                }
+            }
         }
 
         for (seri_indeksi, değerler) in self.veri.seriler().iter().enumerate() {
@@ -3639,6 +3777,19 @@ fn yıldız_çokgeni(merkez: Nokta, uçlar: usize, dış: f32, iç: f32) -> Vec<
         ));
     }
     noktalar
+}
+
+fn daire_çokgeni(merkez: Nokta, yarıçap: f32, parça: usize) -> Vec<Nokta> {
+    let parça = parça.max(8);
+    (0..parça)
+        .map(|indeks| {
+            let açı = std::f32::consts::TAU * indeks as f32 / parça as f32;
+            Nokta::yeni(
+                merkez.x + yarıçap * açı.cos(),
+                merkez.y + yarıçap * açı.sin(),
+            )
+        })
+        .collect()
 }
 
 fn piksele_hizala(değer: f32, adım: f32) -> f32 {

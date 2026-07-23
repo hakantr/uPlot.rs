@@ -58,6 +58,7 @@ pub struct YÖlçekSeçenekleri {
     pub ızgara: bool,
     pub eksen_görünür: bool,
     pub eksen_rengi: String,
+    pub eksen_etiketi: String,
     pub birim: String,
     pub kaynak: Option<String>,
     pub dönüşüm_çarpanı: f64,
@@ -79,6 +80,7 @@ impl YÖlçekSeçenekleri {
             ızgara: true,
             eksen_görünür: false,
             eksen_rengi: "#4b5563".to_string(),
+            eksen_etiketi: String::new(),
             birim: String::new(),
             kaynak: None,
             dönüşüm_çarpanı: 1.0,
@@ -114,6 +116,11 @@ impl YÖlçekSeçenekleri {
 
     pub fn eksen_rengi(mut self, renk: impl Into<String>) -> Self {
         self.eksen_rengi = renk.into();
+        self
+    }
+
+    pub fn eksen_etiketi(mut self, etiket: impl Into<String>) -> Self {
+        self.eksen_etiketi = etiket.into();
         self
     }
 

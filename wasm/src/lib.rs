@@ -20,20 +20,20 @@ use uplot_rs::{
     NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
     POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
-    ScalesDirOriÖrneği, SeriSeçenekleri, SeçimEylemi, SmoothingÖrneği, UplotHatası,
-    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
-    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
-    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
-    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
-    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
-    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
-    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
-    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    SCATTER_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SeçimEylemi,
+    SmoothingÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
+    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
+    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
+    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
+    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
+    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
-    resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, zoom_touch_kartı, zoom_wheel_kartı,
-    ÇubukYönü, ÇubukÖrneği,
+    resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, zoom_touch_kartı,
+    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -109,6 +109,15 @@ impl KartOturumu {
                     scales_dir_ori_kartı,
                 )
             }
+            kimlik if kimlik.starts_with("scatter-") => ScatterÖrneği::kimlikten(kimlik)
+                .map_or_else(
+                    || {
+                        Err(UplotHatası::BilinmeyenKart {
+                            kimlik: kimlik.to_string(),
+                        })
+                    },
+                    scatter_kartı,
+                ),
             "cursor-bind" => cursor_bind_kartı(),
             "cursor-snap" => cursor_snap_kartı(),
             "cursor-tooltip" => cursor_tooltip_kartı(),
@@ -441,6 +450,30 @@ impl KartOturumu {
             })
     }
 
+    pub fn dagilim_vurusu(&self, genişlik: u32, yükseklik: u32, x: f32, y: f32) -> Vec<f64> {
+        self.grafik
+            .dağılım_vuruşu_boyutta(genişlik, yükseklik, x, y)
+            .map_or_else(Vec::new, |vuruş| {
+                vec![
+                    vuruş.seri as f64,
+                    vuruş.indeks as f64,
+                    f64::from(vuruş.merkez.x),
+                    f64::from(vuruş.merkez.y),
+                    f64::from(vuruş.boyut),
+                    vuruş.x,
+                    vuruş.y,
+                    vuruş.değer.unwrap_or(f64::NAN),
+                ]
+            })
+    }
+
+    pub fn dagilim_vurus_etiketi(&self, genişlik: u32, yükseklik: u32, x: f32, y: f32) -> String {
+        self.grafik
+            .dağılım_vuruşu_boyutta(genişlik, yükseklik, x, y)
+            .and_then(|vuruş| vuruş.etiket)
+            .unwrap_or_default()
+    }
+
     pub fn cizim_alani(&self, genişlik: u32, yükseklik: u32) -> Vec<f64> {
         let (sol, sağ, üst, alt) = self.grafik.çizim_alanı_boyutta(genişlik, yükseklik);
         vec![
@@ -554,7 +587,7 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    179
+    181
 }
 
 #[wasm_bindgen]
@@ -688,6 +721,11 @@ pub fn scales_dir_ori_kart_tanim_ornegi() -> String {
 }
 
 #[wasm_bindgen]
+pub fn scatter_kart_tanim_ornegi() -> String {
+    SCATTER_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
 pub fn cursor_snap_kart_tanim_ornegi() -> String {
     CURSOR_SNAP_KART_TANIM_ÖRNEĞİ.to_string()
 }
@@ -791,7 +829,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 179);
+        assert_eq!(kart_sayisi(), 181);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -816,7 +854,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 179);
+        assert_eq!(kart_sayisi(), 181);
     }
 
     #[test]
@@ -834,7 +872,7 @@ mod testler {
             }
         }
         assert!(path_gap_clip_kart_tanim_ornegi().contains("path_gap_clip_kartı"));
-        assert_eq!(kart_sayisi(), 179);
+        assert_eq!(kart_sayisi(), 181);
     }
 
     #[test]
@@ -850,7 +888,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(pixel_align_kart_tanim_ornegi().contains("pixel_align_kartı"));
-        assert_eq!(kart_sayisi(), 179);
+        assert_eq!(kart_sayisi(), 181);
     }
 
     #[test]
@@ -865,7 +903,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(points_kart_tanim_ornegi().contains("points_kartı"));
-        assert_eq!(kart_sayisi(), 179);
+        assert_eq!(kart_sayisi(), 181);
     }
 
     #[test]
@@ -881,7 +919,41 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(scales_dir_ori_kart_tanim_ornegi().contains("scales_dir_ori_kartı"));
-        assert_eq!(kart_sayisi(), 179);
+        assert_eq!(kart_sayisi(), 181);
+    }
+
+    #[test]
+    fn scatter_wasm_iki_mode_iki_yüzeyini_ve_vuruşu_üretir() {
+        for örnek in ScatterÖrneği::TÜMÜ {
+            let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
+            assert!(oturum.is_ok(), "{}", örnek.kimlik());
+            let Ok(oturum) = oturum else { continue };
+            assert!(oturum.svg(1_920, 600).contains(örnek.başlık()));
+        }
+        let Ok(oturum) = KartOturumu::yeni("scatter-bubble", 100) else {
+            return;
+        };
+        let vuruş_adayı = oturum
+            .grafik
+            .çiz()
+            .komutlar()
+            .iter()
+            .find_map(|komut| match komut {
+                uplot_rs::Komut::Daire { merkez, .. } => Some(*merkez),
+                _ => None,
+            });
+        let Some(merkez) = vuruş_adayı else { return };
+        assert_eq!(
+            oturum.dagilim_vurusu(1_920, 600, merkez.x, merkez.y).len(),
+            8
+        );
+        assert!(
+            !oturum
+                .dagilim_vurus_etiketi(1_920, 600, merkez.x, merkez.y)
+                .is_empty()
+        );
+        assert!(scatter_kart_tanim_ornegi().contains("scatter_kartı"));
+        assert_eq!(kart_sayisi(), 181);
     }
 
     #[test]

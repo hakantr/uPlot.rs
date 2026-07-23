@@ -2205,6 +2205,52 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "kısmi"
       }
+    },
+    {
+      "sıra": 40,
+      "id": "scatter",
+      "başlık": { "en": "Scatter & Bubble", "tr": "Dağılım ve Balon" },
+      "kaynak": "demos/scatter.html",
+      "kaynak_sha256": "dab2c42e9135cc5b85b6166d559a60d478a09c0c2f72c4e710f3157ce01c17b7",
+      "ek_kaynaklar": [
+        { "yol": "demos/lib/quadtree.js", "sha256": "b538fad72f5c4687c536992f2ce55ecb990c32ac0c784bafceddb57c39fc0670" },
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" },
+        { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" }
+      ],
+      "fixture": "src/kart/scatter.rs#scatter_kartı",
+      "örnek": "examples/scatter.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/scatter.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/scatter.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin", "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin", "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "kartta_etkin", "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "kartta_etkin", "canli-coklu-seri-lejanti": "kartta_etkin",
+          "kosullu-bos-ve-dolu-noktalar": "kartta_etkin", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "kartta_etkin"
+        }
+      },
+      "sahip_faz": 3,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-mode2-two-surfaces", "source-seeded-40000-scatter-points",
+        "source-seeded-200-bubbles", "area-scaled-bubble-size", "facet-y2-region",
+        "smallest-overlap-hit-selection", "bubble-live-values", "gpui-wasm-catalog-parity",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
+        "performans": "kısmi"
+      }
     }
   ]
 }

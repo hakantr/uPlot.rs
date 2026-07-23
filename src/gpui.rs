@@ -12,8 +12,8 @@ use ::gpui::{
 };
 
 use crate::{
-    DoğrusalGradyan, Grafik, Komut, MetinHizası, Nokta, Sahne, SeriSeçenekleri, SeçimEylemi,
-    UplotHatası,
+    DağılımVuruşu, DoğrusalGradyan, Grafik, Komut, MetinHizası, Nokta, Sahne, SeriSeçenekleri,
+    SeçimEylemi, UplotHatası,
 };
 
 #[derive(Clone)]
@@ -21,6 +21,7 @@ struct İmleçDurumu {
     fare: Nokta,
     veri_x: f64,
     seri_değerleri: Vec<Option<f64>>,
+    dağılım: Option<DağılımVuruşu>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -180,6 +181,16 @@ impl GpuiGrafik {
         let mut sahne = self.grafik.çiz();
         let (sol, sağ, üst, alt) = self.çizim_alanı();
         if let Some(imleç) = self.imleç.as_ref() {
+            if let Some(vuruş) = &imleç.dağılım {
+                sahne.ekle(Komut::Daire {
+                    merkez: vuruş.merkez,
+                    yarıçap: vuruş.boyut / 2.0,
+                    dolgu: "#ffffff66".to_string(),
+                    çizgi: "#111111".to_string(),
+                    kalınlık: 2.0,
+                });
+                return sahne;
+            }
             if let Some((_, _, konum, genişlik, yükseklik, _)) = self.grafik.çubuk_vuruşu(
                 self.grafik.boyut().0,
                 self.grafik.boyut().1,
@@ -367,6 +378,24 @@ impl GpuiGrafik {
             return;
         }
         let (sol, sağ, üst, alt) = self.çizim_alanı();
+        if let Some(vuruş) = self.grafik.dağılım_vuruşu_boyutta(
+            self.grafik.boyut().0,
+            self.grafik.boyut().1,
+            fare.x,
+            fare.y,
+        ) {
+            let mut değerler = vec![None; self.grafik.seri_seçenekleri().len()];
+            if let Some(hedef) = değerler.get_mut(vuruş.seri) {
+                *hedef = Some(vuruş.y);
+            }
+            self.imleç = Some(İmleçDurumu {
+                fare,
+                veri_x: vuruş.x,
+                seri_değerleri: değerler,
+                dağılım: Some(vuruş),
+            });
+            return;
+        }
         let yatay = f64::from((fare.x - sol) / (sağ - sol));
         let dikey = f64::from((fare.y - üst) / (alt - üst));
         let Some((yatay, dikey)) = self.grafik.imleç_oranlarını_uyarla(
@@ -402,6 +431,7 @@ impl GpuiGrafik {
             ),
             veri_x,
             seri_değerleri,
+            dağılım: None,
         });
     }
 
@@ -507,7 +537,11 @@ impl Render for GpuiGrafik {
             .as_ref()
             .filter(|_| self.grafik.etkileşim_seçenekleri().imleç_bilgi_kutusu)
             .and_then(|imleç| {
-                let y = imleç.seri_değerleri.first().copied().flatten()?;
+                let y = imleç
+                    .dağılım
+                    .as_ref()
+                    .map(|vuruş| vuruş.y)
+                    .or_else(|| imleç.seri_değerleri.first().copied().flatten())?;
                 let sınırlar = self.çizim_sınırları.get()?;
                 let (kaynak_g, kaynak_y) = self.grafik.boyut();
                 let ölçek = (f32::from(sınırlar.size.width) / kaynak_g as f32)
@@ -522,11 +556,26 @@ impl Render for GpuiGrafik {
                 Some((
                     sol,
                     üst,
-                    format!(
-                        "{},{y} at {},{}",
-                        imleç.veri_x,
-                        imleç.fare.x.round(),
-                        imleç.fare.y.round()
+                    imleç.dağılım.as_ref().map_or_else(
+                        || {
+                            format!(
+                                "{},{y} at {},{}",
+                                imleç.veri_x,
+                                imleç.fare.x.round(),
+                                imleç.fare.y.round()
+                            )
+                        },
+                        |vuruş| {
+                            format!(
+                                "Country: {} · Population: {} · GDP: ${} · Income: ${}",
+                                vuruş.etiket.as_deref().unwrap_or("--"),
+                                vuruş
+                                    .değer
+                                    .map_or_else(|| "--".to_string(), |değer| değer.to_string()),
+                                vuruş.x,
+                                vuruş.y
+                            )
+                        },
                     ),
                 ))
             });
