@@ -38,6 +38,7 @@ mod scales_dir_ori;
 mod scatter;
 mod scroll_sync;
 mod sine_stream;
+mod soft_minmax;
 mod veri_uretici;
 mod zoom_touch;
 mod zoom_wheel;
@@ -140,6 +141,9 @@ pub use scroll_sync::{
 pub use sine_stream::{
     SINE_STREAM_KANIT_TOHUMU, SINE_STREAM_KART_TANIM_ÖRNEĞİ, SINE_STREAM_NOKTA_SAYISI, SineAkışı,
     sine_stream_kartı,
+};
+pub use soft_minmax::{
+    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SoftMinMaxAkışı, SoftMinMaxÖrneği, soft_minmax_kartı,
 };
 pub use zoom_touch::{ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, zoom_touch_kartı};
 pub use zoom_wheel::{ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, zoom_wheel_kartı};

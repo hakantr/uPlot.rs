@@ -122,7 +122,16 @@ impl Grafik {
                         birincil_ölçek.is_none_or(|ölçek| ölçek.log_tam_büyüklükler),
                     )
                     .unwrap_or_else(|| Aralık::otomatik(değerler())),
-                    _ => Aralık::otomatik(değerler()),
+                    _ => birincil_ölçek
+                        .and_then(|ölçek| ölçek.sayısal_aralık)
+                        .and_then(|ayarlar| {
+                            sonlu_sınırlar(değerler().flatten().copied()).and_then(
+                                |(en_az, en_çok)| {
+                                    Aralık::uplot_yapılandırılmış(en_az, en_çok, ayarlar).ok()
+                                },
+                            )
+                        })
+                        .unwrap_or_else(|| Aralık::otomatik(değerler())),
                 }
             });
         if let Some(düzen) = birincil_ölçek.and_then(|ölçek| ölçek.güzel_ölçek) {
@@ -2783,7 +2792,17 @@ impl Grafik {
                         logaritmik_otomatik_aralık(görünür(), taban, tam)
                             .unwrap_or_else(|| Aralık::otomatik(görünür()))
                     }
-                    _ => Aralık::otomatik(görünür()),
+                    _ => self
+                        .ölçek_seçeneği(anahtar)
+                        .and_then(|ölçek| ölçek.sayısal_aralık)
+                        .and_then(|ayarlar| {
+                            sonlu_sınırlar(görünür().flatten().copied()).and_then(
+                                |(en_az, en_çok)| {
+                                    Aralık::uplot_yapılandırılmış(en_az, en_çok, ayarlar).ok()
+                                },
+                            )
+                        })
+                        .unwrap_or_else(|| Aralık::otomatik(görünür())),
                 }
             })
     }
@@ -3380,13 +3399,18 @@ fn uygun_artım(aralık: Aralık, boyut: f32, en_az_boşluk: f32) -> f64 {
 }
 
 fn sonlu_aralık(değerler: impl Iterator<Item = f64>) -> Option<Aralık> {
+    let (en_az, en_çok) = sonlu_sınırlar(değerler)?;
+    Aralık::yeni(en_az, en_çok).ok()
+}
+
+fn sonlu_sınırlar(değerler: impl Iterator<Item = f64>) -> Option<(f64, f64)> {
     let mut en_az = f64::INFINITY;
     let mut en_çok = f64::NEG_INFINITY;
     for değer in değerler.filter(|değer| değer.is_finite()) {
         en_az = en_az.min(değer);
         en_çok = en_çok.max(değer);
     }
-    Aralık::yeni(en_az, en_çok).ok()
+    (en_az.is_finite() && en_çok.is_finite()).then_some((en_az, en_çok))
 }
 
 fn güzel_sayı(fark: f64, yuvarla: bool) -> Option<f64> {

@@ -422,11 +422,11 @@
     },
     {
       "sembol": "Config.max",
-      "durum": "araştırılacak"
+      "durum": "kısmi_veya_uygulandı"
     },
     {
       "sembol": "Config.min",
-      "durum": "araştırılacak"
+      "durum": "kısmi_veya_uygulandı"
     },
     {
       "sembol": "Cursor.bind",

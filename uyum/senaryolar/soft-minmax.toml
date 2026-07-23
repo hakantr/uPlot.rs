@@ -1,0 +1,25 @@
+id = "soft-minmax"
+kaynak = "../uPlot/demos/soft-minmax.html"
+fixture = "src/kart/soft_minmax.rs#soft_minmax_kartı"
+viewport = [1600, 900]
+device_pixel_ratio = 1
+durum = "beş_soft_minmax_yüzeyi"
+
+[veri]
+yüzey_sayısı = 5
+boyut = [400, 400]
+canlı_x = [0, 10]
+canlı_y = [5, 12]
+düz_x = [1, 2]
+düz_y = [0, 0]
+
+[etkileşim]
+düğme = "dataMax++"
+aralık_milisaniye = 50
+güncelleme = "SoftMinMaxAkışı::ilerlet_to_Grafik::veriyi_ayarla"
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+svg_dizini = "target/soft-minmax"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

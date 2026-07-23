@@ -114,6 +114,11 @@ path = "examples/sine_stream.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "soft-minmax"
+path = "examples/soft_minmax.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

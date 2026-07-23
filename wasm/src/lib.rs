@@ -21,20 +21,22 @@ use uplot_rs::{
     POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
     SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
-    ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SeçimEylemi, SineAkışı, SmoothingÖrneği,
-    UplotHatası, YüzeyDikdörtgeni, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SeçimEylemi,
+    SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, UplotHatası, YüzeyDikdörtgeni,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
-    sine_stream_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    sine_stream_kartı, soft_minmax_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü,
+    ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -47,6 +49,7 @@ pub struct KartOturumu {
     dinamik_seri_sayacı: u32,
     yüzey: Option<YüzeyDikdörtgeni>,
     sine_akışı: Option<SineAkışı>,
+    soft_minmax_akışı: Option<SoftMinMaxAkışı>,
 }
 
 #[wasm_bindgen]
@@ -123,6 +126,15 @@ impl KartOturumu {
                 ),
             "scroll-sync" => scroll_sync_kartı(),
             "sine-stream" => sine_stream_kartı(),
+            kimlik if kimlik.starts_with("soft-minmax-") => SoftMinMaxÖrneği::kimlikten(kimlik)
+                .map_or_else(
+                    || {
+                        Err(UplotHatası::BilinmeyenKart {
+                            kimlik: kimlik.to_string(),
+                        })
+                    },
+                    |örnek| soft_minmax_kartı(örnek, 12.0),
+                ),
             "cursor-bind" => cursor_bind_kartı(),
             "cursor-snap" => cursor_snap_kartı(),
             "cursor-tooltip" => cursor_tooltip_kartı(),
@@ -221,12 +233,15 @@ impl KartOturumu {
         } else {
             None
         };
+        let soft_minmax_akışı =
+            SoftMinMaxÖrneği::kimlikten(kart_kimliği).map(|_| SoftMinMaxAkışı::yeni());
         Ok(Self {
             grafik,
             kart_kimliği: kart_kimliği.to_string(),
             dinamik_seri_sayacı: 0,
             yüzey: None,
             sine_akışı,
+            soft_minmax_akışı,
         })
     }
 
@@ -262,6 +277,21 @@ impl KartOturumu {
             return Ok(false);
         };
         let veri = akış.ilerlet().map_err(js_hatası)?;
+        self.grafik.veriyi_ayarla(veri).map_err(js_hatası)?;
+        Ok(true)
+    }
+
+    pub fn soft_minmax_ilerlet(&mut self) -> Result<bool, JsValue> {
+        let Some(örnek) = SoftMinMaxÖrneği::kimlikten(&self.kart_kimliği) else {
+            return Ok(false);
+        };
+        if !örnek.canlı_mı() {
+            return Ok(false);
+        }
+        let Some(akış) = self.soft_minmax_akışı.as_mut() else {
+            return Ok(false);
+        };
+        let veri = akış.ilerlet(örnek).map_err(js_hatası)?;
         self.grafik.veriyi_ayarla(veri).map_err(js_hatası)?;
         Ok(true)
     }
@@ -631,7 +661,12 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    183
+    188
+}
+
+#[wasm_bindgen]
+pub fn soft_minmax_kart_tanim_ornegi() -> String {
+    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -883,7 +918,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 183);
+        assert_eq!(kart_sayisi(), 188);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -908,7 +943,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 183);
+        assert_eq!(kart_sayisi(), 188);
     }
 
     #[test]
@@ -926,7 +961,7 @@ mod testler {
             }
         }
         assert!(path_gap_clip_kart_tanim_ornegi().contains("path_gap_clip_kartı"));
-        assert_eq!(kart_sayisi(), 183);
+        assert_eq!(kart_sayisi(), 188);
     }
 
     #[test]
@@ -942,7 +977,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(pixel_align_kart_tanim_ornegi().contains("pixel_align_kartı"));
-        assert_eq!(kart_sayisi(), 183);
+        assert_eq!(kart_sayisi(), 188);
     }
 
     #[test]
@@ -957,7 +992,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(points_kart_tanim_ornegi().contains("points_kartı"));
-        assert_eq!(kart_sayisi(), 183);
+        assert_eq!(kart_sayisi(), 188);
     }
 
     #[test]
@@ -973,7 +1008,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(scales_dir_ori_kart_tanim_ornegi().contains("scales_dir_ori_kartı"));
-        assert_eq!(kart_sayisi(), 183);
+        assert_eq!(kart_sayisi(), 188);
     }
 
     #[test]
@@ -1007,7 +1042,7 @@ mod testler {
                 .is_empty()
         );
         assert!(scatter_kart_tanim_ornegi().contains("scatter_kartı"));
-        assert_eq!(kart_sayisi(), 183);
+        assert_eq!(kart_sayisi(), 188);
     }
 
     #[test]
@@ -1038,7 +1073,30 @@ mod testler {
         assert!(oturum.sine_akisini_ilerlet().is_ok_and(|değişti| değişti));
         assert_ne!(oturum.svg(1_920, 600), önce);
         assert!(sine_stream_kart_tanim_ornegi().contains("SineAkışı"));
-        assert_eq!(kart_sayisi(), 183);
+        assert_eq!(kart_sayisi(), 188);
+    }
+
+    #[test]
+    fn soft_minmax_wasm_beş_yüzeyi_ve_canlı_artışı_korur() {
+        for örnek in SoftMinMaxÖrneği::TÜMÜ {
+            let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
+            assert!(oturum.is_ok(), "{}", örnek.kimlik());
+            let Ok(mut oturum) = oturum else {
+                continue;
+            };
+            let aralık = oturum.gorunur_y_araligi();
+            assert_eq!(aralık.len(), 2);
+            if örnek.canlı_mı() {
+                let önce = oturum.svg(400, 400);
+                assert!(oturum.soft_minmax_ilerlet().is_ok_and(|değişti| değişti));
+                assert_ne!(oturum.svg(400, 400), önce);
+            } else {
+                assert_eq!(aralık, vec![-1.0, 1.0]);
+                assert!(matches!(oturum.soft_minmax_ilerlet(), Ok(false)));
+            }
+        }
+        assert!(soft_minmax_kart_tanim_ornegi().contains("SoftMinMaxAkışı"));
+        assert_eq!(kart_sayisi(), 188);
     }
 
     #[test]

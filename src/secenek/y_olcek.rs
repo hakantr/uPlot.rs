@@ -1,4 +1,4 @@
-use crate::{Aralık, UplotHatası};
+use crate::{Aralık, SayısalAralıkAyarları, UplotHatası};
 
 /// `nice-scale.html` içindeki piksel yüksekliğine bağlı güzel sayı
 /// algoritmasının doğrulanmış ayarları.
@@ -69,6 +69,7 @@ pub struct YÖlçekSeçenekleri {
     pub etiket_biçimi: YÖlçekEtiketBiçimi,
     pub log_tam_büyüklükler: bool,
     pub güzel_ölçek: Option<GüzelÖlçekDüzeni>,
+    pub sayısal_aralık: Option<SayısalAralıkAyarları>,
 }
 
 impl YÖlçekSeçenekleri {
@@ -91,6 +92,7 @@ impl YÖlçekSeçenekleri {
             etiket_biçimi: YÖlçekEtiketBiçimi::Otomatik,
             log_tam_büyüklükler: true,
             güzel_ölçek: None,
+            sayısal_aralık: None,
         }
     }
 
@@ -195,6 +197,11 @@ impl YÖlçekSeçenekleri {
 
     pub fn güzel_ölçek(mut self, düzen: GüzelÖlçekDüzeni) -> Self {
         self.güzel_ölçek = Some(düzen);
+        self
+    }
+
+    pub fn sayısal_aralık(mut self, ayarlar: SayısalAralıkAyarları) -> Self {
+        self.sayısal_aralık = Some(ayarlar);
         self
     }
 }

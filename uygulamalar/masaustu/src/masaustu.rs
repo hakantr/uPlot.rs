@@ -28,20 +28,21 @@ use uplot_rs::{
     POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
     SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
-    ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı, SmoothingÖrneği, UplotHatası,
-    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
-    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
-    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
-    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
-    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
-    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
-    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
-    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı,
+    SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
+    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
+    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
+    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
+    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
+    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
-    sine_stream_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    sine_stream_kartı, soft_minmax_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü,
+    ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -66,6 +67,7 @@ enum KartKimliği {
     Scatter(ScatterÖrneği),
     ScrollSync,
     SineStream,
+    SoftMinMax(SoftMinMaxÖrneği),
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -116,6 +118,7 @@ impl KartKimliği {
             Self::Scatter(örnek) => örnek.başlık(),
             Self::ScrollSync => "Scroll syncRect()",
             Self::SineStream => "6 series x 600 points @ 60fps",
+            Self::SoftMinMax(örnek) => örnek.başlık(),
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -186,6 +189,9 @@ impl KartKimliği {
             Self::Scatter(_) => "scatter.html · quadtree.js · mode:2 facet ve bubble vuruşu",
             Self::ScrollSync => "scroll-sync.html · syncRect() · kaydırmada istemci/sahne eşlemesi",
             Self::SineStream => "sine-stream.html · Box–Muller yürüyüşü · requestAnimationFrame",
+            Self::SoftMinMax(_) => {
+                "soft-minmax.html · rangeNum soft/hard/pad/mode · kaynak dataMax++"
+            }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -254,6 +260,7 @@ impl KartKimliği {
             Self::Scatter(_) => SCATTER_KART_TANIM_ÖRNEĞİ,
             Self::ScrollSync => SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
             Self::SineStream => SINE_STREAM_KART_TANIM_ÖRNEĞİ,
+            Self::SoftMinMax(_) => SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -300,6 +307,7 @@ impl KartKimliği {
             Self::Scatter(_) => "src/kart/scatter.rs",
             Self::ScrollSync => "src/kart/scroll_sync.rs",
             Self::SineStream => "src/kart/sine_stream.rs",
+            Self::SoftMinMax(_) => "src/kart/soft_minmax.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -357,6 +365,8 @@ pub struct ChartListesi {
     align_data_zamanlayıcısı: Option<Task<()>>,
     pixel_align_adımı: usize,
     sine_akışı: Option<SineAkışı>,
+    soft_minmax_akışı: Option<SoftMinMaxAkışı>,
+    soft_minmax_çalışıyor: bool,
 }
 
 impl ChartListesi {
@@ -411,6 +421,8 @@ impl ChartListesi {
             align_data_zamanlayıcısı: None,
             pixel_align_adımı: 140,
             sine_akışı: None,
+            soft_minmax_akışı: None,
+            soft_minmax_çalışıyor: false,
         }
     }
 
@@ -474,6 +486,9 @@ impl ChartListesi {
         } else {
             None
         };
+        self.soft_minmax_akışı =
+            matches!(kart, KartKimliği::SoftMinMax(_)).then(SoftMinMaxAkışı::yeni);
+        self.soft_minmax_çalışıyor = false;
         let etkileşimler = kart.etkileşimler();
         self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
         self.tekerlek_anahtarı.update(cx, |anahtar, cx| {
@@ -585,6 +600,62 @@ impl ChartListesi {
         }
     }
 
+    fn soft_minmax_başlat(&mut self, cx: &mut Context<Self>) {
+        let KartKimliği::SoftMinMax(örnek) = self.aktif_kart else {
+            return;
+        };
+        if !örnek.canlı_mı() || self.soft_minmax_çalışıyor {
+            return;
+        }
+        self.soft_minmax_çalışıyor = true;
+        let kart = self.aktif_kart;
+        self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
+            loop {
+                cx.background_executor()
+                    .timer(Duration::from_millis(50))
+                    .await;
+                let devam = bu
+                    .update(cx, |bu, cx| {
+                        if bu.aktif_kart != kart {
+                            return false;
+                        }
+                        let sonuç = bu.soft_minmax_akışı.as_mut().map_or_else(
+                            || {
+                                Err(UplotHatası::GeçersizKaynakVeri {
+                                    varlık: "SoftMinMaxAkışı",
+                                    açıklama: "masaüstü akış durumu bulunamadı".to_string(),
+                                })
+                            },
+                            |akış| akış.ilerlet(örnek),
+                        );
+                        match sonuç {
+                            Ok(veri) => {
+                                if let Some(grafik) = &bu.grafik {
+                                    let güncellendi = grafik
+                                        .update(cx, |grafik, cx| grafik.veriyi_ayarla(veri, cx));
+                                    if let Err(hata) = güncellendi {
+                                        bu.hata =
+                                            Some(format!("Soft Min/Max güncellenemedi: {hata}"));
+                                        return false;
+                                    }
+                                }
+                                true
+                            }
+                            Err(hata) => {
+                                bu.hata = Some(format!("Soft Min/Max verisi üretilemedi: {hata}"));
+                                false
+                            }
+                        }
+                    })
+                    .unwrap_or(false);
+                if !devam {
+                    break;
+                }
+            }
+        }));
+        cx.notify();
+    }
+
     fn arcsinh_kuvvetini_ayarla(&mut self, kuvvet: i32, cx: &mut Context<Self>) {
         let kuvvet = kuvvet.clamp(-3, 3);
         let eşik = 10_f64.powi(kuvvet);
@@ -679,6 +750,7 @@ fn grafik_oluştur(
         KartKimliği::Scatter(örnek) => scatter_kartı(örnek),
         KartKimliği::ScrollSync => scroll_sync_kartı(),
         KartKimliği::SineStream => sine_stream_kartı(),
+        KartKimliği::SoftMinMax(örnek) => soft_minmax_kartı(örnek, 12.0),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -718,6 +790,11 @@ impl Render for ChartListesi {
         let soluk = rgb(0x6b7280);
         let vurgu = rgb(0xdc2626);
         let aktif_kart = self.aktif_kart;
+        let soft_minmax_canlı = matches!(
+            aktif_kart,
+            KartKimliği::SoftMinMax(örnek) if örnek.canlı_mı()
+        );
+        let soft_minmax_çalışıyor = self.soft_minmax_çalışıyor;
         let mevcut_seri_sayısı = self.grafik.as_ref().map_or(0, |grafik| {
             grafik.read(cx).grafik().seri_seçenekleri().len()
         });
@@ -781,6 +858,16 @@ impl Render for ChartListesi {
             }
             KartKimliği::ScrollSync => "30 nokta × 3 seri · kaydırmada syncRect".to_string(),
             KartKimliği::SineStream => "600 nokta × 6 seri · 60 FPS setData".to_string(),
+            KartKimliği::SoftMinMax(örnek) => {
+                let davranış = match örnek {
+                    SoftMinMaxÖrneği::MinKip0 => "sabit % alt pay",
+                    SoftMinMaxÖrneği::MinKip1 => "veri aşarsa softMin",
+                    SoftMinMaxÖrneği::MinKip2 => "pay aşarsa softMin",
+                    SoftMinMaxÖrneği::MinKip3 => "koşullu softMin",
+                    SoftMinMaxÖrneği::DüzSıfır => "soft aralık −1…1",
+                };
+                format!("2 kaynak noktası · {davranış}")
+            }
             KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
             KartKimliği::CursorTooltip => "7 nokta × 1 seri · canlı bilgi kutusu".to_string(),
@@ -1501,6 +1588,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::SineStream, cx);
                 })),
             )
+            .children(SoftMinMaxÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::SoftMinMax(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "soft-minmax",
+                    aktif_kart == kart,
+                    "rangeNum · soft/pad/mode",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
             .child(
                 katalog_kartı(
                     "kart-cursor-snap",
@@ -1757,6 +1859,15 @@ impl Render for ChartListesi {
                     .child(nokta_yazısı),
             )
             .child(tekerlek_anahtarı)
+            .when(soft_minmax_canlı, |öğe| {
+                öğe.child(
+                    Dugme::yeni("soft-minmax-baslat", "▶ dataMax++")
+                        .boyutu(DugmeBoyutu::Kucuk)
+                        .turu(DugmeTuru::Ikincil)
+                        .devre_disi(soft_minmax_çalışıyor)
+                        .tiklaninca(cx.listener(|bu, _, _, cx| bu.soft_minmax_başlat(cx))),
+                )
+            })
             .when(aktif_kart == KartKimliği::AddDelSeries, |öğe| {
                 öğe
                     .child(

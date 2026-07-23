@@ -243,6 +243,7 @@
             <button id="dinamik-seri-ekle" type="button">Seri ekle</button>
             <button id="dinamik-seri-sil" type="button">Seri sil</button>
           </span>
+          <button id="soft-minmax-baslat" type="button" hidden>▶ dataMax++</button>
         </div>
       </header>
       <section id="chart" tabindex="0" aria-label="Etkileşimli grafik" aria-live="polite"><span>WASM yükleniyor…</span></section>
@@ -297,6 +298,7 @@
       scatter_kart_tanim_ornegi,
       scroll_sync_kart_tanim_ornegi,
       sine_stream_kart_tanim_ornegi,
+      soft_minmax_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -344,6 +346,7 @@
     const açıklamaDiyaloğu = document.getElementById("açıklama-diyaloğu");
     const açıklamaMetni = document.getElementById("açıklama-metni");
     const dinamikSeriKontrolleri = document.getElementById("dinamik-seri-kontrolleri");
+    const softMinMaxBaşlat = document.getElementById("soft-minmax-baslat");
     const dinamikSeriEkle = document.getElementById("dinamik-seri-ekle");
     const dinamikSeriSil = document.getElementById("dinamik-seri-sil");
 
@@ -898,6 +901,64 @@
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
     };
+    const softMinMaxYüzeyleri = [
+      {
+        kimlik: "soft-minmax-mode-0",
+        başlık: "min: {soft: 0, mode: 0}",
+        açıklama: "With min.mode: 0 or min.soft: null, the scaleMin will always be a constant % [of the full range] below dataMin.",
+        canlı: true,
+      },
+      {
+        kimlik: "soft-minmax-mode-1",
+        başlık: "min: {soft: 0, mode: 1}",
+        açıklama: "With min.mode: 1, the scaleMin will be min.soft unless dataMin goes below it. This is probably how most would expect a softMin setting to behave.",
+        canlı: true,
+      },
+      {
+        kimlik: "soft-minmax-mode-2",
+        başlık: "min: {soft: 0, mode: 2}",
+        açıklama: "With min.mode: 2, the scaleMin will be min.soft unless (dataMin - pad) goes below it.",
+        canlı: true,
+      },
+      {
+        kimlik: "soft-minmax-mode-3",
+        başlık: "min: {soft: 0, mode: 3}",
+        açıklama: "With min.mode: 3, the scaleMin will be a constant % [of the full range] below dataMin until (dataMin - pad) goes below it.",
+        canlı: true,
+      },
+      {
+        kimlik: "soft-minmax-flat-zero",
+        başlık: "min: {soft: -1, mode: 2}, max: {soft: 1, mode: 2}",
+        açıklama: "Düz 0,0 kaynak verisi, generic düz-veri yedeği yerine yapılandırılmış −1…1 soft aralığını korur.",
+        canlı: false,
+      },
+    ];
+    document.querySelector('[data-kart="sine-stream"]')?.insertAdjacentHTML(
+      "afterend",
+      softMinMaxYüzeyleri.map(yüzey => `
+        <article class="kart" data-kart="${yüzey.kimlik}" aria-current="false" tabindex="0">
+          <strong>${yüzey.başlık}</strong><small>soft-minmax</small>
+          <div class="durum">${yüzey.canlı ? "2 nokta · dataMax++" : "2 düz sıfır noktası · −1…1"}</div>
+        </article>`).join("")
+    );
+    for (const yüzey of softMinMaxYüzeyleri) {
+      kartlar[yüzey.kimlik] = {
+        başlık: yüzey.başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/soft-minmax.html">soft-minmax.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/utils.js">rangeNum()</a>
+          <br>${yüzey.açıklama}
+          <br>Kaynak 400×400 boyutu, iki veri noktası, mavi çizgi/dolgu ve soft/pad/mode aralık yapılandırması Rust çekirdeğinde uygulanır.`,
+        tanım: () => soft_minmax_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/soft_minmax.rs",
+        seriler: [{ etiket: "Data", renk: "blue" }],
+        yardım: yüzey.canlı
+          ? "▶ dataMax++ ile resmî 50 ms setData akışını başlat"
+          : "Düz sıfır verisi · soft min/max −1…1",
+        değişkenNokta: false,
+        softMinMaxCanlı: yüzey.canlı,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",
@@ -1415,6 +1476,7 @@
     let autosizeZamanlayıcı = null;
     let alignDataZamanlayıcı = null;
     let sineAnimationFrame = null;
+    let softMinMaxZamanlayıcı = null;
     let etkileşimler = {
       tekerlek: false,
       seçim: false,
@@ -1996,6 +2058,25 @@
         hata.textContent = `Seri silinemedi: ${String(neden)}`;
       }
     });
+    softMinMaxBaşlat.addEventListener("click", () => {
+      if (!kartlar[aktifKart]?.softMinMaxCanlı || !oturum || softMinMaxZamanlayıcı !== null) return;
+      softMinMaxBaşlat.disabled = true;
+      softMinMaxZamanlayıcı = setInterval(() => {
+        if (!kartlar[aktifKart]?.softMinMaxCanlı || !oturum) {
+          clearInterval(softMinMaxZamanlayıcı);
+          softMinMaxZamanlayıcı = null;
+          return;
+        }
+        try {
+          if (oturum.soft_minmax_ilerlet()) çiz();
+          hata.textContent = "";
+        } catch (neden) {
+          hata.textContent = `Soft Min/Max güncellenemedi: ${String(neden)}`;
+          clearInterval(softMinMaxZamanlayıcı);
+          softMinMaxZamanlayıcı = null;
+        }
+      }, 50);
+    });
 
     try {
       await init();
@@ -2007,6 +2088,10 @@
         if (sineAnimationFrame !== null) {
           cancelAnimationFrame(sineAnimationFrame);
           sineAnimationFrame = null;
+        }
+        if (softMinMaxZamanlayıcı !== null) {
+          clearInterval(softMinMaxZamanlayıcı);
+          softMinMaxZamanlayıcı = null;
         }
         oturum?.free();
         aktifKart = kimlik;
@@ -2022,6 +2107,8 @@
         autosizeKontrolü.hidden = kimlik !== "axis-autosize";
         latencyHistogramKontrolü.hidden = !kimlik.startsWith("latency-histogram-");
         dinamikSeriKontrolleri.hidden = kimlik !== "add-del-series";
+        softMinMaxBaşlat.hidden = !kart.softMinMaxCanlı;
+        softMinMaxBaşlat.disabled = false;
         arcsinhEşiği.value = "0";
         arcsinhDeğeri.value = "1";
         autosizeKuvvet.value = "0";

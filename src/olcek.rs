@@ -7,6 +7,50 @@ pub struct Aralık {
     pub en_çok: f64,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum YumuşakSınırKipi {
+    SabitPay = 0,
+    VeriAşarsa = 1,
+    PayAşarsa = 2,
+    Koşullu = 3,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SayısalAralıkParçası {
+    pub pay: f64,
+    pub sert: Option<f64>,
+    pub yumuşak: Option<f64>,
+    pub kip: YumuşakSınırKipi,
+}
+
+impl SayısalAralıkParçası {
+    pub const fn yeni(pay: f64, yumuşak: Option<f64>, kip: YumuşakSınırKipi) -> Self {
+        Self {
+            pay,
+            sert: None,
+            yumuşak,
+            kip,
+        }
+    }
+
+    pub const fn sert(mut self, sınır: f64) -> Self {
+        self.sert = Some(sınır);
+        self
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SayısalAralıkAyarları {
+    pub en_az: SayısalAralıkParçası,
+    pub en_çok: SayısalAralıkParçası,
+}
+
+impl SayısalAralıkAyarları {
+    pub const fn yeni(en_az: SayısalAralıkParçası, en_çok: SayısalAralıkParçası) -> Self {
+        Self { en_az, en_çok }
+    }
+}
+
 impl Aralık {
     /// uPlot `rangeNum(min, max, mult, extra)` sayısal ölçek aralığını üretir.
     ///
@@ -20,11 +64,42 @@ impl Aralık {
         pay: f64,
         sıfırı_yumuşat: bool,
     ) -> Result<Self, UplotHatası> {
+        let kip = if sıfırı_yumuşat {
+            YumuşakSınırKipi::Koşullu
+        } else {
+            YumuşakSınırKipi::SabitPay
+        };
+        let yumuşak = sıfırı_yumuşat.then_some(0.0);
+        Self::uplot_yapılandırılmış(
+            en_az,
+            en_çok,
+            SayısalAralıkAyarları::yeni(
+                SayısalAralıkParçası::yeni(pay, yumuşak, kip),
+                SayısalAralıkParçası::yeni(pay, yumuşak, kip),
+            ),
+        )
+    }
+
+    pub fn uplot_yapılandırılmış(
+        en_az: f64,
+        en_çok: f64,
+        ayarlar: SayısalAralıkAyarları,
+    ) -> Result<Self, UplotHatası> {
         if !en_az.is_finite() || !en_çok.is_finite() || en_az > en_çok {
             return Err(UplotHatası::GeçersizAralık { en_az, en_çok });
         }
-        if !pay.is_finite() || pay < 0.0 {
-            return Err(UplotHatası::GeçersizÇarpan { değer: pay });
+        for parça in [ayarlar.en_az, ayarlar.en_çok] {
+            if !parça.pay.is_finite() || parça.pay < 0.0 {
+                return Err(UplotHatası::GeçersizÇarpan { değer: parça.pay });
+            }
+            if parça.sert.is_some_and(|değer| !değer.is_finite())
+                || parça.yumuşak.is_some_and(|değer| !değer.is_finite())
+            {
+                return Err(UplotHatası::GeçersizAralık {
+                    en_az: parça.sert.or(parça.yumuşak).unwrap_or(f64::NAN),
+                    en_çok: parça.sert.or(parça.yumuşak).unwrap_or(f64::NAN),
+                });
+            }
         }
 
         let mut delta = en_çok - en_az;
@@ -34,11 +109,10 @@ impl Aralık {
         let büyüklük_farkı = (skaler_büyüklüğü - delta_büyüklüğü).abs();
 
         if delta < 1e-24 || büyüklük_farkı > 10.0 {
-            delta = if en_az == 0.0 || en_çok == 0.0 {
-                1e-24
-            } else {
-                0.0
-            };
+            delta = 0.0;
+            if en_az == 0.0 || en_çok == 0.0 {
+                delta = 1e-24;
+            }
         }
 
         if mutlak_en_çok == 0.0 {
@@ -46,30 +120,73 @@ impl Aralık {
         }
         let sıfır_olmayan_delta = if delta != 0.0 { delta } else { mutlak_en_çok };
         let taban = 10_f64.powf(sıfır_olmayan_delta.log10().floor());
+        let alt_pay_oranı = if delta == 1e-24
+            && en_az == 0.0
+            && ayarlar.en_az.kip == YumuşakSınırKipi::PayAşarsa
+            && ayarlar.en_az.yumuşak.is_some()
+        {
+            0.0
+        } else {
+            ayarlar.en_az.pay
+        };
+        let üst_pay_oranı = if delta == 1e-24
+            && en_çok == 0.0
+            && ayarlar.en_çok.kip == YumuşakSınırKipi::PayAşarsa
+            && ayarlar.en_çok.yumuşak.is_some()
+        {
+            0.0
+        } else {
+            ayarlar.en_çok.pay
+        };
         let alt_pay = sıfır_olmayan_delta
             * if delta == 0.0 {
                 if en_az == 0.0 { 0.1 } else { 1.0 }
             } else {
-                pay
+                alt_pay_oranı
             };
         let üst_pay = sıfır_olmayan_delta
             * if delta == 0.0 {
                 if en_çok == 0.0 { 0.1 } else { 1.0 }
             } else {
-                pay
+                üst_pay_oranı
             };
         let adım = taban / 10.0;
         let mut yeni_alt = ondalık_yuvarla(artıma_aşağı_yuvarla(en_az - alt_pay, adım), 24);
         let mut yeni_üst = ondalık_yuvarla(artıma_yukarı_yuvarla(en_çok + üst_pay, adım), 24);
-
-        if sıfırı_yumuşat {
-            if en_az >= 0.0 && yeni_alt <= 0.0 {
-                yeni_alt = 0.0;
-            }
-            if en_çok <= 0.0 && yeni_üst >= 0.0 {
-                yeni_üst = 0.0;
-            }
-        }
+        let yumuşak_alt = ayarlar.en_az.yumuşak.unwrap_or(f64::INFINITY);
+        let etkin_yumuşak_alt = if en_az >= yumuşak_alt
+            && (ayarlar.en_az.kip == YumuşakSınırKipi::VeriAşarsa
+                || (ayarlar.en_az.kip == YumuşakSınırKipi::Koşullu && yeni_alt <= yumuşak_alt)
+                || (ayarlar.en_az.kip == YumuşakSınırKipi::PayAşarsa && yeni_alt >= yumuşak_alt))
+        {
+            yumuşak_alt
+        } else {
+            f64::INFINITY
+        };
+        yeni_alt = ayarlar.en_az.sert.unwrap_or(f64::NEG_INFINITY).max(
+            if yeni_alt < etkin_yumuşak_alt && en_az >= etkin_yumuşak_alt {
+                etkin_yumuşak_alt
+            } else {
+                etkin_yumuşak_alt.min(yeni_alt)
+            },
+        );
+        let yumuşak_üst = ayarlar.en_çok.yumuşak.unwrap_or(f64::NEG_INFINITY);
+        let etkin_yumuşak_üst = if en_çok <= yumuşak_üst
+            && (ayarlar.en_çok.kip == YumuşakSınırKipi::VeriAşarsa
+                || (ayarlar.en_çok.kip == YumuşakSınırKipi::Koşullu && yeni_üst >= yumuşak_üst)
+                || (ayarlar.en_çok.kip == YumuşakSınırKipi::PayAşarsa && yeni_üst <= yumuşak_üst))
+        {
+            yumuşak_üst
+        } else {
+            f64::NEG_INFINITY
+        };
+        yeni_üst = ayarlar.en_çok.sert.unwrap_or(f64::INFINITY).min(
+            if yeni_üst > etkin_yumuşak_üst && en_çok <= etkin_yumuşak_üst {
+                etkin_yumuşak_üst
+            } else {
+                etkin_yumuşak_üst.max(yeni_üst)
+            },
+        );
 
         if yeni_alt == yeni_üst {
             if yeni_alt == 0.0 {
@@ -306,5 +423,39 @@ mod testler {
         assert!(Aralık::uplot_sayısal(f64::NAN, 1.0, 0.1, true).is_err());
         assert!(Aralık::uplot_sayısal(2.0, 1.0, 0.1, true).is_err());
         assert!(Aralık::uplot_sayısal(0.0, 1.0, -0.1, true).is_err());
+        let geçersiz_yumuşak = SayısalAralıkAyarları::yeni(
+            SayısalAralıkParçası::yeni(0.2, Some(f64::NAN), YumuşakSınırKipi::PayAşarsa).sert(0.0),
+            SayısalAralıkParçası::yeni(0.2, None, YumuşakSınırKipi::SabitPay),
+        );
+        assert!(Aralık::uplot_yapılandırılmış(5.0, 12.0, geçersiz_yumuşak).is_err());
+    }
+
+    #[test]
+    fn range_num_soft_minmax_kaynak_kiplerini_korur() -> Result<(), UplotHatası> {
+        let beklenenler = [
+            (YumuşakSınırKipi::SabitPay, (3.6, 13.4)),
+            (YumuşakSınırKipi::VeriAşarsa, (0.0, 13.4)),
+            (YumuşakSınırKipi::PayAşarsa, (0.0, 13.4)),
+            (YumuşakSınırKipi::Koşullu, (3.6, 13.4)),
+        ];
+        for (kip, (beklenen_alt, beklenen_üst)) in beklenenler {
+            let ayarlar = SayısalAralıkAyarları::yeni(
+                SayısalAralıkParçası::yeni(0.2, Some(0.0), kip),
+                SayısalAralıkParçası::yeni(0.2, Some(0.0), YumuşakSınırKipi::PayAşarsa),
+            );
+            let aralık = Aralık::uplot_yapılandırılmış(5.0, 12.0, ayarlar)?;
+            assert!((aralık.en_az - beklenen_alt).abs() <= 1e-12);
+            assert!((aralık.en_çok - beklenen_üst).abs() <= 1e-12);
+        }
+
+        let sıfır_ayarları = SayısalAralıkAyarları::yeni(
+            SayısalAralıkParçası::yeni(0.2, Some(-1.0), YumuşakSınırKipi::PayAşarsa),
+            SayısalAralıkParçası::yeni(0.2, Some(1.0), YumuşakSınırKipi::PayAşarsa),
+        );
+        assert_eq!(
+            Aralık::uplot_yapılandırılmış(0.0, 0.0, sıfır_ayarları)?,
+            Aralık::yeni(-1.0, 1.0)?
+        );
+        Ok(())
     }
 }
