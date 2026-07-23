@@ -1,0 +1,27 @@
+id = "log-scales2"
+kaynak = "../uPlot/demos/log-scales2.html"
+fixture = "src/kart/log_scales2.rs#log_scales2_kartı"
+device_pixel_ratio = 1
+alt_grafik_sayısı = 12
+
+[veri]
+geniş_aralık_nokta_sayısı = 127
+geniş_aralık_en_az = 0.000001
+geniş_aralık_en_çok = 100000000
+imzalı_nokta_sayısı = 130
+sabit_kanıt_zamanı = 1704499200
+sabit_kanıt_tohumu = 274506210
+
+[davranış]
+log_tabanları = [2, 10]
+pozitif_log_filtresi = true
+ters_yön = true
+tümü_null_seri_aralık_dışı = true
+kısmi_büyüklükler = true
+bilimsel_etiket = true
+ikili_üs_etiketi = true
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/log-scales2/log-scales2-log10-wide.svg"

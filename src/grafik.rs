@@ -11,7 +11,7 @@ use crate::cizim::{DoğrusalGradyan, GradyanRenkDurağı, Komut, MetinHizası, N
 use crate::etkilesim::EtkileşimDenetleyicisi;
 use crate::{
     Aralık, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri, HizalıVeri, UplotHatası,
-    XÖlçekDağılımı, YÖlçekDağılımı, ÖlçekGradyanı,
+    XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi, ÖlçekGradyanı,
 };
 
 /// Bir işaretçi seçiminin çekirdekte çözümlenen sonucu.
@@ -88,10 +88,12 @@ impl Grafik {
                         .flat_map(|(seri, _)| seri.iter())
                 };
                 match birincil_ölçek.map(|ölçek| ölçek.dağılım) {
-                    Some(YÖlçekDağılımı::Logaritmik { taban }) => {
-                        logaritmik_otomatik_aralık(değerler(), taban)
-                            .unwrap_or_else(|| Aralık::otomatik(değerler()))
-                    }
+                    Some(YÖlçekDağılımı::Logaritmik { taban }) => logaritmik_otomatik_aralık(
+                        değerler(),
+                        taban,
+                        birincil_ölçek.is_none_or(|ölçek| ölçek.log_tam_büyüklükler),
+                    )
+                    .unwrap_or_else(|| Aralık::otomatik(değerler())),
                     _ => Aralık::otomatik(değerler()),
                 }
             });
@@ -267,17 +269,16 @@ impl Grafik {
         if self.seçenekler.otomatik_y_eksen_genişliği && !self.seçenekler.birincil_y_sağda {
             let aralık = self.görünür_y_aralığı();
             let artım = uygun_artım(aralık, yükseklik_px, 30.0);
-            let birim = self
-                .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
-                .map_or("", |ölçek| ölçek.birim.as_str());
-            let dağılım = self
-                .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
-                .map(|ölçek| ölçek.dağılım);
+            let ölçek = self.ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği);
+            let birim = ölçek.map_or("", |ölçek| ölçek.birim.as_str());
+            let dağılım = ölçek.map(|ölçek| ölçek.dağılım);
+            let biçim = ölçek.map_or(YÖlçekEtiketBiçimi::Otomatik, |ölçek| ölçek.etiket_biçimi);
+            let çarpan = ölçek.map_or(1.0, |ölçek| ölçek.eksen_değer_çarpanı);
             let en_uzun = self
                 .y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, aralık, yükseklik_px)
                 .into_iter()
                 .map(|değer| {
-                    ölçek_eksen_değerini_yaz(değer, artım, birim, dağılım)
+                    ölçek_eksen_değerini_yaz(değer * çarpan, artım, birim, dağılım, biçim)
                         .chars()
                         .count()
                 })
@@ -681,7 +682,13 @@ impl Grafik {
             .veri
             .seriler()
             .iter()
-            .map(|seri| seri.get(indeks).copied().flatten())
+            .zip(self.seçenekler.seriler.iter())
+            .map(|(seri, seçenek)| {
+                seri.get(indeks)
+                    .copied()
+                    .flatten()
+                    .map(|değer| değer * seçenek.gösterim_değer_çarpanı)
+            })
             .collect();
         Some((x, değerler))
     }
@@ -919,12 +926,12 @@ impl Grafik {
             })
             .unwrap_or(tam_x_aralığı);
         let y_aralığı = görünür_y.unwrap_or_else(|| self.y_aralığı(x_aralığı));
-        let birincil_birim = self
-            .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
-            .map_or("", |ölçek| ölçek.birim.as_str());
-        let birincil_dağılım = self
-            .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
-            .map(|ölçek| ölçek.dağılım);
+        let birincil_ölçek = self.ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği);
+        let birincil_birim = birincil_ölçek.map_or("", |ölçek| ölçek.birim.as_str());
+        let birincil_dağılım = birincil_ölçek.map(|ölçek| ölçek.dağılım);
+        let birincil_biçim =
+            birincil_ölçek.map_or(YÖlçekEtiketBiçimi::Otomatik, |ölçek| ölçek.etiket_biçimi);
+        let birincil_çarpan = birincil_ölçek.map_or(1.0, |ölçek| ölçek.eksen_değer_çarpanı);
 
         let eksen_komutları_başlangıcı = sahne.komutlar().len();
         let y_artımı = uygun_artım(y_aralığı, yükseklik, 30.0);
@@ -945,29 +952,38 @@ impl Grafik {
                 renk: self.seçenekler.ızgara_rengi.clone(),
                 kalınlık: 1.0,
             });
-            sahne.ekle(Komut::Metin {
-                konum: Nokta::yeni(
-                    if self.seçenekler.birincil_y_sağda {
-                        sağ + 8.0
+            if log_etiketi_göster(
+                y_değeri,
+                y_aralığı,
+                yükseklik,
+                birincil_dağılım,
+                birincil_biçim,
+            ) {
+                sahne.ekle(Komut::Metin {
+                    konum: Nokta::yeni(
+                        if self.seçenekler.birincil_y_sağda {
+                            sağ + 8.0
+                        } else {
+                            sol - 8.0
+                        },
+                        y + 4.0,
+                    ),
+                    içerik: ölçek_eksen_değerini_yaz(
+                        y_değeri * birincil_çarpan,
+                        y_artımı,
+                        birincil_birim,
+                        birincil_dağılım,
+                        birincil_biçim,
+                    ),
+                    renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                    boyut: 11.0,
+                    hiza: if self.seçenekler.birincil_y_sağda {
+                        MetinHizası::Başlangıç
                     } else {
-                        sol - 8.0
+                        MetinHizası::Bitiş
                     },
-                    y + 4.0,
-                ),
-                içerik: ölçek_eksen_değerini_yaz(
-                    y_değeri,
-                    y_artımı,
-                    birincil_birim,
-                    birincil_dağılım,
-                ),
-                renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
-                boyut: 11.0,
-                hiza: if self.seçenekler.birincil_y_sağda {
-                    MetinHizası::Başlangıç
-                } else {
-                    MetinHizası::Bitiş
-                },
-            });
+                });
+            }
         }
 
         if !self.seçenekler.y_eksen_etiketi.is_empty() {
@@ -1018,22 +1034,31 @@ impl Grafik {
                         kalınlık: 1.0,
                     });
                 }
-                sahne.ekle(Komut::Metin {
-                    konum: Nokta::yeni(eksen_x, y + 4.0),
-                    içerik: ölçek_eksen_değerini_yaz(
-                        değer,
-                        artım,
-                        &ölçek.birim,
-                        Some(ölçek.dağılım),
-                    ),
-                    renk: ölçek.eksen_rengi.clone(),
-                    boyut: 11.0,
-                    hiza: if ölçek.sağda {
-                        MetinHizası::Başlangıç
-                    } else {
-                        MetinHizası::Bitiş
-                    },
-                });
+                if log_etiketi_göster(
+                    değer,
+                    aralık,
+                    yükseklik,
+                    Some(ölçek.dağılım),
+                    ölçek.etiket_biçimi,
+                ) {
+                    sahne.ekle(Komut::Metin {
+                        konum: Nokta::yeni(eksen_x, y + 4.0),
+                        içerik: ölçek_eksen_değerini_yaz(
+                            değer * ölçek.eksen_değer_çarpanı,
+                            artım,
+                            &ölçek.birim,
+                            Some(ölçek.dağılım),
+                            ölçek.etiket_biçimi,
+                        ),
+                        renk: ölçek.eksen_rengi.clone(),
+                        boyut: 11.0,
+                        hiza: if ölçek.sağda {
+                            MetinHizası::Başlangıç
+                        } else {
+                            MetinHizası::Bitiş
+                        },
+                    });
+                }
             }
         }
 
@@ -2174,7 +2199,10 @@ impl Grafik {
                 };
                 match self.ölçek_seçeneği(anahtar).map(|ölçek| ölçek.dağılım) {
                     Some(YÖlçekDağılımı::Logaritmik { taban }) => {
-                        logaritmik_otomatik_aralık(görünür(), taban)
+                        let tam = self
+                            .ölçek_seçeneği(anahtar)
+                            .is_none_or(|ölçek| ölçek.log_tam_büyüklükler);
+                        logaritmik_otomatik_aralık(görünür(), taban, tam)
                             .unwrap_or_else(|| Aralık::otomatik(görünür()))
                     }
                     _ => Aralık::otomatik(görünür()),
@@ -2403,11 +2431,17 @@ impl Grafik {
         başlangıç: f32,
         uzunluk: f32,
     ) -> f32 {
-        match self.ölçek_seçeneği(anahtar).map(|ölçek| ölçek.dağılım) {
+        let ölçek = self.ölçek_seçeneği(anahtar);
+        let konum = match ölçek.map(|ölçek| ölçek.dağılım) {
             Some(YÖlçekDağılımı::Logaritmik { taban })
-                if taban.is_finite() && taban > 1.0 && aralık.en_az > 0.0 && değer > 0.0 =>
+                if taban.is_finite() && taban > 1.0 && aralık.en_az > 0.0 =>
             {
                 let dönüştür = |sayı: f64| sayı.log(taban);
+                let değer = if değer > 0.0 {
+                    değer
+                } else {
+                    aralık.en_az / taban
+                };
                 dönüştürülmüş_konum(aralık, değer, başlangıç, uzunluk, dönüştür)
             }
             Some(YÖlçekDağılımı::Weibull)
@@ -2425,6 +2459,11 @@ impl Grafik {
                 başlangıç + oran as f32 * uzunluk
             }
             _ => aralık.konum(değer, başlangıç, uzunluk),
+        };
+        if ölçek.is_some_and(|ölçek| ölçek.ters_yön) {
+            başlangıç + uzunluk - (konum - başlangıç)
+        } else {
+            konum
         }
     }
 
@@ -2580,6 +2619,7 @@ fn logaritmik_bölmeler(aralık: Aralık, taban: f64) -> Vec<f64> {
 fn logaritmik_otomatik_aralık<'a>(
     değerler: impl Iterator<Item = &'a Option<f64>>,
     taban: f64,
+    tam_büyüklükler: bool,
 ) -> Option<Aralık> {
     if !taban.is_finite() || taban <= 1.0 {
         return None;
@@ -2597,11 +2637,19 @@ fn logaritmik_otomatik_aralık<'a>(
         en_az /= taban;
         en_çok *= taban;
     }
-    Aralık::yeni(
-        taban.powf(en_az.log(taban).floor()),
-        taban.powf(en_çok.log(taban).ceil()),
-    )
-    .ok()
+    let (alt, üst) = if tam_büyüklükler {
+        let alt_üs = en_az.log(taban).floor() as i32;
+        let üst_üs = en_çok.log(taban).ceil() as i32;
+        (taban.powi(alt_üs), taban.powi(üst_üs))
+    } else {
+        let alt_adım = taban.powi(en_az.log(taban).floor() as i32);
+        let üst_adım = taban.powi(en_çok.log(taban).floor() as i32);
+        (
+            (en_az / alt_adım).floor() * alt_adım,
+            (en_çok / üst_adım).ceil() * üst_adım,
+        )
+    };
+    Aralık::yeni(alt, üst).ok()
 }
 
 fn tam_x_aralığı(veri: &HizalıVeri) -> Result<Aralık, UplotHatası> {
@@ -2793,21 +2841,103 @@ fn ölçek_eksen_değerini_yaz(
     artım: f64,
     birim: &str,
     dağılım: Option<YÖlçekDağılımı>,
+    biçim: YÖlçekEtiketBiçimi,
 ) -> String {
-    let sayı = match dağılım {
-        Some(YÖlçekDağılımı::Logaritmik { .. }) if değer.abs() >= 1.0 => {
-            format!("{değer:.0}")
-        }
-        Some(YÖlçekDağılımı::Logaritmik { .. } | YÖlçekDağılımı::Weibull) => {
-            format!("{değer:e}")
-        }
-        _ => eksen_değerini_yaz(değer, artım),
+    let sayı = match biçim {
+        YÖlçekEtiketBiçimi::Bilimsel => format!("{değer:e}"),
+        YÖlçekEtiketBiçimi::İkiliÜs => ikili_üs_etiketi(değer),
+        YÖlçekEtiketBiçimi::İkiliŞapka => ikili_şapka_etiketi(değer),
+        YÖlçekEtiketBiçimi::Kompakt => kompakt_sayı(değer),
+        YÖlçekEtiketBiçimi::Otomatik => match dağılım {
+            Some(YÖlçekDağılımı::Logaritmik { taban }) if (taban - 2.0).abs() <= f64::EPSILON => {
+                ikili_üs_etiketi(değer)
+            }
+            Some(YÖlçekDağılımı::Logaritmik { .. }) if değer.abs() >= 1.0 => {
+                format!("{değer:.0}")
+            }
+            Some(YÖlçekDağılımı::Logaritmik { .. } | YÖlçekDağılımı::Weibull) => {
+                format!("{değer:e}")
+            }
+            _ => eksen_değerini_yaz(değer, artım),
+        },
     };
     if birim.is_empty() {
         sayı
     } else {
         format!("{sayı} {birim}")
     }
+}
+
+/// Resmî geniş log demolarında 1/2/5 ızgarası korunurken bilimsel eksen
+/// metinleri yalnız tam taban kuvvetlerine yazılır.
+fn log_etiketi_göster(
+    değer: f64,
+    aralık: Aralık,
+    boyut: f32,
+    dağılım: Option<YÖlçekDağılımı>,
+    biçim: YÖlçekEtiketBiçimi,
+) -> bool {
+    let Some(YÖlçekDağılımı::Logaritmik { taban }) = dağılım else {
+        return true;
+    };
+    if !matches!(
+        biçim,
+        YÖlçekEtiketBiçimi::Bilimsel
+            | YÖlçekEtiketBiçimi::İkiliÜs
+            | YÖlçekEtiketBiçimi::İkiliŞapka
+    ) || değer <= 0.0
+        || aralık.en_az <= 0.0
+        || !boyut.is_finite()
+        || boyut <= 0.0
+    {
+        return true;
+    }
+    let üs = değer.log(taban);
+    if !üs.is_finite() || (üs - üs.round()).abs() > 1e-9 {
+        return false;
+    }
+    let en_az_üs = aralık.en_az.log(taban).floor() as i32;
+    let en_çok_üs = aralık.en_çok.log(taban).ceil() as i32;
+    let üs = üs.round() as i32;
+    let açıklık = en_çok_üs.saturating_sub(en_az_üs).max(1);
+    let adım = (f64::from(açıklık) * 22.0 / f64::from(boyut))
+        .ceil()
+        .max(1.0) as i32;
+    en_çok_üs.saturating_sub(üs).rem_euclid(adım) == 0
+}
+
+fn ikili_üs_etiketi(değer: f64) -> String {
+    if !değer.is_finite() || değer <= 0.0 {
+        return "—".to_string();
+    }
+    let üs = değer.log2().round() as i32;
+    let mut sonuç = String::from("2");
+    if üs < 0 {
+        sonuç.push('⁻');
+    }
+    for rakam in üs.unsigned_abs().to_string().bytes() {
+        sonuç.push(match rakam {
+            b'0' => '⁰',
+            b'1' => '¹',
+            b'2' => '²',
+            b'3' => '³',
+            b'4' => '⁴',
+            b'5' => '⁵',
+            b'6' => '⁶',
+            b'7' => '⁷',
+            b'8' => '⁸',
+            b'9' => '⁹',
+            _ => '�',
+        });
+    }
+    sonuç
+}
+
+fn ikili_şapka_etiketi(değer: f64) -> String {
+    if !değer.is_finite() || değer <= 0.0 {
+        return "—".to_string();
+    }
+    format!("2^{}", değer.log2().round() as i32)
 }
 
 fn renk_rgb(renk: &str) -> Option<(u8, u8, u8)> {
@@ -2979,10 +3109,61 @@ mod eksen_testleri {
                 50_000.0,
                 1.0,
                 "",
-                Some(YÖlçekDağılımı::Logaritmik { taban: 10.0 })
+                Some(YÖlçekDağılımı::Logaritmik { taban: 10.0 }),
+                YÖlçekEtiketBiçimi::Otomatik,
             ),
             "50000"
         );
+        assert_eq!(
+            ölçek_eksen_değerini_yaz(
+                2_f64.powi(-10),
+                1.0,
+                "",
+                Some(YÖlçekDağılımı::Logaritmik { taban: 2.0 }),
+                YÖlçekEtiketBiçimi::İkiliÜs,
+            ),
+            "2⁻¹⁰"
+        );
+        assert!(log_etiketi_göster(
+            1e-6,
+            Aralık {
+                en_az: 1e-6,
+                en_çok: 1e8,
+            },
+            600.0,
+            Some(YÖlçekDağılımı::Logaritmik { taban: 10.0 }),
+            YÖlçekEtiketBiçimi::Bilimsel,
+        ));
+        assert!(!log_etiketi_göster(
+            2e-6,
+            Aralık {
+                en_az: 1e-6,
+                en_çok: 1e8,
+            },
+            600.0,
+            Some(YÖlçekDağılımı::Logaritmik { taban: 10.0 }),
+            YÖlçekEtiketBiçimi::Bilimsel,
+        ));
+        assert!(log_etiketi_göster(
+            2_f64.powi(20),
+            Aralık {
+                en_az: 2_f64.powi(-10),
+                en_çok: 2_f64.powi(20),
+            },
+            204.0,
+            Some(YÖlçekDağılımı::Logaritmik { taban: 2.0 }),
+            YÖlçekEtiketBiçimi::İkiliŞapka,
+        ));
+        assert!(!log_etiketi_göster(
+            2_f64.powi(18),
+            Aralık {
+                en_az: 2_f64.powi(-10),
+                en_çok: 2_f64.powi(20),
+            },
+            204.0,
+            Some(YÖlçekDağılımı::Logaritmik { taban: 2.0 }),
+            YÖlçekEtiketBiçimi::İkiliŞapka,
+        ));
     }
 
     #[test]

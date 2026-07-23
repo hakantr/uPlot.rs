@@ -27,6 +27,7 @@ pub struct SeriSeçenekleri {
     pub çubuk_genişlik_oranı: f32,
     pub azami_çubuk_genişliği: f32,
     pub çubuk_hizası: i8,
+    pub gösterim_değer_çarpanı: f64,
 }
 
 impl SeriSeçenekleri {
@@ -48,6 +49,7 @@ impl SeriSeçenekleri {
             çubuk_genişlik_oranı: 0.6,
             azami_çubuk_genişliği: f32::INFINITY,
             çubuk_hizası: 0,
+            gösterim_değer_çarpanı: 1.0,
         }
     }
 
@@ -166,6 +168,15 @@ impl SeriSeçenekleri {
 
     pub fn çubuk_hizası(mut self, hiza: i8) -> Self {
         self.çubuk_hizası = hiza.clamp(-1, 1);
+        self
+    }
+
+    /// uPlot `series.value` gösterim dönüşümünün doğrusal karşılığıdır.
+    /// Çizim geometrisi ham veriyi kullanmaya devam eder.
+    pub fn gösterim_değer_çarpanı(mut self, çarpan: f64) -> Self {
+        if çarpan.is_finite() && çarpan.abs() > f64::EPSILON {
+            self.gösterim_değer_çarpanı = çarpan;
+        }
         self
     }
 }

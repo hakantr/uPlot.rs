@@ -8,7 +8,7 @@ mod y_olcek;
 pub use gradyan::{GradyanDurağı, GradyanEkseni, GradyanKonumu, ÖlçekGradyanı};
 pub use isi_haritasi::{IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu};
 pub use seri::{SeriSeçenekleri, SeriÇizimTürü};
-pub use y_olcek::{YÖlçekDağılımı, YÖlçekSeçenekleri};
+pub use y_olcek::{YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum XÖlçekDağılımı {

@@ -295,19 +295,37 @@
       "kaynak_yolu": "Scale.distr: 3 / Scale.log",
       "rust_karşılığı": "YÖlçekDağılımı::Logaritmik / YÖlçekSeçenekleri::logaritmik",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/log_scales.rs"
+      "test": "src/kart/log_scales2.rs"
     },
     {
       "kaynak_yolu": "rangeLog / snapLogY",
       "rust_karşılığı": "grafik::logaritmik_otomatik_aralık",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/log_scales.rs"
+      "test": "src/kart/log_scales2.rs"
     },
     {
       "kaynak_yolu": "logAxisSplits",
       "rust_karşılığı": "grafik::logaritmik_bölmeler",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/log_scales2.rs"
+    },
+    {
+      "kaynak_yolu": "Scale.dir",
+      "rust_karşılığı": "YÖlçekSeçenekleri::ters_yön",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/log_scales2.rs"
+    },
+    {
+      "kaynak_yolu": "Axis.values / Series.value",
+      "rust_karşılığı": "YÖlçekEtiketBiçimi / eksen_değer_çarpanı / gösterim_değer_çarpanı",
       "durum": "kısmi",
-      "test": "src/kart/log_scales.rs"
+      "test": "src/kart/log_scales2.rs"
+    },
+    {
+      "kaynak_yolu": "rangeLog(fullMags: false)",
+      "rust_karşılığı": "YÖlçekSeçenekleri::logaritmik_kısmi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/log_scales2.rs"
     },
     {
       "kaynak_yolu": "_timeAxisSplits / timeAxisVals",

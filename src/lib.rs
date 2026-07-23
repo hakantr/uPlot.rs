@@ -40,7 +40,8 @@ pub use kart::{
     GRID_OVER_SERIES_KANIT_TOHUMU, GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği,
     HIGH_LOW_BANDS_KANIT_TOHUMU, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ, HighLowBandsÖrneği,
     LATENCY_HEATMAP_KANIT_TOHUMU, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ,
-    LOG_SCALES_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği, LinePathsÖrneği, LogScalesÖrneği,
+    LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KANIT_TOHUMU, LOG_SCALES2_KART_TANIM_ÖRNEĞİ,
+    LatencyHeatmapÖrneği, LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KANIT_TOHUMU, MONTHS_KART_TANIM_ÖRNEĞİ,
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SmoothingÖrneği,
     ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
@@ -51,7 +52,7 @@ pub use kart::{
     cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
     draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
     hareketli_ortalama, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, ortak_kart_etkileşimleri, resize_kartı,
     savitzky_golay, scale_padding_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
 };
@@ -60,7 +61,7 @@ pub use secenek::{
     BantYönü, EtkileşimSeçenekleri, GradyanDurağı, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri,
     IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu, KutuBıyıkDüzeni, MumDüzeni, NoktaKatmanı,
     OdakDüzeni, OdakStili, SeriBandı, SeriSeçenekleri, SeriÇizimTürü, TekerlekAyarları,
-    TekerlekKipi, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekSeçenekleri, ÇizimKancasıDüzeni,
-    ÇizimSırası, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı,
+    TekerlekKipi, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri,
+    ÇizimKancasıDüzeni, ÇizimSırası, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı,
 };
 pub use veri::{BoşlukKipi, HizalıVeri, hizalı_verileri_birleştir};

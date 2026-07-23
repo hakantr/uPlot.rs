@@ -260,6 +260,7 @@
       latency_heatmap_kart_tanim_ornegi,
       line_paths_kart_tanim_ornegi,
       log_scales_kart_tanim_ornegi,
+      log_scales2_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
@@ -991,6 +992,53 @@
         tanımYolu: "src/kart/log_scales.rs",
         seriler: logScalesSerileri.map(([etiket, renk]) => ({ etiket, renk })),
         yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+
+    const logScales2Kartları = [
+      ["log-scales2-linear-wide", "Linear Scale (0.000001 -> 100,000,000)",
+        "127 nokta · 10⁻⁶…10⁸", [["Value", "magenta"]]],
+      ["log-scales2-log10-wide", "Log10 Y Scale (0.000001 -> 100,000,000)",
+        "127 nokta · log10", [["Value", "orange"]]],
+      ["log-scales2-log2-wide", "Log2 Y Scale (0.000001 -> 100,000,000)",
+        "127 nokta · log2", [["Value", "purple"]]],
+      ["log-scales2-inverted-in", "Inverted Log10 Y Scale — In",
+        "4 zaman noktası · normal yön", [["In", "orange"]]],
+      ["log-scales2-inverted-out", "Inverted Log10 Y Scale — Out",
+        "4 zaman noktası · ters yön", [["Out", "blue"]]],
+      ["log-scales2-positive-filter", "Log10 Y Scale (-100 -> 100)",
+        "130 nokta · pozitif log aralığı", [["Value", "blue"]]],
+      ["log-scales2-skip-log10", "Skip ticks log10",
+        "2 nokta · 10⁻¹⁴…10¹⁴", [["Value", "red"]]],
+      ["log-scales2-skip-log2", "Skip ticks log2",
+        "2 nokta · 2⁻¹⁰…2²⁰", [["Value", "blue"]]],
+      ["log-scales2-all-nulls", "Proper range with a all-nulls series",
+        "3 nokta · tümü-null ikinci seri", [["Value", "red"], ["All null", "blue"]]],
+      ["log-scales2-tiny-values", "Handle 3e-24 y values",
+        "2 nokta · çok küçük değerler", [["Value", "red"]]],
+      ["log-scales2-partial-large", "Partial mags (base 10) — large",
+        "3 nokta · iki kısmi log ölçeği", [["A", "#f7931a"], ["B", "#000000"]]],
+      ["log-scales2-partial-small", "Partial mags (base 10) — small",
+        "3 nokta · küçük ondalıklar", [["A", "#f7931a"], ["B", "#000000"]]],
+    ];
+    for (const [kimlik, başlık, durum, seriler] of logScales2Kartları) {
+      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>log-scales2</small>
+          <div class="durum">${durum}</div>
+        </article>`);
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/log-scales2.html">log-scales2.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/utils.js">rangeLog</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/opts.js">log axis splits</a>
+          <br>On iki resmî çizim yüzeyi; aynı veri üretimi, log2/log10 aralıkları, pozitif değer filtresi, ters eksen, tümü-null seri ve kısmi büyüklük davranışları Rust çekirdeğinde çözülür.`,
+        tanım: () => log_scales2_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/log_scales2.rs",
+        seriler: seriler.map(([etiket, renk]) => ({ etiket, renk })),
+        yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı · çift tıkla: tam görünüm",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       };

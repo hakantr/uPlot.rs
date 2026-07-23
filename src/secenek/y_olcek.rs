@@ -13,6 +13,15 @@ pub enum YÖlçekDağılımı {
     },
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum YÖlçekEtiketBiçimi {
+    Otomatik,
+    Bilimsel,
+    İkiliÜs,
+    İkiliŞapka,
+    Kompakt,
+}
+
 /// uPlot'un adlandırılmış Y ölçekleri ve bunlara bağlı eksenlerinin çekirdek
 /// karşılığıdır. `y` anahtarı birincil sol eksendir; diğer ölçekler sağda
 /// gösterilebilir.
@@ -29,6 +38,10 @@ pub struct YÖlçekSeçenekleri {
     pub dönüşüm_çarpanı: f64,
     pub dönüşüm_kaydırması: f64,
     pub dağılım: YÖlçekDağılımı,
+    pub ters_yön: bool,
+    pub eksen_değer_çarpanı: f64,
+    pub etiket_biçimi: YÖlçekEtiketBiçimi,
+    pub log_tam_büyüklükler: bool,
 }
 
 impl YÖlçekSeçenekleri {
@@ -45,6 +58,10 @@ impl YÖlçekSeçenekleri {
             dönüşüm_çarpanı: 1.0,
             dönüşüm_kaydırması: 0.0,
             dağılım: YÖlçekDağılımı::Doğrusal,
+            ters_yön: false,
+            eksen_değer_çarpanı: 1.0,
+            etiket_biçimi: YÖlçekEtiketBiçimi::Otomatik,
+            log_tam_büyüklükler: true,
         }
     }
 
@@ -106,6 +123,34 @@ impl YÖlçekSeçenekleri {
         if taban.is_finite() && taban > 1.0 {
             self.dağılım = YÖlçekDağılımı::Logaritmik { taban };
         }
+        self
+    }
+
+    /// uPlot `rangeLog(..., fullMags: false)` karşılığıdır.
+    pub fn logaritmik_kısmi(mut self, taban: f64) -> Self {
+        if taban.is_finite() && taban > 1.0 {
+            self.dağılım = YÖlçekDağılımı::Logaritmik { taban };
+            self.log_tam_büyüklükler = false;
+        }
+        self
+    }
+
+    /// uPlot `Scale.dir: -1` karşılığıdır.
+    pub fn ters_yön(mut self, ters: bool) -> Self {
+        self.ters_yön = ters;
+        self
+    }
+
+    /// Eksen değerini veri geometrisini değiştirmeden gösterim için dönüştürür.
+    pub fn eksen_değer_çarpanı(mut self, çarpan: f64) -> Self {
+        if çarpan.is_finite() && çarpan.abs() > f64::EPSILON {
+            self.eksen_değer_çarpanı = çarpan;
+        }
+        self
+    }
+
+    pub fn etiket_biçimi(mut self, biçim: YÖlçekEtiketBiçimi) -> Self {
+        self.etiket_biçimi = biçim;
         self
     }
 
