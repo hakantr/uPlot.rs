@@ -1,0 +1,25 @@
+id = "latency-heatmap"
+kaynak = "../uPlot/demos/latency-heatmap.html"
+fixture = "src/kart/latency_heatmap.rs#latency_heatmap_kartı"
+device_pixel_ratio = 1
+alt_grafik_sayısı = 5
+kanıt_tohumu = "0x1A7E4C7A"
+
+[veri]
+ham_x_sayısı = 100
+ham_y_adet_aralığı = [200, 500]
+mode2_örnek_sayısı = 45000
+mode2_x_kovası_milisaniye = 15000
+mode2_y_kovası = 2
+
+[davranış]
+ham_hücre_pikseli = [10, 1]
+toplu_kova_boyutu = 5
+histogram_kova_aralığı = [1, 25]
+histogram_ofset_aralığı = [0, 25]
+histogram_kontrolleri = ["masaüstü", "wasm"]
+
+[kanıt]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/latency-heatmap/latency-heatmap-mode2.svg"

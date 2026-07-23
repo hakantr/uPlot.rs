@@ -26,10 +26,13 @@
     .kart small { color: #6b7280; }
     .durum { margin-top: 10px; color: #dc2626; font-size: 12px; }
     main { min-width: 0; min-height: 0; padding: 24px; display: flex; flex-direction: column; }
-    header { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+    header { display: flex; align-items: start; justify-content: space-between; gap: 16px;
+             flex-wrap: wrap; }
+    header > div:first-child { flex: 1 1 300px; min-width: 260px; }
     h2 { margin: 0; font-size: 19px; }
     .kaynak { margin-top: 5px; color: #6b7280; font-size: 13px; }
-    .denetimler { display: flex; align-items: center; gap: 12px; }
+    .denetimler { flex: 1 1 500px; display: flex; align-items: center; justify-content: flex-end;
+                  flex-wrap: wrap; gap: 12px; }
     .denetimler label { display: flex; align-items: center; gap: 8px; }
     .eklenti-anahtarı { white-space: nowrap; font-size: 13px; color: #374151; }
     .eklenti-anahtarı input { accent-color: #dc2626; }
@@ -38,6 +41,8 @@
     button:hover:not(:disabled) { border-color: #9ca3af; background: #f9fafb; }
     button:disabled { color: #9ca3af; background: #f3f4f6; cursor: default; }
     input[type="range"] { width: 200px; }
+    #latency-histogram-kontrolü input[type="range"] { width: 110px; }
+    #latency-histogram-kontrolü output { min-width: 20px; }
     output { min-width: 78px; color: #6b7280; font-size: 13px; }
     #chart { position: relative; flex: 1; min-height: 320px; margin-top: 18px; padding: 12px;
              display: grid; place-items: center; overflow: hidden; background: #fff;
@@ -206,6 +211,13 @@
             <input id="autosize-kuvvet" type="range" min="0" max="9" step="1" value="0">
             <output id="autosize-degeri">1</output>
           </label>
+          <label id="latency-histogram-kontrolü" hidden>Histogram kovası
+            <input id="latency-kova" type="range" min="1" max="25" step="1" value="5">
+            <output id="latency-kova-degeri">5</output>
+            · ofset
+            <input id="latency-ofset" type="range" min="0" max="25" step="1" value="0">
+            <output id="latency-ofset-degeri">0</output>
+          </label>
           <span id="dinamik-seri-kontrolleri" hidden>
             <button id="dinamik-seri-ekle" type="button">Seri ekle</button>
             <button id="dinamik-seri-sil" type="button">Seri sil</button>
@@ -244,6 +256,7 @@
       gradients_kart_tanim_ornegi,
       grid_over_series_kart_tanim_ornegi,
       high_low_bands_kart_tanim_ornegi,
+      latency_heatmap_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
@@ -290,6 +303,11 @@
     const autosizeKontrolü = document.getElementById("autosize-kontrolü");
     const autosizeKuvvet = document.getElementById("autosize-kuvvet");
     const autosizeDeğeri = document.getElementById("autosize-degeri");
+    const latencyHistogramKontrolü = document.getElementById("latency-histogram-kontrolü");
+    const latencyKova = document.getElementById("latency-kova");
+    const latencyKovaDeğeri = document.getElementById("latency-kova-degeri");
+    const latencyOfset = document.getElementById("latency-ofset");
+    const latencyOfsetDeğeri = document.getElementById("latency-ofset-degeri");
     const açıklamaDiyaloğu = document.getElementById("açıklama-diyaloğu");
     const açıklamaMetni = document.getElementById("açıklama-metni");
     const dinamikSeriKontrolleri = document.getElementById("dinamik-seri-kontrolleri");
@@ -892,6 +910,31 @@
       };
     }
 
+    for (const [kimlik, başlık, durum, seriler] of [
+      ["latency-heatmap-raw", "Latency Heatmap (~35k)", "100 zaman sütunu · ham örnekler", []],
+      ["latency-heatmap-aggregated", "Latency Heatmap Aggregated 10ms (~20k)", "5 ms yoğunluk kovaları", []],
+      ["latency-heatmap-mode2", "Heatmap / Scatter (mode: 2) / ~45k", "15 sn × 2 ms mode-2 hücreleri", []],
+      ["latency-histogram-collapsed", "Latency Histogram · border collapse", "5 ms · gap 0 · stroke 2", [["Latency", "#ff0000"]]],
+      ["latency-histogram-gapped", "Latency Histogram · disp-gap-shift", "5 ms · gap 3 · stroke 1", [["Latency", "#ff0000"]]],
+    ]) {
+      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>latency-heatmap</small><div class="durum">${durum}</div>
+        </article>`);
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/latency-heatmap.html">latency-heatmap.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/rand.js">rand.js</a>
+          <br>Beş resmî grafik; skew-normal üreteci, draw kancası, mode-2 hücre yolu ve histogram kovaları Rust çekirdeğinde çözülür.`,
+        tanım: () => latency_heatmap_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/latency_heatmap.rs",
+        seriler: seriler.map(([etiket, renk]) => ({ etiket, renk })),
+        yardım: "Sürükleyerek X/Y alanı seç · tekerlekle fare odağında yakınlaştır · boşlukla taşı",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
+
     function ortakEtkileşimler() {
       return {
         tekerlek: ortak_kart_tekerlek_etkilesimi(),
@@ -1431,11 +1474,16 @@
         noktaKontrolü.hidden = !kart.değişkenNokta;
         arcsinhKontrolü.hidden = kimlik !== "arcsinh-scales";
         autosizeKontrolü.hidden = kimlik !== "axis-autosize";
+        latencyHistogramKontrolü.hidden = !kimlik.startsWith("latency-histogram-");
         dinamikSeriKontrolleri.hidden = kimlik !== "add-del-series";
         arcsinhEşiği.value = "0";
         arcsinhDeğeri.value = "1";
         autosizeKuvvet.value = "0";
         autosizeDeğeri.value = "1";
+        latencyKova.value = "5";
+        latencyKovaDeğeri.value = "5";
+        latencyOfset.value = "0";
+        latencyOfsetDeğeri.value = "0";
         if (autosizeZamanlayıcı !== null) {
           clearInterval(autosizeZamanlayıcı);
           autosizeZamanlayıcı = null;
@@ -1511,6 +1559,21 @@
           hata.textContent = `Axis AutoSize güncellenemedi: ${String(neden)}`;
         }
       });
+      const latencyHistogramıGüncelle = () => {
+        if (!aktifKart.startsWith("latency-histogram-") || !oturum) return;
+        const kova = Number(latencyKova.value);
+        const ofset = Number(latencyOfset.value);
+        latencyKovaDeğeri.value = String(kova);
+        latencyOfsetDeğeri.value = String(ofset);
+        try {
+          if (oturum.latency_histogram_ayarla(kova, ofset)) çiz();
+          hata.textContent = "";
+        } catch (neden) {
+          hata.textContent = `Histogram güncellenemedi: ${String(neden)}`;
+        }
+      };
+      latencyKova.addEventListener("input", latencyHistogramıGüncelle);
+      latencyOfset.addEventListener("input", latencyHistogramıGüncelle);
       new ResizeObserver(çiz).observe(chart);
       çiz();
     } catch (neden) {

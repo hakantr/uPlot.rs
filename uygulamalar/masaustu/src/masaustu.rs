@@ -20,16 +20,17 @@ use uplot_rs::{
     DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri,
     FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ,
     GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği, Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
-    HighLowBandsÖrneği, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ,
-    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SmoothingÖrneği,
-    UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, missing_data_null_kartı,
+    HighLowBandsÖrneği, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SmoothingÖrneği, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, missing_data_null_kartı,
     missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
     ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
     zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
@@ -57,6 +58,7 @@ enum KartKimliği {
     Gradients(GradientÖrneği),
     GridOverSeries,
     HighLowBands(HighLowBandsÖrneği),
+    LatencyHeatmap(LatencyHeatmapÖrneği),
     MissingDataNull,
     MissingDataXGap,
     DependentScale,
@@ -93,6 +95,7 @@ impl KartKimliği {
             Self::Gradients(örnek) => örnek.başlık(),
             Self::GridOverSeries => "Grid Over Series",
             Self::HighLowBands(örnek) => örnek.başlık(),
+            Self::LatencyHeatmap(örnek) => örnek.başlık(),
             Self::MissingDataNull => "Missing Data · null values",
             Self::MissingDataXGap => "Missing Data · adjacent X gap",
             Self::DependentScale => "Derived Scale · °F / °C",
@@ -143,6 +146,9 @@ impl KartKimliği {
             Self::Gradients(_) => "gradients.html · scaleGradient + cursor point colors",
             Self::GridOverSeries => "grid-over-series.html · drawOrder: series, axes",
             Self::HighLowBands(_) => "high-low-bands.html · yönlü line/step/spline/bar bantları",
+            Self::LatencyHeatmap(_) => {
+                "latency-heatmap.html · rand.js · draw hook, mode-2 ve histogram kovaları"
+            }
             Self::MissingDataNull | Self::MissingDataXGap => {
                 "missing-data.html · resmî veri ve iki kaynak alt grafiği"
             }
@@ -182,6 +188,7 @@ impl KartKimliği {
             Self::Gradients(_) => GRADIENTS_KART_TANIM_ÖRNEĞİ,
             Self::GridOverSeries => GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ,
             Self::HighLowBands(_) => HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
+            Self::LatencyHeatmap(_) => LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ,
             Self::MissingDataNull | Self::MissingDataXGap => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
             Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::ArcSinhScales => ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
@@ -215,6 +222,7 @@ impl KartKimliği {
             Self::Gradients(_) => "src/kart/gradients.rs",
             Self::GridOverSeries => "src/kart/grid_over_series.rs",
             Self::HighLowBands(_) => "src/kart/high_low_bands.rs",
+            Self::LatencyHeatmap(_) => "src/kart/latency_heatmap.rs",
             Self::MissingDataNull | Self::MissingDataXGap => "src/kart/missing_data.rs",
             Self::DependentScale => "src/kart/dependent_scale.rs",
             Self::ArcSinhScales => "src/kart/arcsinh_scales.rs",
@@ -251,6 +259,8 @@ pub struct ChartListesi {
     tekerlek_anahtarı: Entity<Anahtar>,
     arcsinh_kuvvet: i32,
     autosize_kuvvet: i32,
+    latency_kova: u8,
+    latency_ofset: u8,
     açıklama_istendi: bool,
     dinamik_seri_sayacı: u32,
     align_data_zamanlayıcısı: Option<Task<()>>,
@@ -278,7 +288,7 @@ impl ChartListesi {
         })
         .detach();
 
-        let (grafik, hata) = grafik_oluştur(KartKimliği::Resize, 100, 0).map_or_else(
+        let (grafik, hata) = grafik_oluştur(KartKimliği::Resize, 100, 0, 5, 0).map_or_else(
             |hata| (None, Some(format!("Grafik oluşturulamadı: {hata}"))),
             |grafik| (Some(cx.new(|_| GpuiGrafik::yeni(grafik))), None),
         );
@@ -301,6 +311,8 @@ impl ChartListesi {
             tekerlek_anahtarı,
             arcsinh_kuvvet: 0,
             autosize_kuvvet: 0,
+            latency_kova: 5,
+            latency_ofset: 0,
             açıklama_istendi: false,
             dinamik_seri_sayacı: 0,
             align_data_zamanlayıcısı: None,
@@ -309,7 +321,13 @@ impl ChartListesi {
 
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
-        match grafik_oluştur(self.aktif_kart, nokta_sayısı, self.autosize_kuvvet) {
+        match grafik_oluştur(
+            self.aktif_kart,
+            nokta_sayısı,
+            self.autosize_kuvvet,
+            self.latency_kova,
+            self.latency_ofset,
+        ) {
             Ok(mut yeni) => {
                 yeni.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
                 if let Some(grafik) = &self.grafik {
@@ -343,6 +361,8 @@ impl ChartListesi {
         self.kart_tanımı_açık = false;
         self.arcsinh_kuvvet = 0;
         self.autosize_kuvvet = 0;
+        self.latency_kova = 5;
+        self.latency_ofset = 0;
         self.açıklama_istendi = false;
         self.dinamik_seri_sayacı = 0;
         self.align_data_zamanlayıcısı = None;
@@ -398,6 +418,12 @@ impl ChartListesi {
         self.grafiği_yenile(self.nokta_sayısı, cx);
     }
 
+    fn latency_histogramını_ayarla(&mut self, kova: u8, ofset: u8, cx: &mut Context<Self>) {
+        self.latency_kova = kova.clamp(1, 25);
+        self.latency_ofset = ofset.min(25);
+        self.grafiği_yenile(self.nokta_sayısı, cx);
+    }
+
     fn dinamik_seri_ekle(&mut self, cx: &mut Context<Self>) {
         let Some(grafik) = &self.grafik else {
             self.hata = Some("Dinamik seri eklemek için grafik bulunamadı".to_string());
@@ -443,6 +469,8 @@ fn grafik_oluştur(
     kart: KartKimliği,
     nokta_sayısı: usize,
     autosize_kuvvet: i32,
+    latency_kova: u8,
+    latency_ofset: u8,
 ) -> Result<Grafik, UplotHatası> {
     let (seçenekler, veri) = match kart {
         KartKimliği::AddDelSeries => add_del_series_kartı(),
@@ -465,6 +493,9 @@ fn grafik_oluştur(
         KartKimliği::Gradients(örnek) => gradients_kartı(örnek),
         KartKimliği::GridOverSeries => grid_over_series_kartı(),
         KartKimliği::HighLowBands(örnek) => high_low_bands_kartı(örnek),
+        KartKimliği::LatencyHeatmap(örnek) => {
+            latency_heatmap_kartı(örnek, f64::from(latency_kova), f64::from(latency_ofset))
+        }
         KartKimliği::MissingDataNull => missing_data_null_kartı(),
         KartKimliği::MissingDataXGap => missing_data_x_boşluğu_kartı(),
         KartKimliği::DependentScale => dependent_scale_kartı(),
@@ -562,6 +593,18 @@ impl Render for ChartListesi {
                 let uzunluk = örnek.nokta_sayısı();
                 format!("{uzunluk} nokta · yönlü ve boşluğa duyarlı bant")
             }
+            KartKimliği::LatencyHeatmap(LatencyHeatmapÖrneği::Ham) => {
+                "100 zaman sütunu · yaklaşık 35 bin ham örnek".to_string()
+            }
+            KartKimliği::LatencyHeatmap(LatencyHeatmapÖrneği::Kovalanmış) => {
+                "100 zaman sütunu · 5 ms yoğunluk kovaları".to_string()
+            }
+            KartKimliği::LatencyHeatmap(LatencyHeatmapÖrneği::Mode2) => {
+                "45 bin örnek · 15 sn × 2 ms hücreler".to_string()
+            }
+            KartKimliği::LatencyHeatmap(
+                LatencyHeatmapÖrneği::HistogramBirleşik | LatencyHeatmapÖrneği::HistogramBoşluklu,
+            ) => "Tüm örnekler · 5 ms histogram kovaları".to_string(),
             KartKimliği::MissingDataNull => "200 nokta × 3 seri · % + MB".to_string(),
             KartKimliği::MissingDataXGap => "8 nokta × 1 seri · 2 yol parçası".to_string(),
             KartKimliği::DependentScale => "7 nokta × °F veri · türetilmiş °C ekseni".to_string(),
@@ -684,6 +727,21 @@ impl Render for ChartListesi {
                     "high-low-bands",
                     aktif_kart == kart,
                     "Yönlü bant · boşluk ve yol kırpması",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
+            .children(LatencyHeatmapÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::LatencyHeatmap(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "latency-heatmap",
+                    aktif_kart == kart,
+                    "Isı hücresi · kaynak histogram kovaları",
                     panel,
                     vurgu,
                 )
@@ -1306,6 +1364,74 @@ impl Render for ChartListesi {
                             })),
                     )
             })
+            .when(
+                matches!(
+                    aktif_kart,
+                    KartKimliği::LatencyHeatmap(
+                        LatencyHeatmapÖrneği::HistogramBirleşik
+                            | LatencyHeatmapÖrneği::HistogramBoşluklu
+                    )
+                ),
+                |öğe| {
+                    öğe
+                        .child(
+                            Dugme::yeni("latency-kova-azalt", "− Kova")
+                                .boyutu(DugmeBoyutu::Kucuk)
+                                .turu(DugmeTuru::Ikincil)
+                                .devre_disi(self.latency_kova <= 1)
+                                .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                    bu.latency_histogramını_ayarla(
+                                        bu.latency_kova.saturating_sub(1),
+                                        bu.latency_ofset,
+                                        cx,
+                                    );
+                                })),
+                        )
+                        .child(
+                            Dugme::yeni("latency-kova-artir", "+ Kova")
+                                .boyutu(DugmeBoyutu::Kucuk)
+                                .turu(DugmeTuru::Ikincil)
+                                .devre_disi(self.latency_kova >= 25)
+                                .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                    bu.latency_histogramını_ayarla(
+                                        bu.latency_kova.saturating_add(1),
+                                        bu.latency_ofset,
+                                        cx,
+                                    );
+                                })),
+                        )
+                        .child(
+                            Dugme::yeni("latency-ofset-azalt", "− Ofset")
+                                .boyutu(DugmeBoyutu::Kucuk)
+                                .turu(DugmeTuru::Ikincil)
+                                .devre_disi(self.latency_ofset == 0)
+                                .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                    bu.latency_histogramını_ayarla(
+                                        bu.latency_kova,
+                                        bu.latency_ofset.saturating_sub(1),
+                                        cx,
+                                    );
+                                })),
+                        )
+                        .child(div().text_xs().text_color(soluk).child(format!(
+                            "{} ms · ofset {}",
+                            self.latency_kova, self.latency_ofset
+                        )))
+                        .child(
+                            Dugme::yeni("latency-ofset-artir", "+ Ofset")
+                                .boyutu(DugmeBoyutu::Kucuk)
+                                .turu(DugmeTuru::Ikincil)
+                                .devre_disi(self.latency_ofset >= 25)
+                                .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                    bu.latency_histogramını_ayarla(
+                                        bu.latency_kova,
+                                        bu.latency_ofset.saturating_add(1),
+                                        cx,
+                                    );
+                                })),
+                        )
+                },
+            )
             .child(
                 Dugme::yeni("nokta-azalt", "− Nokta")
                     .boyutu(DugmeBoyutu::Kucuk)

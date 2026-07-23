@@ -1,4 +1,5 @@
 mod bant;
+mod isi_haritasi;
 mod seri_geometrisi;
 
 use seri_geometrisi::seri_yol_noktaları;
@@ -52,6 +53,16 @@ impl Grafik {
                     anahtar: ayarlar.ölçek.clone(),
                 });
             }
+        }
+        if seçenekler
+            .ısı_haritası_düzeni
+            .as_ref()
+            .is_some_and(|düzen| !düzen.geçerli_mi())
+        {
+            return Err(UplotHatası::GeçersizKaynakVeri {
+                varlık: "IsıHaritasıDüzeni",
+                açıklama: "hücre konumu, boyutu veya rengi geçersiz".to_string(),
+            });
         }
         let mut tam = tam_x_aralığı(&veri)?;
         if (seçenekler.çubuk_düzeni.is_some()
@@ -1055,6 +1066,19 @@ impl Grafik {
             });
         }
         let eksen_komutları_bitişi = sahne.komutlar().len();
+
+        if let Some(düzen) = &self.seçenekler.ısı_haritası_düzeni {
+            self.ısı_haritasını_çiz(
+                &mut sahne,
+                düzen,
+                x_aralığı,
+                y_aralığı,
+                sol,
+                sağ,
+                üst,
+                alt,
+            );
+        }
 
         for (seri_indeksi, değerler) in self.veri.seriler().iter().enumerate() {
             let Some(seri) = self.seçenekler.seriler.get(seri_indeksi) else {

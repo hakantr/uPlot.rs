@@ -1,10 +1,12 @@
 use crate::{Aralık, UplotHatası};
 
 mod gradyan;
+mod isi_haritasi;
 mod seri;
 mod y_olcek;
 
 pub use gradyan::{GradyanDurağı, GradyanEkseni, GradyanKonumu, ÖlçekGradyanı};
+pub use isi_haritasi::{IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu};
 pub use seri::{SeriSeçenekleri, SeriÇizimTürü};
 pub use y_olcek::{YÖlçekDağılımı, YÖlçekSeçenekleri};
 
@@ -443,6 +445,7 @@ pub struct GrafikSeçenekleri {
     pub çubuk_düzeni: Option<ÇubukDüzeni>,
     pub kutu_bıyık_düzeni: Option<KutuBıyıkDüzeni>,
     pub mum_düzeni: Option<MumDüzeni>,
+    pub ısı_haritası_düzeni: Option<IsıHaritasıDüzeni>,
     pub bantlar: Vec<SeriBandı>,
     pub nokta_katmanları: Vec<NoktaKatmanı>,
     pub çizim_kancaları: Option<ÇizimKancasıDüzeni>,
@@ -486,6 +489,7 @@ impl GrafikSeçenekleri {
             çubuk_düzeni: None,
             kutu_bıyık_düzeni: None,
             mum_düzeni: None,
+            ısı_haritası_düzeni: None,
             bantlar: Vec::new(),
             nokta_katmanları: Vec::new(),
             çizim_kancaları: None,
@@ -636,6 +640,11 @@ impl GrafikSeçenekleri {
 
     pub fn mum_düzeni(mut self, düzen: MumDüzeni) -> Self {
         self.mum_düzeni = Some(düzen);
+        self
+    }
+
+    pub fn ısı_haritası_düzeni(mut self, düzen: IsıHaritasıDüzeni) -> Self {
+        self.ısı_haritası_düzeni = Some(düzen);
         self
     }
 

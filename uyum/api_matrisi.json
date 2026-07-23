@@ -248,6 +248,30 @@
       "rust_karşılığı": "GrafikSeçenekleri::x_zaman_milisaniye",
       "durum": "kısmi",
       "test": "src/kart/high_low_bands.rs"
+    },
+    {
+      "kaynak_yolu": "Hooks.draw + valToPos heatmapPlugin",
+      "rust_karşılığı": "IsıHaritasıDüzeni / Grafik::ısı_haritasını_çiz",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/latency_heatmap.rs"
+    },
+    {
+      "kaynak_yolu": "mode: 2 + Series.facets + custom heatmap paths",
+      "rust_karşılığı": "IsıHücresi / veri ve piksel hücre boyutları",
+      "durum": "kısmi",
+      "test": "src/kart/latency_heatmap.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.paths.bars({align,size,gap,disp})",
+      "rust_karşılığı": "SeriÇizimTürü::Çubuk / çubuk_boyutu",
+      "durum": "kısmi",
+      "test": "src/kart/latency_heatmap.rs"
+    },
+    {
+      "kaynak_yolu": "histogram / aggAll / aggEach",
+      "rust_karşılığı": "latency_heatmap::histogram_say",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/latency_heatmap.rs"
     }
   ]
 }

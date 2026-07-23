@@ -1684,6 +1684,49 @@
         "gpui-wasm-catalog-parity", "common-interaction-profile", "panic-free-source-parser"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+    },
+    {
+      "sıra": 29,
+      "id": "latency-heatmap",
+      "başlık": { "en": "Latency Heatmap", "tr": "Gecikme Isı Haritası" },
+      "kaynak": "demos/latency-heatmap.html",
+      "kaynak_sha256": "9a461c98a8714fa0aafc73fd0cc770e73249325a269a12b404521201e4ce77b4",
+      "ek_kaynaklar": [
+        { "yol": "demos/lib/rand.js", "sha256": "ba4edd3853959cff66ff73e3c20c5e0d5b58019dfbcdc14ade02ef6ffc0d857c" },
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" },
+        { "yol": "src/paths/bars.js", "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56" }
+      ],
+      "fixture": "src/kart/latency_heatmap.rs#latency_heatmap_kartı",
+      "örnek": "examples/latency_heatmap.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/latency-heatmap.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/latency_heatmap.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "devralındı", "cekirdek-davranis-sahipligi": "devralındı",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı", "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı", "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı", "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "devralındı"
+        }
+      },
+      "sahip_faz": 3,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "five-source-subcharts", "source-rand-js-skew-normal-generator", "fixed-proof-seed",
+        "raw-pixel-heat-cells", "aggregated-density-colors", "mode2-faceted-heat-cells",
+        "source-metal-palette", "histogram-aggregation", "histogram-bucket-size-offset-controls",
+        "batched-color-polygons", "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "panic-free-data-generation"
+      ],
+      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "uygulandı_kanıtlı" }
     }
   ]
 }

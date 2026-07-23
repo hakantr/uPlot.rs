@@ -3,9 +3,9 @@
   "kaynak_commit": "0e5812c504430f5c804e0f993376d8999b26cc34",
   "demo_sayısı": 73,
   "durum_özeti": {
-    "uygulandı_kanıtlı": 29,
+    "uygulandı_kanıtlı": 30,
     "çekirdek_davranışı_port_edildi_kart_bekliyor": 0,
-    "bekliyor": 44
+    "bekliyor": 43
   },
   "demolar": [
     {
@@ -335,7 +335,7 @@
       ],
       "sahip_faz": 3,
       "faz": "Özel çizim ve seri eklentileri",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 25,

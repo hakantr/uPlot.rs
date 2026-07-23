@@ -13,16 +13,17 @@ use uplot_rs::{
     DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, DRAW_HOOKS_KART_TANIM_ÖRNEĞİ,
     FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ,
     GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği, Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
-    HighLowBandsÖrneği, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ,
-    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SeçimEylemi,
-    SmoothingÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, missing_data_null_kartı,
+    HighLowBandsÖrneği, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SeriSeçenekleri, SeçimEylemi, SmoothingÖrneği, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, missing_data_null_kartı,
     missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
     ortak_kart_etkileşimleri, resize_kartı, scale_padding_kartı, zoom_touch_kartı,
     zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
@@ -34,6 +35,7 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 pub struct KartOturumu {
     grafik: Grafik,
+    kart_kimliği: String,
     dinamik_seri_sayacı: u32,
 }
 
@@ -85,6 +87,15 @@ impl KartOturumu {
                     high_low_bands_kartı,
                 )
             }
+            kimlik if kimlik.starts_with("latency-") => LatencyHeatmapÖrneği::kimlikten(kimlik)
+                .map_or_else(
+                    || {
+                        Err(UplotHatası::BilinmeyenKart {
+                            kimlik: kimlik.to_string(),
+                        })
+                    },
+                    |örnek| latency_heatmap_kartı(örnek, 5.0, 0.0),
+                ),
             "missing-data-null" => missing_data_null_kartı(),
             "missing-data-x-gap" => missing_data_x_boşluğu_kartı(),
             "dependent-scale" => dependent_scale_kartı(),
@@ -111,6 +122,7 @@ impl KartOturumu {
         let grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
         Ok(Self {
             grafik,
+            kart_kimliği: kart_kimliği.to_string(),
             dinamik_seri_sayacı: 0,
         })
     }
@@ -413,6 +425,29 @@ impl KartOturumu {
     pub fn geri_var(&self) -> bool {
         self.grafik.geri_var()
     }
+
+    pub fn latency_histogram_ayarla(
+        &mut self,
+        kova_boyutu: f64,
+        kova_ofseti: f64,
+    ) -> Result<bool, JsValue> {
+        let Some(örnek) = LatencyHeatmapÖrneği::kimlikten(&self.kart_kimliği) else {
+            return Ok(false);
+        };
+        if !matches!(
+            örnek,
+            LatencyHeatmapÖrneği::HistogramBirleşik | LatencyHeatmapÖrneği::HistogramBoşluklu
+        ) {
+            return Ok(false);
+        }
+        let tekerlek = self.grafik.etkileşim_seçenekleri().tekerlek_etkileşimi;
+        let (seçenekler, veri) =
+            latency_heatmap_kartı(örnek, kova_boyutu, kova_ofseti).map_err(js_hatası)?;
+        let mut grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
+        grafik.tekerlek_etkileşimi_ayarla(tekerlek);
+        self.grafik = grafik;
+        Ok(true)
+    }
 }
 
 fn js_hatası(hata: UplotHatası) -> JsValue {
@@ -421,7 +456,12 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    80
+    85
+}
+
+#[wasm_bindgen]
+pub fn latency_heatmap_kart_tanim_ornegi() -> String {
+    LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -608,7 +648,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 80);
+        assert_eq!(kart_sayisi(), 85);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -633,7 +673,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 80);
+        assert_eq!(kart_sayisi(), 85);
     }
 
     #[test]
@@ -887,6 +927,16 @@ mod testler {
             assert!(oturum.svg(960, 400).contains(örnek.başlık()));
         }
         assert!(high_low_bands_kart_tanim_ornegi().contains("FarklıYollar"));
+    }
+
+    #[test]
+    fn latency_heatmap_wasm_beş_kaynak_grafiği_üretir() {
+        for örnek in LatencyHeatmapÖrneği::TÜMÜ {
+            let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
+            let Ok(oturum) = oturum else { continue };
+            assert!(oturum.svg(960, 400).contains(örnek.başlık()));
+        }
+        assert!(latency_heatmap_kart_tanim_ornegi().contains("Kovalanmış"));
     }
 
     #[test]

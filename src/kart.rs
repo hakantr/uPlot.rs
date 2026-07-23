@@ -20,6 +20,7 @@ mod focus_cursor;
 mod gradients;
 mod grid_over_series;
 mod high_low_bands;
+mod latency_heatmap;
 mod missing_data;
 mod months;
 mod ortak;
@@ -85,6 +86,10 @@ pub use grid_over_series::{
 pub use high_low_bands::{
     HIGH_LOW_BANDS_KANIT_TOHUMU, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ, HighLowBandsÖrneği,
     high_low_bands_kartı,
+};
+pub use latency_heatmap::{
+    LATENCY_HEATMAP_KANIT_TOHUMU, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
+    latency_heatmap_kartı,
 };
 pub use missing_data::{
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, missing_data_null_kartı, missing_data_x_boşluğu_kartı,

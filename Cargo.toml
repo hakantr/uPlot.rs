@@ -120,6 +120,10 @@ name = "high_low_bands"
 required-features = ["svg"]
 
 [[example]]
+name = "latency_heatmap"
+required-features = ["svg"]
+
+[[example]]
 name = "missing_data"
 required-features = ["svg"]
 
