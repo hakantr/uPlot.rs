@@ -1,0 +1,35 @@
+id = "timezones-dst"
+kaynak = "../uPlot/demos/timezones-dst.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/timezones_dst.rs#timezones_dst_kartı"
+viewport = [600, 200]
+durum = "elli_bir_etkin_zaman_dilimi_yüzeyi"
+
+[yüzeyler]
+toplam = 51
+karşılaştırmalı_dst = 12
+ayrıntılı_saat_artımı = 28
+gün = 4
+ay = 5
+başlangıç_ofseti = 2
+
+[zaman_dilimleri]
+utc = "Etc/UTC"
+londra = "Europe/London"
+chicago = "America/Chicago"
+platformdan_bağımsız = true
+
+[dst_2024]
+londra_yaz_başlangıcı_utc = 1711846800
+londra_yaz_bitişi_utc = 1729990800
+chicago_yaz_başlangıcı_utc = 1710057600
+chicago_yaz_bitişi_utc = 1730617200
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+senkron_grup_sayısı = 4
+
+[kanıt]
+örnek = "examples/timezones_dst.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

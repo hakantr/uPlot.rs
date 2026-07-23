@@ -680,6 +680,36 @@
       "rust_karşılığı": "GrafikSeçenekleri::y_özel_etiketler",
       "durum": "tam_kanıtlı",
       "test": "src/kart/timeseries_discrete.rs"
+    },
+    {
+      "kaynak_yolu": "fmtDate.js tzDate / DateZoned timezone getters",
+      "rust_karşılığı": "ZamanDilimi / zaman_dilimi_ofseti / yerel_eksen_etiketi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timezones_dst.rs"
+    },
+    {
+      "kaynak_yolu": "timeAxisSplits timezone-adjusted hourly baseline",
+      "rust_karşılığı": "zaman_bölmeleri yerel ofset hizalaması",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timezones_dst.rs"
+    },
+    {
+      "kaynak_yolu": "Europe/London 2024 spring/fall DST transitions",
+      "rust_karşılığı": "ZamanDilimi::EuropeLondon geçiş aralığı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timezones_dst.rs"
+    },
+    {
+      "kaynak_yolu": "America/Chicago 2024 spring/fall DST transitions",
+      "rust_karşılığı": "ZamanDilimi::AmericaChicago geçiş aralığı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timezones_dst.rs"
+    },
+    {
+      "kaynak_yolu": "51 active genOpts/sliceRange surfaces",
+      "rust_karşılığı": "TimezonesDstÖrneği::tümü / kaynak_veri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timezones_dst.rs"
     }
   ]
 }

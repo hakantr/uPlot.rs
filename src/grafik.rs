@@ -1609,6 +1609,8 @@ impl Grafik {
                 x_boyutu,
                 x_etiket_boşluğu,
                 self.seçenekler.x_zaman_milisaniye,
+                self.seçenekler.x_zaman_dilimi,
+                self.seçenekler.x_zaman_sabit_artımı,
             ),
             XÖlçekDağılımı::Doğrusal => (
                 eksen_bölmeleri(x_aralığı, x_boyutu, x_etiket_boşluğu),
@@ -1684,6 +1686,7 @@ impl Grafik {
                             x_değeri / birim,
                             x_artımı / birim,
                             &self.seçenekler.x_tarih_adları,
+                            self.seçenekler.x_zaman_dilimi,
                             önceki_x_yılı,
                         )
                         .map_or_else(
@@ -1726,6 +1729,7 @@ impl Grafik {
                     kaydırılmış,
                     x_artımı / birim,
                     &self.seçenekler.x_tarih_adları,
+                    self.seçenekler.x_zaman_dilimi,
                     önceki_ikincil_x_yılı,
                 )
                 .map_or_else(
@@ -3579,6 +3583,8 @@ fn zaman_bölmeleri(
     boyut: f32,
     en_az_boşluk: f32,
     milisaniye: bool,
+    zaman_dilimi: crate::ZamanDilimi,
+    sabit_artım: Option<f64>,
 ) -> (Vec<f64>, f64) {
     const SANİYE_ADIMLARI: [f64; 25] = [
         1.0,
@@ -3610,11 +3616,16 @@ fn zaman_bölmeleri(
     let birim = if milisaniye { 1_000.0 } else { 1.0 };
     let hedef =
         (aralık.en_çok - aralık.en_az) * f64::from(en_az_boşluk) / f64::from(boyut.max(1.0));
-    let adım = SANİYE_ADIMLARI
-        .into_iter()
-        .map(|adım| adım * birim)
-        .find(|adım| *adım >= hedef)
-        .unwrap_or(63_072_000.0 * birim);
+    let adım = sabit_artım
+        .filter(|artım| artım.is_finite() && *artım > 0.0)
+        .map(|artım| artım * birim)
+        .unwrap_or_else(|| {
+            SANİYE_ADIMLARI
+                .into_iter()
+                .map(|adım| adım * birim)
+                .find(|adım| *adım >= hedef)
+                .unwrap_or(63_072_000.0 * birim)
+        });
     let saniye_adımı = adım / birim;
     if saniye_adımı >= 2_592_000.0 {
         let ay_adımı = if saniye_adımı >= 31_536_000.0 {
@@ -3625,7 +3636,12 @@ fn zaman_bölmeleri(
         };
         return (takvim_ay_bölmeleri(aralık, birim, ay_adımı), adım);
     }
-    let ilk = (aralık.en_az / adım).ceil() * adım;
+    let başlangıç_saniyesi = aralık.en_az / birim;
+    let ofset = f64::from(crate::zaman::zaman_dilimi_ofseti(
+        zaman_dilimi,
+        başlangıç_saniyesi,
+    )) * birim;
+    let ilk = ((aralık.en_az + ofset) / adım).ceil() * adım - ofset;
     let mut sonuç = Vec::new();
     let mut değer = ilk;
     while değer <= aralık.en_çok && sonuç.len() < 10_000 {
@@ -4390,7 +4406,8 @@ mod eksen_testleri {
     fn zaman_bölmeleri_saat_sınırlarına_hizalanır() {
         let aralık = Aralık::yeni(1_594_953_046.0, 1_595_039_415.0);
         let Ok(aralık) = aralık else { return };
-        let (bölmeler, adım) = zaman_bölmeleri(aralık, 1_400.0, 50.0, false);
+        let (bölmeler, adım) =
+            zaman_bölmeleri(aralık, 1_400.0, 50.0, false, crate::ZamanDilimi::Utc, None);
         assert_eq!(adım, 3_600.0);
         assert!(
             bölmeler
@@ -4403,7 +4420,8 @@ mod eksen_testleri {
     fn aylık_zaman_bölmeleri_gerçek_takvim_sınırlarına_hizalanır() {
         let aralık = Aralık::yeni(1_483_228_800.0, 1_575_158_400.0);
         let Ok(aralık) = aralık else { return };
-        let (bölmeler, adım) = zaman_bölmeleri(aralık, 1_850.0, 50.0, false);
+        let (bölmeler, adım) =
+            zaman_bölmeleri(aralık, 1_850.0, 50.0, false, crate::ZamanDilimi::Utc, None);
         assert_eq!(adım, 2_592_000.0);
         assert!(!bölmeler.is_empty());
         assert!(bölmeler.iter().all(|değer| {

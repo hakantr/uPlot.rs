@@ -2976,6 +2976,55 @@
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
         "performans": "kısmi"
       }
+    },
+    {
+      "sıra": 56,
+      "id": "timezones-dst",
+      "başlık": { "en": "Timezones & DST", "tr": "Zaman Dilimleri ve Yaz Saati" },
+      "kaynak": "demos/timezones-dst.html",
+      "kaynak_sha256": "f95106c44b035eeb232e80ce88238af9512c572e9a66a5c98e8394db34de0bc6",
+      "ek_kaynaklar": [
+        { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" },
+        { "yol": "src/fmtDate.js", "sha256": "e7867482a11abe4cd9e015d3610b7e8b6ab1d55409e06acd7550dd57348f9d3b" }
+      ],
+      "fixture": "src/kart/timezones_dst.rs#timezones_dst_kartı",
+      "örnek": "examples/timezones_dst.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/timezones-dst.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/timezones_dst.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin", "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin", "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "kartta_etkin", "dinamik-eksen-izgara": "kartta_etkin",
+          "surekli-imlec-izleme": "kartta_etkin", "canli-coklu-seri-lejanti": "kartta_etkin",
+          "kosullu-bos-ve-dolu-noktalar": "uygulanamaz", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "kartta_etkin", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {
+          "kosullu-bos-ve-dolu-noktalar": "Kaynak yüzeyler noktasız kırmızı zaman serisi çizer."
+        }
+      },
+      "sahip_faz": 2,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-fifty-one-surfaces", "platform-independent-timezones",
+        "london-2024-dst-skip-repeat", "chicago-2024-dst-skip-repeat",
+        "local-midnight-tick-alignment", "source-hour-day-month-ranges",
+        "four-cursor-sync-groups", "gpui-wasm-parity", "common-interaction-profile",
+        "panic-free-timezone-axis"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
+        "performans": "kısmi"
+      }
     }
   ]
 }

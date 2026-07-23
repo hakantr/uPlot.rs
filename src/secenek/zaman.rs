@@ -104,3 +104,23 @@ impl Default for TarihAdları {
         Self::ingilizce()
     }
 }
+
+/// uPlot `tzDate` karşılığı olarak çekirdeğin desteklediği kaynak zaman
+/// dilimleri. Geçişler platformun yerel saat diliminden bağımsız hesaplanır.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ZamanDilimi {
+    #[default]
+    Utc,
+    EuropeLondon,
+    AmericaChicago,
+}
+
+impl ZamanDilimi {
+    pub const fn iana(self) -> &'static str {
+        match self {
+            Self::Utc => "Etc/UTC",
+            Self::EuropeLondon => "Europe/London",
+            Self::AmericaChicago => "America/Chicago",
+        }
+    }
+}

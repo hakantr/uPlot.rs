@@ -349,6 +349,7 @@
       time_periods_kart_tanim_ornegi,
       timeline_discrete_kart_tanim_ornegi,
       timeseries_discrete_kart_tanim_ornegi,
+      timezones_dst_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1412,6 +1413,77 @@
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
     };
+
+    const zamanDilimiYüzeyleri = [];
+    const karşılaştırmaBölümleri = [
+      ["London's 2024 \"spring forward\" time range", [
+        ["UTC (no DST)", "Etc/UTC"],
+        ["Europe/London (Mar 31, 2024: 1am -> 2am)", "Europe/London"],
+        ["America/Chicago (no DST switch in this range)", "America/Chicago"],
+      ]],
+      ["London's 2024 \"fall back\" time range", [
+        ["UTC (no DST)", "Etc/UTC"],
+        ["Europe/London (Oct 27, 2024: 2am -> 1am)", "Europe/London"],
+        ["America/Chicago (no DST switch in this range)", "America/Chicago"],
+      ]],
+      ["Chicago's 2024 \"spring forward\" time range", [
+        ["UTC (no DST)", "Etc/UTC"],
+        ["America/Chicago (Mar 10, 2024: 2am -> 3am)", "America/Chicago"],
+        ["Europe/London (no DST switch in this range)", "Europe/London"],
+      ]],
+      ["Chicago's 2024 \"fall back\" time range", [
+        ["UTC (no DST)", "Etc/UTC"],
+        ["America/Chicago (Nov 3, 2024: 2am -> 1am)", "America/Chicago"],
+        ["Europe/London (no DST switch in this range)", "Europe/London"],
+      ]],
+    ];
+    karşılaştırmaBölümleri.forEach(([bölüm, yüzeyler]) =>
+      yüzeyler.forEach(([başlık, dilim]) => zamanDilimiYüzeyleri.push([başlık, bölüm, dilim]))
+    );
+    const artımBaşlıkları = ["1h ticks", "2h ticks", "3h ticks", "4h ticks", "6h ticks", "8h ticks", "12h ticks"];
+    [
+      ["Europe/London (Mar 31, 2024: 1am -> 2am)", "Europe/London"],
+      ["Europe/London (Oct 27, 2024: 2am -> 1am)", "Europe/London"],
+      ["America/Chicago (Mar 10, 2024: 2am -> 3am)", "America/Chicago"],
+      ["America/Chicago (Nov 3, 2024: 2am -> 1am)", "America/Chicago"],
+    ].forEach(([bölüm, dilim]) =>
+      artımBaşlıkları.forEach(başlık => zamanDilimiYüzeyleri.push([başlık, bölüm, dilim]))
+    );
+    ["1-Day", "2-Day", "3-Day", "4-Day"].forEach(başlık =>
+      zamanDilimiYüzeyleri.push([başlık, "Days", "Etc/UTC"])
+    );
+    ["1-Month", "2-Month", "3-Month", "4-Month", "6-Month"].forEach(başlık =>
+      zamanDilimiYüzeyleri.push([başlık, "Months", "Etc/UTC"])
+    );
+    ["3-Day (ensure Jan 1)", "2-Month (ensure Jan 1)"].forEach(başlık =>
+      zamanDilimiYüzeyleri.push([başlık, "With start offset", "Etc/UTC"])
+    );
+    let zamanDilimiEklemeNoktası = document.querySelector('[data-kart="timeseries-discrete"]');
+    zamanDilimiYüzeyleri.forEach(([başlık, bölüm, dilim], indeks) => {
+      const kimlik = `timezones-dst-${String(indeks + 1).padStart(2, "0")}`;
+      zamanDilimiEklemeNoktası?.insertAdjacentHTML(
+        "afterend",
+        `<article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>${kimlik}</small>
+          <div class="durum">${bölüm} · ${dilim}</div>
+        </article>`
+      );
+      zamanDilimiEklemeNoktası = document.querySelector(`[data-kart="${kimlik}"]`);
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak:
+          <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/timezones-dst.html">timezones-dst.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/opts.js">src/opts.js</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/fmtDate.js">src/fmtDate.js</a>
+          <br>${bölüm}; ${dilim} yerel saat bölmeleri Rust çekirdeğinde platformdan bağımsız üretilir.`,
+        tanım: () => timezones_dst_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/timezones_dst.rs",
+        seriler: [{ etiket: "2024", renk: "red" }],
+        yardım: `${dilim} · DST saat atlama/tekrarlama · ortak kart etkileşimleri`,
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    });
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",

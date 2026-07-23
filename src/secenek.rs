@@ -16,7 +16,7 @@ pub use timeline::{TimelineDüzeni, TimelineHücresi};
 pub use y_olcek::{
     GüzelÖlçekDüzeni, YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri
 };
-pub use zaman::TarihAdları;
+pub use zaman::{TarihAdları, ZamanDilimi};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum XÖlçekDağılımı {
@@ -503,6 +503,7 @@ pub struct GrafikSeçenekleri {
     pub x_zaman: bool,
     pub x_zaman_milisaniye: bool,
     pub x_tarih_adları: TarihAdları,
+    pub x_zaman_dilimi: ZamanDilimi,
     pub x_dağılımı: XÖlçekDağılımı,
     pub x_ters_yön: bool,
     /// uPlot `scales.x.ori = 1` karşılığıdır. Etkin olduğunda X dikey,
@@ -523,6 +524,9 @@ pub struct GrafikSeçenekleri {
     pub ikincil_x_eksen: Option<İkincilXEksen>,
     /// uPlot `axes[0].space` karşılığı asgari X etiketi piksel boşluğu.
     pub x_eksen_asgari_etiket_boşluğu: f32,
+    /// Kaynak demonun otomatik olarak seçtiği zaman artımını duyarlı
+    /// yüzeylerde de sabit tutmak için saniye cinsinden eksen artımı.
+    pub x_zaman_sabit_artımı: Option<f64>,
     pub y_eksen_etiketi: String,
     pub birincil_y_sağda: bool,
     /// Birincil Y eksenini yönelimine göre karşı tarafa taşır. Standart
@@ -579,6 +583,7 @@ impl GrafikSeçenekleri {
             x_zaman: true,
             x_zaman_milisaniye: false,
             x_tarih_adları: TarihAdları::default(),
+            x_zaman_dilimi: ZamanDilimi::Utc,
             x_dağılımı: XÖlçekDağılımı::Doğrusal,
             x_ters_yön: false,
             x_dikey: false,
@@ -594,6 +599,7 @@ impl GrafikSeçenekleri {
             x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi::Otomatik,
             ikincil_x_eksen: None,
             x_eksen_asgari_etiket_boşluğu: 50.0,
+            x_zaman_sabit_artımı: None,
             y_eksen_etiketi: String::new(),
             birincil_y_sağda: false,
             birincil_y_karşıda: false,
@@ -687,6 +693,11 @@ impl GrafikSeçenekleri {
         self
     }
 
+    pub fn x_zaman_dilimi(mut self, zaman_dilimi: ZamanDilimi) -> Self {
+        self.x_zaman_dilimi = zaman_dilimi;
+        self
+    }
+
     pub fn x_logaritmik(mut self, taban: f64) -> Self {
         if taban.is_finite() && taban > 1.0 {
             self.x_dağılımı = XÖlçekDağılımı::Logaritmik { taban };
@@ -761,6 +772,13 @@ impl GrafikSeçenekleri {
     pub fn x_eksen_asgari_etiket_boşluğu(mut self, boşluk: f32) -> Self {
         if boşluk.is_finite() && boşluk > 0.0 {
             self.x_eksen_asgari_etiket_boşluğu = boşluk;
+        }
+        self
+    }
+
+    pub fn x_zaman_sabit_artımı(mut self, saniye: f64) -> Self {
+        if saniye.is_finite() && saniye > 0.0 {
+            self.x_zaman_sabit_artımı = Some(saniye);
         }
         self
     }

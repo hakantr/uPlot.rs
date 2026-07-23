@@ -181,6 +181,11 @@ path = "examples/timeseries_discrete.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "timezones-dst"
+path = "examples/timezones_dst.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 
