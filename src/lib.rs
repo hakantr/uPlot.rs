@@ -61,6 +61,7 @@ pub use kart::{
     ScatterÖrneği, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği,
     SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı,
     StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği, SyncYZeroAşaması,
+    THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, ThinBarsYoğunluk, ThinBarsÖrneği,
     ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
     add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
     arcsinh_scales_kartı, area_fill_kartı, asap_yumuşat, axis_autosize_kartı, axis_control_kartı,
@@ -76,7 +77,8 @@ pub use kart::{
     scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
     sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
     stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları,
-    sync_y_zero_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
+    sync_y_zero_kartı, thin_bars_stroke_fill_kartı, zoom_touch_kartı, zoom_wheel_kartı,
+    ÇubukÖrneği,
 };
 pub use olcek::{Aralık, SayısalAralıkAyarları, SayısalAralıkParçası, YumuşakSınırKipi};
 pub use secenek::{

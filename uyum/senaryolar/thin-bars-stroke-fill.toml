@@ -1,0 +1,36 @@
+id = "thin-bars-stroke-fill"
+kaynak = "../uPlot/demos/thin-bars-stroke-fill.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/thin_bars_stroke_fill.rs#thin_bars_stroke_fill_kartı"
+durum = "elli_beş_kaynak_yüzeyi"
+
+[yuzeyler]
+yogunluk = 7
+geometri = 48
+toplam = 55
+boyutlar = [[800, 200], [1000, 200], [1200, 200], [1600, 200], [400, 200]]
+
+[veri]
+normal_x_araligi = [0, 29]
+normal_y = 5
+yogun_x_araligi = [0, 199]
+yogun_y = 5
+geometri_x = [0, 1, 2, 3, 4]
+geometri_y = [0, 1, 2, 3, 4]
+
+[geometri]
+hizalamalar = [0, 1, -1]
+genislik_oranlari = [0.6, 1.0]
+ek_bosluklar = [0, 16]
+yonler = [1, -1]
+vurus_kalinliklari = [1, 4]
+minimum_cubuk_genisligi = 1
+ince_vurusta_vurus_rengi_dolguya_duser = true
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+örnek = "examples/thin_bars_stroke_fill.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

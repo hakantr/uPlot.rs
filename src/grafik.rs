@@ -102,7 +102,9 @@ impl Grafik {
                 en_az: 0.0,
                 en_çok: 1.0,
             });
-        if (seçenekler.çubuk_düzeni.is_some()
+        if (seçenekler
+            .çubuk_düzeni
+            .is_some_and(|düzen| düzen.x_kenar_paylı)
             || seçenekler.kutu_bıyık_düzeni.is_some()
             || seçenekler.mum_düzeni.is_some())
             && veri.uzunluk() > 1
@@ -629,17 +631,17 @@ impl Grafik {
                 genişlik,
                 yükseklik,
                 dolgu,
-                kalınlık,
+                çizgi,
                 ..
             } = komut
             else {
                 continue;
             };
-            if *kalınlık != 0.0
-                || !self.seçenekler.seriler.iter().any(|seri| {
-                    seri.dolgu.as_deref() == Some(dolgu.as_str()) || seri.renk == *dolgu
-                })
-            {
+            if !self.seçenekler.seriler.iter().any(|seri| {
+                seri.dolgu.as_deref() == Some(dolgu.as_str())
+                    || seri.renk == *dolgu
+                    || seri.renk == *çizgi
+            }) {
                 continue;
             }
             let (seri, indeks, değer) = çizilenler.get(sıra).copied()?;
@@ -2330,11 +2332,20 @@ impl Grafik {
                 0.0
             },
         };
-        let aralık = görünür_y.unwrap_or(veri_aralığı);
+        let aralık = görünür_y
+            .or_else(|| {
+                self.seçenekler
+                    .y_ölçekleri
+                    .iter()
+                    .find(|ölçek| ölçek.anahtar == self.seçenekler.birincil_y_ölçeği)
+                    .and_then(|ölçek| ölçek.aralık)
+            })
+            .or(self.seçenekler.y_aralığı)
+            .unwrap_or(veri_aralığı);
         let tam_x = tam_x_aralığı(&self.veri)
             .ok()
             .and_then(|aralık| {
-                if grup_sayısı > 1 {
+                if grup_sayısı > 1 && düzen.x_kenar_paylı {
                     Aralık::yeni(aralık.en_az - 0.5, aralık.en_çok + 0.5).ok()
                 } else {
                     Some(aralık)
@@ -2373,8 +2384,16 @@ impl Grafik {
                         hiza: MetinHizası::Bitiş,
                     });
                 }
-                let grup_adımı = çizim_g / x_açıklığı as f32;
-                let grup_genişliği = grup_adımı * 0.9;
+                let grup_adımı = if grup_sayısı > 1 {
+                    çizim_g / x_açıklığı as f32
+                } else {
+                    çizim_g
+                };
+                let mut tam_boşluk = grup_adımı * (1.0 - düzen.genişlik_oranı) + düzen.ek_boşluk;
+                if tam_boşluk < 1.0 {
+                    tam_boşluk = 0.0;
+                }
+                let grup_genişliği = (grup_adımı - tam_boşluk).max(1.0);
                 let otomatik_yazı_boyutu = düzen.değer_etiketi_otomatik.then(|| {
                     let azami_metin_genişliği = self
                         .veri
@@ -2405,8 +2424,12 @@ impl Grafik {
                     let Some(x_değeri) = self.veri.x().get(indeks).copied() else {
                         continue;
                     };
-                    let merkez =
-                        sol + ((x_değeri - x_aralığı.en_az) / x_açıklığı) as f32 * çizim_g;
+                    let oran = if düzen.ters {
+                        (x_aralığı.en_çok - x_değeri) / x_açıklığı
+                    } else {
+                        (x_değeri - x_aralığı.en_az) / x_açıklığı
+                    };
+                    let merkez = sol + oran as f32 * çizim_g;
                     if merkez + grup_genişliği / 2.0 < sol || merkez - grup_genişliği / 2.0 > sağ
                     {
                         continue;
@@ -2423,14 +2446,37 @@ impl Grafik {
                         let Some(değer) = değerler.get(indeks).copied().flatten() else {
                             continue;
                         };
-                        let (x, genişlik) = if düzen.yığılmış {
-                            (merkez - grup_genişliği / 2.0, grup_genişliği)
+                        let seri = self.seçenekler.seriler.get(seri_indeksi);
+                        let istenen_vuruş = seri.map_or(0.0, |seri| seri.çizgi_kalınlığı);
+                        let vuruş = if istenen_vuruş >= grup_genişliği / 2.0 {
+                            0.0
                         } else {
-                            let genişlik = grup_genişliği / seri_sayısı as f32;
-                            (
-                                merkez - grup_genişliği / 2.0 + seri_indeksi as f32 * genişlik,
-                                genişlik,
-                            )
+                            istenen_vuruş
+                        };
+                        let iç_vuruş = tam_boşluk > 0.0 && vuruş > 0.0;
+                        let ham_genişlik =
+                            grup_adımı - tam_boşluk - if iç_vuruş { vuruş } else { 0.0 };
+                        let kaynak_genişliği = ham_genişlik.max(1.0);
+                        let yön = if düzen.ters { -1_i8 } else { 1_i8 };
+                        let hizalama = düzen.hizalama;
+                        let kaydırma = if hizalama == 0 {
+                            kaynak_genişliği / 2.0
+                        } else if hizalama == yön {
+                            0.0
+                        } else {
+                            kaynak_genişliği
+                        } - f32::from(hizalama * yön)
+                            * (if hizalama == 0 {
+                                düzen.ek_boşluk / 2.0
+                            } else {
+                                0.0
+                            } + if iç_vuruş { vuruş / 2.0 } else { 0.0 });
+                        let kaynak_x = merkez - kaydırma;
+                        let (x, genişlik) = if düzen.yığılmış {
+                            (kaynak_x, kaynak_genişliği)
+                        } else {
+                            let genişlik = kaynak_genişliği / seri_sayısı as f32;
+                            (kaynak_x + seri_indeksi as f32 * genişlik, genişlik)
                         };
                         let taban = if düzen.yığılmış { birikim } else { 0.0 };
                         birikim += if düzen.yığılmış { değer } else { 0.0 };
@@ -2441,24 +2487,50 @@ impl Grafik {
                         };
                         let y0 = alt - aralık.konum(taban, 0.0, çizim_y);
                         let y1 = alt - aralık.konum(tepe, 0.0, çizim_y);
+                        let nokta_komutu = seri
+                            .filter(|seri| seri.noktaları_göster == Some(true))
+                            .map(|seri| Komut::Daire {
+                                merkez: Nokta::yeni(merkez, y1.clamp(üst, alt)),
+                                yarıçap: ((seri.nokta_boyutu - seri.nokta_kalınlığı) / 2.0)
+                                    .max(0.0),
+                                dolgu: seri
+                                    .nokta_dolgusu
+                                    .clone()
+                                    .unwrap_or_else(|| "#ffffff".to_string()),
+                                çizgi: seri.renk.clone(),
+                                kalınlık: seri.nokta_kalınlığı,
+                            });
+                        if (tepe - taban).abs() <= f64::EPSILON {
+                            if let Some(komut) = nokta_komutu {
+                                sahne.ekle(komut);
+                            }
+                            continue;
+                        }
                         let çubuk_sol = x.clamp(sol, sağ);
                         let çubuk_sağ = (x + genişlik).clamp(sol, sağ);
-                        let renk = self
-                            .seçenekler
-                            .seriler
-                            .get(seri_indeksi)
-                            .and_then(|seri| seri.dolgu.clone().or_else(|| Some(seri.renk.clone())))
-                            .unwrap_or_else(|| "#6b7280".to_string());
+                        let vuruş_rengi =
+                            seri.map_or_else(|| "#6b7280".to_string(), |seri| seri.renk.clone());
+                        let normal_dolgu = seri
+                            .and_then(|seri| seri.dolgu.clone())
+                            .unwrap_or_else(|| vuruş_rengi.clone());
+                        let dolgu = if vuruş <= 0.0 && istenen_vuruş > 0.0 {
+                            vuruş_rengi.clone()
+                        } else {
+                            normal_dolgu
+                        };
                         let çubuk_üst = y1.min(y0).clamp(üst, alt);
                         let çubuk_alt = y1.max(y0).clamp(üst, alt);
                         sahne.ekle(Komut::Dikdörtgen {
                             konum: Nokta::yeni(çubuk_sol, çubuk_üst),
                             genişlik: (çubuk_sağ - çubuk_sol).max(0.0),
                             yükseklik: (çubuk_alt - çubuk_üst).max(0.0),
-                            dolgu: renk.clone(),
-                            çizgi: renk,
-                            kalınlık: 0.0,
+                            dolgu,
+                            çizgi: vuruş_rengi,
+                            kalınlık: vuruş,
                         });
+                        if let Some(komut) = nokta_komutu {
+                            sahne.ekle(komut);
+                        }
                         if let Some(yazı_boyutu) = otomatik_yazı_boyutu {
                             let (alan_y, alan_yüksekliği) = if değer < 0.0 {
                                 (y1, alt - y1)
@@ -2487,7 +2559,7 @@ impl Grafik {
                                     hiza: MetinHizası::Orta,
                                 });
                             }
-                        } else {
+                        } else if düzen.değer_etiketleri {
                             sahne.ekle(Komut::Metin {
                                 konum: Nokta::yeni(x + genişlik / 2.0, y1 - 4.0),
                                 içerik: format!("{tepe}"),

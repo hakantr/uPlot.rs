@@ -242,12 +242,17 @@ impl KutuBıyıkDüzeni {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ÇubukDüzeni {
     pub yön: ÇubukYönü,
     pub yığılmış: bool,
     pub ters: bool,
     pub değer_etiketi_otomatik: bool,
+    pub değer_etiketleri: bool,
+    pub genişlik_oranı: f32,
+    pub ek_boşluk: f32,
+    pub hizalama: i8,
+    pub x_kenar_paylı: bool,
 }
 
 impl ÇubukDüzeni {
@@ -257,6 +262,11 @@ impl ÇubukDüzeni {
             yığılmış: false,
             ters: false,
             değer_etiketi_otomatik: false,
+            değer_etiketleri: true,
+            genişlik_oranı: 0.9,
+            ek_boşluk: 0.0,
+            hizalama: 0,
+            x_kenar_paylı: true,
         }
     }
 
@@ -272,6 +282,35 @@ impl ÇubukDüzeni {
 
     pub fn değer_etiketi_otomatik(mut self, etkin: bool) -> Self {
         self.değer_etiketi_otomatik = etkin;
+        self
+    }
+
+    pub fn değer_etiketleri(mut self, etkin: bool) -> Self {
+        self.değer_etiketleri = etkin;
+        self
+    }
+
+    pub fn genişlik_oranı(mut self, oran: f32) -> Self {
+        if oran.is_finite() {
+            self.genişlik_oranı = oran.clamp(0.0, 1.0);
+        }
+        self
+    }
+
+    pub fn ek_boşluk(mut self, piksel: f32) -> Self {
+        if piksel.is_finite() {
+            self.ek_boşluk = piksel.max(0.0);
+        }
+        self
+    }
+
+    pub fn hizalama(mut self, hizalama: i8) -> Self {
+        self.hizalama = hizalama.clamp(-1, 1);
+        self
+    }
+
+    pub fn x_kenar_paylı(mut self, etkin: bool) -> Self {
+        self.x_kenar_paylı = etkin;
         self
     }
 }

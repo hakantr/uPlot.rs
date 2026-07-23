@@ -34,10 +34,11 @@ use uplot_rs::{
     SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı,
     SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği,
     SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu,
-    SyncCursorÖrneği, SyncYZeroAşaması, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
-    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    SyncCursorÖrneği, SyncYZeroAşaması, THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği,
+    UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
+    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
+    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
     bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
     cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
     dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
@@ -48,8 +49,8 @@ use uplot_rs::{
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
     sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
     stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
-    sync_cursor_kartı, sync_y_zero_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü,
-    ÇubukÖrneği,
+    sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, zoom_touch_kartı,
+    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -83,6 +84,7 @@ enum KartKimliği {
     SvgImage,
     SyncCursor,
     SyncYZero(SyncYZeroAşaması),
+    ThinBars(ThinBarsÖrneği),
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -142,6 +144,7 @@ impl KartKimliği {
             Self::SvgImage => "uPlot to image PoC",
             Self::SyncCursor => "Sync Cursor",
             Self::SyncYZero(_) => "Sync Y Zero",
+            Self::ThinBars(_) => "Thin bar stroke & fill",
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -229,6 +232,9 @@ impl KartKimliği {
             Self::SyncYZero(_) => {
                 "sync-y-zero.html · ham → simetrik → ortak sıfır pikseli · 3 sol Y ekseni"
             }
+            Self::ThinBars(_) => {
+                "thin-bars-stroke-fill.html · paths/bars.js · 55 vuruş/dolgu geometrisi"
+            }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -306,6 +312,7 @@ impl KartKimliği {
             Self::SvgImage => SVG_IMAGE_KART_TANIM_ÖRNEĞİ,
             Self::SyncCursor => SYNC_CURSOR_KART_TANIM_ÖRNEĞİ,
             Self::SyncYZero(_) => SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
+            Self::ThinBars(_) => THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -361,6 +368,7 @@ impl KartKimliği {
             Self::SvgImage => "src/kart/svg_image.rs",
             Self::SyncCursor => "src/kart/sync_cursor.rs",
             Self::SyncYZero(_) => "src/kart/sync_y_zero.rs",
+            Self::ThinBars(_) => "src/kart/thin_bars_stroke_fill.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -1063,6 +1071,7 @@ fn grafik_oluştur(
         KartKimliği::SvgImage => svg_image_kartı(),
         KartKimliği::SyncCursor => sync_cursor_kartı(SyncCursorÖrneği::Cpu),
         KartKimliği::SyncYZero(aşama) => sync_y_zero_kartı(aşama),
+        KartKimliği::ThinBars(örnek) => thin_bars_stroke_fill_kartı(örnek),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -1336,6 +1345,10 @@ impl Render for ChartListesi {
             KartKimliği::Candlestick => "218 gün · Gold OHLC + kanıt hacmi".to_string(),
             KartKimliği::SyncYZero(aşama) => {
                 format!("3 nokta × 3 Y ölçeği · {}", aşama.açıklama())
+            }
+            KartKimliği::ThinBars(örnek) => {
+                let (genişlik, yükseklik) = örnek.boyut();
+                format!("{genişlik}×{yükseklik} · {}", örnek.başlık())
             }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
@@ -2086,6 +2099,22 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::SyncYZero(SyncYZeroAşaması::Ham), cx);
                 })),
             )
+            .children(ThinBarsÖrneği::tümü().into_iter().map(|örnek| {
+                let kart = KartKimliği::ThinBars(örnek);
+                let (genişlik, yükseklik) = örnek.boyut();
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "thin-bars-stroke-fill",
+                    aktif_kart == kart,
+                    format!("{genişlik}×{yükseklik} · paths.bars vuruş/dolgu"),
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
             .child(
                 katalog_kartı(
                     "kart-cursor-snap",
@@ -2813,14 +2842,18 @@ impl Render for ChartListesi {
 }
 
 fn katalog_kartı(
-    kimlik: &'static str,
-    başlık: &'static str,
-    alt_kimlik: &'static str,
+    kimlik: impl Into<SharedString>,
+    başlık: impl Into<SharedString>,
+    alt_kimlik: impl Into<SharedString>,
     aktif: bool,
-    durum: &'static str,
+    durum: impl Into<SharedString>,
     panel: gpui::Rgba,
     vurgu: gpui::Rgba,
 ) -> gpui::Stateful<gpui::Div> {
+    let kimlik = kimlik.into();
+    let başlık = başlık.into();
+    let alt_kimlik = alt_kimlik.into();
+    let durum = durum.into();
     div()
         .id(kimlik)
         .cursor_pointer()

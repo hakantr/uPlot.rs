@@ -338,6 +338,7 @@
       svg_image_kart_tanim_ornegi,
       sync_cursor_kart_tanim_ornegi,
       sync_y_zero_kart_tanim_ornegi,
+      thin_bars_stroke_fill_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1246,6 +1247,56 @@
       syncYZero: true,
       etkileşimler: () => ortakEtkileşimler(),
     };
+
+    const inceÇubukYüzeyleri = [
+      ["thin-bars-normal-30", "Normal", "800×200 · 30 bars"],
+      ["thin-bars-no-stroke-red-fill-200", "No stroke, red fill", "800×200 · 200 bars"],
+      ["thin-bars-width-zero-normal-fill-200", "Too thin, but stroke width 0, use normal fill", "800×200 · 200 bars"],
+      ["thin-bars-thin-stroke-fallback-200", "Too thin, use stroke color for fill", "800×200 · 200 bars"],
+      ["thin-bars-stroke-fill-1000", "Still stroke & fill", "1000×200 · 200 bars"],
+      ["thin-bars-stroke-fill-1200", "Still stroke & fill", "1200×200 · 200 bars"],
+      ["thin-bars-stroke-fill-1600", "Still stroke & fill", "1600×200 · 200 bars"],
+    ];
+    for (const [hizalama, genişlikYüzdesi, boşluk] of [
+      [0, 60, 0], [0, 60, 16], [0, 100, 0], [0, 100, 16],
+      [1, 60, 0], [1, 60, 16], [1, 100, 0], [1, 100, 16],
+      [-1, 60, 0], [-1, 60, 16], [-1, 100, 0], [-1, 100, 16],
+    ]) {
+      for (const vuruş of [1, 4]) {
+        for (const yön of [1, -1]) {
+          const genişlik = (genişlikYüzdesi / 100).toFixed(1);
+          inceÇubukYüzeyleri.push([
+            `thin-bars-a${hizalama}-w${genişlikYüzdesi}-g${boşluk}-d${yön}-s${vuruş}`,
+            `{align: ${hizalama}, width: ${genişlik}, gap: ${boşluk}, dir: ${yön}, stroke: ${vuruş}}`,
+            "400×200 · paths.bars() geometry",
+          ]);
+        }
+      }
+    }
+    let inceÇubukEklemeNoktası = document.querySelector('[data-kart="sync-y-zero"]');
+    for (const [kimlik, başlık, durum] of inceÇubukYüzeyleri) {
+      inceÇubukEklemeNoktası?.insertAdjacentHTML(
+        "afterend",
+        `<article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
+          <strong>${başlık}</strong><small>${kimlik}</small><div class="durum">${durum}</div>
+        </article>`
+      );
+      inceÇubukEklemeNoktası = document.querySelector(`[data-kart="${kimlik}"]`);
+      kartlar[kimlik] = {
+        başlık,
+        kaynak: `Kaynak:
+          <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/thin-bars-stroke-fill.html">thin-bars-stroke-fill.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/bars.js">src/paths/bars.js</a>
+          <br>Resmî örneğin 7 yoğunluk yüzeyi ile align, width, gap, dir ve stroke
+          birleşimlerinden oluşan 48 geometri yüzeyi aynı veri ve boyutlarla Rust çekirdeğinde çizilir.`,
+        tanım: () => thin_bars_stroke_fill_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/thin_bars_stroke_fill.rs",
+        seriler: [{ etiket: "Value", renk: kimlik.includes("-a") ? "#00f" : "red" }],
+        yardım: "Vuruş/dolgu düşümü, hizalama, boşluk ve ters yön çekirdekte çözülür",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",

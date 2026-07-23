@@ -161,6 +161,11 @@ path = "examples/sync_y_zero.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "thin-bars-stroke-fill"
+path = "examples/thin_bars_stroke_fill.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 
