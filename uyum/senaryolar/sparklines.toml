@@ -1,0 +1,17 @@
+id = "sparklines"
+kaynak = "../uPlot/demos/sparklines.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/sparklines.rs#sparklines_kartı"
+simge_sayısı = 10
+yüzey_sayısı = 20
+kayıt_sayısı = 22
+boyut = [150, 30]
+
+[kanıt]
+veri = "on_kaynak_csv_aynen"
+ölçümler = ["Volume", "Close/Last"]
+piksel_hizası = 0
+eksenler = "gizli"
+renkler = ["pink", "#03a9f4", "#b3e5fc"]
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

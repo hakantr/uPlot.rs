@@ -336,8 +336,21 @@ impl Grafik {
         genişlik_px: u32,
         yükseklik_px: u32,
     ) -> (f32, f32, f32, f32) {
-        let genişlik_px = genişlik_px.max(160) as f32;
-        let yükseklik_px = yükseklik_px.max(120) as f32;
+        let genişlik_px = if self.seçenekler.kompakt_yüzey {
+            genişlik_px.max(2)
+        } else {
+            genişlik_px.max(160)
+        } as f32;
+        let yükseklik_px = if self.seçenekler.kompakt_yüzey {
+            yükseklik_px.max(2)
+        } else {
+            yükseklik_px.max(120)
+        } as f32;
+        let gizli_eksen_payı = if self.seçenekler.kompakt_yüzey {
+            0.0
+        } else {
+            8.0
+        };
         if let Some(düzen) = self.seçenekler.çubuk_düzeni {
             return match düzen.yön {
                 crate::ÇubukYönü::Dikey => (64.0, genişlik_px - 24.0, 48.0, yükseklik_px - 72.0),
@@ -354,14 +367,14 @@ impl Grafik {
         }
         if self.seçenekler.x_dikey {
             let sol_pay = if !self.seçenekler.x_eksen_görünür {
-                8.0
+                gizli_eksen_payı
             } else if self.seçenekler.x_eksen_karşıda {
                 24.0
             } else {
                 64.0
             };
             let sağ_pay = if !self.seçenekler.x_eksen_görünür {
-                8.0
+                gizli_eksen_payı
             } else if self.seçenekler.x_eksen_karşıda {
                 64.0
             } else {
@@ -369,7 +382,7 @@ impl Grafik {
             };
             let üst_pay = if !self.seçenekler.birincil_y_eksen_görünür {
                 if self.seçenekler.başlık.is_empty() {
-                    8.0
+                    gizli_eksen_payı
                 } else {
                     48.0
                 }
@@ -379,7 +392,7 @@ impl Grafik {
                 68.0
             };
             let alt_pay = if !self.seçenekler.birincil_y_eksen_görünür {
-                8.0
+                gizli_eksen_payı
             } else if self.seçenekler.birincil_y_karşıda {
                 48.0
             } else {
@@ -410,7 +423,7 @@ impl Grafik {
             .count();
         let mut sağ_pay: f32 = if !self.seçenekler.birincil_y_eksen_görünür && sağ_eksen_sayısı == 0
         {
-            8.0
+            gizli_eksen_payı
         } else if self.seçenekler.birincil_y_sağda {
             72.0 + sağ_eksen_sayısı as f32 * 56.0
         } else if sağ_eksen_sayısı > 0 {
@@ -428,7 +441,7 @@ impl Grafik {
         }
         let mut sol_pay: f32 = if !self.seçenekler.birincil_y_eksen_görünür && sol_eksen_sayısı == 0
         {
-            8.0
+            gizli_eksen_payı
         } else if self.seçenekler.birincil_y_sağda {
             24.0 + sol_eksen_sayısı as f32 * 56.0
         } else {
@@ -455,7 +468,7 @@ impl Grafik {
             sol_pay = sol_pay.max(24.0 + en_uzun as f32 * 7.0);
         }
         let alt_pay = if !self.seçenekler.x_eksen_görünür {
-            8.0
+            gizli_eksen_payı
         } else if self.seçenekler.x_eksen_karşıda {
             24.0
         } else if self.seçenekler.x_eksen_etiketi.is_empty() {
@@ -465,7 +478,7 @@ impl Grafik {
         };
         let üst_pay = if !self.seçenekler.x_eksen_görünür {
             if self.seçenekler.başlık.is_empty() {
-                8.0
+                gizli_eksen_payı
             } else {
                 48.0
             }
@@ -1101,8 +1114,16 @@ impl Grafik {
         görünür_x: Option<Aralık>,
         görünür_y: Option<Aralık>,
     ) -> Sahne {
-        let genişlik_px = genişlik_px.max(160);
-        let yükseklik_px = yükseklik_px.max(120);
+        let genişlik_px = if self.seçenekler.kompakt_yüzey {
+            genişlik_px.max(2)
+        } else {
+            genişlik_px.max(160)
+        };
+        let yükseklik_px = if self.seçenekler.kompakt_yüzey {
+            yükseklik_px.max(2)
+        } else {
+            yükseklik_px.max(120)
+        };
         let mut sahne = Sahne::yeni(genişlik_px, yükseklik_px);
         sahne.ekle(Komut::ArkaPlan {
             renk: self.seçenekler.arka_plan_rengi.clone(),

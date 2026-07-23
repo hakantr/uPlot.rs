@@ -267,7 +267,8 @@
     </form>
   </dialog>
   <script type="module">
-    import init, {
+    const {
+      default: init,
       KartOturumu,
       align_data_kart_tanim_ornegi,
       cursor_tooltip_kart_tanim_ornegi,
@@ -300,6 +301,7 @@
       sine_stream_kart_tanim_ornegi,
       soft_minmax_kart_tanim_ornegi,
       sparklines_bars_kart_tanim_ornegi,
+      sparklines_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -319,7 +321,7 @@
       ortak_kart_dokunma_etkilesimi,
       kart_sayisi,
       kaynak_commit,
-    } from "../pkg/uplot_rs_wasm.js";
+    } = await import(`../pkg/uplot_rs_wasm.js${location.search}`);
 
     const chart = document.getElementById("chart");
     const nokta = document.getElementById("nokta");
@@ -997,6 +999,35 @@
         etkileşimler: () => ortakEtkileşimler(),
       };
     }
+    const sparklineSimgeleri = ["AAPL", "AMD", "AMZN", "CSCO", "FB", "MSFT", "QCOM", "SBUX", "TSLA", "ZNGA"];
+    const sparklineYüzeyleri = sparklineSimgeleri.flatMap(simge => [
+      { kimlik: `sparklines-${simge.toLowerCase()}-volume`, başlık: `${simge} · Hacim`, ölçüm: "Hacim" },
+      { kimlik: `sparklines-${simge.toLowerCase()}-close`, başlık: `${simge} · Kapanış`, ölçüm: "Kapanış" },
+    ]);
+    document.querySelector('[data-kart="sparklines-bars-explicit-colors"]')?.insertAdjacentHTML(
+      "afterend",
+      sparklineYüzeyleri.map(yüzey => `
+        <article class="kart" data-kart="${yüzey.kimlik}" aria-current="false" tabindex="0">
+          <strong>${yüzey.başlık}</strong><small>sparklines</small>
+          <div class="durum">22 CSV kaydı · 150×30</div>
+        </article>`).join("")
+    );
+    for (const yüzey of sparklineYüzeyleri) {
+      kartlar[yüzey.kimlik] = {
+        başlık: yüzey.başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/sparklines.html">sparklines.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/tree/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data">10 kaynak CSV</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/uDSV.iife.min.js">uDSV parser</a>
+          <br>Resmî tablodaki 10 hisse × hacim/kapanış yüzeyinin 22 kaydı, 150×30 boyutu, pembe arka planı, mavi çizgi/dolgusu ve pxAlign:false davranışı Rust çekirdeğinde korunur.`,
+        tanım: () => sparklines_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/sparklines.rs",
+        seriler: [{ etiket: yüzey.ölçüm, renk: "#03a9f4" }],
+        yardım: `${yüzey.başlık} · kaynak CSV · kompakt yüzey`,
+        değişkenNokta: false,
+        kompakt: true,
+        etkileşimler: () => ortakEtkileşimler(),
+      };
+    }
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",
@@ -1541,6 +1572,9 @@
       if (aktifKart === "scroll-sync") {
         return { genişlik: 400, yükseklik: 200 };
       }
+      if (kartlar[aktifKart]?.kompakt === true) {
+        return { genişlik: 150, yükseklik: 30 };
+      }
       const lejantPayı = chart.dataset.cokluLejant === "true" ? 64 : 0;
       return {
         genişlik: Math.max(160, Math.round(chart.clientWidth - 24)),
@@ -1560,6 +1594,7 @@
       chart.dataset.yEnCok = String(yAralığı[1]);
       const kart = kartlar[aktifKart];
       chart.classList.toggle("scroll-sync-yüzeyi", kart.scrollSync === true);
+      chart.dataset.kompakt = String(kart.kompakt === true);
       chart.dataset.cokluLejant = kart.seriler.length > 6 ? "true" : "false";
       const { genişlik, yükseklik } = boyutlar();
       const svgÇıktısı = oturum.svg(genişlik, yükseklik);
@@ -2117,7 +2152,9 @@
     });
 
     try {
-      await init();
+      await init({
+        module_or_path: new URL(`../pkg/uplot_rs_wasm_bg.wasm${location.search}`, import.meta.url),
+      });
       document.documentElement.dataset.kartSayısı = String(kart_sayisi());
       document.documentElement.dataset.kaynakCommit = kaynak_commit();
       function kartıSeç(kimlik) {

@@ -435,6 +435,9 @@ pub struct GrafikSeçenekleri {
     pub başlık_rengi: String,
     pub genişlik: u32,
     pub yükseklik: u32,
+    /// Eksenleri gizli, çok küçük sparkline yüzeylerinde kaynak piksel
+    /// boyutunu ve sıfır kenar payını korur.
+    pub kompakt_yüzey: bool,
     pub x_zaman: bool,
     pub x_zaman_milisaniye: bool,
     pub x_tarih_adları: TarihAdları,
@@ -507,6 +510,7 @@ impl GrafikSeçenekleri {
             başlık_rengi: "#111111".to_string(),
             genişlik,
             yükseklik,
+            kompakt_yüzey: false,
             x_zaman: true,
             x_zaman_milisaniye: false,
             x_tarih_adları: TarihAdları::default(),
@@ -553,6 +557,21 @@ impl GrafikSeçenekleri {
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
         })
+    }
+
+    /// uPlot sparkline örneklerindeki gibi küçük, eksensiz bir yüzey kurar.
+    pub fn kompakt(genişlik: u32, yükseklik: u32) -> Result<Self, UplotHatası> {
+        if genişlik < 2 || yükseklik < 2 {
+            return Err(UplotHatası::GeçersizBoyut {
+                genişlik,
+                yükseklik,
+            });
+        }
+        let mut seçenekler = Self::yeni(genişlik.max(160), yükseklik.max(120))?;
+        seçenekler.genişlik = genişlik;
+        seçenekler.yükseklik = yükseklik;
+        seçenekler.kompakt_yüzey = true;
+        Ok(seçenekler)
     }
 
     pub fn başlık(mut self, başlık: impl Into<String>) -> Self {

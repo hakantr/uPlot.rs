@@ -270,7 +270,7 @@
     },
     {
       "sembol": "Axis.show",
-      "durum": "araştırılacak"
+      "durum": "kısmi_veya_uygulandı"
     },
     {
       "sembol": "Axis.side",
@@ -806,7 +806,7 @@
     },
     {
       "sembol": "Options.pxAlign",
-      "durum": "araştırılacak"
+      "durum": "kısmi_veya_uygulandı"
     },
     {
       "sembol": "Options.pxRatio",

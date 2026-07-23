@@ -2433,6 +2433,60 @@
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
         "performans": "kısmi"
       }
+    },
+    {
+      "sıra": 45,
+      "id": "sparklines",
+      "başlık": { "en": "Sparklines", "tr": "Mini Grafikler" },
+      "kaynak": "demos/sparklines.html",
+      "kaynak_sha256": "dbef789abb7f271c77f374f1090c8c1ccc7c54bd79101262088edad90f4d5f8d",
+      "ek_kaynaklar": [
+        { "yol": "demos/lib/uDSV.iife.min.js", "sha256": "177612e3999555b4cdaa0b15a642a325214d7e79fa89c621f005ac13546a9330" },
+        { "yol": "demos/data/AAPL.csv", "sha256": "98234671bef0115df32622cc8ae03361fe0882d05209c53971c8b40d3f9223b4" },
+        { "yol": "demos/data/AMD.csv", "sha256": "e043af38b6e7ad0e62041fbad1ed24f5c5622b4eff692b910257ef4ccf871a61" },
+        { "yol": "demos/data/AMZN.csv", "sha256": "2ee3ea2f370430e8870159eaace809a15d13935d3ed6c65ebf9826f30b7dbb16" },
+        { "yol": "demos/data/CSCO.csv", "sha256": "821b72ebf53d7e8a80997c54eaf459f16b14a4676499735a537f721d089d58cd" },
+        { "yol": "demos/data/FB.csv", "sha256": "484aa0ff0d08f84f4c4338595a4fa6b4b96eb2e712b6d9fe77839157940254b6" },
+        { "yol": "demos/data/MSFT.csv", "sha256": "796fc39808d667e0c134e9193c23c376e215a50093043efb4b073da2020373f8" },
+        { "yol": "demos/data/QCOM.csv", "sha256": "db912bb49501a322197ccec15aeb385176189f9ed90c58ff371d5aa766455ff3" },
+        { "yol": "demos/data/SBUX.csv", "sha256": "7387186179825fbf0654657a8788c070a368481022db9b07f491f7a2ba4d630e" },
+        { "yol": "demos/data/TSLA.csv", "sha256": "4252b8850602b4208bf109eee71652e2c4f8e2b9eb50e5f808954c88864d756d" },
+        { "yol": "demos/data/ZNGA.csv", "sha256": "895f534a58e2e533945a3a534b324a571c2e76e784a8f373774281ef0b6d3c10" }
+      ],
+      "fixture": "src/kart/sparklines.rs#sparklines_kartı",
+      "örnek": "examples/sparklines.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/sparklines.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/sparklines.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin", "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin", "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "kartta_etkin", "dinamik-eksen-izgara": "kartta_etkin",
+          "surekli-imlec-izleme": "devralındı", "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "devralındı", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "kartta_etkin"
+        }
+      },
+      "sahip_faz": 1,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-ten-symbols-two-metrics", "source-twenty-150x30-surfaces",
+        "source-exact-twenty-two-row-csv-data", "px-align-false",
+        "hidden-axes-grid-points", "pink-canvas-blue-stroke-fill",
+        "compact-core-surface", "gpui-wasm-parity", "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
+        "performans": "kısmi"
+      }
     }
   ]
 }

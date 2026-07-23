@@ -39,6 +39,7 @@ mod scatter;
 mod scroll_sync;
 mod sine_stream;
 mod soft_minmax;
+mod sparklines;
 mod sparklines_bars;
 mod veri_uretici;
 mod zoom_touch;
@@ -146,6 +147,7 @@ pub use sine_stream::{
 pub use soft_minmax::{
     SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SoftMinMaxAkışı, SoftMinMaxÖrneği, soft_minmax_kartı,
 };
+pub use sparklines::{SPARKLINES_KART_TANIM_ÖRNEĞİ, SparklineÖrneği, sparklines_kartı};
 pub use sparklines_bars::{
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SparklinesBarsÖrneği, sparklines_bars_kartı,
 };

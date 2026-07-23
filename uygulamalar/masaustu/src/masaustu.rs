@@ -28,22 +28,23 @@ use uplot_rs::{
     POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
     SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
-    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği,
-    ScatterÖrneği, SeriSeçenekleri, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği,
-    SparklinesBarsÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ,
+    ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı, SmoothingÖrneği,
+    SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, UplotHatası,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
-    sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı,
+    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -70,6 +71,7 @@ enum KartKimliği {
     SineStream,
     SoftMinMax(SoftMinMaxÖrneği),
     SparklinesBars(SparklinesBarsÖrneği),
+    Sparklines(SparklineÖrneği),
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -122,6 +124,7 @@ impl KartKimliği {
             Self::SineStream => "6 series x 600 points @ 60fps",
             Self::SoftMinMax(örnek) => örnek.başlık(),
             Self::SparklinesBars(örnek) => örnek.başlık(),
+            Self::Sparklines(örnek) => örnek.başlık(),
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -198,6 +201,7 @@ impl KartKimliği {
             Self::SparklinesBars(_) => {
                 "sparklines-bars.html · sparkline + yüzen çubuklar + ölçek gradyanı"
             }
+            Self::Sparklines(_) => "sparklines.html · kaynak CSV · 150×30 eksensiz kompakt yüzey",
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -268,6 +272,7 @@ impl KartKimliği {
             Self::SineStream => SINE_STREAM_KART_TANIM_ÖRNEĞİ,
             Self::SoftMinMax(_) => SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
             Self::SparklinesBars(_) => SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ,
+            Self::Sparklines(_) => SPARKLINES_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -316,6 +321,7 @@ impl KartKimliği {
             Self::SineStream => "src/kart/sine_stream.rs",
             Self::SoftMinMax(_) => "src/kart/soft_minmax.rs",
             Self::SparklinesBars(_) => "src/kart/sparklines_bars.rs",
+            Self::Sparklines(_) => "src/kart/sparklines.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -760,6 +766,7 @@ fn grafik_oluştur(
         KartKimliği::SineStream => sine_stream_kartı(),
         KartKimliği::SoftMinMax(örnek) => soft_minmax_kartı(örnek, 12.0),
         KartKimliği::SparklinesBars(örnek) => sparklines_bars_kartı(örnek),
+        KartKimliği::Sparklines(örnek) => sparklines_kartı(örnek),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -878,6 +885,9 @@ impl Render for ChartListesi {
                 format!("2 kaynak noktası · {davranış}")
             }
             KartKimliği::SparklinesBars(_) => "16 nokta · sparkline + 16 yüzen çubuk".to_string(),
+            KartKimliği::Sparklines(örnek) => {
+                format!("{} · {} · 22 nokta · 150×30", örnek.simge(), örnek.ölçüm())
+            }
             KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
             KartKimliği::CursorTooltip => "7 nokta × 1 seri · canlı bilgi kutusu".to_string(),
@@ -1621,6 +1631,21 @@ impl Render for ChartListesi {
                     "sparklines-bars",
                     aktif_kart == kart,
                     "sparkline · floating bars",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
+            .children(SparklineÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::Sparklines(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "sparklines",
+                    aktif_kart == kart,
+                    "22 CSV kaydı · 150×30",
                     panel,
                     vurgu,
                 )

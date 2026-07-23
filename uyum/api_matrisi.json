@@ -470,6 +470,12 @@
       "rust_karşılığı": "YÖlçekSeçenekleri::sayısal_aralık / YumuşakSınırKipi",
       "durum": "tam_kanıtlı",
       "test": "src/olcek.rs"
+    },
+    {
+      "kaynak_yolu": "Axis.show / compact Options.width / Options.height",
+      "rust_karşılığı": "GrafikSeçenekleri::x_ekseni_göster / y_ekseni_göster / kompakt",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/sparklines.rs"
     }
   ]
 }

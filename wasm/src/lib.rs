@@ -21,23 +21,23 @@ use uplot_rs::{
     POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
     SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
-    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği,
-    ScatterÖrneği, SeriSeçenekleri, SeçimEylemi, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı,
-    SoftMinMaxÖrneği, SparklinesBarsÖrneği, UplotHatası, YüzeyDikdörtgeni,
-    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
-    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
-    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
-    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
-    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
-    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
-    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
-    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ,
+    ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SeçimEylemi, SineAkışı, SmoothingÖrneği,
+    SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, UplotHatası,
+    YüzeyDikdörtgeni, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
+    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
+    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
+    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
+    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
+    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
-    sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı,
+    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -146,6 +146,15 @@ impl KartOturumu {
                     sparklines_bars_kartı,
                 )
             }
+            kimlik if kimlik.starts_with("sparklines-") => SparklineÖrneği::kimlikten(kimlik)
+                .map_or_else(
+                    || {
+                        Err(UplotHatası::BilinmeyenKart {
+                            kimlik: kimlik.to_string(),
+                        })
+                    },
+                    sparklines_kartı,
+                ),
             "cursor-bind" => cursor_bind_kartı(),
             "cursor-snap" => cursor_snap_kartı(),
             "cursor-tooltip" => cursor_tooltip_kartı(),
@@ -672,7 +681,7 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    190
+    210
 }
 
 #[wasm_bindgen]
@@ -683,6 +692,11 @@ pub fn soft_minmax_kart_tanim_ornegi() -> String {
 #[wasm_bindgen]
 pub fn sparklines_bars_kart_tanim_ornegi() -> String {
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
+pub fn sparklines_kart_tanim_ornegi() -> String {
+    SPARKLINES_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -934,7 +948,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 190);
+        assert_eq!(kart_sayisi(), 210);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -959,7 +973,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 190);
+        assert_eq!(kart_sayisi(), 210);
     }
 
     #[test]
@@ -977,7 +991,7 @@ mod testler {
             }
         }
         assert!(path_gap_clip_kart_tanim_ornegi().contains("path_gap_clip_kartı"));
-        assert_eq!(kart_sayisi(), 190);
+        assert_eq!(kart_sayisi(), 210);
     }
 
     #[test]
@@ -993,7 +1007,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(pixel_align_kart_tanim_ornegi().contains("pixel_align_kartı"));
-        assert_eq!(kart_sayisi(), 190);
+        assert_eq!(kart_sayisi(), 210);
     }
 
     #[test]
@@ -1008,7 +1022,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(points_kart_tanim_ornegi().contains("points_kartı"));
-        assert_eq!(kart_sayisi(), 190);
+        assert_eq!(kart_sayisi(), 210);
     }
 
     #[test]
@@ -1024,7 +1038,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(scales_dir_ori_kart_tanim_ornegi().contains("scales_dir_ori_kartı"));
-        assert_eq!(kart_sayisi(), 190);
+        assert_eq!(kart_sayisi(), 210);
     }
 
     #[test]
@@ -1058,7 +1072,7 @@ mod testler {
                 .is_empty()
         );
         assert!(scatter_kart_tanim_ornegi().contains("scatter_kartı"));
-        assert_eq!(kart_sayisi(), 190);
+        assert_eq!(kart_sayisi(), 210);
     }
 
     #[test]
@@ -1089,7 +1103,7 @@ mod testler {
         assert!(oturum.sine_akisini_ilerlet().is_ok_and(|değişti| değişti));
         assert_ne!(oturum.svg(1_920, 600), önce);
         assert!(sine_stream_kart_tanim_ornegi().contains("SineAkışı"));
-        assert_eq!(kart_sayisi(), 190);
+        assert_eq!(kart_sayisi(), 210);
     }
 
     #[test]
@@ -1112,7 +1126,7 @@ mod testler {
             }
         }
         assert!(soft_minmax_kart_tanim_ornegi().contains("SoftMinMaxAkışı"));
-        assert_eq!(kart_sayisi(), 190);
+        assert_eq!(kart_sayisi(), 210);
     }
 
     #[test]
@@ -1130,7 +1144,25 @@ mod testler {
             assert!(svg.contains("<rect") || svg.contains("<polygon"));
         }
         assert!(sparklines_bars_kart_tanim_ornegi().contains("sparklines_bars_kartı"));
-        assert_eq!(kart_sayisi(), 190);
+        assert_eq!(kart_sayisi(), 210);
+    }
+
+    #[test]
+    fn sparklines_wasm_yirmi_kompakt_yüzeyi_korur() {
+        for örnek in SparklineÖrneği::TÜMÜ {
+            let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
+            assert!(oturum.is_ok(), "{}", örnek.kimlik());
+            let Ok(oturum) = oturum else {
+                continue;
+            };
+            let svg = oturum.svg(150, 30);
+            assert!(svg.contains("width=\"150\" height=\"30\""));
+            assert!(svg.contains("pink"));
+            assert!(svg.contains("#03a9f4"));
+            assert!(svg.contains("#b3e5fc"));
+        }
+        assert!(sparklines_kart_tanim_ornegi().contains("sparklines_kartı"));
+        assert_eq!(kart_sayisi(), 210);
     }
 
     #[test]

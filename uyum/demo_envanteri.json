@@ -3,9 +3,9 @@
   "kaynak_commit": "0e5812c504430f5c804e0f993376d8999b26cc34",
   "demo_sayısı": 73,
   "durum_özeti": {
-    "uygulandı_kanıtlı": 44,
+    "uygulandı_kanıtlı": 45,
     "çekirdek_davranışı_port_edildi_kart_bekliyor": 0,
-    "bekliyor": 29
+    "bekliyor": 28
   },
   "demolar": [
     {
@@ -714,11 +714,21 @@
         {
           "yol": "demos/lib/uDSV.iife.min.js",
           "sha256": "177612e3999555b4cdaa0b15a642a325214d7e79fa89c621f005ac13546a9330"
-        }
+        },
+        { "yol": "demos/data/AAPL.csv", "sha256": "98234671bef0115df32622cc8ae03361fe0882d05209c53971c8b40d3f9223b4" },
+        { "yol": "demos/data/AMD.csv", "sha256": "e043af38b6e7ad0e62041fbad1ed24f5c5622b4eff692b910257ef4ccf871a61" },
+        { "yol": "demos/data/AMZN.csv", "sha256": "2ee3ea2f370430e8870159eaace809a15d13935d3ed6c65ebf9826f30b7dbb16" },
+        { "yol": "demos/data/CSCO.csv", "sha256": "821b72ebf53d7e8a80997c54eaf459f16b14a4676499735a537f721d089d58cd" },
+        { "yol": "demos/data/FB.csv", "sha256": "484aa0ff0d08f84f4c4338595a4fa6b4b96eb2e712b6d9fe77839157940254b6" },
+        { "yol": "demos/data/MSFT.csv", "sha256": "796fc39808d667e0c134e9193c23c376e215a50093043efb4b073da2020373f8" },
+        { "yol": "demos/data/QCOM.csv", "sha256": "db912bb49501a322197ccec15aeb385176189f9ed90c58ff371d5aa766455ff3" },
+        { "yol": "demos/data/SBUX.csv", "sha256": "7387186179825fbf0654657a8788c070a368481022db9b07f491f7a2ba4d630e" },
+        { "yol": "demos/data/TSLA.csv", "sha256": "4252b8850602b4208bf109eee71652e2c4f8e2b9eb50e5f808954c88864d756d" },
+        { "yol": "demos/data/ZNGA.csv", "sha256": "895f534a58e2e533945a3a534b324a571c2e76e784a8f373774281ef0b6d3c10" }
       ],
       "sahip_faz": 1,
       "faz": "Doğrusal yollar, alanlar ve veri boşlukları",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 49,
