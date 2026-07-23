@@ -13,7 +13,7 @@ use ::gpui::{
 
 use crate::{
     DağılımVuruşu, DoğrusalGradyan, Grafik, Komut, MetinHizası, Nokta, Sahne, SeriSeçenekleri,
-    SeçimEylemi, UplotHatası,
+    SeçimEylemi, UplotHatası, YüzeyDikdörtgeni,
 };
 
 #[derive(Clone)]
@@ -348,17 +348,18 @@ impl GpuiGrafik {
     fn sahne_konumu(&self, pencere_konumu: ::gpui::Point<Pixels>) -> Option<Nokta> {
         let sınırlar = self.çizim_sınırları.get()?;
         let (kaynak_g, kaynak_y) = self.grafik.boyut();
-        let ölçek = (f32::from(sınırlar.size.width) / kaynak_g as f32)
-            .min(f32::from(sınırlar.size.height) / kaynak_y as f32)
-            .max(0.01);
-        let köken_x = f32::from(sınırlar.origin.x)
-            + (f32::from(sınırlar.size.width) - kaynak_g as f32 * ölçek) / 2.0;
-        let köken_y = f32::from(sınırlar.origin.y)
-            + (f32::from(sınırlar.size.height) - kaynak_y as f32 * ölçek) / 2.0;
-        Some(Nokta::yeni(
-            (f32::from(pencere_konumu.x) - köken_x) / ölçek,
-            (f32::from(pencere_konumu.y) - köken_y) / ölçek,
-        ))
+        YüzeyDikdörtgeni::yeni(
+            f64::from(f32::from(sınırlar.origin.x)),
+            f64::from(f32::from(sınırlar.origin.y)),
+            f64::from(f32::from(sınırlar.size.width)),
+            f64::from(f32::from(sınırlar.size.height)),
+        )?
+        .sahne_konumu(
+            f64::from(f32::from(pencere_konumu.x)),
+            f64::from(f32::from(pencere_konumu.y)),
+            kaynak_g,
+            kaynak_y,
+        )
     }
 
     fn grafik_alanında(&self, nokta: Nokta) -> bool {

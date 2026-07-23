@@ -1,0 +1,25 @@
+id = "scroll-sync"
+kaynak = "../uPlot/demos/scroll-sync.html"
+fixture = "src/kart/scroll_sync.rs#scroll_sync_kartı"
+viewport = [1200, 900]
+device_pixel_ratio = 1
+durum = "kaydırmada_yüzey_dikdörtgeni_yenilenir"
+
+[veri]
+x_aralığı = [1, 30]
+seri_sayısı = 3
+seri_başı_nokta = 30
+değer_havuzu = [-10, 10]
+kanıt_tohumu = "0x5c201144"
+
+[etkileşim]
+kapsayıcı = [400, 400]
+grafik = [400, 200]
+kaydırma = "yüzey_dikdörtgenini_yenile"
+koordinat_dönüşümü = "istemci_to_sahne_çekirdekte"
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+svg_dizini = "target/scroll-sync"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

@@ -36,6 +36,7 @@ mod resize;
 mod scale_padding;
 mod scales_dir_ori;
 mod scatter;
+mod scroll_sync;
 mod veri_uretici;
 mod zoom_touch;
 mod zoom_wheel;
@@ -131,6 +132,9 @@ pub use scales_dir_ori::{
 };
 pub use scatter::{
     SCATTER_KANIT_TOHUMU, SCATTER_KART_TANIM_ÖRNEĞİ, ScatterÖrneği, scatter_kartı
+};
+pub use scroll_sync::{
+    SCROLL_SYNC_KANIT_TOHUMU, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, scroll_sync_kartı
 };
 pub use zoom_touch::{ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, zoom_touch_kartı};
 pub use zoom_wheel::{ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, zoom_wheel_kartı};

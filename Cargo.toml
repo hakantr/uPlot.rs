@@ -104,6 +104,11 @@ name = "scatter"
 required-features = ["svg"]
 
 [[example]]
+name = "scroll-sync"
+path = "examples/scroll_sync.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

@@ -440,6 +440,12 @@
       "rust_karşılığı": "Grafik::dağılım_vuruşu_boyutta / DağılımVuruşu",
       "durum": "tam_kanıtlı",
       "test": "src/kart/scatter.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.syncRect() / uPlot.rect",
+      "rust_karşılığı": "YüzeyDikdörtgeni::sahne_konumu",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/scroll_sync.rs"
     }
   ]
 }

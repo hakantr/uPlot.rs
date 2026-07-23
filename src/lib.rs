@@ -16,6 +16,7 @@ pub mod kart;
 pub mod olcek;
 pub mod secenek;
 pub mod veri;
+pub mod yuzey;
 mod zaman;
 
 #[cfg(feature = "svg")]
@@ -48,21 +49,21 @@ pub use kart::{
     PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_PENCERE_MS, POINTS_KANIT_TOHUMU,
     POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
     RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
-    SCATTER_KANIT_TOHUMU, SCATTER_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği,
-    SmoothingÖrneği, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, asap_yumuşat,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, hareketli_ortalama, high_low_bands_kartı, latency_heatmap_kartı,
-    line_paths_kartı, log_scales_kartı, log_scales2_kartı, missing_data_null_kartı,
-    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    months_rusça_kartı, nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri,
-    path_gap_clip_kartı, pixel_align_kartı, points_kartı, resize_kartı, savitzky_golay,
-    scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, zoom_touch_kartı, zoom_wheel_kartı,
-    ÇubukÖrneği,
+    SCATTER_KANIT_TOHUMU, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KANIT_TOHUMU,
+    SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SmoothingÖrneği,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, asap_yumuşat, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    hareketli_ortalama, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
+    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
+    no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
+    resize_kartı, savitzky_golay, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı,
+    scroll_sync_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
 };
 pub use olcek::Aralık;
 pub use secenek::{
@@ -74,3 +75,4 @@ pub use secenek::{
     YÖlçekSeçenekleri, ÇizimKancasıDüzeni, ÇizimSırası, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı,
 };
 pub use veri::{BoşlukKipi, HizalıDeğer, HizalıVeri, hizalı_verileri_birleştir};
+pub use yuzey::YüzeyDikdörtgeni;
