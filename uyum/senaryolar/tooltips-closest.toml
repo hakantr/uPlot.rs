@@ -1,0 +1,32 @@
+id = "tooltips-closest"
+kaynak = "../uPlot/demos/tooltips-closest.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/tooltips_closest.rs#tooltips_closest_kartı"
+viewport = [1920, 600]
+durum = "en_yakın_seri_commit_tooltipi"
+
+[veri]
+kaynak = "../uPlot/demos/data/rustc-perf.json"
+sha256 = "b2e16eb649b525ad2bb504680f2d925453a8ff31f2bf912640d1ca43ad0e0934"
+commit_sayısı = 234
+seri_sayısı = 4
+interpolasyon_sayısı = 100
+yinelenen_x_değerleri_korunur = true
+
+[tooltip]
+odak_yakınlığı_piksel = 5
+odak_alfa = 0.3
+tarih_biçimi = "{M}/{D}/{YY} {h}:{mm}:{ss} {AA}"
+commit_karakteri = 10
+başlangıçtan_yüzde = true
+tıklanabilir_karşılaştırma = true
+stat = "instructions:u"
+interpolasyon_rengi = "#fcb0f1"
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+örnek = "examples/tooltips_closest.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

@@ -1027,6 +1027,79 @@ impl Grafik {
         Some((x, değerler))
     }
 
+    pub fn ham_seri_değeri(&self, seri: usize, indeks: usize) -> Option<f64> {
+        self.veri
+            .seriler()
+            .get(seri)
+            .and_then(|değerler| değerler.get(indeks))
+            .copied()
+            .flatten()
+    }
+
+    pub fn en_yakın_tooltip(
+        &self,
+        yatay_oran: f64,
+        seri: usize,
+    ) -> Option<crate::EnYakınTooltipBilgisi> {
+        let düzen = self.seçenekler.en_yakın_tooltip.as_ref()?;
+        let aralık = self.görünür_x_aralığı();
+        let hedef = self.x_değeri_orandan(aralık, yatay_oran.clamp(0.0, 1.0));
+        let (indeks, zaman) = self
+            .veri
+            .x()
+            .iter()
+            .copied()
+            .enumerate()
+            .filter(|(_, x)| *x >= aralık.en_az && *x <= aralık.en_çok)
+            .min_by(|(_, a), (_, b)| (a - hedef).abs().total_cmp(&(b - hedef).abs()))?;
+        let değer = self.ham_seri_değeri(seri, indeks)?;
+        let başlangıç = self
+            .ham_seri_değeri(seri, 0)
+            .filter(|değer| değer.abs() > f64::EPSILON)?;
+        let commit = düzen.commitler.get(indeks)?.clone();
+        let önceki_commit = indeks
+            .checked_sub(1)
+            .and_then(|önceki| düzen.commitler.get(önceki))
+            .cloned();
+        let interpolasyon = düzen.interpolasyonlar.contains(&indeks);
+        let kenarlık_rengi = if interpolasyon {
+            düzen.interpolasyon_rengi.clone()
+        } else {
+            self.seçenekler
+                .seriler
+                .get(seri)
+                .map_or_else(|| "#000000".to_string(), |seri| seri.renk.clone())
+        };
+        let başlangıç_parametresi = önceki_commit.as_deref().unwrap_or("null");
+        let karşılaştırma_url = format!(
+            "https://perf.rust-lang.org/compare.html?start={başlangıç_parametresi}&end={commit}&stat={}",
+            düzen.stat
+        );
+        let yüzde = (değer - başlangıç) / başlangıç * 100.0;
+        let tarih = crate::zaman::tooltip_tarihi(zaman).unwrap_or_else(|| zaman.to_string());
+        let kısa_commit = commit.get(..10).unwrap_or(commit.as_str()).to_string();
+        Some(crate::EnYakınTooltipBilgisi {
+            zaman,
+            commit,
+            önceki_commit,
+            seri,
+            değer,
+            başlangıçtan_yüzde: yüzde,
+            interpolasyon,
+            kenarlık_rengi,
+            karşılaştırma_url,
+            metin: format!("{tarih} - {kısa_commit}\n{değer} ({yüzde:.2}% since start)"),
+        })
+    }
+
+    pub fn en_yakın_tooltip_etkin(&self) -> bool {
+        self.seçenekler.en_yakın_tooltip.is_some()
+    }
+
+    pub fn lejant_canlı(&self) -> bool {
+        self.seçenekler.lejant_canlı
+    }
+
     /// İmleç bulunmadığında uPlot lejantının gösterdiği son hizalı veri satırını döndürür.
     pub fn son_değerler(&self) -> Option<(f64, Vec<Option<f64>>)> {
         let indeks = self.veri.uzunluk().checked_sub(1)?;
@@ -1842,6 +1915,24 @@ impl Grafik {
             }
         }
 
+        if let Some(düzen) = self.seçenekler.en_yakın_tooltip.as_ref() {
+            for indeks in &düzen.interpolasyonlar {
+                let Some(x_değeri) = self.veri.x().get(*indeks).copied() else {
+                    continue;
+                };
+                if x_değeri < x_aralığı.en_az || x_değeri > x_aralığı.en_çok {
+                    continue;
+                }
+                let x = self.x_konumu(x_aralığı, x_değeri, sol, genişlik);
+                sahne.ekle(Komut::Çizgi {
+                    başlangıç: Nokta::yeni(x, üst),
+                    bitiş: Nokta::yeni(x, alt),
+                    renk: renk_alfa(&düzen.interpolasyon_rengi, 0x7a),
+                    kalınlık: 1.0,
+                });
+            }
+        }
+
         for (seri_indeksi, değerler) in self.veri.seriler().iter().enumerate() {
             let Some(seri) = self.seçenekler.seriler.get(seri_indeksi) else {
                 continue;
@@ -2152,6 +2243,20 @@ impl Grafik {
                             çizgi: nokta_rengi,
                             kalınlık: seri.nokta_kalınlığı,
                         }),
+                    }
+                }
+
+                if let Some(düzen) = self.seçenekler.en_yakın_tooltip.as_ref() {
+                    for (indeks, nokta, _, _) in &görünür_noktalar {
+                        if düzen.interpolasyonlar.contains(indeks) {
+                            sahne.ekle(Komut::Daire {
+                                merkez: *nokta,
+                                yarıçap: 3.0,
+                                dolgu: "#ffffff".to_string(),
+                                çizgi: düzen.interpolasyon_rengi.clone(),
+                                kalınlık: 1.5,
+                            });
+                        }
                     }
                 }
             }

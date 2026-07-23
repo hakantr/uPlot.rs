@@ -96,13 +96,16 @@
     .lejant > span { white-space: nowrap; }
     .örnek { display: inline-block; width: 11px; height: 11px; margin-right: 5px;
              border: 1px solid #dc2626; vertical-align: -1px; }
-    .yardım { position: absolute; left: 76px; right: 24px; top: 42px;
+    .yardım { position: absolute; left: 76px; right: 24px; top: 22px;
               overflow: hidden; color: #6b7280; font-size: 10px; line-height: 1.35;
               text-align: left; text-overflow: ellipsis; white-space: nowrap;
               pointer-events: none; }
     .imlec-bilgi-kutusu { position: absolute; z-index: 12; max-width: 190px; padding: 8px;
                           border-radius: 4px; color: #fff; background: rgba(0,0,0,.8);
                           font-size: 12px; pointer-events: none; white-space: nowrap; }
+    .imlec-bilgi-kutusu.en-yakin { max-width: 280px; border: 2px solid transparent;
+                                   color: #111; background: #fff; cursor: pointer;
+                                   pointer-events: auto; white-space: pre-line; }
     .kod-örneği { margin-top: 14px; border: 1px solid #d1d5db; border-radius: 10px;
                   background: #111827; color: #e5e7eb; overflow: hidden; }
     .kod-örneği summary { padding: 9px 12px; color: #93c5fd; cursor: pointer;
@@ -350,6 +353,7 @@
       timeline_discrete_kart_tanim_ornegi,
       timeseries_discrete_kart_tanim_ornegi,
       timezones_dst_kart_tanim_ornegi,
+      tooltips_closest_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1484,6 +1488,35 @@
         etkileşimler: () => ortakEtkileşimler(),
       };
     });
+
+    zamanDilimiEklemeNoktası?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="tooltips-closest" aria-current="false" tabindex="0">
+        <strong>Summary-opt</strong><small>tooltips-closest</small>
+        <div class="durum">234 commit × 4 seri · en yakın commit tooltip'i</div>
+      </article>`
+    );
+    kartlar["tooltips-closest"] = {
+      başlık: "Summary-opt",
+      kaynak: `Kaynak:
+        <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/tooltips-closest.html">tooltips-closest.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/rustc-perf.json">rustc-perf.json</a>
+        <br>Resmî 234 commit, dört Opt serisi, 100 interpolasyon işareti ve tıklanabilir
+        perf karşılaştırma bağlantısı Rust çekirdeğinde aynı veriyle üretilir.`,
+      tanım: () => tooltips_closest_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/tooltips_closest.rs",
+      seriler: [
+        { etiket: "full", renk: "#7cb5ec" },
+        { etiket: "incr-unchanged", renk: "#434348" },
+        { etiket: "incr-full", renk: "#90ed7d" },
+        { etiket: "incr-patched: println", renk: "#f7a35c" },
+      ],
+      yardım: "Çizgiye yaklaş: en yakın commit · tooltip'e tıkla: perf karşılaştırması",
+      değişkenNokta: false,
+      bilgiKutusu: true,
+      enYakınTooltip: true,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",
@@ -2648,6 +2681,14 @@
       });
       if (kart.bilgiKutusu) {
         chart.insertAdjacentHTML("beforeend", `<div id="imlec-bilgi-kutusu" class="imlec-bilgi-kutusu" hidden></div>`);
+        const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
+        if (kart.enYakınTooltip) {
+          bilgiKutusu?.classList.add("en-yakin");
+          bilgiKutusu?.addEventListener("click", () => {
+            const url = bilgiKutusu.dataset.karsilastirmaUrl;
+            if (url) window.open(url, "_blank", "noopener,noreferrer");
+          });
+        }
       }
       kontrolleriGüncelle();
       taşımaİmleciniGüncelle();
@@ -2802,6 +2843,8 @@
       if (hamX < sol || hamX > sağ || hamY < üst || hamY > alt) {
         öğeler.forEach(öğe => öğe?.setAttribute("visibility", "hidden"));
         svg.querySelectorAll(".eksen-gosterge").forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+        const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
+        if (bilgiKutusu) bilgiKutusu.hidden = true;
         return;
       }
       const hamOranX = Math.max(0, Math.min(1, (hamX - sol) / (sağ - sol)));
@@ -2830,8 +2873,20 @@
       const noktaX = sol + xKonumOranı * (sağ - sol);
       const noktaXEkseniY = alt - xKonumOranı * (alt - üst);
       const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
-      if (bilgiKutusu && Number.isFinite(seriDeğerleri[0])) {
-        bilgiKutusu.textContent = `${gerçekX},${seriDeğerleri[0]} at ${Math.round(hamX)},${Math.round(hamY)}`;
+      const tooltipBilgisi = kartlar[aktifKart].enYakınTooltip
+        ? Array.from(oturum?.en_yakin_tooltip(xEksenOranı, oturum.odak_serisi()) ?? [])
+        : [];
+      if (bilgiKutusu && kartlar[aktifKart].enYakınTooltip && tooltipBilgisi.length !== 4) {
+        bilgiKutusu.hidden = true;
+      } else if (bilgiKutusu && (tooltipBilgisi.length === 4 || Number.isFinite(seriDeğerleri[0]))) {
+        if (tooltipBilgisi.length === 4) {
+          bilgiKutusu.textContent = tooltipBilgisi[0];
+          bilgiKutusu.style.borderColor = tooltipBilgisi[1];
+          bilgiKutusu.dataset.karsilastirmaUrl = tooltipBilgisi[2];
+          bilgiKutusu.title = "Rust performans karşılaştırmasını yeni sekmede aç";
+        } else {
+          bilgiKutusu.textContent = `${gerçekX},${seriDeğerleri[0]} at ${Math.round(hamX)},${Math.round(hamY)}`;
+        }
         const chartKutusu = chart.getBoundingClientRect();
         const svgKutusu = svg.getBoundingClientRect();
         const pikselX = svgKutusu.left - chartKutusu.left + hamX / view.width * svgKutusu.width;
@@ -2893,12 +2948,14 @@
           yGösterge.setAttribute("visibility", "visible");
         }
       });
-      chart.querySelector("#x-değeri").textContent = gerçekX.toLocaleString("tr-TR", {maximumFractionDigits: 3});
-      seriDeğerleri.forEach((seriDeğeri, indeks) => {
-        const hedef = chart.querySelector(`#seri-değeri-${indeks}`);
-        if (hedef) hedef.textContent = Number.isFinite(seriDeğeri)
-          ? seriDeğeri.toLocaleString("tr-TR", {maximumFractionDigits: 3}) : "--";
-      });
+      if (oturum.lejant_canli()) {
+        chart.querySelector("#x-değeri").textContent = gerçekX.toLocaleString("tr-TR", {maximumFractionDigits: 3});
+        seriDeğerleri.forEach((seriDeğeri, indeks) => {
+          const hedef = chart.querySelector(`#seri-değeri-${indeks}`);
+          if (hedef) hedef.textContent = Number.isFinite(seriDeğeri)
+            ? seriDeğeri.toLocaleString("tr-TR", {maximumFractionDigits: 3}) : "--";
+        });
+      }
     }
 
     chart.addEventListener("pointermove", olay => {

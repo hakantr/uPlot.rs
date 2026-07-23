@@ -88,6 +88,9 @@ impl GpuiGrafik {
     }
 
     pub fn lejant_değerleri(&self) -> Option<(f64, Vec<Option<f64>>)> {
+        if !self.grafik.lejant_canlı() {
+            return None;
+        }
         self.imleç
             .as_ref()
             .map(|imleç| (imleç.veri_x, imleç.seri_değerleri.clone()))
@@ -667,11 +670,22 @@ impl Render for GpuiGrafik {
             .as_ref()
             .filter(|_| self.grafik.etkileşim_seçenekleri().imleç_bilgi_kutusu)
             .and_then(|imleç| {
-                let y = imleç
-                    .dağılım
-                    .as_ref()
-                    .map(|vuruş| vuruş.y)
-                    .or_else(|| imleç.seri_değerleri.first().copied().flatten())?;
+                let seri_indeksi = self.grafik.odak_serisi().or_else(|| {
+                    (!self.grafik.en_yakın_tooltip_etkin())
+                        .then(|| {
+                            imleç
+                                .seri_değerleri
+                                .iter()
+                                .position(|değer| değer.is_some())
+                        })
+                        .flatten()
+                });
+                let y = imleç.dağılım.as_ref().map(|vuruş| vuruş.y).or_else(|| {
+                    seri_indeksi
+                        .and_then(|indeks| imleç.seri_değerleri.get(indeks))
+                        .copied()
+                        .flatten()
+                })?;
                 let sınırlar = self.çizim_sınırları.get()?;
                 let (kaynak_g, kaynak_y) = self.grafik.boyut();
                 let ölçek = (f32::from(sınırlar.size.width) / kaynak_g as f32)
@@ -683,30 +697,54 @@ impl Render for GpuiGrafik {
                     .clamp(4.0, (f32::from(sınırlar.size.width) - 190.0).max(4.0));
                 let üst = (dikey_pay + imleç.fare.y * ölçek + 12.0)
                     .clamp(4.0, (f32::from(sınırlar.size.height) - 42.0).max(4.0));
+                let (çizim_sol, çizim_sağ, _, _) = self.çizim_alanı();
+                let yatay_oran = f64::from(
+                    ((imleç.fare.x - çizim_sol) / (çizim_sağ - çizim_sol)).clamp(0.0, 1.0),
+                );
+                let en_yakın =
+                    seri_indeksi.and_then(|seri| self.grafik.en_yakın_tooltip(yatay_oran, seri));
+                if self.grafik.en_yakın_tooltip_etkin() && en_yakın.is_none() {
+                    return None;
+                }
+                let kenarlık = en_yakın.as_ref().map_or_else(
+                    || "#000000".to_string(),
+                    |bilgi| bilgi.kenarlık_rengi.clone(),
+                );
+                let bağlantı = en_yakın
+                    .as_ref()
+                    .map(|bilgi| bilgi.karşılaştırma_url.clone());
                 Some((
                     sol,
                     üst,
-                    imleç.dağılım.as_ref().map_or_else(
+                    en_yakın.map_or_else(
                         || {
-                            format!(
-                                "{},{y} at {},{}",
-                                imleç.veri_x,
-                                imleç.fare.x.round(),
-                                imleç.fare.y.round()
+                            imleç.dağılım.as_ref().map_or_else(
+                                || {
+                                    format!(
+                                        "{},{y} at {},{}",
+                                        imleç.veri_x,
+                                        imleç.fare.x.round(),
+                                        imleç.fare.y.round()
+                                    )
+                                },
+                                |vuruş| {
+                                    format!(
+                                        "Country: {} · Population: {} · GDP: ${} · Income: ${}",
+                                        vuruş.etiket.as_deref().unwrap_or("--"),
+                                        vuruş.değer.map_or_else(
+                                            || "--".to_string(),
+                                            |değer| değer.to_string()
+                                        ),
+                                        vuruş.x,
+                                        vuruş.y
+                                    )
+                                },
                             )
                         },
-                        |vuruş| {
-                            format!(
-                                "Country: {} · Population: {} · GDP: ${} · Income: ${}",
-                                vuruş.etiket.as_deref().unwrap_or("--"),
-                                vuruş
-                                    .değer
-                                    .map_or_else(|| "--".to_string(), |değer| değer.to_string()),
-                                vuruş.x,
-                                vuruş.y
-                            )
-                        },
+                        |bilgi| bilgi.metin,
                     ),
+                    kenarlık,
+                    bağlantı,
                 ))
             });
         div()
@@ -880,21 +918,45 @@ impl Render for GpuiGrafik {
                 )
                 .size_full(),
             )
-            .when_some(bilgi_kutusu, |yüzey, (sol, üst, metin)| {
-                yüzey.child(
-                    div()
-                        .absolute()
-                        .left(px(sol))
-                        .top(px(üst))
-                        .px_2()
-                        .py_1()
-                        .rounded_sm()
-                        .bg(rgba(0x000000cc))
-                        .text_color(rgb(0xffffff))
-                        .text_xs()
-                        .child(metin),
-                )
-            })
+            .when_some(
+                bilgi_kutusu,
+                |yüzey, (sol, üst, metin, kenarlık, bağlantı)| {
+                    let tıklama_bağlantısı = bağlantı.clone();
+                    yüzey.child(
+                        div()
+                            .absolute()
+                            .left(px(sol))
+                            .top(px(üst))
+                            .px_2()
+                            .py_1()
+                            .border_1()
+                            .border_color(renk_çöz(&kenarlık))
+                            .rounded_sm()
+                            .bg(if bağlantı.is_some() {
+                                rgb(0xffffff)
+                            } else {
+                                rgba(0x000000cc)
+                            })
+                            .text_color(if bağlantı.is_some() {
+                                rgb(0x111111)
+                            } else {
+                                rgb(0xffffff)
+                            })
+                            .text_xs()
+                            .when(bağlantı.is_some(), |kutu| {
+                                kutu.cursor_pointer().on_mouse_down(
+                                    MouseButton::Left,
+                                    cx.listener(move |_, _: &MouseDownEvent, _, cx| {
+                                        if let Some(url) = tıklama_bağlantısı.as_deref() {
+                                            cx.open_url(url);
+                                        }
+                                    }),
+                                )
+                            })
+                            .child(metin),
+                    )
+                },
+            )
     }
 }
 

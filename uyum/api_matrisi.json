@@ -710,6 +710,36 @@
       "rust_karşılığı": "TimezonesDstÖrneği::tümü / kaynak_veri",
       "durum": "tam_kanıtlı",
       "test": "src/kart/timezones_dst.rs"
+    },
+    {
+      "kaynak_yolu": "tooltips-closest rustc-perf.json / 234 commits and four Opt series",
+      "rust_karşılığı": "tooltips_closest_kartı / yerleşik kaynak fixture",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/tooltips_closest.rs"
+    },
+    {
+      "kaynak_yolu": "cursor.focus prox 5 alpha 0.3",
+      "rust_karşılığı": "OdakDüzeni / Grafik::imleç_odağını_güncelle",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/tooltips_closest.rs"
+    },
+    {
+      "kaynak_yolu": "closest tooltip date, commit and percent-since-start formatter",
+      "rust_karşılığı": "Grafik::en_yakın_tooltip / zaman::tooltip_tarihi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/tooltips_closest.rs"
+    },
+    {
+      "kaynak_yolu": "interpolated indices vertical guides and point markers",
+      "rust_karşılığı": "EnYakınTooltipDüzeni / ortak Sahne komutları",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/tooltips_closest.rs"
+    },
+    {
+      "kaynak_yolu": "tooltip click opens perf compare start/end/stat URL",
+      "rust_karşılığı": "EnYakınTooltipBilgisi::karşılaştırma_url / GPUI ve WASM bağdaştırıcıları",
+      "durum": "tam_kanıtlı",
+      "test": "wasm/src/lib.rs"
     }
   ]
 }

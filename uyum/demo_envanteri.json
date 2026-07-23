@@ -3,9 +3,9 @@
   "kaynak_commit": "0e5812c504430f5c804e0f993376d8999b26cc34",
   "demo_sayısı": 73,
   "durum_özeti": {
-    "uygulandı_kanıtlı": 56,
+    "uygulandı_kanıtlı": 57,
     "çekirdek_davranışı_port_edildi_kart_bekliyor": 0,
-    "bekliyor": 17
+    "bekliyor": 16
   },
   "demolar": [
     {
@@ -910,7 +910,7 @@
       ],
       "sahip_faz": 4,
       "faz": "Cursor, tooltip ve yakınlaştırma eklentileri",
-      "durum": "bekliyor"
+      "durum": "uygulandı_kanıtlı"
     },
     {
       "sıra": 61,

@@ -28,6 +28,19 @@ pub(crate) fn utc_zaman_damgası(yıl: i64, ay: u32, gün: u32) -> Option<f64> {
     Some(((çağ * 146_097 + çağ_günü - 719_468) * 86_400) as f64)
 }
 
+pub(crate) fn tooltip_tarihi(zaman: f64) -> Option<String> {
+    let (yıl, ay, gün, saat24, dakika, saniye) = utc_alanları(zaman)?;
+    let dönem = if saat24 < 12 { "AM" } else { "PM" };
+    let saat = match saat24 % 12 {
+        0 => 12,
+        değer => değer,
+    };
+    Some(format!(
+        "{ay}/{gün}/{:02} {saat}:{dakika:02}:{saniye:02} {dönem}",
+        yıl.rem_euclid(100)
+    ))
+}
+
 pub(crate) fn yerel_eksen_etiketi(
     zaman_damgası: f64,
     artım: f64,

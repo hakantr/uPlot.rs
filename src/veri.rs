@@ -31,7 +31,8 @@ pub enum BoşlukKipi {
 }
 
 impl HizalıVeri {
-    /// Veriyi doğrular. X değerleri sonlu, benzersiz ve kesin artan olmalıdır.
+    /// Veriyi doğrular. X değerleri sonlu ve azalmayan sırada olmalıdır.
+    /// uPlot, aynı saniyeye düşen commitler gibi yinelenen X değerlerini kabul eder.
     /// uPlot'un `null`, `[]` ve `[[], []]` girdileri, bütün seri sütunları da
     /// boş olduğunda sıfır uzunluklu hizalı veri olarak korunur.
     pub fn yeni(x: Vec<f64>, seriler: Vec<Vec<Option<f64>>>) -> Result<Self, UplotHatası> {
@@ -41,7 +42,7 @@ impl HizalıVeri {
             }
             if indeks > 0
                 && x.get(indeks.saturating_sub(1))
-                    .is_some_and(|önceki| önceki >= değer)
+                    .is_some_and(|önceki| önceki > değer)
             {
                 return Err(UplotHatası::SırasızX { indeks });
             }
@@ -248,6 +249,18 @@ pub fn hizalı_verileri_birleştir(
 #[cfg(test)]
 mod birleştirme_testleri {
     use super::*;
+
+    #[test]
+    fn yinelenen_x_kabul_edilir_azalan_x_reddedilir() -> Result<(), UplotHatası> {
+        let yinelenen = HizalıVeri::yeni(
+            vec![1.0, 1.0, 2.0],
+            vec![vec![Some(1.0), Some(2.0), Some(3.0)]],
+        );
+        assert!(yinelenen.is_ok());
+        let azalan = HizalıVeri::yeni(vec![1.0, 0.5], vec![vec![Some(1.0), Some(2.0)]]);
+        assert!(matches!(azalan, Err(UplotHatası::SırasızX { indeks: 1 })));
+        Ok(())
+    }
 
     #[test]
     fn join_sıralı_birleşim_ve_null_expand_maskesini_korur() -> Result<(), UplotHatası> {

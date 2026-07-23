@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use crate::{Aralık, UplotHatası};
 
 mod dagilim;
@@ -173,6 +175,43 @@ impl OdakDüzeni {
         self.stil = stil;
         self
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EnYakınTooltipDüzeni {
+    pub commitler: Vec<String>,
+    pub interpolasyonlar: BTreeSet<usize>,
+    pub stat: String,
+    pub interpolasyon_rengi: String,
+}
+
+impl EnYakınTooltipDüzeni {
+    pub fn yeni(
+        commitler: Vec<String>,
+        interpolasyonlar: impl IntoIterator<Item = usize>,
+        stat: impl Into<String>,
+    ) -> Self {
+        Self {
+            commitler,
+            interpolasyonlar: interpolasyonlar.into_iter().collect(),
+            stat: stat.into(),
+            interpolasyon_rengi: "#fcb0f1".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct EnYakınTooltipBilgisi {
+    pub zaman: f64,
+    pub commit: String,
+    pub önceki_commit: Option<String>,
+    pub seri: usize,
+    pub değer: f64,
+    pub başlangıçtan_yüzde: f64,
+    pub interpolasyon: bool,
+    pub kenarlık_rengi: String,
+    pub karşılaştırma_url: String,
+    pub metin: String,
 }
 
 impl Default for ÇizimKancasıDüzeni {
@@ -553,6 +592,8 @@ pub struct GrafikSeçenekleri {
     pub nokta_katmanları: Vec<NoktaKatmanı>,
     pub çizim_kancaları: Option<ÇizimKancasıDüzeni>,
     pub odak: Option<OdakDüzeni>,
+    pub en_yakın_tooltip: Option<EnYakınTooltipDüzeni>,
+    pub lejant_canlı: bool,
     pub çizim_sırası: ÇizimSırası,
     /// uPlot `opts.pxAlign` karşılığıdır. `1`, koordinatları tam piksele
     /// yuvarlar; `0`, canlı akışlarda alt piksel hareketini korur.
@@ -624,6 +665,8 @@ impl GrafikSeçenekleri {
             nokta_katmanları: Vec::new(),
             çizim_kancaları: None,
             odak: None,
+            en_yakın_tooltip: None,
+            lejant_canlı: true,
             çizim_sırası: ÇizimSırası::EksenlerSeriler,
             piksel_hizası: 1.0,
             ızgara_rengi: "#e5e7eb".to_string(),
@@ -805,6 +848,16 @@ impl GrafikSeçenekleri {
 
     pub fn odak(mut self, düzen: OdakDüzeni) -> Self {
         self.odak = Some(düzen);
+        self
+    }
+
+    pub fn en_yakın_tooltip(mut self, düzen: EnYakınTooltipDüzeni) -> Self {
+        self.en_yakın_tooltip = Some(düzen);
+        self
+    }
+
+    pub fn lejant_canlı(mut self, canlı: bool) -> Self {
+        self.lejant_canlı = canlı;
         self
     }
 

@@ -186,6 +186,11 @@ path = "examples/timezones_dst.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "tooltips-closest"
+path = "examples/tooltips_closest.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 
