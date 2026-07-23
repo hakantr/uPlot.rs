@@ -1417,12 +1417,13 @@ impl Grafik {
                                 üst - 8.0
                             },
                         ),
-                        içerik: ölçek_eksen_değerini_yaz(
-                            y_değeri * birincil_çarpan,
+                        içerik: self.birincil_y_etiketi(
+                            y_değeri,
                             y_artımı,
                             birincil_birim,
                             birincil_dağılım,
                             birincil_biçim,
+                            birincil_çarpan,
                         ),
                         renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
                         boyut: 11.0,
@@ -1467,12 +1468,13 @@ impl Grafik {
                         },
                         y + 4.0,
                     ),
-                    içerik: ölçek_eksen_değerini_yaz(
-                        y_değeri * birincil_çarpan,
+                    içerik: self.birincil_y_etiketi(
+                        y_değeri,
                         y_artımı,
                         birincil_birim,
                         birincil_dağılım,
                         birincil_biçim,
+                        birincil_çarpan,
                     ),
                     renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
                     boyut: 11.0,
@@ -2255,6 +2257,25 @@ impl Grafik {
                 kalınlık: 1.0,
             });
         }
+    }
+
+    fn birincil_y_etiketi(
+        &self,
+        değer: f64,
+        artım: f64,
+        birim: &str,
+        dağılım: Option<YÖlçekDağılımı>,
+        biçim: YÖlçekEtiketBiçimi,
+        çarpan: f64,
+    ) -> String {
+        self.seçenekler
+            .birincil_y_özel_etiketler
+            .iter()
+            .find(|(aday, _)| (*aday - değer).abs() <= f64::EPSILON)
+            .map(|(_, etiket)| etiket.clone())
+            .unwrap_or_else(|| {
+                ölçek_eksen_değerini_yaz(değer * çarpan, artım, birim, dağılım, biçim)
+            })
     }
 
     #[allow(clippy::too_many_arguments)]

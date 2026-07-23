@@ -50,6 +50,7 @@ mod sync_y_zero;
 mod thin_bars_stroke_fill;
 mod time_periods;
 mod timeline_discrete;
+mod timeseries_discrete;
 mod veri_uretici;
 mod zoom_touch;
 mod zoom_wheel;
@@ -188,6 +189,10 @@ pub use time_periods::{
 pub use timeline_discrete::{
     TIMELINE_DISCRETE_KANIT_TOHUMU, TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,
     TIMELINE_DISCRETE_ZAMAN_ÇAPASI, TimelineDiscreteÖrneği, timeline_discrete_kartı,
+};
+pub use timeseries_discrete::{
+    TIMESERIES_DISCRETE_KANIT_TOHUMU, TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
+    TimeseriesDiscreteGrubu, TimeseriesDiscreteÖrneği, timeseries_discrete_kartı,
 };
 pub use zoom_touch::{ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, zoom_touch_kartı};
 pub use zoom_wheel::{ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, zoom_wheel_kartı};

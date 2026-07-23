@@ -1,0 +1,30 @@
+id = "timeseries-discrete"
+kaynak = "../uPlot/demos/timeseries-discrete.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/timeseries_discrete.rs#timeseries_discrete_kartı"
+viewport = [1920, 800]
+durum = "iki_yüzey_ortak_x_imleci_birleşik_lejant"
+
+[veri]
+kanıt_tohumu = 1414743113
+başlangıç_zamanı = 1704067200
+adım_saniye = 15
+nokta_sayısı = 50
+
+[yüzeyler]
+üst = [1920, 600]
+alt = [1920, 200]
+üst_seri_sayısı = 1
+alt_seri_sayısı = 3
+ayrık_y_aralığı = [0, 5]
+ayrık_y_bölmeleri = [0, 2, 4]
+
+[etkileşim]
+ortak_x_imleci = true
+birleşik_lejant = true
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+örnek = "examples/timeseries_discrete.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

@@ -531,6 +531,7 @@ pub struct GrafikSeçenekleri {
     pub birincil_y_eksen_görünür: bool,
     pub birincil_y_ızgara_görünür: bool,
     pub birincil_y_sabit_bölmeler: Option<Vec<f64>>,
+    pub birincil_y_özel_etiketler: Vec<(f64, String)>,
     pub birincil_y_ızgara_kesik: Option<f32>,
     pub birincil_y_eksen_rengi: String,
     pub x_eksen_değer_çarpanı: f64,
@@ -599,6 +600,7 @@ impl GrafikSeçenekleri {
             birincil_y_eksen_görünür: true,
             birincil_y_ızgara_görünür: true,
             birincil_y_sabit_bölmeler: None,
+            birincil_y_özel_etiketler: Vec::new(),
             birincil_y_ızgara_kesik: None,
             birincil_y_eksen_rengi: "#4b5563".to_string(),
             x_eksen_değer_çarpanı: 1.0,
@@ -733,6 +735,19 @@ impl GrafikSeçenekleri {
         if bölmeler.iter().all(|değer| değer.is_finite()) {
             self.birincil_y_sabit_bölmeler = Some(bölmeler);
         }
+        self
+    }
+
+    pub fn y_özel_etiketler<I, S>(mut self, etiketler: I) -> Self
+    where
+        I: IntoIterator<Item = (f64, S)>,
+        S: Into<String>,
+    {
+        self.birincil_y_özel_etiketler = etiketler
+            .into_iter()
+            .filter(|(değer, _)| değer.is_finite())
+            .map(|(değer, etiket)| (değer, etiket.into()))
+            .collect();
         self
     }
 

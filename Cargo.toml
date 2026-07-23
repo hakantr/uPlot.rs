@@ -176,6 +176,11 @@ path = "examples/timeline_discrete.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "timeseries-discrete"
+path = "examples/timeseries_discrete.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

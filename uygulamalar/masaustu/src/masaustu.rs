@@ -35,8 +35,9 @@ use uplot_rs::{
     SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği,
     SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu,
     SyncCursorÖrneği, SyncYZeroAşaması, THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ,
-    TIME_PERIODS_KART_TANIM_ÖRNEĞİ, TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği,
-    TimePeriodsÖrneği, TimelineDiscreteÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    TIME_PERIODS_KART_TANIM_ÖRNEĞİ, TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,
+    TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği, TimePeriodsÖrneği,
+    TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
     ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
     align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
     axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
@@ -51,7 +52,8 @@ use uplot_rs::{
     sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
     stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
     sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
-    timeline_discrete_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    timeline_discrete_kartı, timeseries_discrete_kartı, zoom_touch_kartı, zoom_wheel_kartı,
+    ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -88,6 +90,7 @@ enum KartKimliği {
     ThinBars(ThinBarsÖrneği),
     TimePeriods(TimePeriodsÖrneği),
     TimelineDiscrete(TimelineDiscreteÖrneği),
+    TimeseriesDiscrete,
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -150,6 +153,7 @@ impl KartKimliği {
             Self::ThinBars(_) => "Thin bar stroke & fill",
             Self::TimePeriods(_) => "Time Periods",
             Self::TimelineDiscrete(_) => "Timeline / Discrete",
+            Self::TimeseriesDiscrete => "TimeSeries + Discrete",
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -246,6 +250,9 @@ impl KartKimliği {
             Self::TimelineDiscrete(_) => {
                 "timeline-discrete.html · distr.js · quadtree.js · null/undefined şeritleri"
             }
+            Self::TimeseriesDiscrete => {
+                "timeseries-discrete.html · iki yüzey · ortak X imleci · birleşik lejant"
+            }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -326,6 +333,7 @@ impl KartKimliği {
             Self::ThinBars(_) => THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ,
             Self::TimePeriods(_) => TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
             Self::TimelineDiscrete(_) => TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,
+            Self::TimeseriesDiscrete => TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -384,6 +392,7 @@ impl KartKimliği {
             Self::ThinBars(_) => "src/kart/thin_bars_stroke_fill.rs",
             Self::TimePeriods(_) => "src/kart/time_periods.rs",
             Self::TimelineDiscrete(_) => "src/kart/timeline_discrete.rs",
+            Self::TimeseriesDiscrete => "src/kart/timeseries_discrete.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -448,6 +457,7 @@ pub struct ChartListesi {
     soft_minmax_çalışıyor: bool,
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grubu: SyncCursorGrubu,
+    timeseries_discrete_grafikleri: Vec<(TimeseriesDiscreteÖrneği, Entity<GpuiGrafik>)>,
 }
 
 impl ChartListesi {
@@ -464,6 +474,12 @@ impl ChartListesi {
             let AnahtarOlayi::Degisti(etkin) = *olay;
             if bu.aktif_kart == KartKimliği::SyncCursor {
                 for (_, grafik) in &bu.sync_cursor_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if bu.aktif_kart == KartKimliği::TimeseriesDiscrete {
+                for (_, grafik) in &bu.timeseries_discrete_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -513,7 +529,70 @@ impl ChartListesi {
             soft_minmax_çalışıyor: false,
             sync_cursor_grafikleri: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
+            timeseries_discrete_grafikleri: Vec::new(),
         }
+    }
+
+    fn timeseries_discrete_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let mut yüzeyler = Vec::with_capacity(TimeseriesDiscreteÖrneği::TÜMÜ.len());
+        let mut hata = None;
+        for örnek in TimeseriesDiscreteÖrneği::TÜMÜ {
+            let sonuç = timeseries_discrete_kartı(örnek)
+                .and_then(|(seçenekler, veri)| Grafik::yeni(seçenekler, veri));
+            let mut grafik = match sonuç {
+                Ok(grafik) => grafik,
+                Err(oluşturma_hatası) => {
+                    hata = Some(format!(
+                        "{} yüzeyi oluşturulamadı: {oluşturma_hatası}",
+                        örnek.başlık()
+                    ));
+                    break;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, move |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                match olay {
+                    GpuiGrafikOlayı::Açıklamaİstendi => bu.açıklama_istendi = true,
+                    GpuiGrafikOlayı::İmleçDeğişti => {
+                        let yayın = bu
+                            .timeseries_discrete_grafikleri
+                            .iter()
+                            .find(|(kimlik, _)| *kimlik == örnek)
+                            .and_then(|(_, grafik)| grafik.read(cx).senkron_yayını());
+                        let yüzeyler = bu.timeseries_discrete_grafikleri.clone();
+                        for (hedef, hedef_grafik) in yüzeyler {
+                            if hedef == örnek {
+                                continue;
+                            }
+                            if let Some((x, _, _)) = yayın {
+                                hedef_grafik.update(cx, |grafik, cx| {
+                                    grafik.senkron_imleci_ayarla(x, None, None, cx);
+                                });
+                            } else {
+                                hedef_grafik.update(cx, |grafik, cx| {
+                                    grafik.senkron_imleci_temizle(cx);
+                                });
+                            }
+                        }
+                    }
+                    GpuiGrafikOlayı::FareBırakıldı | GpuiGrafikOlayı::DurumDeğişti => {}
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        if let Some(hata) = hata {
+            self.hata = Some(hata);
+            self.grafik = None;
+            self.timeseries_discrete_grafikleri.clear();
+        } else {
+            self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+            self.timeseries_discrete_grafikleri = yüzeyler;
+            self.hata = None;
+        }
+        cx.notify();
     }
 
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
@@ -711,9 +790,14 @@ impl ChartListesi {
         });
         if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
+            self.timeseries_discrete_grafikleri.clear();
             self.sync_cursor_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::TimeseriesDiscrete {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
             self.grafiği_yenile(self.nokta_sayısı, cx);
         }
         if kart == KartKimliği::AlignDataCost
@@ -1089,6 +1173,9 @@ fn grafik_oluştur(
         KartKimliği::ThinBars(örnek) => thin_bars_stroke_fill_kartı(örnek),
         KartKimliği::TimePeriods(örnek) => time_periods_kartı(örnek),
         KartKimliği::TimelineDiscrete(örnek) => timeline_discrete_kartı(örnek),
+        KartKimliği::TimeseriesDiscrete => {
+            timeseries_discrete_kartı(TimeseriesDiscreteÖrneği::ZamanSerisi)
+        }
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -1373,6 +1460,9 @@ impl Render for ChartListesi {
             KartKimliği::TimelineDiscrete(örnek) => {
                 format!("1920×300 · {}", örnek.başlık())
             }
+            KartKimliği::TimeseriesDiscrete => {
+                "50 ortak zaman noktası · 1 float + 3 ayrık seri".to_string()
+            }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
@@ -1404,18 +1494,56 @@ impl Render for ChartListesi {
                 .sync_cursor_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::TimeseriesDiscrete {
+            geri_var = self
+                .timeseries_discrete_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .timeseries_discrete_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         }
         let çizim_hatası = self.hata.clone().or(bileşen_hatası);
-        let seri_adları = self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
-            grafik
-                .read(cx)
-                .grafik()
-                .seri_seçenekleri()
+        let seri_adları = if aktif_kart == KartKimliği::TimeseriesDiscrete {
+            self.timeseries_discrete_grafikleri
                 .iter()
-                .filter(|seri| seri.göster)
-                .map(|seri| seri.etiket.clone())
-                .collect::<Vec<_>>()
-        });
+                .flat_map(|(_, grafik)| {
+                    grafik
+                        .read(cx)
+                        .grafik()
+                        .seri_seçenekleri()
+                        .iter()
+                        .filter(|seri| seri.göster)
+                        .map(|seri| seri.etiket.clone())
+                        .collect::<Vec<_>>()
+                })
+                .collect()
+        } else {
+            self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
+                grafik
+                    .read(cx)
+                    .grafik()
+                    .seri_seçenekleri()
+                    .iter()
+                    .filter(|seri| seri.göster)
+                    .map(|seri| seri.etiket.clone())
+                    .collect::<Vec<_>>()
+            })
+        };
+        let lejant = if aktif_kart == KartKimliği::TimeseriesDiscrete {
+            let mut ortak_x = None;
+            let mut değerler = Vec::new();
+            for (_, grafik) in &self.timeseries_discrete_grafikleri {
+                if let Some((x, yüzey_değerleri)) = grafik.read(cx).lejant_değerleri() {
+                    ortak_x = ortak_x.or(Some(x));
+                    değerler.extend(yüzey_değerleri);
+                }
+            }
+            ortak_x.map(|x| (x, değerler))
+        } else {
+            lejant
+        };
         let lejant = lejant.map_or_else(
             || {
                 let seriler = seri_adları
@@ -2170,6 +2298,20 @@ impl Render for ChartListesi {
             }))
             .child(
                 katalog_kartı(
+                    "timeseries-discrete",
+                    "TimeSeries + Discrete",
+                    "timeseries-discrete",
+                    aktif_kart == KartKimliği::TimeseriesDiscrete,
+                    "2 eşzamanlı yüzey · 50 ortak X · birleşik lejant",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::TimeseriesDiscrete, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
                     "kart-cursor-snap",
                     "Cursor Snap",
                     "cursor-snap",
@@ -2751,6 +2893,35 @@ impl Render for ChartListesi {
                             .when_some(grafik, |öğe, grafik| öğe.child(grafik))
                     }),
                 ))
+        } else if aktif_kart == KartKimliği::TimeseriesDiscrete {
+            let üst = self
+                .timeseries_discrete_grafikleri
+                .iter()
+                .find(|(örnek, _)| *örnek == TimeseriesDiscreteÖrneği::ZamanSerisi)
+                .map(|(_, grafik)| grafik.clone());
+            let alt = self
+                .timeseries_discrete_grafikleri
+                .iter()
+                .find(|(örnek, _)| *örnek == TimeseriesDiscreteÖrneği::AyrıkDurumlar)
+                .map(|(_, grafik)| grafik.clone());
+            çizim_tabanı
+                .flex_none()
+                .h(px(720.0))
+                .overflow_y_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .w_full()
+                        .h(px(500.0))
+                        .when_some(üst, |öğe, grafik| öğe.child(grafik)),
+                )
+                .child(
+                    div()
+                        .mt_2()
+                        .w_full()
+                        .h(px(180.0))
+                        .when_some(alt, |öğe, grafik| öğe.child(grafik)),
+                )
         } else if aktif_kart == KartKimliği::ScrollSync {
             çizim_tabanı
                 .flex_none()
@@ -2791,6 +2962,9 @@ impl Render for ChartListesi {
             }
             KartKimliği::SyncCursor => {
                 "İmleci beş yüzeyde gezdir · tıkla: cursor kilidi · anahtarlar ilk grubun pub/sub ve mousedown/up filtresini değiştirir"
+            }
+            KartKimliği::TimeseriesDiscrete => {
+                "İki yüzey aynı X imlecini paylaşır · üst float seri ve alttaki DEV1/DEV2/DEV3 değerleri tek lejantta birleşir"
             }
             _ => {
                 "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır · çift tıkla: tam görünüm"

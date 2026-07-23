@@ -2928,6 +2928,54 @@
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
         "performans": "kısmi"
       }
+    },
+    {
+      "sıra": 55,
+      "id": "timeseries-discrete",
+      "başlık": { "en": "TimeSeries + Discrete", "tr": "Zaman Serisi + Ayrık Durumlar" },
+      "kaynak": "demos/timeseries-discrete.html",
+      "kaynak_sha256": "e0babfa1970d87e4662d88e00bb8c5f2c3f119844bc335ae6b985e3e1278ce39",
+      "ek_kaynaklar": [
+        { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" },
+        { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
+      ],
+      "fixture": "src/kart/timeseries_discrete.rs#timeseries_discrete_kartı",
+      "örnek": "examples/timeseries_discrete.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/timeseries-discrete.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/timeseries_discrete.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin", "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin", "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "kartta_etkin", "dinamik-eksen-izgara": "kartta_etkin",
+          "surekli-imlec-izleme": "kartta_etkin", "canli-coklu-seri-lejanti": "kartta_etkin",
+          "kosullu-bos-ve-dolu-noktalar": "uygulanamaz", "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin", "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin", "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "kartta_etkin", "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı", "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {
+          "kosullu-bos-ve-dolu-noktalar": "Resmî örnek noktaları kapalı çizgi ve basamak serileri kullanır."
+        }
+      },
+      "sahip_faz": 3,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-two-surfaces", "shared-fifty-step-time-axis", "deterministic-source-generator-order",
+        "shifted-discrete-step-series", "raw-zero-one-legend-values", "fixed-device-axis-labels",
+        "shared-x-cursor", "combined-four-series-legend", "gpui-wasm-parity",
+        "common-interaction-profile", "panic-free-multi-surface-session"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
+        "performans": "kısmi"
+      }
     }
   ]
 }

@@ -83,6 +83,13 @@
     .sync-cursor-grafik svg { display: block; width: 100%; height: 220px; }
     .sync-cursor-grafik .lejant { position: absolute; left: 8px; right: 8px; bottom: 7px; }
     .sync-cursor-grafik[data-kilitli="true"] { border-color: #dc2626; }
+    #chart.timeseries-discrete-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .timeseries-discrete-yığın { min-width: 680px; display: grid; gap: 8px; }
+    .timeseries-discrete-yığın > section { position: relative; height: 420px; min-width: 0; }
+    .timeseries-discrete-yığın > section:nth-child(2) { height: 190px; }
+    .timeseries-discrete-yığın svg { display: block; width: 100%; height: 100%; }
+    .timeseries-discrete-yığın .yardım,
+    .timeseries-discrete-yığın .lejant { position: static; justify-content: flex-start; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -341,6 +348,7 @@
       thin_bars_stroke_fill_kart_tanim_ornegi,
       time_periods_kart_tanim_ornegi,
       timeline_discrete_kart_tanim_ornegi,
+      timeseries_discrete_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1378,6 +1386,33 @@
       };
     }
 
+    timelineEklemeNoktası?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="timeseries-discrete" aria-current="false" tabindex="0">
+        <strong>TimeSeries + Discrete</strong><small>timeseries-discrete</small>
+        <div class="durum">iki yüzey · ortak X imleci · birleşik lejant</div>
+      </article>`
+    );
+    kartlar["timeseries-discrete"] = {
+      başlık: "TimeSeries + Discrete",
+      kaynak: `Kaynak:
+        <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/timeseries-discrete.html">timeseries-discrete.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/opts.js">src/opts.js</a>
+        <br>Resmî örneğin 50 ortak zaman noktası, üstteki kayan değer serisi,
+        alttaki üç basamaklı aygıt durumu, ortak X imleci ve birleşik lejantı korunur.`,
+      tanım: () => timeseries_discrete_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/timeseries_discrete.rs",
+      seriler: [
+        { etiket: "Value", renk: "red" },
+        { etiket: "DEV1", renk: "green" },
+        { etiket: "DEV2", renk: "blue" },
+        { etiket: "DEV3", renk: "magenta" },
+      ],
+      yardım: "İki yüzey ortak X imlecini paylaşır · tekerlek: yakınlaştır · çift tık: tam görünüm",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
+
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",
       "bars-horizontal-grouped", "bars-horizontal-stacked",
@@ -1885,6 +1920,7 @@
 
     let oturum = null;
     let syncCursorOturumları = [];
+    let timeseriesDiscreteOturumları = [];
     let syncCursorKöprüsü = null;
     let syncCursorDurumları = Array.from({ length: 5 }, () => null);
     let syncCursorSürükleme = null;
@@ -2310,6 +2346,7 @@
 
     function syncCursorÇiz() {
       chart.classList.add("sync-cursor-yüzeyi");
+      chart.classList.remove("timeseries-discrete-yüzeyi");
       chart.innerHTML = `<div class="sync-cursor-ızgara">
         ${syncCursorYüzeyleri.map((yüzey, indeks) =>
           `<section class="sync-cursor-grafik" data-sync-index="${indeks}" aria-label="${yüzey.başlık}"></section>`
@@ -2320,13 +2357,108 @@
       kontrolleriGüncelle();
     }
 
+    function timeseriesDiscreteİmleciniGüncelle(oran) {
+      const sınırlı = Math.max(0, Math.min(1, oran));
+      const değerler = timeseriesDiscreteOturumları.flatMap((yüzey, indeks) => {
+        const enYakın = Array.from(yüzey.en_yakin_noktalar(sınırlı));
+        return indeks === 0 ? enYakın : enYakın.slice(1);
+      });
+      const [x, ...seriler] = değerler;
+      const xHedefi = chart.querySelector("#timeseries-x-değeri");
+      if (xHedefi && Number.isFinite(x)) xHedefi.textContent = x.toFixed(0);
+      seriler.forEach((değer, indeks) => {
+        const hedef = chart.querySelector(`#timeseries-seri-${indeks}`);
+        if (hedef) hedef.textContent = Number.isFinite(değer) ? Number(değer).toFixed(3) : "--";
+      });
+      chart.querySelectorAll("[data-timeseries-yüzey]").forEach((kutu, indeks) => {
+        const svg = kutu.querySelector("svg");
+        const çizgi = svg?.querySelector(".timeseries-imleç");
+        if (!svg || !çizgi) return;
+        const view = svg.viewBox.baseVal;
+        const alan = timeseriesDiscreteOturumları[indeks]?.cizim_alani(view.width, view.height) ?? [];
+        if (alan.length !== 4) return;
+        const [sol, sağ, üst, alt] = alan;
+        const px = sol + sınırlı * (sağ - sol);
+        çizgi.setAttribute("x1", px); çizgi.setAttribute("x2", px);
+        çizgi.setAttribute("y1", üst); çizgi.setAttribute("y2", alt);
+        çizgi.setAttribute("visibility", "visible");
+      });
+    }
+
+    function timeseriesDiscreteÇiz() {
+      chart.classList.remove("sync-cursor-yüzeyi");
+      chart.classList.add("timeseries-discrete-yüzeyi");
+      const boyutlar = [[1920, 520], [1920, 220]];
+      chart.innerHTML = `
+        <div class="timeseries-discrete-yığın">
+          ${timeseriesDiscreteOturumları.map((yüzey, indeks) => {
+            const [genişlik, yükseklik] = boyutlar[indeks];
+            return `<section data-timeseries-yüzey="${indeks}">${yüzey.svg(genişlik, yükseklik)}</section>`;
+          }).join("")}
+          <div class="yardım">${kartlar[aktifKart].yardım}</div>
+          <div class="lejant"><span>x: <b id="timeseries-x-değeri">--</b></span>
+            ${kartlar[aktifKart].seriler.map((seri, indeks) =>
+              `<span><i class="örnek" style="border-color:${seri.renk}"></i>${seri.etiket}: <b id="timeseries-seri-${indeks}">--</b></span>`
+            ).join("")}
+          </div>
+        </div>`;
+      chart.querySelectorAll("[data-timeseries-yüzey]").forEach((kutu, indeks) => {
+        const svg = kutu.querySelector("svg");
+        const yüzey = timeseriesDiscreteOturumları[indeks];
+        if (!svg || !yüzey) return;
+        svg.insertAdjacentHTML("beforeend",
+          `<line class="timeseries-imleç" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4" pointer-events="none"/>`
+        );
+        const konumOranı = olay => {
+          const rect = svg.getBoundingClientRect();
+          const view = svg.viewBox.baseVal;
+          const alan = yüzey.cizim_alani(view.width, view.height);
+          if (alan.length !== 4 || rect.width <= 0) return null;
+          const x = (olay.clientX - rect.left) / rect.width * view.width;
+          if (x < alan[0] || x > alan[1]) return null;
+          return (x - alan[0]) / (alan[1] - alan[0]);
+        };
+        kutu.addEventListener("pointermove", olay => {
+          olay.stopPropagation();
+          const oran = konumOranı(olay);
+          if (oran !== null) timeseriesDiscreteİmleciniGüncelle(oran);
+        });
+        kutu.addEventListener("wheel", olay => {
+          olay.stopPropagation();
+          if (!etkileşimler.tekerlek || olay.deltaY === 0) return;
+          const oran = konumOranı(olay);
+          if (oran === null) return;
+          olay.preventDefault();
+          try {
+            if (yüzey.tekerlek(oran, 0.5, -olay.deltaY, olay.deltaMode === 0)) {
+              timeseriesDiscreteÇiz();
+              timeseriesDiscreteİmleciniGüncelle(oran);
+              kontrolleriGüncelle();
+            }
+          } catch (neden) {
+            hata.textContent = `TimeSeries + Discrete yakınlaştırması uygulanamadı: ${String(neden)}`;
+          }
+        }, { passive: false });
+        kutu.addEventListener("dblclick", olay => {
+          olay.stopPropagation();
+          if (yüzey.tam_gorunum()) timeseriesDiscreteÇiz();
+        });
+      });
+      kontrolleriGüncelle();
+    }
+
     function çiz() {
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
         return;
       }
+      if (aktifKart === "timeseries-discrete") {
+        timeseriesDiscreteÇiz();
+        return;
+      }
       if (!oturum) return;
       chart.classList.remove("sync-cursor-yüzeyi");
+      chart.classList.remove("timeseries-discrete-yüzeyi");
       const sayı = Number(nokta.value);
       değer.value = `${sayı} nokta`;
       const xAralığı = oturum.gorunur_x_araligi();
@@ -2958,6 +3090,10 @@
         syncCursorOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
+      } else if (aktifKart === "timeseries-discrete") {
+        timeseriesDiscreteOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
       } else {
         oturum?.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
       }
@@ -3059,6 +3195,8 @@
         oturum = null;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
         syncCursorOturumları = [];
+        timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
+        timeseriesDiscreteOturumları = [];
         syncCursorKöprüsü?.free();
         syncCursorKöprüsü = null;
         syncCursorDurumları = Array.from({ length: 5 }, () => null);
@@ -3115,6 +3253,18 @@
             const yüzeyOturumu = new KartOturumu(yüzey.kimlik, Number(nokta.value));
             yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
             return yüzeyOturumu;
+          });
+          çiz();
+          return;
+        }
+        if (kimlik === "timeseries-discrete") {
+          timeseriesDiscreteOturumları = [
+            "timeseries-discrete-floats",
+            "timeseries-discrete-devices",
+          ].map(yüzeyKimliği => {
+            const yüzey = new KartOturumu(yüzeyKimliği, 50);
+            yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzey;
           });
           çiz();
           return;

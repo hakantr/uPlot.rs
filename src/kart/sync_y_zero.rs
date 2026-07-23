@@ -121,8 +121,14 @@ mod testler {
     fn kaynak_veri_ve_üç_bağımsız_ölçek_korunur() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = sync_y_zero_kartı(SyncYZeroAşaması::Ham)?;
         assert_eq!(veri.x(), &[0.0, 1.0, 2.0]);
-        assert_eq!(seçenekler.seriler[1].ölçek, "y2");
-        assert_eq!(seçenekler.seriler[2].ölçek, "y3");
+        assert_eq!(
+            seçenekler.seriler.get(1).map(|seri| seri.ölçek.as_str()),
+            Some("y2")
+        );
+        assert_eq!(
+            seçenekler.seriler.get(2).map(|seri| seri.ölçek.as_str()),
+            Some("y3")
+        );
         let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
         assert!(
             sahne
@@ -144,8 +150,13 @@ mod testler {
             })
             .collect();
         assert_eq!(eksen_x_değerleri.len(), 3);
-        assert_ne!(eksen_x_değerleri[0], eksen_x_değerleri[1]);
-        assert_ne!(eksen_x_değerleri[1], eksen_x_değerleri[2]);
+        let [birinci, ikinci, üçüncü] = eksen_x_değerleri.as_slice() else {
+            return Err(UplotHatası::YetersizVeri {
+                uzunluk: eksen_x_değerleri.len(),
+            });
+        };
+        assert_ne!(birinci, ikinci);
+        assert_ne!(ikinci, üçüncü);
         Ok(())
     }
 

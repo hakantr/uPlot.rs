@@ -650,6 +650,36 @@
       "rust_karşılığı": "HizalıDeğer / BoşlukKipi / ardışıkları_birleştir",
       "durum": "tam_kanıtlı",
       "test": "src/kart/timeline_discrete.rs"
+    },
+    {
+      "kaynak_yolu": "timeseries-discrete fromTs / stepTs / numSteps",
+      "rust_karşılığı": "timeseries_discrete::ortak_x_değerleri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timeseries_discrete.rs"
+    },
+    {
+      "kaynak_yolu": "series paths stepped align=1 with draw-time value shifts",
+      "rust_karşılığı": "SeriSeçenekleri::basamak_sonra / timeseries_discrete shifted drawing data",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timeseries_discrete.rs"
+    },
+    {
+      "kaynak_yolu": "series values subtract DEV shifts for legend",
+      "rust_karşılığı": "SeriSeçenekleri::lejant_değerleri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timeseries_discrete.rs"
+    },
+    {
+      "kaynak_yolu": "cursor sync key '_' and top legend moved into bottom legend",
+      "rust_karşılığı": "TimeseriesDiscreteGrubu ortak imleç ve birleşik_lejant_değerleri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timeseries_discrete.rs"
+    },
+    {
+      "kaynak_yolu": "y splits [0,2,4] values DEV1/DEV2/DEV3",
+      "rust_karşılığı": "GrafikSeçenekleri::y_özel_etiketler",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timeseries_discrete.rs"
     }
   ]
 }
