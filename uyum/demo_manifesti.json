@@ -290,7 +290,9 @@
         "cursor-anchored-xy-wheel-zoom",
         "full-range-clamping",
         "adaptive-precise-wheel-normalization",
-        "common-interaction-profile"
+        "common-interaction-profile",
+        "no-duplicate-catalog-card",
+        "shared-common-profile-proof"
       ],
       "kanıt": {
         "api": "kısmi",
@@ -355,7 +357,8 @@
         "uniform-pinch-xy-zoom",
         "single-touch-pan",
         "responsive-screen-width",
-        "common-interaction-profile"
+        "common-interaction-profile",
+        "no-duplicate-catalog-card"
       ],
       "kanıt": {
         "api": "kısmi",
@@ -898,27 +901,20 @@
           "surekli-imlec-izleme": "devralındı",
           "canli-coklu-seri-lejanti": "kartta_kapalı",
           "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
-          "secim-yakinlastirma": "kartta_kapalı",
-          "cift-tik-tam-gorunum": "kartta_kapalı",
-          "tekerlek-yakinlastirma": "kartta_kapalı",
-          "uyarlanabilir-hassas-tekerlek": "uygulanamaz",
-          "dokunma-yakinlastirma-tasima": "kartta_kapalı",
-          "bosluk-sol-surukleme-tasima": "uygulanamaz",
-          "gorunum-gecmisi": "kartta_kapalı",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "kartta_etkin",
           "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
           "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
           "paniksiz-hata-bildirimi": "devralındı"
         },
         "gerekçeler": {
           "canli-coklu-seri-lejanti": "Resmî demo legend.live=false kullanır ve yalnız vurulan çubuğu işaretler.",
-          "kosullu-bos-ve-dolu-noktalar": "Çubuk yollarında nokta işaretçisi bulunmaz.",
-          "secim-yakinlastirma": "Resmî seriesBarsPlugin select.show=false ayarlar.",
-          "cift-tik-tam-gorunum": "Kaynak çubuk eklentisi yakınlaştırma görünümü üretmez.",
-          "tekerlek-yakinlastirma": "Kaynak demoda wheel eklentisi etkin değildir.",
-          "uyarlanabilir-hassas-tekerlek": "Tekerlek yakınlaştırması kapalı olduğundan uygulanmaz.",
-          "dokunma-yakinlastirma-tasima": "Kaynak demoda touch eklentisi etkin değildir.",
-          "bosluk-sol-surukleme-tasima": "Yakınlaştırılmış görünüm üretilmediğinden taşıma uygulanmaz.",
-          "gorunum-gecmisi": "Kaynak kart görünüm değişikliği üretmez."
+          "kosullu-bos-ve-dolu-noktalar": "Çubuk yollarında nokta işaretçisi bulunmaz."
         }
       },
       "sahip_faz": 3,
@@ -931,7 +927,8 @@
         "single-group-and-single-series-support",
         "space-between-distribution",
         "core-bar-hit-testing",
-        "gpui-wasm-hover-rectangle"
+        "gpui-wasm-hover-rectangle",
+        "common-interaction-profile"
       ],
       "kanıt": {
         "api": "kısmi",
@@ -3747,7 +3744,7 @@
         "kararlar": {
           "kaynak-veri-esligi": "kartta_etkin",
           "cekirdek-davranis-sahipligi": "kartta_etkin",
-          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
           "duyarli-boyutlandirma": "devralındı",
           "cizim-alani-kirpmasi": "devralındı",
           "dinamik-eksen-izgara": "devralındı",
@@ -3766,7 +3763,8 @@
           "paniksiz-hata-bildirimi": "kartta_etkin"
         },
         "gerekçeler": {
-          "kart-bilgi-ve-tanim-yerlesimi": "Gereksiz tekrar kartı yerine mevcut zoom-wheel doğrulama yüzeyi kullanılır.",
+          "gpui-wasm-yuzey-esdegerligi": "Fetch akışı platformdan bağımsız çekirdek API'si ve WASM kanıt fonksiyonuyla doğrulanır; ayrı GPUI kontrolü üretilmez.",
+          "kart-bilgi-ve-tanim-yerlesimi": "Fetch akışı çekirdek kanıtında tutulur; ayrı katalog kartı veya Resize içinde tekrar kontrolü üretilmez.",
           "kosullu-bos-ve-dolu-noktalar": "Kaynak veri null örnek içermez."
         }
       },
@@ -3777,8 +3775,8 @@
         "selection-to-data-range-request",
         "atomic-data-and-x-range-update",
         "full-range-refetch-reset",
-        "existing-zoom-surface-proof",
-        "gpui-wasm-parity"
+        "core-zoom-flow-proof",
+        "shared-core-wasm-proof"
       ],
       "kanıt": {
         "api": "tam_kanıtlı",
@@ -3804,7 +3802,7 @@
         "kararlar": {
           "kaynak-veri-esligi": "kartta_etkin",
           "cekirdek-davranis-sahipligi": "kartta_etkin",
-          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
           "duyarli-boyutlandirma": "kartta_etkin",
           "cizim-alani-kirpmasi": "devralındı",
           "dinamik-eksen-izgara": "devralındı",
@@ -3823,7 +3821,8 @@
           "paniksiz-hata-bildirimi": "kartta_etkin"
         },
         "gerekçeler": {
-          "kart-bilgi-ve-tanim-yerlesimi": "Ayrı kart yerine mevcut zoom-wheel yüzeyinde etkileşimli overview gösterilir.",
+          "gpui-wasm-yuzey-esdegerligi": "Ranger durum makinesi ortak çekirdekte ve WASM testinde doğrulanır; platform kataloglarında yinelenen kontrol üretilmez.",
+          "kart-bilgi-ve-tanim-yerlesimi": "Ranger ayrı kart veya başka bir kart içinde tekrar yüzeyi oluşturmadan çekirdek API olarak korunur.",
           "kosullu-bos-ve-dolu-noktalar": "Sinüs kaynağı null içermez."
         }
       },
@@ -3835,7 +3834,7 @@
         "whole-window-drag",
         "left-right-grip-resize",
         "bidirectional-main-view-sync",
-        "interactive-wasm-proof"
+        "core-wasm-test-proof"
       ],
       "kanıt": {
         "api": "tam_kanıtlı",
@@ -3861,7 +3860,7 @@
         "kararlar": {
           "kaynak-veri-esligi": "kartta_etkin",
           "cekirdek-davranis-sahipligi": "kartta_etkin",
-          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
           "duyarli-boyutlandirma": "kartta_etkin",
           "cizim-alani-kirpmasi": "devralındı",
           "dinamik-eksen-izgara": "devralındı",
@@ -3880,7 +3879,8 @@
           "paniksiz-hata-bildirimi": "kartta_etkin"
         },
         "gerekçeler": {
-          "kart-bilgi-ve-tanim-yerlesimi": "Ayrı katalog kartı yerine mevcut zoom-wheel yüzeyindeki açılıp kapanabilir ortak zoom seçeneği kullanılır.",
+          "gpui-wasm-yuzey-esdegerligi": "X/Y ranger ortak çekirdek API'si ve WASM testiyle doğrulanır; katalog kontrolü üretilmez.",
+          "kart-bilgi-ve-tanim-yerlesimi": "Ayrı katalog kartı veya Resize içinde tekrarlı kontrol üretilmez.",
           "kosullu-bos-ve-dolu-noktalar": "Sinüs kaynağı null içermez."
         }
       },
@@ -3892,8 +3892,8 @@
         "source-dist-10",
         "source-uni-10-adaptive-axis",
         "bidirectional-xy-sync",
-        "reusable-toggleable-ranger-option",
-        "gpui-wasm-parity"
+        "reusable-ranger-option",
+        "shared-core-wasm-proof"
       ],
       "kanıt": {
         "api": "tam_kanıtlı",
@@ -3939,7 +3939,7 @@
         },
         "gerekçeler": {
           "kart-bilgi-ve-tanim-yerlesimi": "Temel X ranger, mevcut grips ve XY ortak API'sinin alt kümesidir; yeni katalog kartı veya tekrar yüzey üretilmez.",
-          "gpui-wasm-yuzey-esdegerligi": "Mevcut zoom-wheel overview yüzeyleri ve ortak çekirdek API kanıtı aynen devralınır.",
+          "gpui-wasm-yuzey-esdegerligi": "Ortak çekirdek ranger API'si ve WASM testi aynen devralınır.",
           "kosullu-bos-ve-dolu-noktalar": "Kaynak sinüs verisi null içermez."
         }
       },
@@ -3952,7 +3952,7 @@
         "source-init-x-1-to-4.5",
         "overview-selection-to-main-x-sync",
         "main-x-to-overview-selection-sync",
-        "inherited-example-desktop-wasm-web-proof"
+        "inherited-core-wasm-web-proof"
       ],
       "kanıt": {
         "api": "tam_kanıtlı",
@@ -3978,7 +3978,7 @@
         "kararlar": {
           "kaynak-veri-esligi": "kartta_etkin",
           "cekirdek-davranis-sahipligi": "kartta_etkin",
-          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "devralındı",
           "duyarli-boyutlandirma": "devralındı",
           "cizim-alani-kirpmasi": "devralındı",
           "dinamik-eksen-izgara": "devralındı",
@@ -3997,7 +3997,8 @@
           "paniksiz-hata-bildirimi": "kartta_etkin"
         },
         "gerekçeler": {
-          "kart-bilgi-ve-tanim-yerlesimi": "On kaynak varyasyonu ayrı kartlar yerine mevcut zoom-wheel overview yüzeyindeki tek açılıp kapanabilir kip/dist kontrolünde kanıtlanır.",
+          "gpui-wasm-yuzey-esdegerligi": "Drag kipleri ortak çekirdek seçenekleri ve WASM testiyle doğrulanır; katalog kontrolü üretilmez.",
+          "kart-bilgi-ve-tanim-yerlesimi": "On kaynak varyasyonu ayrı kartlar veya başka kart içinde görsel tekrar üretmeden tipli seçenek olarak korunur.",
           "kosullu-bos-ve-dolu-noktalar": "Kaynak veri null içermez."
         }
       },
@@ -4013,8 +4014,8 @@
         "adaptive-omni-uni-50",
         "all-five-with-default-distance",
         "all-five-with-min-distance-10",
-        "interactive-existing-wasm-proof",
-        "gpui-wasm-parity"
+        "wasm-test-proof",
+        "shared-core-wasm-proof"
       ],
       "kanıt": {
         "api": "tam_kanıtlı",

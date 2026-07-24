@@ -3,7 +3,7 @@ kaynak = "../uPlot/demos/zoom-fetch.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
 fixture = "src/kart/zoom_wheel.rs#ZoomFetchAkışı"
 viewport = [800, 400]
-durum = "mevcut_zoom_yüzeyinde_ortak_fetch_akışı"
+durum = "çekirdek_akışı_ayrı_katalog_yüzeyi_yok"
 
 [davranış]
 ayrı_katalog_kartı = false
@@ -13,5 +13,5 @@ tam_aralık = "çift tıkta kaynak veriyi yeniden yükle"
 
 [kanıt]
 örnek = "examples/zoom_wheel.rs"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs#ZoomWheel"
+ortak_çekirdek = "src/kart/zoom_wheel.rs#ZoomFetchAkışı"
 wasm = "wasm/src/lib.rs#zoom_fetch_kaniti"

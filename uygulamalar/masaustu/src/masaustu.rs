@@ -45,10 +45,9 @@ use uplot_rs::{
     UPDATE_CURSOR_SELECT_RESIZE_ARALIK_MS, UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
     UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ, Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ,
     Y_SHIFTED_SERIES_ARALIK_MS, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ, YShiftedSeriesAkışı,
-    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
-    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
-    annotations_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
+    align_data_çizgi_çubuk_kartı, annotations_kartı, arcsinh_scales_kartı, area_fill_kartı,
+    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
     bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
     cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
     dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
@@ -64,7 +63,7 @@ use uplot_rs::{
     thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
     timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
     trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
-    y_shifted_series_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -76,8 +75,6 @@ enum KartKimliği {
     Annotations,
     AreaFill,
     ScalePadding,
-    ZoomWheel,
-    ZoomTouch,
     MonthsNoLeap,
     MonthsLeap,
     MonthsRussian,
@@ -152,8 +149,6 @@ impl KartKimliği {
             Self::Annotations => "Annotations",
             Self::AreaFill => "Area Fill",
             Self::ScalePadding => "Scale Padding · Flat",
-            Self::ZoomWheel => "Wheel Zoom & Drag",
-            Self::ZoomTouch => "Pinch Zoom & Pan",
             Self::MonthsNoLeap => "Months · No leap year",
             Self::MonthsLeap => "Months · 2024 leap year",
             Self::MonthsRussian => "Months · Russian",
@@ -237,10 +232,6 @@ impl KartKimliği {
             Self::ScalePadding => {
                 "scale-padding.html · 13 düz seri · kaynakla aynı değer düzeyleri"
             }
-            Self::ZoomWheel => {
-                "zoom-wheel + ranger/grips/XY + zoom-variations · X/Y overview · 5 drag kipi × dist 0/10"
-            }
-            Self::ZoomTouch => "zoom-touch.html · resmî kıstırma ve tek parmak taşıma eklentisi",
             Self::MonthsNoLeap | Self::MonthsLeap => {
                 "months.html · UTC ay ekseni · resmî sayfadaki iki alt grafik"
             }
@@ -384,8 +375,6 @@ impl KartKimliği {
             Self::Annotations => ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
             Self::AreaFill => AREA_FILL_KART_TANIM_ÖRNEĞİ,
             Self::ScalePadding => SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-            Self::ZoomWheel => ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-            Self::ZoomTouch => ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
             Self::MonthsNoLeap | Self::MonthsLeap | Self::MonthsRussian => {
                 MONTHS_KART_TANIM_ÖRNEĞİ
             }
@@ -458,8 +447,6 @@ impl KartKimliği {
             Self::Annotations => "src/kart/annotations.rs",
             Self::AreaFill => "src/kart/area_fill.rs",
             Self::ScalePadding => "src/kart/scale_padding.rs",
-            Self::ZoomWheel => "src/kart/zoom_wheel.rs",
-            Self::ZoomTouch => "src/kart/zoom_touch.rs",
             Self::MonthsNoLeap | Self::MonthsLeap | Self::MonthsRussian => "src/kart/months.rs",
             Self::NiceScale => "src/kart/nice_scale.rs",
             Self::NoData => "src/kart/no_data.rs",
@@ -523,11 +510,7 @@ impl KartKimliği {
     }
 
     fn etkileşimler(self) -> EtkileşimSeçenekleri {
-        if matches!(self, Self::Bars(_)) {
-            EtkileşimSeçenekleri::default()
-                .seçim_yakınlaştır(false)
-                .çift_tıkla_tam_görünüm(false)
-        } else if self == Self::CursorBind {
+        if self == Self::CursorBind {
             ortak_kart_etkileşimleri().ctrl_açıklama(true)
         } else if matches!(self, Self::StreamData(_)) {
             ortak_kart_etkileşimleri().seçim_yakınlaştır(false)
@@ -1408,8 +1391,6 @@ fn grafik_oluştur(
         KartKimliği::Annotations => annotations_kartı(),
         KartKimliği::AreaFill => area_fill_kartı(),
         KartKimliği::ScalePadding => scale_padding_kartı(),
-        KartKimliği::ZoomWheel => zoom_wheel_kartı(),
-        KartKimliği::ZoomTouch => zoom_touch_kartı(),
         KartKimliği::MonthsNoLeap => months_artık_yılsız_kartı(),
         KartKimliği::MonthsLeap => months_artık_yıllı_kartı(),
         KartKimliği::MonthsRussian => months_rusça_kartı(),
@@ -1524,8 +1505,6 @@ impl Render for ChartListesi {
             KartKimliği::Annotations => "30 nokta × 2 seri · 2 X annotation".to_string(),
             KartKimliği::AreaFill => "30 sabit nokta × 3 seri".to_string(),
             KartKimliği::ScalePadding => "10 nokta × 13 düz seri".to_string(),
-            KartKimliği::ZoomWheel => "7 nokta × 2 seri".to_string(),
-            KartKimliği::ZoomTouch => "7 nokta × 2 seri".to_string(),
             KartKimliği::MonthsNoLeap | KartKimliği::MonthsLeap => {
                 "36 aylık nokta × 1 seri".to_string()
             }
@@ -2369,78 +2348,6 @@ impl Render for ChartListesi {
                             .text_xs()
                             .text_color(vurgu)
                             .child("13 düz seri · otomatik Y payı"),
-                    ),
-            )
-            .child(
-                div()
-                    .id("kart-zoom-wheel")
-                    .cursor_pointer()
-                    .mt_2()
-                    .p_3()
-                    .rounded_lg()
-                    .border_1()
-                    .border_color(if aktif_kart == KartKimliği::ZoomWheel {
-                        vurgu
-                    } else {
-                        rgb(0xd1d5db)
-                    })
-                    .bg(if aktif_kart == KartKimliği::ZoomWheel {
-                        rgb(0xfef2f2)
-                    } else {
-                        panel
-                    })
-                    .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                        bu.kartı_seç(KartKimliği::ZoomWheel, cx);
-                    }))
-                    .child(
-                        div()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .text_color(metin)
-                            .child("Wheel Zoom & Drag"),
-                    )
-                    .child(div().mt_1().text_xs().text_color(soluk).child("zoom-wheel"))
-                    .child(
-                        div()
-                            .mt_2()
-                            .text_xs()
-                            .text_color(vurgu)
-                            .child("Resmî tekerlek eklentisi · 2 seri"),
-                    ),
-            )
-            .child(
-                div()
-                    .id("kart-zoom-touch")
-                    .cursor_pointer()
-                    .mt_2()
-                    .p_3()
-                    .rounded_lg()
-                    .border_1()
-                    .border_color(if aktif_kart == KartKimliği::ZoomTouch {
-                        vurgu
-                    } else {
-                        rgb(0xd1d5db)
-                    })
-                    .bg(if aktif_kart == KartKimliği::ZoomTouch {
-                        rgb(0xfef2f2)
-                    } else {
-                        panel
-                    })
-                    .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                        bu.kartı_seç(KartKimliği::ZoomTouch, cx);
-                    }))
-                    .child(
-                        div()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .text_color(metin)
-                            .child("Pinch Zoom & Pan"),
-                    )
-                    .child(div().mt_1().text_xs().text_color(soluk).child("zoom-touch"))
-                    .child(
-                        div()
-                            .mt_2()
-                            .text_xs()
-                            .text_color(vurgu)
-                            .child("Resmî touch eklentisi · 2 seri"),
                     ),
             )
             .child(

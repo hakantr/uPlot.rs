@@ -24,6 +24,8 @@
     .kart[aria-current="false"] { border-color: #d1d5db; }
     .kart strong { display: block; }
     .kart small { color: #6b7280; }
+    #no-data-variation { display: block; width: 100%; max-width: 100%; min-width: 0;
+                         box-sizing: border-box; text-overflow: ellipsis; }
     .durum { margin-top: 10px; color: #dc2626; font-size: 12px; }
     main { min-width: 0; min-height: 0; padding: 24px; display: flex; flex-direction: column; }
     header { display: flex; align-items: start; justify-content: space-between; gap: 16px;
@@ -202,35 +204,6 @@
         <strong>Scale Padding</strong>
         <small>scale-padding</small>
         <div class="durum">13 düz seri · otomatik Y payı</div>
-      </article>
-      <article class="kart" data-kart="zoom-wheel" aria-current="false" tabindex="0">
-        <strong>Wheel Zoom &amp; Drag</strong>
-        <small>zoom-wheel</small>
-        <div class="durum">Resmî tekerlek eklentisi · 2 seri</div>
-        <div id="zoom-ranger-proof" style="margin-top:8px;height:60px;background:#fee2e2;position:relative">
-          <span style="position:absolute;left:20%;top:20%;width:55%;height:60%;border:5px solid purple;background:#fecaca"></span>
-        </div>
-        <button data-ranger="left">sol grip</button>
-        <button data-ranger="move">pencereyi taşı</button>
-        <button data-ranger="right">sağ grip</button>
-        <button data-ranger="bottom">alt grip</button>
-        <button data-ranger="top">üst grip</button>
-        <label>drag:
-          <select id="zoom-variation">
-            <option value="0">X only</option>
-            <option value="1">Y only</option>
-            <option value="2">adaptive · uni=∞</option>
-            <option value="3">omni XY</option>
-            <option value="4">adaptive + omni · uni=50</option>
-          </select>
-        </label>
-        <label><input id="zoom-variation-dist" type="checkbox"> min dist=10</label>
-        <output id="zoom-variation-proof">X</output>
-      </article>
-      <article class="kart" data-kart="zoom-touch" aria-current="false" tabindex="0">
-        <strong>Pinch Zoom &amp; Pan</strong>
-        <small>zoom-touch</small>
-        <div class="durum">Resmî touch eklentisi · 2 seri</div>
       </article>
       <article class="kart" data-kart="months-no-leap" aria-current="false" tabindex="0">
         <strong>No leap year</strong>
@@ -4046,37 +4019,6 @@
           hata.textContent = `No Data seçeneği yüklenemedi: ${String(neden)}`;
         }
       });
-      document.querySelectorAll("[data-ranger]").forEach(düğme => {
-        düğme.addEventListener("click", olay => {
-          olay.stopPropagation();
-          if (aktifKart !== "zoom-wheel" || !oturum) return;
-          if (düğme.dataset.ranger === "left") oturum.zoom_ranger_sol(0.3);
-          if (düğme.dataset.ranger === "move") oturum.zoom_ranger_tasi(0.1);
-          if (düğme.dataset.ranger === "right") oturum.zoom_ranger_sag(0.8);
-          if (düğme.dataset.ranger === "bottom") oturum.zoom_ranger_alt(0.2);
-          if (düğme.dataset.ranger === "top") oturum.zoom_ranger_ust(0.8);
-          const oranlar = oturum.zoom_ranger_oranlari();
-          const seçim = document.querySelector("#zoom-ranger-proof span");
-          if (oranlar.length === 4 && seçim) {
-            seçim.style.left = `${oranlar[0] * 100}%`;
-            seçim.style.width = `${(oranlar[1] - oranlar[0]) * 100}%`;
-            seçim.style.top = `${(1 - oranlar[3]) * 100}%`;
-            seçim.style.height = `${(oranlar[3] - oranlar[2]) * 100}%`;
-            seçim.dataset.adaptifEksen = String(oturum.zoom_ranger_surukleme_ekseni(18, 15));
-          }
-          çiz();
-        });
-      });
-      function zoomVaryasyonKanıtınıGüncelle() {
-        if (aktifKart !== "zoom-wheel" || !oturum) return;
-        const kip = Number(document.querySelector("#zoom-variation")?.value ?? 0);
-        const dist = document.querySelector("#zoom-variation-dist")?.checked ?? false;
-        const kod = oturum.zoom_varyasyon_ekseni(kip, dist, 30, 20);
-        const çıktı = document.querySelector("#zoom-variation-proof");
-        if (çıktı) çıktı.textContent = ["Yok", "X", "Y", "XY"][kod] ?? "Yok";
-      }
-      document.querySelector("#zoom-variation")?.addEventListener("change", zoomVaryasyonKanıtınıGüncelle);
-      document.querySelector("#zoom-variation-dist")?.addEventListener("change", zoomVaryasyonKanıtınıGüncelle);
       kartıSeç("resize");
       nokta.addEventListener("input", () => {
         if (aktifKart === "resize") kartıSeç("resize");

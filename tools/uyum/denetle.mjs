@@ -64,6 +64,23 @@ if (
 ) {
   hata("WASM kart listesi dikey kaydırma sözleşmesini uygulamıyor");
 }
+for (const kimlik of ["zoom-wheel", "zoom-touch"]) {
+  if (
+    masaüstüKataloğu.includes(`.id("kart-${kimlik}")`) ||
+    wasmKataloğu.includes(`data-kart="${kimlik}"`)
+  ) {
+    hata(`${kimlik} ortak profil varken ayrı katalog kartı olarak gösteriliyor`);
+  }
+}
+for (const kontrolKimliği of [
+  "zoom-ortak-kaniti",
+  "zoom-ranger-proof",
+  "zoom-variation",
+]) {
+  if (wasmKataloğu.includes(`id="${kontrolKimliği}"`)) {
+    hata(`${kontrolKimliği} katalogda gereksiz zoom tekrar yüzeyi üretiyor`);
+  }
+}
 
 const davranışKimlikleri = new Set();
 for (const davranış of davranışSözleşmesi.davranışlar) {
@@ -82,6 +99,14 @@ if (davranışKimlikleri.size < 19) {
   hata(`ortak davranış sözleşmesi beklenenden küçük: ${davranışKimlikleri.size}`);
 }
 const izinliKararlar = new Set(davranışSözleşmesi.izinli_kararlar);
+const ortakZoomDavranışları = [
+  "cift-tik-tam-gorunum",
+  "tekerlek-yakinlastirma",
+  "uyarlanabilir-hassas-tekerlek",
+  "dokunma-yakinlastirma-tasima",
+  "bosluk-sol-surukleme-tasima",
+  "gorunum-gecmisi",
+];
 
 if (demoEnvanteri.demo_sayısı !== 73 || demoEnvanteri.demolar.length !== 73) {
   hata(`demo envanteri 73 kayıt içermiyor: ${demoEnvanteri.demolar.length}`);
@@ -158,6 +183,17 @@ for (const kart of manifest.kartlar) {
   }
   const kararlar = kartSözleşmesi.kararlar ?? {};
   const gerekçeler = kartSözleşmesi.gerekçeler ?? {};
+  for (const davranışKimliği of ortakZoomDavranışları) {
+    if (!["kartta_etkin", "devralındı"].includes(kararlar[davranışKimliği])) {
+      hata(`${kart.id} ortak zoom/taşıma davranışını devralmıyor: ${davranışKimliği}`);
+    }
+  }
+  if (
+    kart.id !== "stream-data" &&
+    !["kartta_etkin", "devralındı"].includes(kararlar["secim-yakinlastirma"])
+  ) {
+    hata(`${kart.id} ortak seçim yakınlaştırmasını devralmıyor`);
+  }
   for (const davranışKimliği of davranışKimlikleri) {
     const karar = kararlar[davranışKimliği];
     if (!izinliKararlar.has(karar)) {

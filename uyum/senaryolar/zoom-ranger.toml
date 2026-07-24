@@ -1,7 +1,6 @@
 id = "zoom-ranger"
 kaynak = "../uPlot/demos/zoom-ranger.html"
 fixture = "src/kart/zoom_wheel.rs#zoom_ranger_xy_grafiği"
-kart = "zoom-wheel"
 durum = "grips_ve_xy_ortak_api_alt_kumesi"
 veri_politikasi = "kaynak_veri_aynen"
 beklenen_nokta_sayisi = 100
@@ -20,6 +19,6 @@ yeni_example_yuzeyi = false
 yeni_masaustu_yuzeyi = false
 yeni_wasm_web_yuzeyi = false
 örnek = "examples/zoom_wheel.rs"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+ortak_çekirdek = "src/grafik.rs#ZoomRangerDurumu"
+wasm = "wasm/src/lib.rs#zoom_wheel_wasm_kaynak_serilerini_üretir"
 svg = "target/zoom-ranger-xy.svg"

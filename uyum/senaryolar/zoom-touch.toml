@@ -3,7 +3,7 @@ kaynak = "../uPlot/demos/zoom-touch.html"
 fixture = "src/kart/zoom_touch.rs#zoom_touch_kartı"
 viewport = [1920, 400]
 device_pixel_ratio = 1
-durum = "etkileşimli"
+durum = "ortak_profile_devredildi_ayri_katalog_karti_yok"
 
 [veri]
 x = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
@@ -29,3 +29,4 @@ görünüm_geçmişi = true
 masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg = "target/zoom-touch.svg"
+sunum = "Tüm kartlarda ortak touch davranışı; ayrı katalog kartı yok"

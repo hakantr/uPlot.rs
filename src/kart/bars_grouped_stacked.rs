@@ -140,12 +140,7 @@ pub fn bars_grouped_stacked_kartı(
     } else {
         (800, 400)
     };
-    let etkileşimler = ortak_kart_etkileşimleri()
-        .tekerlek_etkileşimi(false)
-        .seçim_yakınlaştır(false)
-        .çift_tıkla_tam_görünüm(false)
-        .görünüm_geçmişi(false)
-        .dokunma_etkileşimi(false);
+    let etkileşimler = ortak_kart_etkileşimleri();
     let renkler = ["#33BB55", "#B56FAB", "#BB1133"];
     let etiketler = ["Metric 1", "Metric 2", "Metric 3"];
     let mut seçenekler = GrafikSeçenekleri::yeni(genişlik, yükseklik)?
@@ -215,6 +210,69 @@ mod testler {
         assert!(grafik.çubuk_vuruşu(800, 400, x, y).is_some_and(
             |(seri, indeks, _, _, _, değer)| { seri == 0 && indeks == 0 && değer == 1.0 }
         ));
+        Ok(())
+    }
+
+    #[test]
+    fn tüm_çubuk_yüzeyleri_ortak_zoom_ve_taşıma_profilini_devralır() -> Result<(), UplotHatası> {
+        for örnek in ÇubukÖrneği::TÜMÜ {
+            let (seçenekler, _) = bars_grouped_stacked_kartı(örnek)?;
+            let etkileşimler = seçenekler.etkileşimler;
+            assert!(etkileşimler.tekerlek_etkileşimi, "{}", örnek.kimlik());
+            assert!(etkileşimler.seçim_yakınlaştır, "{}", örnek.kimlik());
+            assert!(etkileşimler.çift_tıkla_tam_görünüm, "{}", örnek.kimlik());
+            assert!(etkileşimler.dokunma_etkileşimi, "{}", örnek.kimlik());
+            assert!(etkileşimler.görünüm_geçmişi, "{}", örnek.kimlik());
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn dikey_ve_yatay_çubuklar_zoom_sonrası_kırpılır_vurulur_ve_tam_görünüme_döner()
+    -> Result<(), UplotHatası> {
+        for (örnek, genişlik, yükseklik) in [
+            (ÇubukÖrneği::ÇokGrupÇokSeriDikeyGruplu, 800_u32, 400_u32),
+            (ÇubukÖrneği::ÇokGrupÇokSeriYatayYığılmış, 400_u32, 800_u32),
+        ] {
+            let (seçenekler, veri) = bars_grouped_stacked_kartı(örnek)?;
+            let mut grafik = Grafik::yeni(seçenekler, veri)?;
+            let tam_x = grafik.görünür_x_aralığı();
+            assert!(grafik.tekerlek(0.5, 0.5, 1.0, false)?, "{}", örnek.kimlik());
+            let sahne = grafik.çiz_görünür_boyutta(genişlik, yükseklik);
+            let merkez = sahne.komutlar().iter().find_map(|komut| match komut {
+                Komut::Dikdörtgen {
+                    konum,
+                    genişlik: çubuk_genişliği,
+                    yükseklik: çubuk_yüksekliği,
+                    kalınlık,
+                    ..
+                } if *kalınlık == 0.0 && *çubuk_genişliği > 0.0 && *çubuk_yüksekliği > 0.0 =>
+                {
+                    assert!(konum.x >= 0.0 && konum.y >= 0.0, "{}", örnek.kimlik());
+                    assert!(
+                        konum.x + *çubuk_genişliği <= genişlik as f32
+                            && konum.y + *çubuk_yüksekliği <= yükseklik as f32,
+                        "{}",
+                        örnek.kimlik()
+                    );
+                    Some((
+                        konum.x + *çubuk_genişliği / 2.0,
+                        konum.y + *çubuk_yüksekliği / 2.0,
+                    ))
+                }
+                _ => None,
+            });
+            let Some((x, y)) = merkez else {
+                panic!("zoom sonrası görünür çubuk yok: {}", örnek.kimlik());
+            };
+            assert!(
+                grafik.çubuk_vuruşu(genişlik, yükseklik, x, y).is_some(),
+                "{}",
+                örnek.kimlik()
+            );
+            assert!(grafik.tam_görünüm(), "{}", örnek.kimlik());
+            assert_eq!(grafik.görünür_x_aralığı(), tam_x, "{}", örnek.kimlik());
+        }
         Ok(())
     }
 

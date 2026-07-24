@@ -2440,6 +2440,12 @@ mod testler {
                 .step_by(2)
                 .all(|(_, küçük)| *küçük == 0)
         );
+        let web = include_str!("../www/index.html");
+        assert!(!web.contains("data-kart=\"zoom-wheel\""));
+        assert!(!web.contains("data-kart=\"zoom-touch\""));
+        assert!(!web.contains("id=\"zoom-ortak-kaniti\""));
+        assert!(!web.contains("id=\"zoom-ranger-proof\""));
+        assert!(!web.contains("id=\"zoom-variation\""));
     }
 
     #[test]
