@@ -39,17 +39,17 @@ pub fn scroll_sync_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHa
                 .dokunma_etkileşimi(false),
         )
         .seri(
-            SeriSeçenekleri::yeni("")
+            SeriSeçenekleri::yeni("Value")
                 .renk("red")
                 .dolgu("rgba(255,0,0,0.1)"),
         )
         .seri(
-            SeriSeçenekleri::yeni("")
+            SeriSeçenekleri::yeni("Value")
                 .renk("green")
                 .dolgu("rgba(0,255,0,0.1)"),
         )
         .seri(
-            SeriSeçenekleri::yeni("")
+            SeriSeçenekleri::yeni("Value")
                 .renk("blue")
                 .dolgu("rgba(0,0,255,0.1)"),
         );
@@ -69,7 +69,7 @@ mod testler {
         assert!(veri.seriler().iter().flatten().all(|değer| {
             değer.is_some_and(|değer| (-10.0..=10.0).contains(&değer) && değer.fract() == 0.0)
         }));
-        assert!(seçenekler.seriler.iter().all(|seri| seri.etiket.is_empty()));
+        assert!(seçenekler.seriler.iter().all(|seri| seri.etiket == "Value"));
         assert!(!seçenekler.etkileşimler.tekerlek_etkileşimi);
         assert!(!seçenekler.etkileşimler.dokunma_etkileşimi);
         let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();
