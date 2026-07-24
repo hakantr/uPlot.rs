@@ -36,6 +36,9 @@ pub struct SeriSeçenekleri {
     pub dolgu_gradyanı: Option<ÖlçekGradyanı>,
     pub dolgu_tabanı: f64,
     pub göster: bool,
+    /// uPlot `series.auto` karşılığıdır. Kapalı seriler otomatik Y aralığına
+    /// katılmaz; veri yine özel yollar ve lejant için erişilebilir kalır.
+    pub otomatik_ölçeğe_katıl: bool,
     pub ölçek: String,
     /// Aynı X konumunda başka bir dönemi karşılaştıran serinin bilgi
     /// kutusunda kullanılacak saniye kaydırması.
@@ -87,6 +90,7 @@ impl SeriSeçenekleri {
             dolgu_gradyanı: None,
             dolgu_tabanı: 0.0,
             göster: true,
+            otomatik_ölçeğe_katıl: true,
             ölçek: "y".to_string(),
             x_zaman_kaydırması: 0.0,
             azami_x_boşluğu: None,
@@ -192,6 +196,11 @@ impl SeriSeçenekleri {
 
     pub fn göster(mut self, göster: bool) -> Self {
         self.göster = göster;
+        self
+    }
+
+    pub fn otomatik_ölçeğe_katıl(mut self, katıl: bool) -> Self {
+        self.otomatik_ölçeğe_katıl = katıl;
         self
     }
 

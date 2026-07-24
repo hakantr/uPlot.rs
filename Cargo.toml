@@ -206,6 +206,11 @@ path = "examples/update_cursor_select_resize.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "wind-direction"
+path = "examples/wind_direction.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

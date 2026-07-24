@@ -363,6 +363,7 @@
       tooltips_kart_tanim_ornegi,
       trendlines_kart_tanim_ornegi,
       update_cursor_select_resize_kart_tanim_ornegi,
+      wind_direction_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1592,6 +1593,31 @@
       tanımYolu: "src/kart/update_cursor_select_resize.rs",
       seriler: [{ etiket: "Value", renk: "red" }],
       yardım: "Grafik 800↔400 px arasında değişirken imleç, seçim ve hover noktası aynı oranda kalır",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
+    document.querySelector('[data-kart="update-cursor-select-resize"]')?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="wind-direction" aria-current="false" tabindex="0">
+        <strong>Wind Direction</strong><small>wind-direction</small>
+        <div class="durum">143 saat · sıcaklık, hız ve yön vektörleri</div>
+      </article>`
+    );
+    kartlar["wind-direction"] = {
+      başlık: "Wind Direction",
+      kaynak: `Kaynak:
+        <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/wind-direction.html">wind-direction.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">src/uPlot.js</a>
+        <br>Resmî 143 saatlik sıcaklık, rüzgâr hızı ve yön verileri; sağ hız
+        ekseni ile 15 px özel yön vektörleri Rust çekirdeğinde üretilir.`,
+      tanım: () => wind_direction_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/wind_direction.rs",
+      seriler: [
+        { etiket: "Temp °C", renk: "orangered" },
+        { etiket: "Wind m/s", renk: "purple" },
+        { etiket: "Wind dir °", renk: "blue" },
+      ],
+      yardım: "Mavi çizgiler hız konumundan rüzgâr yönüne uzanır · sürükle/tekerlek/dokunma ortak çekirdek davranışıdır",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
     };

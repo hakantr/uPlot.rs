@@ -41,10 +41,10 @@ use uplot_rs::{
     TOOLTIPS_KART_TANIM_ÖRNEĞİ, TRENDLINES_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği, TimePeriodsÖrneği,
     TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği, TimezonesDstÖrneği,
     UPDATE_CURSOR_SELECT_RESIZE_ARALIK_MS, UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
-    UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
+    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
+    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
     bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
     cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
     dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
@@ -58,7 +58,7 @@ use uplot_rs::{
     sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
     timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
     tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    wind_direction_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -101,6 +101,7 @@ enum KartKimliği {
     Tooltips,
     Trendlines,
     UpdateCursorSelectResize,
+    WindDirection,
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -169,6 +170,7 @@ impl KartKimliği {
             Self::Tooltips => "Tooltips",
             Self::Trendlines => "Trendlines",
             Self::UpdateCursorSelectResize => "Maintain loc of cursor/select/hoverPts",
+            Self::WindDirection => "Wind Direction",
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -283,6 +285,9 @@ impl KartKimliği {
             Self::UpdateCursorSelectResize => {
                 "update-cursor-select-resize.html · setSize sırasında seçim, kilitli imleç ve hover noktası oranları"
             }
+            Self::WindDirection => {
+                "wind-direction.html · 143 saatlik kaynak veri · 15 px özel yön vektörleri"
+            }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -369,6 +374,7 @@ impl KartKimliği {
             Self::Tooltips => TOOLTIPS_KART_TANIM_ÖRNEĞİ,
             Self::Trendlines => TRENDLINES_KART_TANIM_ÖRNEĞİ,
             Self::UpdateCursorSelectResize => UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
+            Self::WindDirection => WIND_DIRECTION_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -433,6 +439,7 @@ impl KartKimliği {
             Self::Tooltips => "src/kart/tooltips.rs",
             Self::Trendlines => "src/kart/trendlines.rs",
             Self::UpdateCursorSelectResize => "src/kart/update_cursor_select_resize.rs",
+            Self::WindDirection => "src/kart/wind_direction.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -1290,6 +1297,7 @@ fn grafik_oluştur(
         KartKimliği::Tooltips => tooltips_kartı(),
         KartKimliği::Trendlines => trendlines_kartı(),
         KartKimliği::UpdateCursorSelectResize => update_cursor_select_resize_kartı(800),
+        KartKimliği::WindDirection => wind_direction_kartı(),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -1598,6 +1606,9 @@ impl Render for ChartListesi {
                     .boyut_senkron_akışı
                     .map_or(800, BoyutSenkronAkışı::boyut);
                 format!("{boyut}×{boyut} px · imleç/seçim/hover oranları korunuyor")
+            }
+            KartKimliği::WindDirection => {
+                "143 saat × sıcaklık, hız ve yön · 139 yön vektörü".to_string()
             }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
@@ -1930,6 +1941,20 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::UpdateCursorSelectResize, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "wind-direction",
+                    "Wind Direction",
+                    "wind-direction",
+                    aktif_kart == KartKimliği::WindDirection,
+                    "143 saat · sıcaklık, hız ve yön vektörleri",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::WindDirection, cx);
                 })),
             )
             .child(

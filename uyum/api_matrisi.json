@@ -830,6 +830,30 @@
       "rust_karşılığı": "BoyutSenkronAkışı",
       "durum": "tam_kanıtlı",
       "test": "src/kart/update_cursor_select_resize.rs"
+    },
+    {
+      "kaynak_yolu": "series.auto: false",
+      "rust_karşılığı": "SeriSeçenekleri::otomatik_ölçeğe_katıl(false)",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/wind_direction.rs"
+    },
+    {
+      "kaynak_yolu": "series.paths custom wind vector geometry",
+      "rust_karşılığı": "RüzgarYönüDüzeni",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/wind_direction.rs"
+    },
+    {
+      "kaynak_yolu": "valToPos(times[i], 'x') + valToPos(speeds[i], 'y2')",
+      "rust_karşılığı": "Grafik::rüzgar_yönlerini_çiz",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/wind_direction.rs"
+    },
+    {
+      "kaynak_yolu": "(dirs[i] - 90) * PI / 180; len = 15",
+      "rust_karşılığı": "RüzgarYönüDüzeni 15 px derece vektörü",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/wind_direction.rs"
     }
   ]
 }

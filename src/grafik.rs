@@ -115,6 +115,20 @@ impl Grafik {
                 açıklama: "seri, nokta koordinatı veya nokta boyutu geçersiz".to_string(),
             });
         }
+        if seçenekler.rüzgar_yönü_düzeni.as_ref().is_some_and(|düzen| {
+            düzen.hız_serisi >= veri.seriler().len()
+                || düzen.yön_serisi >= veri.seriler().len()
+                || düzen.ölçek.is_empty()
+                || !düzen.uzunluk.is_finite()
+                || düzen.uzunluk <= 0.0
+                || !düzen.kalınlık.is_finite()
+                || düzen.kalınlık <= 0.0
+        }) {
+            return Err(UplotHatası::GeçersizKaynakVeri {
+                varlık: "RüzgarYönüDüzeni",
+                açıklama: "seri indeksi, ölçek veya vektör stili geçersiz".to_string(),
+            });
+        }
         let mut tam = seçenekler
             .x_aralığı
             .or_else(|| tam_x_aralığı(&veri).ok())
@@ -143,7 +157,10 @@ impl Grafik {
                     veri.seriler()
                         .iter()
                         .zip(seçenekler.seriler.iter())
-                        .filter(|(_, ayarlar)| ayarlar.ölçek == seçenekler.birincil_y_ölçeği)
+                        .filter(|(_, ayarlar)| {
+                            ayarlar.otomatik_ölçeğe_katıl
+                                && ayarlar.ölçek == seçenekler.birincil_y_ölçeği
+                        })
                         .flat_map(|(seri, _)| seri.iter())
                 };
                 match birincil_ölçek.map(|ölçek| ölçek.dağılım) {
@@ -170,7 +187,10 @@ impl Grafik {
                 veri.seriler()
                     .iter()
                     .zip(seçenekler.seriler.iter())
-                    .filter(|(_, ayarlar)| ayarlar.ölçek == seçenekler.birincil_y_ölçeği)
+                    .filter(|(_, ayarlar)| {
+                        ayarlar.otomatik_ölçeğe_katıl
+                            && ayarlar.ölçek == seçenekler.birincil_y_ölçeği
+                    })
                     .flat_map(|(seri, _)| seri.iter().flatten().copied()),
             );
             let çizim_yüksekliği = seçenekler.yükseklik.saturating_sub(96).max(1) as f32;
@@ -2268,8 +2288,10 @@ impl Grafik {
                     });
                 }
             }
-            if seri.çizim_türü == crate::SeriÇizimTürü::Noktalar {
-                // Resmî null path: yalnız koşullu veri noktaları çizilir.
+            if seri.çizim_türü == crate::SeriÇizimTürü::Noktalar || seri_kalınlığı <= 0.0
+            {
+                // `paths: null` ve sıfır vuruş kalınlığı normal seri yolunu
+                // üretmez; koşullu noktalar ve özel çekirdek yolları ayrıdır.
             } else if let Some(gradyan) = seri.çizgi_gradyanı.as_ref().and_then(|düzen| {
                 self.ölçek_gradyanını_çöz(
                     düzen,
@@ -2425,6 +2447,19 @@ impl Grafik {
             }
         }
 
+        if let Some(düzen) = self.seçenekler.rüzgar_yönü_düzeni.as_ref() {
+            self.rüzgar_yönlerini_çiz(
+                &mut sahne,
+                düzen,
+                x_aralığı,
+                görünür_y,
+                sol,
+                sağ,
+                üst,
+                alt,
+            );
+        }
+
         let birincil_aralık = self.görünür_ölçek_aralığı(
             &self.seçenekler.birincil_y_ölçeği,
             x_aralığı,
@@ -2565,6 +2600,66 @@ impl Grafik {
             .unwrap_or_else(|| {
                 ölçek_eksen_değerini_yaz(değer * çarpan, artım, birim, dağılım, biçim)
             })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn rüzgar_yönlerini_çiz(
+        &self,
+        sahne: &mut Sahne,
+        düzen: &crate::RüzgarYönüDüzeni,
+        x_aralığı: Aralık,
+        görünür_y: Option<Aralık>,
+        sol: f32,
+        sağ: f32,
+        üst: f32,
+        alt: f32,
+    ) {
+        let Some(hızlar) = self.veri.seriler().get(düzen.hız_serisi) else {
+            return;
+        };
+        let Some(yönler) = self.veri.seriler().get(düzen.yön_serisi) else {
+            return;
+        };
+        let genişlik = sağ - sol;
+        let yükseklik = alt - üst;
+        let y_aralığı = self.görünür_ölçek_aralığı(&düzen.ölçek, x_aralığı, görünür_y);
+
+        for (indeks, x_değeri) in self.veri.x().iter().copied().enumerate() {
+            if x_değeri < x_aralığı.en_az || x_değeri > x_aralığı.en_çok {
+                continue;
+            }
+            let Some((hız, yön)) = hızlar
+                .get(indeks)
+                .copied()
+                .flatten()
+                .zip(yönler.get(indeks).copied().flatten())
+            else {
+                continue;
+            };
+            if !hız.is_finite() || !yön.is_finite() {
+                continue;
+            }
+            let (x, y) = if self.seçenekler.x_dikey {
+                (
+                    sol + self.y_konumu(&düzen.ölçek, y_aralığı, hız, 0.0, genişlik),
+                    alt - self.x_konumu(x_aralığı, x_değeri, 0.0, yükseklik),
+                )
+            } else {
+                (
+                    self.x_konumu(x_aralığı, x_değeri, sol, genişlik),
+                    alt - self.y_konumu(&düzen.ölçek, y_aralığı, hız, 0.0, yükseklik),
+                )
+            };
+            let açı = (yön - 90.0).to_radians();
+            let dx = düzen.uzunluk * açı.cos() as f32;
+            let dy = düzen.uzunluk * açı.sin() as f32;
+            sahne.ekle(Komut::Çizgi {
+                başlangıç: Nokta::yeni(x, y),
+                bitiş: Nokta::yeni(x + dx, y + dy),
+                renk: düzen.renk.clone(),
+                kalınlık: düzen.kalınlık,
+            });
+        }
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -3444,7 +3539,9 @@ impl Grafik {
                         .seriler()
                         .iter()
                         .zip(self.seçenekler.seriler.iter())
-                        .filter(move |(_, ayarlar)| ayarlar.ölçek == anahtar)
+                        .filter(move |(_, ayarlar)| {
+                            ayarlar.otomatik_ölçeğe_katıl && ayarlar.ölçek == anahtar
+                        })
                         .filter_map(move |(seri, _)| seri.get(indeks).copied().flatten())
                 }),
         )?;
@@ -3497,7 +3594,9 @@ impl Grafik {
                                 .seriler()
                                 .iter()
                                 .zip(self.seçenekler.seriler.iter())
-                                .filter(move |(_, ayarlar)| ayarlar.ölçek == anahtar)
+                                .filter(move |(_, ayarlar)| {
+                                    ayarlar.otomatik_ölçeğe_katıl && ayarlar.ölçek == anahtar
+                                })
                                 .filter_map(move |(seri, _)| seri.get(indeks))
                         })
                 };

@@ -111,6 +111,42 @@ pub struct NoktaKatmanı {
     pub boyut: f32,
 }
 
+/// `wind-direction.html` özel `series.paths` fonksiyonunun çekirdek
+/// karşılığıdır. Hız serisi vektör başlangıcını, yön serisi dereceyi taşır.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RüzgarYönüDüzeni {
+    pub hız_serisi: usize,
+    pub yön_serisi: usize,
+    pub ölçek: String,
+    pub uzunluk: f32,
+    pub renk: String,
+    pub kalınlık: f32,
+}
+
+impl RüzgarYönüDüzeni {
+    pub fn yeni(hız_serisi: usize, yön_serisi: usize, ölçek: impl Into<String>) -> Self {
+        Self {
+            hız_serisi,
+            yön_serisi,
+            ölçek: ölçek.into(),
+            uzunluk: 15.0,
+            renk: "blue".to_string(),
+            kalınlık: 1.0,
+        }
+    }
+
+    pub fn stil(mut self, uzunluk: f32, renk: impl Into<String>, kalınlık: f32) -> Self {
+        if uzunluk.is_finite() && uzunluk > 0.0 {
+            self.uzunluk = uzunluk;
+        }
+        self.renk = renk.into();
+        if kalınlık.is_finite() && kalınlık > 0.0 {
+            self.kalınlık = kalınlık;
+        }
+        self
+    }
+}
+
 /// uPlot çizim kancalarının sahneye eklediği, yüzeyden bağımsız katmanlar.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ÇizimKancasıDüzeni {
@@ -711,6 +747,7 @@ pub struct GrafikSeçenekleri {
     pub dağılım_düzeni: Option<DağılımDüzeni>,
     pub bantlar: Vec<SeriBandı>,
     pub nokta_katmanları: Vec<NoktaKatmanı>,
+    pub rüzgar_yönü_düzeni: Option<RüzgarYönüDüzeni>,
     pub çizim_kancaları: Option<ÇizimKancasıDüzeni>,
     pub odak: Option<OdakDüzeni>,
     pub en_yakın_tooltip: Option<EnYakınTooltipDüzeni>,
@@ -787,6 +824,7 @@ impl GrafikSeçenekleri {
             dağılım_düzeni: None,
             bantlar: Vec::new(),
             nokta_katmanları: Vec::new(),
+            rüzgar_yönü_düzeni: None,
             çizim_kancaları: None,
             odak: None,
             en_yakın_tooltip: None,
@@ -959,6 +997,11 @@ impl GrafikSeçenekleri {
 
     pub fn nokta_katmanı(mut self, katman: NoktaKatmanı) -> Self {
         self.nokta_katmanları.push(katman);
+        self
+    }
+
+    pub fn rüzgar_yönü(mut self, düzen: RüzgarYönüDüzeni) -> Self {
+        self.rüzgar_yönü_düzeni = Some(düzen);
         self
     }
 

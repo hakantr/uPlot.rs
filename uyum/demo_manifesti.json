@@ -3221,6 +3221,71 @@
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
         "performans": "tam_kanıtlı"
       }
+    },
+    {
+      "id": "wind-direction",
+      "başlık": "Wind Direction",
+      "kaynak": "demos/wind-direction.html",
+      "kaynak_sha256": "64ffd974a03d6f7ecf4cac8969bdf180252c55142a513d5191d9826e09430b44",
+      "ek_kaynaklar": [
+        {
+          "yol": "src/uPlot.js",
+          "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645"
+        }
+      ],
+      "fixture": "src/kart/wind_direction.rs#wind_direction_kartı",
+      "örnek": "examples/wind_direction.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/wind-direction.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/wind_direction.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin",
+          "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin",
+          "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "kartta_etkin",
+          "dinamik-eksen-izgara": "kartta_etkin",
+          "surekli-imlec-izleme": "kartta_etkin",
+          "canli-coklu-seri-lejanti": "kartta_etkin",
+          "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "kartta_etkin",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {
+          "cizim-alani-kirpmasi": "Resmî demonun özel yön yolunda clip çağrıları yorum satırıdır; vektör uçları aynı biçimde kırpılmaz.",
+          "kosullu-bos-ve-dolu-noktalar": "Yön serisinin points.show değeri false; özel yol yalnız vektör çizgileri üretir."
+        }
+      },
+      "sahip_faz": 3,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-143-hour-data",
+        "source-exact-four-null-gaps",
+        "source-exact-dual-y-axes",
+        "source-exact-fifteen-pixel-direction-vectors",
+        "series-auto-false",
+        "gpui-wasm-parity",
+        "common-interaction-profile",
+        "panic-free-custom-path"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "tam_kanıtlı"
+      }
     }
   ]
 }

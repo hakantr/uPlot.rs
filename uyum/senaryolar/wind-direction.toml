@@ -1,0 +1,35 @@
+id = "wind-direction"
+kaynak = "../uPlot/demos/wind-direction.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/wind_direction.rs#wind_direction_kartı"
+viewport = [800, 400]
+durum = "saatlik_hız_konumlarında_yön_vektörleri"
+
+[veri]
+nokta_sayısı = 143
+seri_sayısı = 3
+null_sayısı = 4
+zaman_adımı_saniye = 3600
+
+[eksenler]
+birincil = "Temp °C"
+ikincil = "Wind m/s"
+ikincil_aralık = [0, 30]
+ikincil_sağda = true
+ikincil_ızgara = false
+
+[özel_yol]
+hız_serisi = 1
+yön_serisi = 2
+uzunluk_px = 15
+renk = "blue"
+beklenen_vektör = 139
+kırpma = false
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+örnek = "examples/wind_direction.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
