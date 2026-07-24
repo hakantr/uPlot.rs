@@ -1,0 +1,40 @@
+id = "update-cursor-select-resize"
+kaynak = "../uPlot/demos/update-cursor-select-resize.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/update_cursor_select_resize.rs#update_cursor_select_resize_kartı"
+viewport = [800, 800]
+durum = "boyut_değişirken_imleç_seçim_ve_hover_oranları_korunur"
+
+[veri]
+x = [0, 1, 2]
+y = [0, 1, 2]
+seri_rengi = "red"
+seri_dolgusu = "rgba(255,0,0,0.1)"
+
+[başlangıç]
+çizim_alanı = [725, 733]
+imleç = [200, 200]
+imleç_kilitli = true
+seçim = [100, 0, 100, 733]
+hover_noktası = [363, 400]
+
+[boyut_akışı]
+başlangıç = 800
+en_az = 400
+en_çok = 800
+adım = 10
+aralık_ms = 100
+kaynak_sınır_aşımı_korunur = true
+
+[çekirdek]
+set_size = "Grafik::boyutu_ayarla"
+oran_düzeni = "BoyutSenkronDüzeni"
+akış = "BoyutSenkronAkışı"
+
+[etkileşim]
+ortak_davranış_profili = "resize-temeli-v1"
+
+[kanıt]
+örnek = "examples/update_cursor_select_resize.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

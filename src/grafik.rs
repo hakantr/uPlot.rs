@@ -222,6 +222,23 @@ impl Grafik {
         (self.seçenekler.genişlik, self.seçenekler.yükseklik)
     }
 
+    /// uPlot `setSize({width, height})` karşılığıdır. Veri ve etkileşim
+    /// görünümü korunurken yalnız hedef sahne boyutu değiştirilir.
+    pub fn boyutu_ayarla(&mut self, genişlik: u32, yükseklik: u32) -> Result<bool, UplotHatası> {
+        if genişlik < 160 || yükseklik < 120 {
+            return Err(UplotHatası::GeçersizBoyut {
+                genişlik,
+                yükseklik,
+            });
+        }
+        if self.boyut() == (genişlik, yükseklik) {
+            return Ok(false);
+        }
+        self.seçenekler.genişlik = genişlik;
+        self.seçenekler.yükseklik = yükseklik;
+        Ok(true)
+    }
+
     pub fn dağılım_vuruşu_boyutta(
         &self,
         genişlik_px: u32,
@@ -2460,6 +2477,48 @@ impl Grafik {
                 eksen_komutları_başlangıcı,
                 eksen_komutları_bitişi,
             );
+        }
+
+        if let Some(düzen) = self.seçenekler.boyut_senkron_düzeni {
+            let imleç = Nokta::yeni(
+                sol + genişlik * düzen.imleç_x_oranı,
+                üst + yükseklik * düzen.imleç_y_oranı,
+            );
+            sahne.ekle(Komut::Dikdörtgen {
+                konum: Nokta::yeni(
+                    sol + genişlik * düzen.seçim_x_oranı,
+                    üst + yükseklik * düzen.seçim_y_oranı,
+                ),
+                genişlik: genişlik * düzen.seçim_genişlik_oranı,
+                yükseklik: yükseklik * düzen.seçim_yükseklik_oranı,
+                dolgu: "#00000012".to_string(),
+                çizgi: "#00000000".to_string(),
+                kalınlık: 0.0,
+            });
+            sahne.ekle(Komut::KesikliÇizgi {
+                başlangıç: Nokta::yeni(imleç.x, üst),
+                bitiş: Nokta::yeni(imleç.x, alt),
+                renk: "#607d8b".to_string(),
+                kalınlık: 1.0,
+                kesik: 4.0,
+            });
+            sahne.ekle(Komut::KesikliÇizgi {
+                başlangıç: Nokta::yeni(sol, imleç.y),
+                bitiş: Nokta::yeni(sağ, imleç.y),
+                renk: "#607d8b".to_string(),
+                kalınlık: 1.0,
+                kesik: 4.0,
+            });
+            sahne.ekle(Komut::Daire {
+                merkez: Nokta::yeni(
+                    sol + genişlik * düzen.hover_x_oranı,
+                    üst + yükseklik * düzen.hover_y_oranı,
+                ),
+                yarıçap: 2.5,
+                dolgu: "red".to_string(),
+                çizgi: "red".to_string(),
+                kalınlık: 0.0,
+            });
         }
 
         sahne

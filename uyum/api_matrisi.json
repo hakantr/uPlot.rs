@@ -800,6 +800,36 @@
       "rust_karşılığı": "GrafikSeçenekleri::x_aralığını_veriye_yapıştır",
       "durum": "tam_kanıtlı",
       "test": "src/kart/trendlines.rs"
+    },
+    {
+      "kaynak_yolu": "setSize({width, height})",
+      "rust_karşılığı": "Grafik::boyutu_ayarla",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/update_cursor_select_resize.rs"
+    },
+    {
+      "kaynak_yolu": "_setSize cursor.left/top proportional scaling",
+      "rust_karşılığı": "BoyutSenkronDüzeni imleç oranları",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/update_cursor_select_resize.rs"
+    },
+    {
+      "kaynak_yolu": "_setSize select left/top/width/height proportional scaling",
+      "rust_karşılığı": "BoyutSenkronDüzeni seçim oranları",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/update_cursor_select_resize.rs"
+    },
+    {
+      "kaynak_yolu": "_setSize cursorPts left/top proportional scaling",
+      "rust_karşılığı": "BoyutSenkronDüzeni hover oranları",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/update_cursor_select_resize.rs"
+    },
+    {
+      "kaynak_yolu": "update-cursor-select-resize 100ms 800..400 size loop",
+      "rust_karşılığı": "BoyutSenkronAkışı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/update_cursor_select_resize.rs"
     }
   ]
 }

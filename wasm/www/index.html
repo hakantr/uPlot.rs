@@ -51,6 +51,9 @@
     #chart:focus { outline: none; }
     #chart:focus-visible { border-color: #f87171; box-shadow: 0 0 0 2px #fecaca; }
     #chart svg { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+    #chart[data-boyut-senkron="true"] svg {
+      width: auto; height: auto; max-width: 100%; max-height: 100%;
+    }
     #chart[data-tasima-imleci="hazir"] svg { cursor: grab; }
     #chart[data-tasima-imleci="tasiyor"] svg { cursor: grabbing; }
     #chart.scroll-sync-yüzeyi { display: block; flex: 0 0 400px; height: 400px; min-height: 400px;
@@ -359,6 +362,7 @@
       tooltips_closest_kart_tanim_ornegi,
       tooltips_kart_tanim_ornegi,
       trendlines_kart_tanim_ornegi,
+      update_cursor_select_resize_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1570,6 +1574,27 @@
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
     };
+    document.querySelector('[data-kart="trendlines"]')?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="update-cursor-select-resize" aria-current="false" tabindex="0">
+        <strong>Maintain loc of cursor/select/hoverPts</strong><small>update-cursor-select-resize</small>
+        <div class="durum">800↔400 px · kilitli imleç ve seçim oranı korunur</div>
+      </article>`
+    );
+    kartlar["update-cursor-select-resize"] = {
+      başlık: "Maintain loc of cursor/select/hoverPts",
+      kaynak: `Kaynak:
+        <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/update-cursor-select-resize.html">update-cursor-select-resize.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">src/uPlot.js</a>
+        <br>Resmî 100 ms boyut döngüsü ile seçim, kilitli imleç ve hover noktasının
+        çizim alanına göre oransal taşınması Rust çekirdeğinde uygulanır.`,
+      tanım: () => update_cursor_select_resize_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/update_cursor_select_resize.rs",
+      seriler: [{ etiket: "Value", renk: "red" }],
+      yardım: "Grafik 800↔400 px arasında değişirken imleç, seçim ve hover noktası aynı oranda kalır",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",
@@ -2098,6 +2123,7 @@
     let streamDataZamanlayıcı = null;
     let softMinMaxZamanlayıcı = null;
     let tooltipsZamanlayıcı = null;
+    let boyutSenkronZamanlayıcı = null;
     let sonTooltipİmleci = null;
     let syncYZeroZamanlayıcıları = [];
     const syncCursorYüzeyleri = [
@@ -2138,6 +2164,10 @@
     }
 
     function boyutlar() {
+      if (aktifKart === "update-cursor-select-resize" && oturum) {
+        const boyut = oturum.kaynak_boyutu();
+        if (boyut > 0) return { genişlik: boyut, yükseklik: boyut };
+      }
       if (aktifKart === "scroll-sync") {
         return { genişlik: 400, yükseklik: 200 };
       }
@@ -2631,6 +2661,7 @@
       chart.classList.toggle("scroll-sync-yüzeyi", kart.scrollSync === true);
       chart.classList.toggle("svg-image-yüzeyi", aktifKart === "svg-image");
       chart.dataset.kompakt = String(kart.kompakt === true);
+      chart.dataset.boyutSenkron = String(aktifKart === "update-cursor-select-resize");
       chart.dataset.cokluLejant = kart.seriler.length > 6 ? "true" : "false";
       const { genişlik, yükseklik } = boyutlar();
       const svgÇıktısı = oturum.svg(genişlik, yükseklik);
@@ -3422,6 +3453,10 @@
           clearInterval(tooltipsZamanlayıcı);
           tooltipsZamanlayıcı = null;
         }
+        if (boyutSenkronZamanlayıcı !== null) {
+          clearInterval(boyutSenkronZamanlayıcı);
+          boyutSenkronZamanlayıcı = null;
+        }
         sonTooltipİmleci = null;
         syncYZeroZamanlayıcıları.forEach(clearTimeout);
         syncYZeroZamanlayıcıları = [];
@@ -3506,6 +3541,23 @@
         oturum = new KartOturumu(kimlik, Number(nokta.value));
         oturum.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
         çiz();
+        if (kimlik === "update-cursor-select-resize") {
+          boyutSenkronZamanlayıcı = setInterval(() => {
+            if (aktifKart !== kimlik || !oturum) {
+              clearInterval(boyutSenkronZamanlayıcı);
+              boyutSenkronZamanlayıcı = null;
+              return;
+            }
+            try {
+              if (oturum.boyut_senkron_ilerlet() > 0) çiz();
+              hata.textContent = "";
+            } catch (neden) {
+              hata.textContent = `Boyut senkron akışı güncellenemedi: ${String(neden)}`;
+              clearInterval(boyutSenkronZamanlayıcı);
+              boyutSenkronZamanlayıcı = null;
+            }
+          }, 100);
+        }
         const tooltipYenidenKurmaMs = oturum.tooltip_yeniden_kurma_ms();
         if (tooltipYenidenKurmaMs > 0) {
           tooltipsZamanlayıcı = setInterval(() => {

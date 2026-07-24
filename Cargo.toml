@@ -201,6 +201,11 @@ path = "examples/trendlines.rs"
 required-features = ["svg"]
 
 [[example]]
+name = "update-cursor-select-resize"
+path = "examples/update_cursor_select_resize.rs"
+required-features = ["svg"]
+
+[[example]]
 name = "cursor_snap"
 required-features = ["svg"]
 

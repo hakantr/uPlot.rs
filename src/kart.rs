@@ -55,6 +55,7 @@ mod timezones_dst;
 mod tooltips;
 mod tooltips_closest;
 mod trendlines;
+mod update_cursor_select_resize;
 mod veri_uretici;
 mod zoom_touch;
 mod zoom_wheel;
@@ -204,5 +205,9 @@ pub use timezones_dst::{
 pub use tooltips::{TOOLTIPS_KART_TANIM_ÖRNEĞİ, tooltips_kartı};
 pub use tooltips_closest::{TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ, tooltips_closest_kartı};
 pub use trendlines::{TRENDLINES_KART_TANIM_ÖRNEĞİ, trendlines_kartı};
+pub use update_cursor_select_resize::{
+    BoyutSenkronAkışı, UPDATE_CURSOR_SELECT_RESIZE_ARALIK_MS,
+    UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ, update_cursor_select_resize_kartı,
+};
 pub use zoom_touch::{ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, zoom_touch_kartı};
 pub use zoom_wheel::{ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, zoom_wheel_kartı};

@@ -14,32 +14,34 @@ use uplot_rs::{
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
     BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, CANDLESTICK_KART_TANIM_ÖRNEĞİ,
-    CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
-    CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
-    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri,
-    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ,
-    GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği, Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
-    HighLowBandsÖrneği, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ,
-    LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
-    LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
-    MONTHS_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
-    NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
-    POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
-    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
-    SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
-    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ,
-    SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS,
-    STREAM_DATA_KART_TANIM_ÖRNEĞİ, SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ,
-    SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı,
-    SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği,
-    SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu,
-    SyncCursorÖrneği, SyncYZeroAşaması, THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ,
-    TIME_PERIODS_KART_TANIM_ÖRNEĞİ, TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,
-    TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ, TIMEZONES_DST_KART_TANIM_ÖRNEĞİ,
-    TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ, TOOLTIPS_KART_TANIM_ÖRNEĞİ, TRENDLINES_KART_TANIM_ÖRNEĞİ,
-    ThinBarsÖrneği, TimePeriodsÖrneği, TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği,
-    TimezonesDstÖrneği, UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+    BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, BoyutSenkronAkışı,
+    CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
+    CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ, CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği,
+    DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
+    DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ,
+    FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ, GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği,
+    Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ, HighLowBandsÖrneği,
+    LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ, LOG_SCALES_KART_TANIM_ÖRNEĞİ,
+    LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği, LinePathsÖrneği, LogScales2Örneği,
+    LogScalesÖrneği, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ,
+    NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ, NoDataÖrneği,
+    PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ,
+    PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ,
+    SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
+    SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
+    STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS, STREAM_DATA_KART_TANIM_ÖRNEĞİ,
+    SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
+    ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı, SmoothingÖrneği,
+    SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği,
+    StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği,
+    SyncYZeroAşaması, THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
+    TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ, TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
+    TIMEZONES_DST_KART_TANIM_ÖRNEĞİ, TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ,
+    TOOLTIPS_KART_TANIM_ÖRNEĞİ, TRENDLINES_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği, TimePeriodsÖrneği,
+    TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği, TimezonesDstÖrneği,
+    UPDATE_CURSOR_SELECT_RESIZE_ARALIK_MS, UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
+    UplotHatası, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
     add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
     align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
     axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
@@ -55,8 +57,8 @@ use uplot_rs::{
     stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
     sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
     timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
-    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, zoom_touch_kartı, zoom_wheel_kartı,
-    ÇubukYönü, ÇubukÖrneği,
+    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
+    zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -98,6 +100,7 @@ enum KartKimliği {
     TooltipsClosest,
     Tooltips,
     Trendlines,
+    UpdateCursorSelectResize,
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -165,6 +168,7 @@ impl KartKimliği {
             Self::TooltipsClosest => "Summary-opt",
             Self::Tooltips => "Tooltips",
             Self::Trendlines => "Trendlines",
+            Self::UpdateCursorSelectResize => "Maintain loc of cursor/select/hoverPts",
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -276,6 +280,9 @@ impl KartKimliği {
             Self::Trendlines => {
                 "trendlines.html · drawSeries uç trendleri · veri değerlerine yapışan X aralığı"
             }
+            Self::UpdateCursorSelectResize => {
+                "update-cursor-select-resize.html · setSize sırasında seçim, kilitli imleç ve hover noktası oranları"
+            }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -361,6 +368,7 @@ impl KartKimliği {
             Self::TooltipsClosest => TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ,
             Self::Tooltips => TOOLTIPS_KART_TANIM_ÖRNEĞİ,
             Self::Trendlines => TRENDLINES_KART_TANIM_ÖRNEĞİ,
+            Self::UpdateCursorSelectResize => UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -424,6 +432,7 @@ impl KartKimliği {
             Self::TooltipsClosest => "src/kart/tooltips_closest.rs",
             Self::Tooltips => "src/kart/tooltips.rs",
             Self::Trendlines => "src/kart/trendlines.rs",
+            Self::UpdateCursorSelectResize => "src/kart/update_cursor_select_resize.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -485,6 +494,7 @@ pub struct ChartListesi {
     sine_akışı: Option<SineAkışı>,
     stream_data_akışı: Option<StreamDataAkışı>,
     soft_minmax_akışı: Option<SoftMinMaxAkışı>,
+    boyut_senkron_akışı: Option<BoyutSenkronAkışı>,
     soft_minmax_çalışıyor: bool,
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grubu: SyncCursorGrubu,
@@ -557,6 +567,7 @@ impl ChartListesi {
             sine_akışı: None,
             stream_data_akışı: None,
             soft_minmax_akışı: None,
+            boyut_senkron_akışı: None,
             soft_minmax_çalışıyor: false,
             sync_cursor_grafikleri: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
@@ -812,6 +823,8 @@ impl ChartListesi {
         };
         self.soft_minmax_akışı =
             matches!(kart, KartKimliği::SoftMinMax(_)).then(SoftMinMaxAkışı::yeni);
+        self.boyut_senkron_akışı =
+            (kart == KartKimliği::UpdateCursorSelectResize).then(BoyutSenkronAkışı::yeni);
         self.soft_minmax_çalışıyor = false;
         let etkileşimler = kart.etkileşimler();
         self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
@@ -1014,6 +1027,42 @@ impl ChartListesi {
                     }
                 }));
             }
+        } else if kart == KartKimliği::UpdateCursorSelectResize {
+            self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
+                loop {
+                    cx.background_executor()
+                        .timer(Duration::from_millis(UPDATE_CURSOR_SELECT_RESIZE_ARALIK_MS))
+                        .await;
+                    let devam = bu
+                        .update(cx, |bu, cx| {
+                            if bu.aktif_kart != KartKimliği::UpdateCursorSelectResize {
+                                return false;
+                            }
+                            let Some(akış) = bu.boyut_senkron_akışı.as_mut() else {
+                                bu.hata = Some("Boyut senkron akışı bulunamadı".to_string());
+                                return false;
+                            };
+                            let boyut = akış.ilerlet();
+                            let Some(grafik) = &bu.grafik else {
+                                return false;
+                            };
+                            match grafik
+                                .update(cx, |grafik, cx| grafik.boyutu_ayarla(boyut, boyut, cx))
+                            {
+                                Ok(_) => true,
+                                Err(hata) => {
+                                    bu.hata =
+                                        Some(format!("Boyut senkron akışı güncellenemedi: {hata}"));
+                                    false
+                                }
+                            }
+                        })
+                        .unwrap_or(false);
+                    if !devam {
+                        break;
+                    }
+                }
+            }));
         } else if matches!(kart, KartKimliği::SyncYZero(_)) {
             self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
                 for aşama in [SyncYZeroAşaması::Simetrik, SyncYZeroAşaması::SıfırHizalı] {
@@ -1240,6 +1289,7 @@ fn grafik_oluştur(
         KartKimliği::TooltipsClosest => tooltips_closest_kartı(),
         KartKimliği::Tooltips => tooltips_kartı(),
         KartKimliği::Trendlines => trendlines_kartı(),
+        KartKimliği::UpdateCursorSelectResize => update_cursor_select_resize_kartı(800),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -1542,6 +1592,12 @@ impl Render for ChartListesi {
             }
             KartKimliği::Trendlines => {
                 "100 nokta × 2 seri · görünür uçlar arasında 5/5 kesik trend".to_string()
+            }
+            KartKimliği::UpdateCursorSelectResize => {
+                let boyut = self
+                    .boyut_senkron_akışı
+                    .map_or(800, BoyutSenkronAkışı::boyut);
+                format!("{boyut}×{boyut} px · imleç/seçim/hover oranları korunuyor")
             }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
@@ -1860,6 +1916,20 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::Trendlines, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "update-cursor-select-resize",
+                    "Maintain loc of cursor/select/hoverPts",
+                    "update-cursor-select-resize",
+                    aktif_kart == KartKimliği::UpdateCursorSelectResize,
+                    "800↔400 px · kalıcı imleç/seçim oranı",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::UpdateCursorSelectResize, cx);
                 })),
             )
             .child(
@@ -3059,6 +3129,16 @@ impl Render for ChartListesi {
                         .h(px(180.0))
                         .when_some(alt, |öğe, grafik| öğe.child(grafik)),
                 )
+        } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
+            let boyut = self
+                .boyut_senkron_akışı
+                .map_or(800, BoyutSenkronAkışı::boyut);
+            çizim_tabanı.overflow_hidden().child(
+                div()
+                    .w(px(boyut as f32))
+                    .h(px(boyut as f32))
+                    .when_some(self.grafik.clone(), |öğe, grafik| öğe.child(grafik)),
+            )
         } else if aktif_kart == KartKimliği::ScrollSync {
             çizim_tabanı
                 .flex_none()

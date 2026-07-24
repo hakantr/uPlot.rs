@@ -196,6 +196,19 @@ impl GpuiGrafik {
         Ok(())
     }
 
+    pub fn boyutu_ayarla(
+        &mut self,
+        genişlik: u32,
+        yükseklik: u32,
+        cx: &mut Context<Self>,
+    ) -> Result<bool, UplotHatası> {
+        let değişti = self.grafik.boyutu_ayarla(genişlik, yükseklik)?;
+        if değişti {
+            Self::bildir(cx);
+        }
+        Ok(değişti)
+    }
+
     pub fn seri_ekle(
         &mut self,
         indeks: usize,

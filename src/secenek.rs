@@ -261,6 +261,67 @@ pub struct TooltipBilgisi {
     pub metin_rengi: String,
 }
 
+/// uPlot `setSize()` sırasında kalıcı seçim, kilitli imleç ve hover
+/// noktasını yeni çizim alanına oransal olarak taşıyan düzen.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct BoyutSenkronDüzeni {
+    pub imleç_x_oranı: f32,
+    pub imleç_y_oranı: f32,
+    pub seçim_x_oranı: f32,
+    pub seçim_y_oranı: f32,
+    pub seçim_genişlik_oranı: f32,
+    pub seçim_yükseklik_oranı: f32,
+    pub hover_x_oranı: f32,
+    pub hover_y_oranı: f32,
+}
+
+impl BoyutSenkronDüzeni {
+    #[allow(clippy::too_many_arguments)]
+    pub fn piksel_değerlerinden(
+        çizim_genişliği: f32,
+        çizim_yüksekliği: f32,
+        imleç_x: f32,
+        imleç_y: f32,
+        seçim_x: f32,
+        seçim_y: f32,
+        seçim_genişliği: f32,
+        seçim_yüksekliği: f32,
+        hover_x: f32,
+        hover_y: f32,
+    ) -> Option<Self> {
+        if !çizim_genişliği.is_finite()
+            || !çizim_yüksekliği.is_finite()
+            || çizim_genişliği <= 0.0
+            || çizim_yüksekliği <= 0.0
+        {
+            return None;
+        }
+        let değerler = [
+            imleç_x,
+            imleç_y,
+            seçim_x,
+            seçim_y,
+            seçim_genişliği,
+            seçim_yüksekliği,
+            hover_x,
+            hover_y,
+        ];
+        if değerler.iter().any(|değer| !değer.is_finite()) {
+            return None;
+        }
+        Some(Self {
+            imleç_x_oranı: (imleç_x / çizim_genişliği).clamp(0.0, 1.0),
+            imleç_y_oranı: (imleç_y / çizim_yüksekliği).clamp(0.0, 1.0),
+            seçim_x_oranı: (seçim_x / çizim_genişliği).clamp(0.0, 1.0),
+            seçim_y_oranı: (seçim_y / çizim_yüksekliği).clamp(0.0, 1.0),
+            seçim_genişlik_oranı: (seçim_genişliği / çizim_genişliği).clamp(0.0, 1.0),
+            seçim_yükseklik_oranı: (seçim_yüksekliği / çizim_yüksekliği).clamp(0.0, 1.0),
+            hover_x_oranı: (hover_x / çizim_genişliği).clamp(0.0, 1.0),
+            hover_y_oranı: (hover_y / çizim_yüksekliği).clamp(0.0, 1.0),
+        })
+    }
+}
+
 impl Default for ÇizimKancasıDüzeni {
     fn default() -> Self {
         Self {
@@ -654,6 +715,7 @@ pub struct GrafikSeçenekleri {
     pub odak: Option<OdakDüzeni>,
     pub en_yakın_tooltip: Option<EnYakınTooltipDüzeni>,
     pub tooltip: Option<TooltipDüzeni>,
+    pub boyut_senkron_düzeni: Option<BoyutSenkronDüzeni>,
     pub lejant_canlı: bool,
     pub çizim_sırası: ÇizimSırası,
     /// uPlot `opts.pxAlign` karşılığıdır. `1`, koordinatları tam piksele
@@ -729,6 +791,7 @@ impl GrafikSeçenekleri {
             odak: None,
             en_yakın_tooltip: None,
             tooltip: None,
+            boyut_senkron_düzeni: None,
             lejant_canlı: true,
             çizim_sırası: ÇizimSırası::EksenlerSeriler,
             piksel_hizası: 1.0,
@@ -921,6 +984,11 @@ impl GrafikSeçenekleri {
 
     pub fn tooltip(mut self, düzen: TooltipDüzeni) -> Self {
         self.tooltip = Some(düzen);
+        self
+    }
+
+    pub fn boyut_senkronu(mut self, düzen: BoyutSenkronDüzeni) -> Self {
+        self.boyut_senkron_düzeni = Some(düzen);
         self
     }
 
