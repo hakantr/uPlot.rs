@@ -1,0 +1,20 @@
+id = "multi-bars"
+kaynak = "../uPlot/demos/multi-bars.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/multi_bars.rs#multi_bars_kartı"
+viewport = [800, 400]
+durum = "dört_kaynak_yüzeyi"
+
+[veri]
+kitaplık = 13
+benchmark_serisi = 6
+renkli_çubuk = 26
+
+[davranış]
+yüzeyler = ["dikey", "yatay", "değişken-renk", "hizasız"]
+durum_renkleri = ["#33BB55", "orange", "red"]
+
+[kanıt]
+örnek = "examples/multi_bars.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

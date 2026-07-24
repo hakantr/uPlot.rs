@@ -166,6 +166,22 @@
         <strong>Measure / Datums</strong><small>measure-datums</small>
         <div class="durum">1/2: datum yerleştir · Esc: temizle</div>
       </article>
+      <article class="kart" data-kart="multi-bars-libraries-vertical" aria-current="false" tabindex="0">
+        <strong>Multi Bars · libraries · vertical</strong><small>multi-bars-libraries-vertical</small>
+        <div class="durum">13 kitaplık × 6 benchmark</div>
+      </article>
+      <article class="kart" data-kart="multi-bars-libraries-horizontal" aria-current="false" tabindex="0">
+        <strong>Multi Bars · libraries · horizontal</strong><small>multi-bars-libraries-horizontal</small>
+        <div class="durum">Ters yönlü yatay gruplar</div>
+      </article>
+      <article class="kart" data-kart="multi-bars-variable-colors" aria-current="false" tabindex="0">
+        <strong>Multi Bars · variable colors</strong><small>multi-bars-variable-colors</small>
+        <div class="durum">Nokta başına durum rengi</div>
+      </article>
+      <article class="kart" data-kart="multi-bars-non-justified" aria-current="false" tabindex="0">
+        <strong>Multi Bars · non-justified</strong><small>multi-bars-non-justified</small>
+        <div class="durum">Sayısal X üzerinde bağımsız çubuklar</div>
+      </article>
       <article class="kart" data-kart="scale-padding" aria-current="false" tabindex="0">
         <strong>Scale Padding</strong>
         <small>scale-padding</small>
@@ -348,6 +364,7 @@
       annotations_kart_tanim_ornegi,
       mass_spectrum_kart_tanim_ornegi,
       measure_datums_kart_tanim_ornegi,
+      multi_bars_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
       scale_padding_kart_tanim_ornegi,
@@ -519,6 +536,22 @@
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       },
+      ...Object.fromEntries([
+        ["multi-bars-libraries-vertical", "Multi Bars · library benchmark · vertical"],
+        ["multi-bars-libraries-horizontal", "Multi Bars · library benchmark · horizontal"],
+        ["multi-bars-variable-colors", "Multi Bars · variable colors"],
+        ["multi-bars-non-justified", "Multi Bars · non-justified"],
+      ].map(([kimlik, başlık]) => [kimlik, {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/multi-bars.html">multi-bars.html</a>
+          <br>Gruplu yön, negatif değerler ve nokta başına durum renkleri Rust çekirdeğinde çözülür.`,
+        tanım: () => multi_bars_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/multi_bars.rs",
+        seriler: [],
+        yardım: "Sürükle: seç · tekerlek/dokunma: yakınlaştır ve taşı · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      }])),
       "scale-padding": {
         başlık: "Scale Padding · Flat",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/scale-padding.html">scale-padding.html</a>

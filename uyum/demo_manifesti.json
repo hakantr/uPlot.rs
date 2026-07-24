@@ -3610,6 +3610,71 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "tam_kanıtlı"
       }
+    },
+    {
+      "id": "multi-bars",
+      "başlık": "Multi-Bars",
+      "kaynak": "demos/multi-bars.html",
+      "kaynak_sha256": "090f2e73ae46864261b2542337e0664cc5d42ac84787c642c8ac482c070188da",
+      "ek_kaynaklar": [
+        {
+          "yol": "bench/results.json",
+          "sha256": "b8129fc0e5892b47db6e95a72de9e0a4950d6e33b79fcb6feb22773eed27fba7"
+        },
+        {
+          "yol": "demos/grouped-bars.js",
+          "sha256": "255b80cb23b36ba92384c2dd1a20f3e6b735c0887ef16bf631d5cfab08f49af6"
+        }
+      ],
+      "fixture": "src/kart/multi_bars.rs#multi_bars_kartı",
+      "örnek": "examples/multi_bars.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/multi-bars.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/multi_bars.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin",
+          "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin",
+          "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "kartta_etkin",
+          "kosullu-bos-ve-dolu-noktalar": "kartta_etkin",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "kartta_etkin",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {}
+      },
+      "sahip_faz": 3,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-benchmark-json",
+        "source-four-chart-surfaces",
+        "source-horizontal-reverse-orientation",
+        "source-per-datum-status-colors",
+        "source-negative-bars",
+        "gpui-wasm-parity",
+        "common-interaction-profile"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "tam_kanıtlı"
+      }
     }
   ]
 }
