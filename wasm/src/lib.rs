@@ -1674,6 +1674,22 @@ mod testler {
     use super::*;
 
     #[test]
+    fn wasm_katalogu_pointer_akışını_boya_karesiyle_birleştirir() {
+        let katalog = include_str!("../www/index.html");
+        assert!(katalog.contains("function bekleyenPointerHareketiniİşle()"));
+        assert!(katalog.contains("pointerAnimationFrame = requestAnimationFrame"));
+        assert!(katalog.contains("pointerKaresi = requestAnimationFrame"));
+    }
+
+    #[test]
+    fn wasm_yeniden_çizimde_sabit_arayüz_kabuğunu_korur() {
+        let katalog = include_str!("../www/index.html");
+        assert!(katalog.contains("const tamKurulum ="));
+        assert!(katalog.contains("mevcutSvg.replaceWith(yeniSvg)"));
+        assert!(katalog.contains("if (kart.bilgiKutusu && tamKurulum)"));
+    }
+
+    #[test]
     fn resize_kartı_wasm_svg_üretir() {
         let oturum = KartOturumu::yeni("resize", 100);
         assert!(oturum.is_ok());

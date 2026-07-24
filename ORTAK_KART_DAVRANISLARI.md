@@ -47,6 +47,26 @@ yapılmadan yeni kart eklenemez.
 18. Bilgi satırı başlık altında/çizim üstünde, Rust tanımı kart altında ve varsayılan kapalıdır.
 19. Geçersiz durumlar panic yerine tipli `UplotHatası` ile bildirilir.
 
+## Ortak performans mimarisi
+
+Kartlar, veri miktarından bağımsız olarak aynı çizim yaşam döngüsünü kullanır:
+
+- Seri, eksen ve ızgaradan oluşan ana sahne yalnız veri, ölçek, görünürlük,
+  boyut veya çizim seçeneği değiştiğinde geçersiz kılınır.
+- Cursor, hover noktası ve seçim dikdörtgeni ana sahneden ayrı bir etkileşim
+  katmanında çizilir. Sıradan imleç hareketi ana seri geometrisini yeniden
+  üretmez.
+- GPUI ana yüzeyi önbellekli bir alt görünüm olarak saklar; yalnız etkileşim
+  katmanındaki değişiklik bu önbelleği geçersiz kılmaz.
+- WASM adaptörü yüksek frekanslı pointer akışını
+  `requestAnimationFrame` başına en fazla bir güncellemeye birleştirir.
+- WASM yeniden çiziminde kartın yardım, lejant ve tooltip kabuğu korunur;
+  yalnız grafik SVG yüzeyi değiştirilir. Seri yapısı değişirse kabuk bir kez
+  yeniden kurulur.
+- Düz çizgi ve görünür alan içinde kalan kırpma yolları sahipli geometri
+  tamponlarını yeniden kullanır; kartların bu sıcak yolu özel kopyalarla
+  yeniden uygulaması kabul edilmez.
+
 ## Yeni kart kabul kapısı
 
 Bir kart ancak kaynak/veri hash'i, sözleşmedeki 19 karar, sayısal test, GPUI ve

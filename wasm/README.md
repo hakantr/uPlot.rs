@@ -27,3 +27,11 @@ sürükleme yakın görünümü taşır. Kartta `dokunma_etkileşimi(true)` ise 
 parmakla X/Y yakınlaştırma ve tek parmakla taşıma da çalışır. Resmî
 davranışlarla uPlot.rs uyarlamalarının ayrıntılı ayrımı için
 [Resmî depo farklılıkları](../RESMI_DEPO_FARKLILIKLARI.md) belgesini okuyun.
+
+## Çizim yaşam döngüsü
+
+Canlı grafiklerde pointer olayları tarayıcının boya karesiyle birleştirilir.
+Cursor, hover noktaları ve seçim alanı SVG içindeki ayrı etkileşim grubunda
+yerinde güncellenir. Veri veya ölçek değişip ana grafik yeniden çizildiğinde
+yardım, lejant ve tooltip DOM'u korunur; yalnız grafik SVG yüzeyi değiştirilir.
+Bu kurallar bütün kartlara ortak adaptör üzerinden uygulanır.

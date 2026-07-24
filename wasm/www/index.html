@@ -2329,6 +2329,8 @@
     let tooltipsZamanlayıcı = null;
     let boyutSenkronZamanlayıcı = null;
     let sonTooltipİmleci = null;
+    let pointerAnimationFrame = null;
+    let bekleyenPointerOlayı = null;
     let syncYZeroZamanlayıcıları = [];
     const syncCursorYüzeyleri = [
       { kimlik: "sync-cursor-cpu", başlık: "CPU", seriler: [["CPU 1", "red"], ["CPU 2", "green"], ["CPU 3", "blue"]] },
@@ -2553,8 +2555,9 @@
     function syncCursorDinleyicileriniBağla() {
       chart.querySelectorAll(".sync-cursor-grafik").forEach(yüzey => {
         const indeks = Number(yüzey.dataset.syncIndex);
-        yüzey.addEventListener("pointermove", olay => {
-          olay.stopPropagation();
+        let bekleyenOlay = null;
+        let pointerKaresi = null;
+        const pointerHareketiniİşle = olay => {
           if (olay.pointerType === "touch" && syncCursorDokunmalar.has(olay.pointerId)) {
             syncCursorDokunmalar.set(olay.pointerId, {
               indeks, x: olay.clientX, y: olay.clientY,
@@ -2603,6 +2606,27 @@
             return;
           }
           syncCursorİmleciniGüncelle(indeks, olay);
+        };
+        const bekleyenHareketiİşle = () => {
+          if (pointerKaresi !== null) cancelAnimationFrame(pointerKaresi);
+          pointerKaresi = null;
+          const olay = bekleyenOlay;
+          bekleyenOlay = null;
+          if (olay) pointerHareketiniİşle(olay);
+        };
+        yüzey.addEventListener("pointermove", olay => {
+          olay.stopPropagation();
+          if (olay.pointerType === "touch" || syncCursorTaşıma?.indeks === indeks) {
+            olay.preventDefault();
+          }
+          bekleyenOlay = olay;
+          if (pointerKaresi !== null) return;
+          pointerKaresi = requestAnimationFrame(() => {
+            pointerKaresi = null;
+            const sonOlay = bekleyenOlay;
+            bekleyenOlay = null;
+            if (sonOlay) pointerHareketiniİşle(sonOlay);
+          });
         });
         yüzey.addEventListener("pointerleave", olay => {
           olay.stopPropagation();
@@ -2654,6 +2678,7 @@
         });
         yüzey.addEventListener("pointerup", olay => {
           olay.stopPropagation();
+          bekleyenHareketiİşle();
           if (olay.pointerType === "touch") {
             syncCursorDokunmalar.delete(olay.pointerId);
             if (syncCursorKıstırma?.indeks === indeks) {
@@ -2708,6 +2733,9 @@
         });
         yüzey.addEventListener("pointercancel", olay => {
           olay.stopPropagation();
+          if (pointerKaresi !== null) cancelAnimationFrame(pointerKaresi);
+          pointerKaresi = null;
+          bekleyenOlay = null;
           syncCursorDokunmalar.delete(olay.pointerId);
           if (syncCursorKıstırma?.indeks === indeks) {
             syncCursorOturumları[indeks]?.dokunmayi_bitir();
@@ -2885,23 +2913,6 @@
       chart.dataset.boyutSenkron = String(aktifKart === "update-cursor-select-resize");
       chart.dataset.cokluLejant = kart.seriler.length > 6 ? "true" : "false";
       const { genişlik, yükseklik } = boyutlar();
-      const svgÇıktısı = oturum.svg(genişlik, yükseklik);
-      chart.innerHTML = kart.scrollSync ? `
-        <div class="scroll-sync-içerik">
-          <p>Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots
-          in classical Latin literature, so the chart begins below scrollable content.</p>
-          <p>Scroll this container, then move or drag over the chart. The cached surface
-          rectangle is synchronized after each scroll event.</p>
-          <div class="scroll-sync-grafik">${svgÇıktısı}</div>
-          <p>The standard chunk used since the 1500s is reproduced here as lower filler
-          content so the chart can move through the viewport like the official demo.</p>
-          <p>uPlot.rs keeps platform layout in the adapter and performs client-to-scene
-          coordinate conversion in the reusable Rust core.</p>
-        </div>` : svgÇıktısı;
-      const svg = chart.querySelector("svg");
-      if (!svg) return;
-      yüzeyiEşitle();
-      svg.dataset.etkileşim = "hover-x-zoom";
       if (kart.dinamikSeri) {
         const etiketler = oturum.seri_etiketleri();
         const renkler = oturum.seri_renkleri();
@@ -2910,6 +2921,41 @@
           renk: renkler[indeks] ?? "#000000",
         }));
       }
+      const seriİmzası = kart.seriler.map((seri, indeks) =>
+        `${seri.etiket}\u0000${seri.renk}\u0000${oturum.seri_gorunur(indeks)}`
+      ).join("\u0001");
+      const tamKurulum = chart.dataset.cizilenKart !== aktifKart
+        || chart.dataset.seriImzasi !== seriİmzası
+        || !chart.querySelector("svg");
+      const svgÇıktısı = oturum.svg(genişlik, yükseklik);
+      if (tamKurulum) {
+        chart.innerHTML = kart.scrollSync ? `
+          <div class="scroll-sync-içerik">
+            <p>Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots
+            in classical Latin literature, so the chart begins below scrollable content.</p>
+            <p>Scroll this container, then move or drag over the chart. The cached surface
+            rectangle is synchronized after each scroll event.</p>
+            <div class="scroll-sync-grafik">${svgÇıktısı}</div>
+            <p>The standard chunk used since the 1500s is reproduced here as lower filler
+            content so the chart can move through the viewport like the official demo.</p>
+            <p>uPlot.rs keeps platform layout in the adapter and performs client-to-scene
+            coordinate conversion in the reusable Rust core.</p>
+          </div>` : svgÇıktısı;
+        chart.dataset.cizilenKart = aktifKart;
+        chart.dataset.seriImzasi = seriİmzası;
+      } else {
+        const mevcutSvg = kart.scrollSync
+          ? chart.querySelector(".scroll-sync-grafik svg")
+          : chart.querySelector(":scope > svg");
+        const şablon = document.createElement("template");
+        şablon.innerHTML = svgÇıktısı.trim();
+        const yeniSvg = şablon.content.firstElementChild;
+        if (mevcutSvg && yeniSvg) mevcutSvg.replaceWith(yeniSvg);
+      }
+      const svg = chart.querySelector("svg");
+      if (!svg) return;
+      yüzeyiEşitle();
+      svg.dataset.etkileşim = "hover-x-zoom";
       const imleçNoktaları = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks)
           ? `<circle id="imleç-nokta-${indeks}" visibility="hidden" r="2.5" fill="${seri.renk}"/>`
@@ -2945,10 +2991,12 @@
           : ""
       ).join("");
       const arayüzHedefi = kart.scrollSync ? chart.querySelector(".scroll-sync-grafik") : chart;
-      arayüzHedefi?.insertAdjacentHTML("beforeend", `
-        ${kart.scrollSync ? "" : `<div class="yardım">${kart.yardım}</div>`}
-        <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
-        ${lejantSerileri}</div>`);
+      if (tamKurulum) {
+        arayüzHedefi?.insertAdjacentHTML("beforeend", `
+          ${kart.scrollSync ? "" : `<div class="yardım">${kart.yardım}</div>`}
+          <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
+          ${lejantSerileri}</div>`);
+      }
       if (aktifKart.startsWith("stream-data-")) {
         const [x, ...değerler] = oturum.son_degerler();
         const xHedefi = chart.querySelector("#x-değeri");
@@ -2961,7 +3009,7 @@
             ? değer.toLocaleString("tr-TR", { maximumFractionDigits: 3 }) : "--";
         });
       }
-      if (aktifKart === "svg-image") {
+      if (aktifKart === "svg-image" && tamKurulum) {
         chart.insertAdjacentHTML(
           "beforeend",
           `<div class="svg-image-çıktısı">
@@ -2970,7 +3018,7 @@
           </div>`
         );
       }
-      chart.querySelectorAll("[data-seri-toggle]").forEach(öğe => {
+      if (tamKurulum) chart.querySelectorAll("[data-seri-toggle]").forEach(öğe => {
         const değiştir = () => {
           const indeks = Number(öğe.dataset.seriToggle);
           if (!Number.isInteger(indeks) || !oturum) return;
@@ -2990,7 +3038,7 @@
           }
         });
       });
-      if (kart.bilgiKutusu) {
+      if (kart.bilgiKutusu && tamKurulum) {
         chart.insertAdjacentHTML("beforeend", `<div id="imlec-bilgi-kutusu" class="imlec-bilgi-kutusu" hidden></div>`);
         const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
         if (kart.enYakınTooltip) {
@@ -3301,7 +3349,7 @@
       }
     }
 
-    chart.addEventListener("pointermove", olay => {
+    function pointerHareketiniİşle(olay) {
       {
         const { x, y, view } = svgKonumu(olay);
         const alan = çizimAlanı(view);
@@ -3384,6 +3432,30 @@
       seçim.setAttribute("fill", sürükleme.açıklama ? "rgba(255,255,0,.3)" : "rgba(59,130,246,.18)");
       seçim.setAttribute("stroke", sürükleme.açıklama ? "#d4a800" : "#3b82f6");
       seçim.setAttribute("visibility", "visible");
+    }
+
+    function bekleyenPointerHareketiniİşle() {
+      if (pointerAnimationFrame !== null) {
+        cancelAnimationFrame(pointerAnimationFrame);
+        pointerAnimationFrame = null;
+      }
+      const olay = bekleyenPointerOlayı;
+      bekleyenPointerOlayı = null;
+      if (olay) pointerHareketiniİşle(olay);
+    }
+
+    chart.addEventListener("pointermove", olay => {
+      if (olay.pointerType === "touch" || eksenSürükleme || taşıma) {
+        olay.preventDefault();
+      }
+      bekleyenPointerOlayı = olay;
+      if (pointerAnimationFrame !== null) return;
+      pointerAnimationFrame = requestAnimationFrame(() => {
+        pointerAnimationFrame = null;
+        const sonOlay = bekleyenPointerOlayı;
+        bekleyenPointerOlayı = null;
+        if (sonOlay) pointerHareketiniİşle(sonOlay);
+      });
     });
     chart.addEventListener("scroll", () => {
       if (kartlar[aktifKart]?.scrollSync) yüzeyiEşitle();
@@ -3444,6 +3516,7 @@
       };
     });
     chart.addEventListener("pointerup", olay => {
+      bekleyenPointerHareketiniİşle();
       if (olay.pointerType === "touch") {
         dokunmalar.delete(olay.pointerId);
         if (kıstırma) {
@@ -3507,6 +3580,9 @@
       }
     });
     chart.addEventListener("pointercancel", olay => {
+      if (pointerAnimationFrame !== null) cancelAnimationFrame(pointerAnimationFrame);
+      pointerAnimationFrame = null;
+      bekleyenPointerOlayı = null;
       dokunmalar.delete(olay.pointerId);
       if (kıstırma) oturum?.dokunmayi_bitir();
       kıstırma = null;
