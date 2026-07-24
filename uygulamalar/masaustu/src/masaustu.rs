@@ -540,6 +540,7 @@ pub struct ChartListesi {
     pixel_align_akışı: Option<PixelAlignAkışı>,
     pixel_align_son_kare: Option<Instant>,
     sine_akışı: Option<SineAkışı>,
+    sine_kare_bekleniyor: bool,
     stream_data_akışı: Option<StreamDataAkışı>,
     soft_minmax_akışı: Option<SoftMinMaxAkışı>,
     boyut_senkron_akışı: Option<BoyutSenkronAkışı>,
@@ -679,6 +680,7 @@ impl ChartListesi {
             pixel_align_akışı: None,
             pixel_align_son_kare: None,
             sine_akışı: None,
+            sine_kare_bekleniyor: false,
             stream_data_akışı: None,
             soft_minmax_akışı: None,
             boyut_senkron_akışı: None,
@@ -1256,6 +1258,7 @@ impl ChartListesi {
         self.align_data_zamanlayıcısı = None;
         self.pixel_align_akışı = None;
         self.pixel_align_son_kare = None;
+        self.sine_kare_bekleniyor = false;
         self.sine_akışı = if kart == KartKimliği::SineStream {
             match SineAkışı::yeni() {
                 Ok(akış) => Some(akış),
@@ -1478,53 +1481,6 @@ impl ChartListesi {
                                 });
                             }
                             true
-                        })
-                        .unwrap_or(false);
-                    if !devam {
-                        break;
-                    }
-                }
-            }));
-        } else if kart == KartKimliği::SineStream {
-            self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
-                loop {
-                    cx.background_executor()
-                        .timer(Duration::from_millis(16))
-                        .await;
-                    let devam = bu
-                        .update(cx, |bu, cx| {
-                            if bu.aktif_kart != KartKimliği::SineStream {
-                                return false;
-                            }
-                            let sonuç = bu.sine_akışı.as_mut().map_or_else(
-                                || {
-                                    Err(UplotHatası::GeçersizKaynakVeri {
-                                        varlık: "SineAkışı",
-                                        açıklama: "masaüstü akış durumu bulunamadı".to_string(),
-                                    })
-                                },
-                                SineAkışı::ilerlet,
-                            );
-                            match sonuç {
-                                Ok(veri) => {
-                                    if let Some(grafik) = &bu.grafik {
-                                        let güncellendi = grafik.update(cx, |grafik, cx| {
-                                            grafik.veriyi_ayarla(veri, cx)
-                                        });
-                                        if let Err(hata) = güncellendi {
-                                            bu.hata =
-                                                Some(format!("Sine Stream güncellenemedi: {hata}"));
-                                            return false;
-                                        }
-                                    }
-                                    true
-                                }
-                                Err(hata) => {
-                                    bu.hata =
-                                        Some(format!("Sine Stream verisi üretilemedi: {hata}"));
-                                    false
-                                }
-                            }
                         })
                         .unwrap_or(false);
                     if !devam {
@@ -1967,7 +1923,39 @@ fn grafik_oluştur(
 }
 
 impl Render for ChartListesi {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if self.aktif_kart == KartKimliği::SineStream && !self.sine_kare_bekleniyor {
+            self.sine_kare_bekleniyor = true;
+            cx.on_next_frame(window, |bu, _window, cx| {
+                bu.sine_kare_bekleniyor = false;
+                if bu.aktif_kart != KartKimliği::SineStream {
+                    return;
+                }
+                let sonuç = bu.sine_akışı.as_mut().map_or_else(
+                    || {
+                        Err(UplotHatası::GeçersizKaynakVeri {
+                            varlık: "SineAkışı",
+                            açıklama: "masaüstü akış durumu bulunamadı".to_string(),
+                        })
+                    },
+                    SineAkışı::ilerlet,
+                );
+                match sonuç {
+                    Ok(veri) => {
+                        if let Some(grafik) = &bu.grafik
+                            && let Err(hata) =
+                                grafik.update(cx, |grafik, cx| grafik.veriyi_ayarla(veri, cx))
+                        {
+                            bu.hata = Some(format!("Sine Stream güncellenemedi: {hata}"));
+                        }
+                    }
+                    Err(hata) => {
+                        bu.hata = Some(format!("Sine Stream verisi üretilemedi: {hata}"));
+                    }
+                }
+                cx.notify();
+            });
+        }
         let panel = rgb(0xffffff);
         let zemin = rgb(0xf3f4f6);
         let metin = rgb(0x111827);
@@ -4638,6 +4626,17 @@ impl Render for ChartListesi {
                  Maliyet: sınır yenileme tek yerleşim ölçümü ve O(1) dönüşümdür; kaydırma ana \
                  veri sahnesini yeniden çizmez. Kaynak davranışını korumak için doğal kapsayıcı \
                  kaydırması varsayılandır; wheel/touch eklentileri ortak API'den açılabilir.",
+            ),
+            KartKimliği::SineStream => Some(
+                "Amaç: tek grafik yüzeyinde 600 örnekli altı seriyi ekranın boya ritminde \
+                 kaydırarak canlı izleme yükünü gösterir. API: SineAkışı::ilerlet yalnız bir \
+                 örnek ilerletir; Grafik::veriyi_ayarla aynı Grafik ve GpuiGrafik örneğinde \
+                 uPlot setData ölçek sıfırlamasını uygular. İzleme: telemetri, log oranı ve \
+                 kaynak ölçümleri gibi sabit uzunluklu canlı pencereler için uygundur. \
+                 Başlıktaki 60 FPS kaynak adıdır; gerçek hız ekran yenileme hızıdır. Maliyet: \
+                 VecDeque pencere kaydırması O(1), veri aktarımı ve altı yolun çizimi \
+                 O(seri×600); sabit eksen/grid yolları önbellekte, cursor/seçim katmanı \
+                 güncellemeler arasında korunur.",
             ),
             KartKimliği::Scatter => Some(
                 "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \

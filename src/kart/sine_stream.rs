@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use web_time::{SystemTime, UNIX_EPOCH};
 
 use super::ortak_kart_etkileşimleri;
 use super::veri_uretici::KanıtRastgele;
@@ -10,15 +11,17 @@ pub const SINE_STREAM_KART_TANIM_ÖRNEĞİ: &str = r##"let mut akış = SineAkı
 let (seçenekler, veri) = akış.kartı()?;
 let mut grafik = Grafik::yeni(seçenekler, veri)?;
 
-// Platform adaptörü her animation-frame/timer adımında yalnız bunu çağırır.
+// Platform adaptörü her animation-frame adımında yalnız bunu çağırır.
 grafik.veriyi_ayarla(akış.ilerlet()?)?;"##;
 
-const KANIT_BAŞLANGICI_SN: f64 = 1_700_000_000.0;
+pub const SINE_STREAM_KANIT_BAŞLANGICI_SN: f64 = 1_700_000_000.0;
 const ÖRNEK_ARALIĞI_SN: f64 = 5.0 * 60.0;
 
-/// `sine-stream.html` içindeki Box–Muller yürüyüşlerini ve 600 noktalı
-/// kayan pencereyi tutan, platformdan bağımsız canlı veri durumu.
+/// `sine-stream.html` içindeki Box–Muller yürüyüşlerini, kaynak başlangıç
+/// yaşam döngüsünü ve 600 noktalı kayan pencereyi tutan platformdan bağımsız
+/// canlı veri durumu.
 pub struct SineAkışı {
+    başlangıç_sn: f64,
     kaydırma: usize,
     x: VecDeque<f64>,
     seriler: [VecDeque<f64>; 6],
@@ -27,9 +30,29 @@ pub struct SineAkışı {
 
 impl SineAkışı {
     pub fn yeni() -> Result<Self, UplotHatası> {
-        let mut normal = BoxMuller::yeni(SINE_STREAM_KANIT_TOHUMU);
+        let şimdi = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|hata| UplotHatası::GeçersizKaynakVeri {
+                varlık: "SineAkışı",
+                açıklama: format!("sistem saati Unix epoch öncesinde: {hata}"),
+            })?;
+        let başlangıç = şimdi.as_secs() as f64;
+        let tohum = SINE_STREAM_KANIT_TOHUMU
+            ^ şimdi.subsec_nanos()
+            ^ (şimdi.as_secs() as u32).rotate_left(13);
+        Self::başlangıçla(başlangıç, tohum)
+    }
+
+    /// Görsel regresyonlar ve karşılaştırılabilir ölçümler için sabit epoch
+    /// ve tohum kullanan üretimle aynı akış.
+    pub fn kanıt() -> Result<Self, UplotHatası> {
+        Self::başlangıçla(SINE_STREAM_KANIT_BAŞLANGICI_SN, SINE_STREAM_KANIT_TOHUMU)
+    }
+
+    fn başlangıçla(başlangıç: f64, tohum: u32) -> Result<Self, UplotHatası> {
+        let mut normal = BoxMuller::yeni(tohum);
         let x = (0..SINE_STREAM_NOKTA_SAYISI)
-            .map(|indeks| KANIT_BAŞLANGICI_SN + indeks as f64 * ÖRNEK_ARALIĞI_SN)
+            .map(|indeks| başlangıç + indeks as f64 * ÖRNEK_ARALIĞI_SN)
             .collect();
         let sinüs = (0..SINE_STREAM_NOKTA_SAYISI)
             .map(|indeks| (indeks as f64 / 16.0).sin() * 5.0)
@@ -41,14 +64,17 @@ impl SineAkışı {
         let artı_iki = rastgele_yürüyüş(SINE_STREAM_NOKTA_SAYISI, 2.0, -1.0, 6.0, &mut normal);
         let artı_dört = rastgele_yürüyüş(SINE_STREAM_NOKTA_SAYISI, 4.0, -1.0, 6.0, &mut normal);
         let mut akış = Self {
-            // Kaynaktaki ilk requestAnimationFrame geçişi 600 değerini ekler.
-            // Böylece kaynak demodaki geçici yinelenen 599 X değeri yerine
-            // ilk kararlı, kesin artan görünür çerçeveyle başlanır.
-            kaydırma: SINE_STREAM_NOKTA_SAYISI,
+            // Kaynak `getData(599)` ile grafiği kurar, ardından `update()`
+            // senkron olarak 600. örneği uygular. İlk boyanan karedeki
+            // yinelenen x=599 davranışı da bu iki adımla korunur.
+            başlangıç_sn: başlangıç,
+            kaydırma: SINE_STREAM_NOKTA_SAYISI - 1,
             x,
             seriler: [sinüs, eksi_dört, eksi_iki, sıfır, artı_iki, artı_dört],
             normal,
         };
+        akış.adımı_uygula()?;
+        akış.kaydırma = akış.kaydırma.saturating_add(1);
         akış.adımı_uygula()?;
         Ok(akış)
     }
@@ -88,7 +114,7 @@ impl SineAkışı {
         ];
         self.x.pop_front();
         self.x
-            .push_back(KANIT_BAŞLANGICI_SN + self.kaydırma as f64 * ÖRNEK_ARALIĞI_SN);
+            .push_back(self.başlangıç_sn + self.kaydırma as f64 * ÖRNEK_ARALIĞI_SN);
         for (seri, değer) in self.seriler.iter_mut().zip(son_değerler) {
             seri.pop_front();
             seri.push_back(değer);
@@ -103,12 +129,12 @@ pub fn sine_stream_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHa
 
 fn sine_stream_seçenekleri() -> Result<GrafikSeçenekleri, UplotHatası> {
     let stiller = [
-        ("Sine", "red", "#ff00001a"),
-        ("1", "green", "#4caf505e"),
-        ("2", "blue", "#0000ff20"),
-        ("3", "orange", "#ffa5004f"),
-        ("4", "magenta", "#ff00ff20"),
-        ("5", "purple", "#80008020"),
+        ("Sine", "red", "rgba(255,0,0,0.1)"),
+        ("Value", "green", "#4caf505e"),
+        ("Value", "blue", "#0000ff20"),
+        ("Value", "orange", "#ffa5004f"),
+        ("Value", "magenta", "#ff00ff20"),
+        ("Value", "purple", "#80008020"),
     ];
     let mut seçenekler = GrafikSeçenekleri::yeni(1_920, 600)?
         .başlık("6 series x 600 points @ 60fps")
@@ -205,21 +231,43 @@ mod testler {
 
     #[test]
     fn kaynak_altı_seriyi_ve_sabit_aralığı_korur() -> Result<(), UplotHatası> {
-        let mut akış = SineAkışı::yeni()?;
+        let mut akış = SineAkışı::kanıt()?;
         let (seçenekler, ilk) = akış.kartı()?;
         assert_eq!(ilk.uzunluk(), 600);
         assert_eq!(ilk.seriler().len(), 6);
         assert_eq!(seçenekler.y_aralığı, Some(Aralık::yeni(-6.0, 6.0)?));
         assert_eq!(seçenekler.piksel_hizası, 0.0);
         assert_eq!(seçenekler.x_eksen_asgari_etiket_boşluğu, 300.0);
-        assert!(ilk.seriler().first().is_some_and(|sinüs| {
-            sinüs.iter().enumerate().all(|(indeks, değer)| {
-                değer.is_some_and(|değer| {
-                    let kaynak_indeksi = indeks + 1;
-                    (değer - (kaynak_indeksi as f64 / 16.0).sin() * 5.0).abs() < 1e-12
-                })
-            })
-        }));
+        assert_eq!(akış.kaydırma(), 600);
+        assert_eq!(
+            ilk.x()
+                .windows(2)
+                .filter(|çift| matches!(*çift, [a, b] if a == b))
+                .count(),
+            1
+        );
+        assert_eq!(
+            ilk.x()
+                .windows(2)
+                .find(|çift| matches!(*çift, [a, b] if a == b)),
+            Some(
+                &[
+                    SINE_STREAM_KANIT_BAŞLANGICI_SN + 599.0 * ÖRNEK_ARALIĞI_SN,
+                    SINE_STREAM_KANIT_BAŞLANGICI_SN + 599.0 * ÖRNEK_ARALIĞI_SN,
+                ][..]
+            )
+        );
+        assert_eq!(
+            seçenekler.seriler.get(1).map(|seri| seri.etiket.as_str()),
+            Some("Value")
+        );
+        assert_eq!(
+            seçenekler
+                .seriler
+                .first()
+                .and_then(|seri| seri.dolgu.as_deref()),
+            Some("rgba(255,0,0,0.1)")
+        );
 
         let önceki_son = ilk.x().last().copied();
         let sonraki = akış.ilerlet()?;
@@ -234,7 +282,7 @@ mod testler {
 
     #[test]
     fn set_data_akışı_grafiği_yeniler() -> Result<(), UplotHatası> {
-        let mut akış = SineAkışı::yeni()?;
+        let mut akış = SineAkışı::kanıt()?;
         let (seçenekler, veri) = akış.kartı()?;
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
         let önce = grafik.çiz().svg();

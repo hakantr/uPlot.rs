@@ -2350,13 +2350,15 @@
       "özellikler": [
         "source-six-series-600-points", "source-sine-series",
         "source-box-muller-bounded-random-walks", "fixed-minus6-plus6-y-range",
-        "request-animation-frame-live-set-data", "gpui-wasm-live-parity",
-        "common-interaction-profile"
+        "source-initial-duplicate-x-lifecycle", "runtime-current-epoch",
+        "wasm-request-animation-frame", "gpui-next-frame-live-set-data",
+        "same-graph-widget-svg-surface", "in-place-svg-node-update",
+        "persistent-cursor-selection-overlay", "common-interaction-profile"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
-        "performans": "kısmi"
+        "performans": "uygulandı_kanıtlı"
       }
     },
     {

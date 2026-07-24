@@ -1366,18 +1366,24 @@
       başlık: "6 series x 600 points @ 60fps",
       kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/sine-stream.html">sine-stream.html</a>
         · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">setData()</a>
-        <br>600 noktalı sinüs ve beş Box–Muller rastgele yürüyüşü, kaynak sınırları ve 5 dakikalık örnek aralığıyla Rust çekirdeğinde tutulur.
-        <br>WASM requestAnimationFrame yalnız <code>sine_akisini_ilerlet()</code> çağırır; veri üretimi ve setData doğrulaması çekirdektedir.`,
+        <br>600 noktalı sinüs ve beş Box–Muller rastgele yürüyüşü, kaynak sınırları, çalışma anındaki epoch ve ilk boyanan karenin yinelenen X yaşam döngüsüyle Rust çekirdeğinde tutulur.
+        <br>WASM requestAnimationFrame yalnız <code>sine_akisini_ilerlet()</code> çağırır; aynı SVG düğümleri ve bağımsız etkileşim katmanı korunarak setData çizimi yerinde güncellenir.`,
       tanım: () => sine_stream_kart_tanim_ornegi(),
       tanımYolu: "src/kart/sine_stream.rs",
       seriler: [
-        { etiket: "Sine", renk: "red" }, { etiket: "1", renk: "green" },
-        { etiket: "2", renk: "blue" }, { etiket: "3", renk: "orange" },
-        { etiket: "4", renk: "magenta" }, { etiket: "5", renk: "purple" },
+        { etiket: "Sine", renk: "red" }, { etiket: "Value", renk: "green" },
+        { etiket: "Value", renk: "blue" }, { etiket: "Value", renk: "orange" },
+        { etiket: "Value", renk: "magenta" }, { etiket: "Value", renk: "purple" },
       ],
       yardım: "Canlı 60 FPS kayan pencere · 600 nokta · 6 seri",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Tek bir grafik yüzeyinde 600 örnekli altı seriyi ekranın boya ritminde kaydırarak canlı izleme yükünü gösterir.",
+        api: "SineAkışı::ilerlet yalnız bir örnek ilerletir; Grafik::veriyi_ayarla aynı Grafik/GPUI widget/WASM SVG kimliğinde uPlot setData ölçek sıfırlamasını uygular.",
+        izleme: "Telemetri, log oranı ve kaynak ölçümleri gibi sabit uzunluklu canlı pencereler için uygundur. Başlıktaki 60 FPS kaynak adıdır; gerçek hız ekran yenileme hızıdır.",
+        maliyet: "VecDeque pencere kaydırması O(1), veri aktarımı ve altı yolun çizimi O(seri × 600)’dür. WASM ana SVG düğümlerini yerinde günceller; cursor/seçim katmanı yeniden kurulmaz.",
+      },
     };
     const softMinMaxYüzeyleri = [
       {
@@ -2625,6 +2631,7 @@
     let sonTooltipİmleci = null;
     let pointerAnimationFrame = null;
     let bekleyenPointerOlayı = null;
+    let sonPointerOlayı = null;
     let resizeAnimationFrame = null;
     let niceScaleResizeAnimationFrame = null;
     let sonResizeBoyutu = "";
@@ -4660,7 +4667,7 @@
           yeniKaydırma.scrollTop = öncekiMultiBarsKaydırmaKonumu.üst;
         }
       }
-      yüzeyiEşitle();
+      if (tamKurulum || aktifKart !== "sine-stream") yüzeyiEşitle();
       svg.dataset.etkileşim = "hover-x-zoom";
       const imleçNoktaları = kart.seriler.map((seri, indeks) =>
         !kart.çubuk && oturum.seri_gorunur(indeks)
@@ -4678,7 +4685,7 @@
             <rect width="44" height="22" rx="3" fill="${seri.renk}"/>
             <text fill="#ffffff" font-size="11" text-anchor="middle"></text>
           </g>` : "").join("")}` : "";
-      svg.insertAdjacentHTML("beforeend", `
+      if (!svg.querySelector(":scope > #etkileşim")) svg.insertAdjacentHTML("beforeend", `
         <g id="etkileşim" pointer-events="none">
           <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
           <rect id="çubuk-vurgu" visibility="hidden" fill="rgba(255,255,255,.3)" stroke="none"/>
@@ -4798,6 +4805,9 @@
           });
         }
       }
+      if (aktifKart === "sine-stream" && grafikÜzerinde && sonPointerOlayı) {
+        imleciGüncelle(sonPointerOlayı);
+      }
       kontrolleriGüncelle();
       taşımaİmleciniGüncelle();
     }
@@ -4813,6 +4823,38 @@
       return oturum.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
     }
 
+    function svgDüğümünüYerindeGüncelle(mevcut, yeni) {
+      if (mevcut.nodeType !== yeni.nodeType || mevcut.nodeName !== yeni.nodeName) return false;
+      if (mevcut.nodeType === Node.TEXT_NODE) {
+        if (mevcut.data !== yeni.data) mevcut.data = yeni.data;
+        return true;
+      }
+      if (mevcut.nodeType !== Node.ELEMENT_NODE) return true;
+      for (const nitelik of Array.from(mevcut.attributes)) {
+        if (!yeni.hasAttribute(nitelik.name)) mevcut.removeAttribute(nitelik.name);
+      }
+      for (const nitelik of Array.from(yeni.attributes)) {
+        if (mevcut.getAttribute(nitelik.name) !== nitelik.value) {
+          mevcut.setAttribute(nitelik.name, nitelik.value);
+        }
+      }
+      const mevcutÇocuklar = Array.from(mevcut.childNodes);
+      const yeniÇocuklar = Array.from(yeni.childNodes);
+      const aynıYapı = mevcutÇocuklar.length === yeniÇocuklar.length
+        && mevcutÇocuklar.every((çocuk, indeks) =>
+          çocuk.nodeType === yeniÇocuklar[indeks].nodeType
+          && çocuk.nodeName === yeniÇocuklar[indeks].nodeName
+        );
+      if (!aynıYapı) {
+        mevcut.replaceChildren(...yeniÇocuklar);
+        return true;
+      }
+      mevcutÇocuklar.forEach((çocuk, indeks) =>
+        svgDüğümünüYerindeGüncelle(çocuk, yeniÇocuklar[indeks])
+      );
+      return true;
+    }
+
     function svgYüzeyiniYerindeGüncelle(mevcutSvg, yeniSvg) {
       if (!mevcutSvg || !yeniSvg) return false;
       for (const nitelik of Array.from(mevcutSvg.attributes)) {
@@ -4821,7 +4863,24 @@
       for (const nitelik of Array.from(yeniSvg.attributes)) {
         mevcutSvg.setAttribute(nitelik.name, nitelik.value);
       }
-      mevcutSvg.replaceChildren(...Array.from(yeniSvg.childNodes));
+      const etkileşim = mevcutSvg.querySelector(":scope > #etkileşim");
+      const mevcutÇocuklar = Array.from(mevcutSvg.childNodes)
+        .filter(düğüm => düğüm !== etkileşim);
+      const yeniÇocuklar = Array.from(yeniSvg.childNodes);
+      const aynıYapı = mevcutÇocuklar.length === yeniÇocuklar.length
+        && mevcutÇocuklar.every((çocuk, indeks) =>
+          çocuk.nodeType === yeniÇocuklar[indeks].nodeType
+          && çocuk.nodeName === yeniÇocuklar[indeks].nodeName
+        );
+      if (aynıYapı) {
+        mevcutÇocuklar.forEach((çocuk, indeks) =>
+          svgDüğümünüYerindeGüncelle(çocuk, yeniÇocuklar[indeks])
+        );
+      } else {
+        mevcutÇocuklar.forEach(düğüm => düğüm.remove());
+        yeniÇocuklar.forEach(düğüm => mevcutSvg.insertBefore(düğüm, etkileşim));
+      }
+      mevcutSvg.dataset.güncelleme = "yerinde";
       return true;
     }
 
@@ -5301,6 +5360,7 @@
       if (olay.pointerType === "touch" || eksenSürükleme || taşıma) {
         olay.preventDefault();
       }
+      sonPointerOlayı = olay;
       bekleyenPointerOlayı = olay;
       if (pointerAnimationFrame !== null) return;
       pointerAnimationFrame = requestAnimationFrame(() => {
@@ -5453,6 +5513,7 @@
     });
     chart.addEventListener("pointerleave", () => {
       grafikÜzerinde = false;
+      sonPointerOlayı = null;
       sonDatumOranı = null;
       eksenİmleciniGüncelle();
       sonTooltipİmleci = null;
@@ -6250,6 +6311,7 @@
         resizeAnimationFrame = requestAnimationFrame(() => {
           resizeAnimationFrame = null;
           çiz();
+          yüzeyiEşitle();
         });
       });
       chartResizeObserver.observe(chart);

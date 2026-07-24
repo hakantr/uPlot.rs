@@ -1961,7 +1961,10 @@ mod testler {
         let katalog = include_str!("../www/index.html");
         assert!(katalog.contains("const tamKurulum ="));
         assert!(katalog.contains("function svgYüzeyiniYerindeGüncelle"));
-        assert!(katalog.contains("mevcutSvg.replaceChildren"));
+        assert!(katalog.contains("function svgDüğümünüYerindeGüncelle"));
+        assert!(katalog.contains("svgDüğümünüYerindeGüncelle(çocuk, yeniÇocuklar[indeks])"));
+        assert!(katalog.contains("const etkileşim = mevcutSvg.querySelector"));
+        assert!(!katalog.contains("mevcutSvg.replaceChildren"));
         assert!(!katalog.contains("mevcutSvg.replaceWith(yeniSvg)"));
         assert!(katalog.contains("if (kart.bilgiKutusu && tamKurulum)"));
         assert!(katalog.contains("resizeAnimationFrame = requestAnimationFrame"));
@@ -2417,6 +2420,11 @@ mod testler {
         assert!(oturum.sine_akisini_ilerlet().is_ok_and(|değişti| değişti));
         assert_ne!(oturum.svg(1_920, 600), önce);
         assert!(sine_stream_kart_tanim_ornegi().contains("SineAkışı"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("function svgDüğümünüYerindeGüncelle"));
+        assert!(web.contains("if (!svg.querySelector(\":scope > #etkileşim\"))"));
+        assert!(web.contains("aktifKart === \"sine-stream\" && grafikÜzerinde"));
+        assert!(web.contains("WASM ana SVG düğümlerini yerinde günceller"));
         assert_eq!(kart_sayisi(), 365);
     }
 

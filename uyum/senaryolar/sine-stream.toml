@@ -11,11 +11,16 @@ seri_sayısı = 6
 örnek_aralığı_saniye = 300
 y_aralığı = [-6, 6]
 kanıt_tohumu = "0x51a50045"
+kanıt_epoch_saniye = 1700000000
 üreteç = "Box-Muller + bounded randomWalk"
+kaynak_başlangıç_x_tekrarı = "ilk_boyanan_karede_x599_iki_kez"
 
 [etkileşim]
-güncelleme = "requestAnimationFrame_to_SineAkışı::ilerlet"
-set_data = "Grafik::veriyi_ayarla"
+wasm_güncelleme = "requestAnimationFrame_to_SineAkışı::ilerlet"
+gpui_güncelleme = "Window::on_next_frame_to_SineAkışı::ilerlet"
+set_data = "aynı_Grafik_ve_yüzeyde_Grafik::veriyi_ayarla"
+cursor = "sabit_farede_yeni_veriden_yeniden_çöz"
+wasm_dom = "svg_düğümlerini_yerinde_güncelle_etkileşim_katmanını_koru"
 ortak_davranış_profili = "resize-temeli-v1"
 
 [kanıt]

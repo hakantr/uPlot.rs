@@ -531,12 +531,60 @@ impl GpuiGrafik {
         veri: HizalıVeri,
         cx: &mut Context<Self>,
     ) -> Result<(), UplotHatası> {
+        let korunacak_imleç = self.imleç.as_ref().map(|imleç| imleç.fare);
         self.grafik.veriyi_ayarla(veri)?;
-        self.imleç = None;
         self.açıklama_vuruşu = None;
-        self.seçim = None;
+        if let Some(fare) = korunacak_imleç {
+            self.canlı_imleci_yenile(fare);
+        }
         self.grafik_bildir(cx);
         Ok(())
+    }
+
+    /// uPlot `setData()` sırasında yaptığı gibi aynı hafif cursor katmanını
+    /// korur ve sabit fare konumundaki canlı değerleri yeni veriden çözer.
+    fn canlı_imleci_yenile(&mut self, fare: Nokta) {
+        if self
+            .imleç
+            .as_ref()
+            .is_some_and(|imleç| imleç.dağılım.is_some())
+            || !self.grafik_alanında(fare)
+        {
+            self.imleç = None;
+            return;
+        }
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        let yatay = f64::from((fare.x - sol) / (sağ - sol));
+        let dikey = f64::from((fare.y - üst) / (alt - üst));
+        let x_dikey = self.grafik.x_dikey_mi();
+        let x_oranı = if x_dikey { 1.0 - dikey } else { yatay };
+        let x_uzunluğu = if x_dikey { alt - üst } else { sağ - sol };
+        let Some(çözüm) = self.grafik.imleç_çözümü(x_oranı, f64::from(x_uzunluğu)) else {
+            self.imleç = None;
+            return;
+        };
+        let seri_x_değerleri = çözüm
+            .seriler
+            .iter()
+            .map(|örnek| örnek.map(|örnek| örnek.x))
+            .collect();
+        let seri_değerleri = çözüm
+            .seriler
+            .iter()
+            .map(|örnek| örnek.map(|örnek| örnek.değer))
+            .collect();
+        let x_konumu = self.grafik.x_konum_oranı(çözüm.imleç_x).unwrap_or(x_oranı) as f32;
+        self.imleç = Some(İmleçDurumu {
+            fare: if x_dikey {
+                Nokta::yeni(fare.x, alt - x_konumu * (alt - üst))
+            } else {
+                Nokta::yeni(sol + x_konumu * (sağ - sol), fare.y)
+            },
+            veri_x: çözüm.ortak_x,
+            seri_x_değerleri,
+            seri_değerleri,
+            dağılım: None,
+        });
     }
 
     pub fn canlı_veriyi_x_aralığında_ayarla(

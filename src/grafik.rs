@@ -1072,6 +1072,54 @@ impl Grafik {
     /// uPlot `setData(data)` karşılığı olarak hizalı veriyi doğrular, uygular
     /// ve otomatik ölçeklerle etkileşim görünümünü tam aralığa sıfırlar.
     pub fn veriyi_ayarla(&mut self, veri: HizalıVeri) -> Result<(), UplotHatası> {
+        if self.seçenekler.seriler.len() != veri.seriler().len() {
+            return Err(UplotHatası::SeriSeçeneğiEksik {
+                beklenen: veri.seriler().len(),
+                bulunan: self.seçenekler.seriler.len(),
+            });
+        }
+        let birincil_sabit_y = self
+            .seçenekler
+            .y_ölçekleri
+            .iter()
+            .find(|ölçek| ölçek.anahtar == self.seçenekler.birincil_y_ölçeği)
+            .and_then(|ölçek| ölçek.aralık)
+            .or(self.seçenekler.y_aralığı);
+        if let Some(tam_y) = birincil_sabit_y {
+            // Canlı sabit-Y grafiklerinde seçenek ağacını, stil dizilerini ve
+            // eklenti yapılandırmasını her kare yeniden kurmaya gerek yoktur.
+            // uPlot `setData(data)` gibi aynı Grafik örneğinde yalnız veri,
+            // tam ölçekler ve veriye bağlı dizinler yenilenir.
+            let mut tam_x = self
+                .seçenekler
+                .x_aralığı
+                .or_else(|| tam_x_aralığı(&veri).ok())
+                .unwrap_or(Aralık {
+                    en_az: 0.0,
+                    en_çok: 1.0,
+                });
+            if (self
+                .seçenekler
+                .çubuk_düzeni
+                .is_some_and(|düzen| düzen.x_kenar_paylı)
+                || self.seçenekler.kutu_bıyık_düzeni.is_some()
+                || self.seçenekler.mum_düzeni.is_some())
+                && veri.uzunluk() > 1
+            {
+                tam_x = Aralık::yeni(tam_x.en_az - 0.5, tam_x.en_çok + 0.5)?;
+            }
+            let etkileşim_ayarları = self.etkileşim.ayarlar();
+            self.veri = veri;
+            self.etkileşim = EtkileşimDenetleyicisi::yeni(tam_x, tam_y, etkileşim_ayarları);
+            self.odak_serisi = None;
+            self.elle_x_aralığı = None;
+            self.elle_y_aralıkları.clear();
+            self.eksen_sürükleme = None;
+            self.ölçüm_datumları = [None, None];
+            *self.çubuk_vuruş_dizini.borrow_mut() = None;
+            *self.dağılım_vuruş_dizini.borrow_mut() = None;
+            return Ok(());
+        }
         let mut seçenekler = self.seçenekler.clone();
         seçenekler.etkileşimler = self.etkileşim.ayarlar();
         let yeni = Self::yeni(seçenekler, veri)?;
