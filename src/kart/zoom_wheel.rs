@@ -11,6 +11,12 @@ let istek = akış.aralık_isteği(0.25, 0.75)?;
 akış.kaynak_yanıtını_uygula(istek)?;
 akış.tam_aralığı_yükle()?;"##;
 
+pub const ZOOM_RANGER_GRIPS_KANIT_ÖRNEĞİ: &str = r##"let mut ranger = grafik.zoom_ranger_durumu()?;
+ranger.pencereyi_taşı(0.25);
+ranger.sol_tutamağı_ayarla(2.0);
+ranger.sağ_tutamağı_ayarla(5.0);
+grafik.zoom_ranger_uygula(ranger);"##;
+
 /// Seçim aralığını veri sağlayıcı isteğine dönüştüren, platformdan bağımsız akış.
 pub struct ZoomFetchAkışı {
     grafik: Grafik,
@@ -127,6 +133,26 @@ mod testler {
         assert_eq!(akış.grafik().en_yakın_nokta(0.0, 0), Some((4.0, 23.0)));
         akış.tam_aralığı_yükle()?;
         assert_eq!(akış.grafik().görünür_x_aralığı(), Aralık::yeni(1.0, 10.0)?);
+        Ok(())
+    }
+
+    #[test]
+    fn ranger_taşıma_tutamaklar_ve_çift_yönlü_senkronu_korur() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = zoom_wheel_kartı()?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        assert!(grafik.seçim_yakınlaştır(0.0, 0.5)?);
+        let mut ranger = grafik.zoom_ranger_durumu()?;
+        assert_eq!(ranger.seçim_oranları(), (0.0, 0.5));
+        assert!(ranger.pencereyi_taşı(10.0));
+        assert_eq!(ranger.seçim_aralığı(), Aralık::yeni(4.0, 7.0)?);
+        assert!(ranger.sol_tutamağı_ayarla(5.0));
+        assert!(ranger.sağ_tutamağı_ayarla(6.0));
+        assert!(grafik.zoom_ranger_uygula(ranger));
+        assert_eq!(grafik.görünür_x_aralığı(), Aralık::yeni(5.0, 6.0)?);
+        let mut ranger = grafik.zoom_ranger_durumu()?;
+        assert!(grafik.tekerlek(0.5, 0.5, 1.0, false)?);
+        assert!(ranger.ana_görünümle_senkronla(grafik.görünür_x_aralığı())?);
+        assert_eq!(ranger.seçim_aralığı(), grafik.görünür_x_aralığı());
         Ok(())
     }
 }
