@@ -2369,6 +2369,9 @@
     let sonTooltipİmleci = null;
     let pointerAnimationFrame = null;
     let bekleyenPointerOlayı = null;
+    let resizeAnimationFrame = null;
+    let sonResizeBoyutu = "";
+    let chartResizeObserver = null;
     let syncYZeroZamanlayıcıları = [];
     const syncCursorYüzeyleri = [
       { kimlik: "sync-cursor-cpu", başlık: "CPU", seriler: [["CPU 1", "red"], ["CPU 2", "green"], ["CPU 3", "blue"]] },
@@ -3048,7 +3051,7 @@
         const şablon = document.createElement("template");
         şablon.innerHTML = svgÇıktısı.trim();
         const yeniSvg = şablon.content.firstElementChild;
-        if (mevcutSvg && yeniSvg) mevcutSvg.replaceWith(yeniSvg);
+        svgYüzeyiniYerindeGüncelle(mevcutSvg, yeniSvg);
       }
       const svg = chart.querySelector("svg");
       if (!svg) return;
@@ -3196,6 +3199,18 @@
       if (!svg || !oturum) return false;
       const rect = svg.getBoundingClientRect();
       return oturum.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+    }
+
+    function svgYüzeyiniYerindeGüncelle(mevcutSvg, yeniSvg) {
+      if (!mevcutSvg || !yeniSvg) return false;
+      for (const nitelik of Array.from(mevcutSvg.attributes)) {
+        if (!yeniSvg.hasAttribute(nitelik.name)) mevcutSvg.removeAttribute(nitelik.name);
+      }
+      for (const nitelik of Array.from(yeniSvg.attributes)) {
+        mevcutSvg.setAttribute(nitelik.name, nitelik.value);
+      }
+      mevcutSvg.replaceChildren(...Array.from(yeniSvg.childNodes));
+      return true;
     }
 
     function svgKonumu(olay) {
@@ -4276,7 +4291,17 @@
       };
       latencyKova.addEventListener("input", latencyHistogramıGüncelle);
       latencyOfset.addEventListener("input", latencyHistogramıGüncelle);
-      new ResizeObserver(çiz).observe(chart);
+      chartResizeObserver = new ResizeObserver(() => {
+        const boyutİmzası = `${chart.clientWidth}x${chart.clientHeight}`;
+        if (boyutİmzası === sonResizeBoyutu) return;
+        sonResizeBoyutu = boyutİmzası;
+        if (resizeAnimationFrame !== null) return;
+        resizeAnimationFrame = requestAnimationFrame(() => {
+          resizeAnimationFrame = null;
+          çiz();
+        });
+      });
+      chartResizeObserver.observe(chart);
       çiz();
     } catch (neden) {
       chart.textContent = "WASM başlatılamadı";

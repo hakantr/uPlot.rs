@@ -641,6 +641,10 @@ impl Grafik {
         (self.seçenekler.genişlik, self.seçenekler.yükseklik)
     }
 
+    pub fn duyarlı_boyut_mu(&self) -> bool {
+        self.seçenekler.duyarlı_boyut
+    }
+
     /// uPlot `setSize({width, height})` karşılığıdır. Veri ve etkileşim
     /// görünümü korunurken yalnız hedef sahne boyutu değiştirilir.
     pub fn boyutu_ayarla(&mut self, genişlik: u32, yükseklik: u32) -> Result<bool, UplotHatası> {

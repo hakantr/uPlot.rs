@@ -7,8 +7,9 @@ use ::gpui::{
     App, BorderStyle, Bounds, ContentMask, Context, Corners, Entity, EventEmitter, FocusHandle,
     Hsla, IntoElement, KeyDownEvent, KeyUpEvent, MouseButton, MouseDownEvent, MouseExitEvent,
     MouseMoveEvent, MouseUpEvent, Path, PathBuilder, PinchEvent, Pixels, Render, ScrollDelta,
-    ScrollWheelEvent, SharedString, StyleRefinement, TextAlign, TextRun, TouchPhase, Window,
-    canvas, div, linear_color_stop, linear_gradient, point, prelude::*, px, quad, rgb, rgba, size,
+    ScrollWheelEvent, SharedString, StyleRefinement, TextAlign, TextRun, TouchPhase, WeakEntity,
+    Window, canvas, div, linear_color_stop, linear_gradient, point, prelude::*, px, quad, rgb,
+    rgba, size,
 };
 
 use crate::{
@@ -58,14 +59,18 @@ struct GpuiAnaYüzey {
     sahne: Rc<Sahne>,
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
     yol_önbelleği: Rc<RefCell<GpuiYolÖnbelleği>>,
+    duyarlı_grafik: Option<WeakEntity<GpuiGrafik>>,
 }
 
 impl GpuiAnaYüzey {
-    fn sahneyi_ayarla(&mut self, sahne: Rc<Sahne>) {
+    fn sahneyi_ayarla(
+        &mut self, sahne: Rc<Sahne>, duyarlı_grafik: Option<WeakEntity<GpuiGrafik>>
+    ) {
         self.yol_önbelleği
             .borrow_mut()
             .sahneyi_değiştir(&self.sahne, &sahne);
         self.sahne = sahne;
+        self.duyarlı_grafik = duyarlı_grafik;
     }
 }
 
@@ -255,8 +260,23 @@ impl Render for GpuiAnaYüzey {
         let sahne = self.sahne.clone();
         let çizim_sınırları = self.çizim_sınırları.clone();
         let yol_önbelleği = self.yol_önbelleği.clone();
+        let duyarlı_grafik = self.duyarlı_grafik.clone();
         canvas(
-            move |sınırlar, _, _| çizim_sınırları.set(Some(sınırlar)),
+            move |sınırlar, _, uygulama| {
+                çizim_sınırları.set(Some(sınırlar));
+                let Some(grafik) = duyarlı_grafik else {
+                    return;
+                };
+                let genişlik = f32::from(sınırlar.size.width).round().max(160.0) as u32;
+                let yükseklik = f32::from(sınırlar.size.height).round().max(120.0) as u32;
+                uygulama.defer(move |uygulama| {
+                    if let Some(grafik) = grafik.upgrade() {
+                        grafik.update(uygulama, |grafik, cx| {
+                            let _ = grafik.boyutu_ayarla(genişlik, yükseklik, cx);
+                        });
+                    }
+                });
+            },
             move |sınırlar, _, pencere, uygulama| {
                 sahneyi_önbellekli_boya(
                     &sahne,
@@ -974,10 +994,11 @@ impl GpuiGrafik {
 
     fn grafik_bildir(&mut self, cx: &mut Context<Self>) {
         self.ana_sahne = Rc::new(self.grafik.çiz());
+        let duyarlı_grafik = self.grafik.duyarlı_boyut_mu().then(|| cx.weak_entity());
         if let Some(yüzey) = self.ana_yüzey.as_ref() {
             let sahne = self.ana_sahne.clone();
             yüzey.update(cx, |yüzey, cx| {
-                yüzey.sahneyi_ayarla(sahne);
+                yüzey.sahneyi_ayarla(sahne, duyarlı_grafik);
                 cx.notify();
             });
         }
@@ -1008,10 +1029,12 @@ impl Render for GpuiGrafik {
             .get_or_insert_with(|| {
                 let sahne = self.ana_sahne.clone();
                 let çizim_sınırları = self.çizim_sınırları.clone();
+                let duyarlı_grafik = self.grafik.duyarlı_boyut_mu().then(|| cx.weak_entity());
                 cx.new(|_| GpuiAnaYüzey {
                     sahne,
                     çizim_sınırları,
                     yol_önbelleği: Rc::new(RefCell::new(GpuiYolÖnbelleği::default())),
+                    duyarlı_grafik,
                 })
             })
             .clone();

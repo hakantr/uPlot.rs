@@ -24,6 +24,7 @@ pub fn resize_kartı(
 
     let seçenekler = GrafikSeçenekleri::yeni(800, 400)?
         .başlık("Resize")
+        .duyarlı_boyut(true)
         .x_zaman(false)
         // Kaynak demo kadrajı sabit tutar. SVG yüzeyi CSS pikseline değil
         // aygıt pikseline ölçeklenen canvas'tan farklı olduğu için seri yolunu
@@ -61,6 +62,8 @@ mod testler {
 
     #[test]
     fn yüz_noktalı_kaynak_yolu_css_piksellerine_merdivenlenmez() -> Result<(), UplotHatası> {
+        let (seçenekler, _) = resize_kartı(100)?;
+        assert!(seçenekler.duyarlı_boyut);
         let yol = resize_yolu(100)?;
         assert_eq!(yol.len(), 100);
         assert!(

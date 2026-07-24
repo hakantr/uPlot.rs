@@ -1829,8 +1829,12 @@ mod testler {
     fn wasm_yeniden_çizimde_sabit_arayüz_kabuğunu_korur() {
         let katalog = include_str!("../www/index.html");
         assert!(katalog.contains("const tamKurulum ="));
-        assert!(katalog.contains("mevcutSvg.replaceWith(yeniSvg)"));
+        assert!(katalog.contains("function svgYüzeyiniYerindeGüncelle"));
+        assert!(katalog.contains("mevcutSvg.replaceChildren"));
+        assert!(!katalog.contains("mevcutSvg.replaceWith(yeniSvg)"));
         assert!(katalog.contains("if (kart.bilgiKutusu && tamKurulum)"));
+        assert!(katalog.contains("resizeAnimationFrame = requestAnimationFrame"));
+        assert!(katalog.contains("if (boyutİmzası === sonResizeBoyutu) return"));
     }
 
     #[test]

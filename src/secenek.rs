@@ -955,6 +955,9 @@ pub struct GrafikSeçenekleri {
     /// Eksenleri gizli, çok küçük sparkline yüzeylerinde kaynak piksel
     /// boyutunu ve sıfır kenar payını korur.
     pub kompakt_yüzey: bool,
+    /// Taşıyıcı yüzey değiştiğinde uPlot `setSize()` gibi sahne
+    /// geometrisini yeni CSS piksel boyutunda yeniden hesaplar.
+    pub duyarlı_boyut: bool,
     pub x_zaman: bool,
     pub x_zaman_milisaniye: bool,
     pub x_tarih_adları: TarihAdları,
@@ -1050,6 +1053,7 @@ impl GrafikSeçenekleri {
             genişlik,
             yükseklik,
             kompakt_yüzey: false,
+            duyarlı_boyut: false,
             x_zaman: true,
             x_zaman_milisaniye: false,
             x_tarih_adları: TarihAdları::default(),
@@ -1130,6 +1134,11 @@ impl GrafikSeçenekleri {
 
     pub fn başlık(mut self, başlık: impl Into<String>) -> Self {
         self.başlık = başlık.into();
+        self
+    }
+
+    pub fn duyarlı_boyut(mut self, duyarlı: bool) -> Self {
+        self.duyarlı_boyut = duyarlı;
         self
     }
 
