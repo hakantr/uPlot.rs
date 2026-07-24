@@ -938,6 +938,18 @@
       "rust_karşılığı": "mass_spectrum_kartı kaynak CSV ayrıştırması",
       "durum": "tam_kanıtlı",
       "test": "src/kart/mass_spectrum.rs"
+    },
+    {
+      "kaynak_yolu": "datumsPlugin keydown 1/2 and Escape",
+      "rust_karşılığı": "Grafik::ölçüm_datumunu_ayarla / ölçüm_datumlarını_temizle",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/measure_datums.rs"
+    },
+    {
+      "kaynak_yolu": "drawDatum and drawDelta hooks",
+      "rust_karşılığı": "Grafik ölçüm datum sahne katmanı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/measure_datums.rs"
     }
   ]
 }

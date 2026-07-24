@@ -23,40 +23,41 @@ use uplot_rs::{
     Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ, HighLowBandsÖrneği,
     LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ, LOG_SCALES_KART_TANIM_ÖRNEĞİ,
     LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği, LinePathsÖrneği, LogScales2Örneği,
-    LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
-    MONTHS_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
-    NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
-    POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
-    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
-    SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
-    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ,
-    SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS,
-    STREAM_DATA_KART_TANIM_ÖRNEĞİ, SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ,
-    SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı,
-    SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği,
-    SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu,
-    SyncCursorÖrneği, SyncYZeroAşaması, THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ,
-    TIME_PERIODS_KART_TANIM_ÖRNEĞİ, TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,
-    TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ, TIMEZONES_DST_KART_TANIM_ÖRNEĞİ,
-    TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ, TOOLTIPS_KART_TANIM_ÖRNEĞİ, TRENDLINES_KART_TANIM_ÖRNEĞİ,
-    ThinBarsÖrneği, TimePeriodsÖrneği, TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği,
-    TimezonesDstÖrneği, UPDATE_CURSOR_SELECT_RESIZE_ARALIK_MS,
-    UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ, UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ,
-    Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ, Y_SHIFTED_SERIES_ARALIK_MS, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ,
-    YShiftedSeriesAkışı, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, annotations_kartı, arcsinh_scales_kartı, area_fill_kartı,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ,
+    NO_DATA_KART_TANIM_ÖRNEĞİ, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
+    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği,
+    PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
+    SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
+    SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
+    STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS, STREAM_DATA_KART_TANIM_ÖRNEĞİ,
+    SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
+    ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı, SmoothingÖrneği,
+    SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği,
+    StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği,
+    SyncYZeroAşaması, THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
+    TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ, TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
+    TIMEZONES_DST_KART_TANIM_ÖRNEĞİ, TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ,
+    TOOLTIPS_KART_TANIM_ÖRNEĞİ, TRENDLINES_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği, TimePeriodsÖrneği,
+    TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği, TimezonesDstÖrneği,
+    UPDATE_CURSOR_SELECT_RESIZE_ARALIK_MS, UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
+    UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ, Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ,
+    Y_SHIFTED_SERIES_ARALIK_MS, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ, YShiftedSeriesAkışı,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    annotations_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
+    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
     bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
     cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
     dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
     grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, missing_data_null_kartı,
-    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    months_rusça_kartı, nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri,
-    path_gap_clip_kartı, pixel_align_kartı, points_kartı, resize_kartı, scale_padding_kartı,
-    scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı,
-    sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
+    log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
+    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
+    months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı, no_data_kartı,
+    ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı, resize_kartı,
+    scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
+    soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
     stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
     sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
     timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
@@ -123,6 +124,7 @@ enum KartKimliği {
     LogScales(LogScalesÖrneği),
     LogScales2(LogScales2Örneği),
     MassSpectrum,
+    MeasureDatums,
     MissingDataNull,
     MissingDataXGap,
     DependentScale,
@@ -196,6 +198,7 @@ impl KartKimliği {
             Self::LogScales(örnek) => örnek.başlık(),
             Self::LogScales2(örnek) => örnek.başlık(),
             Self::MassSpectrum => "Mass Spectrum",
+            Self::MeasureDatums => "Measure / Datums",
             Self::MissingDataNull => "Missing Data · null values",
             Self::MissingDataXGap => "Missing Data · adjacent X gap",
             Self::DependentScale => "Derived Scale · °F / °C",
@@ -339,6 +342,7 @@ impl KartKimliği {
             Self::MassSpectrum => {
                 "mass-spectrum.html · 41.986 kaynak CSV noktası · özel düz Y aralığı"
             }
+            Self::MeasureDatums => "measure-datums.html · 1/2 datum · Esc temizle",
             Self::MissingDataNull | Self::MissingDataXGap => {
                 "missing-data.html · resmî veri ve iki kaynak alt grafiği"
             }
@@ -416,6 +420,7 @@ impl KartKimliği {
             Self::LogScales(_) => LOG_SCALES_KART_TANIM_ÖRNEĞİ,
             Self::LogScales2(_) => LOG_SCALES2_KART_TANIM_ÖRNEĞİ,
             Self::MassSpectrum => MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ,
+            Self::MeasureDatums => MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
             Self::MissingDataNull | Self::MissingDataXGap => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
             Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::ArcSinhScales => ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
@@ -485,6 +490,7 @@ impl KartKimliği {
             Self::LogScales(_) => "src/kart/log_scales.rs",
             Self::LogScales2(_) => "src/kart/log_scales2.rs",
             Self::MassSpectrum => "src/kart/mass_spectrum.rs",
+            Self::MeasureDatums => "src/kart/measure_datums.rs",
             Self::MissingDataNull | Self::MissingDataXGap => "src/kart/missing_data.rs",
             Self::DependentScale => "src/kart/dependent_scale.rs",
             Self::ArcSinhScales => "src/kart/arcsinh_scales.rs",
@@ -1413,6 +1419,7 @@ fn grafik_oluştur(
         KartKimliği::LogScales(örnek) => log_scales_kartı(örnek),
         KartKimliği::LogScales2(örnek) => log_scales2_kartı(örnek),
         KartKimliği::MassSpectrum => mass_spectrum_kartı(),
+        KartKimliği::MeasureDatums => measure_datums_kartı(),
         KartKimliği::MissingDataNull => missing_data_null_kartı(),
         KartKimliği::MissingDataXGap => missing_data_x_boşluğu_kartı(),
         KartKimliği::DependentScale => dependent_scale_kartı(),
@@ -1653,6 +1660,7 @@ impl Render for ChartListesi {
             KartKimliği::MassSpectrum => {
                 "41.986 kaynak CSV noktası · m/z / relative abundance (%)".to_string()
             }
+            KartKimliği::MeasureDatums => "5 nokta · 1/2 datum · Esc temizle".to_string(),
             KartKimliği::MissingDataNull => "200 nokta × 3 seri · % + MB".to_string(),
             KartKimliği::MissingDataXGap => "8 nokta × 1 seri · 2 yol parçası".to_string(),
             KartKimliği::DependentScale => "7 nokta × °F veri · türetilmiş °C ekseni".to_string(),
@@ -1949,6 +1957,20 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::MassSpectrum, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "measure-datums",
+                    "Measure / Datums",
+                    "measure-datums",
+                    aktif_kart == KartKimliği::MeasureDatums,
+                    "1/2: datum · Esc: temizle",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::MeasureDatums, cx);
                 })),
             )
             .children(FocusÖrneği::TÜMÜ.into_iter().map(|örnek| {

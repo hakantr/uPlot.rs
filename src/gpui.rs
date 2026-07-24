@@ -827,7 +827,23 @@ impl Render for GpuiGrafik {
                 yüzey.cursor_move()
             })
             .on_key_down(cx.listener(|bu, olay: &KeyDownEvent, _, cx| {
-                if olay.keystroke.key.as_str() == "space" {
+                let tuş = olay.keystroke.key.as_str();
+                if tuş == "escape" && bu.grafik.ölçüm_datumları_etkin() {
+                    bu.grafik.ölçüm_datumlarını_temizle();
+                    cx.stop_propagation();
+                    GpuiGrafik::bildir(cx);
+                } else if matches!(tuş, "1" | "2")
+                    && bu.grafik.ölçüm_datumları_etkin()
+                    && let Some(imleç) = bu.imleç.as_ref()
+                {
+                    let (sol, sağ, üst, alt) = bu.çizim_alanı();
+                    let yatay = f64::from((imleç.fare.x - sol) / (sağ - sol));
+                    let dikey = f64::from((imleç.fare.y - üst) / (alt - üst));
+                    let datum = if tuş == "1" { 1 } else { 2 };
+                    bu.grafik.ölçüm_datumunu_ayarla(datum, yatay, dikey);
+                    cx.stop_propagation();
+                    GpuiGrafik::bildir(cx);
+                } else if tuş == "space" {
                     bu.boşluk_basılı = true;
                     bu.seçim = None;
                     bu.açıklama_seçimi = false;
@@ -908,6 +924,7 @@ impl Render for GpuiGrafik {
                 GpuiGrafik::imleç_bildir(cx);
             }))
             .on_scroll_wheel(cx.listener(|bu, olay: &ScrollWheelEvent, _, cx| {
+                bu.grafik.ölçüm_datumlarını_temizle();
                 bu.tekerlek_yakınlaştır(olay);
                 GpuiGrafik::bildir(cx);
             }))
@@ -951,6 +968,7 @@ impl Render for GpuiGrafik {
                         bu.açıklama_seçimi = false;
                         bu.imleç = None;
                     } else if olay.click_count >= 2 && ayarlar.çift_tıkla_tam_görünüm {
+                        bu.grafik.ölçüm_datumlarını_temizle();
                         bu.grafik.tam_görünüm();
                         bu.seçim = None;
                         bu.açıklama_seçimi = false;

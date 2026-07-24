@@ -867,6 +867,7 @@ pub struct GrafikSeçenekleri {
     pub bantlar: Vec<SeriBandı>,
     pub nokta_katmanları: Vec<NoktaKatmanı>,
     pub açıklama_düzeni: Option<AçıklamaDüzeni>,
+    pub ölçüm_datumları: bool,
     pub rüzgar_yönü_düzeni: Option<RüzgarYönüDüzeni>,
     pub çizim_kancaları: Option<ÇizimKancasıDüzeni>,
     pub odak: Option<OdakDüzeni>,
@@ -947,6 +948,7 @@ impl GrafikSeçenekleri {
             bantlar: Vec::new(),
             nokta_katmanları: Vec::new(),
             açıklama_düzeni: None,
+            ölçüm_datumları: false,
             rüzgar_yönü_düzeni: None,
             çizim_kancaları: None,
             odak: None,
@@ -1125,6 +1127,11 @@ impl GrafikSeçenekleri {
 
     pub fn açıklamalar(mut self, düzen: AçıklamaDüzeni) -> Self {
         self.açıklama_düzeni = Some(düzen);
+        self
+    }
+
+    pub fn ölçüm_datumları(mut self, etkin: bool) -> Self {
+        self.ölçüm_datumları = etkin;
         self
     }
 

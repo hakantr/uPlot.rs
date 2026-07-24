@@ -162,6 +162,10 @@
         <small>mass-spectrum</small>
         <div class="durum">41.986 kaynak CSV noktası · m/z</div>
       </article>
+      <article class="kart" data-kart="measure-datums" aria-current="false" tabindex="0">
+        <strong>Measure / Datums</strong><small>measure-datums</small>
+        <div class="durum">1/2: datum yerleştir · Esc: temizle</div>
+      </article>
       <article class="kart" data-kart="scale-padding" aria-current="false" tabindex="0">
         <strong>Scale Padding</strong>
         <small>scale-padding</small>
@@ -343,6 +347,7 @@
       add_del_series_kart_tanim_ornegi,
       annotations_kart_tanim_ornegi,
       mass_spectrum_kart_tanim_ornegi,
+      measure_datums_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
       scale_padding_kart_tanim_ornegi,
@@ -500,6 +505,17 @@
         tanımYolu: "src/kart/mass_spectrum.rs",
         seriler: [{ etiket: "Intensity", renk: "#305CDE" }],
         yardım: "Sürükle: seç · tekerlek/dokunma: yakınlaştır ve taşı · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
+      "measure-datums": {
+        başlık: "Measure / Datums",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/measure-datums.html">measure-datums.html</a>
+          <br>Grafiğe odaklanın; imleçte 1 ve 2 ile datum yerleştirin, Esc ile temizleyin.`,
+        tanım: () => measure_datums_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/measure_datums.rs",
+        seriler: [{ etiket: "Data 1", renk: "red" }],
+        yardım: "1: mavi datum · 2: turuncu datum ve dx/dy · Esc, tekerlek veya çift tık: temizle",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       },
@@ -2232,6 +2248,7 @@
     let eksenSürükleme = null;
     let boşlukBasılı = false;
     let grafikÜzerinde = false;
+    let sonDatumOranı = null;
     const dokunmalar = new Map();
     let kıstırma = null;
     let autosizeZamanlayıcı = null;
@@ -3215,6 +3232,13 @@
     }
 
     chart.addEventListener("pointermove", olay => {
+      {
+        const { x, y, view } = svgKonumu(olay);
+        const alan = çizimAlanı(view);
+        sonDatumOranı = x >= alan.sol && x <= alan.sağ && y >= alan.üst && y <= alan.alt
+          ? [(x - alan.sol) / alan.genişlik, (y - alan.üst) / alan.yükseklik]
+          : null;
+      }
       if (olay.pointerType === "touch") {
         if (!dokunmalar.has(olay.pointerId)) return;
         dokunmalar.set(olay.pointerId, { x: olay.clientX, y: olay.clientY });
@@ -3440,6 +3464,18 @@
       chart.querySelector("#timeline-vurgu")?.setAttribute("visibility", "hidden");
     });
     document.addEventListener("keydown", olay => {
+      if (aktifKart === "measure-datums" && oturum && olay.target !== açıklamaMetni) {
+        if (olay.key === "Escape") {
+          if (oturum.olcum_datumlarini_temizle()) çiz();
+          olay.preventDefault();
+          return;
+        }
+        if ((olay.key === "1" || olay.key === "2") && sonDatumOranı) {
+          if (oturum.olcum_datumu_ayarla(Number(olay.key), ...sonDatumOranı)) çiz();
+          olay.preventDefault();
+          return;
+        }
+      }
       if (olay.code !== "Space") return;
       if (olay.target === açıklamaMetni) return;
       boşlukBasılı = true;
@@ -3473,10 +3509,12 @@
       taşımaİmleciniGüncelle();
     });
     chart.addEventListener("dblclick", () => {
+      if (aktifKart === "measure-datums") oturum?.olcum_datumlarini_temizle();
       if (etkileşimler.çiftTık && oturum?.tam_gorunum()) çiz();
     });
 
     chart.addEventListener("wheel", olay => {
+      if (aktifKart === "measure-datums" && oturum?.olcum_datumlarini_temizle()) çiz();
       if (!etkileşimler.tekerlek || olay.deltaY === 0) return;
       const { x, y, view } = svgKonumu(olay);
       const alan = çizimAlanı(view);

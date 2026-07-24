@@ -1,0 +1,23 @@
+id = "measure-datums"
+kaynak = "../uPlot/demos/measure-datums.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/measure_datums.rs#measure_datums_kartı"
+viewport = [800, 400]
+durum = "klavye_ile_iki_olcum_datumu"
+
+[veri]
+x = [0, 1, 2, 3, 4]
+y = [0, 100, 30, 25, 7]
+
+[davranış]
+birinci_tuş = "1"
+ikinci_tuş = "2"
+temizleme = ["Escape", "wheel", "double-click"]
+birinci_renk = "blue"
+ikinci_renk = "orange"
+delta = "dx ve dy üç anlamlı basamak"
+
+[kanıt]
+örnek = "examples/measure_datums.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

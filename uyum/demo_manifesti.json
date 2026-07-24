@@ -3551,6 +3551,65 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "tam_kanıtlı"
       }
+    },
+    {
+      "id": "measure-datums",
+      "başlık": "Measure / Datums",
+      "kaynak": "demos/measure-datums.html",
+      "kaynak_sha256": "786a15ef41df4aad0c5ca5ee3630f7088d906fd2feb75706ab8d1868d15d89a2",
+      "fixture": "src/kart/measure_datums.rs#measure_datums_kartı",
+      "örnek": "examples/measure_datums.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/measure-datums.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/measure_datums.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin",
+          "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin",
+          "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "kartta_etkin",
+          "dinamik-eksen-izgara": "kartta_etkin",
+          "surekli-imlec-izleme": "kartta_etkin",
+          "canli-coklu-seri-lejanti": "kartta_etkin",
+          "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "kartta_etkin",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {
+          "kosullu-bos-ve-dolu-noktalar": "Kaynak demo nokta işaretleri tanımlamaz.",
+          "cizim-alani-kirpmasi": "Datum geometrileri kaynak çizim alanı koordinatlarında üretilir."
+        }
+      },
+      "sahip_faz": 3,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-exact-five-point-data",
+        "source-exact-keyboard-datums",
+        "source-exact-crosshair-circles",
+        "source-exact-delta-label",
+        "source-exact-clear-events",
+        "gpui-wasm-parity",
+        "common-interaction-profile",
+        "panic-free-datum-state"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "tam_kanıtlı"
+      }
     }
   ]
 }

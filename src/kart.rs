@@ -26,6 +26,7 @@ mod line_paths;
 mod log_scales;
 mod log_scales2;
 mod mass_spectrum;
+mod measure_datums;
 mod missing_data;
 mod months;
 mod nice_scale;
@@ -135,6 +136,7 @@ pub use log_scales2::{
     LOG_SCALES2_KANIT_TOHUMU, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LogScales2Örneği, log_scales2_kartı,
 };
 pub use mass_spectrum::{MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, mass_spectrum_kartı};
+pub use measure_datums::{MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ, measure_datums_kartı};
 pub use missing_data::{
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
 };

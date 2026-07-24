@@ -73,6 +73,7 @@ pub struct Grafik {
     elle_x_aralığı: Option<Aralık>,
     elle_y_aralıkları: BTreeMap<String, Aralık>,
     eksen_sürükleme: Option<EksenSürüklemeBaşlangıcı>,
+    ölçüm_datumları: [Option<(f64, f64)>; 2],
 }
 
 impl Grafik {
@@ -243,6 +244,7 @@ impl Grafik {
             elle_x_aralığı: None,
             elle_y_aralıkları: BTreeMap::new(),
             eksen_sürükleme: None,
+            ölçüm_datumları: [None, None],
         })
     }
 
@@ -260,6 +262,47 @@ impl Grafik {
                 .copied()
                 .or_else(|| self.etkileşim.görünür_y()),
         )
+    }
+
+    pub fn ölçüm_datumunu_ayarla(
+        &mut self,
+        datum: usize,
+        yatay_oran: f64,
+        dikey_oran: f64,
+    ) -> bool {
+        if !self.seçenekler.ölçüm_datumları
+            || !(1..=2).contains(&datum)
+            || !yatay_oran.is_finite()
+            || !dikey_oran.is_finite()
+            || !(0.0..=1.0).contains(&yatay_oran)
+            || !(0.0..=1.0).contains(&dikey_oran)
+        {
+            return false;
+        }
+        let x_aralığı = self.görünür_x_aralığı();
+        let x = x_aralığı.en_az + yatay_oran * (x_aralığı.en_çok - x_aralığı.en_az);
+        let y_aralığı = self.görünür_y_aralığı();
+        let y = y_aralığı.en_çok - dikey_oran * (y_aralığı.en_çok - y_aralığı.en_az);
+        self.ölçüm_datumları
+            .get_mut(datum - 1)
+            .is_some_and(|hedef| {
+                *hedef = Some((x, y));
+                true
+            })
+    }
+
+    pub fn ölçüm_datumlarını_temizle(&mut self) -> bool {
+        let değişti = self.ölçüm_datumları.iter().any(Option::is_some);
+        self.ölçüm_datumları = [None, None];
+        değişti
+    }
+
+    pub const fn ölçüm_datumları(&self) -> [Option<(f64, f64)>; 2] {
+        self.ölçüm_datumları
+    }
+
+    pub const fn ölçüm_datumları_etkin(&self) -> bool {
+        self.seçenekler.ölçüm_datumları
     }
 
     pub fn görünür_x_aralığı(&self) -> Aralık {
@@ -2818,6 +2861,62 @@ impl Grafik {
             }
         }
 
+        if self.seçenekler.ölçüm_datumları {
+            let datum_noktası = |(x, y): (f64, f64)| {
+                Nokta::yeni(
+                    self.x_konumu(x_aralığı, x, sol, genişlik),
+                    alt - self.y_konumu(
+                        &self.seçenekler.birincil_y_ölçeği,
+                        y_aralığı,
+                        y,
+                        0.0,
+                        yükseklik,
+                    ),
+                )
+            };
+            for (datum, renk) in self.ölçüm_datumları.into_iter().zip(["blue", "orange"]) {
+                let Some(değer) = datum else {
+                    continue;
+                };
+                let merkez = datum_noktası(değer);
+                sahne.ekle(Komut::Daire {
+                    merkez,
+                    yarıçap: 10.0,
+                    dolgu: "#00000000".to_string(),
+                    çizgi: renk.to_string(),
+                    kalınlık: 2.0,
+                });
+                sahne.ekle(Komut::Çizgi {
+                    başlangıç: Nokta::yeni(merkez.x - 15.0, merkez.y),
+                    bitiş: Nokta::yeni(merkez.x + 15.0, merkez.y),
+                    renk: renk.to_string(),
+                    kalınlık: 2.0,
+                });
+                sahne.ekle(Komut::Çizgi {
+                    başlangıç: Nokta::yeni(merkez.x, merkez.y - 15.0),
+                    bitiş: Nokta::yeni(merkez.x, merkez.y + 15.0),
+                    renk: renk.to_string(),
+                    kalınlık: 2.0,
+                });
+            }
+            if let (Some((x1, y1)), Some((x2, y2))) =
+                (self.ölçüm_datumları[0], self.ölçüm_datumları[1])
+            {
+                let orta = datum_noktası(((x1 + x2) / 2.0, (y1 + y2) / 2.0));
+                sahne.ekle(Komut::Metin {
+                    konum: orta,
+                    içerik: format!(
+                        "dx: {}, dy: {}",
+                        üç_anlamlı_basamak(x2 - x1),
+                        üç_anlamlı_basamak(y2 - y1)
+                    ),
+                    renk: "black".to_string(),
+                    boyut: 12.0,
+                    hiza: MetinHizası::Orta,
+                });
+            }
+        }
+
         if let Some(düzen) = self.seçenekler.rüzgar_yönü_düzeni.as_ref() {
             self.rüzgar_yönlerini_çiz(
                 &mut sahne,
@@ -4724,6 +4823,18 @@ fn eksen_bölmeleri_artımla(aralık: Aralık, artım: f64) -> Vec<f64> {
         değer += artım;
     }
     bölmeler
+}
+
+fn üç_anlamlı_basamak(değer: f64) -> String {
+    if değer == 0.0 {
+        return "0.00".to_string();
+    }
+    let basamak = 2 - değer.abs().log10().floor() as i32;
+    if basamak > 0 {
+        format!("{değer:.basamak$}", basamak = basamak as usize)
+    } else {
+        format!("{:.0}", değer / 10_f64.powi(-basamak)) + &"0".repeat((-basamak) as usize)
+    }
 }
 
 fn artıma_yuvarla(değer: f64, artım: f64) -> f64 {
