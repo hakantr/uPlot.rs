@@ -27,7 +27,7 @@ boşluk_sol_sürükleme_taşıma = true
 görünüm_geçmişi = true
 
 [kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+ortak_çekirdek = "src/kart/zoom_wheel.rs#zoom_wheel_kartı"
+wasm_testi = "wasm/src/lib.rs#zoom_wheel_wasm_kaynak_serilerini_üretir"
 svg = "target/zoom-wheel.svg"
 sunum = "Resize dahil tüm kartlarda ortak ve tercihe bağlı; ayrı katalog kartı yok"

@@ -26,7 +26,7 @@ seçim_yakınlaştır = true
 görünüm_geçmişi = true
 
 [kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+ortak_çekirdek = "src/kart/zoom_touch.rs#zoom_touch_kartı"
+wasm_testi = "wasm/src/lib.rs#zoom_touch_wasm_kıstırmayı_çekirdekte_uygular"
 svg = "target/zoom-touch.svg"
 sunum = "Tüm kartlarda ortak touch davranışı; ayrı katalog kartı yok"
