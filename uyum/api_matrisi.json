@@ -878,6 +878,36 @@
       "rust_karşılığı": "Grafik::elle_y_aralıkları",
       "durum": "tam_kanıtlı",
       "test": "src/kart/y_scale_drag.rs"
+    },
+    {
+      "kaynak_yolu": "mode.data(data)",
+      "rust_karşılığı": "YShiftedSeriesAkışı kaydırılmış seri geometrisi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_shifted_series.rs"
+    },
+    {
+      "kaynak_yolu": "series.fillTo(u, seriesIdx, dataMin, dataMax, band, scale)",
+      "rust_karşılığı": "SeriSeçenekleri::dolgu_tabanı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_shifted_series.rs"
+    },
+    {
+      "kaynak_yolu": "series.value(u, rawValue, seriesIdx, idx)",
+      "rust_karşılığı": "SeriSeçenekleri::lejant_değerleri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_shifted_series.rs"
+    },
+    {
+      "kaynak_yolu": "axis.values shifted modulo/core labels",
+      "rust_karşılığı": "GrafikSeçenekleri::y_özel_etiketler",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_shifted_series.rs"
+    },
+    {
+      "kaynak_yolu": "setInterval setData(mode.data(data), 2000)",
+      "rust_karşılığı": "YShiftedSeriesAkışı::ilerlet",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_shifted_series.rs"
     }
   ]
 }

@@ -1,0 +1,32 @@
+id = "y-shifted-series"
+kaynak = "../uPlot/demos/y-shifted-series.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/y_shifted_series.rs#y_shifted_series_kartı"
+viewport = [1920, 600]
+durum = "aynı_ham_veri_normal_ve_kaydırılmış_kipte"
+
+[veri]
+x_başlangıç = 1
+x_bitiş = 30
+seri_sayısı = 3
+ham_değer_aralığı = [0, 10]
+kanıt_tohumu = 1498630214
+
+[kipler]
+kaydırılmış_y_aralığı = [0, 30]
+kaydırmalar = [0, 10, 20]
+normal_y_aralığı = [0, 10]
+dolgu_tabanları_kaydırılmış = [0, 10, 20]
+dolgu_tabanları_normal = [0, 0, 0]
+değişim_ms = 2000
+
+[seriler]
+birinci = "kırmızı_çizgi"
+ikinci = "yeşil_çizgi"
+üçüncü = "mavi_çubuk"
+lejant = "ham_değerleri_korur"
+
+[kanıt]
+örnek = "examples/y_shifted_series.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

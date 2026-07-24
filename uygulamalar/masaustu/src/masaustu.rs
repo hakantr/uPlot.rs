@@ -42,6 +42,7 @@ use uplot_rs::{
     TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği, TimezonesDstÖrneği,
     UPDATE_CURSOR_SELECT_RESIZE_ARALIK_MS, UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
     UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ, Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ,
+    Y_SHIFTED_SERIES_ARALIK_MS, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ, YShiftedSeriesAkışı,
     ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
     add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
     arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
@@ -59,8 +60,8 @@ use uplot_rs::{
     sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
     timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
     tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, y_scale_drag_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü,
-    ÇubukÖrneği,
+    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, zoom_touch_kartı,
+    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -105,6 +106,7 @@ enum KartKimliği {
     UpdateCursorSelectResize,
     WindDirection,
     YScaleDrag,
+    YShiftedSeries,
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -175,6 +177,7 @@ impl KartKimliği {
             Self::UpdateCursorSelectResize => "Maintain loc of cursor/select/hoverPts",
             Self::WindDirection => "Wind Direction",
             Self::YScaleDrag => "Draggable x & y scales",
+            Self::YShiftedSeries => "Y-shifted Series",
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -295,6 +298,9 @@ impl KartKimliği {
             Self::YScaleDrag => {
                 "y-scale-drag.html · bağımsız X/Y eksen sürükleme · Shift ile büyüt/daralt"
             }
+            Self::YShiftedSeries => {
+                "y-shifted-series.html · aynı ham veriyle 2 sn normal/kaydırılmış kip"
+            }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -383,6 +389,7 @@ impl KartKimliği {
             Self::UpdateCursorSelectResize => UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
             Self::WindDirection => WIND_DIRECTION_KART_TANIM_ÖRNEĞİ,
             Self::YScaleDrag => Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ,
+            Self::YShiftedSeries => Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -449,6 +456,7 @@ impl KartKimliği {
             Self::UpdateCursorSelectResize => "src/kart/update_cursor_select_resize.rs",
             Self::WindDirection => "src/kart/wind_direction.rs",
             Self::YScaleDrag => "src/kart/y_scale_drag.rs",
+            Self::YShiftedSeries => "src/kart/y_shifted_series.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -513,6 +521,7 @@ pub struct ChartListesi {
     stream_data_akışı: Option<StreamDataAkışı>,
     soft_minmax_akışı: Option<SoftMinMaxAkışı>,
     boyut_senkron_akışı: Option<BoyutSenkronAkışı>,
+    y_shifted_series_akışı: Option<YShiftedSeriesAkışı>,
     soft_minmax_çalışıyor: bool,
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grubu: SyncCursorGrubu,
@@ -586,6 +595,7 @@ impl ChartListesi {
             stream_data_akışı: None,
             soft_minmax_akışı: None,
             boyut_senkron_akışı: None,
+            y_shifted_series_akışı: None,
             soft_minmax_çalışıyor: false,
             sync_cursor_grafikleri: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
@@ -843,6 +853,17 @@ impl ChartListesi {
             matches!(kart, KartKimliği::SoftMinMax(_)).then(SoftMinMaxAkışı::yeni);
         self.boyut_senkron_akışı =
             (kart == KartKimliği::UpdateCursorSelectResize).then(BoyutSenkronAkışı::yeni);
+        self.y_shifted_series_akışı = if kart == KartKimliği::YShiftedSeries {
+            match YShiftedSeriesAkışı::yeni() {
+                Ok(akış) => Some(akış),
+                Err(hata) => {
+                    self.hata = Some(format!("Y-shifted Series başlatılamadı: {hata}"));
+                    None
+                }
+            }
+        } else {
+            None
+        };
         self.soft_minmax_çalışıyor = false;
         let etkileşimler = kart.etkileşimler();
         self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
@@ -1081,6 +1102,55 @@ impl ChartListesi {
                     }
                 }
             }));
+        } else if kart == KartKimliği::YShiftedSeries {
+            self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
+                loop {
+                    cx.background_executor()
+                        .timer(Duration::from_millis(Y_SHIFTED_SERIES_ARALIK_MS))
+                        .await;
+                    let devam = bu
+                        .update(cx, |bu, cx| {
+                            if bu.aktif_kart != KartKimliği::YShiftedSeries {
+                                return false;
+                            }
+                            let sonuç = bu.y_shifted_series_akışı.as_mut().map_or_else(
+                                || {
+                                    Err(UplotHatası::GeçersizKaynakVeri {
+                                        varlık: "YShiftedSeriesAkışı",
+                                        açıklama: "masaüstü akış durumu bulunamadı".to_string(),
+                                    })
+                                },
+                                YShiftedSeriesAkışı::ilerlet,
+                            );
+                            let (seçenekler, veri) = match sonuç {
+                                Ok(kart) => kart,
+                                Err(hata) => {
+                                    bu.hata = Some(format!("Y-shifted Series üretilemedi: {hata}"));
+                                    return false;
+                                }
+                            };
+                            let yeni_grafik = match Grafik::yeni(seçenekler, veri) {
+                                Ok(grafik) => grafik,
+                                Err(hata) => {
+                                    bu.hata = Some(format!("Y-shifted Series kurulamadı: {hata}"));
+                                    return false;
+                                }
+                            };
+                            let Some(grafik) = &bu.grafik else {
+                                return false;
+                            };
+                            grafik.update(cx, |grafik, cx| {
+                                grafik.grafiği_ayarla(yeni_grafik, cx);
+                            });
+                            bu.hata = None;
+                            true
+                        })
+                        .unwrap_or(false);
+                    if !devam {
+                        break;
+                    }
+                }
+            }));
         } else if matches!(kart, KartKimliği::SyncYZero(_)) {
             self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
                 for aşama in [SyncYZeroAşaması::Simetrik, SyncYZeroAşaması::SıfırHizalı] {
@@ -1310,6 +1380,7 @@ fn grafik_oluştur(
         KartKimliği::UpdateCursorSelectResize => update_cursor_select_resize_kartı(800),
         KartKimliği::WindDirection => wind_direction_kartı(),
         KartKimliği::YScaleDrag => y_scale_drag_kartı(),
+        KartKimliği::YShiftedSeries => y_shifted_series_kartı(),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -1624,6 +1695,9 @@ impl Render for ChartListesi {
             }
             KartKimliği::YScaleDrag => {
                 "5 nokta × 2 bağımsız Y ölçeği · eksenleri sürükleyin".to_string()
+            }
+            KartKimliği::YShiftedSeries => {
+                "30 nokta × 3 seri · 2 sn normal / +0,+10,+20 kaydırılmış kip".to_string()
             }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
@@ -1984,6 +2058,20 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::YScaleDrag, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "y-shifted-series",
+                    "Y-shifted Series",
+                    "y-shifted-series",
+                    aktif_kart == KartKimliği::YShiftedSeries,
+                    "30×3 · her 2 sn normal / kaydırılmış",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::YShiftedSeries, cx);
                 })),
             )
             .child(

@@ -535,6 +535,13 @@ impl Grafik {
         } else {
             64.0 + sol_eksen_sayısı as f32 * 56.0
         };
+        if let Some(genişlik) = self.seçenekler.birincil_y_eksen_genişliği {
+            if self.seçenekler.birincil_y_sağda {
+                sağ_pay = genişlik + sağ_eksen_sayısı as f32 * 56.0;
+            } else {
+                sol_pay = genişlik + sol_eksen_sayısı as f32 * 56.0;
+            }
+        }
         if self.seçenekler.timeline_düzeni.is_some() {
             // Kaynak timelinePlugin axes[1].size=70 ve gap=15 kullanır.
             sol_pay = sol_pay.max(85.0);

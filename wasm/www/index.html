@@ -366,6 +366,7 @@
       update_cursor_select_resize_kart_tanim_ornegi,
       wind_direction_kart_tanim_ornegi,
       y_scale_drag_kart_tanim_ornegi,
+      y_shifted_series_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1644,6 +1645,31 @@
         { etiket: "Amount", renk: "blue" },
       ],
       yardım: "Kırmızı, mavi veya X eksenini sürükle · Shift basılıyken ölçeği büyüt/daralt",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
+    document.querySelector('[data-kart="y-scale-drag"]')?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="y-shifted-series" aria-current="false" tabindex="0">
+        <strong>Y-shifted Series</strong><small>y-shifted-series</small>
+        <div class="durum">30×3 · her 2 sn normal / kaydırılmış</div>
+      </article>`
+    );
+    kartlar["y-shifted-series"] = {
+      başlık: "Y-shifted Series",
+      kaynak: `Kaynak:
+        <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/y-shifted-series.html">y-shifted-series.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">src/uPlot.js</a>
+        <br>Resmî 30 noktalı üç seri aynı ham veri korunarak her iki saniyede
+        normal ve +0/+10/+20 kaydırılmış kip arasında değiştirilir.`,
+      tanım: () => y_shifted_series_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/y_shifted_series.rs",
+      seriler: [
+        { etiket: "Core #1", renk: "red" },
+        { etiket: "Core #2", renk: "green" },
+        { etiket: "Core #3", renk: "blue" },
+      ],
+      yardım: "Çizgi, çizgi ve çubuk · kip değişirken lejant ham 0…10 değerlerini korur",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
     };
@@ -3739,6 +3765,22 @@
             oturum.bosluklari_birlestir_ayarla(boşluklarıBirleştir);
             çiz();
           }, 1000);
+        } else if (kimlik === "y-shifted-series") {
+          alignDataZamanlayıcı = setInterval(() => {
+            if (aktifKart !== kimlik || !oturum) {
+              clearInterval(alignDataZamanlayıcı);
+              alignDataZamanlayıcı = null;
+              return;
+            }
+            try {
+              if (oturum.y_shifted_series_ilerlet()) çiz();
+              hata.textContent = "";
+            } catch (neden) {
+              hata.textContent = `Y-shifted Series güncellenemedi: ${String(neden)}`;
+              clearInterval(alignDataZamanlayıcı);
+              alignDataZamanlayıcı = null;
+            }
+          }, 2000);
         } else if (kimlik.startsWith("pixel-align-")) {
           let pixelAlignAdımı = 140;
           alignDataZamanlayıcı = setInterval(() => {

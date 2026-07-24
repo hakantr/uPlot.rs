@@ -743,6 +743,8 @@ pub struct GrafikSeçenekleri {
     pub birincil_y_özel_etiketler: Vec<(f64, String)>,
     pub birincil_y_ızgara_kesik: Option<f32>,
     pub birincil_y_eksen_rengi: String,
+    /// uPlot `axes[1].size` karşılığı sabit Y ekseni payı.
+    pub birincil_y_eksen_genişliği: Option<f32>,
     pub x_eksen_değer_çarpanı: f64,
     pub otomatik_x_sağ_pay: bool,
     pub otomatik_y_eksen_genişliği: bool,
@@ -820,6 +822,7 @@ impl GrafikSeçenekleri {
             birincil_y_özel_etiketler: Vec::new(),
             birincil_y_ızgara_kesik: None,
             birincil_y_eksen_rengi: "#4b5563".to_string(),
+            birincil_y_eksen_genişliği: None,
             x_eksen_değer_çarpanı: 1.0,
             otomatik_x_sağ_pay: false,
             otomatik_y_eksen_genişliği: false,
@@ -1126,6 +1129,13 @@ impl GrafikSeçenekleri {
 
     pub fn birincil_y_eksen_rengi(mut self, renk: impl Into<String>) -> Self {
         self.birincil_y_eksen_rengi = renk.into();
+        self
+    }
+
+    pub fn birincil_y_eksen_genişliği(mut self, genişlik: f32) -> Self {
+        if genişlik.is_finite() && genişlik >= 0.0 {
+            self.birincil_y_eksen_genişliği = Some(genişlik);
+        }
         self
     }
 
