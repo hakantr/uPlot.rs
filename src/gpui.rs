@@ -13,8 +13,8 @@ use ::gpui::{
 };
 
 use crate::{
-    DağılımVuruşu, DoğrusalGradyan, Grafik, HizalıVeri, Komut, MetinHizası, Nokta, Sahne,
-    SeriSeçenekleri, SeçimEylemi, TekerlekEkseni, UplotHatası, YüzeyDikdörtgeni,
+    AçıklamaVuruşu, DağılımVuruşu, DoğrusalGradyan, Grafik, HizalıVeri, Komut, MetinHizası, Nokta,
+    Sahne, SeriSeçenekleri, SeçimEylemi, TekerlekEkseni, UplotHatası, YüzeyDikdörtgeni,
 };
 
 #[derive(Clone)]
@@ -53,6 +53,7 @@ pub struct GpuiGrafik {
     odak: Option<FocusHandle>,
     imleç_kilitli: bool,
     eksen_üzerinde: bool,
+    açıklama_vuruşu: Option<AçıklamaVuruşu>,
 }
 
 struct GpuiAnaYüzey {
@@ -309,6 +310,7 @@ impl GpuiGrafik {
             odak: None,
             imleç_kilitli: false,
             eksen_üzerinde: false,
+            açıklama_vuruşu: None,
         }
     }
 
@@ -380,6 +382,7 @@ impl GpuiGrafik {
             .map_or(-10.0, |oran| {
                 üst + oran.clamp(0.0, 1.0) as f32 * (alt - üst)
             });
+        self.açıklama_vuruşu = None;
         self.imleç = Some(İmleçDurumu {
             fare: Nokta::yeni(sol + x_oranı as f32 * (sağ - sol), y),
             veri_x,
@@ -435,6 +438,7 @@ impl GpuiGrafik {
         self.boşluk_basılı = false;
         self.hata = None;
         self.imleç_kilitli = korunmuş_kilit;
+        self.açıklama_vuruşu = None;
         self.grafik_bildir(cx);
     }
 
@@ -445,6 +449,7 @@ impl GpuiGrafik {
     ) -> Result<(), UplotHatası> {
         self.grafik.veriyi_ayarla(veri)?;
         self.imleç = None;
+        self.açıklama_vuruşu = None;
         self.seçim = None;
         self.grafik_bildir(cx);
         Ok(())
@@ -472,6 +477,7 @@ impl GpuiGrafik {
     ) -> Result<(), UplotHatası> {
         self.grafik.seri_ekle(indeks, seçenek, değerler)?;
         self.imleç = None;
+        self.açıklama_vuruşu = None;
         self.seçim = None;
         self.açıklama_seçimi = false;
         self.grafik_bildir(cx);
@@ -481,6 +487,7 @@ impl GpuiGrafik {
     pub fn seri_sil(&mut self, indeks: usize, cx: &mut Context<Self>) -> Result<(), UplotHatası> {
         self.grafik.seri_sil(indeks)?;
         self.imleç = None;
+        self.açıklama_vuruşu = None;
         self.seçim = None;
         self.açıklama_seçimi = false;
         self.grafik_bildir(cx);
@@ -793,6 +800,15 @@ impl GpuiGrafik {
                 kalınlık: 1.0,
             });
         }
+        if let Some(vuruş) = self.açıklama_vuruşu.as_ref() {
+            for komut in self
+                .grafik
+                .açıklama_vurgu_sahnesi_boyutta(genişlik, yükseklik, vuruş)
+                .komutlar()
+            {
+                sahne.ekle(komut.clone());
+            }
+        }
         sahne
     }
 
@@ -824,12 +840,20 @@ impl GpuiGrafik {
         }
         let Some(fare) = self.sahne_konumu(pencere_konumu) else {
             self.imleç = None;
+            self.açıklama_vuruşu = None;
             return self.grafik.imleç_odağını_temizle();
         };
         if !self.grafik_alanında(fare) {
             self.imleç = None;
+            self.açıklama_vuruşu = None;
             return self.grafik.imleç_odağını_temizle();
         }
+        self.açıklama_vuruşu = self.grafik.açıklama_vuruşu_boyutta(
+            self.grafik.boyut().0,
+            self.grafik.boyut().1,
+            fare.x,
+            fare.y,
+        );
         let (sol, sağ, üst, alt) = self.çizim_alanı();
         if let Some(vuruş) = self.grafik.dağılım_vuruşu_boyutta(
             self.grafik.boyut().0,
@@ -1012,6 +1036,7 @@ impl GpuiGrafik {
     }
 
     fn grafik_bildir(&mut self, cx: &mut Context<Self>) {
+        self.açıklama_vuruşu = None;
         self.ana_sahne = Rc::new(self.grafik.çiz());
         let duyarlı_grafik = self.grafik.duyarlı_boyut_mu().then(|| cx.weak_entity());
         if let Some(yüzey) = self.ana_yüzey.as_ref() {
@@ -1062,7 +1087,7 @@ impl Render for GpuiGrafik {
         let taşımaya_hazır = self.boşluk_basılı && self.grafik.yakınlaştırılmış();
         let eksen_sürükleniyor = self.grafik.eksen_sürükleniyor();
         let eksen_imleci = self.eksen_üzerinde || eksen_sürükleniyor;
-        let bilgi_kutusu = self
+        let standart_bilgi_kutusu = self
             .imleç
             .as_ref()
             .filter(|_| self.grafik.etkileşim_seçenekleri().imleç_bilgi_kutusu)
@@ -1145,6 +1170,30 @@ impl Render for GpuiGrafik {
                     bağlantı,
                 ))
             });
+        let açıklama_bilgi_kutusu = self
+            .açıklama_vuruşu
+            .as_ref()
+            .filter(|vuruş| vuruş.etiket_üzerinde && !vuruş.açıklama.is_empty())
+            .and_then(|vuruş| {
+                let imleç = self.imleç.as_ref()?;
+                let sınırlar = self.çizim_sınırları.get()?;
+                let (kaynak_g, kaynak_y) = self.grafik.boyut();
+                let ölçek = (f32::from(sınırlar.size.width) / kaynak_g as f32)
+                    .min(f32::from(sınırlar.size.height) / kaynak_y as f32)
+                    .max(0.01);
+                let yatay_pay = (f32::from(sınırlar.size.width) - kaynak_g as f32 * ölçek) / 2.0;
+                let dikey_pay = (f32::from(sınırlar.size.height) - kaynak_y as f32 * ölçek) / 2.0;
+                Some((
+                    (yatay_pay + imleç.fare.x * ölçek + 12.0)
+                        .clamp(4.0, (f32::from(sınırlar.size.width) - 190.0).max(4.0)),
+                    (dikey_pay + imleç.fare.y * ölçek + 12.0)
+                        .clamp(4.0, (f32::from(sınırlar.size.height) - 42.0).max(4.0)),
+                    vuruş.açıklama.clone(),
+                    vuruş.çizgi.clone(),
+                    None,
+                ))
+            });
+        let bilgi_kutusu = açıklama_bilgi_kutusu.or(standart_bilgi_kutusu);
         let tooltip_kutuları = self
             .imleç
             .as_ref()
@@ -1196,6 +1245,9 @@ impl Render for GpuiGrafik {
             .when(!taşıyor && taşımaya_hazır, |yüzey| yüzey.cursor_grab())
             .when(!taşıyor && !taşımaya_hazır && eksen_imleci, |yüzey| {
                 yüzey.cursor_move()
+            })
+            .when(!taşıyor && self.açıklama_vuruşu.is_some(), |yüzey| {
+                yüzey.cursor_pointer()
             })
             .on_key_down(cx.listener(|bu, olay: &KeyDownEvent, _, cx| {
                 let tuş = olay.keystroke.key.as_str();
@@ -1257,6 +1309,7 @@ impl Render for GpuiGrafik {
                         }
                     }
                     bu.imleç = None;
+                    bu.açıklama_vuruşu = None;
                 } else if let Some(başlangıç) = bu.taşıma_başlangıcı
                     && let Some(konum) = bu.sahne_konumu(olay.position)
                 {
@@ -1273,6 +1326,7 @@ impl Render for GpuiGrafik {
                         }
                     }
                     bu.imleç = None;
+                    bu.açıklama_vuruşu = None;
                 } else {
                     ana_sahne_değişti = bu.imleci_güncelle(olay.position);
                 }
@@ -1325,6 +1379,7 @@ impl Render for GpuiGrafik {
                 if !bu.imleç_kilitli && bu.seçim.is_none() && bu.taşıma_başlangıcı.is_none()
                 {
                     bu.imleç = None;
+                    bu.açıklama_vuruşu = None;
                     bu.eksen_üzerinde = false;
                     if bu.grafik.imleç_odağını_temizle() {
                         bu.grafik_bildir(cx);
@@ -1351,6 +1406,7 @@ impl Render for GpuiGrafik {
                         bu.taşıma_başlangıcı = None;
                         bu.açıklama_seçimi = false;
                         bu.imleç = None;
+                        bu.açıklama_vuruşu = None;
                     } else if bu.boşluk_basılı
                         && let Some(konum) = bu.sahne_konumu(olay.position)
                         && bu.grafik_alanında(konum)
@@ -1360,6 +1416,7 @@ impl Render for GpuiGrafik {
                         bu.seçim = None;
                         bu.açıklama_seçimi = false;
                         bu.imleç = None;
+                        bu.açıklama_vuruşu = None;
                     } else if olay.click_count >= 2 && ayarlar.çift_tıkla_tam_görünüm {
                         bu.grafik.ölçüm_datumlarını_temizle();
                         ana_sahne_değişti = bu.grafik.tam_görünüm();
@@ -1937,16 +1994,111 @@ fn boya_maskeli_aralık(
 }
 
 fn renk_çöz(kod: &str) -> Hsla {
-    let Some(ham) = kod.strip_prefix('#') else {
+    let kod = kod.trim().to_ascii_lowercase();
+    if let Some(ham) = kod.strip_prefix('#') {
+        return match ham.len() {
+            3 => kısa_hex_rengi(ham, false),
+            4 => kısa_hex_rengi(ham, true),
+            6 => u32::from_str_radix(ham, 16)
+                .map_or_else(|_| rgb(0x000000).into(), |sayı| rgb(sayı).into()),
+            8 => u32::from_str_radix(ham, 16)
+                .map_or_else(|_| rgb(0x000000).into(), |sayı| rgba(sayı).into()),
+            _ => rgb(0x000000).into(),
+        };
+    }
+    if let Some(renk) = css_rgb_rengi(&kod) {
+        return renk;
+    }
+    let sayı = match kod.as_str() {
+        "transparent" => 0x00000000,
+        "white" => 0xffffffff,
+        "red" => 0xff0000ff,
+        "green" => 0x008000ff,
+        "blue" => 0x0000ffff,
+        "yellow" => 0xffff00ff,
+        "orange" => 0xffa500ff,
+        "purple" => 0x800080ff,
+        "magenta" | "fuchsia" => 0xff00ffff,
+        "cyan" | "aqua" => 0x00ffffff,
+        "gray" | "grey" => 0x808080ff,
+        "brown" => 0xa52a2aff,
+        "teal" => 0x008080ff,
+        "pink" => 0xffc0cbff,
+        _ => 0x000000ff,
+    };
+    rgba(sayı).into()
+}
+
+fn kısa_hex_rengi(ham: &str, alfa_var: bool) -> Hsla {
+    let mut rakamlar = ham.chars().filter_map(|rakam| rakam.to_digit(16));
+    let Some(r) = rakamlar.next() else {
         return rgb(0x000000).into();
     };
-    match ham.len() {
-        8 => u32::from_str_radix(ham, 16)
-            .map_or_else(|_| rgb(0x000000).into(), |sayı| rgba(sayı).into()),
-        6 => u32::from_str_radix(ham, 16)
-            .map_or_else(|_| rgb(0x000000).into(), |sayı| rgb(sayı).into()),
-        _ => rgb(0x000000).into(),
+    let Some(g) = rakamlar.next() else {
+        return rgb(0x000000).into();
+    };
+    let Some(b) = rakamlar.next() else {
+        return rgb(0x000000).into();
+    };
+    let a = if alfa_var {
+        let Some(a) = rakamlar.next() else {
+            return rgb(0x000000).into();
+        };
+        a * 17
+    } else {
+        255
+    };
+    rgba((r * 17) << 24 | (g * 17) << 16 | (b * 17) << 8 | a).into()
+}
+
+fn css_rgb_rengi(kod: &str) -> Option<Hsla> {
+    let içerik = kod
+        .strip_prefix("rgba(")
+        .or_else(|| kod.strip_prefix("rgb("))?
+        .strip_suffix(')')?;
+    let normal = içerik.replace(',', " ");
+    let (kanallar, eğik_alfa) = normal
+        .split_once('/')
+        .map_or((normal.as_str(), None), |(kanallar, alfa)| {
+            (kanallar, Some(alfa.trim()))
+        });
+    let parçalar = kanallar.split_whitespace().collect::<Vec<_>>();
+    let (r, g, b, eski_alfa) = match parçalar.as_slice() {
+        [r, g, b] => (*r, *g, *b, None),
+        [r, g, b, alfa] => (*r, *g, *b, Some(*alfa)),
+        _ => return None,
+    };
+    let r = css_renk_kanalı(r)?;
+    let g = css_renk_kanalı(g)?;
+    let b = css_renk_kanalı(b)?;
+    let a = eğik_alfa.or(eski_alfa).map_or(Some(255), css_alfa_kanalı)?;
+    Some(rgba(u32::from(r) << 24 | u32::from(g) << 16 | u32::from(b) << 8 | u32::from(a)).into())
+}
+
+fn css_renk_kanalı(değer: &str) -> Option<u8> {
+    if let Some(yüzde) = değer.strip_suffix('%') {
+        return yüzde
+            .parse::<f32>()
+            .ok()
+            .map(|oran| (oran.clamp(0.0, 100.0) * 2.55).round() as u8);
     }
+    değer
+        .parse::<f32>()
+        .ok()
+        .map(|kanal| kanal.clamp(0.0, 255.0).round() as u8)
+}
+
+fn css_alfa_kanalı(değer: &str) -> Option<u8> {
+    if let Some(yüzde) = değer.strip_suffix('%') {
+        return yüzde
+            .parse::<f32>()
+            .ok()
+            .map(|oran| (oran.clamp(0.0, 100.0) * 2.55).round() as u8);
+    }
+    değer
+        .parse::<f32>()
+        .ok()
+        .map(|alfa| (alfa.clamp(0.0, 1.0) * 255.0).round() as u8)
 }
 
 #[cfg(test)]
@@ -1992,6 +2144,46 @@ mod testler {
         assert!(!bileşen.etkileşim_sahnesi().komutlar().is_empty());
         assert_eq!(bileşen.ana_sahne.komutlar().len(), ana_komut_sayısı);
         Ok(())
+    }
+
+    #[test]
+    fn annotation_hover_yalnız_etkileşim_sahnesini_değiştirir() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = crate::kart::annotations_kartı()?;
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        let mut bileşen = GpuiGrafik::yeni(grafik);
+        let ana_sahne = bileşen.ana_sahne.clone();
+        let (sol, sağ, _, alt) = bileşen.çizim_alanı();
+        let deprem_x = sol + (sağ - sol) * (3.0 / 29.0);
+        bileşen.açıklama_vuruşu = bileşen.grafik.açıklama_vuruşu_boyutta(
+            bileşen.grafik.boyut().0,
+            bileşen.grafik.boyut().1,
+            deprem_x,
+            alt - 9.0,
+        );
+
+        assert!(bileşen.açıklama_vuruşu.is_some());
+        assert!(!bileşen.etkileşim_sahnesi().komutlar().is_empty());
+        assert_eq!(bileşen.ana_sahne, ana_sahne);
+        Ok(())
+    }
+
+    #[test]
+    fn gpui_css_adlı_ve_modern_rgb_renklerini_korur() {
+        let kırmızı = renk_çöz("red").to_rgb();
+        assert!((kırmızı.r - 1.0).abs() < f32::EPSILON);
+        assert!(kırmızı.g.abs() < f32::EPSILON);
+        assert!(kırmızı.b.abs() < f32::EPSILON);
+        assert!((kırmızı.a - 1.0).abs() < f32::EPSILON);
+
+        let annotation = renk_çöz("rgb(255 193 7 / 20%)").to_rgb();
+        assert!((annotation.r - 1.0).abs() < f32::EPSILON);
+        assert!((annotation.g - 193.0 / 255.0).abs() < 0.0001);
+        assert!((annotation.b - 7.0 / 255.0).abs() < 0.0001);
+        assert!((annotation.a - 0.2).abs() < 0.0001);
+
+        let eski = renk_çöz("rgba(255,0,0,0.1)").to_rgb();
+        assert!((eski.a - 26.0 / 255.0).abs() < 0.0001);
+        assert_eq!(renk_çöz("#0f08"), renk_çöz("rgba(0,255,0,0.5333333)"));
     }
 
     #[test]

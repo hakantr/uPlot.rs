@@ -58,6 +58,7 @@
     #chart:focus { outline: none; }
     #chart:focus-visible { border-color: #f87171; box-shadow: 0 0 0 2px #fecaca; }
     #chart svg { width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+    #chart svg[data-annotation-hover="true"] { cursor: pointer; }
     #chart[data-boyut-senkron="true"] svg {
       width: auto; height: auto; max-width: 100%; max-height: 100%;
     }
@@ -567,7 +568,7 @@
       "annotations": {
         başlık: "Annotations",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/annotations.html">annotations.html</a>
-          <br>30 noktalı iki seri üzerinde tekil deprem çizgisi ve kasırga aralığı · görünür X ölçeğinde yeniden kırpılır`,
+          <br>Tek yüzeyde iki seri, tekil olay ve süre aralığı · işaret hover'ı ana veri sahnesinden bağımsızdır`,
         tanım: () => annotations_kart_tanim_ornegi(),
         tanımYolu: "src/kart/annotations.rs",
         seriler: [
@@ -577,6 +578,12 @@
         yardım: "Sürükle: seç · işaretler yakınlaştırma ve taşımada görünür X aralığına kırpılır",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "Ortak X/zaman eksenindeki telemetriye tekil olayları ve başlangıç-bitiş aralıklarını bağlar; olayın öncesi ve sonrası aynı yüzeyde okunur.",
+          api: "AçıklamaDüzeni içinde tür başına AçıklamaStili, olay başına Açıklamaİşareti tanımlanır. İşaret stilleri veri modelinden bir kez çözülür; açıklama metni etiket hover'ında gösterilir.",
+          izleme: "Dağıtım, alarm ve yeniden başlatma gibi nokta olaylarını; bakım, kesinti veya incident sürelerini CPU/RAM/log zaman serileri üzerinde göstermek için uygundur.",
+          maliyet: "Ana çizim O(görünür veri + işaret); tür-stil eşlemesi kurulumda önbelleğe alınır. Hover yalnız küçük etkileşim katmanını değiştirir, seri yollarını yeniden üretmez.",
+        },
       },
       "mass-spectrum": {
         başlık: "Mass Spectrum",
@@ -3107,6 +3114,7 @@
           <rect id="çubuk-vurgu" visibility="hidden" fill="rgba(255,255,255,.3)" stroke="none"/>
           <rect id="kutu-biyik-vurgu" visibility="hidden" fill="rgba(51,204,255,.3)" stroke="none"/>
           <g id="timeline-vurgu" visibility="hidden"></g>
+          <g id="aciklama-vurgu" visibility="hidden"></g>
           <line id="imleç-x" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
           <line id="imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
           ${imleçNoktaları}
@@ -3291,9 +3299,48 @@
       }
     }
 
+    function açıklamaVurgusunuGüncelle(svg, view, x, y) {
+      const grup = svg?.querySelector("#aciklama-vurgu");
+      if (!grup || !oturum) return;
+      const çıktı = oturum.aciklama_vurgusu(view.width, view.height, x, y);
+      if (!çıktı) {
+        grup.replaceChildren();
+        grup.setAttribute("visibility", "hidden");
+        svg.removeAttribute("data-annotation-hover");
+        return;
+      }
+      try {
+        const vuruş = JSON.parse(çıktı);
+        const şablon = document.createElement("template");
+        şablon.innerHTML = vuruş.svg.trim();
+        const vurguSvg = şablon.content.firstElementChild;
+        grup.replaceChildren(...Array.from(vurguSvg?.childNodes ?? []));
+        if (vuruş.etiketUzerinde && vuruş.aciklama && Number.isFinite(vuruş.etiketX)) {
+          const başlıkAlanı = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          başlıkAlanı.setAttribute("x", vuruş.etiketX);
+          başlıkAlanı.setAttribute("y", vuruş.etiketY);
+          başlıkAlanı.setAttribute("width", vuruş.etiketGenisligi);
+          başlıkAlanı.setAttribute("height", vuruş.etiketYuksekligi);
+          başlıkAlanı.setAttribute("fill", "transparent");
+          başlıkAlanı.setAttribute("pointer-events", "all");
+          const başlık = document.createElementNS("http://www.w3.org/2000/svg", "title");
+          başlık.textContent = vuruş.aciklama;
+          başlıkAlanı.appendChild(başlık);
+          grup.appendChild(başlıkAlanı);
+        }
+        grup.setAttribute("visibility", "visible");
+        svg.setAttribute("data-annotation-hover", "true");
+      } catch {
+        grup.replaceChildren();
+        grup.setAttribute("visibility", "hidden");
+        svg.removeAttribute("data-annotation-hover");
+      }
+    }
+
     function imleciGüncelle(olay) {
       const { x: hamX, y: hamY, svg, view } = svgKonumu(olay);
       const { sol, sağ, üst, alt } = çizimAlanı(view);
+      açıklamaVurgusunuGüncelle(svg, view, hamX, hamY);
       if (kartlar[aktifKart].çubuk) {
         const vurgu = svg.querySelector("#çubuk-vurgu");
         const vuruş = oturum?.cubuk_vurusu(view.width, view.height, hamX, hamY) ?? [];

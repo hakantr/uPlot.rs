@@ -26,8 +26,8 @@ pub use cizim::{
     DoğrusalGradyan, GradyanRenkDurağı, Komut, KöşeYarıçapları, MetinHizası, Nokta, Sahne,
 };
 pub use grafik::{
-    DağılımVuruşu, EksenHedefi, Grafik, NullAtlamaYönü, SeçimEylemi, TimelineVuruşu,
-    ZoomRangerDurumu, ZoomRangerSürüklemeEkseni,
+    AçıklamaVuruşu, DağılımVuruşu, EksenHedefi, Grafik, NullAtlamaYönü, SeçimEylemi,
+    TimelineVuruşu, ZoomRangerDurumu, ZoomRangerSürüklemeEkseni,
 };
 pub use hata::UplotHatası;
 #[cfg(feature = "svg")]

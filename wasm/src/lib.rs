@@ -1001,6 +1001,40 @@ impl KartOturumu {
         ]
     }
 
+    pub fn aciklama_vurgusu(&self, genişlik: u32, yükseklik: u32, x: f32, y: f32) -> String {
+        let Some(vuruş) = self
+            .grafik
+            .açıklama_vuruşu_boyutta(genişlik, yükseklik, x, y)
+        else {
+            return String::new();
+        };
+        let svg = self
+            .grafik
+            .açıklama_vurgu_sahnesi_boyutta(genişlik, yükseklik, &vuruş)
+            .svg();
+        let (etiket_x, etiket_y) = vuruş
+            .etiket_konumu
+            .map_or((f32::NAN, f32::NAN), |konum| (konum.x, konum.y));
+        serde_json::to_string(&serde_json::json!({
+            "indeks": vuruş.indeks,
+            "svg": svg,
+            "baslangicX": vuruş.başlangıç_x,
+            "bitisX": vuruş.bitiş_x,
+            "ust": vuruş.üst,
+            "alt": vuruş.alt,
+            "etiketX": etiket_x,
+            "etiketY": etiket_y,
+            "etiketGenisligi": vuruş.etiket_genişliği,
+            "etiketYuksekligi": vuruş.etiket_yüksekliği,
+            "etiketUzerinde": vuruş.etiket_üzerinde,
+            "etiket": vuruş.etiket,
+            "aciklama": vuruş.açıklama,
+            "cizgi": vuruş.çizgi,
+            "kalinlik": vuruş.kalınlık,
+        }))
+        .unwrap_or_default()
+    }
+
     pub fn en_yakin_nokta(&self, yatay_oran: f64) -> Vec<f64> {
         self.grafik
             .en_yakın_nokta(yatay_oran, 0)
@@ -1937,11 +1971,50 @@ mod testler {
         assert!(svg.contains("tor_20"));
         assert!(svg.contains("rgb(76 175 80)"));
         assert!(svg.contains("rgb(255 193 7 / 20%)"));
+        let alan = oturum.cizim_alani(1_920, 600);
+        assert_eq!(alan.len(), 4);
+        let [sol, sağ, _, alt] = alan.as_slice() else {
+            return;
+        };
+        let deprem_x = sol + (sağ - sol) * (3.0 / 29.0);
+        let vurgu = oturum.aciklama_vurgusu(1_920, 600, deprem_x as f32, *alt as f32 - 9.0);
+        let vurgu = serde_json::from_str::<serde_json::Value>(&vurgu);
+        assert!(vurgu.is_ok());
+        let Ok(vurgu) = vurgu else {
+            return;
+        };
+        assert_eq!(
+            vurgu.get("etiket").and_then(serde_json::Value::as_str),
+            Some("eqk_01")
+        );
+        assert_eq!(
+            vurgu.get("aciklama").and_then(serde_json::Value::as_str),
+            Some("Earthquake 01!")
+        );
+        assert_eq!(
+            vurgu
+                .get("etiketUzerinde")
+                .and_then(serde_json::Value::as_bool),
+            Some(true)
+        );
+        assert!(
+            vurgu
+                .get("svg")
+                .and_then(serde_json::Value::as_str)
+                .is_some_and(|svg| {
+                    svg.contains("rgb(76 175 80)") && !svg.contains("stroke-dasharray")
+                })
+        );
+        assert!(oturum.aciklama_vurgusu(1_920, 600, 0.0, 0.0).is_empty());
         assert!(oturum.secim_yakinlastir(0.34, 0.52).is_ok());
         let yakın = oturum.svg(1_920, 600);
         assert!(!yakın.contains("eqk_01"));
         assert!(yakın.contains("rgb(255 193 7 / 20%)"));
         assert!(annotations_kart_tanim_ornegi().contains("annotations_kartı"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("id=\"aciklama-vurgu\""));
+        assert!(web.contains("data-annotation-hover"));
+        assert!(web.contains("İşaret stilleri veri modelinden"));
         assert_eq!(kart_sayisi(), 365);
     }
 

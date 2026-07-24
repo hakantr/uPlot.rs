@@ -280,6 +280,25 @@ pub struct TimelineVuruşu {
     pub değer: String,
 }
 
+/// `annotations.html` DOM işaretinin platformdan bağımsız vuruş ve hover
+/// geometrisi. Yüzey adaptörleri yalnız bu hafif katmanı yeniden boyar.
+#[derive(Debug, Clone, PartialEq)]
+pub struct AçıklamaVuruşu {
+    pub indeks: usize,
+    pub başlangıç_x: f32,
+    pub bitiş_x: f32,
+    pub üst: f32,
+    pub alt: f32,
+    pub etiket_konumu: Option<Nokta>,
+    pub etiket_genişliği: f32,
+    pub etiket_yüksekliği: f32,
+    pub etiket_üzerinde: bool,
+    pub etiket: String,
+    pub açıklama: String,
+    pub çizgi: String,
+    pub kalınlık: f32,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 struct ÇubukVuruşAnahtarı {
     genişlik: u32,
@@ -383,6 +402,7 @@ pub struct Grafik {
     elle_y_aralıkları: BTreeMap<String, Aralık>,
     eksen_sürükleme: Option<EksenSürüklemeBaşlangıcı>,
     ölçüm_datumları: [Option<(f64, f64)>; 2],
+    açıklama_stil_indeksleri: Vec<Option<usize>>,
     çubuk_vuruş_dizini: RefCell<Option<ÇubukVuruşDizini>>,
 }
 
@@ -546,6 +566,17 @@ impl Grafik {
             tam_y = Aralık::otomatik(değerler.iter());
         }
         let etkileşim = EtkileşimDenetleyicisi::yeni(tam, tam_y, seçenekler.etkileşimler);
+        let açıklama_stil_indeksleri =
+            seçenekler
+                .açıklama_düzeni
+                .as_ref()
+                .map_or_else(Vec::new, |düzen| {
+                    düzen
+                        .işaretler
+                        .iter()
+                        .map(|işaret| düzen.stiller.iter().position(|stil| stil.tür == işaret.tür))
+                        .collect()
+                });
         Ok(Self {
             seçenekler,
             veri,
@@ -555,6 +586,7 @@ impl Grafik {
             elle_y_aralıkları: BTreeMap::new(),
             eksen_sürükleme: None,
             ölçüm_datumları: [None, None],
+            açıklama_stil_indeksleri,
             çubuk_vuruş_dizini: RefCell::new(None),
         })
     }
@@ -721,6 +753,142 @@ impl Grafik {
             }
         }
         sonuç.map(|(_, _, vuruş)| vuruş)
+    }
+
+    pub fn açıklama_vuruşu_boyutta(
+        &self,
+        genişlik_px: u32,
+        yükseklik_px: u32,
+        x: f32,
+        y: f32,
+    ) -> Option<AçıklamaVuruşu> {
+        if !x.is_finite() || !y.is_finite() {
+            return None;
+        }
+        let düzen = self.seçenekler.açıklama_düzeni.as_ref()?;
+        let x_aralığı = self.görünür_x_aralığı();
+        let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
+        if y < üst || y > alt {
+            return None;
+        }
+        let çizim_genişliği = sağ - sol;
+        düzen
+            .işaretler
+            .iter()
+            .zip(self.açıklama_stil_indeksleri.iter())
+            .enumerate()
+            .rev()
+            .find_map(|(indeks, (işaret, stil_indeksi))| {
+                if !işaret.başlangıç.is_finite()
+                    || !işaret.bitiş.is_finite()
+                    || işaret.bitiş < işaret.başlangıç
+                {
+                    return None;
+                }
+                let görünür = (işaret.başlangıç >= x_aralığı.en_az
+                    && işaret.başlangıç <= x_aralığı.en_çok)
+                    || (işaret.bitiş >= x_aralığı.en_az && işaret.bitiş <= x_aralığı.en_çok)
+                    || (işaret.başlangıç <= x_aralığı.en_az && işaret.bitiş >= x_aralığı.en_çok);
+                if !görünür {
+                    return None;
+                }
+                let stil = stil_indeksi.and_then(|indeks| düzen.stiller.get(indeks))?;
+                let başlangıç_x = self
+                    .x_konumu(x_aralığı, işaret.başlangıç, sol, çizim_genişliği)
+                    .round();
+                let bitiş_x = self
+                    .x_konumu(x_aralığı, işaret.bitiş, sol, çizim_genişliği)
+                    .round();
+                let etiket_genişliği = (işaret.etiket.chars().count() as f32 * 7.0 + 8.0).max(12.0);
+                let etiket_yüksekliği = 18.0;
+                let etiket_konumu = (başlangıç_x >= sol && başlangıç_x <= sağ).then(|| {
+                    Nokta::yeni(
+                        başlangıç_x - etiket_genişliği / 2.0,
+                        match stil.hiza {
+                            crate::AçıklamaHizası::Üst => üst,
+                            crate::AçıklamaHizası::Alt => alt - etiket_yüksekliği,
+                        },
+                    )
+                });
+                let etiket_üzerinde = etiket_konumu.is_some_and(|konum| {
+                    x >= konum.x
+                        && x <= konum.x + etiket_genişliği
+                        && y >= konum.y
+                        && y <= konum.y + etiket_yüksekliği
+                });
+                let işaret_üzerinde = if işaret.bitiş > işaret.başlangıç {
+                    x >= başlangıç_x.clamp(sol, sağ) && x <= bitiş_x.clamp(sol, sağ)
+                } else {
+                    (x - başlangıç_x).abs() <= stil.kalınlık.max(4.0) / 2.0
+                };
+                (işaret_üzerinde || etiket_üzerinde).then(|| AçıklamaVuruşu {
+                    indeks,
+                    başlangıç_x,
+                    bitiş_x,
+                    üst,
+                    alt,
+                    etiket_konumu,
+                    etiket_genişliği,
+                    etiket_yüksekliği,
+                    etiket_üzerinde,
+                    etiket: işaret.etiket.clone(),
+                    açıklama: işaret.açıklama.clone(),
+                    çizgi: stil.çizgi.clone(),
+                    kalınlık: stil.kalınlık,
+                })
+            })
+    }
+
+    pub fn açıklama_vurgu_sahnesi_boyutta(
+        &self,
+        genişlik_px: u32,
+        yükseklik_px: u32,
+        vuruş: &AçıklamaVuruşu,
+    ) -> Sahne {
+        let mut sahne = Sahne::yeni(genişlik_px, yükseklik_px);
+        let (sol, sağ, _, _) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
+        if vuruş.başlangıç_x >= sol && vuruş.başlangıç_x <= sağ {
+            sahne.ekle(Komut::Çizgi {
+                başlangıç: Nokta::yeni(vuruş.başlangıç_x, vuruş.üst),
+                bitiş: Nokta::yeni(vuruş.başlangıç_x, vuruş.alt),
+                renk: vuruş.çizgi.clone(),
+                kalınlık: vuruş.kalınlık,
+            });
+        }
+        if let Some(konum) = vuruş.etiket_konumu {
+            for (başlangıç, bitiş) in [
+                (
+                    konum,
+                    Nokta::yeni(konum.x + vuruş.etiket_genişliği, konum.y),
+                ),
+                (
+                    Nokta::yeni(konum.x + vuruş.etiket_genişliği, konum.y),
+                    Nokta::yeni(
+                        konum.x + vuruş.etiket_genişliği,
+                        konum.y + vuruş.etiket_yüksekliği,
+                    ),
+                ),
+                (
+                    Nokta::yeni(
+                        konum.x + vuruş.etiket_genişliği,
+                        konum.y + vuruş.etiket_yüksekliği,
+                    ),
+                    Nokta::yeni(konum.x, konum.y + vuruş.etiket_yüksekliği),
+                ),
+                (
+                    Nokta::yeni(konum.x, konum.y + vuruş.etiket_yüksekliği),
+                    konum,
+                ),
+            ] {
+                sahne.ekle(Komut::Çizgi {
+                    başlangıç,
+                    bitiş,
+                    renk: vuruş.çizgi.clone(),
+                    kalınlık: vuruş.kalınlık,
+                });
+            }
+        }
+        sahne
     }
 
     /// uPlot `setData(data)` karşılığı olarak hizalı veriyi doğrular, uygular
@@ -3260,7 +3428,11 @@ impl Grafik {
         }
 
         if let Some(düzen) = self.seçenekler.açıklama_düzeni.as_ref() {
-            for işaret in &düzen.işaretler {
+            for (işaret, stil_indeksi) in düzen
+                .işaretler
+                .iter()
+                .zip(self.açıklama_stil_indeksleri.iter())
+            {
                 if !işaret.başlangıç.is_finite()
                     || !işaret.bitiş.is_finite()
                     || işaret.bitiş < işaret.başlangıç
@@ -3274,8 +3446,7 @@ impl Grafik {
                 if !görünür {
                     continue;
                 }
-                let Some(stil) = düzen.stiller.iter().find(|stil| stil.tür == işaret.tür)
-                else {
+                let Some(stil) = stil_indeksi.and_then(|indeks| düzen.stiller.get(indeks)) else {
                     continue;
                 };
                 let başlangıç_x = self

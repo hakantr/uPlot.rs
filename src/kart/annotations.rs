@@ -161,4 +161,37 @@ mod testler {
         assert!(x + genişlik <= sağ);
         Ok(())
     }
+
+    #[test]
+    fn işaret_vuruşu_açıklamayı_ve_hafif_hover_katmanını_korur() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = annotations_kartı()?;
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        let (sol, sağ, üst, alt) = grafik.çizim_alanı_boyutta(1_920, 600);
+        let deprem_x = sol + (sağ - sol) * (3.0 / 29.0);
+        let vuruş = grafik
+            .açıklama_vuruşu_boyutta(1_920, 600, deprem_x, alt - 9.0)
+            .ok_or_else(|| test_hatası("deprem etiketi vuruşu bulunamadı"))?;
+
+        assert_eq!(vuruş.etiket, "eqk_01");
+        assert_eq!(vuruş.açıklama, "Earthquake 01!");
+        assert!(vuruş.etiket_üzerinde);
+        assert_eq!(
+            grafik
+                .açıklama_vurgu_sahnesi_boyutta(1_920, 600, &vuruş)
+                .komutlar()
+                .iter()
+                .filter(|komut| matches!(komut, Komut::Çizgi { .. }))
+                .count(),
+            5
+        );
+
+        let tornado_x = sol + (sağ - sol) * ((14.0 - 1.0) / 29.0);
+        let tornado = grafik
+            .açıklama_vuruşu_boyutta(1_920, 600, tornado_x, (üst + alt) / 2.0)
+            .ok_or_else(|| test_hatası("tornado aralığı vuruşu bulunamadı"))?;
+        assert_eq!(tornado.etiket, "tor_20");
+        assert_eq!(tornado.açıklama, "Tornado 20!");
+        assert!(!tornado.etiket_üzerinde);
+        Ok(())
+    }
 }
