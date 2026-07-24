@@ -3675,6 +3675,60 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "tam_kanıtlı"
       }
+    },
+    {
+      "id": "nearest-non-null",
+      "başlık": "Nearest Non-Null",
+      "kaynak": "demos/nearest-non-null.html",
+      "kaynak_sha256": "25b26de2abf98dff1583259d06e766da1dace15806d1ff7921a6fab044b26359",
+      "fixture": "src/kart/nearest_non_null.rs#nearest_non_null_kartı",
+      "örnek": "examples/nearest_non_null.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/nearest-non-null.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/nearest_non_null.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin",
+          "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin",
+          "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "kartta_etkin",
+          "canli-coklu-seri-lejanti": "kartta_etkin",
+          "kosullu-bos-ve-dolu-noktalar": "kartta_etkin",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "kartta_etkin",
+          "uyarlanabilir-hassas-tekerlek": "kartta_etkin",
+          "dokunma-yakinlastirma-tasima": "kartta_etkin",
+          "bosluk-sol-surukleme-tasima": "kartta_etkin",
+          "gorunum-gecmisi": "kartta_etkin",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {}
+      },
+      "sahip_faz": 4,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "source-null-gap-indices",
+        "source-nearest-x-distance",
+        "source-left-tie-break",
+        "source-previous-non-null-bias",
+        "source-four-surfaces",
+        "gpui-wasm-parity"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "tam_kanıtlı"
+      }
     }
   ]
 }

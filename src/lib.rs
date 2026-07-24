@@ -23,7 +23,9 @@ mod zaman;
 pub mod svg;
 
 pub use cizim::{DoğrusalGradyan, GradyanRenkDurağı, Komut, MetinHizası, Nokta, Sahne};
-pub use grafik::{DağılımVuruşu, EksenHedefi, Grafik, SeçimEylemi, TimelineVuruşu};
+pub use grafik::{
+    DağılımVuruşu, EksenHedefi, Grafik, NullAtlamaYönü, SeçimEylemi, TimelineVuruşu
+};
 pub use hata::UplotHatası;
 #[cfg(feature = "svg")]
 pub use kart::svg_image_belgesi;
@@ -49,21 +51,21 @@ pub use kart::{
     LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KANIT_TOHUMU, MONTHS_KART_TANIM_ÖRNEĞİ,
     MONTHS_RU_KANIT_TOHUMU, MULTI_BARS_KART_TANIM_ÖRNEĞİ, MultiBarsÖrneği,
-    NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ, NoDataÖrneği,
-    PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_ARALIK_MS, PIXEL_ALIGN_KANIT_TOHUMU,
-    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_PENCERE_MS, POINTS_KANIT_TOHUMU,
-    POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
-    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
-    SCATTER_KANIT_TOHUMU, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KANIT_TOHUMU,
-    SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KANIT_TOHUMU, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
-    SINE_STREAM_NOKTA_SAYISI, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ,
-    SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KANIT_TOHUMU,
-    STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ADIMI, STREAM_DATA_ARALIK_MS,
-    STREAM_DATA_KART_TANIM_ÖRNEĞİ, STREAM_DATA_PENCERESİ, SVG_IMAGE_KART_TANIM_ÖRNEĞİ,
-    SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği,
-    ScatterÖrneği, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği,
-    SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği, StreamDataAkışı,
-    StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği, SyncYZeroAşaması,
+    NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
+    NearestNonNullÖrneği, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_ARALIK_MS,
+    PIXEL_ALIGN_KANIT_TOHUMU, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_PENCERE_MS,
+    POINTS_KANIT_TOHUMU, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği,
+    PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KANIT_TOHUMU, SCATTER_KART_TANIM_ÖRNEĞİ,
+    SCROLL_SYNC_KANIT_TOHUMU, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KANIT_TOHUMU,
+    SINE_STREAM_KART_TANIM_ÖRNEĞİ, SINE_STREAM_NOKTA_SAYISI, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
+    SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
+    STACKED_SERIES_KANIT_TOHUMU, STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ADIMI,
+    STREAM_DATA_ARALIK_MS, STREAM_DATA_KART_TANIM_ÖRNEĞİ, STREAM_DATA_PENCERESİ,
+    SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
+    ScalesDirOriÖrneği, ScatterÖrneği, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı,
+    SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği,
+    StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği, SyncYZeroAşaması,
     THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
     TIMELINE_DISCRETE_KANIT_TOHUMU, TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,
     TIMELINE_DISCRETE_ZAMAN_ÇAPASI, TIMESERIES_DISCRETE_KANIT_TOHUMU,
@@ -85,7 +87,7 @@ pub use kart::{
     high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
     log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı, missing_data_null_kartı,
     missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    months_rusça_kartı, multi_bars_kartı, nice_scale_kartı, no_data_kartı,
+    months_rusça_kartı, multi_bars_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
     ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı, resize_kartı,
     savitzky_golay, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
     sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,

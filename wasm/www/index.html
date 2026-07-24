@@ -182,6 +182,22 @@
         <strong>Multi Bars · non-justified</strong><small>multi-bars-non-justified</small>
         <div class="durum">Sayısal X üzerinde bağımsız çubuklar</div>
       </article>
+      <article class="kart" data-kart="nearest-non-null-x-value" aria-current="false" tabindex="0">
+        <strong>Nearest Non-Null · X value</strong><small>nearest-non-null-x-value</small>
+        <div class="durum">Null boşluğunda en yakın X</div>
+      </article>
+      <article class="kart" data-kart="nearest-non-null-30px" aria-current="false" tabindex="0">
+        <strong>Nearest Non-Null · 30px</strong><small>nearest-non-null-30px</small>
+        <div class="durum">Yakınlık sınırı ve null atlama</div>
+      </article>
+      <article class="kart" data-kart="nearest-non-null-null-15px" aria-current="false" tabindex="0">
+        <strong>Nearest Non-Null · null 15px</strong><small>nearest-non-null-null-15px</small>
+        <div class="durum">Yalnız null değerde yakınlık</div>
+      </article>
+      <article class="kart" data-kart="nearest-non-null-previous" aria-current="false" tabindex="0">
+        <strong>Nearest Non-Null · previous</strong><small>nearest-non-null-previous</small>
+        <div class="durum">İmleci önceki dolu örneğe yapıştır</div>
+      </article>
       <article class="kart" data-kart="scale-padding" aria-current="false" tabindex="0">
         <strong>Scale Padding</strong>
         <small>scale-padding</small>
@@ -365,6 +381,7 @@
       mass_spectrum_kart_tanim_ornegi,
       measure_datums_kart_tanim_ornegi,
       multi_bars_kart_tanim_ornegi,
+      nearest_non_null_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
       scale_padding_kart_tanim_ornegi,
@@ -549,6 +566,22 @@
         tanımYolu: "src/kart/multi_bars.rs",
         seriler: [],
         yardım: "Sürükle: seç · tekerlek/dokunma: yakınlaştır ve taşı · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      }])),
+      ...Object.fromEntries([
+        ["nearest-non-null-x-value", "Nearest Non-Null · by nearest x scale value"],
+        ["nearest-non-null-30px", "Nearest Non-Null · by 30px proximity"],
+        ["nearest-non-null-null-15px", "Nearest Non-Null · 15px only when null"],
+        ["nearest-non-null-previous", "Nearest Non-Null · snap to previous"],
+      ].map(([kimlik, başlık]) => [kimlik, {
+        başlık,
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/nearest-non-null.html">nearest-non-null.html</a>
+          <br>Null örnekler ortak çekirdek indeks API'siyle atlanır.`,
+        tanım: () => nearest_non_null_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/nearest_non_null.rs",
+        seriler: [],
+        yardım: "İmleci null boşluklarına taşıyarak en yakın veya önceki dolu örneği izleyin.",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       }])),

@@ -28,6 +28,15 @@ pub enum SeçimEylemi {
     Açıklamaİstendi,
 }
 
+/// Null bir hizalı örneğin çevresinde imleç indeksinin hangi yönde aranacağını belirler.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NullAtlamaYönü {
+    /// X ölçeği uzaklığı en küçük olan dolu örnek; eşitlikte soldaki.
+    EnYakın,
+    /// İmlecin solundaki veya üzerindeki son dolu örnek.
+    Önceki,
+}
+
 /// İşaretçi konumunda sürüklenebilen eksenin çekirdek karşılığı.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EksenHedefi {
@@ -1356,6 +1365,37 @@ impl Grafik {
             .filter_map(|(x, y)| y.map(|y| (x, y)))
             .filter(|(x, _)| *x >= aralık.en_az && *x <= aralık.en_çok)
             .min_by(|(x_a, _), (x_b, _)| (x_a - hedef).abs().total_cmp(&(x_b - hedef).abs()))
+    }
+
+    /// Hizalı seride null değerleri atlayıp kaynak X ölçeği uzaklığına göre bir indeks seçer.
+    pub fn en_yakın_null_olmayan_indeks(
+        &self,
+        yatay_oran: f64,
+        seri_indeksi: usize,
+        yön: NullAtlamaYönü,
+    ) -> Option<usize> {
+        if !yatay_oran.is_finite() {
+            return None;
+        }
+        let seri = self.veri.seriler().get(seri_indeksi)?;
+        let aralık = self.görünür_x_aralığı();
+        let hedef = self.x_değeri_orandan(aralık, yatay_oran.clamp(0.0, 1.0));
+        self.veri
+            .x()
+            .iter()
+            .copied()
+            .enumerate()
+            .zip(seri)
+            .filter(|((_, x), y)| {
+                y.is_some()
+                    && *x >= aralık.en_az
+                    && *x <= aralık.en_çok
+                    && (yön == NullAtlamaYönü::EnYakın || *x <= hedef)
+            })
+            .min_by(|((_, x_a), _), ((_, x_b), _)| {
+                (x_a - hedef).abs().total_cmp(&(x_b - hedef).abs())
+            })
+            .map(|((indeks, _), _)| indeks)
     }
 
     /// En yakın ortak X indeksini ve o indeksteki tüm seri değerlerini döndürür.

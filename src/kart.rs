@@ -30,6 +30,7 @@ mod measure_datums;
 mod missing_data;
 mod months;
 mod multi_bars;
+mod nearest_non_null;
 mod nice_scale;
 mod no_data;
 mod ortak;
@@ -146,6 +147,9 @@ pub use months::{
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı,
 };
 pub use multi_bars::{MULTI_BARS_KART_TANIM_ÖRNEĞİ, MultiBarsÖrneği, multi_bars_kartı};
+pub use nearest_non_null::{
+    NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, nearest_non_null_kartı,
+};
 pub use nice_scale::{NICE_SCALE_KART_TANIM_ÖRNEĞİ, nice_scale_kartı};
 pub use no_data::{NO_DATA_KART_TANIM_ÖRNEĞİ, NoDataÖrneği, no_data_kartı};
 pub use ortak::ortak_kart_etkileşimleri;

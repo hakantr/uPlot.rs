@@ -25,11 +25,12 @@ use uplot_rs::{
     LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği, LinePathsÖrneği, LogScales2Örneği,
     LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, MULTI_BARS_KART_TANIM_ÖRNEĞİ,
-    MultiBarsÖrneği, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ, NoDataÖrneği,
-    PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ,
-    PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ,
-    SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
+    MultiBarsÖrneği, NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ,
+    NO_DATA_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
+    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği,
+    PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
+    SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
     STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS, STREAM_DATA_KART_TANIM_ÖRNEĞİ,
     SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
@@ -54,16 +55,16 @@ use uplot_rs::{
     grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
     log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
     missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
-    months_artık_yılsız_kartı, months_rusça_kartı, multi_bars_kartı, nice_scale_kartı,
-    no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
-    resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
-    sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
-    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
-    sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
-    timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
-    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    months_artık_yılsız_kartı, months_rusça_kartı, multi_bars_kartı, nearest_non_null_kartı,
+    nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı,
+    pixel_align_kartı, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartı,
+    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
+    sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
+    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_kartı,
+    thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
+    trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
+    y_shifted_series_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -127,6 +128,7 @@ enum KartKimliği {
     MassSpectrum,
     MeasureDatums,
     MultiBars(MultiBarsÖrneği),
+    NearestNonNull(NearestNonNullÖrneği),
     MissingDataNull,
     MissingDataXGap,
     DependentScale,
@@ -202,6 +204,7 @@ impl KartKimliği {
             Self::MassSpectrum => "Mass Spectrum",
             Self::MeasureDatums => "Measure / Datums",
             Self::MultiBars(örnek) => örnek.başlık(),
+            Self::NearestNonNull(örnek) => örnek.başlık(),
             Self::MissingDataNull => "Missing Data · null values",
             Self::MissingDataXGap => "Missing Data · adjacent X gap",
             Self::DependentScale => "Derived Scale · °F / °C",
@@ -349,6 +352,7 @@ impl KartKimliği {
             Self::MultiBars(_) => {
                 "multi-bars.html · benchmark grupları · negatif ve durum renkli çubuklar"
             }
+            Self::NearestNonNull(_) => "nearest-non-null.html · null atlayan imleç indeksi",
             Self::MissingDataNull | Self::MissingDataXGap => {
                 "missing-data.html · resmî veri ve iki kaynak alt grafiği"
             }
@@ -428,6 +432,7 @@ impl KartKimliği {
             Self::MassSpectrum => MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ,
             Self::MeasureDatums => MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
             Self::MultiBars(_) => MULTI_BARS_KART_TANIM_ÖRNEĞİ,
+            Self::NearestNonNull(_) => NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ,
             Self::MissingDataNull | Self::MissingDataXGap => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
             Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::ArcSinhScales => ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
@@ -499,6 +504,7 @@ impl KartKimliği {
             Self::MassSpectrum => "src/kart/mass_spectrum.rs",
             Self::MeasureDatums => "src/kart/measure_datums.rs",
             Self::MultiBars(_) => "src/kart/multi_bars.rs",
+            Self::NearestNonNull(_) => "src/kart/nearest_non_null.rs",
             Self::MissingDataNull | Self::MissingDataXGap => "src/kart/missing_data.rs",
             Self::DependentScale => "src/kart/dependent_scale.rs",
             Self::ArcSinhScales => "src/kart/arcsinh_scales.rs",
@@ -1429,6 +1435,7 @@ fn grafik_oluştur(
         KartKimliği::MassSpectrum => mass_spectrum_kartı(),
         KartKimliği::MeasureDatums => measure_datums_kartı(),
         KartKimliği::MultiBars(örnek) => multi_bars_kartı(örnek),
+        KartKimliği::NearestNonNull(örnek) => nearest_non_null_kartı(örnek),
         KartKimliği::MissingDataNull => missing_data_null_kartı(),
         KartKimliği::MissingDataXGap => missing_data_x_boşluğu_kartı(),
         KartKimliği::DependentScale => dependent_scale_kartı(),
@@ -1671,6 +1678,9 @@ impl Render for ChartListesi {
             }
             KartKimliği::MeasureDatums => "5 nokta · 1/2 datum · Esc temizle".to_string(),
             KartKimliği::MultiBars(örnek) => format!("multi-bars · {}", örnek.başlık()),
+            KartKimliği::NearestNonNull(örnek) => {
+                format!("nearest-non-null · {}", örnek.başlık())
+            }
             KartKimliği::MissingDataNull => "200 nokta × 3 seri · % + MB".to_string(),
             KartKimliği::MissingDataXGap => "8 nokta × 1 seri · 2 yol parçası".to_string(),
             KartKimliği::DependentScale => "7 nokta × °F veri · türetilmiş °C ekseni".to_string(),
@@ -1991,6 +2001,21 @@ impl Render for ChartListesi {
                     "multi-bars",
                     aktif_kart == kart,
                     "Gruplu benchmark · nokta başına renk",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(kart, cx);
+                }))
+            }))
+            .children(NearestNonNullÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                let kart = KartKimliği::NearestNonNull(örnek);
+                katalog_kartı(
+                    örnek.kimlik(),
+                    örnek.başlık(),
+                    "nearest-non-null",
+                    aktif_kart == kart,
+                    "Null boşluğunda ölçek uzaklığıyla indeks seçimi",
                     panel,
                     vurgu,
                 )
