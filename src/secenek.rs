@@ -26,6 +26,27 @@ pub enum XÖlçekDağılımı {
     Logaritmik { taban: f64 },
 }
 
+/// uPlot `cursor.dataIdx`, `cursor.hover` ve `cursor.move` null-atlama
+/// davranışlarının yüzeyden bağımsız karşılığıdır.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub enum NullİmleçDüzeni {
+    /// Bütün seriler en yakın ortak X indeksini kullanır.
+    #[default]
+    Ortak,
+    /// Yalnız null hücrede, X ölçeğinde en yakın dolu örneği seçer.
+    EnYakınX,
+    /// Null ve hizalama eksiklerini atlar; aday X noktası imlece bu piksel
+    /// eşiğinden daha uzaksa seri hover'ını gizler.
+    PikselYakınlığı { piksel: f64 },
+    /// Gerçek `null` hücrede piksel eşiği uygular; `join()` kaynaklı
+    /// `undefined` hizalama eksiğinde eşiği sınırsız bırakır.
+    YalnızNullsaPiksel { piksel: f64 },
+    /// Seri noktası/lejant önceki dolu örneğe gider, cursor çizgisi farede kalır.
+    ÖncekiSeri,
+    /// Hem seri noktası/lejant hem cursor çizgisi önceki dolu örneğe gider.
+    ÖncekiİmleçVeSeri,
+}
+
 /// Aynı X konumlarını kaydırılmış bir zaman aralığıyla karşı tarafta gösteren
 /// uPlot `scales.{key}.from = "x"` ve ikinci X ekseni karşılığıdır.
 #[derive(Debug, Clone, PartialEq)]
@@ -1034,6 +1055,8 @@ pub struct GrafikSeçenekleri {
     /// uPlot `cursor.move` ile eşdeğer, çizim alanı piksel koordinatlarında
     /// imleci kare ızgaraya oturtan isteğe bağlı adım.
     pub imleç_ızgara_adımı: Option<f32>,
+    pub null_imleç_düzeni: NullİmleçDüzeni,
+    pub imleç_y_görünür: bool,
     pub etkileşimler: EtkileşimSeçenekleri,
     pub seriler: Vec<SeriSeçenekleri>,
 }
@@ -1112,6 +1135,8 @@ impl GrafikSeçenekleri {
             piksel_hizası: 1.0,
             ızgara_rengi: "#e5e7eb".to_string(),
             imleç_ızgara_adımı: None,
+            null_imleç_düzeni: NullİmleçDüzeni::Ortak,
+            imleç_y_görünür: true,
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
         })
@@ -1484,6 +1509,16 @@ impl GrafikSeçenekleri {
         if piksel.is_finite() && piksel > 0.0 {
             self.imleç_ızgara_adımı = Some(piksel);
         }
+        self
+    }
+
+    pub fn null_imleç_düzeni(mut self, düzen: NullİmleçDüzeni) -> Self {
+        self.null_imleç_düzeni = düzen;
+        self
+    }
+
+    pub fn imleç_y_göster(mut self, görünür: bool) -> Self {
+        self.imleç_y_görünür = görünür;
         self
     }
 

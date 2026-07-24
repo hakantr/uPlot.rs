@@ -16,8 +16,8 @@ use crate::cizim::{
 };
 use crate::etkilesim::EtkileşimDenetleyicisi;
 use crate::{
-    Aralık, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri, HizalıVeri, TekerlekEkseni,
-    UplotHatası, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi, ÖlçekGradyanı,
+    Aralık, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri, HizalıVeri, NullİmleçDüzeni,
+    TekerlekEkseni, UplotHatası, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi, ÖlçekGradyanı,
 };
 
 /// Bir işaretçi seçiminin çekirdekte çözümlenen sonucu.
@@ -38,6 +38,24 @@ pub enum NullAtlamaYönü {
     EnYakın,
     /// İmlecin solundaki veya üzerindeki son dolu örnek.
     Önceki,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct İmleçSeriÖrneği {
+    pub indeks: usize,
+    pub x: f64,
+    pub değer: f64,
+    pub hizalama_eksiğinden_atlandı: bool,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct İmleçÇözümü {
+    /// Cursor çizgisinin veri X'i. `cursor.move` kipinde örneğe yapışabilir.
+    pub imleç_x: f64,
+    /// Fareye en yakın ortak hizalı X.
+    pub ortak_x: f64,
+    /// Her görünür seri için bağımsız hover örneği.
+    pub seriler: Vec<Option<İmleçSeriÖrneği>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -2010,6 +2028,115 @@ impl Grafik {
             })
             .collect();
         Some((x, değerler))
+    }
+
+    /// Cursor politikasını çizim alanının gerçek CSS piksel genişliğinde
+    /// değerlendirir. Böylece proximity eşikleri zoom ve resize sonrasında da
+    /// uPlot ile aynı ekran uzaklığını ifade eder.
+    pub fn imleç_çözümü(
+        &self,
+        yatay_oran: f64,
+        çizim_genişliği: f64,
+    ) -> Option<İmleçÇözümü> {
+        if !yatay_oran.is_finite() || !çizim_genişliği.is_finite() || çizim_genişliği <= 0.0 {
+            return None;
+        }
+        let aralık = self.görünür_x_aralığı();
+        let hedef = self.x_değeri_orandan(aralık, yatay_oran.clamp(0.0, 1.0));
+        let ortak_indeks = en_yakın_x_indeksi(self.veri.x(), aralık, hedef)?;
+        let ortak_x = *self.veri.x().get(ortak_indeks)?;
+        let düzen = self.seçenekler.null_imleç_düzeni;
+        let x_aralığı = (aralık.en_çok - aralık.en_az).abs().max(f64::EPSILON);
+        let piksel_uzaklığı = |indeks: usize| {
+            self.veri.x().get(indeks).map_or(f64::INFINITY, |x| {
+                (x - hedef).abs() / x_aralığı * çizim_genişliği
+            })
+        };
+
+        let seriler = self
+            .veri
+            .seriler()
+            .iter()
+            .enumerate()
+            .map(|(seri_indeksi, seri)| {
+                let ortak_dolu = seri.get(ortak_indeks).copied().flatten().is_some();
+                let hizalama_eksiği = self.veri.hizalama_eksiği_mi(seri_indeksi, ortak_indeks);
+                let aday = match düzen {
+                    NullİmleçDüzeni::Ortak => Some(ortak_indeks),
+                    NullİmleçDüzeni::EnYakınX if ortak_dolu => Some(ortak_indeks),
+                    NullİmleçDüzeni::EnYakınX => en_yakın_dolu_x_indeksi(
+                        self.veri.x(),
+                        seri,
+                        aralık,
+                        hedef,
+                        NullAtlamaYönü::EnYakın,
+                    ),
+                    NullİmleçDüzeni::PikselYakınlığı { piksel } => {
+                        let aday = en_yakın_dolu_x_indeksi(
+                            self.veri.x(),
+                            seri,
+                            aralık,
+                            hedef,
+                            NullAtlamaYönü::EnYakın,
+                        );
+                        aday.filter(|indeks| piksel_uzaklığı(*indeks) <= piksel.max(0.0))
+                    }
+                    NullİmleçDüzeni::YalnızNullsaPiksel { piksel: _ } if ortak_dolu => {
+                        Some(ortak_indeks)
+                    }
+                    NullİmleçDüzeni::YalnızNullsaPiksel { piksel } => {
+                        let aday = en_yakın_dolu_x_indeksi(
+                            self.veri.x(),
+                            seri,
+                            aralık,
+                            hedef,
+                            NullAtlamaYönü::EnYakın,
+                        );
+                        if hizalama_eksiği {
+                            aday
+                        } else {
+                            aday.filter(|indeks| piksel_uzaklığı(*indeks) <= piksel.max(0.0))
+                        }
+                    }
+                    NullİmleçDüzeni::ÖncekiSeri | NullİmleçDüzeni::ÖncekiİmleçVeSeri => {
+                        en_yakın_dolu_x_indeksi(
+                            self.veri.x(),
+                            seri,
+                            aralık,
+                            hedef,
+                            NullAtlamaYönü::Önceki,
+                        )
+                    }
+                }?;
+                let x = *self.veri.x().get(aday)?;
+                let değer = seri.get(aday).copied().flatten()?;
+                Some(İmleçSeriÖrneği {
+                    indeks: aday,
+                    x,
+                    değer,
+                    hizalama_eksiğinden_atlandı: hizalama_eksiği && aday != ortak_indeks,
+                })
+            })
+            .collect::<Vec<_>>();
+
+        let imleç_x = if düzen == NullİmleçDüzeni::ÖncekiİmleçVeSeri {
+            seriler
+                .iter()
+                .flatten()
+                .next()
+                .map_or(hedef, |örnek| örnek.x)
+        } else {
+            hedef
+        };
+        Some(İmleçÇözümü {
+            imleç_x,
+            ortak_x,
+            seriler,
+        })
+    }
+
+    pub fn imleç_y_görünür(&self) -> bool {
+        self.seçenekler.imleç_y_görünür
     }
 
     pub fn ham_seri_değeri(&self, seri: usize, indeks: usize) -> Option<f64> {

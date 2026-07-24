@@ -27,7 +27,7 @@ pub use cizim::{
 };
 pub use grafik::{
     AçıklamaVuruşu, DağılımVuruşu, EksenHedefi, Grafik, NullAtlamaYönü, SeçimEylemi,
-    TimelineVuruşu, ZoomRangerDurumu, ZoomRangerSürüklemeEkseni,
+    TimelineVuruşu, ZoomRangerDurumu, ZoomRangerSürüklemeEkseni, İmleçSeriÖrneği, İmleçÇözümü,
 };
 pub use hata::UplotHatası;
 #[cfg(feature = "svg")]
@@ -109,11 +109,12 @@ pub use secenek::{
     DağılımDüzeni, DağılımNoktası, DağılımSerisi, EnYakınTooltipBilgisi, EnYakınTooltipDüzeni,
     EtkileşimSeçenekleri, GradyanDurağı, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri,
     GüzelÖlçekDüzeni, IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu, KutuBıyıkDüzeni, MumDüzeni,
-    NoktaFiltreKipi, NoktaKatmanı, NoktaŞekli, OdakDüzeni, OdakStili, RüzgarYönüDüzeni, SeriBandı,
-    SeriSeçenekleri, SeriÇizimTürü, TarihAdları, TekerlekAyarları, TekerlekEkseni, TekerlekKipi,
-    TimelineDüzeni, TimelineHücresi, TooltipBilgisi, TooltipDüzeni, XÖlçekDağılımı, YÖlçekDağılımı,
-    YÖlçekEtiketBiçimi, YÖlçekSeçenekleri, ZamanDilimi, ZoomRangerSeçenekleri, ZoomSürüklemeKipi,
-    ÇizimKancasıDüzeni, ÇizimSırası, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı, İkincilXEksen,
+    NoktaFiltreKipi, NoktaKatmanı, NoktaŞekli, NullİmleçDüzeni, OdakDüzeni, OdakStili,
+    RüzgarYönüDüzeni, SeriBandı, SeriSeçenekleri, SeriÇizimTürü, TarihAdları, TekerlekAyarları,
+    TekerlekEkseni, TekerlekKipi, TimelineDüzeni, TimelineHücresi, TooltipBilgisi, TooltipDüzeni,
+    XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri, ZamanDilimi,
+    ZoomRangerSeçenekleri, ZoomSürüklemeKipi, ÇizimKancasıDüzeni, ÇizimSırası, ÇubukDüzeni,
+    ÇubukYönü, ÖlçekGradyanı, İkincilXEksen,
 };
 pub use veri::{BoşlukKipi, HizalıDeğer, HizalıVeri, hizalı_verileri_birleştir};
 pub use yuzey::YüzeyDikdörtgeni;

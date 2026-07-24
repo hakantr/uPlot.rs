@@ -21,6 +21,7 @@ use crate::{
 struct İmleçDurumu {
     fare: Nokta,
     veri_x: f64,
+    seri_x_değerleri: Vec<Option<f64>>,
     seri_değerleri: Vec<Option<f64>>,
     dağılım: Option<DağılımVuruşu>,
 }
@@ -372,11 +373,21 @@ impl GpuiGrafik {
         if self.imleç_kilitli || !yatay_oran.is_finite() {
             return false;
         }
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
         let x_oranı = yatay_oran.clamp(0.0, 1.0);
-        let Some((veri_x, seri_değerleri)) = self.grafik.en_yakın_noktalar(x_oranı) else {
+        let Some(çözüm) = self.grafik.imleç_çözümü(x_oranı, f64::from(sağ - sol)) else {
             return false;
         };
-        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        let seri_x_değerleri = çözüm
+            .seriler
+            .iter()
+            .map(|örnek| örnek.map(|örnek| örnek.x))
+            .collect();
+        let seri_değerleri = çözüm
+            .seriler
+            .iter()
+            .map(|örnek| örnek.map(|örnek| örnek.değer))
+            .collect();
         let y = dikey_oran
             .filter(|oran| oran.is_finite())
             .map_or(-10.0, |oran| {
@@ -384,8 +395,13 @@ impl GpuiGrafik {
             });
         self.açıklama_vuruşu = None;
         self.imleç = Some(İmleçDurumu {
-            fare: Nokta::yeni(sol + x_oranı as f32 * (sağ - sol), y),
-            veri_x,
+            fare: Nokta::yeni(
+                sol + self.grafik.x_konum_oranı(çözüm.imleç_x).unwrap_or(x_oranı) as f32
+                    * (sağ - sol),
+                y,
+            ),
+            veri_x: çözüm.ortak_x,
+            seri_x_değerleri,
             seri_değerleri,
             dağılım: None,
         });
@@ -698,7 +714,7 @@ impl GpuiGrafik {
                 kalınlık: 1.0,
                 kesik: 4.0,
             });
-            if !self.grafik.eksen_göstergeleri_etkin() {
+            if !self.grafik.eksen_göstergeleri_etkin() && self.grafik.imleç_y_görünür() {
                 sahne.ekle(Komut::KesikliÇizgi {
                     başlangıç: Nokta::yeni(sol, imleç.fare.y),
                     bitiş: Nokta::yeni(sağ, imleç.fare.y),
@@ -730,14 +746,24 @@ impl GpuiGrafik {
                 let Some(seri) = self.grafik.seri_seçenekleri().get(seri_indeksi) else {
                     continue;
                 };
+                let seri_x = imleç
+                    .seri_x_değerleri
+                    .get(seri_indeksi)
+                    .copied()
+                    .flatten()
+                    .unwrap_or(imleç.veri_x);
                 let seri_rengi = self
                     .grafik
-                    .seri_imleç_rengi(seri_indeksi, imleç.veri_x, *değer)
+                    .seri_imleç_rengi(seri_indeksi, seri_x, *değer)
                     .unwrap_or_else(|| seri.renk.clone());
                 let Some(y_oranı) = self.grafik.seri_y_konum_oranı(seri_indeksi, *değer) else {
                     continue;
                 };
                 let nokta_y = alt - y_oranı as f32 * (alt - üst);
+                let seri_nokta_x = self
+                    .grafik
+                    .x_konum_oranı(seri_x)
+                    .map_or(nokta_x, |oran| sol + oran as f32 * (sağ - sol));
                 if self.grafik.eksen_göstergeleri_etkin() {
                     sahne.ekle(Komut::KesikliÇizgi {
                         başlangıç: Nokta::yeni(sol, nokta_y),
@@ -764,7 +790,7 @@ impl GpuiGrafik {
                     });
                 }
                 sahne.ekle(Komut::Daire {
-                    merkez: Nokta::yeni(nokta_x, nokta_y),
+                    merkez: Nokta::yeni(seri_nokta_x, nokta_y),
                     yarıçap: 2.5,
                     dolgu: seri_rengi.clone(),
                     çizgi: seri_rengi,
@@ -868,6 +894,10 @@ impl GpuiGrafik {
             self.imleç = Some(İmleçDurumu {
                 fare,
                 veri_x: vuruş.x,
+                seri_x_değerleri: değerler
+                    .iter()
+                    .map(|değer| değer.map(|_| vuruş.x))
+                    .collect(),
                 seri_değerleri: değerler,
                 dağılım: Some(vuruş),
             });
@@ -895,16 +925,28 @@ impl GpuiGrafik {
             },
         );
         let x_oranı = if x_dikey { 1.0 - dikey } else { yatay };
-        let Some((veri_x, seri_değerleri)) = self.grafik.en_yakın_noktalar(x_oranı) else {
+        let Some(çözüm) = self.grafik.imleç_çözümü(x_oranı, f64::from(sağ - sol)) else {
             self.imleç = None;
             return self.grafik.imleç_odağını_temizle() || odak_değişti;
         };
+        let seri_x_değerleri = çözüm
+            .seriler
+            .iter()
+            .map(|örnek| örnek.map(|örnek| örnek.x))
+            .collect();
+        let seri_değerleri = çözüm
+            .seriler
+            .iter()
+            .map(|örnek| örnek.map(|örnek| örnek.değer))
+            .collect();
         self.imleç = Some(İmleçDurumu {
             fare: Nokta::yeni(
-                sol + (yatay as f32) * (sağ - sol),
+                sol + self.grafik.x_konum_oranı(çözüm.imleç_x).unwrap_or(yatay) as f32
+                    * (sağ - sol),
                 üst + (dikey as f32) * (alt - üst),
             ),
-            veri_x,
+            veri_x: çözüm.ortak_x,
+            seri_x_değerleri,
             seri_değerleri,
             dağılım: None,
         });
@@ -2140,6 +2182,7 @@ mod testler {
         bileşen.imleç = Some(İmleçDurumu {
             fare: Nokta::yeni((sol + sağ) / 2.0, (üst + alt) / 2.0),
             veri_x,
+            seri_x_değerleri: vec![Some(veri_x); seri_değerleri.len()],
             seri_değerleri,
             dağılım: None,
         });

@@ -3,12 +3,15 @@ kaynak = "../uPlot/demos/nearest-non-null.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
 fixture = "src/kart/nearest_non_null.rs#nearest_non_null_kartı"
 viewport = [1920, 600]
-durum = "null_atlayan_imlec_indeksi"
+durum = "bes_yuzeyli_null_proximity_ve_cursor_karsilastirmasi"
 
 [davranış]
-yüzeyler = ["x-değeri", "30px", "null-15px", "önceki"]
+yüzeyler = ["x-değeri", "30px", "null-15px", "önceki-seri", "önceki-cursor"]
+sunum = "tek_kart_sayfasinda_bes_bagimsiz_yuzey"
 eşitlik = "soldaki"
 önceki = "imleç-x-değerinin-solundaki-son-dolu"
+joined_hucreler = "null_ile_alignment-missing-ayri"
+cursor_ayrimi = "dataIdx-noktayi-snapler_move-cursor-ve-noktayi-snapler"
 
 [kanıt]
 örnek = "examples/nearest_non_null.rs"

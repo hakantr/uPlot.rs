@@ -138,6 +138,21 @@
     .timeseries-discrete-yığın svg { display: block; width: 100%; height: 100%; }
     .timeseries-discrete-yığın .yardım,
     .timeseries-discrete-yığın .lejant { position: static; justify-content: flex-start; }
+    #chart.nearest-non-null-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .nearest-non-null-yığın { min-width: 680px; display: grid; grid-template-columns: 1fr 1fr;
+                              gap: 10px; align-items: start; }
+    .nearest-non-null-grafik { position: relative; min-width: 0; min-height: 230px;
+                               border: 1px solid #e5e7eb; border-radius: 8px;
+                               background: #fff; overflow: hidden; }
+    .nearest-non-null-grafik[data-nearest-index="0"],
+    .nearest-non-null-grafik[data-nearest-index="1"],
+    .nearest-non-null-grafik[data-nearest-index="2"] { grid-column: 1 / -1; min-height: 300px; }
+    .nearest-non-null-grafik svg { display: block; width: 100%; height: 100%; min-height: inherit; }
+    .nearest-non-null-açıklama { position: absolute; z-index: 3; top: 38px; left: 64px;
+                                 right: 12px; color: #6b7280; font-size: 10px;
+                                 pointer-events: none; }
+    .nearest-non-null-grafik .lejant { position: absolute; left: 58px; right: 12px;
+                                       bottom: 7px; justify-content: flex-start; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -227,21 +242,9 @@
         <strong>Multi Bars · non-justified</strong><small>multi-bars-non-justified</small>
         <div class="durum">Sayısal X üzerinde bağımsız çubuklar</div>
       </article>
-      <article class="kart" data-kart="nearest-non-null-x-value" aria-current="false" tabindex="0">
-        <strong>Nearest Non-Null · X value</strong><small>nearest-non-null-x-value</small>
-        <div class="durum">Null boşluğunda en yakın X</div>
-      </article>
-      <article class="kart" data-kart="nearest-non-null-30px" aria-current="false" tabindex="0">
-        <strong>Nearest Non-Null · 30px</strong><small>nearest-non-null-30px</small>
-        <div class="durum">Yakınlık sınırı ve null atlama</div>
-      </article>
-      <article class="kart" data-kart="nearest-non-null-null-15px" aria-current="false" tabindex="0">
-        <strong>Nearest Non-Null · null 15px</strong><small>nearest-non-null-null-15px</small>
-        <div class="durum">Yalnız null değerde yakınlık</div>
-      </article>
-      <article class="kart" data-kart="nearest-non-null-previous" aria-current="false" tabindex="0">
-        <strong>Nearest Non-Null · previous</strong><small>nearest-non-null-previous</small>
-        <div class="durum">İmleci önceki dolu örneğe yapıştır</div>
+      <article class="kart" data-kart="nearest-non-null" aria-current="false" tabindex="0">
+        <strong>Nearest Non-Null</strong><small>nearest-non-null.html</small>
+        <div class="durum">5 ilişkili yüzey · null, proximity ve cursor snap karşılaştırması</div>
       </article>
       <article class="kart" data-kart="scale-padding" aria-current="false" tabindex="0">
         <strong>Scale Padding</strong>
@@ -638,22 +641,23 @@
         çubuk: kimlik !== "multi-bars-non-justified",
         etkileşimler: () => ortakEtkileşimler(),
       }])),
-      ...Object.fromEntries([
-        ["nearest-non-null-x-value", "Nearest Non-Null · by nearest x scale value"],
-        ["nearest-non-null-30px", "Nearest Non-Null · by 30px proximity"],
-        ["nearest-non-null-null-15px", "Nearest Non-Null · 15px only when null"],
-        ["nearest-non-null-previous", "Nearest Non-Null · snap to previous"],
-      ].map(([kimlik, başlık]) => [kimlik, {
-        başlık,
+      "nearest-non-null": {
+        başlık: "Nearest Non-Null · 5 davranışın karşılaştırması",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/nearest-non-null.html">nearest-non-null.html</a>
-          <br>Null örnekler ortak çekirdek indeks API'siyle atlanır.`,
+          <br>Beş bağımsız uPlot yüzeyi tek sayfada tutulur; son iki yüzey aynı veride <code>cursor.dataIdx</code> ile <code>cursor.move</code> farkını yan yana gösterir.`,
         tanım: () => nearest_non_null_kart_tanim_ornegi(),
         tanımYolu: "src/kart/nearest_non_null.rs",
         seriler: [],
-        yardım: "İmleci null boşluklarına taşıyarak en yakın veya önceki dolu örneği izleyin.",
+        yardım: "Her yüzey bağımsızdır. Null boşluğunda seri noktası ile dikey cursor çizgisinin davranışını karşılaştırın.",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
-      }])),
+        kullanım: {
+          amaç: "Eksik telemetride en yakın X, 30 px yakınlık, yalnız gerçek null için 15 px ve önceki dolu örneğe iki farklı snap politikasını karşılaştırır.",
+          api: "GrafikSeçenekleri::null_imleç_düzeni politikayı belirler; Grafik::imleç_çözümü tek ortak indeks yerine seri başına index, gerçek timestamp ve değer döndürür. null ile join kaynaklı hizalama eksiği korunur.",
+          izleme: "Scrape boşluklarında legend değerini tamamen kaybetmeden yakın örneği göstermek için kullanılır. Eski değeri güncelmiş gibi sunmamak için gerçek örnek zamanı ve uygulamaya özgü stale eşiği ayrıca gösterilmelidir.",
+          maliyet: "Başlangıç sıralı X üzerinde O(log N), geçilen null koşusu K ise O(K). Piksel eşiği görünür pencereyle sınırlıdır; pointer hareketi ana SVG yollarını yeniden çizmez, yalnız cursor/nokta/lejant katmanını günceller.",
+        },
+      },
       "scale-padding": {
         başlık: "Scale Padding · Flat",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/scale-padding.html">scale-padding.html</a>
@@ -2382,6 +2386,7 @@
     let oturum = null;
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
+    let nearestNonNullOturumları = [];
     let syncCursorKöprüsü = null;
     let syncCursorDurumları = Array.from({ length: 5 }, () => null);
     let syncCursorSürükleme = null;
@@ -2417,6 +2422,39 @@
       { kimlik: "sync-cursor-tcp", başlık: "TCP", seriler: [["TCP 1", "red"], ["TCP 2", "green"], ["TCP 3", "blue"]] },
       { kimlik: "sync-cursor-mismatch-red-blue", başlık: "Mis-matched series order", seriler: [["red", "red"], ["blue", "blue"]] },
       { kimlik: "sync-cursor-mismatch-green-red", başlık: "Mis-matched series order", seriler: [["green", "green"], ["red", "red"]] },
+    ];
+    const nearestNonNullYüzeyleri = [
+      {
+        kimlik: "nearest-non-null-x-value",
+        başlık: "Nearest Non-Null (by nearest x scale value)",
+        açıklama: "CPU ve RAM, aynı cursor konumunda kendi en yakın dolu timestamp'ini seçebilir.",
+        seriler: [["CPU", "red"], ["RAM", "blue"]], boyut: [1920, 600],
+      },
+      {
+        kimlik: "nearest-non-null-30px",
+        başlık: "Nearest Non-Null (by 30px proximity)",
+        açıklama: "Dört farklı X tablosu join edilir; 30 CSS piksel dışındaki hover noktası gizlenir.",
+        seriler: [["Sparse", "red"], ["5", "blue"], ["18", "green"], ["25", "orange"]],
+        boyut: [1920, 600],
+      },
+      {
+        kimlik: "nearest-non-null-null-15px",
+        başlık: "Nearest Non-Null (15px only when hovered val === null)",
+        açıklama: "Gerçek null 15 px ile sınırlıdır; o timestamp'te örneği olmayan undefined hücre aynı değildir.",
+        seriler: [["Series 1", "red"], ["Series 2", "blue"]], boyut: [1920, 600],
+      },
+      {
+        kimlik: "nearest-non-null-previous-series",
+        başlık: "Previous non-null (cursor.dataIdx)",
+        açıklama: "Nokta geriye yapışır, dikey cursor fare konumunda kalır.",
+        seriler: [["foo", "red"]], boyut: [600, 300],
+      },
+      {
+        kimlik: "nearest-non-null-previous-cursor",
+        başlık: "Previous non-null (cursor.move)",
+        açıklama: "Nokta ve dikey cursor birlikte önceki dolu X'e yapışır.",
+        seriler: [["foo", "blue"]], boyut: [600, 300],
+      },
     ];
     let etkileşimler = {
       tekerlek: false,
@@ -2469,6 +2507,14 @@
           || !syncCursorOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !syncCursorOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "nearest-non-null") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !nearestNonNullOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !nearestNonNullOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -3000,6 +3046,176 @@
       kontrolleriGüncelle();
     }
 
+    function nearestNonNullYüzeyiniÇiz(indeks) {
+      const kutu = chart.querySelector(`[data-nearest-index="${indeks}"]`);
+      const yüzey = nearestNonNullYüzeyleri[indeks];
+      const yüzeyOturumu = nearestNonNullOturumları[indeks];
+      if (!kutu || !yüzey || !yüzeyOturumu) return;
+      const [genişlik, yükseklik] = yüzey.boyut;
+      kutu.innerHTML = `
+        ${yüzeyOturumu.svg(genişlik, yükseklik)}
+        <div class="nearest-non-null-açıklama">${yüzey.açıklama}</div>
+        <div class="lejant">
+          <span>x: <b data-nearest-x>--</b></span>
+          ${yüzey.seriler.map((seri, seriİndeksi) =>
+            `<span><i class="örnek" style="border-color:${seri[1]};background:${seri[1]}"></i>${seri[0]}:
+              <b data-nearest-seri="${seriİndeksi}">--</b></span>`
+          ).join("")}
+        </div>`;
+      const svg = kutu.querySelector("svg");
+      if (!svg) return;
+      svg.insertAdjacentHTML("beforeend", `
+        <g class="nearest-etkileşim" pointer-events="none">
+          <rect class="nearest-seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+          <line class="nearest-imleç-x" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
+          <line class="nearest-imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
+          ${yüzey.seriler.map((seri, seriİndeksi) =>
+            `<circle data-nearest-nokta="${seriİndeksi}" visibility="hidden" r="3" fill="${seri[1]}"/>`
+          ).join("")}
+        </g>`);
+
+      const alan = olay => {
+        const rect = svg.getBoundingClientRect();
+        const view = svg.viewBox.baseVal;
+        const çizim = Array.from(yüzeyOturumu.cizim_alani(view.width, view.height));
+        if (çizim.length !== 4 || rect.width <= 0 || rect.height <= 0) return null;
+        const x = (olay.clientX - rect.left) / rect.width * view.width;
+        const y = (olay.clientY - rect.top) / rect.height * view.height;
+        return { view, x, y, sol: çizim[0], sağ: çizim[1], üst: çizim[2], alt: çizim[3] };
+      };
+      const gizle = () => kutu.querySelectorAll(".nearest-imleç-x,.nearest-imleç-y,[data-nearest-nokta]")
+        .forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+      const imleciGüncelle = olay => {
+        const a = alan(olay);
+        if (!a || a.x < a.sol || a.x > a.sağ || a.y < a.üst || a.y > a.alt) {
+          gizle();
+          return;
+        }
+        const oran = (a.x - a.sol) / (a.sağ - a.sol);
+        const çözüm = Array.from(yüzeyOturumu.imlec_cozumu(oran, a.sağ - a.sol));
+        if (çözüm.length < 2) {
+          gizle();
+          return;
+        }
+        const [imleçX, ortakX, ...örnekler] = çözüm;
+        const imleçOranı = yüzeyOturumu.x_konum_orani(imleçX);
+        const imleçPx = a.sol + imleçOranı * (a.sağ - a.sol);
+        const dikey = kutu.querySelector(".nearest-imleç-x");
+        const yatay = kutu.querySelector(".nearest-imleç-y");
+        dikey?.setAttribute("x1", imleçPx); dikey?.setAttribute("x2", imleçPx);
+        dikey?.setAttribute("y1", a.üst); dikey?.setAttribute("y2", a.alt);
+        dikey?.setAttribute("visibility", "visible");
+        yatay?.setAttribute("x1", a.sol); yatay?.setAttribute("x2", a.sağ);
+        yatay?.setAttribute("y1", a.y); yatay?.setAttribute("y2", a.y);
+        yatay?.setAttribute("visibility", yüzeyOturumu.imlec_y_gorunur() ? "visible" : "hidden");
+        const xHedefi = kutu.querySelector("[data-nearest-x]");
+        if (xHedefi) xHedefi.textContent = Number.isFinite(ortakX)
+          ? ortakX.toLocaleString("tr-TR", { maximumFractionDigits: 3 }) : "--";
+        yüzey.seriler.forEach((seri, seriİndeksi) => {
+          const seriX = örnekler[seriİndeksi * 3];
+          const seriY = örnekler[seriİndeksi * 3 + 1];
+          const nokta = kutu.querySelector(`[data-nearest-nokta="${seriİndeksi}"]`);
+          const hedef = kutu.querySelector(`[data-nearest-seri="${seriİndeksi}"]`);
+          if (!Number.isFinite(seriX) || !Number.isFinite(seriY)) {
+            nokta?.setAttribute("visibility", "hidden");
+            if (hedef) hedef.textContent = "--";
+            return;
+          }
+          const px = a.sol + yüzeyOturumu.x_konum_orani(seriX) * (a.sağ - a.sol);
+          const yOranı = yüzeyOturumu.seri_y_konum_orani(seriİndeksi, seriY);
+          const py = a.alt - yOranı * (a.alt - a.üst);
+          nokta?.setAttribute("cx", px); nokta?.setAttribute("cy", py);
+          nokta?.setAttribute("visibility", "visible");
+          if (hedef) hedef.textContent =
+            `${seriY.toLocaleString("tr-TR", { maximumFractionDigits: 3 })} @ ${seriX.toLocaleString("tr-TR", { maximumFractionDigits: 3 })}`;
+        });
+      };
+      let seçim = null;
+      kutu.addEventListener("pointermove", olay => {
+        olay.stopPropagation();
+        imleciGüncelle(olay);
+        if (!seçim) return;
+        const a = alan(olay);
+        if (!a) return;
+        seçim.son = Math.max(a.sol, Math.min(a.sağ, a.x));
+        const dikdörtgen = kutu.querySelector(".nearest-seçim");
+        dikdörtgen?.setAttribute("x", Math.min(seçim.baş, seçim.son));
+        dikdörtgen?.setAttribute("y", a.üst);
+        dikdörtgen?.setAttribute("width", Math.abs(seçim.son - seçim.baş));
+        dikdörtgen?.setAttribute("height", a.alt - a.üst);
+        dikdörtgen?.setAttribute("visibility", "visible");
+      });
+      kutu.addEventListener("pointerleave", () => {
+        if (!seçim) gizle();
+      });
+      kutu.addEventListener("pointerdown", olay => {
+        if (olay.button !== 0) return;
+        const a = alan(olay);
+        if (!a || a.x < a.sol || a.x > a.sağ || a.y < a.üst || a.y > a.alt) return;
+        seçim = { baş: a.x, son: a.x, pointerId: olay.pointerId };
+        kutu.setPointerCapture(olay.pointerId);
+      });
+      kutu.addEventListener("pointerup", olay => {
+        if (!seçim || seçim.pointerId !== olay.pointerId) return;
+        const a = alan(olay);
+        const tamamlanan = seçim;
+        seçim = null;
+        if (kutu.hasPointerCapture(olay.pointerId)) kutu.releasePointerCapture(olay.pointerId);
+        if (!a || Math.abs(tamamlanan.son - tamamlanan.baş) < 4) return;
+        const başlangıç = (Math.min(tamamlanan.baş, tamamlanan.son) - a.sol) / (a.sağ - a.sol);
+        const bitiş = (Math.max(tamamlanan.baş, tamamlanan.son) - a.sol) / (a.sağ - a.sol);
+        try {
+          if (yüzeyOturumu.secimi_bitir(başlangıç, bitiş, false) === 1) {
+            nearestNonNullYüzeyiniÇiz(indeks);
+            kontrolleriGüncelle();
+          }
+        } catch (neden) {
+          hata.textContent = `Nearest Non-Null seçimi uygulanamadı: ${String(neden)}`;
+        }
+      });
+      kutu.addEventListener("wheel", olay => {
+        olay.stopPropagation();
+        const delta = tekerlekDeltası(olay);
+        if (!etkileşimler.tekerlek || delta === 0) return;
+        const a = alan(olay);
+        if (!a || a.x < a.sol || a.x > a.sağ || a.y < a.üst || a.y > a.alt) return;
+        olay.preventDefault();
+        try {
+          if (yüzeyOturumu.tekerlek_eksende(
+            (a.x - a.sol) / (a.sağ - a.sol),
+            (a.y - a.üst) / (a.alt - a.üst),
+            -delta,
+            olay.deltaMode === 0,
+            tekerlekEkseni(olay),
+          )) {
+            nearestNonNullYüzeyiniÇiz(indeks);
+            kontrolleriGüncelle();
+          }
+        } catch (neden) {
+          hata.textContent = `Nearest Non-Null yakınlaştırması uygulanamadı: ${String(neden)}`;
+        }
+      }, { passive: false });
+      kutu.addEventListener("dblclick", olay => {
+        olay.stopPropagation();
+        if (yüzeyOturumu.tam_gorunum()) {
+          nearestNonNullYüzeyiniÇiz(indeks);
+          kontrolleriGüncelle();
+        }
+      });
+    }
+
+    function nearestNonNullÇiz() {
+      chart.classList.remove("sync-cursor-yüzeyi", "timeseries-discrete-yüzeyi");
+      chart.classList.add("nearest-non-null-yüzeyi");
+      chart.innerHTML = `<div class="nearest-non-null-yığın">
+        ${nearestNonNullYüzeyleri.map((_, indeks) =>
+          `<section class="nearest-non-null-grafik" data-nearest-index="${indeks}"></section>`
+        ).join("")}
+      </div>`;
+      nearestNonNullYüzeyleri.forEach((_, indeks) => nearestNonNullYüzeyiniÇiz(indeks));
+      kontrolleriGüncelle();
+    }
+
     function çiz() {
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
@@ -3007,6 +3223,10 @@
       }
       if (aktifKart === "timeseries-discrete") {
         timeseriesDiscreteÇiz();
+        return;
+      }
+      if (aktifKart === "nearest-non-null") {
+        nearestNonNullÇiz();
         return;
       }
       if (!oturum) return;
@@ -3018,6 +3238,7 @@
       } : null;
       chart.classList.remove("sync-cursor-yüzeyi");
       chart.classList.remove("timeseries-discrete-yüzeyi");
+      chart.classList.remove("nearest-non-null-yüzeyi");
       chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
       const sayı = Number(nokta.value);
       değer.value = `${sayı} nokta`;
@@ -3494,12 +3715,21 @@
       const x = sol + oran * (sağ - sol);
       const y = üst + dikeyOran * (alt - üst);
       const xEksenOranı = xDikey ? 1 - dikeyOran : oran;
-      const enYakın = oturum?.en_yakin_noktalar(xEksenOranı) ?? [];
-      if (enYakın.length < 2) return;
-      const [gerçekX, ...seriDeğerleri] = enYakın;
+      const çözüm = Array.from(oturum?.imlec_cozumu(xEksenOranı, sağ - sol) ?? []);
+      if (çözüm.length < 2) return;
+      const [imleçX, gerçekX, ...seriÖrnekleri] = çözüm;
+      const seriDeğerleri = kartlar[aktifKart].seriler.map((_, indeks) =>
+        seriÖrnekleri[indeks * 3 + 1]
+      );
+      const seriXDeğerleri = kartlar[aktifKart].seriler.map((_, indeks) =>
+        seriÖrnekleri[indeks * 3]
+      );
       const imleçRenkleri = oturum?.imlec_seri_renkleri(xEksenOranı) ?? [];
       const xKonumOranı = oturum.x_konum_orani(gerçekX);
       const noktaX = sol + xKonumOranı * (sağ - sol);
+      const imleçXKonumOranı = oturum.x_konum_orani(imleçX);
+      const imleçXKonumu = Number.isFinite(imleçXKonumOranı)
+        ? sol + imleçXKonumOranı * (sağ - sol) : x;
       const noktaXEkseniY = alt - xKonumOranı * (alt - üst);
       const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
       const tooltipBilgisi = kartlar[aktifKart].enYakınTooltip
@@ -3529,12 +3759,16 @@
       const [dikey, yatay] = çizgiler;
       // Varsayılan kartlarda kesintisiz; cursor-snap kartında çekirdek ayarının
       // döndürdüğü 10×10 piksel ızgarasına bağlı hareket eder.
-      dikey.setAttribute("x1", x); dikey.setAttribute("x2", x);
+      dikey.setAttribute("x1", imleçXKonumu); dikey.setAttribute("x2", imleçXKonumu);
       dikey.setAttribute("y1", üst); dikey.setAttribute("y2", alt);
       yatay.setAttribute("x1", sol); yatay.setAttribute("x2", sağ);
       yatay.setAttribute("y1", y); yatay.setAttribute("y2", y);
       dikey?.setAttribute("visibility", "visible");
-      yatay?.setAttribute("visibility", kartlar[aktifKart].eksenGöstergeleri ? "hidden" : "visible");
+      yatay?.setAttribute(
+        "visibility",
+        kartlar[aktifKart].eksenGöstergeleri || !oturum.imlec_y_gorunur()
+          ? "hidden" : "visible"
+      );
       if (kartlar[aktifKart].eksenGöstergeleri) {
         const xGösterge = svg.querySelector("#eksen-gosterge-x");
         const xDikdörtgen = xGösterge?.querySelector("rect");
@@ -3548,6 +3782,7 @@
       }
       noktalar.forEach((nokta, indeks) => {
         const seriDeğeri = seriDeğerleri[indeks];
+        const seriX = seriXDeğerleri[indeks];
         const yGösterge = svg.querySelector(`#eksen-gosterge-y-${indeks}`);
         if (!nokta || !Number.isFinite(seriDeğeri)) {
           nokta?.setAttribute("visibility", "hidden");
@@ -3560,7 +3795,10 @@
           return;
         }
         const noktaY = alt - yOranı * (alt - üst);
-        nokta.setAttribute("cx", xDikey ? sol + yOranı * (sağ - sol) : noktaX);
+        const seriXOranı = oturum.x_konum_orani(seriX);
+        const seriNoktaX = Number.isFinite(seriXOranı)
+          ? sol + seriXOranı * (sağ - sol) : noktaX;
+        nokta.setAttribute("cx", xDikey ? sol + yOranı * (sağ - sol) : seriNoktaX);
         nokta.setAttribute("cy", xDikey ? noktaXEkseniY : noktaY);
         nokta.setAttribute("fill", imleçRenkleri[indeks] ?? kartlar[aktifKart].seriler[indeks]?.renk ?? "#000000");
         nokta.setAttribute("visibility", "visible");
@@ -3946,6 +4184,11 @@
           if (yüzey.onceki_gorunum()) syncCursorYüzeyiÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "nearest-non-null") {
+        nearestNonNullOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.onceki_gorunum()) nearestNonNullYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (oturum?.onceki_gorunum()) çiz();
     });
     tamGörünüm.addEventListener("click", () => {
@@ -3962,8 +4205,17 @@
         syncCursorOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
+      } else if (aktifKart === "nearest-non-null") {
+        nearestNonNullOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.tam_gorunum()) nearestNonNullYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "timeseries-discrete") {
         timeseriesDiscreteOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "nearest-non-null") {
+        nearestNonNullOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else {
@@ -4048,6 +4300,9 @@
       document.documentElement.dataset.kaynakCommit = kaynak_commit();
       function kartıSeç(kimlik) {
         const oturumKimliği = kimlik;
+        if (kimlik !== "nearest-non-null" && kimlik.startsWith("nearest-non-null-")) {
+          kimlik = "nearest-non-null";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -4086,6 +4341,8 @@
         syncCursorOturumları = [];
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
         timeseriesDiscreteOturumları = [];
+        nearestNonNullOturumları.forEach(yüzey => yüzey.free());
+        nearestNonNullOturumları = [];
         syncCursorKöprüsü?.free();
         syncCursorKöprüsü = null;
         syncCursorDurumları = Array.from({ length: 5 }, () => null);
@@ -4162,6 +4419,15 @@
             const yüzey = new KartOturumu(yüzeyKimliği, 50);
             yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
             return yüzey;
+          });
+          çiz();
+          return;
+        }
+        if (kimlik === "nearest-non-null") {
+          nearestNonNullOturumları = nearestNonNullYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
           });
           çiz();
           return;

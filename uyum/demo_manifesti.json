@@ -3713,11 +3713,17 @@
       "sahip_faz": 4,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-null-gap-indices",
+        "source-exact-cpu-ram-data",
+        "source-five-surface-page-group",
+        "source-null-vs-alignment-missing",
+        "source-per-series-cursor-indices",
         "source-nearest-x-distance",
+        "source-30px-proximity",
+        "source-null-only-15px-proximity",
         "source-left-tie-break",
         "source-previous-non-null-bias",
-        "source-four-surfaces",
+        "source-dataIdx-vs-cursor-move",
+        "hover-overlay-without-main-path-redraw",
         "gpui-wasm-parity"
       ],
       "kanıt": {

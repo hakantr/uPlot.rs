@@ -1052,6 +1052,29 @@ impl KartOturumu {
             })
     }
 
+    /// `[cursor_x, ortak_x, seri_x, seri_y, seri_indeksi, ...]` biçiminde,
+    /// seri başına bağımsız null-atlama sonucunu döndürür.
+    pub fn imlec_cozumu(&self, yatay_oran: f64, çizim_genişliği: f64) -> Vec<f64> {
+        self.grafik
+            .imleç_çözümü(yatay_oran, çizim_genişliği)
+            .map_or_else(Vec::new, |çözüm| {
+                let mut sonuç = Vec::with_capacity(2 + çözüm.seriler.len() * 3);
+                sonuç.extend([çözüm.imleç_x, çözüm.ortak_x]);
+                for örnek in çözüm.seriler {
+                    if let Some(örnek) = örnek {
+                        sonuç.extend([örnek.x, örnek.değer, örnek.indeks as f64]);
+                    } else {
+                        sonuç.extend([f64::NAN, f64::NAN, f64::NAN]);
+                    }
+                }
+                sonuç
+            })
+    }
+
+    pub fn imlec_y_gorunur(&self) -> bool {
+        self.grafik.imleç_y_görünür()
+    }
+
     pub fn timeline_vuruslari(&self, yatay_oran: f64) -> Vec<f64> {
         self.grafik
             .timeline_vuruşları(yatay_oran)
@@ -2106,7 +2129,7 @@ mod testler {
     }
 
     #[test]
-    fn nearest_non_null_wasm_dört_yüzeyi_üretir() {
+    fn nearest_non_null_wasm_beş_yüzeyi_üretir() {
         for örnek in NearestNonNullÖrneği::TÜMÜ {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             assert!(oturum.is_ok(), "{}", örnek.kimlik());
@@ -2115,7 +2138,7 @@ mod testler {
             };
             assert!(oturum.svg(800, 400).starts_with("<svg"));
         }
-        assert!(nearest_non_null_kart_tanim_ornegi().contains("en_yakın_null_olmayan_indeks"));
+        assert!(nearest_non_null_kart_tanim_ornegi().contains("beş ilişkili yüzeyi"));
         assert_eq!(kart_sayisi(), 365);
     }
 
