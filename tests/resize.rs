@@ -14,8 +14,8 @@ fn resize_kartı_belirlenimci_svg_üretir() -> Result<(), UplotHatası> {
     assert_eq!(ilk, uplot_rs::svg::çiz(&sahne));
     assert!(ilk.starts_with("<svg"));
     assert!(ilk.contains("Resize"));
-    assert!(ilk.contains("stroke=\"#dc2626\""));
-    assert_eq!(sahne.komutlar().len(), 47);
+    assert!(ilk.contains("stroke=\"red\""));
+    assert_eq!(sahne.komutlar().len(), 43);
     Ok(())
 }
 

@@ -1754,8 +1754,10 @@ mod testler {
     #[test]
     fn nearest_non_null_wasm_dört_yüzeyi_üretir() {
         for örnek in NearestNonNullÖrneği::TÜMÜ {
-            let Ok(oturum) = KartOturumu::yeni(örnek.kimlik(), 100) else {
-                panic!("{}", örnek.kimlik());
+            let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
+            assert!(oturum.is_ok(), "{}", örnek.kimlik());
+            let Ok(oturum) = oturum else {
+                continue;
             };
             assert!(oturum.svg(800, 400).starts_with("<svg"));
         }
