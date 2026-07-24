@@ -13,8 +13,8 @@ use ::gpui::{
 };
 
 use crate::{
-    AçıklamaVuruşu, DağılımVuruşu, DoğrusalGradyan, Grafik, HizalıVeri, Komut, MetinHizası, Nokta,
-    Sahne, SeriSeçenekleri, SeçimEylemi, TekerlekEkseni, UplotHatası, YüzeyDikdörtgeni,
+    Aralık, AçıklamaVuruşu, DağılımVuruşu, DoğrusalGradyan, Grafik, HizalıVeri, Komut, MetinHizası,
+    Nokta, Sahne, SeriSeçenekleri, SeçimEylemi, TekerlekEkseni, UplotHatası, YüzeyDikdörtgeni,
 };
 
 #[derive(Clone)]
@@ -469,6 +469,32 @@ impl GpuiGrafik {
         self.seçim = None;
         self.grafik_bildir(cx);
         Ok(())
+    }
+
+    pub fn canlı_veriyi_x_aralığında_ayarla(
+        &mut self,
+        veri: HizalıVeri,
+        aralık: Aralık,
+        cx: &mut Context<Self>,
+    ) -> Result<bool, UplotHatası> {
+        let görünür_değişti = self.grafik.canlı_veriyi_x_aralığında_ayarla(veri, aralık)?;
+        self.açıklama_vuruşu = None;
+        if görünür_değişti {
+            self.grafik_bildir(cx);
+        }
+        Ok(görünür_değişti)
+    }
+
+    pub fn canlı_x_aralığını_ayarla(
+        &mut self,
+        aralık: Aralık,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let değişti = self.grafik.canlı_x_aralığını_ayarla(aralık);
+        if değişti {
+            self.grafik_bildir(cx);
+        }
+        değişti
     }
 
     pub fn boyutu_ayarla(

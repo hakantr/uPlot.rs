@@ -7,7 +7,7 @@ use gpui::{
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, PlatformPencere,
 };
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
     ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
@@ -27,8 +27,8 @@ use uplot_rs::{
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, MULTI_BARS_KART_TANIM_ÖRNEĞİ,
     MultiBarsÖrneği, NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ,
     NO_DATA_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
-    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği,
-    PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignAkışı,
+    PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
     SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
     SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
@@ -55,9 +55,9 @@ use uplot_rs::{
     log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
     missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yılsız_kartı,
     months_kartları, multi_bars_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
-    ortak_kart_etkileşimleri, path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartı,
-    points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı,
-    scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
+    ortak_kart_etkileşimleri, path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları,
+    pixel_align_kartı, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartı,
+    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
     sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
     stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_kartı,
     thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
@@ -79,7 +79,7 @@ enum KartKimliği {
     NiceScale,
     NoData,
     PathGapClip,
-    PixelAlign(PixelAlignÖrneği),
+    PixelAlign,
     Points(PointsÖrneği),
     ScalesDirOri(ScalesDirOriÖrneği),
     Scatter(ScatterÖrneği),
@@ -151,7 +151,7 @@ impl KartKimliği {
             Self::NiceScale => "Nice Scale & Ticks",
             Self::NoData => "No Data · 33 seçenek",
             Self::PathGapClip => "Path & Gap Clipping · 15 yüzey",
-            Self::PixelAlign(örnek) => örnek.başlık(),
+            Self::PixelAlign => "Pixel Align · canlı A/B",
             Self::Points(örnek) => örnek.başlık(),
             Self::ScalesDirOri(örnek) => örnek.başlık(),
             Self::Scatter(örnek) => örnek.başlık(),
@@ -240,8 +240,8 @@ impl KartKimliği {
             Self::PathGapClip => {
                 "path-gap-clip.html · 15 null/undefined, band, stepped ve piksel yüzeyi"
             }
-            Self::PixelAlign(_) => {
-                "pixel-align.html · aynı canlı veriyle tam piksel ve alt piksel karşılaştırması"
+            Self::PixelAlign => {
+                "pixel-align.html · 2 eşzamanlı yüzey · ortak 1 Hz halka veri + animation-frame X saati"
             }
             Self::Points(_) => {
                 "points.html · randomWalk.js · points.space, paths:null ve points.filter"
@@ -374,7 +374,7 @@ impl KartKimliği {
             Self::NiceScale => NICE_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::NoData => NO_DATA_KART_TANIM_ÖRNEĞİ,
             Self::PathGapClip => PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
-            Self::PixelAlign(_) => PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
+            Self::PixelAlign => PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
             Self::Points(_) => POINTS_KART_TANIM_ÖRNEĞİ,
             Self::ScalesDirOri(_) => SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
             Self::Scatter(_) => SCATTER_KART_TANIM_ÖRNEĞİ,
@@ -444,7 +444,7 @@ impl KartKimliği {
             Self::NiceScale => "src/kart/nice_scale.rs",
             Self::NoData => "src/kart/no_data.rs",
             Self::PathGapClip => "src/kart/path_gap_clip.rs",
-            Self::PixelAlign(_) => "src/kart/pixel_align.rs",
+            Self::PixelAlign => "src/kart/pixel_align.rs",
             Self::Points(_) => "src/kart/points.rs",
             Self::ScalesDirOri(_) => "src/kart/scales_dir_ori.rs",
             Self::Scatter(_) => "src/kart/scatter.rs",
@@ -531,7 +531,8 @@ pub struct ChartListesi {
     açıklama_istendi: bool,
     dinamik_seri_sayacı: u32,
     align_data_zamanlayıcısı: Option<Task<()>>,
-    pixel_align_adımı: usize,
+    pixel_align_akışı: Option<PixelAlignAkışı>,
+    pixel_align_son_kare: Option<Instant>,
     sine_akışı: Option<SineAkışı>,
     stream_data_akışı: Option<StreamDataAkışı>,
     soft_minmax_akışı: Option<SoftMinMaxAkışı>,
@@ -544,6 +545,7 @@ pub struct ChartListesi {
     nearest_non_null_grafikleri: Vec<(NearestNonNullÖrneği, Entity<GpuiGrafik>)>,
     months_grafikleri: Vec<Entity<GpuiGrafik>>,
     path_gap_clip_grafikleri: Vec<(PathGapClipÖrneği, Entity<GpuiGrafik>)>,
+    pixel_align_grafikleri: Vec<(PixelAlignÖrneği, Entity<GpuiGrafik>)>,
     no_data_örneği: NoDataÖrneği,
 }
 
@@ -585,6 +587,12 @@ impl ChartListesi {
                 }
             } else if bu.aktif_kart == KartKimliği::PathGapClip {
                 for (_, grafik) in &bu.path_gap_clip_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if bu.aktif_kart == KartKimliği::PixelAlign {
+                for (_, grafik) in &bu.pixel_align_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -637,7 +645,8 @@ impl ChartListesi {
             açıklama_istendi: false,
             dinamik_seri_sayacı: 0,
             align_data_zamanlayıcısı: None,
-            pixel_align_adımı: 140,
+            pixel_align_akışı: None,
+            pixel_align_son_kare: None,
             sine_akışı: None,
             stream_data_akışı: None,
             soft_minmax_akışı: None,
@@ -650,6 +659,7 @@ impl ChartListesi {
             nearest_non_null_grafikleri: Vec::new(),
             months_grafikleri: Vec::new(),
             path_gap_clip_grafikleri: Vec::new(),
+            pixel_align_grafikleri: Vec::new(),
             no_data_örneği: NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
         }
     }
@@ -827,6 +837,40 @@ impl ChartListesi {
         cx.notify();
     }
 
+    fn pixel_align_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = pixel_align_kartları(140);
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Pixel Align ailesi oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.pixel_align_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.pixel_align_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            yüzeyler.push((örnek, cx.new(|_| GpuiGrafik::yeni(grafik))));
+        }
+        self.pixel_align_akışı = PixelAlignAkışı::yeni(140).ok();
+        self.pixel_align_son_kare = Some(Instant::now());
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.pixel_align_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
         match grafik_oluştur(
@@ -836,7 +880,7 @@ impl ChartListesi {
             self.autosize_kuvvet,
             self.latency_kova,
             self.latency_ofset,
-            self.pixel_align_adımı,
+            140,
         ) {
             Ok(mut yeni) => {
                 yeni.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
@@ -1002,7 +1046,8 @@ impl ChartListesi {
         self.açıklama_istendi = false;
         self.dinamik_seri_sayacı = 0;
         self.align_data_zamanlayıcısı = None;
-        self.pixel_align_adımı = 140;
+        self.pixel_align_akışı = None;
+        self.pixel_align_son_kare = None;
         self.sine_akışı = if kart == KartKimliği::SineStream {
             match SineAkışı::yeni() {
                 Ok(akış) => Some(akış),
@@ -1053,37 +1098,50 @@ impl ChartListesi {
             self.nearest_non_null_grafikleri.clear();
             self.months_grafikleri.clear();
             self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
             self.sync_cursor_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::TimeseriesDiscrete {
             self.sync_cursor_grafikleri.clear();
             self.nearest_non_null_grafikleri.clear();
             self.months_grafikleri.clear();
             self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
             self.timeseries_discrete_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::NearestNonNull {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
             self.months_grafikleri.clear();
             self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
             self.nearest_non_null_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::Months {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
             self.nearest_non_null_grafikleri.clear();
             self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
             self.months_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::PathGapClip {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
             self.nearest_non_null_grafikleri.clear();
             self.months_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
             self.path_gap_clip_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::PixelAlign {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
             self.nearest_non_null_grafikleri.clear();
             self.months_grafikleri.clear();
             self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
             self.grafiği_yenile(self.nokta_sayısı, cx);
         }
         if kart == KartKimliği::AlignDataCost {
@@ -1136,18 +1194,46 @@ impl ChartListesi {
                     }
                 }
             }));
-        } else if matches!(kart, KartKimliği::PixelAlign(_)) {
+        } else if kart == KartKimliği::PixelAlign {
             self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
                 loop {
-                    cx.background_executor().timer(Duration::from_secs(1)).await;
+                    cx.background_executor()
+                        .timer(Duration::from_millis(16))
+                        .await;
                     let devam = bu
                         .update(cx, |bu, cx| {
-                            if bu.aktif_kart != kart {
+                            if bu.aktif_kart != KartKimliği::PixelAlign {
                                 return false;
                             }
-                            bu.pixel_align_adımı =
-                                bu.pixel_align_adımı.saturating_add(1).min(10_000);
-                            bu.grafiği_yenile(bu.nokta_sayısı, cx);
+                            let şimdi = Instant::now();
+                            let geçen_ms = bu.pixel_align_son_kare.map_or(16.0, |önceki| {
+                                şimdi.duration_since(önceki).as_secs_f64() * 1_000.0
+                            });
+                            bu.pixel_align_son_kare = Some(şimdi);
+                            let Some(akış) = bu.pixel_align_akışı.as_mut() else {
+                                return false;
+                            };
+                            let veri_değişti = akış.kareyi_ilerlet(geçen_ms.min(1_000.0));
+                            let Ok(aralık) = akış.görünür_x_aralığı() else {
+                                return false;
+                            };
+                            let veri = veri_değişti.then(|| akış.veri()).transpose();
+                            let Ok(veri) = veri else {
+                                return false;
+                            };
+                            for (_, grafik) in &bu.pixel_align_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    if let Some(veri) = &veri {
+                                        let _ = grafik.canlı_veriyi_x_aralığında_ayarla(
+                                            veri.clone(),
+                                            aralık,
+                                            cx,
+                                        );
+                                    } else {
+                                        grafik.canlı_x_aralığını_ayarla(aralık, cx);
+                                    }
+                                });
+                            }
                             true
                         })
                         .unwrap_or(false);
@@ -1569,7 +1655,9 @@ fn grafik_oluştur(
         KartKimliği::NiceScale => nice_scale_kartı(),
         KartKimliği::NoData => no_data_kartı(no_data_örneği),
         KartKimliği::PathGapClip => path_gap_clip_kartı(PathGapClipÖrneği::VeriDışınaTaşanÖlçek),
-        KartKimliği::PixelAlign(örnek) => pixel_align_kartı(örnek, pixel_align_adımı),
+        KartKimliği::PixelAlign => {
+            pixel_align_kartı(PixelAlignÖrneği::Varsayılan, pixel_align_adımı)
+        }
         KartKimliği::Points(örnek) => points_kartı(örnek),
         KartKimliği::ScalesDirOri(örnek) => scales_dir_ori_kartı(örnek),
         KartKimliği::Scatter(örnek) => scatter_kartı(örnek),
@@ -1701,10 +1789,13 @@ impl Render for ChartListesi {
                 "15 ilişkili yüzey · 4 ortak spanGaps animasyonu · 5 karşılaştırma grubu"
                     .to_string()
             }
-            KartKimliği::PixelAlign(_) => {
+            KartKimliği::PixelAlign => {
+                let örnek = self
+                    .pixel_align_akışı
+                    .as_ref()
+                    .map_or(0, PixelAlignAkışı::örnek_sayısı);
                 format!(
-                    "{} canlı örnek × 3 seri · 120 sn görünür pencere",
-                    self.pixel_align_adımı.min(1_000)
+                    "2 eşzamanlı yüzey · {örnek} ortak örnek × 3 seri · 60 FPS kayan 120 sn pencere"
                 )
             }
             KartKimliği::Points(örnek) => {
@@ -1990,6 +2081,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .path_gap_clip_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::PixelAlign {
+            geri_var = self
+                .pixel_align_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .pixel_align_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         }
@@ -2612,21 +2712,20 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::PathGapClip, cx);
                 })),
             )
-            .children(PixelAlignÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::PixelAlign(örnek);
+            .child(
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
+                    "kart-pixel-align",
+                    "Pixel Align · canlı A/B",
                     "pixel-align",
-                    aktif_kart == kart,
-                    "Canlı pxAlign 1 / 0 karşılaştırması",
+                    aktif_kart == KartKimliği::PixelAlign,
+                    "2 ortak veri yüzeyi · 60 FPS kayan pencere",
                     panel,
                     vurgu,
                 )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            }))
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::PixelAlign, cx);
+                })),
+            )
             .children(PointsÖrneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::Points(örnek);
                 katalog_kartı(
@@ -3398,6 +3497,12 @@ impl Render for ChartListesi {
                                     grafik.önceki_görünüm(cx);
                                 });
                             }
+                        } else if bu.aktif_kart == KartKimliği::PixelAlign {
+                            for (_, grafik) in &bu.pixel_align_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.önceki_görünüm(cx);
+                                });
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
@@ -3436,6 +3541,12 @@ impl Render for ChartListesi {
                                     grafik.tam_görünüm(cx);
                                 });
                             }
+                        } else if bu.aktif_kart == KartKimliği::PixelAlign {
+                            for (_, grafik) in &bu.pixel_align_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.tam_görünüm(cx);
+                                });
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.tam_görünüm(cx);
@@ -3458,6 +3569,8 @@ impl Render for ChartListesi {
                             bu.months_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::PathGapClip {
                             bu.path_gap_clip_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::PixelAlign {
+                            bu.pixel_align_yüzeylerini_oluştur(cx);
                         } else {
                             bu.grafiği_yenile(100, cx);
                         }
@@ -3800,6 +3913,56 @@ impl Render for ChartListesi {
                             )
                         }))
                 }))
+        } else if aktif_kart == KartKimliği::PixelAlign {
+            let yüzey = |örnek| {
+                self.pixel_align_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(860.0))
+                .overflow_y_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("İki panel aynı halka verisini ve aynı animation-frame saatini paylaşır. Üst panel koordinatları tam piksele yuvarlayarak keskin fakat basamaklı “tırtıl” hareketi; alt panel alt-piksel konumlarını koruyarak daha yumuşak hareket üretir."),
+                )
+                .children([
+                    (
+                        PixelAlignÖrneği::Varsayılan,
+                        "Tam piksel · pxAlign 1",
+                        "Path, point, axis ve grid koordinatları en yakın piksele yuvarlanır.",
+                    ),
+                    (
+                        PixelAlignÖrneği::Kapalı,
+                        "Alt piksel · pxAlign 0",
+                        "Koordinatlar yuvarlanmaz; kayan 120 saniyelik pencere frame düzeyinde ilerler.",
+                    ),
+                ].into_iter().map(|(örnek, başlık, açıklama)| {
+                    div()
+                        .mt_2()
+                        .child(
+                            div()
+                                .text_sm()
+                                .font_weight(FontWeight::BOLD)
+                                .text_color(metin)
+                                .child(başlık),
+                        )
+                        .child(div().text_xs().text_color(soluk).child(açıklama))
+                        .child(
+                            div()
+                                .w_full()
+                                .h(px(360.0))
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                        )
+                }))
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
             let boyut = self
                 .boyut_senkron_akışı
@@ -3856,6 +4019,9 @@ impl Render for ChartListesi {
             }
             KartKimliği::PathGapClip => {
                 "15 yüzey bağımsız yakınlaşır · dört canlı yüzey aynı saniyede gerçek null boşluklarını bağlar/ayırır"
+            }
+            KartKimliği::PixelAlign => {
+                "İki yüzey aynı veri/saati paylaşır · tam piksel tırtıl hareketini alt-piksel akışla karşılaştır"
             }
             _ => {
                 "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır · çift tıkla: tam görünüm"
@@ -3933,6 +4099,16 @@ impl Render for ChartListesi {
                  bağlandığını kullanıcıya belirtin. Maliyet: path/gap taraması O(N), sıralı imleç \
                  O(log N); pointer yalnız hafif overlay'i günceller, bir saniyelik animasyon yalnız \
                  dört kaynak yüzeyin ana yollarını yeniden kurar.",
+            ),
+            KartKimliği::PixelAlign => Some(
+                "Amaç: aynı canlı telemetriyi aynı kayan 120 saniyelik pencerede tam piksel ve \
+                 alt-piksel rasterizasyonuyla A/B karşılaştırır. API: grafik piksel_hizası eksen \
+                 ve grid varsayılanını, seri piksel_hizası path/point override'ını belirler; \
+                 PixelAlignAkışı 1 Hz örnek eklerken frame saati yalnız X ölçeğini ilerletir. \
+                 İzleme: hizalama veriyi değiştirmez; pxAlign=1 keskin ve hızlı fakat tırtıllı, \
+                 pxAlign=0 daha yumuşak fakat 1 px çizgilerde daha bulanık olabilir. Maliyet: \
+                 halka ekleme O(1), her frame çizim O(görünür N×S); grafik örnekleri yeniden \
+                 kurulmaz, yakınlaştırılmış görünüm canlı tam aralık ilerlerken sabit kalır.",
             ),
             _ => None,
         };

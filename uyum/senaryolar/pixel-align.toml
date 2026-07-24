@@ -1,9 +1,16 @@
 id = "pixel-align"
 kaynak = "../uPlot/demos/pixel-align.html"
-fixture = "src/kart/pixel_align.rs#pixel_align_kartı"
+fixture = "src/kart/pixel_align.rs#pixel_align_kartları"
 viewport = [1300, 1200]
 device_pixel_ratio = 1
 durum = "iki_canlı_yüzey"
+
+[sunum]
+katalog_kartı = 1
+eşzamanlı_yüzey_sayısı = 2
+aynı_veri = true
+aynı_frame_saati = true
+kullanım_rehberi_varsayılan_kapalı = true
 
 [veri]
 pencere_ms = 120000
@@ -22,7 +29,11 @@ piksel_hizası = [1, 0]
 [etkileşim]
 ortak_davranış_profili = "resize-temeli-v1"
 canlı_güncelleme_ms = 1000
+ölçek_güncelleme_kipi = "animation-frame"
+oturumu_yeniden_kurmaz = true
 tekerlek_x_yakınlaştır = true
+shift_tekerlek_yalnız_x = true
+ctrl_tekerlek_yalnız_y = true
 seçim_yakınlaştır = true
 çift_tıkla_tam_görünüm = true
 dokunma_xy_yakınlaştır = true

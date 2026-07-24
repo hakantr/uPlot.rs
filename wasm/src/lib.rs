@@ -20,7 +20,7 @@ use uplot_rs::{
     MULTI_BARS_KART_TANIM_ÖRNEĞİ, MultiBarsÖrneği, NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ,
     NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, NoDataÖrneği,
     PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ,
-    PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ,
+    PathGapClipÖrneği, PixelAlignAkışı, PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ,
     SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ,
     SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
@@ -74,6 +74,7 @@ pub struct KartOturumu {
     soft_minmax_akışı: Option<SoftMinMaxAkışı>,
     boyut_senkron_akışı: Option<BoyutSenkronAkışı>,
     y_shifted_series_akışı: Option<YShiftedSeriesAkışı>,
+    pixel_align_akışı: Option<PixelAlignAkışı>,
     multi_bars_kategorileri: Option<Vec<bool>>,
     multi_bars_veri_sürümü: u64,
 }
@@ -120,6 +121,7 @@ impl KartOturumu {
             "nice-scale" => nice_scale_kartı(),
             "no-data" => no_data_kartı(NoDataÖrneği::BOŞ_ÖZEL_ARALIK),
             "path-gap-clip" => path_gap_clip_kartı(PathGapClipÖrneği::VeriDışınaTaşanÖlçek),
+            "pixel-align" => pixel_align_kartı(PixelAlignÖrneği::Varsayılan, 140),
             kimlik if kimlik.starts_with("no-data-") => NoDataÖrneği::kimlikten(kimlik)
                 .map_or_else(
                     || {
@@ -410,6 +412,10 @@ impl KartOturumu {
         } else {
             None
         };
+        let pixel_align_akışı = PixelAlignÖrneği::kimlikten(kart_kimliği)
+            .map(|_| PixelAlignAkışı::yeni(140))
+            .transpose()
+            .map_err(js_hatası)?;
         let multi_bars_kategorileri = MultiBarsÖrneği::kimlikten(kart_kimliği)
             .filter(|örnek| {
                 matches!(
@@ -433,6 +439,7 @@ impl KartOturumu {
             soft_minmax_akışı,
             boyut_senkron_akışı,
             y_shifted_series_akışı,
+            pixel_align_akışı,
             multi_bars_kategorileri,
             multi_bars_veri_sürümü: 0,
         })
@@ -919,15 +926,33 @@ impl KartOturumu {
     }
 
     pub fn pixel_align_adimi_ayarla(&mut self, adım: usize) -> Result<bool, JsValue> {
-        let Some(örnek) = PixelAlignÖrneği::kimlikten(&self.kart_kimliği) else {
+        if PixelAlignÖrneği::kimlikten(&self.kart_kimliği).is_none() {
+            return Ok(false);
+        }
+        let akış = PixelAlignAkışı::yeni(adım).map_err(js_hatası)?;
+        let veri = akış.veri().map_err(js_hatası)?;
+        let aralık = akış.görünür_x_aralığı().map_err(js_hatası)?;
+        let değişti = self
+            .grafik
+            .canlı_veriyi_x_aralığında_ayarla(veri, aralık)
+            .map_err(js_hatası)?;
+        self.pixel_align_akışı = Some(akış);
+        Ok(değişti)
+    }
+
+    pub fn pixel_align_kareyi_ilerlet(&mut self, geçen_ms: f64) -> Result<bool, JsValue> {
+        let Some(akış) = self.pixel_align_akışı.as_mut() else {
             return Ok(false);
         };
-        let tekerlek = self.grafik.etkileşim_seçenekleri().tekerlek_etkileşimi;
-        let (seçenekler, veri) = pixel_align_kartı(örnek, adım).map_err(js_hatası)?;
-        let mut grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
-        grafik.tekerlek_etkileşimi_ayarla(tekerlek);
-        self.grafik = grafik;
-        Ok(true)
+        let veri_değişti = akış.kareyi_ilerlet(geçen_ms.min(1_000.0));
+        let aralık = akış.görünür_x_aralığı().map_err(js_hatası)?;
+        if veri_değişti {
+            self.grafik
+                .canlı_veriyi_x_aralığında_ayarla(akış.veri().map_err(js_hatası)?, aralık)
+                .map_err(js_hatası)
+        } else {
+            Ok(self.grafik.canlı_x_aralığını_ayarla(aralık))
+        }
     }
 
     pub fn eksen_gostergeleri_etkin(&self) -> bool {
@@ -2180,17 +2205,29 @@ mod testler {
 
     #[test]
     fn pixel_align_wasm_iki_canlı_yüzeyi_yeniler() {
+        assert!(KartOturumu::yeni("pixel-align", 100).is_ok());
         for örnek in PixelAlignÖrneği::TÜMÜ {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             assert!(oturum.is_ok(), "{}", örnek.kimlik());
             let Ok(mut oturum) = oturum else {
                 continue;
             };
+            assert_eq!(oturum.pixel_align_kareyi_ilerlet(16.0), Ok(true));
             assert!(oturum.pixel_align_adimi_ayarla(141).is_ok());
             let svg = oturum.svg(1_200, 400);
             assert!(svg.contains(örnek.başlık()));
         }
-        assert!(pixel_align_kart_tanim_ornegi().contains("pixel_align_kartı"));
+        assert!(pixel_align_kart_tanim_ornegi().contains("pixel_align_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"pixel-align\"")
+                .count(),
+            1
+        );
+        assert_eq!(web.matches("data-kart=\"pixel-align-").count(), 0);
+        assert!(web.contains("let pixelAlignOturumları = [];"));
+        assert!(web.contains("pixelAlignAnimationFrame = requestAnimationFrame"));
+        assert!(web.contains("pixel_align_kareyi_ilerlet(geçen)"));
         assert_eq!(kart_sayisi(), 365);
     }
 

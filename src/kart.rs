@@ -161,7 +161,8 @@ pub use path_gap_clip::{
 };
 pub use pixel_align::{
     PIXEL_ALIGN_ARALIK_MS, PIXEL_ALIGN_KANIT_TOHUMU, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
-    PIXEL_ALIGN_PENCERE_MS, PixelAlignÖrneği, pixel_align_kartı,
+    PIXEL_ALIGN_PENCERE_MS, PixelAlignAkışı, PixelAlignÖrneği, pixel_align_kartları,
+    pixel_align_kartı,
 };
 pub use points::{POINTS_KANIT_TOHUMU, POINTS_KART_TANIM_ÖRNEĞİ, PointsÖrneği, points_kartı};
 pub use resize::{RESIZE_KART_TANIM_ÖRNEĞİ, resize_kartı};

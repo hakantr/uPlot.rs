@@ -2069,7 +2069,7 @@
         { "yol": "src/paths/spline.js", "sha256": "73f29178227e0b17b8a433348495f555c8d42dbdc49032a3972747f4f906dbe9" },
         { "yol": "src/paths/stepped.js", "sha256": "7a11e94e31462f173d25810b371ced0c30652e39df5fbd23668a0a4059f2e2a7" }
       ],
-      "fixture": "src/kart/pixel_align.rs#pixel_align_kartı",
+      "fixture": "src/kart/pixel_align.rs#pixel_align_kartları",
       "örnek": "examples/pixel_align.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -2093,8 +2093,10 @@
       "sahip_faz": 1,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-exact-two-live-surfaces", "source-window-120000ms",
-        "source-interval-1000ms", "source-loop-1000", "deterministic-random-proof-seed",
+        "single-catalog-family-two-live-surfaces", "shared-data-and-animation-clock",
+        "animation-frame-x-window-progress", "stateful-no-rebuild-stream-update",
+        "source-window-120000ms", "source-interval-1000ms",
+        "unbounded-lifecycle-1000-point-ring", "deterministic-random-proof-seed",
         "graph-and-series-px-align", "linear-spline-stepped-paths",
         "explicit-points-show", "gpui-wasm-live-update-parity",
         "common-interaction-profile", "panic-free-update-feedback"

@@ -933,6 +933,31 @@ impl Grafik {
         Ok(())
     }
 
+    /// Canlı bir grafikte uPlot `setData(data, false)` ve ardından gelen
+    /// `setScale("x", range)` çiftini mevcut Grafik örneğini ve kullanıcı
+    /// etkileşim durumunu koruyarak uygular.
+    pub fn canlı_veriyi_x_aralığında_ayarla(
+        &mut self,
+        veri: HizalıVeri,
+        aralık: Aralık,
+    ) -> Result<bool, UplotHatası> {
+        let mut seçenekler = self.seçenekler.clone();
+        seçenekler.etkileşimler = self.etkileşim.ayarlar();
+        let doğrulanmış = Self::yeni(seçenekler, veri)?;
+        self.veri = doğrulanmış.veri;
+        self.çubuk_vuruş_dizini = RefCell::new(None);
+        self.seçenekler.x_aralığı = Some(aralık);
+        Ok(self.etkileşim.canlı_tam_x_ayarla(aralık))
+    }
+
+    /// Veri değişmeden kayan canlı X penceresini ilerletir. Kullanıcı
+    /// görünümü yakınlaştırılmışsa tam aralık güncellenir, görünür aralık
+    /// dondurulur ve pahalı yeniden boya gerektirilmez.
+    pub fn canlı_x_aralığını_ayarla(&mut self, aralık: Aralık) -> bool {
+        self.seçenekler.x_aralığı = Some(aralık);
+        self.etkileşim.canlı_tam_x_ayarla(aralık)
+    }
+
     /// Görünür X ölçeğinde iki normalize edilmiş seçim ucunu veri aralığına dönüştürür.
     pub fn x_aralığı_oranlardan(
         &self,

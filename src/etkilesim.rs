@@ -60,6 +60,14 @@ impl EtkileşimDenetleyicisi {
         self.tam_x
     }
 
+    pub(crate) fn canlı_tam_x_ayarla(&mut self, aralık: Aralık) -> bool {
+        if self.tam_x == aralık {
+            return false;
+        }
+        self.tam_x = aralık;
+        self.görünüm.x.is_none()
+    }
+
     pub(crate) fn tam_y(&self) -> Aralık {
         self.tam_y
     }
