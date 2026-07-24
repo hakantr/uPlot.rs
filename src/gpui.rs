@@ -49,6 +49,7 @@ pub struct GpuiGrafik {
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
     odak: Option<FocusHandle>,
     imleç_kilitli: bool,
+    eksen_üzerinde: bool,
 }
 
 impl GpuiGrafik {
@@ -65,6 +66,7 @@ impl GpuiGrafik {
             çizim_sınırları: Rc::new(Cell::new(None)),
             odak: None,
             imleç_kilitli: false,
+            eksen_üzerinde: false,
         }
     }
 
@@ -687,6 +689,8 @@ impl Render for GpuiGrafik {
         let çizim_sınırları = self.çizim_sınırları.clone();
         let taşıyor = self.taşıma_başlangıcı.is_some();
         let taşımaya_hazır = self.boşluk_basılı && self.grafik.yakınlaştırılmış();
+        let eksen_sürükleniyor = self.grafik.eksen_sürükleniyor();
+        let eksen_imleci = self.eksen_üzerinde || eksen_sürükleniyor;
         let bilgi_kutusu = self
             .imleç
             .as_ref()
@@ -819,6 +823,9 @@ impl Render for GpuiGrafik {
             .overflow_hidden()
             .when(taşıyor, |yüzey| yüzey.cursor_grabbing())
             .when(!taşıyor && taşımaya_hazır, |yüzey| yüzey.cursor_grab())
+            .when(!taşıyor && !taşımaya_hazır && eksen_imleci, |yüzey| {
+                yüzey.cursor_move()
+            })
             .on_key_down(cx.listener(|bu, olay: &KeyDownEvent, _, cx| {
                 if olay.keystroke.key.as_str() == "space" {
                     bu.boşluk_basılı = true;
@@ -846,7 +853,20 @@ impl Render for GpuiGrafik {
                 {
                     odak.focus(window, cx);
                 }
-                if let Some(başlangıç) = bu.taşıma_başlangıcı
+                if bu.grafik.eksen_sürükleniyor()
+                    && let Some(konum) = bu.sahne_konumu(olay.position)
+                {
+                    match bu
+                        .grafik
+                        .eksen_sürükle(konum.x, konum.y, olay.modifiers.shift)
+                    {
+                        Ok(_) => bu.hata = None,
+                        Err(hata) => {
+                            bu.hata = Some(format!("Eksen ölçeği sürüklenemedi: {hata}"));
+                        }
+                    }
+                    bu.imleç = None;
+                } else if let Some(başlangıç) = bu.taşıma_başlangıcı
                     && let Some(konum) = bu.sahne_konumu(olay.position)
                 {
                     let (sol, sağ, üst, alt) = bu.çizim_alanı();
@@ -863,6 +883,7 @@ impl Render for GpuiGrafik {
                     bu.imleci_güncelle(olay.position);
                 }
                 if bu.taşıma_başlangıcı.is_none()
+                    && !bu.grafik.eksen_sürükleniyor()
                     && olay.dragging()
                     && let Some((başlangıç, _)) = bu.seçim
                     && let Some(konum) = bu.sahne_konumu(olay.position)
@@ -874,6 +895,15 @@ impl Render for GpuiGrafik {
                         konum.x.clamp(sol, sağ)
                     };
                     bu.seçim = Some((başlangıç, eksen_konumu));
+                }
+                if !bu.grafik.eksen_sürükleniyor()
+                    && let Some(konum) = bu.sahne_konumu(olay.position)
+                {
+                    let (genişlik, yükseklik) = bu.grafik.boyut();
+                    bu.eksen_üzerinde = bu
+                        .grafik
+                        .eksen_vuruşu_boyutta(genişlik, yükseklik, konum.x, konum.y)
+                        .is_some();
                 }
                 GpuiGrafik::imleç_bildir(cx);
             }))
@@ -889,6 +919,7 @@ impl Render for GpuiGrafik {
                 if !bu.imleç_kilitli && bu.seçim.is_none() && bu.taşıma_başlangıcı.is_none()
                 {
                     bu.imleç = None;
+                    bu.eksen_üzerinde = false;
                     bu.grafik.imleç_odağını_temizle();
                     GpuiGrafik::imleç_bildir(cx);
                 }
@@ -900,7 +931,17 @@ impl Render for GpuiGrafik {
                         odak.focus(window, cx);
                     }
                     let ayarlar = bu.grafik.etkileşim_seçenekleri();
-                    if bu.boşluk_basılı
+                    let eksen_başladı = bu.sahne_konumu(olay.position).is_some_and(|konum| {
+                        let (genişlik, yükseklik) = bu.grafik.boyut();
+                        bu.grafik
+                            .eksen_sürüklemeyi_başlat(genişlik, yükseklik, konum.x, konum.y)
+                    });
+                    if eksen_başladı {
+                        bu.seçim = None;
+                        bu.taşıma_başlangıcı = None;
+                        bu.açıklama_seçimi = false;
+                        bu.imleç = None;
+                    } else if bu.boşluk_basılı
                         && let Some(konum) = bu.sahne_konumu(olay.position)
                         && bu.grafik_alanında(konum)
                         && bu.grafik.taşımayı_başlat()
@@ -931,6 +972,11 @@ impl Render for GpuiGrafik {
             .on_mouse_up(
                 MouseButton::Left,
                 cx.listener(|bu, _: &MouseUpEvent, _, cx| {
+                    if bu.grafik.eksen_sürükleniyor() {
+                        bu.grafik.eksen_sürüklemeyi_bitir();
+                        GpuiGrafik::bildir(cx);
+                        return;
+                    }
                     if bu.taşıma_başlangıcı.take().is_some() {
                         bu.grafik.taşımayı_bitir();
                         GpuiGrafik::bildir(cx);

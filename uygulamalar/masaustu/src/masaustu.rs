@@ -41,15 +41,16 @@ use uplot_rs::{
     TOOLTIPS_KART_TANIM_ÖRNEĞİ, TRENDLINES_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği, TimePeriodsÖrneği,
     TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği, TimezonesDstÖrneği,
     UPDATE_CURSOR_SELECT_RESIZE_ARALIK_MS, UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
-    UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
-    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
-    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ, Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ,
+    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
+    add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
@@ -58,7 +59,8 @@ use uplot_rs::{
     sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
     timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
     tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    wind_direction_kartı, y_scale_drag_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü,
+    ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -102,6 +104,7 @@ enum KartKimliği {
     Trendlines,
     UpdateCursorSelectResize,
     WindDirection,
+    YScaleDrag,
     CursorBind,
     CursorSnap,
     CursorTooltip,
@@ -171,6 +174,7 @@ impl KartKimliği {
             Self::Trendlines => "Trendlines",
             Self::UpdateCursorSelectResize => "Maintain loc of cursor/select/hoverPts",
             Self::WindDirection => "Wind Direction",
+            Self::YScaleDrag => "Draggable x & y scales",
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
@@ -288,6 +292,9 @@ impl KartKimliği {
             Self::WindDirection => {
                 "wind-direction.html · 143 saatlik kaynak veri · 15 px özel yön vektörleri"
             }
+            Self::YScaleDrag => {
+                "y-scale-drag.html · bağımsız X/Y eksen sürükleme · Shift ile büyüt/daralt"
+            }
             Self::CursorBind => {
                 "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
             }
@@ -375,6 +382,7 @@ impl KartKimliği {
             Self::Trendlines => TRENDLINES_KART_TANIM_ÖRNEĞİ,
             Self::UpdateCursorSelectResize => UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
             Self::WindDirection => WIND_DIRECTION_KART_TANIM_ÖRNEĞİ,
+            Self::YScaleDrag => Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ,
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -440,6 +448,7 @@ impl KartKimliği {
             Self::Trendlines => "src/kart/trendlines.rs",
             Self::UpdateCursorSelectResize => "src/kart/update_cursor_select_resize.rs",
             Self::WindDirection => "src/kart/wind_direction.rs",
+            Self::YScaleDrag => "src/kart/y_scale_drag.rs",
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
@@ -476,6 +485,8 @@ impl KartKimliği {
             ortak_kart_etkileşimleri().ctrl_açıklama(true)
         } else if matches!(self, Self::StreamData(_)) {
             ortak_kart_etkileşimleri().seçim_yakınlaştır(false)
+        } else if self == Self::YScaleDrag {
+            ortak_kart_etkileşimleri().eksen_sürükleme(true)
         } else {
             ortak_kart_etkileşimleri()
         }
@@ -1298,6 +1309,7 @@ fn grafik_oluştur(
         KartKimliği::Trendlines => trendlines_kartı(),
         KartKimliği::UpdateCursorSelectResize => update_cursor_select_resize_kartı(800),
         KartKimliği::WindDirection => wind_direction_kartı(),
+        KartKimliği::YScaleDrag => y_scale_drag_kartı(),
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
@@ -1609,6 +1621,9 @@ impl Render for ChartListesi {
             }
             KartKimliği::WindDirection => {
                 "143 saat × sıcaklık, hız ve yön · 139 yön vektörü".to_string()
+            }
+            KartKimliği::YScaleDrag => {
+                "5 nokta × 2 bağımsız Y ölçeği · eksenleri sürükleyin".to_string()
             }
         });
         let kart_tanımı_açık = self.kart_tanımı_açık;
@@ -1955,6 +1970,20 @@ impl Render for ChartListesi {
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::WindDirection, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "y-scale-drag",
+                    "Draggable x & y scales",
+                    "y-scale-drag",
+                    aktif_kart == KartKimliği::YScaleDrag,
+                    "X/Y eksen sürükleme · Shift ile ölçekleme",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::YScaleDrag, cx);
                 })),
             )
             .child(

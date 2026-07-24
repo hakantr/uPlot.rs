@@ -56,6 +56,7 @@
     }
     #chart[data-tasima-imleci="hazir"] svg { cursor: grab; }
     #chart[data-tasima-imleci="tasiyor"] svg { cursor: grabbing; }
+    #chart[data-eksen-imleci="true"] svg { cursor: move; }
     #chart.scroll-sync-yüzeyi { display: block; flex: 0 0 400px; height: 400px; min-height: 400px;
                                 overflow-y: auto; overflow-x: hidden;
                                 overscroll-behavior: contain; }
@@ -364,6 +365,7 @@
       trendlines_kart_tanim_ornegi,
       update_cursor_select_resize_kart_tanim_ornegi,
       wind_direction_kart_tanim_ornegi,
+      y_scale_drag_kart_tanim_ornegi,
       cursor_snap_kart_tanim_ornegi,
       missing_data_kart_tanim_ornegi,
       dependent_scale_kart_tanim_ornegi,
@@ -1621,6 +1623,30 @@
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
     };
+    document.querySelector('[data-kart="wind-direction"]')?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="y-scale-drag" aria-current="false" tabindex="0">
+        <strong>Draggable x &amp; y scales</strong><small>y-scale-drag</small>
+        <div class="durum">X ve iki bağımsız Y ekseni · Shift ile büyüt/daralt</div>
+      </article>`
+    );
+    kartlar["y-scale-drag"] = {
+      başlık: "Draggable x & y scales (hold shift to grow/contract)",
+      kaynak: `Kaynak:
+        <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/y-scale-drag.html">y-scale-drag.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">src/uPlot.js</a>
+        <br>Resmî eksen eklentisinin normal sürüklemede kaydırma, Shift ile
+        büyütüp daraltma davranışı bağımsız ölçek durumuyla Rust çekirdeğindedir.`,
+      tanım: () => y_scale_drag_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/y_scale_drag.rs",
+      seriler: [
+        { etiket: "Price", renk: "red" },
+        { etiket: "Amount", renk: "blue" },
+      ],
+      yardım: "Kırmızı, mavi veya X eksenini sürükle · Shift basılıyken ölçeği büyüt/daralt",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     const çubukAltGrafikleri = [
       "bars-multi-group-grouped", "bars-multi-group-stacked",
@@ -2139,6 +2165,7 @@
     let aktifKart = "resize";
     let sürükleme = null;
     let taşıma = null;
+    let eksenSürükleme = null;
     let boşlukBasılı = false;
     let grafikÜzerinde = false;
     const dokunmalar = new Map();
@@ -2173,6 +2200,23 @@
       else if (boşlukBasılı && oturum?.yakinlastirilmis()) {
         chart.dataset.tasimaImleci = "hazir";
       } else delete chart.dataset.tasimaImleci;
+    }
+
+    function eksenİmleciniGüncelle(olay = null) {
+      if (eksenSürükleme) {
+        chart.dataset.eksenImleci = "true";
+        return;
+      }
+      if (!olay || !oturum) {
+        delete chart.dataset.eksenImleci;
+        return;
+      }
+      const { x, y, view } = svgKonumu(olay);
+      if (oturum.eksen_vurusu(view.width, view.height, x, y)) {
+        chart.dataset.eksenImleci = "true";
+      } else {
+        delete chart.dataset.eksenImleci;
+      }
     }
 
     function kontrolleriGüncelle() {
@@ -3132,6 +3176,17 @@
           return;
         }
       }
+      if (eksenSürükleme) {
+        const { x, y } = svgKonumu(olay);
+        try {
+          if (oturum?.eksen_surukle(x, y, olay.shiftKey)) çiz();
+          hata.textContent = "";
+        } catch (neden) {
+          hata.textContent = `Eksen ölçeği sürüklenemedi: ${String(neden)}`;
+        }
+        olay.preventDefault();
+        return;
+      }
       if (taşıma) {
         const { x, y, view } = svgKonumu(olay);
         const alan = çizimAlanı(view);
@@ -3155,6 +3210,7 @@
         };
       }
       imleciGüncelle(olay);
+      eksenİmleciniGüncelle(olay);
       if (!sürükleme) return;
       const { x, y, svg, view } = svgKonumu(olay);
       const alan = çizimAlanı(view);
@@ -3199,6 +3255,15 @@
       chart.focus({ preventScroll: true });
       const { x, y, view } = svgKonumu(olay);
       const alan = çizimAlanı(view);
+      if (oturum?.eksen_suruklemeyi_baslat(view.width, view.height, x, y)) {
+        chart.setPointerCapture(olay.pointerId);
+        eksenSürükleme = { pointerId: olay.pointerId };
+        sürükleme = null;
+        taşıma = null;
+        eksenİmleciniGüncelle();
+        olay.preventDefault();
+        return;
+      }
       if (boşlukBasılı) {
         if (x < alan.sol || x > alan.sağ || y < alan.üst || y > alan.alt) return;
         if (oturum?.tasimayi_baslat()) {
@@ -3233,6 +3298,14 @@
         }
         if (chart.hasPointerCapture(olay.pointerId)) chart.releasePointerCapture(olay.pointerId);
         taşımaİmleciniGüncelle();
+        kontrolleriGüncelle();
+        return;
+      }
+      if (eksenSürükleme) {
+        oturum?.eksen_suruklemeyi_bitir();
+        eksenSürükleme = null;
+        if (chart.hasPointerCapture(olay.pointerId)) chart.releasePointerCapture(olay.pointerId);
+        eksenİmleciniGüncelle(olay);
         kontrolleriGüncelle();
         return;
       }
@@ -3281,9 +3354,12 @@
       kıstırma = null;
       if (taşıma) oturum?.tasimayi_bitir();
       taşıma = null;
+      if (eksenSürükleme) oturum?.eksen_suruklemeyi_bitir();
+      eksenSürükleme = null;
       sürükleme = null;
       if (chart.hasPointerCapture(olay.pointerId)) chart.releasePointerCapture(olay.pointerId);
       taşımaİmleciniGüncelle();
+      eksenİmleciniGüncelle();
     });
     chart.addEventListener("pointerenter", () => {
       grafikÜzerinde = true;
@@ -3291,6 +3367,7 @@
     });
     chart.addEventListener("pointerleave", () => {
       grafikÜzerinde = false;
+      eksenİmleciniGüncelle();
       sonTooltipİmleci = null;
       if (oturum?.imlec_odagini_temizle()) çiz();
       const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");

@@ -3,6 +3,8 @@ mod isi_haritasi;
 mod seri_geometrisi;
 mod timeline;
 
+use std::collections::BTreeMap;
+
 use seri_geometrisi::seri_yol_noktaları;
 
 use crate::cizim::kirpma::{
@@ -24,6 +26,21 @@ pub enum SeçimEylemi {
     Yakınlaştırıldı,
     /// `cursor-bind` bağı yakınlaştırmayı durdurup açıklama UI'si istedi.
     Açıklamaİstendi,
+}
+
+/// İşaretçi konumunda sürüklenebilen eksenin çekirdek karşılığı.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum EksenHedefi {
+    X,
+    Y(String),
+}
+
+#[derive(Debug, Clone)]
+struct EksenSürüklemeBaşlangıcı {
+    hedef: EksenHedefi,
+    konum: Nokta,
+    aralık: Aralık,
+    boyut: f64,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -53,6 +70,9 @@ pub struct Grafik {
     veri: HizalıVeri,
     etkileşim: EtkileşimDenetleyicisi,
     odak_serisi: Option<usize>,
+    elle_x_aralığı: Option<Aralık>,
+    elle_y_aralıkları: BTreeMap<String, Aralık>,
+    eksen_sürükleme: Option<EksenSürüklemeBaşlangıcı>,
 }
 
 impl Grafik {
@@ -220,6 +240,9 @@ impl Grafik {
             veri,
             etkileşim,
             odak_serisi: None,
+            elle_x_aralığı: None,
+            elle_y_aralıkları: BTreeMap::new(),
+            eksen_sürükleme: None,
         })
     }
 
@@ -227,15 +250,21 @@ impl Grafik {
         self.çiz_boyutta_aralıklarla(
             self.seçenekler.genişlik,
             self.seçenekler.yükseklik,
-            self.etkileşim
-                .yakınlaştırılmış()
-                .then(|| self.etkileşim.görünür_x()),
-            self.etkileşim.görünür_y(),
+            self.elle_x_aralığı.or_else(|| {
+                self.etkileşim
+                    .yakınlaştırılmış()
+                    .then(|| self.etkileşim.görünür_x())
+            }),
+            self.elle_y_aralıkları
+                .get(&self.seçenekler.birincil_y_ölçeği)
+                .copied()
+                .or_else(|| self.etkileşim.görünür_y()),
         )
     }
 
     pub fn görünür_x_aralığı(&self) -> Aralık {
-        self.etkileşim.görünür_x()
+        self.elle_x_aralığı
+            .unwrap_or_else(|| self.etkileşim.görünür_x())
     }
 
     pub fn boyut(&self) -> (u32, u32) {
@@ -566,6 +595,8 @@ impl Grafik {
 
     pub fn yakınlaştırılmış(&self) -> bool {
         self.etkileşim.yakınlaştırılmış()
+            || self.elle_x_aralığı.is_some()
+            || !self.elle_y_aralıkları.is_empty()
     }
 
     pub fn geri_var(&self) -> bool {
@@ -752,6 +783,180 @@ impl Grafik {
         self.etkileşim.tekerlek_etkileşimi_ayarla(etkin);
     }
 
+    /// Verilen yüzey koordinatında sürüklenebilir bir eksen olup olmadığını
+    /// belirler. Platform bağlayıcıları eksen yerleşimini tekrar hesaplamaz.
+    pub fn eksen_vuruşu_boyutta(
+        &self,
+        genişlik_px: u32,
+        yükseklik_px: u32,
+        x: f32,
+        y: f32,
+    ) -> Option<EksenHedefi> {
+        if !self.etkileşim.ayarlar().eksen_sürükleme || !x.is_finite() || !y.is_finite() {
+            return None;
+        }
+        let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
+        if self.seçenekler.x_dikey {
+            if self.seçenekler.x_eksen_görünür
+                && (üst..=alt).contains(&y)
+                && if self.seçenekler.x_eksen_karşıda {
+                    x > sağ && x <= genişlik_px as f32
+                } else {
+                    x >= 0.0 && x < sol
+                }
+            {
+                return Some(EksenHedefi::X);
+            }
+            if (sol..=sağ).contains(&x) {
+                let birincil_bölge = if self.seçenekler.birincil_y_karşıda {
+                    y > alt && y <= yükseklik_px as f32
+                } else {
+                    y >= 0.0 && y < üst
+                };
+                if self.seçenekler.birincil_y_eksen_görünür && birincil_bölge {
+                    return Some(EksenHedefi::Y(self.seçenekler.birincil_y_ölçeği.clone()));
+                }
+            }
+            return None;
+        }
+
+        if self.seçenekler.x_eksen_görünür
+            && (sol..=sağ).contains(&x)
+            && if self.seçenekler.x_eksen_karşıda {
+                y >= 0.0 && y < üst
+            } else {
+                y > alt && y <= yükseklik_px as f32
+            }
+        {
+            return Some(EksenHedefi::X);
+        }
+        if !(üst..=alt).contains(&y) {
+            return None;
+        }
+        let (sağda, uzaklık) = if x >= 0.0 && x < sol {
+            (false, sol - x)
+        } else if x > sağ && x <= genişlik_px as f32 {
+            (true, x - sağ)
+        } else {
+            return None;
+        };
+        let mut anahtarlar = Vec::new();
+        if self.seçenekler.birincil_y_eksen_görünür && self.seçenekler.birincil_y_sağda == sağda
+        {
+            anahtarlar.push(self.seçenekler.birincil_y_ölçeği.clone());
+        }
+        anahtarlar.extend(
+            self.seçenekler
+                .y_ölçekleri
+                .iter()
+                .filter(|ölçek| {
+                    ölçek.anahtar != self.seçenekler.birincil_y_ölçeği
+                        && ölçek.eksen_görünür
+                        && ölçek.sağda == sağda
+                })
+                .map(|ölçek| ölçek.anahtar.clone()),
+        );
+        if anahtarlar.is_empty() {
+            return None;
+        }
+        let indeks = (((uzaklık.max(1.0) - 1.0) / 56.0).floor() as usize)
+            .min(anahtarlar.len().saturating_sub(1));
+        anahtarlar.get(indeks).cloned().map(EksenHedefi::Y)
+    }
+
+    /// Resmî `y-scale-drag` kancasındaki eksen sürüklemesini çekirdekte başlatır.
+    pub fn eksen_sürüklemeyi_başlat(
+        &mut self,
+        genişlik_px: u32,
+        yükseklik_px: u32,
+        x: f32,
+        y: f32,
+    ) -> bool {
+        let Some(hedef) = self.eksen_vuruşu_boyutta(genişlik_px, yükseklik_px, x, y) else {
+            return false;
+        };
+        let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
+        let boyut = match hedef {
+            EksenHedefi::X if self.seçenekler.x_dikey => f64::from(alt - üst),
+            EksenHedefi::X => f64::from(sağ - sol),
+            EksenHedefi::Y(_) if self.seçenekler.x_dikey => f64::from(sağ - sol),
+            EksenHedefi::Y(_) => f64::from(alt - üst),
+        };
+        if !boyut.is_finite() || boyut <= f64::EPSILON {
+            return false;
+        }
+        let aralık = match &hedef {
+            EksenHedefi::X => self.görünür_x_aralığı(),
+            EksenHedefi::Y(anahtar) => self.görünür_ölçek_aralığı(
+                anahtar,
+                self.görünür_x_aralığı(),
+                self.etkileşim.görünür_y(),
+            ),
+        };
+        self.eksen_sürükleme = Some(EksenSürüklemeBaşlangıcı {
+            hedef,
+            konum: Nokta::yeni(x, y),
+            aralık,
+            boyut,
+        });
+        true
+    }
+
+    /// Aktif ekseni taşır; Shift basılıyken kaynak demodaki gibi ölçeği
+    /// iki uçtan büyütür veya daraltır.
+    pub fn eksen_sürükle(&mut self, x: f32, y: f32, shift: bool) -> Result<bool, UplotHatası> {
+        if !x.is_finite() || !y.is_finite() {
+            return Ok(false);
+        }
+        let Some(başlangıç) = self.eksen_sürükleme.clone() else {
+            return Ok(false);
+        };
+        let fark = match başlangıç.hedef {
+            EksenHedefi::X if self.seçenekler.x_dikey => başlangıç.konum.y - y,
+            EksenHedefi::X => başlangıç.konum.x - x,
+            EksenHedefi::Y(_) if self.seçenekler.x_dikey => x - başlangıç.konum.x,
+            EksenHedefi::Y(_) => y - başlangıç.konum.y,
+        };
+        let açıklık = başlangıç.aralık.en_çok - başlangıç.aralık.en_az;
+        let kaydırma = f64::from(fark) * açıklık / başlangıç.boyut;
+        if !kaydırma.is_finite() {
+            return Ok(false);
+        }
+        let ham_en_az = if shift {
+            başlangıç.aralık.en_az - kaydırma
+        } else {
+            başlangıç.aralık.en_az + kaydırma
+        };
+        let ham_en_çok = başlangıç.aralık.en_çok + kaydırma;
+        if !ham_en_az.is_finite()
+            || !ham_en_çok.is_finite()
+            || (ham_en_çok - ham_en_az).abs() < 1e-16
+        {
+            return Ok(false);
+        }
+        let aralık = Aralık::yeni(ham_en_az.min(ham_en_çok), ham_en_az.max(ham_en_çok))?;
+        match &başlangıç.hedef {
+            EksenHedefi::X => {
+                let değişti = self.elle_x_aralığı != Some(aralık);
+                self.elle_x_aralığı = Some(aralık);
+                Ok(değişti)
+            }
+            EksenHedefi::Y(anahtar) => {
+                let değişti = self.elle_y_aralıkları.get(anahtar) != Some(&aralık);
+                self.elle_y_aralıkları.insert(anahtar.clone(), aralık);
+                Ok(değişti)
+            }
+        }
+    }
+
+    pub fn eksen_sürüklemeyi_bitir(&mut self) {
+        self.eksen_sürükleme = None;
+    }
+
+    pub fn eksen_sürükleniyor(&self) -> bool {
+        self.eksen_sürükleme.is_some()
+    }
+
     /// ArcSinh ölçeğinin doğrusal merkez eşiğini çalışma anında değiştirir.
     /// Platform yüzeyleri yalnız bu çekirdek API'sini çağırır.
     pub fn y_arcsinh_eşiği_ayarla(&mut self, anahtar: &str, eşik: f64) -> bool {
@@ -780,6 +985,8 @@ impl Grafik {
         delta: f64,
         hassas: bool,
     ) -> Result<bool, UplotHatası> {
+        self.elle_x_aralığını_etkileşime_aktar();
+        self.elle_y_aralıklarını_etkileşime_aktar();
         let görünür_y = self.görünür_y_aralığı();
         let (x_oranı, y_oranı) =
             self.fiziksel_oranları_mantıksala(yatay_odak_oranı, dikey_odak_oranı);
@@ -797,6 +1004,7 @@ impl Grafik {
         başlangıç_oranı: f64,
         bitiş_oranı: f64,
     ) -> Result<bool, UplotHatası> {
+        self.elle_x_aralığını_etkileşime_aktar();
         let (başlangıç_oranı, bitiş_oranı) = if self.seçenekler.x_ters_yön {
             (1.0 - başlangıç_oranı, 1.0 - bitiş_oranı)
         } else {
@@ -845,7 +1053,11 @@ impl Grafik {
     }
 
     pub fn tam_görünüm(&mut self) -> bool {
-        self.etkileşim.tam_görünüm()
+        self.eksen_sürükleme = None;
+        let elle_x_değişti = self.elle_x_aralığı.take().is_some();
+        let elle_değişti = !self.elle_y_aralıkları.is_empty();
+        self.elle_y_aralıkları.clear();
+        self.etkileşim.tam_görünüm() || elle_x_değişti || elle_değişti
     }
 
     pub fn önceki_görünüm(&mut self) -> bool {
@@ -853,6 +1065,8 @@ impl Grafik {
     }
 
     pub fn taşımayı_başlat(&mut self) -> bool {
+        self.elle_x_aralığını_etkileşime_aktar();
+        self.elle_y_aralıklarını_etkileşime_aktar();
         let görünür_y = self.görünür_y_aralığı();
         self.etkileşim.taşımayı_başlat(görünür_y)
     }
@@ -876,6 +1090,8 @@ impl Grafik {
     }
 
     pub fn dokunmayı_başlat(&mut self) -> bool {
+        self.elle_x_aralığını_etkileşime_aktar();
+        self.elle_y_aralıklarını_etkileşime_aktar();
         let görünür_y = self.görünür_y_aralığı();
         self.etkileşim.dokunmayı_başlat(görünür_y)
     }
@@ -979,15 +1195,35 @@ impl Grafik {
         self.etkileşim.dokunmayı_bitir();
     }
 
+    fn elle_x_aralığını_etkileşime_aktar(&mut self) {
+        if let Some(aralık) = self.elle_x_aralığı.take() {
+            self.etkileşim.görünür_x_ayarla(aralık);
+        }
+    }
+
+    fn elle_y_aralıklarını_etkileşime_aktar(&mut self) {
+        if let Some(aralık) = self
+            .elle_y_aralıkları
+            .remove(&self.seçenekler.birincil_y_ölçeği)
+        {
+            self.etkileşim.görünür_y_ayarla(aralık);
+        }
+        self.elle_y_aralıkları.clear();
+    }
+
     /// Geçerli X görünümündeki veriden hesaplanan Y aralığını döndürür.
     pub fn görünür_y_aralığı(&self) -> Aralık {
-        self.etkileşim.görünür_y().unwrap_or_else(|| {
-            if self.kutu_bıyık_grafiği() {
-                self.kutu_bıyık_y_aralığı()
-            } else {
-                self.y_aralığı(self.görünür_x_aralığı())
-            }
-        })
+        self.elle_y_aralıkları
+            .get(&self.seçenekler.birincil_y_ölçeği)
+            .copied()
+            .or_else(|| self.etkileşim.görünür_y())
+            .unwrap_or_else(|| {
+                if self.kutu_bıyık_grafiği() {
+                    self.kutu_bıyık_y_aralığı()
+                } else {
+                    self.y_aralığı(self.görünür_x_aralığı())
+                }
+            })
     }
 
     pub fn seri_görünür_y_aralığı(&self, seri_indeksi: usize) -> Option<Aralık> {
@@ -1413,12 +1649,17 @@ impl Grafik {
 
     /// Etkileşim denetleyicisindeki güncel görünümü hedef yüzey boyutunda çizer.
     pub fn çiz_görünür_boyutta(&self, genişlik_px: u32, yükseklik_px: u32) -> Sahne {
-        let görünür = self.yakınlaştırılmış().then(|| self.görünür_x_aralığı());
+        let görünür = self
+            .elle_x_aralığı
+            .or_else(|| self.yakınlaştırılmış().then(|| self.görünür_x_aralığı()));
         self.çiz_boyutta_aralıklarla(
             genişlik_px,
             yükseklik_px,
             görünür,
-            self.etkileşim.görünür_y(),
+            self.elle_y_aralıkları
+                .get(&self.seçenekler.birincil_y_ölçeği)
+                .copied()
+                .or_else(|| self.etkileşim.görünür_y()),
         )
     }
 
@@ -1543,6 +1784,9 @@ impl Grafik {
             });
         let x_aralığı = görünür_x
             .and_then(|aralık| {
+                if self.elle_x_aralığı == Some(aralık) {
+                    return Some(aralık);
+                }
                 Aralık::yeni(
                     aralık.en_az.max(tam_x_aralığı.en_az),
                     aralık.en_çok.min(tam_x_aralığı.en_çok),
@@ -3629,6 +3873,16 @@ impl Grafik {
         x_aralığı: Aralık,
         görünür_birincil: Option<Aralık>,
     ) -> Aralık {
+        if let Some(aralık) = self.elle_y_aralıkları.get(anahtar) {
+            return *aralık;
+        }
+        if anahtar != self.seçenekler.birincil_y_ölçeği
+            && self
+                .elle_y_aralıkları
+                .contains_key(&self.seçenekler.birincil_y_ölçeği)
+        {
+            return self.y_aralığı_ölçek(anahtar, x_aralığı);
+        }
         if anahtar == self.seçenekler.birincil_y_ölçeği {
             return görünür_birincil.unwrap_or_else(|| {
                 self.y_aralığı_ölçek(&self.seçenekler.birincil_y_ölçeği, x_aralığı)

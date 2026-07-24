@@ -69,6 +69,15 @@ impl EtkileşimDenetleyicisi {
         self.görünüm.y
     }
 
+    pub(crate) fn görünür_y_ayarla(&mut self, aralık: Aralık) -> bool {
+        let yeni = (aralık != self.tam_y).then_some(aralık);
+        if self.görünüm.y == yeni {
+            return false;
+        }
+        self.görünüm.y = yeni;
+        true
+    }
+
     pub(crate) fn yakınlaştırılmış(&self) -> bool {
         self.görünüm != Görünüm::default()
     }

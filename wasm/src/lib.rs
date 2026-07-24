@@ -33,10 +33,10 @@ use uplot_rs::{
     TOOLTIPS_KART_TANIM_ÖRNEĞİ, TRENDLINES_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği, TimePeriodsÖrneği,
     TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği, TimezonesDstÖrneği,
     UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ, UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ,
-    YüzeyDikdörtgeni, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
-    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ, YüzeyDikdörtgeni, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi, add_del_series_kartı,
+    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, arcsinh_scales_kartı, area_fill_kartı,
+    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
     bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
     cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
     dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
@@ -50,7 +50,8 @@ use uplot_rs::{
     sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
     timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
     tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    wind_direction_kartı, y_scale_drag_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü,
+    ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -253,6 +254,7 @@ impl KartOturumu {
             "trendlines" => trendlines_kartı(),
             "update-cursor-select-resize" => update_cursor_select_resize_kartı(800),
             "wind-direction" => wind_direction_kartı(),
+            "y-scale-drag" => y_scale_drag_kartı(),
             kimlik if kimlik.starts_with("sync-cursor-") => SyncCursorÖrneği::kimlikten(kimlik)
                 .map_or_else(
                     || {
@@ -584,6 +586,31 @@ impl KartOturumu {
 
     pub fn tasimayi_baslat(&mut self) -> bool {
         self.grafik.taşımayı_başlat()
+    }
+
+    pub fn eksen_vurusu(&self, genişlik: u32, yükseklik: u32, x: f32, y: f32) -> bool {
+        self.grafik
+            .eksen_vuruşu_boyutta(genişlik, yükseklik, x, y)
+            .is_some()
+    }
+
+    pub fn eksen_suruklemeyi_baslat(
+        &mut self,
+        genişlik: u32,
+        yükseklik: u32,
+        x: f32,
+        y: f32,
+    ) -> bool {
+        self.grafik
+            .eksen_sürüklemeyi_başlat(genişlik, yükseklik, x, y)
+    }
+
+    pub fn eksen_surukle(&mut self, x: f32, y: f32, shift: bool) -> Result<bool, JsValue> {
+        self.grafik.eksen_sürükle(x, y, shift).map_err(js_hatası)
+    }
+
+    pub fn eksen_suruklemeyi_bitir(&mut self) {
+        self.grafik.eksen_sürüklemeyi_bitir();
     }
 
     pub fn tasi(
@@ -1160,6 +1187,11 @@ pub fn update_cursor_select_resize_kart_tanim_ornegi() -> String {
 #[wasm_bindgen]
 pub fn wind_direction_kart_tanim_ornegi() -> String {
     WIND_DIRECTION_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
+pub fn y_scale_drag_kart_tanim_ornegi() -> String {
+    Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ.to_string()
 }
 
 #[wasm_bindgen]
@@ -1991,6 +2023,20 @@ mod testler {
         assert_eq!(svg.matches("stroke=\"blue\"").count(), 139);
         assert!(wind_direction_kart_tanim_ornegi().contains("çekirdekte 15 px vektörlere"));
         assert_eq!(kart_sayisi(), 359);
+    }
+
+    #[test]
+    fn y_scale_drag_wasm_eksenleri_çekirdek_üzerinden_sürükler() {
+        let oturum = KartOturumu::yeni("y-scale-drag", 100);
+        assert!(oturum.is_ok());
+        let Ok(mut oturum) = oturum else {
+            return;
+        };
+        assert!(oturum.eksen_vurusu(1_200, 600, 20.0, 300.0));
+        assert!(oturum.eksen_suruklemeyi_baslat(1_200, 600, 20.0, 300.0));
+        assert!(matches!(oturum.eksen_surukle(20.0, 340.0, false), Ok(true)));
+        oturum.eksen_suruklemeyi_bitir();
+        assert!(y_scale_drag_kart_tanim_ornegi().contains("Shift"));
     }
 
     #[test]

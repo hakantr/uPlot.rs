@@ -854,6 +854,30 @@
       "rust_karşılığı": "RüzgarYönüDüzeni 15 px derece vektörü",
       "durum": "tam_kanıtlı",
       "test": "src/kart/wind_direction.rs"
+    },
+    {
+      "kaynak_yolu": "hooks.ready: .u-axis mousedown",
+      "rust_karşılığı": "Grafik::eksen_sürüklemeyi_başlat",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_scale_drag.rs"
+    },
+    {
+      "kaynak_yolu": "setScale(scaleKey, {min + d * unitsPerPx, max + d * unitsPerPx})",
+      "rust_karşılığı": "Grafik::eksen_sürükle normal kaydırma",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_scale_drag.rs"
+    },
+    {
+      "kaynak_yolu": "shiftKey grow/contract min-max formula",
+      "rust_karşılığı": "Grafik::eksen_sürükle Shift ölçekleme",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_scale_drag.rs"
+    },
+    {
+      "kaynak_yolu": "independent meter and km/h scales",
+      "rust_karşılığı": "Grafik::elle_y_aralıkları",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_scale_drag.rs"
     }
   ]
 }

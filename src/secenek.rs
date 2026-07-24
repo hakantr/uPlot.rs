@@ -623,6 +623,9 @@ pub struct EtkileşimSeçenekleri {
     pub ctrl_açıklama: bool,
     /// `cursor-tooltip` demosundaki imleç bilgi kutusunu etkinleştirir.
     pub imleç_bilgi_kutusu: bool,
+    /// `y-scale-drag` demosundaki ekseni sürükleyerek ölçeği kaydırma ve
+    /// Shift ile büyütüp daraltma davranışını etkinleştirir.
+    pub eksen_sürükleme: bool,
 }
 
 impl Default for EtkileşimSeçenekleri {
@@ -636,6 +639,7 @@ impl Default for EtkileşimSeçenekleri {
             dokunma_etkileşimi: false,
             ctrl_açıklama: false,
             imleç_bilgi_kutusu: false,
+            eksen_sürükleme: false,
         }
     }
 }
@@ -679,6 +683,11 @@ impl EtkileşimSeçenekleri {
 
     pub fn imleç_bilgi_kutusu(mut self, etkin: bool) -> Self {
         self.imleç_bilgi_kutusu = etkin;
+        self
+    }
+
+    pub fn eksen_sürükleme(mut self, etkin: bool) -> Self {
+        self.eksen_sürükleme = etkin;
         self
     }
 }

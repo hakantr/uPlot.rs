@@ -58,6 +58,7 @@ mod trendlines;
 mod update_cursor_select_resize;
 mod veri_uretici;
 mod wind_direction;
+mod y_scale_drag;
 mod zoom_touch;
 mod zoom_wheel;
 
@@ -211,5 +212,6 @@ pub use update_cursor_select_resize::{
     UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ, update_cursor_select_resize_kartı,
 };
 pub use wind_direction::{WIND_DIRECTION_KART_TANIM_ÖRNEĞİ, wind_direction_kartı};
+pub use y_scale_drag::{Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ, y_scale_drag_kartı};
 pub use zoom_touch::{ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, zoom_touch_kartı};
 pub use zoom_wheel::{ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, zoom_wheel_kartı};
