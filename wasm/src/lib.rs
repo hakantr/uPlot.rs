@@ -114,6 +114,7 @@ impl KartOturumu {
             "months-leap" => months_artık_yıllı_kartı(),
             "months-russian" => months_rusça_kartı(),
             "nice-scale" => nice_scale_kartı(),
+            "no-data" => no_data_kartı(NoDataÖrneği::BOŞ_ÖZEL_ARALIK),
             kimlik if kimlik.starts_with("no-data-") => NoDataÖrneği::kimlikten(kimlik)
                 .map_or_else(
                     || {
@@ -2506,6 +2507,16 @@ mod testler {
             return;
         };
         assert_eq!(boş.svg(800, 400).matches("<line").count(), 0);
+
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"no-data\"")
+                .count(),
+            1
+        );
+        assert_eq!(web.matches("data-kart=\"no-data-").count(), 0);
+        assert!(web.contains("id=\"no-data-variation\""));
+        assert_eq!(web.matches("[\"no-data-").count(), 33);
     }
 
     #[test]

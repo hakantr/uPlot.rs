@@ -3,10 +3,12 @@ kaynak = "../uPlot/demos/no-data.html"
 fixture = "src/kart/no_data.rs#no_data_kartı"
 viewport = [800, 400]
 device_pixel_ratio = 1
-durum = "33_kaynak_yüzeyi"
+durum = "tek_katalog_karti_33_secilebilir_kaynak_yuzeyi"
 
 [veri]
 etkin_yüzey_sayısı = 33
+catalog_kart_sayisi = 1
+select_option_sayisi = 33
 boş_yüzey_sayısı = 2
 tek_zaman_noktası = 1
 tek_sayısal_nokta_yüzeyi = 9
@@ -34,3 +36,4 @@ boşluk_sol_sürükleme_taşıma = true
 masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg_dizini = "target/no-data"
+sunum = "single-card + 33 options"

@@ -4,12 +4,12 @@ use crate::{
     YÖlçekSeçenekleri,
 };
 
-pub const NO_DATA_KART_TANIM_ÖRNEĞİ: &str = r##"for örnek in NoDataÖrneği::TÜMÜ {
-    let (seçenekler, veri) = no_data_kartı(örnek)?;
-    // Boş, tek noktalı ve birbirine aşırı yakın kaynak durumlarının
-    // ölçek güvenliği ile hata geri bildirimi çekirdekte çözülür.
-    let grafik = Grafik::yeni(seçenekler, veri)?;
-}"##;
+pub const NO_DATA_KART_TANIM_ÖRNEĞİ: &str = r##"// Tek katalog kartındaki 33 seçenekten biri tipli olarak seçilir.
+let örnek = NoDataÖrneği::kimlikten("no-data-one-x-0-y-0")
+    .unwrap_or(NoDataÖrneği::BOŞ_ÖZEL_ARALIK);
+let (seçenekler, veri) = no_data_kartı(örnek)?;
+// NoDataÖrneği::TÜMÜ, kaynak 33 yüzeyinin eksiksiz kanıt kümesidir.
+let grafik = Grafik::yeni(seçenekler, veri)?;"##;
 
 /// Resmî `demos/no-data.html` sayfasındaki 33 etkin uPlot yüzeyi.
 ///

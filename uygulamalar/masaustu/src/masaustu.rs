@@ -82,7 +82,7 @@ enum KartKimliği {
     MonthsLeap,
     MonthsRussian,
     NiceScale,
-    NoData(NoDataÖrneği),
+    NoData,
     PathGapClip(PathGapClipÖrneği),
     PixelAlign(PixelAlignÖrneği),
     Points(PointsÖrneği),
@@ -158,7 +158,7 @@ impl KartKimliği {
             Self::MonthsLeap => "Months · 2024 leap year",
             Self::MonthsRussian => "Months · Russian",
             Self::NiceScale => "Nice Scale & Ticks",
-            Self::NoData(örnek) => örnek.başlık(),
+            Self::NoData => "No Data · 33 seçenek",
             Self::PathGapClip(örnek) => örnek.başlık(),
             Self::PixelAlign(örnek) => örnek.başlık(),
             Self::Points(örnek) => örnek.başlık(),
@@ -250,7 +250,9 @@ impl KartKimliği {
             Self::NiceScale => {
                 "nice-scale.html · boyuta bağlı niceScale/niceNum Y aralığı ve artımı"
             }
-            Self::NoData(_) => "no-data.html · 33 boş, tek noktalı, düz ve hassas ölçek yüzeyi",
+            Self::NoData => {
+                "no-data.html · tek kartta 33 boş, tek noktalı, düz ve hassas ölçek seçeneği"
+            }
             Self::PathGapClip(_) => {
                 "path-gap-clip.html · 15 null/undefined, band, stepped ve piksel yüzeyi"
             }
@@ -388,7 +390,7 @@ impl KartKimliği {
                 MONTHS_KART_TANIM_ÖRNEĞİ
             }
             Self::NiceScale => NICE_SCALE_KART_TANIM_ÖRNEĞİ,
-            Self::NoData(_) => NO_DATA_KART_TANIM_ÖRNEĞİ,
+            Self::NoData => NO_DATA_KART_TANIM_ÖRNEĞİ,
             Self::PathGapClip(_) => PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
             Self::PixelAlign(_) => PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
             Self::Points(_) => POINTS_KART_TANIM_ÖRNEĞİ,
@@ -460,7 +462,7 @@ impl KartKimliği {
             Self::ZoomTouch => "src/kart/zoom_touch.rs",
             Self::MonthsNoLeap | Self::MonthsLeap | Self::MonthsRussian => "src/kart/months.rs",
             Self::NiceScale => "src/kart/nice_scale.rs",
-            Self::NoData(_) => "src/kart/no_data.rs",
+            Self::NoData => "src/kart/no_data.rs",
             Self::PathGapClip(_) => "src/kart/path_gap_clip.rs",
             Self::PixelAlign(_) => "src/kart/pixel_align.rs",
             Self::Points(_) => "src/kart/points.rs",
@@ -562,6 +564,7 @@ pub struct ChartListesi {
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grubu: SyncCursorGrubu,
     timeseries_discrete_grafikleri: Vec<(TimeseriesDiscreteÖrneği, Entity<GpuiGrafik>)>,
+    no_data_örneği: NoDataÖrneği,
 }
 
 impl ChartListesi {
@@ -598,7 +601,16 @@ impl ChartListesi {
         })
         .detach();
 
-        let (grafik, hata) = grafik_oluştur(KartKimliği::Resize, 100, 0, 5, 0, 140).map_or_else(
+        let (grafik, hata) = grafik_oluştur(
+            KartKimliği::Resize,
+            NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
+            100,
+            0,
+            5,
+            0,
+            140,
+        )
+        .map_or_else(
             |hata| (None, Some(format!("Grafik oluşturulamadı: {hata}"))),
             |grafik| (Some(cx.new(|_| GpuiGrafik::yeni(grafik))), None),
         );
@@ -636,6 +648,7 @@ impl ChartListesi {
             sync_cursor_grafikleri: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
             timeseries_discrete_grafikleri: Vec::new(),
+            no_data_örneği: NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
         }
     }
 
@@ -705,6 +718,7 @@ impl ChartListesi {
         self.nokta_sayısı = nokta_sayısı;
         match grafik_oluştur(
             self.aktif_kart,
+            self.no_data_örneği,
             nokta_sayısı,
             self.autosize_kuvvet,
             self.latency_kova,
@@ -734,6 +748,18 @@ impl ChartListesi {
             }
         }
         cx.notify();
+    }
+
+    fn no_data_örneğini_seç(&mut self, örnek: NoDataÖrneği, cx: &mut Context<Self>) {
+        if self.no_data_örneği == örnek {
+            return;
+        }
+        self.no_data_örneği = örnek;
+        if self.aktif_kart == KartKimliği::NoData {
+            self.grafiği_yenile(self.nokta_sayısı, cx);
+        } else {
+            cx.notify();
+        }
     }
 
     fn sync_cursor_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
@@ -1367,6 +1393,7 @@ impl ChartListesi {
 
 fn grafik_oluştur(
     kart: KartKimliği,
+    no_data_örneği: NoDataÖrneği,
     nokta_sayısı: usize,
     autosize_kuvvet: i32,
     latency_kova: u8,
@@ -1387,7 +1414,7 @@ fn grafik_oluştur(
         KartKimliği::MonthsLeap => months_artık_yıllı_kartı(),
         KartKimliği::MonthsRussian => months_rusça_kartı(),
         KartKimliği::NiceScale => nice_scale_kartı(),
-        KartKimliği::NoData(örnek) => no_data_kartı(örnek),
+        KartKimliği::NoData => no_data_kartı(no_data_örneği),
         KartKimliği::PathGapClip(örnek) => path_gap_clip_kartı(örnek),
         KartKimliği::PixelAlign(örnek) => pixel_align_kartı(örnek, pixel_align_adımı),
         KartKimliği::Points(örnek) => points_kartı(örnek),
@@ -1508,10 +1535,11 @@ impl Render for ChartListesi {
             KartKimliği::NiceScale => {
                 "6 nokta × 3 seri · boyuta duyarlı güzel Y ölçeği".to_string()
             }
-            KartKimliği::NoData(örnek) => {
-                let nokta = örnek.nokta_sayısı();
+            KartKimliği::NoData => {
+                let nokta = self.no_data_örneği.nokta_sayısı();
                 format!(
-                    "{nokta} nokta × 1 seri · {}",
+                    "{} · {nokta} nokta × 1 seri · {}",
+                    self.no_data_örneği.başlık(),
                     if nokta == 0 {
                         "boş ölçek durumu"
                     } else {
@@ -2471,21 +2499,20 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::NiceScale, cx);
                 })),
             )
-            .children(NoDataÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::NoData(örnek);
+            .child(
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
+                    "kart-no-data",
+                    "No Data · 33 seçenek",
                     "no-data",
-                    aktif_kart == kart,
-                    "Boş/tek/düz veri · kaynak rangeNum",
+                    aktif_kart == KartKimliği::NoData,
+                    "Tek kart · seçilebilir 33 kaynak rangeNum durumu",
                     panel,
                     vurgu,
                 )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            }))
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::NoData, cx);
+                })),
+            )
             .children(PathGapClipÖrneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::PathGapClip(örnek);
                 katalog_kartı(
@@ -3452,6 +3479,29 @@ impl Render for ChartListesi {
             }
         };
         let açıklama_istendi = self.açıklama_istendi;
+        let no_data_seçenekleri = div()
+            .id("no-data-secenekleri")
+            .mb_3()
+            .max_h(px(150.0))
+            .overflow_y_scroll()
+            .flex()
+            .flex_wrap()
+            .gap_1()
+            .children(NoDataÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                Dugme::yeni(
+                    SharedString::from(format!("no-data-secenek-{}", örnek.kimlik())),
+                    örnek.başlık(),
+                )
+                .boyutu(DugmeBoyutu::Kucuk)
+                .turu(if self.no_data_örneği == örnek {
+                    DugmeTuru::Birincil
+                } else {
+                    DugmeTuru::Hayalet
+                })
+                .tiklaninca(cx.listener(move |bu, _, _, cx| {
+                    bu.no_data_örneğini_seç(örnek, cx);
+                }))
+            }));
         let ayrıntı = div()
             .flex_1()
             .h_full()
@@ -3471,6 +3521,16 @@ impl Render for ChartListesi {
                     .child(div().text_sm().text_color(soluk).child(aktif_kart.kaynak())),
             )
             .child(araçlar)
+            .when(aktif_kart == KartKimliği::NoData, |öğe| {
+                öğe.child(
+                    div()
+                        .mb_1()
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("No Data kaynağı · 33 erişilebilir seçenek"),
+                )
+                .child(no_data_seçenekleri)
+            })
             .child(div().mb_2().text_xs().text_color(soluk).child(yardım))
             .child(div().mb_2().text_xs().text_color(vurgu).child(lejant))
             .when(açıklama_istendi, |öğe| {

@@ -1986,7 +1986,8 @@
       "sahip_faz": 1,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-exact-33-active-canvases", "null-and-empty-aligned-data",
+        "source-exact-33-active-canvases", "single-catalog-card-33-options",
+        "legacy-no-data-id-aliases", "null-and-empty-aligned-data",
         "custom-empty-x-y-range", "undefined-empty-scale-surface",
         "single-time-point-one-day-x-range", "single-numeric-point-range",
         "source-range-num-algorithm", "source-floating-point-flatness-thresholds",

@@ -866,26 +866,29 @@
     ];
     document.querySelector('[data-kart="nice-scale"]')?.insertAdjacentHTML(
       "afterend",
-      noDataYüzeyleri.map(([kimlik, başlık]) => `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>${kimlik}</small>
-          <div class="durum">Boş/tek/düz veri · kaynak rangeNum</div>
-        </article>`).join("")
+      `<article class="kart" data-kart="no-data" aria-current="false" tabindex="0">
+        <strong>No Data · 33 seçenek</strong><small>no-data</small>
+        <div class="durum">Tek kart · boş/tek/düz veri · kaynak rangeNum</div>
+        <label>Kaynak yüzey
+          <select id="no-data-variation" aria-label="No Data kaynak yüzeyi">
+            ${noDataYüzeyleri.map(([kimlik, başlık]) =>
+              `<option value="${kimlik}">${başlık}</option>`).join("")}
+          </select>
+        </label>
+      </article>`
     );
-    for (const [kimlik, başlık] of noDataYüzeyleri) {
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/no-data.html">no-data.html</a>
-          <br>Resmî sayfadaki 33 etkin boş, tek noktalı, düz ve kayan nokta hassasiyetli yüzey aynı veriyle ayrı ayrı sunulur.
-          <br><code>rangeNum</code>, tek zaman noktası ve tanımsız boş ölçek davranışları Rust çekirdeğindedir.`,
-        tanım: () => no_data_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/no_data.rs",
-        seriler: [{ etiket: "Value", renk: "#000000" }],
-        yardım: "Kaynak ölçek kenar durumu · sürükle: seç · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    kartlar["no-data"] = {
+      başlık: "No Data · 33 seçenek",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/no-data.html">no-data.html</a>
+        <br>Resmî sayfadaki 33 etkin boş, tek noktalı, düz ve kayan nokta hassasiyetli yüzey tek karttaki seçenek kontrolünden sunulur.
+        <br><code>rangeNum</code>, tek zaman noktası ve tanımsız boş ölçek davranışları Rust çekirdeğindedir.`,
+      tanım: () => no_data_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/no_data.rs",
+      seriler: [{ etiket: "Value", renk: "#000000" }],
+      yardım: "Kaynak yüzeyi seç · sürükle: seç · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+    };
 
     const pathGapClipYüzeyleri = [
       ["path-gap-clip-scale-range", "Scale range exceeds data range (zoom out)", [["Low", "green"], ["High", "green"]]],
@@ -904,7 +907,7 @@
       ["path-gap-clip-double-null", "Single-null pixel-intro bug test", [["Low", "red"]]],
       ["path-gap-clip-undefined", "Undefined", [["", "red"]]],
     ];
-    document.querySelector('[data-kart="no-data-flat-100"]')?.insertAdjacentHTML(
+    document.querySelector('[data-kart="no-data"]')?.insertAdjacentHTML(
       "afterend",
       pathGapClipYüzeyleri.map(([kimlik, başlık]) => `
         <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
@@ -3734,6 +3737,14 @@
       document.documentElement.dataset.kartSayısı = String(kart_sayisi());
       document.documentElement.dataset.kaynakCommit = kaynak_commit();
       function kartıSeç(kimlik) {
+        const oturumKimliği = kimlik;
+        if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
+          const noDataSeçimi = document.querySelector("#no-data-variation");
+          if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
+            noDataSeçimi.value = kimlik;
+            kimlik = "no-data";
+          }
+        }
         const kart = kartlar[kimlik];
         if (!kart) return;
         if (sineAnimationFrame !== null) {
@@ -3837,7 +3848,12 @@
           çiz();
           return;
         }
-        oturum = new KartOturumu(kimlik, Number(nokta.value));
+        oturum = new KartOturumu(
+          kimlik === "no-data" && oturumKimliği !== "no-data"
+            ? oturumKimliği
+            : kimlik,
+          Number(nokta.value)
+        );
         oturum.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
         çiz();
         if (kimlik === "update-cursor-select-resize") {
@@ -4012,6 +4028,23 @@
           if (olay.key === " " && grafikÜzerinde) return;
           if (olay.key === "Enter" || olay.key === " ") kartıSeç(öğe.dataset.kart);
         });
+      });
+      const noDataSeçimi = document.querySelector("#no-data-variation");
+      noDataSeçimi?.addEventListener("click", olay => olay.stopPropagation());
+      noDataSeçimi?.addEventListener("change", olay => {
+        olay.stopPropagation();
+        if (aktifKart !== "no-data") return;
+        try {
+          oturum?.free();
+          oturum = new KartOturumu(noDataSeçimi.value, Number(nokta.value));
+          oturum.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+          const başlık = noDataSeçimi.selectedOptions[0]?.textContent ?? "No Data";
+          kartBaşlığı.textContent = başlık;
+          hata.textContent = "";
+          çiz();
+        } catch (neden) {
+          hata.textContent = `No Data seçeneği yüklenemedi: ${String(neden)}`;
+        }
       });
       document.querySelectorAll("[data-ranger]").forEach(düğme => {
         düğme.addEventListener("click", olay => {
