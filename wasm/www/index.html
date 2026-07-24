@@ -33,6 +33,11 @@
     header > div:first-child { flex: 1 1 300px; min-width: 260px; }
     h2 { margin: 0; font-size: 19px; }
     .kaynak { margin-top: 5px; color: #6b7280; font-size: 13px; }
+    .kart-rehberi { margin-top: 8px; padding: 8px 10px; display: grid;
+                    grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 5px 14px;
+                    border: 1px solid #e5e7eb; border-radius: 8px; color: #4b5563;
+                    background: #fff; font-size: 11px; line-height: 1.35; }
+    .kart-rehberi strong { color: #111827; }
     .denetimler { flex: 1 1 500px; display: flex; align-items: center; justify-content: flex-end;
                   flex-wrap: wrap; gap: 12px; }
     .denetimler label { display: flex; align-items: center; gap: 8px; }
@@ -172,6 +177,7 @@
       .uygulama { height: auto; min-height: 100vh; grid-template-columns: 1fr; overflow: visible; }
       aside { height: min(46vh, 520px); border-right: 0; border-bottom: 1px solid #e5e7eb; }
       header { align-items: start; flex-direction: column; }
+      .kart-rehberi { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -324,6 +330,12 @@
             · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-touch.html">zoom-touch.html</a>
             <br>Çekirdek: seçim + çift tık · Resmi eklentiler: tekerlek + taşıma matematiği · uPlot.rs: boşluk + sol sürükleme bağı
           </div>
+          <section class="kart-rehberi" id="kart-rehberi" aria-label="Kullanım ve kaynak maliyeti" hidden>
+            <span><strong>Amaç:</strong> <span data-rehber="amaç"></span></span>
+            <span><strong>API / durum:</strong> <span data-rehber="api"></span></span>
+            <span><strong>İzleme kullanımı:</strong> <span data-rehber="izleme"></span></span>
+            <span><strong>Kaynak maliyeti:</strong> <span data-rehber="maliyet"></span></span>
+          </section>
         </div>
         <div class="denetimler">
           <button id="gorunum-geri" type="button">↶ Geri</button>
@@ -479,6 +491,7 @@
     const tekerlekEtkileşimi = document.getElementById("tekerlek-etkilesimi");
     const kartBaşlığı = document.getElementById("kart-başlığı");
     const kartKaynağı = document.getElementById("kart-kaynağı");
+    const kartRehberi = document.getElementById("kart-rehberi");
     const noktaKontrolü = document.getElementById("nokta-kontrolü");
     const arcsinhKontrolü = document.getElementById("arcsinh-kontrolü");
     const arcsinhEşiği = document.getElementById("arcsinh-esigi");
@@ -544,6 +557,12 @@
           geçmiş: ortak_kart_gorunum_gecmisi(),
           dokunma: ortak_kart_dokunma_etkilesimi(),
         }),
+        kullanım: {
+          amaç: "Ortak X eksenindeki imzalı serilerin sıfır çizgisine göre büyüklük ve yönünü alan dolgularıyla karşılaştırır.",
+          api: "Tek hizalı x sütunu + üç y sütunu; seri başına stroke, fill ve boşta son-değer formatter durumu.",
+          izleme: "CPU farkı, giriş/çıkış, artı/eksi sapma veya sıfır eşiği çevresindeki telemetriyi birlikte okumak için uygundur.",
+          maliyet: "Çizim O(seri × görünür nokta); hover yalnız imleç/lejant katmanını günceller, no-op wheel/pinch ana sahneyi yeniden üretmez.",
+        },
       },
       "annotations": {
         başlık: "Annotations",
@@ -3119,6 +3138,13 @@
           if (hedef) hedef.textContent = Number.isFinite(değer)
             ? değer.toLocaleString("tr-TR", { maximumFractionDigits: 3 }) : "--";
         });
+      } else {
+        oturum.bosta_lejant_degerleri().forEach((değer, indeks) => {
+          const hedef = chart.querySelector(`#seri-değeri-${indeks}`);
+          if (hedef) hedef.textContent = Number.isFinite(değer)
+            ? `${değer.toLocaleString("tr-TR", { maximumFractionDigits: 3 })} (last)`
+            : "--";
+        });
       }
       if (aktifKart === "svg-image" && tamKurulum) {
         chart.insertAdjacentHTML(
@@ -4003,6 +4029,13 @@
         );
         kartBaşlığı.textContent = kart.başlık;
         kartKaynağı.innerHTML = kart.kaynak;
+        kartRehberi.hidden = !kart.kullanım;
+        if (kart.kullanım) {
+          for (const [alan, değer] of Object.entries(kart.kullanım)) {
+            const hedef = kartRehberi.querySelector(`[data-rehber="${alan}"]`);
+            if (hedef) hedef.textContent = değer;
+          }
+        }
         kartTanımKodu.textContent = kart.tanım();
         kartTanımBaşlığı.textContent = `Kart tanımı · ${kart.tanımYolu}`;
         noktaKontrolü.hidden = !kart.değişkenNokta;

@@ -36,17 +36,20 @@ pub fn area_fill_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHata
         .seri(
             SeriSeçenekleri::yeni("1")
                 .renk("#ff0000")
-                .dolgu("#ff00001a"),
+                .dolgu("#ff00001a")
+                .boşta_son_değeri_göster(true),
         )
         .seri(
             SeriSeçenekleri::yeni("2")
                 .renk("#008000")
-                .dolgu("#00ff001a"),
+                .dolgu("#00ff001a")
+                .boşta_son_değeri_göster(true),
         )
         .seri(
             SeriSeçenekleri::yeni("3")
                 .renk("#0000ff")
-                .dolgu("#0000ff1a"),
+                .dolgu("#0000ff1a")
+                .boşta_son_değeri_göster(true),
         );
     let veri = HizalıVeri::yeni(x, seriler)?;
     Ok((seçenekler, veri))
@@ -70,8 +73,20 @@ mod testler {
         assert!(seçenekler.etkileşimler.çift_tıkla_tam_görünüm);
         assert!(seçenekler.etkileşimler.görünüm_geçmişi);
         assert!(seçenekler.etkileşimler.dokunma_etkileşimi);
+        assert!(
+            seçenekler
+                .seriler
+                .iter()
+                .all(|seri| seri.boşta_son_değeri_göster)
+        );
 
-        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        let boşta = grafik.boşta_lejant_değerleri();
+        assert!(boşta.is_some(), "kaynak fmtVal son değerleri bulunamadı");
+        let boşta = boşta.unwrap_or_default();
+        assert_eq!(boşta.len(), 3);
+        assert!(boşta.iter().all(Option::is_some));
+        let sahne = grafik.çiz();
         let alan_sayısı = sahne
             .komutlar()
             .iter()

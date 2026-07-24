@@ -1827,13 +1827,15 @@ impl Render for ChartListesi {
         let lejant = if aktif_kart == KartKimliği::TimeseriesDiscrete {
             let mut ortak_x = None;
             let mut değerler = Vec::new();
+            let mut lejant_var = false;
             for (_, grafik) in &self.timeseries_discrete_grafikleri {
                 if let Some((x, yüzey_değerleri)) = grafik.read(cx).lejant_değerleri() {
-                    ortak_x = ortak_x.or(Some(x));
+                    lejant_var = true;
+                    ortak_x = ortak_x.or(x);
                     değerler.extend(yüzey_değerleri);
                 }
             }
-            ortak_x.map(|x| (x, değerler))
+            lejant_var.then_some((ortak_x, değerler))
         } else {
             lejant
         };
@@ -1851,11 +1853,20 @@ impl Render for ChartListesi {
                     .iter()
                     .zip(değerler.iter())
                     .map(|(ad, değer)| {
-                        değer.map_or_else(|| format!("□ {ad}: --"), |y| format!("□ {ad}: {y:.3}"))
+                        değer.map_or_else(
+                            || format!("□ {ad}: --"),
+                            |y| {
+                                format!(
+                                    "□ {ad}: {y:.3}{}",
+                                    if x.is_none() { " (last)" } else { "" }
+                                )
+                            },
+                        )
                     })
                     .collect::<Vec<_>>()
                     .join("    ");
-                format!("x: {x:.3}    {seriler}")
+                let x = x.map_or_else(|| "--".to_string(), |x| format!("{x:.3}"));
+                format!("x: {x}    {seriler}")
             },
         );
 

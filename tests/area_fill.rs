@@ -9,7 +9,13 @@ fn area_fill_kaynak_verisini_ve_dolgularını_korur() -> Result<(), UplotHatası
     assert_eq!(veri.seriler().len(), 3);
     assert!(veri.seriler().iter().all(|seri| seri.len() == 30));
 
-    let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+    let grafik = Grafik::yeni(seçenekler, veri)?;
+    let boşta = grafik.boşta_lejant_değerleri();
+    assert!(boşta.is_some(), "kaynak fmtVal son değerleri bulunamadı");
+    let boşta = boşta.unwrap_or_default();
+    assert_eq!(boşta.len(), 3);
+    assert!(boşta.iter().all(Option::is_some));
+    let sahne = grafik.çiz();
     assert_eq!(
         sahne
             .komutlar()

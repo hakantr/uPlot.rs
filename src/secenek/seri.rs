@@ -63,6 +63,10 @@ pub struct SeriSeçenekleri {
     /// Çizim verisi kümülatif/dönüştürülmüş olduğunda cursor ve lejantta
     /// gösterilecek ham kaynak değerleri. Uzunluk uyuşmazsa güvenle yoksayılır.
     pub lejant_değerleri: Option<Vec<Option<f64>>>,
+    /// uPlot `series.value` callback'inin `didx == null` durumunda son
+    /// değeri göstermesi karşılığıdır. İmleç varken normal hizalı değer
+    /// kullanılmaya devam eder.
+    pub boşta_son_değeri_göster: bool,
     /// uPlot `series.pxAlign` karşılığıdır. `None`, grafik düzeyindeki
     /// `pxAlign` değerini devralır; `Some(0.0)` hizalamayı kapatır.
     pub piksel_hizası: Option<f32>,
@@ -107,6 +111,7 @@ impl SeriSeçenekleri {
             çubuk_çizgileri: Vec::new(),
             gösterim_değer_çarpanı: 1.0,
             lejant_değerleri: None,
+            boşta_son_değeri_göster: false,
             piksel_hizası: None,
             noktaları_göster: None,
             nokta_boşluğu: 10.0,
@@ -288,6 +293,11 @@ impl SeriSeçenekleri {
 
     pub fn lejant_değerleri(mut self, değerler: Vec<Option<f64>>) -> Self {
         self.lejant_değerleri = Some(değerler);
+        self
+    }
+
+    pub fn boşta_son_değeri_göster(mut self, göster: bool) -> Self {
+        self.boşta_son_değeri_göster = göster;
         self
     }
 

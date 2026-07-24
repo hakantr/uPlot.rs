@@ -2003,7 +2003,8 @@ impl Grafik {
         self.seçenekler.lejant_canlı
     }
 
-    /// İmleç bulunmadığında uPlot lejantının gösterdiği son hizalı veri satırını döndürür.
+    /// Canlı akış ve özel formatter'ların kullanabildiği son hizalı veri
+    /// satırını döndürür.
     pub fn son_değerler(&self) -> Option<(f64, Vec<Option<f64>>)> {
         let indeks = self.veri.uzunluk().checked_sub(1)?;
         let x = self.veri.x().get(indeks).copied()?;
@@ -2025,6 +2026,36 @@ impl Grafik {
             })
             .collect();
         Some((x, değerler))
+    }
+
+    /// İmleç grafik dışında olduğunda yalnız özel `series.value`
+    /// callback'i bulunan serilerin son değerlerini döndürür. X serisi
+    /// uPlot varsayılanı gibi boş kalır.
+    pub fn boşta_lejant_değerleri(&self) -> Option<Vec<Option<f64>>> {
+        let indeks = self.veri.uzunluk().checked_sub(1)?;
+        let mut özel_değer_var = false;
+        let değerler = self
+            .veri
+            .seriler()
+            .iter()
+            .zip(self.seçenekler.seriler.iter())
+            .map(|(seri, seçenek)| {
+                if !seçenek.boşta_son_değeri_göster {
+                    return None;
+                }
+                özel_değer_var = true;
+                seçenek
+                    .lejant_değerleri
+                    .as_ref()
+                    .filter(|değerler| değerler.len() == seri.len())
+                    .unwrap_or(seri)
+                    .get(indeks)
+                    .copied()
+                    .flatten()
+                    .map(|değer| değer * seçenek.gösterim_değer_çarpanı)
+            })
+            .collect::<Vec<_>>();
+        özel_değer_var.then_some(değerler)
     }
 
     /// Kaynak `series.values` tarih eşlemesini yüzey adaptörlerine taşır.

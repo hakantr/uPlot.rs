@@ -1043,6 +1043,15 @@ impl KartOturumu {
             })
     }
 
+    pub fn bosta_lejant_degerleri(&self) -> Vec<f64> {
+        self.grafik
+            .boşta_lejant_değerleri()
+            .unwrap_or_default()
+            .into_iter()
+            .map(|değer| değer.unwrap_or(f64::NAN))
+            .collect()
+    }
+
     pub fn lejant_canli(&self) -> bool {
         self.grafik.lejant_canlı()
     }
@@ -1905,6 +1914,13 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
+        let boşta = oturum.bosta_lejant_degerleri();
+        assert_eq!(boşta.len(), 3);
+        assert!(boşta.iter().all(|değer| değer.is_finite()));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("oturum.bosta_lejant_degerleri()"));
+        assert!(web.contains("data-rehber=\"amaç\""));
+        assert!(web.contains("no-op wheel/pinch ana sahneyi yeniden üretmez"));
         assert_eq!(kart_sayisi(), 365);
     }
 

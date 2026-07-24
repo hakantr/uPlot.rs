@@ -331,14 +331,18 @@ impl GpuiGrafik {
         })
     }
 
-    pub fn lejant_değerleri(&self) -> Option<(f64, Vec<Option<f64>>)> {
+    pub fn lejant_değerleri(&self) -> Option<(Option<f64>, Vec<Option<f64>>)> {
         if !self.grafik.lejant_canlı() {
             return None;
         }
         self.imleç
             .as_ref()
-            .map(|imleç| (imleç.veri_x, imleç.seri_değerleri.clone()))
-            .or_else(|| self.grafik.son_değerler())
+            .map(|imleç| (Some(imleç.veri_x), imleç.seri_değerleri.clone()))
+            .or_else(|| {
+                self.grafik
+                    .boşta_lejant_değerleri()
+                    .map(|değerler| (None, değerler))
+            })
     }
 
     pub fn senkron_yayını(&self) -> Option<(f64, f64, Option<usize>)> {
@@ -883,12 +887,12 @@ impl GpuiGrafik {
         odak_değişti
     }
 
-    fn tekerlek_yakınlaştır(&mut self, olay: &ScrollWheelEvent) {
+    fn tekerlek_yakınlaştır(&mut self, olay: &ScrollWheelEvent) -> bool {
         let Some(fare) = self.sahne_konumu(olay.position) else {
-            return;
+            return false;
         };
         if !self.grafik_alanında(fare) {
-            return;
+            return false;
         }
         if cfg!(target_os = "windows") && self.grafik.etkileşim_seçenekleri().dokunma_etkileşimi
         {
@@ -896,15 +900,15 @@ impl GpuiGrafik {
                 TouchPhase::Started => {
                     let _ = self.grafik.taşımayı_başlat();
                     self.dokunma_kaydırma = Some((0.0_f64, 0.0_f64));
-                    return;
+                    return false;
                 }
                 TouchPhase::Ended | TouchPhase::Cancelled if self.dokunma_kaydırma.is_some() => {
                     self.dokunma_kaydırma = None;
                     self.grafik.taşımayı_bitir();
-                    return;
+                    return false;
                 }
                 TouchPhase::Moved => {}
-                _ => return,
+                _ => return false,
             }
         }
         let (sol, sağ, üst, alt) = self.çizim_alanı();
@@ -917,11 +921,16 @@ impl GpuiGrafik {
             };
             *birikmiş_x += x / f64::from(sağ - sol);
             *birikmiş_y += y / f64::from(alt - üst);
-            match self.grafik.taşı(*birikmiş_x, *birikmiş_y) {
-                Ok(_) => self.hata = None,
-                Err(hata) => self.hata = Some(format!("Dokunma taşıması uygulanamadı: {hata}")),
-            }
-            return;
+            return match self.grafik.taşı(*birikmiş_x, *birikmiş_y) {
+                Ok(değişti) => {
+                    self.hata = None;
+                    değişti
+                }
+                Err(hata) => {
+                    self.hata = Some(format!("Dokunma taşıması uygulanamadı: {hata}"));
+                    false
+                }
+            };
         }
         let eksen = match (olay.modifiers.shift, olay.modifiers.control) {
             (true, false) => TekerlekEkseni::X,
@@ -961,34 +970,44 @@ impl GpuiGrafik {
             .grafik
             .tekerlek_eksende(yatay, dikey, delta, hassas, eksen)
         {
-            Ok(_) => self.hata = None,
+            Ok(değişti) => {
+                self.hata = None;
+                değişti
+            }
             Err(hata) => {
                 self.hata = Some(format!("Tekerlek yakınlaştırması uygulanamadı: {hata}"));
+                false
             }
         }
     }
 
-    fn dokunma_yakınlaştır(&mut self, olay: &PinchEvent) {
+    fn dokunma_yakınlaştır(&mut self, olay: &PinchEvent) -> bool {
         if matches!(olay.phase, TouchPhase::Ended | TouchPhase::Cancelled) {
             self.grafik.dokunmayı_bitir();
-            return;
+            return false;
         }
         if olay.phase == TouchPhase::Started && !self.grafik.dokunmayı_başlat() {
-            return;
+            return false;
         }
         let Some(fare) = self.sahne_konumu(olay.position) else {
-            return;
+            return false;
         };
         if !self.grafik_alanında(fare) {
-            return;
+            return false;
         }
         let (sol, sağ, üst, alt) = self.çizim_alanı();
         let yatay = f64::from((fare.x - sol) / (sağ - sol));
         let dikey = f64::from((fare.y - üst) / (alt - üst));
         let çarpan = f64::from((1.0 + olay.delta).max(0.01));
         match self.grafik.dokunma_yakınlaştır(yatay, dikey, çarpan) {
-            Ok(_) => self.hata = None,
-            Err(hata) => self.hata = Some(format!("Dokunma yakınlaştırması uygulanamadı: {hata}")),
+            Ok(değişti) => {
+                self.hata = None;
+                değişti
+            }
+            Err(hata) => {
+                self.hata = Some(format!("Dokunma yakınlaştırması uygulanamadı: {hata}"));
+                false
+            }
         }
     }
 
@@ -1287,13 +1306,20 @@ impl Render for GpuiGrafik {
                 }
             }))
             .on_scroll_wheel(cx.listener(|bu, olay: &ScrollWheelEvent, _, cx| {
-                bu.grafik.ölçüm_datumlarını_temizle();
-                bu.tekerlek_yakınlaştır(olay);
-                bu.grafik_bildir(cx);
+                let datum_değişti = bu.grafik.ölçüm_datumlarını_temizle();
+                let görünüm_değişti = bu.tekerlek_yakınlaştır(olay);
+                if datum_değişti || görünüm_değişti {
+                    bu.grafik_bildir(cx);
+                } else {
+                    GpuiGrafik::bildir(cx);
+                }
             }))
             .on_pinch(cx.listener(|bu, olay: &PinchEvent, _, cx| {
-                bu.dokunma_yakınlaştır(olay);
-                bu.grafik_bildir(cx);
+                if bu.dokunma_yakınlaştır(olay) {
+                    bu.grafik_bildir(cx);
+                } else {
+                    GpuiGrafik::bildir(cx);
+                }
             }))
             .on_mouse_exit(cx.listener(|bu, _: &MouseExitEvent, _, cx| {
                 if !bu.imleç_kilitli && bu.seçim.is_none() && bu.taşıma_başlangıcı.is_none()
