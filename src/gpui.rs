@@ -1,12 +1,12 @@
 //! GPUI çizim yüzeyi ve etkileşim adaptörü.
 
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use ::gpui::{
     App, BorderStyle, Bounds, ContentMask, Context, Entity, EventEmitter, FocusHandle, Hsla,
     IntoElement, KeyDownEvent, KeyUpEvent, MouseButton, MouseDownEvent, MouseExitEvent,
-    MouseMoveEvent, MouseUpEvent, PathBuilder, PinchEvent, Pixels, Render, ScrollDelta,
+    MouseMoveEvent, MouseUpEvent, Path, PathBuilder, PinchEvent, Pixels, Render, ScrollDelta,
     ScrollWheelEvent, SharedString, StyleRefinement, TextAlign, TextRun, TouchPhase, Window,
     canvas, div, linear_color_stop, linear_gradient, point, prelude::*, px, quad, rgb, rgba, size,
 };
@@ -57,16 +57,214 @@ pub struct GpuiGrafik {
 struct GpuiAnaYüzey {
     sahne: Rc<Sahne>,
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
+    yol_önbelleği: Rc<RefCell<GpuiYolÖnbelleği>>,
+}
+
+impl GpuiAnaYüzey {
+    fn sahneyi_ayarla(&mut self, sahne: Rc<Sahne>) {
+        self.yol_önbelleği
+            .borrow_mut()
+            .sahneyi_değiştir(&self.sahne, &sahne);
+        self.sahne = sahne;
+    }
+}
+
+#[derive(Default)]
+struct GpuiYolÖnbelleği {
+    sahne_boyutu: Option<(u32, u32)>,
+    sınırlar: Option<Bounds<Pixels>>,
+    yollar: Vec<Option<Path<Pixels>>>,
+}
+
+impl GpuiYolÖnbelleği {
+    fn yüzeyi_hazırla(&mut self, sahne: &Sahne, sınırlar: Bounds<Pixels>) {
+        let sahne_boyutu = sahne.boyut();
+        if self.sahne_boyutu != Some(sahne_boyutu) || self.sınırlar != Some(sınırlar) {
+            self.sahne_boyutu = Some(sahne_boyutu);
+            self.sınırlar = Some(sınırlar);
+            self.yollar.clear();
+        }
+        if self.yollar.len() != sahne.komutlar().len() {
+            self.yollar.resize_with(sahne.komutlar().len(), || None);
+        }
+    }
+
+    fn sahneyi_değiştir(&mut self, eski: &Sahne, yeni: &Sahne) -> usize {
+        if eski.boyut() != yeni.boyut() {
+            self.sahne_boyutu = Some(yeni.boyut());
+            self.sınırlar = None;
+            self.yollar.clear();
+            return 0;
+        }
+
+        let mut eski_yollar = std::mem::take(&mut self.yollar);
+        let mut yeni_yollar = vec![None; yeni.komutlar().len()];
+        let mut korunan = 0;
+        for (indeks, (eski_komut, yeni_komut)) in
+            eski.komutlar().iter().zip(yeni.komutlar()).enumerate()
+        {
+            if !aynı_yol_geometrisi(eski_komut, yeni_komut) {
+                continue;
+            }
+            let Some(eski_yol) = eski_yollar.get_mut(indeks).and_then(Option::take) else {
+                continue;
+            };
+            let Some(yeni_yol) = yeni_yollar.get_mut(indeks) else {
+                continue;
+            };
+            *yeni_yol = Some(eski_yol);
+            korunan += 1;
+        }
+        self.yollar = yeni_yollar;
+        korunan
+    }
+
+    fn yol(
+        &mut self,
+        indeks: usize,
+        oluştur: impl FnOnce() -> Option<Path<Pixels>>,
+    ) -> Option<Path<Pixels>> {
+        if let Some(yol) = self
+            .yollar
+            .get(indeks)
+            .and_then(|yol| yol.as_ref())
+            .cloned()
+        {
+            return Some(yol);
+        }
+        let yol = oluştur()?;
+        if let Some(hedef) = self.yollar.get_mut(indeks) {
+            *hedef = Some(yol.clone());
+        }
+        Some(yol)
+    }
+}
+
+fn aynı_yol_geometrisi(eski: &Komut, yeni: &Komut) -> bool {
+    match (eski, yeni) {
+        (
+            Komut::Çizgi {
+                başlangıç: eski_başlangıç,
+                bitiş: eski_bitiş,
+                kalınlık: eski_kalınlık,
+                ..
+            },
+            Komut::Çizgi {
+                başlangıç: yeni_başlangıç,
+                bitiş: yeni_bitiş,
+                kalınlık: yeni_kalınlık,
+                ..
+            },
+        ) => {
+            eski_başlangıç == yeni_başlangıç
+                && eski_bitiş == yeni_bitiş
+                && eski_kalınlık == yeni_kalınlık
+        }
+        (
+            Komut::KesikliÇizgi {
+                başlangıç: eski_başlangıç,
+                bitiş: eski_bitiş,
+                kalınlık: eski_kalınlık,
+                kesik: eski_kesik,
+                ..
+            },
+            Komut::KesikliÇizgi {
+                başlangıç: yeni_başlangıç,
+                bitiş: yeni_bitiş,
+                kalınlık: yeni_kalınlık,
+                kesik: yeni_kesik,
+                ..
+            },
+        ) => {
+            eski_başlangıç == yeni_başlangıç
+                && eski_bitiş == yeni_bitiş
+                && eski_kalınlık == yeni_kalınlık
+                && eski_kesik == yeni_kesik
+        }
+        (
+            Komut::Yol {
+                parçalar: eski_parçalar,
+                kalınlık: eski_kalınlık,
+                ..
+            },
+            Komut::Yol {
+                parçalar: yeni_parçalar,
+                kalınlık: yeni_kalınlık,
+                ..
+            },
+        )
+        | (
+            Komut::GradyanYol {
+                parçalar: eski_parçalar,
+                kalınlık: eski_kalınlık,
+                ..
+            },
+            Komut::GradyanYol {
+                parçalar: yeni_parçalar,
+                kalınlık: yeni_kalınlık,
+                ..
+            },
+        ) => eski_parçalar == yeni_parçalar && eski_kalınlık == yeni_kalınlık,
+        (
+            Komut::KesikliYol {
+                parçalar: eski_parçalar,
+                kalınlık: eski_kalınlık,
+                çizgi: eski_çizgi,
+                boşluk: eski_boşluk,
+                ..
+            },
+            Komut::KesikliYol {
+                parçalar: yeni_parçalar,
+                kalınlık: yeni_kalınlık,
+                çizgi: yeni_çizgi,
+                boşluk: yeni_boşluk,
+                ..
+            },
+        ) => {
+            eski_parçalar == yeni_parçalar
+                && eski_kalınlık == yeni_kalınlık
+                && eski_çizgi == yeni_çizgi
+                && eski_boşluk == yeni_boşluk
+        }
+        (
+            Komut::Alan {
+                çokgenler: eski_çokgenler,
+                ..
+            },
+            Komut::Alan {
+                çokgenler: yeni_çokgenler,
+                ..
+            },
+        )
+        | (
+            Komut::GradyanAlan {
+                çokgenler: eski_çokgenler,
+                ..
+            },
+            Komut::GradyanAlan {
+                çokgenler: yeni_çokgenler,
+                ..
+            },
+        ) => eski_çokgenler == yeni_çokgenler,
+        _ => false,
+    }
 }
 
 impl Render for GpuiAnaYüzey {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let sahne = self.sahne.clone();
         let çizim_sınırları = self.çizim_sınırları.clone();
+        let yol_önbelleği = self.yol_önbelleği.clone();
         canvas(
             move |sınırlar, _, _| çizim_sınırları.set(Some(sınırlar)),
             move |sınırlar, _, pencere, uygulama| {
-                sahneyi_boya(&sahne, sınırlar, pencere, uygulama);
+                sahneyi_önbellekli_boya(
+                    &sahne,
+                    sınırlar,
+                    &mut yol_önbelleği.borrow_mut(),
+                    pencere,
+                    uygulama,
+                );
             },
         )
         .size_full()
@@ -699,7 +897,7 @@ impl GpuiGrafik {
         if let Some(yüzey) = self.ana_yüzey.as_ref() {
             let sahne = self.ana_sahne.clone();
             yüzey.update(cx, |yüzey, cx| {
-                yüzey.sahne = sahne;
+                yüzey.sahneyi_ayarla(sahne);
                 cx.notify();
             });
         }
@@ -733,6 +931,7 @@ impl Render for GpuiGrafik {
                 cx.new(|_| GpuiAnaYüzey {
                     sahne,
                     çizim_sınırları,
+                    yol_önbelleği: Rc::new(RefCell::new(GpuiYolÖnbelleği::default())),
                 })
             })
             .clone();
@@ -1188,6 +1387,18 @@ pub fn sahneyi_boya(
     pencere: &mut Window,
     uygulama: &mut App,
 ) {
+    let mut yol_önbelleği = GpuiYolÖnbelleği::default();
+    sahneyi_önbellekli_boya(sahne, sınırlar, &mut yol_önbelleği, pencere, uygulama);
+}
+
+fn sahneyi_önbellekli_boya(
+    sahne: &Sahne,
+    sınırlar: Bounds<Pixels>,
+    yol_önbelleği: &mut GpuiYolÖnbelleği,
+    pencere: &mut Window,
+    uygulama: &mut App,
+) {
+    yol_önbelleği.yüzeyi_hazırla(sahne, sınırlar);
     let (kaynak_g, kaynak_y) = sahne.boyut();
     let ölçek = (f32::from(sınırlar.size.width) / kaynak_g as f32)
         .min(f32::from(sınırlar.size.height) / kaynak_y as f32)
@@ -1199,7 +1410,7 @@ pub fn sahneyi_boya(
     let dönüştür =
         |nokta: Nokta| point(px(köken_x + nokta.x * ölçek), px(köken_y + nokta.y * ölçek));
 
-    for komut in sahne.komutlar() {
+    for (komut_indeksi, komut) in sahne.komutlar().iter().enumerate() {
         match komut {
             Komut::ArkaPlan { .. } => {}
             Komut::Çizgi {
@@ -1208,10 +1419,12 @@ pub fn sahneyi_boya(
                 renk,
                 kalınlık,
             } => {
-                let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek));
-                yol.move_to(dönüştür(*başlangıç));
-                yol.line_to(dönüştür(*bitiş));
-                if let Ok(yol) = yol.build() {
+                if let Some(yol) = yol_önbelleği.yol(komut_indeksi, || {
+                    let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek));
+                    yol.move_to(dönüştür(*başlangıç));
+                    yol.line_to(dönüştür(*bitiş));
+                    yol.build().ok()
+                }) {
                     pencere.paint_path(yol, renk_çöz(renk));
                 }
             }
@@ -1222,11 +1435,13 @@ pub fn sahneyi_boya(
                 kalınlık,
                 kesik,
             } => {
-                let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek))
-                    .dash_array(&[px(*kesik * ölçek), px(*kesik * ölçek)]);
-                yol.move_to(dönüştür(*başlangıç));
-                yol.line_to(dönüştür(*bitiş));
-                if let Ok(yol) = yol.build() {
+                if let Some(yol) = yol_önbelleği.yol(komut_indeksi, || {
+                    let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek))
+                        .dash_array(&[px(*kesik * ölçek), px(*kesik * ölçek)]);
+                    yol.move_to(dönüştür(*başlangıç));
+                    yol.line_to(dönüştür(*bitiş));
+                    yol.build().ok()
+                }) {
                     pencere.paint_path(yol, renk_çöz(renk));
                 }
             }
@@ -1235,17 +1450,19 @@ pub fn sahneyi_boya(
                 renk,
                 kalınlık,
             } => {
-                let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek));
-                for parça in parçalar {
-                    let mut noktalar = parça.iter();
-                    if let Some(ilk) = noktalar.next() {
-                        yol.move_to(dönüştür(*ilk));
+                if let Some(yol) = yol_önbelleği.yol(komut_indeksi, || {
+                    let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek));
+                    for parça in parçalar {
+                        let mut noktalar = parça.iter();
+                        if let Some(ilk) = noktalar.next() {
+                            yol.move_to(dönüştür(*ilk));
+                        }
+                        for nokta in noktalar {
+                            yol.line_to(dönüştür(*nokta));
+                        }
                     }
-                    for nokta in noktalar {
-                        yol.line_to(dönüştür(*nokta));
-                    }
-                }
-                if let Ok(yol) = yol.build() {
+                    yol.build().ok()
+                }) {
                     pencere.paint_path(yol, renk_çöz(renk));
                 }
             }
@@ -1254,17 +1471,19 @@ pub fn sahneyi_boya(
                 gradyan,
                 kalınlık,
             } => {
-                let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek));
-                for parça in parçalar {
-                    let mut noktalar = parça.iter();
-                    if let Some(ilk) = noktalar.next() {
-                        yol.move_to(dönüştür(*ilk));
+                if let Some(yol) = yol_önbelleği.yol(komut_indeksi, || {
+                    let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek));
+                    for parça in parçalar {
+                        let mut noktalar = parça.iter();
+                        if let Some(ilk) = noktalar.next() {
+                            yol.move_to(dönüştür(*ilk));
+                        }
+                        for nokta in noktalar {
+                            yol.line_to(dönüştür(*nokta));
+                        }
                     }
-                    for nokta in noktalar {
-                        yol.line_to(dönüştür(*nokta));
-                    }
-                }
-                if let Ok(yol) = yol.build() {
+                    yol.build().ok()
+                }) {
                     gradyan_yolunu_boya(yol, gradyan, &dönüştür, pencere);
                 }
             }
@@ -1275,56 +1494,62 @@ pub fn sahneyi_boya(
                 çizgi,
                 boşluk,
             } => {
-                let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek))
-                    .dash_array(&[px(*çizgi * ölçek), px(*boşluk * ölçek)]);
-                for parça in parçalar {
-                    let mut noktalar = parça.iter();
-                    if let Some(ilk) = noktalar.next() {
-                        yol.move_to(dönüştür(*ilk));
+                if let Some(yol) = yol_önbelleği.yol(komut_indeksi, || {
+                    let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek))
+                        .dash_array(&[px(*çizgi * ölçek), px(*boşluk * ölçek)]);
+                    for parça in parçalar {
+                        let mut noktalar = parça.iter();
+                        if let Some(ilk) = noktalar.next() {
+                            yol.move_to(dönüştür(*ilk));
+                        }
+                        for nokta in noktalar {
+                            yol.line_to(dönüştür(*nokta));
+                        }
                     }
-                    for nokta in noktalar {
-                        yol.line_to(dönüştür(*nokta));
-                    }
-                }
-                if let Ok(yol) = yol.build() {
+                    yol.build().ok()
+                }) {
                     pencere.paint_path(yol, renk_çöz(renk));
                 }
             }
             Komut::Alan { çokgenler, dolgu } => {
-                let mut yol = PathBuilder::fill();
-                for çokgen in çokgenler {
-                    let mut noktalar = çokgen.iter();
-                    if let Some(ilk) = noktalar.next() {
-                        yol.move_to(dönüştür(*ilk));
+                if let Some(yol) = yol_önbelleği.yol(komut_indeksi, || {
+                    let mut yol = PathBuilder::fill();
+                    for çokgen in çokgenler {
+                        let mut noktalar = çokgen.iter();
+                        if let Some(ilk) = noktalar.next() {
+                            yol.move_to(dönüştür(*ilk));
+                        }
+                        for nokta in noktalar {
+                            yol.line_to(dönüştür(*nokta));
+                        }
+                        if çokgen.len() >= 3 {
+                            yol.close();
+                        }
                     }
-                    for nokta in noktalar {
-                        yol.line_to(dönüştür(*nokta));
-                    }
-                    if çokgen.len() >= 3 {
-                        yol.close();
-                    }
-                }
-                if let Ok(yol) = yol.build() {
+                    yol.build().ok()
+                }) {
                     pencere.paint_path(yol, renk_çöz(dolgu));
                 }
             }
             Komut::GradyanAlan {
                 çokgenler, gradyan
             } => {
-                let mut yol = PathBuilder::fill();
-                for çokgen in çokgenler {
-                    let mut noktalar = çokgen.iter();
-                    if let Some(ilk) = noktalar.next() {
-                        yol.move_to(dönüştür(*ilk));
+                if let Some(yol) = yol_önbelleği.yol(komut_indeksi, || {
+                    let mut yol = PathBuilder::fill();
+                    for çokgen in çokgenler {
+                        let mut noktalar = çokgen.iter();
+                        if let Some(ilk) = noktalar.next() {
+                            yol.move_to(dönüştür(*ilk));
+                        }
+                        for nokta in noktalar {
+                            yol.line_to(dönüştür(*nokta));
+                        }
+                        if çokgen.len() >= 3 {
+                            yol.close();
+                        }
                     }
-                    for nokta in noktalar {
-                        yol.line_to(dönüştür(*nokta));
-                    }
-                    if çokgen.len() >= 3 {
-                        yol.close();
-                    }
-                }
-                if let Ok(yol) = yol.build() {
+                    yol.build().ok()
+                }) {
                     gradyan_yolunu_boya(yol, gradyan, &dönüştür, pencere);
                 }
             }
@@ -1575,6 +1800,20 @@ fn renk_çöz(kod: &str) -> Hsla {
 mod testler {
     use super::*;
 
+    fn yol_sahnesi(renk: &str, kalınlık: f32, bitiş_x: f32) -> Sahne {
+        let mut sahne = Sahne::yeni(320, 180);
+        sahne.ekle(Komut::Yol {
+            parçalar: vec![vec![Nokta::yeni(10.0, 20.0), Nokta::yeni(bitiş_x, 80.0)]],
+            renk: renk.to_owned(),
+            kalınlık,
+        });
+        sahne
+    }
+
+    fn önbelleğe_örnek_yol_ekle(önbellek: &mut GpuiYolÖnbelleği) {
+        önbellek.yollar = vec![Some(Path::new(point(px(0.0), px(0.0))))];
+    }
+
     #[test]
     fn hover_katmanı_ana_sahne_geometrisini_değiştirmez() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = crate::kart::resize_kartı(100)?;
@@ -1600,5 +1839,53 @@ mod testler {
         assert!(!bileşen.etkileşim_sahnesi().komutlar().is_empty());
         assert_eq!(bileşen.ana_sahne.komutlar().len(), ana_komut_sayısı);
         Ok(())
+    }
+
+    #[test]
+    fn gpui_yol_önbelleği_renk_değişiminde_geometriyi_korur() {
+        let eski = yol_sahnesi("#ff0000", 2.0, 200.0);
+        let yeni = yol_sahnesi("#0000ff", 2.0, 200.0);
+        let mut önbellek = GpuiYolÖnbelleği {
+            sahne_boyutu: Some(eski.boyut()),
+            sınırlar: None,
+            yollar: Vec::new(),
+        };
+        önbelleğe_örnek_yol_ekle(&mut önbellek);
+
+        assert_eq!(önbellek.sahneyi_değiştir(&eski, &yeni), 1);
+        assert!(önbellek.yollar.first().is_some_and(Option::is_some));
+    }
+
+    #[test]
+    fn gpui_yol_önbelleği_geometri_ve_kalınlık_değişiminde_geçersizleşir() {
+        let eski = yol_sahnesi("#ff0000", 2.0, 200.0);
+        for yeni in [
+            yol_sahnesi("#ff0000", 3.0, 200.0),
+            yol_sahnesi("#ff0000", 2.0, 240.0),
+        ] {
+            let mut önbellek = GpuiYolÖnbelleği {
+                sahne_boyutu: Some(eski.boyut()),
+                sınırlar: None,
+                yollar: Vec::new(),
+            };
+            önbelleğe_örnek_yol_ekle(&mut önbellek);
+
+            assert_eq!(önbellek.sahneyi_değiştir(&eski, &yeni), 0);
+            assert!(önbellek.yollar.first().is_some_and(Option::is_none));
+        }
+    }
+
+    #[test]
+    fn gpui_yol_önbelleği_yüzey_değişiminde_geçersizleşir() {
+        let sahne = yol_sahnesi("#ff0000", 2.0, 200.0);
+        let ilk_sınırlar = Bounds::new(point(px(0.0), px(0.0)), size(px(320.0), px(180.0)));
+        let yeni_sınırlar = Bounds::new(point(px(1.0), px(0.0)), size(px(320.0), px(180.0)));
+        let mut önbellek = GpuiYolÖnbelleği::default();
+        önbellek.yüzeyi_hazırla(&sahne, ilk_sınırlar);
+        önbelleğe_örnek_yol_ekle(&mut önbellek);
+
+        önbellek.yüzeyi_hazırla(&sahne, yeni_sınırlar);
+
+        assert!(önbellek.yollar.first().is_some_and(Option::is_none));
     }
 }
