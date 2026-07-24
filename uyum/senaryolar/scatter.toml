@@ -3,7 +3,7 @@ kaynak = "../uPlot/demos/scatter.html"
 fixture = "src/kart/scatter.rs#scatter_kartı"
 viewport = [1920, 1200]
 device_pixel_ratio = 1
-durum = "iki_mode_iki_yüzeyi"
+durum = "tek_kart_iki_bağımsız_mode2_yüzeyi"
 
 [veri]
 scatter_seri_sayısı = 4
@@ -17,6 +17,8 @@ balon_çap_aralığı = [0, 60]
 
 [etkileşim]
 bubble_vuruşu = "en_küçük_alan_sonra_en_yakın_merkez"
+uzamsal_dizin = "bbox_hücre_dizini_yalnız_ölçek_veya_boyut_değişince_yenilenir"
+scatter_çizimi = "seri_başına_tek_toplu_daire_yolu"
 etiket_alanları = ["Country", "Population", "GDP", "Income"]
 ortak_davranış_profili = "resize-temeli-v1"
 

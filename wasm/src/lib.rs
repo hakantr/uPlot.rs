@@ -170,6 +170,7 @@ impl KartOturumu {
                     scales_dir_ori_kartı,
                 )
             }
+            "scatter" => scatter_kartı(ScatterÖrneği::Scatter),
             kimlik if kimlik.starts_with("scatter-") => ScatterÖrneği::kimlikten(kimlik)
                 .map_or_else(
                     || {
@@ -2345,6 +2346,7 @@ mod testler {
 
     #[test]
     fn scatter_wasm_iki_mode_iki_yüzeyini_ve_vuruşu_üretir() {
+        assert!(KartOturumu::yeni("scatter", 100).is_ok());
         for örnek in ScatterÖrneği::TÜMÜ {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             assert!(oturum.is_ok(), "{}", örnek.kimlik());
@@ -2374,6 +2376,16 @@ mod testler {
                 .is_empty()
         );
         assert!(scatter_kart_tanim_ornegi().contains("scatter_kartı"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"scatter\"")
+                .count(),
+            1
+        );
+        assert_eq!(web.matches("data-kart=\"scatter-").count(), 0);
+        assert!(web.contains("let scatterOturumları = [];"));
+        assert!(web.contains("function scatterÇiz()"));
+        assert!(web.contains("data-scatter-index"));
         assert_eq!(kart_sayisi(), 365);
     }
 

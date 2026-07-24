@@ -410,6 +410,92 @@ impl ÇubukVuruşDizini {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+struct DağılımVuruşAnahtarı {
+    genişlik: u32,
+    yükseklik: u32,
+    x_aralığı: Aralık,
+    y_aralıkları: Vec<(String, Aralık)>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct DağılımVuruşKaydı {
+    seri: usize,
+    indeks: usize,
+    merkez: Nokta,
+    boyut: f32,
+}
+
+/// Bubble hover için küçük ve yeniden kullanılabilir bir uzamsal dizin.
+///
+/// Kaynak uPlot demosu bir quadtree kullanır. Buradaki eş boyutlu bölütleme
+/// aynı bbox ekleme/nokta sorgulama semantiğini korur ve her pointer olayında
+/// bütün bubble dizisini tekrar taramayı engeller.
+#[derive(Debug, Clone)]
+struct DağılımVuruşDizini {
+    anahtar: DağılımVuruşAnahtarı,
+    sütun_sayısı: usize,
+    satır_sayısı: usize,
+    hücreler: Vec<Vec<usize>>,
+    kayıtlar: Vec<DağılımVuruşKaydı>,
+}
+
+impl DağılımVuruşDizini {
+    fn yeni(anahtar: DağılımVuruşAnahtarı, kayıtlar: Vec<DağılımVuruşKaydı>) -> Self {
+        let kenar = (kayıtlar.len() as f64).sqrt().ceil().clamp(1.0, 32.0) as usize;
+        let sütun_sayısı = kenar;
+        let satır_sayısı = kenar;
+        let mut hücreler = vec![Vec::new(); sütun_sayısı * satır_sayısı];
+        let yüzey_genişliği = anahtar.genişlik.max(1) as f32;
+        let yüzey_yüksekliği = anahtar.yükseklik.max(1) as f32;
+        let sütun = |x: f32| {
+            ((x / yüzey_genişliği * sütun_sayısı as f32).floor() as isize)
+                .clamp(0, sütun_sayısı.saturating_sub(1) as isize) as usize
+        };
+        let satır = |y: f32| {
+            ((y / yüzey_yüksekliği * satır_sayısı as f32).floor() as isize)
+                .clamp(0, satır_sayısı.saturating_sub(1) as isize) as usize
+        };
+        for (kayıt_indeksi, kayıt) in kayıtlar.iter().enumerate() {
+            // Kaynak bbox'a strokeWidth ekler; 0.5 px yarıçap payı aynı
+            // sınırdaki hover davranışını korur.
+            let yarıçap = kayıt.boyut / 2.0 + 0.5;
+            let ilk_sütun = sütun(kayıt.merkez.x - yarıçap);
+            let son_sütun = sütun(kayıt.merkez.x + yarıçap);
+            let ilk_satır = satır(kayıt.merkez.y - yarıçap);
+            let son_satır = satır(kayıt.merkez.y + yarıçap);
+            for satır in ilk_satır..=son_satır {
+                for sütun in ilk_sütun..=son_sütun {
+                    if let Some(hücre) = hücreler.get_mut(satır * sütun_sayısı + sütun) {
+                        hücre.push(kayıt_indeksi);
+                    }
+                }
+            }
+        }
+        Self {
+            anahtar,
+            sütun_sayısı,
+            satır_sayısı,
+            hücreler,
+            kayıtlar,
+        }
+    }
+
+    fn adaylar(&self, x: f32, y: f32) -> impl Iterator<Item = DağılımVuruşKaydı> + '_ {
+        let sütun = ((x / self.anahtar.genişlik.max(1) as f32 * self.sütun_sayısı as f32).floor()
+            as isize)
+            .clamp(0, self.sütun_sayısı.saturating_sub(1) as isize) as usize;
+        let satır = ((y / self.anahtar.yükseklik.max(1) as f32 * self.satır_sayısı as f32).floor()
+            as isize)
+            .clamp(0, self.satır_sayısı.saturating_sub(1) as isize) as usize;
+        self.hücreler
+            .get(satır * self.sütun_sayısı + sütun)
+            .into_iter()
+            .flatten()
+            .filter_map(|indeks| self.kayıtlar.get(*indeks).copied())
+    }
+}
+
 /// Doğrulanmış seçenek ve veriyi taşıyan çizelge örneği.
 pub struct Grafik {
     seçenekler: GrafikSeçenekleri,
@@ -422,6 +508,7 @@ pub struct Grafik {
     ölçüm_datumları: [Option<(f64, f64)>; 2],
     açıklama_stil_indeksleri: Vec<Option<usize>>,
     çubuk_vuruş_dizini: RefCell<Option<ÇubukVuruşDizini>>,
+    dağılım_vuruş_dizini: RefCell<Option<DağılımVuruşDizini>>,
 }
 
 fn oran_aralığı(
@@ -618,6 +705,7 @@ impl Grafik {
             ölçüm_datumları: [None, None],
             açıklama_stil_indeksleri,
             çubuk_vuruş_dizini: RefCell::new(None),
+            dağılım_vuruş_dizini: RefCell::new(None),
         })
     }
 
@@ -743,43 +831,103 @@ impl Grafik {
         let görünür_y = self.etkileşim.görünür_y();
         let genişlik = sağ - sol;
         let yükseklik = alt - üst;
+        let y_aralıkları = düzen
+            .seriler
+            .iter()
+            .map(|seri| {
+                (
+                    seri.ölçek.clone(),
+                    self.görünür_ölçek_aralığı(&seri.ölçek, x_aralığı, görünür_y),
+                )
+            })
+            .collect::<Vec<_>>();
+        let anahtar = DağılımVuruşAnahtarı {
+            genişlik: genişlik_px,
+            yükseklik: yükseklik_px,
+            x_aralığı,
+            y_aralıkları: y_aralıkları.clone(),
+        };
+        let güncel = self
+            .dağılım_vuruş_dizini
+            .borrow()
+            .as_ref()
+            .is_some_and(|dizin| dizin.anahtar == anahtar);
+        if !güncel {
+            let mut kayıtlar = Vec::new();
+            for (seri, (seri_düzeni, (_, y_aralığı))) in
+                düzen.seriler.iter().zip(y_aralıkları.iter()).enumerate()
+            {
+                for (indeks, nokta) in seri_düzeni.noktalar.iter().enumerate() {
+                    let merkez = Nokta::yeni(
+                        self.x_konumu(x_aralığı, nokta.x, sol, genişlik),
+                        alt - self.y_konumu(
+                            &seri_düzeni.ölçek,
+                            *y_aralığı,
+                            nokta.y,
+                            0.0,
+                            yükseklik,
+                        ),
+                    );
+                    let yarıçap = nokta.boyut / 2.0 + 0.5;
+                    if merkez.x + yarıçap < sol
+                        || merkez.x - yarıçap > sağ
+                        || merkez.y + yarıçap < üst
+                        || merkez.y - yarıçap > alt
+                    {
+                        continue;
+                    }
+                    kayıtlar.push(DağılımVuruşKaydı {
+                        seri,
+                        indeks,
+                        merkez,
+                        boyut: nokta.boyut,
+                    });
+                }
+            }
+            *self.dağılım_vuruş_dizini.borrow_mut() =
+                Some(DağılımVuruşDizini::yeni(anahtar, kayıtlar));
+        }
         let mut sonuç = None::<(f32, f32, DağılımVuruşu)>;
-        for (seri, seri_düzeni) in düzen.seriler.iter().enumerate() {
-            let y_aralığı =
-                self.görünür_ölçek_aralığı(&seri_düzeni.ölçek, x_aralığı, görünür_y);
-            for (indeks, nokta) in seri_düzeni.noktalar.iter().enumerate() {
-                let merkez = Nokta::yeni(
-                    self.x_konumu(x_aralığı, nokta.x, sol, genişlik),
-                    alt - self.y_konumu(&seri_düzeni.ölçek, y_aralığı, nokta.y, 0.0, yükseklik),
-                );
-                let yarıçap = nokta.boyut / 2.0;
-                let dx = merkez.x - x;
-                let dy = merkez.y - y;
-                let uzaklık_kare = dx * dx + dy * dy;
-                if uzaklık_kare > yarıçap * yarıçap {
-                    continue;
-                }
-                let alan = nokta.boyut * nokta.boyut;
-                let aday = DağılımVuruşu {
-                    seri,
-                    indeks,
-                    merkez,
-                    boyut: nokta.boyut,
-                    x: nokta.x,
-                    y: nokta.y,
-                    değer: nokta.değer,
-                    etiket: nokta.etiket.clone(),
-                };
-                if sonuç
-                    .as_ref()
-                    .is_none_or(|(önceki_alan, önceki_uzaklık, _)| {
-                        alan < *önceki_alan
-                            || ((alan - *önceki_alan).abs() <= f32::EPSILON
-                                && uzaklık_kare <= *önceki_uzaklık)
-                    })
-                {
-                    sonuç = Some((alan, uzaklık_kare, aday));
-                }
+        let dizin = self.dağılım_vuruş_dizini.borrow();
+        for kayıt in dizin
+            .as_ref()
+            .into_iter()
+            .flat_map(|dizin| dizin.adaylar(x, y))
+        {
+            let Some(nokta) = düzen
+                .seriler
+                .get(kayıt.seri)
+                .and_then(|seri| seri.noktalar.get(kayıt.indeks))
+            else {
+                continue;
+            };
+            let yarıçap = kayıt.boyut / 2.0 + 0.5;
+            let dx = kayıt.merkez.x - x;
+            let dy = kayıt.merkez.y - y;
+            let uzaklık_kare = dx * dx + dy * dy;
+            if uzaklık_kare > yarıçap * yarıçap {
+                continue;
+            }
+            let alan = kayıt.boyut * kayıt.boyut;
+            let aday = DağılımVuruşu {
+                seri: kayıt.seri,
+                indeks: kayıt.indeks,
+                merkez: kayıt.merkez,
+                boyut: kayıt.boyut,
+                x: nokta.x,
+                y: nokta.y,
+                değer: nokta.değer,
+                etiket: nokta.etiket.clone(),
+            };
+            if sonuç
+                .as_ref()
+                .is_none_or(|(önceki_alan, önceki_uzaklık, _)| {
+                    alan < *önceki_alan
+                        || ((alan - *önceki_alan).abs() <= f32::EPSILON
+                            && uzaklık_kare <= *önceki_uzaklık)
+                })
+            {
+                sonuç = Some((alan, uzaklık_kare, aday));
             }
         }
         sonuç.map(|(_, _, vuruş)| vuruş)
@@ -958,6 +1106,7 @@ impl Grafik {
         let doğrulanmış = Self::yeni(seçenekler, veri)?;
         self.veri = doğrulanmış.veri;
         self.çubuk_vuruş_dizini = RefCell::new(None);
+        self.dağılım_vuruş_dizini = RefCell::new(None);
         self.seçenekler.x_aralığı = Some(aralık);
         Ok(self.etkileşim.canlı_tam_x_ayarla(aralık))
     }
@@ -3169,20 +3318,31 @@ impl Grafik {
             for seri in &düzen.seriler {
                 let seri_y_aralığı =
                     self.görünür_ölçek_aralığı(&seri.ölçek, x_aralığı, görünür_y);
+                let ortak_yarıçap = seri.noktalar.first().map(|nokta| nokta.boyut / 2.0);
+                let sabit_boyut = ortak_yarıçap.is_some_and(|yarıçap| {
+                    seri.noktalar
+                        .iter()
+                        .all(|nokta| (nokta.boyut / 2.0 - yarıçap).abs() <= f32::EPSILON)
+                });
+                let mut toplu_merkezler = Vec::new();
                 for nokta in &seri.noktalar {
-                    if nokta.x < x_aralığı.en_az
-                        || nokta.x > x_aralığı.en_çok
-                        || nokta.y < seri_y_aralığı.en_az
-                        || nokta.y > seri_y_aralığı.en_çok
-                    {
-                        continue;
-                    }
                     let merkez = Nokta::yeni(
                         self.x_konumu(x_aralığı, nokta.x, sol, genişlik),
                         alt - self.y_konumu(&seri.ölçek, seri_y_aralığı, nokta.y, 0.0, yükseklik),
                     );
                     let yarıçap = nokta.boyut / 2.0;
-                    if merkez.x - yarıçap >= sol
+                    // Kaynak bubble renderer görünür ölçeği en büyük yarıçap
+                    // kadar genişletir ve ardından plot alanına clip eder.
+                    if merkez.x + yarıçap < sol
+                        || merkez.x - yarıçap > sağ
+                        || merkez.y + yarıçap < üst
+                        || merkez.y - yarıçap > alt
+                    {
+                        continue;
+                    }
+                    if sabit_boyut {
+                        toplu_merkezler.push(merkez);
+                    } else if merkez.x - yarıçap >= sol
                         && merkez.x + yarıçap <= sağ
                         && merkez.y - yarıçap >= üst
                         && merkez.y + yarıçap <= alt
@@ -3204,6 +3364,16 @@ impl Grafik {
                             });
                         }
                     }
+                }
+                if let Some(yarıçap) = ortak_yarıçap
+                    && !toplu_merkezler.is_empty()
+                {
+                    sahne.ekle(Komut::Daireler {
+                        merkezler: toplu_merkezler,
+                        yarıçap,
+                        dolgu: seri.dolgu.clone(),
+                        kesme_sınırları: Some((Nokta::yeni(sol, üst), Nokta::yeni(sağ, alt))),
+                    });
                 }
             }
         }

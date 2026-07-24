@@ -93,6 +93,16 @@ pub enum Komut {
         çizgi: String,
         kalınlık: f32,
     },
+    /// Aynı stile ve yarıçapa sahip çok sayıda daireyi tek çizim komutunda taşır.
+    ///
+    /// uPlot'un scatter `Path2D` yaklaşımının sahne karşılığıdır: arka uçlar
+    /// her noktayı ayrı bir DOM/sahne öğesine dönüştürmek zorunda kalmaz.
+    Daireler {
+        merkezler: Vec<Nokta>,
+        yarıçap: f32,
+        dolgu: String,
+        kesme_sınırları: Option<(Nokta, Nokta)>,
+    },
     Dikdörtgen {
         konum: Nokta,
         genişlik: f32,
@@ -314,6 +324,52 @@ impl Sahne {
                         kaçış(dolgu),
                         kaçış(çizgi),
                         sayı(*kalınlık)
+                    );
+                }
+                Komut::Daireler {
+                    merkezler,
+                    yarıçap,
+                    dolgu,
+                    kesme_sınırları,
+                } => {
+                    let kırpma_kimliği = kesme_sınırları.map(|(başlangıç, bitiş)| {
+                        let kimlik = format!("uplot-daire-kirpma-{komut_indeksi}");
+                        let _ = writeln!(
+                            çıktı,
+                            "  <defs><clipPath id=\"{}\"><rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"/></clipPath></defs>",
+                            kimlik,
+                            sayı(başlangıç.x),
+                            sayı(başlangıç.y),
+                            sayı((bitiş.x - başlangıç.x).max(0.0)),
+                            sayı((bitiş.y - başlangıç.y).max(0.0)),
+                        );
+                        kimlik
+                    });
+                    let mut d = String::new();
+                    let r = sayı(*yarıçap);
+                    let çap = sayı(*yarıçap * 2.0);
+                    for merkez in merkezler {
+                        let _ = write!(
+                            d,
+                            "M{} {}a{} {} 0 1 0 {} 0a{} {} 0 1 0 -{} 0 ",
+                            sayı(merkez.x - *yarıçap),
+                            sayı(merkez.y),
+                            r,
+                            r,
+                            çap,
+                            r,
+                            r,
+                            çap,
+                        );
+                    }
+                    let _ = writeln!(
+                        çıktı,
+                        "  <path d=\"{}\" fill=\"{}\" stroke=\"none\"{} />",
+                        d.trim_end(),
+                        kaçış(dolgu),
+                        kırpma_kimliği.map_or_else(String::new, |kimlik| {
+                            format!(" clip-path=\"url(#{})\"", kaçış(&kimlik))
+                        })
                     );
                 }
                 Komut::Dikdörtgen {

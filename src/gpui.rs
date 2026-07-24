@@ -1997,6 +1997,49 @@ fn sahneyi_önbellekli_boya(
                     BorderStyle::default(),
                 ));
             }
+            Komut::Daireler {
+                merkezler,
+                yarıçap,
+                dolgu,
+                kesme_sınırları,
+            } => {
+                if let Some(yol) = yol_önbelleği.yol(komut_indeksi, || {
+                    let mut yol = PathBuilder::fill();
+                    let yarıçap = px(*yarıçap * ölçek);
+                    let yarıçaplar = point(yarıçap, yarıçap);
+                    for merkez in merkezler {
+                        let merkez = dönüştür(*merkez);
+                        let sol = point(merkez.x - yarıçap, merkez.y);
+                        let sağ = point(merkez.x + yarıçap, merkez.y);
+                        yol.move_to(sol);
+                        yol.arc_to(yarıçaplar, px(0.0), false, true, sağ);
+                        yol.arc_to(yarıçaplar, px(0.0), false, true, sol);
+                        yol.close();
+                    }
+                    yol.build().ok()
+                }) {
+                    let boya = renk_çöz(dolgu);
+                    if let Some((başlangıç, bitiş)) = kesme_sınırları {
+                        let başlangıç = dönüştür(*başlangıç);
+                        let bitiş = dönüştür(*bitiş);
+                        let sol = başlangıç.x.min(bitiş.x);
+                        let üst = başlangıç.y.min(bitiş.y);
+                        let sınırlar = Bounds::new(
+                            point(sol, üst),
+                            size(
+                                başlangıç.x.max(bitiş.x) - sol,
+                                başlangıç.y.max(bitiş.y) - üst,
+                            ),
+                        );
+                        pencere.with_content_mask(
+                            Some(ContentMask { bounds: sınırlar }),
+                            |pencere| pencere.paint_path(yol, boya),
+                        );
+                    } else {
+                        pencere.paint_path(yol, boya);
+                    }
+                }
+            }
             Komut::Dikdörtgen {
                 konum,
                 genişlik,

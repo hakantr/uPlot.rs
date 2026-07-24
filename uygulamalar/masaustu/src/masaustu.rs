@@ -82,7 +82,7 @@ enum KartKimliği {
     PixelAlign,
     Points,
     ScalesDirOri,
-    Scatter(ScatterÖrneği),
+    Scatter,
     ScrollSync,
     SineStream,
     SoftMinMax(SoftMinMaxÖrneği),
@@ -154,7 +154,7 @@ impl KartKimliği {
             Self::PixelAlign => "Pixel Align · canlı A/B",
             Self::Points => "Points · 4 yüzey",
             Self::ScalesDirOri => "Scales Direction & Orientation · 16 yüzey",
-            Self::Scatter(örnek) => örnek.başlık(),
+            Self::Scatter => "Scatter & Bubble · 2 bağımsız yüzey",
             Self::ScrollSync => "Scroll syncRect()",
             Self::SineStream => "6 series x 600 points @ 60fps",
             Self::SoftMinMax(örnek) => örnek.başlık(),
@@ -249,7 +249,9 @@ impl KartKimliği {
             Self::ScalesDirOri => {
                 "scales-dir-ori.html · 16 eşzamanlı yüzey · scale.dir, scale.ori ve axis.side"
             }
-            Self::Scatter(_) => "scatter.html · quadtree.js · mode:2 facet ve bubble vuruşu",
+            Self::Scatter => {
+                "scatter.html · 2 bağımsız mode:2 yüzey · toplu scatter yolu ve uzamsal bubble vuruşu"
+            }
             Self::ScrollSync => "scroll-sync.html · syncRect() · kaydırmada istemci/sahne eşlemesi",
             Self::SineStream => "sine-stream.html · Box–Muller yürüyüşü · requestAnimationFrame",
             Self::SoftMinMax(_) => {
@@ -377,7 +379,7 @@ impl KartKimliği {
             Self::PixelAlign => PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
             Self::Points => POINTS_KART_TANIM_ÖRNEĞİ,
             Self::ScalesDirOri => SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
-            Self::Scatter(_) => SCATTER_KART_TANIM_ÖRNEĞİ,
+            Self::Scatter => SCATTER_KART_TANIM_ÖRNEĞİ,
             Self::ScrollSync => SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
             Self::SineStream => SINE_STREAM_KART_TANIM_ÖRNEĞİ,
             Self::SoftMinMax(_) => SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
@@ -447,7 +449,7 @@ impl KartKimliği {
             Self::PixelAlign => "src/kart/pixel_align.rs",
             Self::Points => "src/kart/points.rs",
             Self::ScalesDirOri => "src/kart/scales_dir_ori.rs",
-            Self::Scatter(_) => "src/kart/scatter.rs",
+            Self::Scatter => "src/kart/scatter.rs",
             Self::ScrollSync => "src/kart/scroll_sync.rs",
             Self::SineStream => "src/kart/sine_stream.rs",
             Self::SoftMinMax(_) => "src/kart/soft_minmax.rs",
@@ -548,6 +550,7 @@ pub struct ChartListesi {
     pixel_align_grafikleri: Vec<(PixelAlignÖrneği, Entity<GpuiGrafik>)>,
     points_grafikleri: Vec<(PointsÖrneği, Entity<GpuiGrafik>)>,
     scales_dir_ori_grafikleri: Vec<(ScalesDirOriÖrneği, Entity<GpuiGrafik>)>,
+    scatter_grafikleri: Vec<(ScatterÖrneği, Entity<GpuiGrafik>)>,
     scales_dir_ori_senkronlanıyor: bool,
     scales_dir_ori_kilitli: bool,
     no_data_örneği: NoDataÖrneği,
@@ -615,6 +618,12 @@ impl ChartListesi {
                     });
                 }
                 bu.scales_dir_ori_senkronlanıyor = false;
+            } else if bu.aktif_kart == KartKimliği::Scatter {
+                for (_, grafik) in &bu.scatter_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
             } else if let Some(grafik) = &bu.grafik {
                 grafik.update(cx, |grafik, cx| {
                     grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
@@ -680,6 +689,7 @@ impl ChartListesi {
             pixel_align_grafikleri: Vec::new(),
             points_grafikleri: Vec::new(),
             scales_dir_ori_grafikleri: Vec::new(),
+            scatter_grafikleri: Vec::new(),
             scales_dir_ori_senkronlanıyor: false,
             scales_dir_ori_kilitli: false,
             no_data_örneği: NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
@@ -1033,6 +1043,38 @@ impl ChartListesi {
         cx.notify();
     }
 
+    fn scatter_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let mut yüzeyler = Vec::with_capacity(ScatterÖrneği::TÜMÜ.len());
+        for örnek in ScatterÖrneği::TÜMÜ {
+            let sonuç =
+                scatter_kartı(örnek).and_then(|(seçenekler, veri)| Grafik::yeni(seçenekler, veri));
+            let mut grafik = match sonuç {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.scatter_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                    bu.açıklama_istendi = true;
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.scatter_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
         match grafik_oluştur(
@@ -1255,6 +1297,7 @@ impl ChartListesi {
             anahtar.devre_disi_ayarla(false, cx);
         });
         self.scales_dir_ori_grafikleri.clear();
+        self.scatter_grafikleri.clear();
         if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -1321,6 +1364,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.scales_dir_ori_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::Scatter {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.scatter_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -1847,7 +1899,7 @@ fn grafik_oluştur(
         }
         KartKimliği::Points => points_kartı(PointsÖrneği::Karma),
         KartKimliği::ScalesDirOri => scales_dir_ori_kartı(ScalesDirOriÖrneği::XArtıAltYArtıSol),
-        KartKimliği::Scatter(örnek) => scatter_kartı(örnek),
+        KartKimliği::Scatter => scatter_kartı(ScatterÖrneği::Scatter),
         KartKimliği::ScrollSync => scroll_sync_kartı(),
         KartKimliği::SineStream => sine_stream_kartı(),
         KartKimliği::SoftMinMax(örnek) => soft_minmax_kartı(örnek, 12.0),
@@ -1992,8 +2044,8 @@ impl Render for ChartListesi {
                 "16 eşzamanlı yüzey · aynı 10 nokta × 2 seri · direction/orientation matrisi"
                     .to_string()
             }
-            KartKimliği::Scatter(örnek) => {
-                format!("{} nokta × 4 mode-2 facet", örnek.seri_başı_nokta())
+            KartKimliği::Scatter => {
+                "2 bağımsız yüzey · 40.000 sabit nokta + 200 alan ölçekli balon".to_string()
             }
             KartKimliği::ScrollSync => "30 nokta × 3 seri · kaydırmada syncRect".to_string(),
             KartKimliği::SineStream => "600 nokta × 6 seri · 60 FPS setData".to_string(),
@@ -2292,6 +2344,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .scales_dir_ori_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::Scatter {
+            geri_var = self
+                .scatter_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .scatter_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         }
@@ -2956,21 +3017,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::ScalesDirOri, cx);
                 })),
             )
-            .children(ScatterÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::Scatter(örnek);
+            .child({
+                let kart = KartKimliği::Scatter;
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
+                    "kart-scatter",
+                    "Scatter & Bubble · 2 yüzey",
                     "scatter",
                     aktif_kart == kart,
-                    "mode:2 · facet · değişken balon alanı",
+                    "Bağımsız mode:2 facet · toplu yol + uzamsal hover",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .child(
                 katalog_kartı(
                     "kart-scroll-sync",
@@ -3717,6 +3778,12 @@ impl Render for ChartListesi {
                                 });
                             }
                             bu.scales_dir_ori_senkronlanıyor = false;
+                        } else if bu.aktif_kart == KartKimliği::Scatter {
+                            for (_, grafik) in &bu.scatter_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.önceki_görünüm(cx);
+                                });
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
@@ -3775,6 +3842,12 @@ impl Render for ChartListesi {
                                 });
                             }
                             bu.scales_dir_ori_senkronlanıyor = false;
+                        } else if bu.aktif_kart == KartKimliği::Scatter {
+                            for (_, grafik) in &bu.scatter_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.tam_görünüm(cx);
+                                });
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.tam_görünüm(cx);
@@ -3803,6 +3876,8 @@ impl Render for ChartListesi {
                             bu.points_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::ScalesDirOri {
                             bu.scales_dir_ori_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::Scatter {
+                            bu.scatter_yüzeylerini_oluştur(cx);
                         } else {
                             bu.grafiği_yenile(100, cx);
                         }
@@ -4316,6 +4391,65 @@ impl Render for ChartListesi {
                 )
                 .child(grup("Direction Inversion", false))
                 .child(grup("Orientation Inversion", true))
+        } else if aktif_kart == KartKimliği::Scatter {
+            let yüzey = |örnek| {
+                self.scatter_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(1320.0))
+                .overflow_y_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("Resmî scatter.html iki eşzamanlı fakat bağımsız mode:2 grafik kurar. İlk yüzey 40.000 sabit noktayı seri başına toplu çizer; ikinci yüzey alan ölçekli 200 balonu ayrı veri, y/y2 ölçekleri ve uzamsal hover diziniyle gösterir."),
+                )
+                .children(ScatterÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    let açıklama = match örnek {
+                        ScatterÖrneği::Scatter => {
+                            "4 facet × 10.000 sabit 5 px nokta · live legend kapalı"
+                        }
+                        ScatterÖrneği::Bubble => {
+                            "4 facet × 50 balon · Country / Population / GDP / Income hover"
+                        }
+                    };
+                    div()
+                        .mt_2()
+                        .child(
+                            div()
+                                .text_sm()
+                                .font_weight(FontWeight::BOLD)
+                                .text_color(metin)
+                                .child(örnek.başlık()),
+                        )
+                        .child(div().text_xs().text_color(soluk).child(açıklama))
+                        .child(
+                            div()
+                                .id(SharedString::from(format!(
+                                    "{}-kaydirma",
+                                    örnek.kimlik()
+                                )))
+                                .w_full()
+                                .h(px(600.0))
+                                .overflow_x_scroll()
+                                .child(
+                                    div()
+                                        .w(px(1920.0))
+                                        .h(px(600.0))
+                                        .when_some(yüzey(örnek), |öğe, grafik| {
+                                            öğe.child(grafik)
+                                        }),
+                                ),
+                        )
+                }))
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
             let boyut = self
                 .boyut_senkron_akışı
@@ -4490,6 +4624,16 @@ impl Render for ChartListesi {
                  16 statik yüzeyin her biri aynı 10 X konumu ve iki seriyi O(S×N) çizer; timer \
                  yoktur. Cursor yalnız hafif etkileşim katmanlarını taşır; ölçek değişiminde \
                  senkron grubun 16 ana yüzeyi birlikte yeniden boyanır.",
+            ),
+            KartKimliği::Scatter => Some(
+                "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \
+                 yaklaşımını aynı kaynak bağlamında karşılaştırır. API: mode:2 facet serileri \
+                 bağımsız X/Y dizileri taşır; bubble size/label facet'leri ve Region A için sağ \
+                 y2 ölçeği ekler. İki yüzey veri, cursor ve ölçek bakımından bağımsızdır. İzleme: \
+                 korelasyon kümeleri, kapasite/gelir ve nüfus yoğunluğu gibi çok boyutlu \
+                 telemetri için uygundur. Maliyet: 40.000 scatter noktası seri başına tek toplu \
+                 çizim komutuna iner; bubble hover yalnız ölçek veya boyut değişince yenilenen \
+                 uzamsal dizinin aday hücresini sorgular ve ana sahneyi yeniden boyamaz.",
             ),
             _ => None,
         };

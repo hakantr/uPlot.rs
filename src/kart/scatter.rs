@@ -52,10 +52,10 @@ pub fn scatter_kartı(
         ]
     } else {
         [
-            ("Region A", "red", "#ff00004d"),
-            ("Region B", "green", "#00ff004d"),
-            ("Region C", "blue", "#0000ff4d"),
-            ("Region E", "orange", "#ff80004d"),
+            ("Region A", "red", "rgba(255,0,0,0.3)"),
+            ("Region B", "green", "rgba(0,255,0,0.3)"),
+            ("Region C", "blue", "rgba(0,0,255,0.3)"),
+            ("Region E", "orange", "rgba(255,128,0,0.3)"),
         ]
     };
     let mut düzen = DağılımDüzeni::default().vuruş_etkin(örnek == ScatterÖrneği::Bubble);
@@ -162,6 +162,11 @@ pub fn scatter_kartı(
         } else {
             ""
         })
+        .y_eksen_etiketi(if örnek == ScatterÖrneği::Bubble {
+            "Income 1"
+        } else {
+            ""
+        })
         .x_aralığı(x_aralığı)
         .y_aralığı(y_aralığı)
         .dağılım_düzeni(düzen)
@@ -229,13 +234,27 @@ mod testler {
                         .iter()
                         .all(|seri| seri.noktalar.len() == örnek.seri_başı_nokta())
             }));
-            let daire_sayısı = Grafik::yeni(seçenekler, veri)?
+            let çizilen_nokta_sayısı = Grafik::yeni(seçenekler, veri)?
                 .çiz()
                 .komutlar()
                 .iter()
-                .filter(|komut| matches!(komut, Komut::Daire { .. } | Komut::Alan { .. }))
-                .count();
-            assert_eq!(daire_sayısı, örnek.seri_başı_nokta() * 4);
+                .map(|komut| match komut {
+                    Komut::Daire { .. } | Komut::Alan { .. } => 1,
+                    Komut::Daireler { merkezler, .. } => merkezler.len(),
+                    _ => 0,
+                })
+                .sum::<usize>();
+            assert_eq!(çizilen_nokta_sayısı, örnek.seri_başı_nokta() * 4);
+            if örnek == ScatterÖrneği::Scatter {
+                let toplu_komut_sayısı =
+                    Grafik::yeni(scatter_kartı(örnek)?.0, scatter_kartı(örnek)?.1)?
+                        .çiz()
+                        .komutlar()
+                        .iter()
+                        .filter(|komut| matches!(komut, Komut::Daireler { .. }))
+                        .count();
+                assert_eq!(toplu_komut_sayısı, 4);
+            }
         }
         Ok(())
     }
@@ -250,6 +269,7 @@ mod testler {
             .iter()
             .find_map(|komut| match komut {
                 Komut::Daire { merkez, .. } => Some(*merkez),
+                Komut::Daireler { merkezler, .. } => merkezler.first().copied(),
                 _ => None,
             });
         let Some(merkez) = merkez else {

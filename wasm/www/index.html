@@ -240,6 +240,24 @@
                                      margin: -24px 8px 6px; padding: 3px 6px;
                                      border-radius: 4px; background: rgba(255,255,255,.88);
                                      justify-content: flex-start; }
+    #chart.scatter-yüzeyi { display: block; min-width: 0; overflow-y: auto;
+                            overflow-x: hidden; padding: 8px; box-sizing: border-box; }
+    .scatter-yığın { width: 100%; min-width: 0; display: grid; gap: 12px; }
+    .scatter-grafik { position: relative; width: 100%; min-width: 0;
+                      border: 1px solid #dbe3ee; border-radius: 8px;
+                      background: #fff; overflow-x: auto; overflow-y: hidden; }
+    .scatter-grafik > h3 { position: sticky; z-index: 4; left: 8px; width: max-content;
+                           margin: 7px 8px 2px; color: #111827; font-size: 13px; }
+    .scatter-grafik > p { position: sticky; z-index: 4; left: 8px; width: max-content;
+                          margin: 0 8px 4px; color: #6b7280; font-size: 10px; }
+    .scatter-grafik svg { display: block; width: auto; height: auto; max-width: none; }
+    .scatter-grafik .lejant { position: sticky; z-index: 4; left: 8px; bottom: 6px;
+                              width: max-content; max-width: calc(100% - 16px);
+                              margin: -28px 8px 6px; padding: 4px 7px; border-radius: 4px;
+                              background: rgba(255,255,255,.92); justify-content: flex-start; }
+    .scatter-grafik .imlec-bilgi-kutusu { position: sticky; z-index: 5; left: 8px;
+                                          bottom: 32px; width: max-content;
+                                          margin: -26px 8px 4px; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -1260,40 +1278,49 @@
       };
 
     const scatterYüzeyleri = [
-      ["scatter-points", "Scatter Plot", "10.000 × 4 sabit boyutlu nokta"],
-      ["scatter-bubble", "Bubble Plot", "50 × 4 alan ölçekli, etiketli balon"],
+      {
+        kimlik: "scatter-points",
+        başlık: "Scatter Plot",
+        açıklama: "10.000 × 4 sabit 5 px nokta · hover/legend live kapalı",
+        bubble: false,
+        seriler: [["Value","red"],["Value","green"],["Value","blue"],["Value","magenta"]],
+      },
+      {
+        kimlik: "scatter-bubble",
+        başlık: "Bubble Plot",
+        açıklama: "50 × 4 alan ölçekli balon · bağımsız veri ve ölçek görünümü",
+        bubble: true,
+        seriler: [["Region A","red"],["Region B","green"],["Region C","blue"],["Region E","orange"]],
+      },
     ];
     document.querySelector('[data-kart="scales-dir-ori"]')?.insertAdjacentHTML(
       "afterend",
-      scatterYüzeyleri.map(([kimlik, başlık, durum]) => `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>${kimlik}</small><div class="durum">${durum}</div>
-        </article>`).join("")
+      `<article class="kart" data-kart="scatter" aria-current="false" tabindex="0">
+        <strong>Scatter & Bubble · 2 yüzey</strong><small>scatter</small>
+        <div class="durum">Aynı kaynak sayfası · bağımsız mode:2 facet grafikleri</div>
+      </article>`
     );
-    for (const [kimlik, başlık] of scatterYüzeyleri) {
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/scatter.html">scatter.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/quadtree.js">quadtree.js</a>
-          <br>Resmî mode-2 facet sayıları, 0…500 dağılımı, dört bölge ve balon alanı ölçeklemesi aynı parametrelerle üretilir.
-          <br>Örtüşmede en küçük, eşit alanda merkeze en yakın balon seçimi Rust çekirdeğindedir.`,
-        tanım: () => scatter_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/scatter.rs",
-        seriler: kimlik === "scatter-bubble" ? [
-          {etiket:"Region A",renk:"red"},{etiket:"Region B",renk:"green"},
-          {etiket:"Region C",renk:"blue"},{etiket:"Region E",renk:"orange"},
-        ] : [
-          {etiket:"Value",renk:"red"},{etiket:"Value",renk:"green"},
-          {etiket:"Value",renk:"blue"},{etiket:"Value",renk:"magenta"},
-        ],
-        yardım: kimlik === "scatter-bubble" ? "Balon üzerine gel: Country / Population / GDP / Income" : "40.000 kaynak noktası",
-        değişkenNokta: false,
-        dağılım: true,
-        bubble: kimlik === "scatter-bubble",
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
-    document.querySelector('[data-kart="scatter-bubble"]')?.insertAdjacentHTML(
+    kartlar.scatter = {
+      başlık: "Scatter & Bubble · 2 bağımsız yüzey",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/scatter.html">scatter.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/quadtree.js">quadtree.js</a>
+        <br>İki grafik aynı kaynak sayfasında birlikte görünür fakat veri, cursor ve ölçek durumları bağımsızdır.
+        <br>Scatter seri başına tek toplu yol; bubble hover ölçek/boyut değişene kadar korunan bbox uzamsal dizini kullanır.`,
+      tanım: () => scatter_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/scatter.rs",
+      seriler: [],
+      yardım: "Her yüzey bağımsızdır · Shift+wheel: X · Ctrl+wheel: Y · balonda Country / Population / GDP / Income",
+      değişkenNokta: false,
+      dağılım: true,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Sabit boyutlu yoğun scatter ile nüfusa göre alan ölçekli bubble yaklaşımını aynı kaynak bağlamında karşılaştırır.",
+        api: "mode:2 facet verisi seri başına bağımsız X/Y sütunları taşır; bubble ayrıca size ve label facet'leri ile Region A için sağ y2 ölçeğini kullanır.",
+        izleme: "Korelasyon kümeleri, kapasite/gelir karşılaştırmaları ve üçüncü büyüklüğü balon alanıyla anlatan telemetri panelleri için uygundur.",
+        maliyet: "40.000 scatter noktası dört toplu path komutuna iner. Bubble hover ana sahneyi boyamaz ve yalnız uzamsal dizinin aday hücresini sorgular.",
+      },
+    };
+    document.querySelector('[data-kart="scatter"]')?.insertAdjacentHTML(
       "afterend",
       `<article class="kart" data-kart="scroll-sync" aria-current="false" tabindex="0">
         <strong>Scroll syncRect()</strong><small>scroll-sync</small>
@@ -2557,6 +2584,8 @@
     let pixelAlignOturumları = [];
     let pointsOturumları = [];
     let scalesDirOriOturumları = [];
+    let scatterOturumları = [];
+    let scatterEtkinİndeks = 0;
     let scalesDirOriİmleci = null;
     let scalesDirOriÇizimKaresi = null;
     let syncCursorKöprüsü = null;
@@ -2752,6 +2781,14 @@
           || !scalesDirOriOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !scalesDirOriOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "scatter") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !scatterOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !scatterOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -4394,6 +4431,59 @@
       kontrolleriGüncelle();
     }
 
+    function scatterYüzeyiniÇiz(indeks) {
+      const tanım = scatterYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-scatter-index="${indeks}"]`);
+      const yüzeyOturumu = scatterOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const öncekiKaydırma = yüzey.scrollLeft;
+      yüzey.innerHTML = `
+        <h3>${tanım.başlık}</h3>
+        <p>${tanım.açıklama}</p>
+        ${yüzeyOturumu.svg(1920, 600)}
+        <div class="lejant">
+          ${tanım.bubble
+            ? `<span>Country: <b data-scatter-country>&lt;COUNTRY&gt;</b></span>
+               <span>Population: <b data-scatter-population>&lt;POPULATION&gt;</b></span>
+               <span>GDP: <b data-scatter-gdp>&lt;GDP&gt;</b></span>
+               <span>Income: <b data-scatter-income>&lt;INCOME&gt;</b></span>`
+            : `<span>4 facet × 10.000 nokta · live legend kapalı</span>`}
+        </div>
+        ${tanım.bubble ? `<div class="imlec-bilgi-kutusu" hidden></div>` : ""}`;
+      yüzey.scrollLeft = öncekiKaydırma;
+      const svg = yüzey.querySelector("svg");
+      if (!svg) return;
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      svg.dataset.etkileşim = "independent-mode2";
+      svg.insertAdjacentHTML("beforeend", `
+        <g id="etkileşim" pointer-events="none">
+          <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+          <line id="imleç-x" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
+          <line id="imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
+          ${tanım.bubble
+            ? tanım.seriler.map(([, renk], seri) =>
+                `<circle id="imleç-nokta-${seri}" visibility="hidden" r="2.5"
+                  fill="${renk}" fill-opacity=".45"/>`).join("")
+            : ""}
+        </g>`);
+    }
+
+    function scatterÇiz() {
+      if (!chart.classList.contains("scatter-yüzeyi")
+        || chart.querySelectorAll(".scatter-grafik").length !== scatterYüzeyleri.length) {
+        chart.className = "scatter-yüzeyi";
+        chart.innerHTML = `<div class="scatter-yığın">
+          ${scatterYüzeyleri.map((_, indeks) =>
+            `<article class="scatter-grafik" data-scatter-index="${indeks}"></article>`
+          ).join("")}
+        </div>`;
+      }
+      scatterYüzeyleri.forEach((_, indeks) => scatterYüzeyiniÇiz(indeks));
+      oturum = scatterOturumları[scatterEtkinİndeks] ?? scatterOturumları[0] ?? null;
+      kontrolleriGüncelle();
+    }
+
     function çiz() {
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
@@ -4427,6 +4517,10 @@
         scalesDirOriÇiz();
         return;
       }
+      if (aktifKart === "scatter") {
+        scatterÇiz();
+        return;
+      }
       if (!oturum) return;
       const öncekiMultiBarsKartı = chart.dataset.cizilenKart;
       const öncekiMultiBarsKaydırma = chart.querySelector(".multi-bars-kaydırma");
@@ -4442,6 +4536,7 @@
       chart.classList.remove("pixel-align-yüzeyi");
       chart.classList.remove("points-yüzeyi");
       chart.classList.remove("scales-dir-ori-yüzeyi");
+      chart.classList.remove("scatter-yüzeyi");
       chart.classList.toggle("nice-scale-yüzeyi", aktifKart === "nice-scale");
       chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
       const sayı = Number(nokta.value);
@@ -4695,8 +4790,12 @@
       taşımaİmleciniGüncelle();
     }
 
-    function yüzeyiEşitle() {
-      const svg = chart.querySelector("svg");
+    function yüzeyiEşitle(hedefSvg = null) {
+      const doğrudanSvg = typeof SVGSVGElement !== "undefined"
+        && hedefSvg instanceof SVGSVGElement ? hedefSvg : null;
+      const svg = doğrudanSvg ?? (aktifKart === "scatter"
+        ? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"] svg`)
+        : chart.querySelector("svg"));
       if (!svg || !oturum) return false;
       const rect = svg.getBoundingClientRect();
       return oturum.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
@@ -4715,12 +4814,16 @@
     }
 
     function svgKonumu(olay) {
-      const svg = chart.querySelector("svg");
+      const scatterYüzeyi = aktifKart === "scatter"
+        ? olay.target?.closest?.(".scatter-grafik")
+          ?? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"]`)
+        : null;
+      const svg = scatterYüzeyi?.querySelector("svg") ?? chart.querySelector("svg");
       if (!svg) return { x: NaN, y: NaN, svg: null, view: { width: 0, height: 0 } };
       const view = svg.viewBox.baseVal;
       let konum = oturum?.istemci_konumu(olay.clientX, olay.clientY, view.width, view.height) ?? [];
       if (konum.length !== 2) {
-        yüzeyiEşitle();
+        yüzeyiEşitle(svg);
         konum = oturum?.istemci_konumu(olay.clientX, olay.clientY, view.width, view.height) ?? [];
       }
       return {
@@ -4847,12 +4950,20 @@
         return;
       }
       if (kartlar[aktifKart].dağılım) {
-        const noktalar = kartlar[aktifKart].seriler.map((_, indeks) =>
+        const scatterTanımı = aktifKart === "scatter"
+          ? scatterYüzeyleri[scatterEtkinİndeks]
+          : null;
+        const seriler = scatterTanımı
+          ? scatterTanımı.seriler.map(([etiket, renk]) => ({ etiket, renk }))
+          : kartlar[aktifKart].seriler;
+        const kapsam = scatterTanımı ? svg.closest(".scatter-grafik") : chart;
+        const noktalar = seriler.map((_, indeks) =>
           svg.querySelector(`#imleç-nokta-${indeks}`)
         );
         noktalar.forEach(nokta => nokta?.setAttribute("visibility", "hidden"));
-        const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
-        if (!kartlar[aktifKart].bubble) {
+        const bilgiKutusu = kapsam?.querySelector(".imlec-bilgi-kutusu")
+          ?? chart.querySelector("#imlec-bilgi-kutusu");
+        if (!(scatterTanımı?.bubble ?? kartlar[aktifKart].bubble)) {
           if (bilgiKutusu) bilgiKutusu.hidden = true;
           return;
         }
@@ -4865,16 +4976,18 @@
         const nokta = noktalar[seri];
         nokta?.setAttribute("cx", merkezX); nokta?.setAttribute("cy", merkezY);
         nokta?.setAttribute("r", boyut / 2);
-        nokta?.setAttribute("fill", kartlar[aktifKart].seriler[seri]?.renk ?? "#000");
+        nokta?.setAttribute("fill", seriler[seri]?.renk ?? "#000");
         nokta?.setAttribute("fill-opacity", "0.45");
         nokta?.setAttribute("visibility", "visible");
         const ülke = oturum?.dagilim_vurus_etiketi(view.width, view.height, hamX, hamY) ?? "";
-        const xHedefi = chart.querySelector("#x-değeri");
-        if (xHedefi) xHedefi.textContent = `$${veriX}`;
-        kartlar[aktifKart].seriler.forEach((_, indeks) => {
-          const hedef = chart.querySelector(`#seri-değeri-${indeks}`);
-          if (hedef) hedef.textContent = indeks === seri ? `${ülke} · ${nüfus} · $${veriY}` : "--";
-        });
+        const ülkeHedefi = kapsam?.querySelector("[data-scatter-country]");
+        const nüfusHedefi = kapsam?.querySelector("[data-scatter-population]");
+        const gdpHedefi = kapsam?.querySelector("[data-scatter-gdp]");
+        const gelirHedefi = kapsam?.querySelector("[data-scatter-income]");
+        if (ülkeHedefi) ülkeHedefi.textContent = ülke;
+        if (nüfusHedefi) nüfusHedefi.textContent = String(nüfus);
+        if (gdpHedefi) gdpHedefi.textContent = `$${veriX}`;
+        if (gelirHedefi) gelirHedefi.textContent = `$${veriY}`;
         if (bilgiKutusu) {
           bilgiKutusu.textContent = `Country: ${ülke} · Population: ${nüfus} · GDP: $${veriX} · Income: $${veriY}`;
           bilgiKutusu.hidden = false;
@@ -5155,6 +5268,21 @@
       const olay = bekleyenPointerOlayı;
       bekleyenPointerOlayı = null;
       if (olay) pointerHareketiniİşle(olay);
+    }
+
+    function scatterOturumunuSeç(olay) {
+      if (aktifKart !== "scatter") return;
+      const yüzey = olay.target?.closest?.(".scatter-grafik");
+      const indeks = Number(yüzey?.dataset.scatterIndex);
+      if (Number.isInteger(indeks) && scatterOturumları[indeks]) {
+        scatterEtkinİndeks = indeks;
+        oturum = scatterOturumları[indeks];
+        const svg = yüzey.querySelector("svg");
+        if (svg) yüzeyiEşitle(svg);
+      }
+    }
+    for (const olayTürü of ["pointerdown", "pointermove", "pointerup", "wheel", "dblclick", "scroll"]) {
+      chart.addEventListener(olayTürü, scatterOturumunuSeç, { capture: true, passive: true });
     }
 
     chart.addEventListener("pointermove", olay => {
@@ -5447,6 +5575,9 @@
         scalesDirOriOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         scalesDirOriÇiziminiPlanla();
         kontrolleriGüncelle();
+      } else if (aktifKart === "scatter") {
+        scatterOturumları.forEach(yüzey => yüzey.onceki_gorunum());
+        scatterÇiz();
       } else if (oturum?.onceki_gorunum()) çiz();
     });
     tamGörünüm.addEventListener("click", () => {
@@ -5484,6 +5615,9 @@
         scalesDirOriOturumları.forEach(yüzey => yüzey.tam_gorunum());
         scalesDirOriÇiziminiPlanla();
         kontrolleriGüncelle();
+      } else if (aktifKart === "scatter") {
+        scatterOturumları.forEach(yüzey => yüzey.tam_gorunum());
+        scatterÇiz();
       } else if (oturum?.tam_gorunum()) çiz();
     });
     tekerlekEtkileşimi.addEventListener("change", () => {
@@ -5514,6 +5648,10 @@
         );
       } else if (aktifKart === "scales-dir-ori") {
         scalesDirOriOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "scatter") {
+        scatterOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "timeseries-discrete") {
@@ -5620,6 +5758,10 @@
         if (kimlik !== "scales-dir-ori" && kimlik.startsWith("scales-dir-ori-")) {
           kimlik = "scales-dir-ori";
         }
+        if (kimlik !== "scatter" && kimlik.startsWith("scatter-")) {
+          scatterEtkinİndeks = kimlik === "scatter-bubble" ? 1 : 0;
+          kimlik = "scatter";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -5675,6 +5817,8 @@
         pointsOturumları = [];
         scalesDirOriOturumları.forEach(yüzey => yüzey.free());
         scalesDirOriOturumları = [];
+        scatterOturumları.forEach(yüzey => yüzey.free());
+        scatterOturumları = [];
         scalesDirOriİmleci = null;
         if (scalesDirOriÇizimKaresi !== null) {
           cancelAnimationFrame(scalesDirOriÇizimKaresi);
@@ -5859,6 +6003,16 @@
             yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
             return yüzeyOturumu;
           });
+          çiz();
+          return;
+        }
+        if (kimlik === "scatter") {
+          scatterOturumları = scatterYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = scatterOturumları[scatterEtkinİndeks] ?? scatterOturumları[0] ?? null;
           çiz();
           return;
         }
