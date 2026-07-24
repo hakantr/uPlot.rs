@@ -1,0 +1,23 @@
+id = "zoom-variations"
+kaynak = "../uPlot/demos/zoom-variations.html"
+fixture = "src/secenek.rs#ZoomSürüklemeKipi"
+kart = "zoom-wheel"
+durum = "mevcut_zoom_yüzeyinde_tek_kip_dist_kontrolu"
+veri_politikasi = "aynı_üreteç_ve_parametreler_sabit_kanıt_tohumu"
+kipler = [
+  "YalnızX",
+  "YalnızY",
+  "Uyarlanabilir",
+  "Omni",
+  "UyarlanabilirOmni",
+]
+kaynak_uni = ["uygulanamaz", "uygulanamaz", "Infinity", "verilmedi", "50"]
+en_az_surukleme_varyantlari_px = [0, 10]
+beklenen_varyasyon_sayisi = 10
+ayri_katalog_karti_sayisi = 0
+yeniden_kullanilabilir_opsiyon = "ZoomRangerSeçenekleri::zoom_varyasyonu"
+çekirdek_testi = "src/kart/zoom_wheel.rs#zoom_variations_beş_kip_ve_dist_on_varyantını_ortak_seçenekle_korur"
+örnek = "examples/zoom_wheel.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html#zoom-variation"
+web_kontrolu = "kip seçimi + min dist=10 anahtarı"

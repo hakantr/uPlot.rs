@@ -1095,6 +1095,33 @@ impl KartOturumu {
         })
     }
 
+    pub fn zoom_varyasyon_ekseni(
+        &self,
+        kip_indeksi: usize,
+        dist_on: bool,
+        x_px: f64,
+        y_px: f64,
+    ) -> u8 {
+        use uplot_rs::ZoomRangerSürüklemeEkseni::{X, XY, Y, Yok};
+        let Some(kip) = uplot_rs::ZoomSürüklemeKipi::TÜMÜ.get(kip_indeksi).copied() else {
+            return 0;
+        };
+        self.grafik.zoom_ranger_durumu().map_or(0, |mut durum| {
+            durum.sürükleme_ayarlarını_ayarla(
+                uplot_rs::ZoomRangerSeçenekleri::zoom_varyasyonu(
+                    kip,
+                    if dist_on { 10.0 } else { 0.0 },
+                ),
+            );
+            match durum.uyarlanabilir_sürükleme_ekseni(x_px, y_px) {
+                Yok => 0,
+                X => 1,
+                Y => 2,
+                XY => 3,
+            }
+        })
+    }
+
     pub fn geri_var(&self) -> bool {
         self.grafik.geri_var()
     }
@@ -2393,6 +2420,25 @@ mod testler {
         assert!(oturum.zoom_ranger_ust(0.8));
         assert_eq!(oturum.zoom_ranger_surukleme_ekseni(18.0, 15.0), 3);
         assert!(zoom_ranger_xy_kanit_ornegi().contains("alt_tutamağı_ayarla"));
+        let varyasyonlar: Vec<_> = (0..5)
+            .flat_map(|kip| {
+                [false, true].map(|dist| {
+                    (
+                        oturum.zoom_varyasyon_ekseni(kip, dist, 30.0, 20.0),
+                        oturum.zoom_varyasyon_ekseni(kip, dist, 3.0, 4.0),
+                    )
+                })
+            })
+            .collect();
+        assert_eq!(varyasyonlar.len(), 10);
+        assert!(varyasyonlar.iter().step_by(2).all(|(_, küçük)| *küçük != 0));
+        assert!(
+            varyasyonlar
+                .iter()
+                .skip(1)
+                .step_by(2)
+                .all(|(_, küçük)| *küçük == 0)
+        );
     }
 
     #[test]

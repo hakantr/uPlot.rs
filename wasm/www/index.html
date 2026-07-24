@@ -215,6 +215,17 @@
         <button data-ranger="right">sağ grip</button>
         <button data-ranger="bottom">alt grip</button>
         <button data-ranger="top">üst grip</button>
+        <label>drag:
+          <select id="zoom-variation">
+            <option value="0">X only</option>
+            <option value="1">Y only</option>
+            <option value="2">adaptive · uni=∞</option>
+            <option value="3">omni XY</option>
+            <option value="4">adaptive + omni · uni=50</option>
+          </select>
+        </label>
+        <label><input id="zoom-variation-dist" type="checkbox"> min dist=10</label>
+        <output id="zoom-variation-proof">X</output>
       </article>
       <article class="kart" data-kart="zoom-touch" aria-current="false" tabindex="0">
         <strong>Pinch Zoom &amp; Pan</strong>
@@ -621,10 +632,12 @@
           · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-fetch.html">zoom-fetch.html</a>
           · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-ranger-grips.html">zoom-ranger-grips.html</a>
           · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-ranger-xy.html">zoom-ranger-xy.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-variations.html">zoom-variations.html</a>
           <br>Kaynakla aynı 7 X noktası, One/Two serileri ve resmî 0.75 yakınlaştırma katsayısı.
           <br>Fetch zoom ayrı kart üretmeden seçim aralığı → veri isteği → atomik veri/görünüm güncellemesi olarak aynı doğrulama yüzeyinde kanıtlanır.
           <br>Overview seçim penceresi, tüm pencere taşıma ve kırmızı/mavi grip boyutlandırması çift yönlü senkronlanır.
           <br>X/Y selection, dist=10 ve uni=10 adaptif sürükleme ile aynı overview üzerinden çift yönlü senkronlanır.
+          <br>Beş drag kipi ve her birinin min dist=10 varyantı aynı kontrol üzerinden kanıtlanır; on tekrar kart üretilmez.
           <br>Orta tuş taşımasının yanında ortak profilde boşluk + sol sürükleme, touch ve görünüm geçmişi de sunulur.`,
         tanım: () => zoom_wheel_kart_tanim_ornegi(),
         tanımYolu: "src/kart/zoom_wheel.rs",
@@ -4021,6 +4034,16 @@
           çiz();
         });
       });
+      function zoomVaryasyonKanıtınıGüncelle() {
+        if (aktifKart !== "zoom-wheel" || !oturum) return;
+        const kip = Number(document.querySelector("#zoom-variation")?.value ?? 0);
+        const dist = document.querySelector("#zoom-variation-dist")?.checked ?? false;
+        const kod = oturum.zoom_varyasyon_ekseni(kip, dist, 30, 20);
+        const çıktı = document.querySelector("#zoom-variation-proof");
+        if (çıktı) çıktı.textContent = ["Yok", "X", "Y", "XY"][kod] ?? "Yok";
+      }
+      document.querySelector("#zoom-variation")?.addEventListener("change", zoomVaryasyonKanıtınıGüncelle);
+      document.querySelector("#zoom-variation-dist")?.addEventListener("change", zoomVaryasyonKanıtınıGüncelle);
       kartıSeç("resize");
       nokta.addEventListener("input", () => {
         if (aktifKart === "resize") kartıSeç("resize");

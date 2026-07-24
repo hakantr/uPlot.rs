@@ -100,6 +100,10 @@ impl ZoomRangerDurumu {
         self.tam_y
     }
 
+    pub fn sürükleme_ayarlarını_ayarla(&mut self, ayarlar: crate::ZoomRangerSeçenekleri) {
+        self.ayarlar = ayarlar;
+    }
+
     pub fn seçim_oranları(self) -> (f64, f64) {
         let genişlik = self.tam_x.en_çok - self.tam_x.en_az;
         (
@@ -202,11 +206,14 @@ impl ZoomRangerDurumu {
         }
         let x = yatay_fark_px.abs();
         let y = dikey_fark_px.abs();
-        if x.hypot(y) < self.ayarlar.en_az_sürükleme_px {
+        if x.max(y) <= f64::EPSILON || x.hypot(y) < self.ayarlar.en_az_sürükleme_px {
             return ZoomRangerSürüklemeEkseni::Yok;
         }
-        if self.ayarlar.x && self.ayarlar.y && (x - y).abs() < self.ayarlar.tek_eksen_eşiği_px {
-            return ZoomRangerSürüklemeEkseni::XY;
+        if self.ayarlar.x && self.ayarlar.y {
+            let uni = self.ayarlar.tek_eksen_eşiği_px;
+            if uni == 0.0 || (uni.is_finite() && (x - y).abs() < uni) {
+                return ZoomRangerSürüklemeEkseni::XY;
+            }
         }
         if self.ayarlar.x && (!self.ayarlar.y || x >= y) {
             ZoomRangerSürüklemeEkseni::X

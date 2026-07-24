@@ -265,4 +265,50 @@ mod testler {
         );
         Ok(())
     }
+
+    #[test]
+    fn zoom_variations_beş_kip_ve_dist_on_varyantını_ortak_seçenekle_korur()
+    -> Result<(), UplotHatası> {
+        use crate::{ZoomRangerSeçenekleri, ZoomRangerSürüklemeEkseni, ZoomSürüklemeKipi};
+
+        let grafik = zoom_ranger_xy_grafiği()?;
+        let beklenen = [
+            (ZoomRangerSürüklemeEkseni::X, ZoomRangerSürüklemeEkseni::X),
+            (ZoomRangerSürüklemeEkseni::Y, ZoomRangerSürüklemeEkseni::Y),
+            (ZoomRangerSürüklemeEkseni::X, ZoomRangerSürüklemeEkseni::Y),
+            (ZoomRangerSürüklemeEkseni::XY, ZoomRangerSürüklemeEkseni::XY),
+            (ZoomRangerSürüklemeEkseni::XY, ZoomRangerSürüklemeEkseni::Y),
+        ];
+        let mut kanıt_sayısı = 0;
+        for (kip, (yakın_açı, belirgin_y)) in ZoomSürüklemeKipi::TÜMÜ.into_iter().zip(beklenen)
+        {
+            for en_az in [0.0, 10.0] {
+                let mut ranger = grafik.zoom_ranger_durumu()?;
+                ranger.sürükleme_ayarlarını_ayarla(ZoomRangerSeçenekleri::zoom_varyasyonu(
+                    kip, en_az,
+                ));
+                assert_eq!(
+                    ranger.uyarlanabilir_sürükleme_ekseni(30.0, 20.0),
+                    yakın_açı,
+                    "{} · dist={en_az}",
+                    kip.başlık()
+                );
+                assert_eq!(
+                    ranger.uyarlanabilir_sürükleme_ekseni(5.0, 60.0),
+                    belirgin_y,
+                    "{} · dist={en_az}",
+                    kip.başlık()
+                );
+                if en_az == 10.0 {
+                    assert_eq!(
+                        ranger.uyarlanabilir_sürükleme_ekseni(3.0, 4.0),
+                        ZoomRangerSürüklemeEkseni::Yok
+                    );
+                }
+                kanıt_sayısı += 1;
+            }
+        }
+        assert_eq!(kanıt_sayısı, 10);
+        Ok(())
+    }
 }

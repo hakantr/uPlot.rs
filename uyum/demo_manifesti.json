@@ -3960,6 +3960,68 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "devralındı_kanıtlı"
       }
+    },
+    {
+      "id": "zoom-variations",
+      "başlık": "Zoom Variations",
+      "kaynak": "demos/zoom-variations.html",
+      "kaynak_sha256": "f48090f461832dec31788f26cd92413784d2ff02393ee0bb7ad82c450eda5f50",
+      "fixture": "src/secenek.rs#ZoomSürüklemeKipi",
+      "örnek": "examples/zoom_wheel.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/zoom-variations.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/zoom_wheel.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin",
+          "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin",
+          "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "devralındı",
+          "tekerlek-yakinlastirma": "devralındı",
+          "uyarlanabilir-hassas-tekerlek": "devralındı",
+          "dokunma-yakinlastirma-tasima": "devralındı",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "devralındı",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {
+          "kart-bilgi-ve-tanim-yerlesimi": "On kaynak varyasyonu ayrı kartlar yerine mevcut zoom-wheel overview yüzeyindeki tek açılıp kapanabilir kip/dist kontrolünde kanıtlanır.",
+          "kosullu-bos-ve-dolu-noktalar": "Kaynak veri null içermez."
+        }
+      },
+      "sahip_faz": 4,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "no-ten-duplicate-catalog-cards",
+        "reusable-zoom-drag-option",
+        "x-only",
+        "y-only",
+        "adaptive-uni-infinity",
+        "omni-xy",
+        "adaptive-omni-uni-50",
+        "all-five-with-default-distance",
+        "all-five-with-min-distance-10",
+        "interactive-existing-wasm-proof",
+        "gpui-wasm-parity"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "tam_kanıtlı"
+      }
     }
   ]
 }

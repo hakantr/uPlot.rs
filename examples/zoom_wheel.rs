@@ -1,6 +1,9 @@
 use std::error::Error;
 use std::path::PathBuf;
-use uplot_rs::{Grafik, ZoomFetchAkışı, zoom_ranger_xy_grafiği, zoom_wheel_kartı};
+use uplot_rs::{
+    Grafik, ZoomFetchAkışı, ZoomRangerSeçenekleri, ZoomSürüklemeKipi, zoom_ranger_xy_grafiği,
+    zoom_wheel_kartı,
+};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let çıktı = std::env::args()
@@ -28,8 +31,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let istek = fetch.aralık_isteği(0.25, 0.75)?;
     fetch.kaynak_yanıtını_uygula(istek)?;
     fetch.tam_aralığı_yükle()?;
+    let varyasyon_sayısı = ZoomSürüklemeKipi::TÜMÜ
+        .into_iter()
+        .flat_map(|kip| {
+            [0.0, 10.0].map(move |dist| ZoomRangerSeçenekleri::zoom_varyasyonu(kip, dist))
+        })
+        .count();
     println!(
-        "Wheel Zoom & Drag ve XY ranger kanıtı üretildi: {}, {}",
+        "Wheel Zoom & Drag, XY ranger ve {varyasyon_sayısı} drag varyasyonu kanıtlandı: {}, {}",
         çıktı.display(),
         xy_çıktı.display()
     );

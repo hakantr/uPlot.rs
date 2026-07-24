@@ -745,6 +745,39 @@ pub struct ZoomRangerSeçenekleri {
     pub tek_eksen_eşiği_px: f64,
 }
 
+/// `zoom-variations` kaynağındaki beş `cursor.drag` eksen/`uni` kipi.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ZoomSürüklemeKipi {
+    YalnızX,
+    YalnızY,
+    /// `uni: Infinity`: her hareket baskın tek eksene kilitlenir.
+    Uyarlanabilir,
+    /// `uni` verilmez: X ve Y birlikte seçilir.
+    Omni,
+    /// `uni: 50`: yakın açılarda XY, belirgin yönde baskın tek eksen.
+    UyarlanabilirOmni,
+}
+
+impl ZoomSürüklemeKipi {
+    pub const TÜMÜ: [Self; 5] = [
+        Self::YalnızX,
+        Self::YalnızY,
+        Self::Uyarlanabilir,
+        Self::Omni,
+        Self::UyarlanabilirOmni,
+    ];
+
+    pub const fn başlık(self) -> &'static str {
+        match self {
+            Self::YalnızX => "X only",
+            Self::YalnızY => "Y only",
+            Self::Uyarlanabilir => "X or Y (adaptive)",
+            Self::Omni => "X or Y (omni)",
+            Self::UyarlanabilirOmni => "X or Y (adaptive + omni)",
+        }
+    }
+}
+
 impl Default for ZoomRangerSeçenekleri {
     fn default() -> Self {
         Self {
@@ -758,6 +791,13 @@ impl Default for ZoomRangerSeçenekleri {
 }
 
 impl ZoomRangerSeçenekleri {
+    pub fn zoom_varyasyonu(kip: ZoomSürüklemeKipi, en_az_px: f64) -> Self {
+        Self::default()
+            .etkin(true)
+            .sürükleme_kipi(kip)
+            .en_az_sürükleme(en_az_px)
+    }
+
     pub fn etkin(mut self, etkin: bool) -> Self {
         self.etkin = etkin;
         self
@@ -775,6 +815,42 @@ impl ZoomRangerSeçenekleri {
         }
         if tek_eksen_px.is_finite() {
             self.tek_eksen_eşiği_px = tek_eksen_px.max(0.0);
+        }
+        self
+    }
+
+    pub fn sürükleme_kipi(mut self, kip: ZoomSürüklemeKipi) -> Self {
+        match kip {
+            ZoomSürüklemeKipi::YalnızX => {
+                self.x = true;
+                self.y = false;
+            }
+            ZoomSürüklemeKipi::YalnızY => {
+                self.x = false;
+                self.y = true;
+            }
+            ZoomSürüklemeKipi::Uyarlanabilir => {
+                self.x = true;
+                self.y = true;
+                self.tek_eksen_eşiği_px = f64::INFINITY;
+            }
+            ZoomSürüklemeKipi::Omni => {
+                self.x = true;
+                self.y = true;
+                self.tek_eksen_eşiği_px = 0.0;
+            }
+            ZoomSürüklemeKipi::UyarlanabilirOmni => {
+                self.x = true;
+                self.y = true;
+                self.tek_eksen_eşiği_px = 50.0;
+            }
+        }
+        self
+    }
+
+    pub fn en_az_sürükleme(mut self, piksel: f64) -> Self {
+        if piksel.is_finite() {
+            self.en_az_sürükleme_px = piksel.max(0.0);
         }
         self
     }

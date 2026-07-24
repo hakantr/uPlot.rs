@@ -109,8 +109,8 @@ pub use secenek::{
     NoktaFiltreKipi, NoktaKatmanı, NoktaŞekli, OdakDüzeni, OdakStili, RüzgarYönüDüzeni, SeriBandı,
     SeriSeçenekleri, SeriÇizimTürü, TarihAdları, TekerlekAyarları, TekerlekKipi, TimelineDüzeni,
     TimelineHücresi, TooltipBilgisi, TooltipDüzeni, XÖlçekDağılımı, YÖlçekDağılımı,
-    YÖlçekEtiketBiçimi, YÖlçekSeçenekleri, ZamanDilimi, ZoomRangerSeçenekleri, ÇizimKancasıDüzeni,
-    ÇizimSırası, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı, İkincilXEksen,
+    YÖlçekEtiketBiçimi, YÖlçekSeçenekleri, ZamanDilimi, ZoomRangerSeçenekleri, ZoomSürüklemeKipi,
+    ÇizimKancasıDüzeni, ÇizimSırası, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı, İkincilXEksen,
 };
 pub use veri::{BoşlukKipi, HizalıDeğer, HizalıVeri, hizalı_verileri_birleştir};
 pub use yuzey::YüzeyDikdörtgeni;
