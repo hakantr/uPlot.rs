@@ -157,7 +157,7 @@ pub use nice_scale::{NICE_SCALE_KART_TANIM_ÖRNEĞİ, nice_scale_kartı};
 pub use no_data::{NO_DATA_KART_TANIM_ÖRNEĞİ, NoDataÖrneği, no_data_kartı};
 pub use ortak::ortak_kart_etkileşimleri;
 pub use path_gap_clip::{
-    PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, path_gap_clip_kartı
+    PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, path_gap_clip_kartları, path_gap_clip_kartı,
 };
 pub use pixel_align::{
     PIXEL_ALIGN_ARALIK_MS, PIXEL_ALIGN_KANIT_TOHUMU, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,

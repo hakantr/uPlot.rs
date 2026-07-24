@@ -10,10 +10,10 @@ use crate::{
 
 const KAYNAK_JSON: &str = include_str!("veri/path_gap_clip.json");
 
-pub const PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ: &str = r##"for örnek in PathGapClipÖrneği::TÜMÜ {
-    let (seçenekler, veri) = path_gap_clip_kartı(örnek)?;
+pub const PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in path_gap_clip_kartları()? {
     // null/undefined ayrımı, boşluk kırpması, bant ve yol geometrisi
-    // platform arayüzünden bağımsız olarak çekirdekte çözülür.
+    // platform arayüzünden bağımsız olarak çekirdekte çözülür. Kaynak
+    // sayfadaki 15 yüzey tek aile görünümünde karşılaştırılır.
     let grafik = Grafik::yeni(seçenekler, veri)?;
 }"##;
 
@@ -115,6 +115,69 @@ impl PathGapClipÖrneği {
             .into_iter()
             .find(|örnek| örnek.kimlik() == kimlik)
     }
+
+    pub const fn kaynak_boyutu(self) -> (u32, u32) {
+        match self {
+            Self::VeriDışınaTaşanÖlçek => (756, 475),
+            Self::BantBoşlukları
+            | Self::BasamakSonra
+            | Self::BasamakÖnce
+            | Self::BirleşikBasamakSonra
+            | Self::BirleşikBasamakÖnce => (800, 400),
+            Self::GenişletilmişHizalama | Self::SayısalHizalama => (1_200, 600),
+            Self::TekBoşlukÇıkışı | Self::TekBoşlukGirişi => (300, 475),
+            Self::TekBoşluk3001 | Self::TekBoşluk4999 | Self::TekBoşluk5001 | Self::ÇiftBoşluk => {
+                (500, 250)
+            }
+            Self::Tanımsız => (600, 300),
+        }
+    }
+
+    pub const fn boşluk_animasyonunda_mı(self) -> bool {
+        matches!(
+            self,
+            Self::VeriDışınaTaşanÖlçek
+                | Self::BantBoşlukları
+                | Self::GenişletilmişHizalama
+                | Self::SayısalHizalama
+        )
+    }
+
+    pub const fn kısa_açıklama(self) -> &'static str {
+        match self {
+            Self::VeriDışınaTaşanÖlçek => {
+                "Sabit X aralığı verinin dışına taşar; bant ve yollar çizim alanında kırpılır."
+            }
+            Self::BantBoşlukları => {
+                "Low/High null boşluğu bandı böler; Avg serisi kesintisiz kalır."
+            }
+            Self::BasamakSonra => "Aynı null/undefined dizisinde stepped-after, line ve spline.",
+            Self::BasamakÖnce => "Aynı null/undefined dizisinde stepped-before, line ve spline.",
+            Self::BirleşikBasamakSonra => {
+                "Beş hizasız tablo join edilir; stepped-after alignGaps=1 kullanır."
+            }
+            Self::BirleşikBasamakÖnce => {
+                "Aynı beş tablo; stepped-before alignGaps=-1 davranışıyla karşılaştırılır."
+            }
+            Self::GenişletilmişHizalama => {
+                "NULL_EXPAND gerçek null koşusunu, yalnız hizalama eksiğinden ayırır."
+            }
+            Self::SayısalHizalama => {
+                "Üç sayısal X tablosu join edilir; kaynak spanGaps animasyonuna katılır."
+            }
+            Self::TekBoşlukÇıkışı => {
+                "Ters X yönünde tek null'un çizim pikselinden çıkışı kırpma regresyonudur."
+            }
+            Self::TekBoşlukGirişi => {
+                "Normal X yönünde tek null'un çizim pikseline girişi kırpma regresyonudur."
+            }
+            Self::TekBoşluk3001 => "3.001 X konumundaki tek null için piksel giriş sınırı.",
+            Self::TekBoşluk4999 => "4.999 X konumundaki tek null için piksel giriş sınırı.",
+            Self::TekBoşluk5001 => "4.999 null ile 5.001 komşusunun alt-piksel sınırı.",
+            Self::ÇiftBoşluk => "4.999 ve 5.001 konumlarında iki null ile kırpma sınırı.",
+            Self::Tanımsız => "null gerçek boşluk; undefined yalnız hizalama eksiğidir.",
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -157,6 +220,14 @@ pub fn path_gap_clip_kartı(
     }
 }
 
+pub fn path_gap_clip_kartları()
+-> Result<Vec<(PathGapClipÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    PathGapClipÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| path_gap_clip_kartı(örnek).map(|(seçenekler, veri)| (örnek, seçenekler, veri)))
+        .collect()
+}
+
 fn temel(
     genişlik: u32,
     yükseklik: u32,
@@ -165,6 +236,7 @@ fn temel(
 ) -> Result<GrafikSeçenekleri, UplotHatası> {
     Ok(GrafikSeçenekleri::yeni(genişlik, yükseklik)?
         .başlık(başlık)
+        .arka_plan_rengi("#e0e0e0")
         .x_zaman(zaman)
         .etkileşimler(ortak_kart_etkileşimleri()))
 }
@@ -539,11 +611,13 @@ fn küçük_boşluk_kartı(
     x: Vec<f64>,
     boşluklar: &[usize],
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
-    let seçenekler = temel(500, 250, PathGapClipÖrneği::TekBoşlukGirişi.başlık(), false)?.seri(
-        SeriSeçenekleri::yeni("Low")
-            .renk("red")
-            .dolgu("rgba(255, 0, 0, .2)"),
-    );
+    let seçenekler = temel(500, 250, PathGapClipÖrneği::TekBoşlukGirişi.başlık(), false)?
+        .x_eksen_asgari_etiket_boşluğu(30.0)
+        .seri(
+            SeriSeçenekleri::yeni("Low")
+                .renk("red")
+                .dolgu("rgba(255, 0, 0, .2)"),
+        );
     Ok((
         seçenekler,
         HizalıVeri::yeni(x, vec![seçenekli(&[1.0; 10], boşluklar)])?,
@@ -598,12 +672,51 @@ mod testler {
 
     #[test]
     fn resmi_on_bes_yuzey_kaynak_nokta_sayilarini_korur() -> Result<(), UplotHatası> {
-        for örnek in PathGapClipÖrneği::TÜMÜ {
-            let (seçenekler, veri) = path_gap_clip_kartı(örnek)?;
+        let kartlar = path_gap_clip_kartları()?;
+        assert_eq!(kartlar.len(), 15);
+        for (örnek, seçenekler, veri) in kartlar {
             assert_eq!(seçenekler.başlık, örnek.başlık());
+            assert_eq!(seçenekler.arka_plan_rengi, "#e0e0e0");
             assert_eq!(veri.uzunluk(), örnek.nokta_sayısı());
+            assert_eq!(seçenekler.seriler.len(), veri.seriler().len());
+            assert_eq!(
+                (seçenekler.genişlik, seçenekler.yükseklik),
+                örnek.kaynak_boyutu()
+            );
         }
         Ok(())
+    }
+
+    #[test]
+    fn kucuk_piksel_regresyonlari_kaynak_otuz_piksel_x_boslugunu_korur() -> Result<(), UplotHatası>
+    {
+        for örnek in [
+            PathGapClipÖrneği::TekBoşluk3001,
+            PathGapClipÖrneği::TekBoşluk4999,
+            PathGapClipÖrneği::TekBoşluk5001,
+            PathGapClipÖrneği::ÇiftBoşluk,
+        ] {
+            let (seçenekler, _) = path_gap_clip_kartı(örnek)?;
+            assert_eq!(seçenekler.x_eksen_asgari_etiket_boşluğu, 30.0);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_span_gaps_zamanlayıcısı_yalnız_dört_yüzeyi_birlikte_değiştirir() {
+        let canlılar = PathGapClipÖrneği::TÜMÜ
+            .into_iter()
+            .filter(|örnek| örnek.boşluk_animasyonunda_mı())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            canlılar,
+            [
+                PathGapClipÖrneği::VeriDışınaTaşanÖlçek,
+                PathGapClipÖrneği::BantBoşlukları,
+                PathGapClipÖrneği::GenişletilmişHizalama,
+                PathGapClipÖrneği::SayısalHizalama,
+            ]
+        );
     }
 
     #[test]

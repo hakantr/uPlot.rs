@@ -119,6 +119,7 @@ impl KartOturumu {
             "months-russian" => months_rusça_kartı(),
             "nice-scale" => nice_scale_kartı(),
             "no-data" => no_data_kartı(NoDataÖrneği::BOŞ_ÖZEL_ARALIK),
+            "path-gap-clip" => path_gap_clip_kartı(PathGapClipÖrneği::VeriDışınaTaşanÖlçek),
             kimlik if kimlik.starts_with("no-data-") => NoDataÖrneği::kimlikten(kimlik)
                 .map_or_else(
                     || {
@@ -2145,6 +2146,7 @@ mod testler {
 
     #[test]
     fn path_gap_clip_wasm_on_bes_kaynak_yuzeyini_uretir() {
+        assert!(KartOturumu::yeni("path-gap-clip", 100).is_ok());
         for örnek in PathGapClipÖrneği::TÜMÜ {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             assert!(oturum.is_ok(), "{}", örnek.kimlik());
@@ -2157,7 +2159,22 @@ mod testler {
                 assert!(svg.contains(ilk_sözcük), "{}", örnek.kimlik());
             }
         }
-        assert!(path_gap_clip_kart_tanim_ornegi().contains("path_gap_clip_kartı"));
+        assert!(path_gap_clip_kart_tanim_ornegi().contains("path_gap_clip_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"path-gap-clip\"")
+                .count(),
+            1
+        );
+        assert_eq!(
+            web.matches("data-kart=\"path-gap-clip-").count(),
+            0,
+            "15 kaynak yüzeyi ayrı katalog kartlarına dönmemeli"
+        );
+        assert!(web.contains("let pathGapClipOturumları = [];"));
+        assert!(web.contains("pathGapClipYüzeyleri.forEach((yüzey, indeks) =>"));
+        assert!(web.contains("if (!yüzey.canlı) return;"));
+        assert!(web.contains("function pathGapClipYüzeyiniÇiz(indeks)"));
         assert_eq!(kart_sayisi(), 365);
     }
 

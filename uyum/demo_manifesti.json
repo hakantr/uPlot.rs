@@ -2018,7 +2018,7 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" },
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" }
       ],
-      "fixture": "src/kart/path_gap_clip.rs#path_gap_clip_kartı",
+      "fixture": "src/kart/path_gap_clip.rs#path_gap_clip_kartları",
       "örnek": "examples/path_gap_clip.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -2042,7 +2042,10 @@
       "sahip_faz": 1,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-exact-15-active-canvases", "source-exact-data0-and-data3-assets",
+        "single-catalog-family-15-related-surfaces", "five-source-comparison-groups",
+        "four-surface-synchronized-span-gaps-redraw", "eleven-independent-static-surfaces",
+        "source-exact-surface-dimensions", "source-30px-small-regression-axis-space",
+        "source-gray-underlay", "source-exact-data0-and-data3-assets",
         "explicit-null-vs-undefined-semantics", "join-null-retain-and-expand",
         "linear-stepped-before-stepped-after-and-spline-paths",
         "gap-aware-series-fill", "gap-aware-band-fill", "plot-rectangle-clipping",

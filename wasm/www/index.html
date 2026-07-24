@@ -182,6 +182,31 @@
                        pointer-events: none; }
     .months-grafik .lejant { position: absolute; left: 58px; right: 12px;
                              bottom: 7px; justify-content: flex-start; }
+    #chart.path-gap-clip-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .path-gap-clip-yığın { min-width: 0; display: grid; gap: 12px; align-items: start; }
+    .path-gap-clip-grup { display: grid; gap: 8px; padding: 8px;
+                          border: 1px solid #dbe3ee; border-radius: 10px;
+                          background: #f8fafc; }
+    .path-gap-clip-grup > h3 { margin: 0; color: #111827; font-size: 14px; }
+    .path-gap-clip-grafik { position: relative; min-width: 0;
+                            border: 1px solid #e5e7eb; border-radius: 8px;
+                            background: #e0e0e0; overflow: auto; }
+    .path-gap-clip-grafik svg { display: block; max-width: none; }
+    .path-gap-clip-başlık { position: sticky; z-index: 4; left: 8px; width: max-content;
+                            max-width: calc(100% - 16px); margin: 6px 8px 0; padding: 3px 6px;
+                            border-radius: 4px; background: rgba(255,255,255,.88);
+                            color: #111827; font-size: 11px; font-weight: 700;
+                            pointer-events: none; }
+    .path-gap-clip-açıklama { position: sticky; z-index: 4; left: 8px; width: max-content;
+                              max-width: calc(100% - 16px); margin: 2px 8px 4px;
+                              padding: 2px 6px; border-radius: 4px;
+                              background: rgba(255,255,255,.82); color: #4b5563;
+                              font-size: 10px; pointer-events: none; }
+    .path-gap-clip-grafik .lejant { position: sticky; z-index: 4; left: 8px; bottom: 6px;
+                                    width: max-content; max-width: calc(100% - 16px);
+                                    margin: -24px 8px 6px; padding: 3px 6px;
+                                    border-radius: 4px; background: rgba(255,255,255,.88);
+                                    justify-content: flex-start; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -971,51 +996,99 @@
     };
 
     const pathGapClipYüzeyleri = [
-      ["path-gap-clip-scale-range", "Scale range exceeds data range (zoom out)", [["Low", "green"], ["High", "green"]]],
-      ["path-gap-clip-band-gaps", "Gaps in a band", [["Low", "red"], ["High", "red"], ["Avg", "green"]]],
-      ["path-gap-clip-stepped-after", "Gaps in stepped after", [["step after", "blue"], ["linear", "red"], ["spline", "orange"]]],
-      ["path-gap-clip-stepped-before", "Gaps in stepped before", [["step before", "red"], ["linear", "blue"], ["spline", "orange"]]],
-      ["path-gap-clip-joined-stepped-after", "Gaps in stepped after", [["on/off", "blue"], ["[0..5]", "red"], ["dataset03", "green"], ["dataset04", "yellow"], ["dataset05 sin", "black"]]],
-      ["path-gap-clip-joined-stepped-before", "Gaps in stepped before", [["on/off", "blue"], ["[0..5]", "red"], ["dataset03", "green"], ["dataset04", "yellow"], ["dataset05 sin", "black"]]],
-      ["path-gap-clip-align-expand", 'Align & null-fill vs "real" null gaps', [["", "red"], ["", "green"]]],
-      ["path-gap-clip-align-numeric", 'Align & null-fill vs "real" null gaps', [["", "red"], ["", "green"], ["", "blue"]]],
-      ["path-gap-clip-single-null-outro", "Single-null pixel-outro bug test", [["Low", "red"]]],
-      ["path-gap-clip-single-null-intro", "Single-null pixel-intro bug test", [["Low", "red"]]],
-      ["path-gap-clip-single-null-3001", "Single-null pixel-intro bug test", [["Low", "red"]]],
-      ["path-gap-clip-single-null-4999", "Single-null pixel-intro bug test", [["Low", "red"]]],
-      ["path-gap-clip-single-null-5001", "Single-null pixel-intro bug test", [["Low", "red"]]],
-      ["path-gap-clip-double-null", "Single-null pixel-intro bug test", [["Low", "red"]]],
-      ["path-gap-clip-undefined", "Undefined", [["", "red"]]],
+      { kimlik: "path-gap-clip-scale-range", başlık: "Scale range exceeds data range (zoom out)",
+        açıklama: "Sabit X aralığı verinin dışına taşar; bant ve yollar plot alanında kırpılır.",
+        grup: "Band ve canlı spanGaps", boyut: [756, 475], canlı: true,
+        seriler: [["Low", "green"], ["High", "green"]] },
+      { kimlik: "path-gap-clip-band-gaps", başlık: "Gaps in a band",
+        açıklama: "Low/High null boşluğu bandı böler; Avg serisi kesintisiz kalır.",
+        grup: "Band ve canlı spanGaps", boyut: [800, 400], canlı: true,
+        seriler: [["Low", "red"], ["High", "red"], ["Avg", "green"]] },
+      { kimlik: "path-gap-clip-stepped-after", başlık: "Gaps in stepped after",
+        açıklama: "Aynı null/undefined dizisinde stepped-after, line ve spline.",
+        grup: "Stepped yol karşılaştırması", boyut: [800, 400], canlı: false,
+        seriler: [["step after", "blue"], ["linear", "red"], ["spline", "orange"]] },
+      { kimlik: "path-gap-clip-stepped-before", başlık: "Gaps in stepped before",
+        açıklama: "Aynı null/undefined dizisinde stepped-before, line ve spline.",
+        grup: "Stepped yol karşılaştırması", boyut: [800, 400], canlı: false,
+        seriler: [["step before", "red"], ["linear", "blue"], ["spline", "orange"]] },
+      { kimlik: "path-gap-clip-joined-stepped-after", başlık: "Joined · stepped after",
+        açıklama: "Beş hizasız tablo join edilir; stepped-after boşluk sonlarını karşılaştırır.",
+        grup: "Stepped yol karşılaştırması", boyut: [800, 400], canlı: false,
+        seriler: [["on/off", "blue"], ["[0..5]", "red"], ["dataset03", "green"], ["dataset04", "yellow"], ["dataset05 sin", "black"]] },
+      { kimlik: "path-gap-clip-joined-stepped-before", başlık: "Joined · stepped before",
+        açıklama: "Aynı beş tablo stepped-before boşluk başlangıcıyla çizilir.",
+        grup: "Stepped yol karşılaştırması", boyut: [800, 400], canlı: false,
+        seriler: [["on/off", "blue"], ["[0..5]", "red"], ["dataset03", "green"], ["dataset04", "yellow"], ["dataset05 sin", "black"]] },
+      { kimlik: "path-gap-clip-align-expand", başlık: 'Align & null-fill · NULL_EXPAND',
+        açıklama: "Milisaniyeli NULL_EXPAND gerçek null koşusunu hizalama eksiğinden ayırır.",
+        grup: "Join ve null türleri", boyut: [1200, 600], canlı: true,
+        seriler: [["Series 1", "red"], ["Series 2", "green"]] },
+      { kimlik: "path-gap-clip-align-numeric", başlık: "Align & null-fill · numeric",
+        açıklama: "Üç sayısal X tablosu join edilir ve ortak bridge durumuna katılır.",
+        grup: "Join ve null türleri", boyut: [1200, 600], canlı: true,
+        seriler: [["Series 1", "red"], ["Series 2", "green"], ["Series 3", "blue"]] },
+      { kimlik: "path-gap-clip-single-null-outro", başlık: "Single-null pixel-outro",
+        açıklama: "Ters X yönünde tek null'un çizim pikselinden çıkış regresyonu.",
+        grup: "Piksel sınırı regresyonları", boyut: [300, 475], canlı: false,
+        seriler: [["Low", "red"]] },
+      { kimlik: "path-gap-clip-single-null-intro", başlık: "Single-null pixel-intro",
+        açıklama: "Normal X yönünde tek null'un çizim pikseline giriş regresyonu.",
+        grup: "Piksel sınırı regresyonları", boyut: [300, 475], canlı: false,
+        seriler: [["Low", "red"]] },
+      { kimlik: "path-gap-clip-single-null-3001", başlık: "Single-null · X 3.001",
+        açıklama: "3.001 X konumundaki null için 30 px axes.space sınırı.",
+        grup: "Piksel sınırı regresyonları", boyut: [500, 250], canlı: false,
+        seriler: [["Low", "red"]] },
+      { kimlik: "path-gap-clip-single-null-4999", başlık: "Single-null · X 4.999",
+        açıklama: "4.999 X konumundaki null için alt-piksel giriş sınırı.",
+        grup: "Piksel sınırı regresyonları", boyut: [500, 250], canlı: false,
+        seriler: [["Low", "red"]] },
+      { kimlik: "path-gap-clip-single-null-5001", başlık: "Single-null · X 4.999 + 5.001",
+        açıklama: "Null ve 5.001 komşusunun aynı piksel çevresindeki sınırı.",
+        grup: "Piksel sınırı regresyonları", boyut: [500, 250], canlı: false,
+        seriler: [["Low", "red"]] },
+      { kimlik: "path-gap-clip-double-null", başlık: "Double-null · X 4.999 + 5.001",
+        açıklama: "İki yakın null ile birleşen kırpma aralığı regresyonu.",
+        grup: "Piksel sınırı regresyonları", boyut: [500, 250], canlı: false,
+        seriler: [["Low", "red"]] },
+      { kimlik: "path-gap-clip-undefined", başlık: "Null vs undefined",
+        açıklama: "Gerçek null görünür gap açar; undefined yalnız hizalama eksiği olarak atlanır.",
+        grup: "Null ve undefined", boyut: [600, 300], canlı: false,
+        seriler: [["Value", "red"]] },
     ];
     document.querySelector('[data-kart="no-data"]')?.insertAdjacentHTML(
       "afterend",
-      pathGapClipYüzeyleri.map(([kimlik, başlık]) => `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>${kimlik}</small>
-          <div class="durum">null/undefined · boşluk ve yol kırpması</div>
-        </article>`).join("")
+      `<article class="kart" data-kart="path-gap-clip" aria-current="false" tabindex="0">
+        <strong>Path &amp; Gap Clipping</strong><small>path-gap-clip</small>
+        <div class="durum">15 ilişkili yüzey · 4 ortak spanGaps animasyonu</div>
+      </article>`
     );
-    for (const [kimlik, başlık, seriler] of pathGapClipYüzeyleri) {
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/path-gap-clip.html">path-gap-clip.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/utils.js">paths/utils.js</a>
-          <br>Resmî sayfadaki 15 etkin yüzey, aynı veri setleri ve null/undefined ayrımıyla ayrı ayrı sunulur.
-          <br>Boşluk kırpması, bant, stepped/spline yolları ve ters X ölçeği Rust çekirdeğindedir.`,
-        tanım: () => path_gap_clip_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/path_gap_clip.rs",
-        seriler: seriler.map(([etiket, renk]) => ({etiket, renk})),
-        yardım: "Kaynak boşluk/kırpma yüzeyi · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    kartlar["path-gap-clip"] = {
+      başlık: "Path & Gap Clipping · 15 yüzey",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/path-gap-clip.html">path-gap-clip.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/utils.js">paths/utils.js</a>
+        <br>Resmî sayfadaki 15 yüzey beş ilişkili grupta birlikte gösterilir; yalnız dört kaynak yüzeyi aynı saniyelik <code>spanGaps</code> durumunu paylaşır.
+        <br>Diğer yüzeylerin cursor, seçim ve görünüm geçmişi bağımsızdır. Kaynakta <code>setData</code>/<code>setScale</code> yoktur.`,
+      tanım: () => path_gap_clip_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/path_gap_clip.rs",
+      seriler: [],
+      yardım: "15 yüzey bağımsız yakınlaşır · Shift+wheel: X · Ctrl+wheel: Y · dört canlı yüzey ortak bridge",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Gerçek null, join sırasında oluşan undefined/hizalama eksiği, band kırpması, stepped before/after ve tek-piksel gap sınırlarını aynı kaynak ailesinde karşılaştırır.",
+        api: "HizalıDeğer::{Değer, Boş, Tanımsız}, NULL_RETAIN/NULL_EXPAND join kipleri, linear/stepped/spline yolları ve spanGaps mutasyonu çekirdektedir; bu demoda setData/setScale kullanılmaz.",
+        izleme: "Scrape eksiğini gerçek ölçüm null'u gibi göstermeyin. Bridge açıldığında çizginin yalnız görsel olarak bağlandığını kullanıcıya belirtin.",
+        maliyet: "Path ve gap taraması O(N), sıralı imleç O(log N). Pointer hafif overlay'i günceller; saniyelik animasyon yalnız dört yüzeyin ana yolunu yeniden kurar.",
+      },
+    };
 
     const pixelAlignYüzeyleri = [
       ["pixel-align-default", "pxAlign: 1 (default)"],
       ["pixel-align-off", "pxAlign: 0 (off)"],
     ];
-    document.querySelector('[data-kart="path-gap-clip-undefined"]')?.insertAdjacentHTML(
+    document.querySelector('[data-kart="path-gap-clip"]')?.insertAdjacentHTML(
       "afterend",
       pixelAlignYüzeyleri.map(([kimlik, başlık]) => `
         <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
@@ -2415,6 +2488,7 @@
     let timeseriesDiscreteOturumları = [];
     let nearestNonNullOturumları = [];
     let monthsOturumları = [];
+    let pathGapClipOturumları = [];
     let syncCursorKöprüsü = null;
     let syncCursorDurumları = Array.from({ length: 5 }, () => null);
     let syncCursorSürükleme = null;
@@ -2574,6 +2648,14 @@
           || !monthsOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !monthsOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "path-gap-clip") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !pathGapClipOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !pathGapClipOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -3524,6 +3606,280 @@
       kontrolleriGüncelle();
     }
 
+    function pathGapClipYüzeyiniÇiz(indeks) {
+      const kutu = chart.querySelector(`[data-path-gap-index="${indeks}"]`);
+      const yüzey = pathGapClipYüzeyleri[indeks];
+      const yüzeyOturumu = pathGapClipOturumları[indeks];
+      if (!kutu || !yüzey || !yüzeyOturumu) return;
+      const [genişlik, yükseklik] = yüzey.boyut;
+      const svgÇıktısı = yüzeyOturumu.svg(genişlik, yükseklik);
+      let svg = kutu.querySelector("svg");
+      if (!svg) {
+        kutu.style.height = `${yükseklik + 74}px`;
+        kutu.innerHTML = `
+          <div class="path-gap-clip-başlık">${yüzey.başlık}</div>
+          <div class="path-gap-clip-açıklama">${yüzey.açıklama}</div>
+          <div class="path-gap-clip-svg">${svgÇıktısı}</div>
+          <div class="lejant">
+            <span>X: <b data-path-x>--</b></span>
+            ${yüzey.seriler.map(([etiket, renk], seriİndeksi) => `
+              <span><i class="örnek" style="border-color:${renk};background:${renk}"></i>
+                ${etiket || `Series ${seriİndeksi + 1}`}: <b data-path-y="${seriİndeksi}">--</b>
+              </span>`).join("")}
+          </div>`;
+        svg = kutu.querySelector("svg");
+      } else {
+        const şablon = document.createElement("template");
+        şablon.innerHTML = svgÇıktısı.trim();
+        svgYüzeyiniYerindeGüncelle(svg, şablon.content.firstElementChild);
+      }
+      svg = kutu.querySelector("svg");
+      if (!svg) return;
+      svg.querySelector(".path-gap-etkileşim")?.remove();
+      svg.insertAdjacentHTML("beforeend", `
+        <g class="path-gap-etkileşim" pointer-events="none">
+          <rect class="path-gap-seçim" visibility="hidden"
+            fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+          <line class="path-gap-imleç-x" visibility="hidden"
+            stroke="#6b7280" stroke-dasharray="4 4"/>
+          <line class="path-gap-imleç-y" visibility="hidden"
+            stroke="#6b7280" stroke-dasharray="4 4"/>
+          ${yüzey.seriler.map(([, renk], seriİndeksi) =>
+            `<circle class="path-gap-nokta" data-path-point="${seriİndeksi}"
+              visibility="hidden" r="3" fill="${renk}"/>`).join("")}
+        </g>`);
+      if (kutu.dataset.etkilesimBagli === "true") return;
+      kutu.dataset.etkilesimBagli = "true";
+
+      const alan = olay => {
+        const canlıSvg = kutu.querySelector("svg");
+        if (!canlıSvg) return null;
+        const rect = canlıSvg.getBoundingClientRect();
+        const view = canlıSvg.viewBox.baseVal;
+        const çizim = Array.from(yüzeyOturumu.cizim_alani(view.width, view.height));
+        if (çizim.length !== 4 || rect.width <= 0 || rect.height <= 0) return null;
+        return {
+          view,
+          x: (olay.clientX - rect.left) / rect.width * view.width,
+          y: (olay.clientY - rect.top) / rect.height * view.height,
+          sol: çizim[0], sağ: çizim[1], üst: çizim[2], alt: çizim[3],
+        };
+      };
+      const imleciGizle = () => {
+        kutu.querySelectorAll(".path-gap-imleç-x,.path-gap-imleç-y,.path-gap-nokta")
+          .forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+      };
+      const imleciGüncelle = olay => {
+        const a = alan(olay);
+        if (!a || a.x < a.sol || a.x > a.sağ || a.y < a.üst || a.y > a.alt) {
+          imleciGizle();
+          return;
+        }
+        const çözüm = Array.from(yüzeyOturumu.imlec_cozumu(
+          (a.x - a.sol) / (a.sağ - a.sol),
+          a.sağ - a.sol,
+        ));
+        if (çözüm.length < 2) {
+          imleciGizle();
+          return;
+        }
+        const imleçPx = a.sol + yüzeyOturumu.x_konum_orani(çözüm[0]) * (a.sağ - a.sol);
+        const dikey = kutu.querySelector(".path-gap-imleç-x");
+        dikey?.setAttribute("x1", imleçPx); dikey?.setAttribute("x2", imleçPx);
+        dikey?.setAttribute("y1", a.üst); dikey?.setAttribute("y2", a.alt);
+        dikey?.setAttribute("visibility", "visible");
+        const xHedefi = kutu.querySelector("[data-path-x]");
+        if (xHedefi) xHedefi.textContent = Number.isFinite(çözüm[1])
+          ? String(Math.round(çözüm[1] * 1000) / 1000)
+          : "--";
+        let ilkY = null;
+        yüzey.seriler.forEach((_, seriİndeksi) => {
+          const seriX = çözüm[2 + seriİndeksi * 3];
+          const seriY = çözüm[3 + seriİndeksi * 3];
+          const nokta = kutu.querySelector(`[data-path-point="${seriİndeksi}"]`);
+          const yHedefi = kutu.querySelector(`[data-path-y="${seriİndeksi}"]`);
+          if (!Number.isFinite(seriX) || !Number.isFinite(seriY)) {
+            nokta?.setAttribute("visibility", "hidden");
+            if (yHedefi) yHedefi.textContent = "--";
+            return;
+          }
+          const pxX = a.sol + yüzeyOturumu.x_konum_orani(seriX) * (a.sağ - a.sol);
+          const pxY = a.alt - yüzeyOturumu.seri_y_konum_orani(seriİndeksi, seriY)
+            * (a.alt - a.üst);
+          nokta?.setAttribute("cx", pxX); nokta?.setAttribute("cy", pxY);
+          nokta?.setAttribute("visibility", "visible");
+          if (yHedefi) yHedefi.textContent = String(Math.round(seriY * 1000) / 1000);
+          if (ilkY === null) ilkY = pxY;
+        });
+        const yatay = kutu.querySelector(".path-gap-imleç-y");
+        if (ilkY === null) {
+          yatay?.setAttribute("visibility", "hidden");
+        } else {
+          yatay?.setAttribute("x1", a.sol); yatay?.setAttribute("x2", a.sağ);
+          yatay?.setAttribute("y1", ilkY); yatay?.setAttribute("y2", ilkY);
+          yatay?.setAttribute("visibility", "visible");
+        }
+      };
+
+      let seçim = null;
+      let taşıma = null;
+      let kıstırma = null;
+      const temaslar = new Map();
+      kutu.addEventListener("pointermove", olay => {
+        olay.stopPropagation();
+        const a = alan(olay);
+        if (!a) return;
+        if (olay.pointerType === "touch" && temaslar.has(olay.pointerId)) {
+          temaslar.set(olay.pointerId, { x: a.x, y: a.y });
+          const noktalar = [...temaslar.values()];
+          if (kıstırma && noktalar.length >= 2) {
+            const uzaklık = Math.hypot(
+              noktalar[0].x - noktalar[1].x,
+              noktalar[0].y - noktalar[1].y,
+            );
+            if (kıstırma.uzaklık > 0 && yüzeyOturumu.dokunma_yakinlastir(
+              ((noktalar[0].x + noktalar[1].x) / 2 - a.sol) / (a.sağ - a.sol),
+              ((noktalar[0].y + noktalar[1].y) / 2 - a.üst) / (a.alt - a.üst),
+              uzaklık / kıstırma.uzaklık,
+            )) pathGapClipYüzeyiniÇiz(indeks);
+            kıstırma.uzaklık = uzaklık;
+            return;
+          }
+        }
+        if (taşıma) {
+          if (yüzeyOturumu.tasi(
+            (a.x - taşıma.x) / (a.sağ - a.sol),
+            (a.y - taşıma.y) / (a.alt - a.üst),
+          )) pathGapClipYüzeyiniÇiz(indeks);
+          taşıma = { x: a.x, y: a.y };
+          return;
+        }
+        imleciGüncelle(olay);
+        if (!seçim) return;
+        seçim.son = Math.max(a.sol, Math.min(a.sağ, a.x));
+        const dikdörtgen = kutu.querySelector(".path-gap-seçim");
+        dikdörtgen?.setAttribute("x", Math.min(seçim.baş, seçim.son));
+        dikdörtgen?.setAttribute("y", a.üst);
+        dikdörtgen?.setAttribute("width", Math.abs(seçim.son - seçim.baş));
+        dikdörtgen?.setAttribute("height", a.alt - a.üst);
+        dikdörtgen?.setAttribute("visibility", "visible");
+      });
+      kutu.addEventListener("pointerdown", olay => {
+        olay.stopPropagation();
+        const a = alan(olay);
+        if (!a || a.x < a.sol || a.x > a.sağ || a.y < a.üst || a.y > a.alt) return;
+        kutu.setPointerCapture(olay.pointerId);
+        if (olay.pointerType === "touch") {
+          temaslar.set(olay.pointerId, { x: a.x, y: a.y });
+          const noktalar = [...temaslar.values()];
+          if (noktalar.length === 1 && yüzeyOturumu.tasimayi_baslat()) {
+            taşıma = { x: a.x, y: a.y };
+          } else if (noktalar.length >= 2) {
+            if (taşıma) yüzeyOturumu.tasimayi_bitir();
+            taşıma = null;
+            const uzaklık = Math.hypot(
+              noktalar[0].x - noktalar[1].x,
+              noktalar[0].y - noktalar[1].y,
+            );
+            if (yüzeyOturumu.dokunmayi_baslat()) kıstırma = { uzaklık };
+          }
+        } else if (olay.button === 0) {
+          if (boşlukBasılı && yüzeyOturumu.tasimayi_baslat()) {
+            taşıma = { x: a.x, y: a.y };
+          } else {
+            seçim = { baş: a.x, son: a.x, pointerId: olay.pointerId };
+          }
+        }
+      });
+      const bitir = olay => {
+        olay.stopPropagation();
+        if (olay.pointerType === "touch") {
+          temaslar.delete(olay.pointerId);
+          if (kıstırma) yüzeyOturumu.dokunmayi_bitir();
+          if (taşıma) yüzeyOturumu.tasimayi_bitir();
+          kıstırma = null;
+          taşıma = null;
+          kontrolleriGüncelle();
+          return;
+        }
+        if (taşıma) {
+          yüzeyOturumu.tasimayi_bitir();
+          taşıma = null;
+          kontrolleriGüncelle();
+          return;
+        }
+        if (!seçim || seçim.pointerId !== olay.pointerId) return;
+        const a = alan(olay);
+        const tamamlanan = seçim;
+        seçim = null;
+        if (!a || Math.abs(tamamlanan.son - tamamlanan.baş) < 4) return;
+        const başlangıç = (Math.min(tamamlanan.baş, tamamlanan.son) - a.sol)
+          / (a.sağ - a.sol);
+        const bitiş = (Math.max(tamamlanan.baş, tamamlanan.son) - a.sol)
+          / (a.sağ - a.sol);
+        try {
+          if (yüzeyOturumu.secimi_bitir(başlangıç, bitiş, false) === 1) {
+            pathGapClipYüzeyiniÇiz(indeks);
+            kontrolleriGüncelle();
+          }
+        } catch (neden) {
+          hata.textContent = `Path & Gap seçimi uygulanamadı: ${String(neden)}`;
+        }
+      };
+      kutu.addEventListener("pointerup", bitir);
+      kutu.addEventListener("pointercancel", bitir);
+      kutu.addEventListener("pointerleave", () => {
+        if (!seçim && !taşıma) imleciGizle();
+      });
+      kutu.addEventListener("wheel", olay => {
+        olay.stopPropagation();
+        const delta = tekerlekDeltası(olay);
+        if (!etkileşimler.tekerlek || delta === 0) return;
+        const a = alan(olay);
+        if (!a || a.x < a.sol || a.x > a.sağ || a.y < a.üst || a.y > a.alt) return;
+        olay.preventDefault();
+        try {
+          if (yüzeyOturumu.tekerlek_eksende(
+            (a.x - a.sol) / (a.sağ - a.sol),
+            (a.y - a.üst) / (a.alt - a.üst),
+            -delta,
+            olay.deltaMode === 0,
+            tekerlekEkseni(olay),
+          )) {
+            pathGapClipYüzeyiniÇiz(indeks);
+            kontrolleriGüncelle();
+          }
+        } catch (neden) {
+          hata.textContent = `Path & Gap yakınlaştırması uygulanamadı: ${String(neden)}`;
+        }
+      }, { passive: false });
+      kutu.addEventListener("dblclick", olay => {
+        olay.stopPropagation();
+        if (yüzeyOturumu.tam_gorunum()) {
+          pathGapClipYüzeyiniÇiz(indeks);
+          kontrolleriGüncelle();
+        }
+      });
+    }
+
+    function pathGapClipÇiz() {
+      if (!chart.classList.contains("path-gap-clip-yüzeyi")
+        || chart.querySelectorAll(".path-gap-clip-grafik").length !== pathGapClipYüzeyleri.length) {
+        const gruplar = [...new Set(pathGapClipYüzeyleri.map(yüzey => yüzey.grup))];
+        chart.className = "path-gap-clip-yüzeyi";
+        chart.innerHTML = `<div class="path-gap-clip-yığın">
+          ${gruplar.map(grup => `<section class="path-gap-clip-grup">
+            <h3>${grup}</h3>
+            ${pathGapClipYüzeyleri.map((yüzey, indeks) => yüzey.grup === grup
+              ? `<article class="path-gap-clip-grafik" data-path-gap-index="${indeks}"></article>`
+              : "").join("")}
+          </section>`).join("")}
+        </div>`;
+      }
+      pathGapClipYüzeyleri.forEach((_, indeks) => pathGapClipYüzeyiniÇiz(indeks));
+      kontrolleriGüncelle();
+    }
+
     function çiz() {
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
@@ -3541,6 +3897,10 @@
         monthsÇiz();
         return;
       }
+      if (aktifKart === "path-gap-clip") {
+        pathGapClipÇiz();
+        return;
+      }
       if (!oturum) return;
       const öncekiMultiBarsKartı = chart.dataset.cizilenKart;
       const öncekiMultiBarsKaydırma = chart.querySelector(".multi-bars-kaydırma");
@@ -3552,6 +3912,7 @@
       chart.classList.remove("timeseries-discrete-yüzeyi");
       chart.classList.remove("nearest-non-null-yüzeyi");
       chart.classList.remove("months-yüzeyi");
+      chart.classList.remove("path-gap-clip-yüzeyi");
       chart.classList.toggle("nice-scale-yüzeyi", aktifKart === "nice-scale");
       chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
       const sayı = Number(nokta.value);
@@ -4538,6 +4899,11 @@
           if (yüzey.onceki_gorunum()) monthsYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "path-gap-clip") {
+        pathGapClipOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.onceki_gorunum()) pathGapClipYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (oturum?.onceki_gorunum()) çiz();
     });
     tamGörünüm.addEventListener("click", () => {
@@ -4556,6 +4922,11 @@
           if (yüzey.tam_gorunum()) monthsYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "path-gap-clip") {
+        pathGapClipOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.tam_gorunum()) pathGapClipYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (oturum?.tam_gorunum()) çiz();
     });
     tekerlekEtkileşimi.addEventListener("change", () => {
@@ -4570,6 +4941,10 @@
         );
       } else if (aktifKart === "months") {
         monthsOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "path-gap-clip") {
+        pathGapClipOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "timeseries-discrete") {
@@ -4664,6 +5039,9 @@
         if (["months-no-leap", "months-leap", "months-russian"].includes(kimlik)) {
           kimlik = "months";
         }
+        if (kimlik !== "path-gap-clip" && kimlik.startsWith("path-gap-clip-")) {
+          kimlik = "path-gap-clip";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -4706,6 +5084,8 @@
         nearestNonNullOturumları = [];
         monthsOturumları.forEach(yüzey => yüzey.free());
         monthsOturumları = [];
+        pathGapClipOturumları.forEach(yüzey => yüzey.free());
+        pathGapClipOturumları = [];
         syncCursorKöprüsü?.free();
         syncCursorKöprüsü = null;
         syncCursorDurumları = Array.from({ length: 5 }, () => null);
@@ -4807,6 +5187,30 @@
           çiz();
           return;
         }
+        if (kimlik === "path-gap-clip") {
+          pathGapClipOturumları = pathGapClipYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          çiz();
+          let boşluklarıBirleştir = false;
+          alignDataZamanlayıcı = setInterval(() => {
+            if (aktifKart !== "path-gap-clip" || pathGapClipOturumları.length === 0) {
+              clearInterval(alignDataZamanlayıcı);
+              alignDataZamanlayıcı = null;
+              return;
+            }
+            boşluklarıBirleştir = !boşluklarıBirleştir;
+            pathGapClipYüzeyleri.forEach((yüzey, indeks) => {
+              if (!yüzey.canlı) return;
+              pathGapClipOturumları[indeks]
+                ?.bosluklari_birlestir_ayarla(boşluklarıBirleştir);
+              pathGapClipYüzeyiniÇiz(indeks);
+            });
+          }, 1000);
+          return;
+        }
         oturum = new KartOturumu(
           kimlik === "no-data" && oturumKimliği !== "no-data"
             ? oturumKimliği
@@ -4893,12 +5297,7 @@
             }
           }, 500);
         }
-        if (kimlik === "align-data-cost" || [
-          "path-gap-clip-scale-range",
-          "path-gap-clip-band-gaps",
-          "path-gap-clip-align-expand",
-          "path-gap-clip-align-numeric",
-        ].includes(kimlik)) {
+        if (kimlik === "align-data-cost") {
           let boşluklarıBirleştir = false;
           alignDataZamanlayıcı = setInterval(() => {
             if (aktifKart !== kimlik || !oturum) {

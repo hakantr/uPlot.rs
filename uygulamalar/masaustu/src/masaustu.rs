@@ -55,11 +55,12 @@ use uplot_rs::{
     log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
     missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yılsız_kartı,
     months_kartları, multi_bars_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
-    ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı, resize_kartı,
-    scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
-    soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
-    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
-    sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    ortak_kart_etkileşimleri, path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartı,
+    points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı,
+    scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
+    sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
+    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_kartı,
+    thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
     timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
     trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
     y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
@@ -77,7 +78,7 @@ enum KartKimliği {
     Months,
     NiceScale,
     NoData,
-    PathGapClip(PathGapClipÖrneği),
+    PathGapClip,
     PixelAlign(PixelAlignÖrneği),
     Points(PointsÖrneği),
     ScalesDirOri(ScalesDirOriÖrneği),
@@ -149,7 +150,7 @@ impl KartKimliği {
             Self::Months => "Months · takvim ve yerelleştirme",
             Self::NiceScale => "Nice Scale & Ticks",
             Self::NoData => "No Data · 33 seçenek",
-            Self::PathGapClip(örnek) => örnek.başlık(),
+            Self::PathGapClip => "Path & Gap Clipping · 15 yüzey",
             Self::PixelAlign(örnek) => örnek.başlık(),
             Self::Points(örnek) => örnek.başlık(),
             Self::ScalesDirOri(örnek) => örnek.başlık(),
@@ -236,7 +237,7 @@ impl KartKimliği {
             Self::NoData => {
                 "no-data.html · tek kartta 33 boş, tek noktalı, düz ve hassas ölçek seçeneği"
             }
-            Self::PathGapClip(_) => {
+            Self::PathGapClip => {
                 "path-gap-clip.html · 15 null/undefined, band, stepped ve piksel yüzeyi"
             }
             Self::PixelAlign(_) => {
@@ -372,7 +373,7 @@ impl KartKimliği {
             Self::Months => MONTHS_KART_TANIM_ÖRNEĞİ,
             Self::NiceScale => NICE_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::NoData => NO_DATA_KART_TANIM_ÖRNEĞİ,
-            Self::PathGapClip(_) => PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
+            Self::PathGapClip => PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
             Self::PixelAlign(_) => PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
             Self::Points(_) => POINTS_KART_TANIM_ÖRNEĞİ,
             Self::ScalesDirOri(_) => SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
@@ -442,7 +443,7 @@ impl KartKimliği {
             Self::Months => "src/kart/months.rs",
             Self::NiceScale => "src/kart/nice_scale.rs",
             Self::NoData => "src/kart/no_data.rs",
-            Self::PathGapClip(_) => "src/kart/path_gap_clip.rs",
+            Self::PathGapClip => "src/kart/path_gap_clip.rs",
             Self::PixelAlign(_) => "src/kart/pixel_align.rs",
             Self::Points(_) => "src/kart/points.rs",
             Self::ScalesDirOri(_) => "src/kart/scales_dir_ori.rs",
@@ -542,6 +543,7 @@ pub struct ChartListesi {
     timeseries_discrete_grafikleri: Vec<(TimeseriesDiscreteÖrneği, Entity<GpuiGrafik>)>,
     nearest_non_null_grafikleri: Vec<(NearestNonNullÖrneği, Entity<GpuiGrafik>)>,
     months_grafikleri: Vec<Entity<GpuiGrafik>>,
+    path_gap_clip_grafikleri: Vec<(PathGapClipÖrneği, Entity<GpuiGrafik>)>,
     no_data_örneği: NoDataÖrneği,
 }
 
@@ -577,6 +579,12 @@ impl ChartListesi {
                 }
             } else if bu.aktif_kart == KartKimliği::Months {
                 for grafik in &bu.months_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if bu.aktif_kart == KartKimliği::PathGapClip {
+                for (_, grafik) in &bu.path_gap_clip_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -641,6 +649,7 @@ impl ChartListesi {
             timeseries_discrete_grafikleri: Vec::new(),
             nearest_non_null_grafikleri: Vec::new(),
             months_grafikleri: Vec::new(),
+            path_gap_clip_grafikleri: Vec::new(),
             no_data_örneği: NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
         }
     }
@@ -774,6 +783,46 @@ impl ChartListesi {
         }
         self.grafik = yüzeyler.first().cloned();
         self.months_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
+    fn path_gap_clip_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = path_gap_clip_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Path & Gap Clipping ailesi oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.path_gap_clip_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.path_gap_clip_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                    bu.açıklama_istendi = true;
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.path_gap_clip_grafikleri = yüzeyler;
         self.hata = None;
         cx.notify();
     }
@@ -1003,40 +1052,41 @@ impl ChartListesi {
             self.timeseries_discrete_grafikleri.clear();
             self.nearest_non_null_grafikleri.clear();
             self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
             self.sync_cursor_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::TimeseriesDiscrete {
             self.sync_cursor_grafikleri.clear();
             self.nearest_non_null_grafikleri.clear();
             self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
             self.timeseries_discrete_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::NearestNonNull {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
             self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
             self.nearest_non_null_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::Months {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
             self.nearest_non_null_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
             self.months_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::PathGapClip {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
             self.nearest_non_null_grafikleri.clear();
             self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
             self.grafiği_yenile(self.nokta_sayısı, cx);
         }
-        if kart == KartKimliği::AlignDataCost
-            || matches!(
-                kart,
-                KartKimliği::PathGapClip(
-                    PathGapClipÖrneği::VeriDışınaTaşanÖlçek
-                        | PathGapClipÖrneği::BantBoşlukları
-                        | PathGapClipÖrneği::GenişletilmişHizalama
-                        | PathGapClipÖrneği::SayısalHizalama
-                )
-            )
-        {
+        if kart == KartKimliği::AlignDataCost {
             self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
                 let mut etkin = false;
                 loop {
@@ -1051,6 +1101,32 @@ impl ChartListesi {
                                 grafik.update(cx, |grafik, cx| {
                                     grafik.boşlukları_birleştir_ayarla(etkin, cx);
                                 });
+                            }
+                            true
+                        })
+                        .unwrap_or(false);
+                    if !devam {
+                        break;
+                    }
+                }
+            }));
+        } else if kart == KartKimliği::PathGapClip {
+            self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
+                let mut etkin = false;
+                loop {
+                    cx.background_executor().timer(Duration::from_secs(1)).await;
+                    etkin = !etkin;
+                    let devam = bu
+                        .update(cx, |bu, cx| {
+                            if bu.aktif_kart != KartKimliği::PathGapClip {
+                                return false;
+                            }
+                            for (örnek, grafik) in &bu.path_gap_clip_grafikleri {
+                                if örnek.boşluk_animasyonunda_mı() {
+                                    grafik.update(cx, |grafik, cx| {
+                                        grafik.boşlukları_birleştir_ayarla(etkin, cx);
+                                    });
+                                }
                             }
                             true
                         })
@@ -1492,7 +1568,7 @@ fn grafik_oluştur(
         KartKimliği::Months => months_artık_yılsız_kartı(),
         KartKimliği::NiceScale => nice_scale_kartı(),
         KartKimliği::NoData => no_data_kartı(no_data_örneği),
-        KartKimliği::PathGapClip(örnek) => path_gap_clip_kartı(örnek),
+        KartKimliği::PathGapClip => path_gap_clip_kartı(PathGapClipÖrneği::VeriDışınaTaşanÖlçek),
         KartKimliği::PixelAlign(örnek) => pixel_align_kartı(örnek, pixel_align_adımı),
         KartKimliği::Points(örnek) => points_kartı(örnek),
         KartKimliği::ScalesDirOri(örnek) => scales_dir_ori_kartı(örnek),
@@ -1621,11 +1697,9 @@ impl Render for ChartListesi {
                     }
                 )
             }
-            KartKimliği::PathGapClip(örnek) => {
-                format!(
-                    "{} nokta · null/undefined boşluk ve kırpma yüzeyi",
-                    örnek.nokta_sayısı()
-                )
+            KartKimliği::PathGapClip => {
+                "15 ilişkili yüzey · 4 ortak spanGaps animasyonu · 5 karşılaştırma grubu"
+                    .to_string()
             }
             KartKimliği::PixelAlign(_) => {
                 format!(
@@ -1909,6 +1983,15 @@ impl Render for ChartListesi {
                 .months_grafikleri
                 .iter()
                 .any(|grafik| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::PathGapClip {
+            geri_var = self
+                .path_gap_clip_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .path_gap_clip_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         }
         let çizim_hatası = self.hata.clone().or(bileşen_hatası);
         let seri_adları = if aktif_kart == KartKimliği::TimeseriesDiscrete {
@@ -2515,21 +2598,20 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::NoData, cx);
                 })),
             )
-            .children(PathGapClipÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::PathGapClip(örnek);
+            .child(
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
+                    "kart-path-gap-clip",
+                    "Path & Gap Clipping",
                     "path-gap-clip",
-                    aktif_kart == kart,
-                    "null/undefined · boşluk ve yol kırpması",
+                    aktif_kart == KartKimliği::PathGapClip,
+                    "15 ilişkili yüzey · 4 ortak spanGaps animasyonu",
                     panel,
                     vurgu,
                 )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            }))
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::PathGapClip, cx);
+                })),
+            )
             .children(PixelAlignÖrneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::PixelAlign(örnek);
                 katalog_kartı(
@@ -3310,6 +3392,12 @@ impl Render for ChartListesi {
                                     grafik.önceki_görünüm(cx);
                                 });
                             }
+                        } else if bu.aktif_kart == KartKimliği::PathGapClip {
+                            for (_, grafik) in &bu.path_gap_clip_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.önceki_görünüm(cx);
+                                });
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
@@ -3342,6 +3430,12 @@ impl Render for ChartListesi {
                                     grafik.tam_görünüm(cx);
                                 });
                             }
+                        } else if bu.aktif_kart == KartKimliği::PathGapClip {
+                            for (_, grafik) in &bu.path_gap_clip_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.tam_görünüm(cx);
+                                });
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.tam_görünüm(cx);
@@ -3362,6 +3456,8 @@ impl Render for ChartListesi {
                             bu.nearest_non_null_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::Months {
                             bu.months_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::PathGapClip {
+                            bu.path_gap_clip_yüzeylerini_oluştur(cx);
                         } else {
                             bu.grafiği_yenile(100, cx);
                         }
@@ -3591,6 +3687,119 @@ impl Render for ChartListesi {
                             )
                     }),
                 )
+        } else if aktif_kart == KartKimliği::PathGapClip {
+            let gruplar: [(&str, &str, &[PathGapClipÖrneği]); 5] = [
+                (
+                    "Band ve canlı spanGaps",
+                    "İki band yüzeyi ile join yüzeyleri aynı bir saniyelik bridge durumunu paylaşır.",
+                    &[
+                        PathGapClipÖrneği::VeriDışınaTaşanÖlçek,
+                        PathGapClipÖrneği::BantBoşlukları,
+                    ],
+                ),
+                (
+                    "Stepped yol karşılaştırması",
+                    "Doğrudan ve join edilmiş veride before/after boşluk sınırları yan yana incelenir.",
+                    &[
+                        PathGapClipÖrneği::BasamakSonra,
+                        PathGapClipÖrneği::BasamakÖnce,
+                        PathGapClipÖrneği::BirleşikBasamakSonra,
+                        PathGapClipÖrneği::BirleşikBasamakÖnce,
+                    ],
+                ),
+                (
+                    "Join ve null türleri",
+                    "NULL_EXPAND ile sayısal join gerçek null'u hizalama eksiğinden ayırır; ikisi de ortak bridge durumuna katılır.",
+                    &[
+                        PathGapClipÖrneği::GenişletilmişHizalama,
+                        PathGapClipÖrneği::SayısalHizalama,
+                    ],
+                ),
+                (
+                    "Piksel sınırı regresyonları",
+                    "Ters/normal yoğun seri ile dört küçük alt-piksel varyasyonu kaynak boyutunda çizilir.",
+                    &[
+                        PathGapClipÖrneği::TekBoşlukÇıkışı,
+                        PathGapClipÖrneği::TekBoşlukGirişi,
+                        PathGapClipÖrneği::TekBoşluk3001,
+                        PathGapClipÖrneği::TekBoşluk4999,
+                        PathGapClipÖrneği::TekBoşluk5001,
+                        PathGapClipÖrneği::ÇiftBoşluk,
+                    ],
+                ),
+                (
+                    "Null ve undefined",
+                    "Gerçek null görünür bir gap açar; undefined yalnız hizalama eksiği olarak atlanır.",
+                    &[PathGapClipÖrneği::Tanımsız],
+                ),
+            ];
+            çizim_tabanı
+                .flex_none()
+                .h(px(1260.0))
+                .overflow_y_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("Kaynak sayfadaki 15 yüzey tek ailede tutulur. Her yüzeyin imleç, seçim ve wheel görünümü bağımsızdır; yalnız scale-range, band-gaps, expand ve numeric yüzeyleri spanGaps durumunu aynı saniyede değiştirir."),
+                )
+                .children(gruplar.into_iter().map(|(grup, açıklama, örnekler)| {
+                    div()
+                        .mt_4()
+                        .child(
+                            div()
+                                .text_sm()
+                                .font_weight(FontWeight::BOLD)
+                                .text_color(metin)
+                                .child(grup),
+                        )
+                        .child(div().text_xs().text_color(soluk).child(açıklama))
+                        .children(örnekler.iter().filter_map(|örnek| {
+                            let grafik = self
+                                .path_gap_clip_grafikleri
+                                .iter()
+                                .find(|(kimlik, _)| kimlik == örnek)
+                                .map(|(_, grafik)| grafik.clone())?;
+                            let (genişlik, yükseklik) = örnek.kaynak_boyutu();
+                            Some(
+                                div()
+                                    .mt_2()
+                                    .child(
+                                        div()
+                                            .text_xs()
+                                            .font_weight(FontWeight::BOLD)
+                                            .text_color(metin)
+                                            .child(örnek.başlık()),
+                                    )
+                                    .child(
+                                        div()
+                                            .text_xs()
+                                            .text_color(soluk)
+                                            .child(örnek.kısa_açıklama()),
+                                    )
+                                    .child(
+                                        div()
+                                            .id(SharedString::from(format!(
+                                                "{}-kaydirma",
+                                                örnek.kimlik()
+                                            )))
+                                            .w_full()
+                                            .h(px(yükseklik as f32))
+                                            .overflow_x_scroll()
+                                            .child(
+                                                div()
+                                                    .w(px(genişlik as f32))
+                                                    .h(px(yükseklik as f32))
+                                                    .child(grafik),
+                                            ),
+                                    ),
+                            )
+                        }))
+                }))
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
             let boyut = self
                 .boyut_senkron_akışı
@@ -3644,6 +3853,9 @@ impl Render for ChartListesi {
             }
             KartKimliği::TimeseriesDiscrete => {
                 "İki yüzey aynı X imlecini paylaşır · üst float seri ve alttaki DEV1/DEV2/DEV3 değerleri tek lejantta birleşir"
+            }
+            KartKimliği::PathGapClip => {
+                "15 yüzey bağımsız yakınlaşır · dört canlı yüzey aynı saniyede gerçek null boşluklarını bağlar/ayırır"
             }
             _ => {
                 "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır · çift tıkla: tam görünüm"
@@ -3710,6 +3922,17 @@ impl Render for ChartListesi {
                  genişlikli olmayan güvenli bir ölçek gösterin. Maliyet: 33 eşzamanlı yüzey \
                  yerine seçili tanım aynı GPUI yüzeyinde değiştirilir ve yalnız eksenlerle en \
                  fazla iki nokta yeniden kurulur.",
+            ),
+            KartKimliği::PathGapClip => Some(
+                "Amaç: gerçek null, join sırasında oluşan undefined/hizalama eksiği, band kırpması, \
+                 stepped before/after ve tek-piksel gap sınırlarını kaynak sayfadaki 15 yüzeyle \
+                 karşılaştırır. API: HizalıDeğer::{Değer, Boş, Tanımsız}, NULL_RETAIN/NULL_EXPAND \
+                 join kipleri, linear/stepped/spline yolları ve spanGaps mutasyonu çekirdekte \
+                 tanımlıdır; kaynakta setData/setScale yoktur. İzleme: scrape eksiğini gerçek \
+                 ölçüm null'u gibi boyamayın; bridge açıldığında çizginin yalnız görsel olarak \
+                 bağlandığını kullanıcıya belirtin. Maliyet: path/gap taraması O(N), sıralı imleç \
+                 O(log N); pointer yalnız hafif overlay'i günceller, bir saniyelik animasyon yalnız \
+                 dört kaynak yüzeyin ana yollarını yeniden kurar.",
             ),
             _ => None,
         };
