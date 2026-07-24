@@ -926,6 +926,18 @@
       "rust_karşılığı": "AçıklamaDüzeni, AçıklamaStili ve Açıklamaİşareti",
       "durum": "tam_kanıtlı",
       "test": "src/kart/annotations.rs"
+    },
+    {
+      "kaynak_yolu": "scales.y.range(u, dataMin, dataMax)",
+      "rust_karşılığı": "GrafikSeçenekleri::kütle_spektrumu_y_aralığı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/mass_spectrum.rs"
+    },
+    {
+      "kaynak_yolu": "fetch('./data/ms_spectrum.csv') columnar parse",
+      "rust_karşılığı": "mass_spectrum_kartı kaynak CSV ayrıştırması",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/mass_spectrum.rs"
     }
   ]
 }

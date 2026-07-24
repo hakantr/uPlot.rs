@@ -826,6 +826,9 @@ pub struct GrafikSeçenekleri {
     /// değerlerine yapıştıran aralık callback'inin karşılığıdır.
     pub x_aralığı_veriye_yapışık: bool,
     pub y_aralığı: Option<Aralık>,
+    /// `mass-spectrum.html` içindeki veri min/max'ını doğrudan kullanan ve
+    /// düz görünümde sıfır için 0..100, diğer değerler için 0..2v üreten kip.
+    pub kütle_spektrumu_y_aralığı: bool,
     pub y_ölçekleri: Vec<YÖlçekSeçenekleri>,
     pub birincil_y_ölçeği: String,
     pub x_eksen_etiketi: String,
@@ -911,6 +914,7 @@ impl GrafikSeçenekleri {
             x_aralığı: None,
             x_aralığı_veriye_yapışık: false,
             y_aralığı: None,
+            kütle_spektrumu_y_aralığı: false,
             y_ölçekleri: Vec::new(),
             birincil_y_ölçeği: "y".to_string(),
             x_eksen_etiketi: String::new(),
@@ -1184,6 +1188,11 @@ impl GrafikSeçenekleri {
 
     pub fn y_aralığı(mut self, aralık: Aralık) -> Self {
         self.y_aralığı = Some(aralık);
+        self
+    }
+
+    pub fn kütle_spektrumu_y_aralığı(mut self, etkin: bool) -> Self {
+        self.kütle_spektrumu_y_aralığı = etkin;
         self
     }
 

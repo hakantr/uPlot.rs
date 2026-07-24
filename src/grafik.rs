@@ -3979,6 +3979,20 @@ impl Grafik {
                         logaritmik_otomatik_aralık(görünür(), taban, tam)
                             .unwrap_or_else(|| Aralık::otomatik(görünür()))
                     }
+                    _ if anahtar == self.seçenekler.birincil_y_ölçeği
+                        && self.seçenekler.kütle_spektrumu_y_aralığı =>
+                    {
+                        sonlu_sınırlar(görünür().flatten().copied())
+                            .and_then(|(en_az, en_çok)| {
+                                if en_az == en_çok {
+                                    let üst = if en_az == 0.0 { 100.0 } else { 2.0 * en_az };
+                                    Aralık::yeni(0.0_f64.min(üst), 0.0_f64.max(üst)).ok()
+                                } else {
+                                    Aralık::yeni(en_az, en_çok).ok()
+                                }
+                            })
+                            .unwrap_or_else(|| Aralık::otomatik(görünür()))
+                    }
                     _ => self
                         .ölçek_seçeneği(anahtar)
                         .and_then(|ölçek| ölçek.sayısal_aralık)

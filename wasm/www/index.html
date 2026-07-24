@@ -157,6 +157,11 @@
         <small>annotations</small>
         <div class="durum">2 seri · X çizgisi ve aralık işaretleri</div>
       </article>
+      <article class="kart" data-kart="mass-spectrum" aria-current="false" tabindex="0">
+        <strong>Mass Spectrum</strong>
+        <small>mass-spectrum</small>
+        <div class="durum">41.986 kaynak CSV noktası · m/z</div>
+      </article>
       <article class="kart" data-kart="scale-padding" aria-current="false" tabindex="0">
         <strong>Scale Padding</strong>
         <small>scale-padding</small>
@@ -337,6 +342,7 @@
       log_scales2_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
       annotations_kart_tanim_ornegi,
+      mass_spectrum_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
       scale_padding_kart_tanim_ornegi,
@@ -482,6 +488,18 @@
           { etiket: "Series 2", renk: "blue" },
         ],
         yardım: "Sürükle: seç · işaretler yakınlaştırma ve taşımada görünür X aralığına kırpılır",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+      },
+      "mass-spectrum": {
+        başlık: "Mass Spectrum",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/mass-spectrum.html">mass-spectrum.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/ms_spectrum.csv">ms_spectrum.csv</a>
+          <br>41.986 kaynak m/z ve relative abundance noktası · düz görünümde kaynak 0…100 / 0…2v Y kuralı`,
+        tanım: () => mass_spectrum_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/mass_spectrum.rs",
+        seriler: [{ etiket: "Intensity", renk: "#305CDE" }],
+        yardım: "Sürükle: seç · tekerlek/dokunma: yakınlaştır ve taşı · çift tıkla: tam görünüm",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
       },

@@ -1,0 +1,24 @@
+id = "mass-spectrum"
+kaynak = "../uPlot/demos/mass-spectrum.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/mass_spectrum.rs#mass_spectrum_kartı"
+viewport = [1920, 600]
+durum = "kaynak_csv_ve_ozel_y_araligi"
+
+[veri]
+nokta_sayısı = 41986
+x_aralığı = [260.01, 1100.0]
+y_aralığı = [0.0, 100.0]
+kaynak = "demos/data/ms_spectrum.csv"
+
+[ölçek]
+x_zaman = false
+x_etiketi = "m/z"
+y_etiketi = "relative abundance (%)"
+düz_sıfır = [0.0, 100.0]
+düz_diğer_kuralı = "0..2v"
+
+[kanıt]
+örnek = "examples/mass_spectrum.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

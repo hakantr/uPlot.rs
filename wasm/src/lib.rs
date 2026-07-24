@@ -15,19 +15,20 @@ use uplot_rs::{
     GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği, Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
     HighLowBandsÖrneği, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ,
     LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
-    LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği, MISSING_DATA_KART_TANIM_ÖRNEĞİ,
-    MONTHS_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
-    NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
-    POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği, PointsÖrneği,
-    RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
-    SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ,
-    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ,
-    SPARSE_KART_TANIM_ÖRNEĞİ, STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_KART_TANIM_ÖRNEĞİ,
-    SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
-    ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SeçimEylemi, SineAkışı, SmoothingÖrneği,
-    SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği,
-    StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği,
-    SyncYZeroAşaması, THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
+    LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ,
+    NO_DATA_KART_TANIM_ÖRNEĞİ, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
+    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignÖrneği,
+    PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
+    SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
+    SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
+    STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_KART_TANIM_ÖRNEĞİ, SVG_IMAGE_KART_TANIM_ÖRNEĞİ,
+    SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği,
+    ScatterÖrneği, SeriSeçenekleri, SeçimEylemi, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı,
+    SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği,
+    StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği, SyncYZeroAşaması,
+    THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
     TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ, TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
     TIMEZONES_DST_KART_TANIM_ÖRNEĞİ, TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ,
     TOOLTIPS_KART_TANIM_ÖRNEĞİ, TRENDLINES_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği, TimePeriodsÖrneği,
@@ -42,17 +43,17 @@ use uplot_rs::{
     cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
     dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
     grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
-    months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
-    no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
-    resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
-    sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
-    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
-    sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
-    timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
-    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, missing_data_null_kartı,
+    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
+    months_rusça_kartı, nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri,
+    path_gap_clip_kartı, pixel_align_kartı, points_kartı, resize_kartı, scale_padding_kartı,
+    scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı,
+    sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
+    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
+    sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
+    trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
+    y_shifted_series_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -81,6 +82,7 @@ impl KartOturumu {
             "align-data-line-bars" => align_data_çizgi_çubuk_kartı(),
             "resize" => resize_kartı(nokta_sayısı),
             "annotations" => annotations_kartı(),
+            "mass-spectrum" => mass_spectrum_kartı(),
             "area-fill" => area_fill_kartı(),
             "scale-padding" => scale_padding_kartı(),
             "zoom-wheel" => zoom_wheel_kartı(),
@@ -1145,7 +1147,7 @@ fn js_hatası(hata: UplotHatası) -> JsValue {
 
 #[wasm_bindgen]
 pub fn kart_sayisi() -> usize {
-    361
+    362
 }
 
 #[wasm_bindgen]
@@ -1329,6 +1331,11 @@ pub fn annotations_kart_tanim_ornegi() -> String {
 }
 
 #[wasm_bindgen]
+pub fn mass_spectrum_kart_tanim_ornegi() -> String {
+    MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
 pub fn scale_padding_kart_tanim_ornegi() -> String {
     SCALE_PADDING_KART_TANIM_ÖRNEĞİ.to_string()
 }
@@ -1507,7 +1514,7 @@ mod testler {
         let svg = oturum.svg(800, 400);
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("Resize"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
         assert!(resize_kart_tanim_ornegi().contains("resize_kartı(100)"));
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
@@ -1532,7 +1539,7 @@ mod testler {
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Area Fill"));
         assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1553,7 +1560,24 @@ mod testler {
         assert!(!yakın.contains("eqk_01"));
         assert!(yakın.contains("rgb(255 193 7 / 20%)"));
         assert!(annotations_kart_tanim_ornegi().contains("annotations_kartı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
+    }
+
+    #[test]
+    fn mass_spectrum_wasm_kaynak_csv_ve_eksenleri_çizer() {
+        let oturum = KartOturumu::yeni("mass-spectrum", 100);
+        assert!(oturum.is_ok());
+        let Ok(oturum) = oturum else {
+            return;
+        };
+        let svg = oturum.svg(1_920, 600);
+        assert!(svg.contains("Mass spectrum"));
+        assert!(svg.contains("m/z"));
+        assert!(svg.contains("relative abundance (%)"));
+        assert!(svg.contains("#305CDE"));
+        assert_eq!(oturum.gorunur_y_araligi(), vec![0.0, 100.0]);
+        assert!(mass_spectrum_kart_tanim_ornegi().contains("mass_spectrum_kartı"));
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1571,7 +1595,7 @@ mod testler {
             }
         }
         assert!(path_gap_clip_kart_tanim_ornegi().contains("path_gap_clip_kartı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1587,7 +1611,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(pixel_align_kart_tanim_ornegi().contains("pixel_align_kartı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1602,7 +1626,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(points_kart_tanim_ornegi().contains("points_kartı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1618,7 +1642,7 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
         }
         assert!(scales_dir_ori_kart_tanim_ornegi().contains("scales_dir_ori_kartı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1652,7 +1676,7 @@ mod testler {
                 .is_empty()
         );
         assert!(scatter_kart_tanim_ornegi().contains("scatter_kartı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1683,7 +1707,7 @@ mod testler {
         assert!(oturum.sine_akisini_ilerlet().is_ok_and(|değişti| değişti));
         assert_ne!(oturum.svg(1_920, 600), önce);
         assert!(sine_stream_kart_tanim_ornegi().contains("SineAkışı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1706,7 +1730,7 @@ mod testler {
             }
         }
         assert!(soft_minmax_kart_tanim_ornegi().contains("SoftMinMaxAkışı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1724,7 +1748,7 @@ mod testler {
             assert!(svg.contains("<rect") || svg.contains("<polygon"));
         }
         assert!(sparklines_bars_kart_tanim_ornegi().contains("sparklines_bars_kartı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1742,7 +1766,7 @@ mod testler {
             assert!(svg.contains("#b3e5fc"));
         }
         assert!(sparklines_kart_tanim_ornegi().contains("sparklines_kartı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1762,7 +1786,7 @@ mod testler {
             }
         }
         assert!(sparse_kart_tanim_ornegi().contains("sparse_kartı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1779,7 +1803,7 @@ mod testler {
             assert!(svg.contains("<path") || svg.contains("<polygon"));
         }
         assert!(stacked_series_kart_tanim_ornegi().contains("stacked_series_kartı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
 
         let Ok(mut oturum) = KartOturumu::yeni("stacked-series-stacked-1", 100) else {
             return;
@@ -1811,7 +1835,7 @@ mod testler {
             assert_ne!(oturum.svg(1_600, 600), önce);
         }
         assert!(stream_data_kart_tanim_ornegi().contains("StreamDataAkışı"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1828,7 +1852,7 @@ mod testler {
         assert!(svg.contains("fill=\"pink\""));
         assert!(svg.contains("stroke=\"blue\""));
         assert!(svg_image_kart_tanim_ornegi().contains("bağımsız_svg"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1854,7 +1878,7 @@ mod testler {
         assert_eq!(köprü.fare_birak(0), vec![0, 1, 1, 1, 2, 1]);
         assert!(köprü.kilitli(2));
         assert!(sync_cursor_kart_tanim_ornegi().contains("SyncCursorGrubu"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1880,7 +1904,7 @@ mod testler {
         );
         assert_ne!(oturum.svg(800, 400), simetrik);
         assert!(sync_y_zero_kart_tanim_ornegi().contains("SyncYZeroAşaması"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1901,7 +1925,7 @@ mod testler {
             assert!(svg.contains("<rect"));
         }
         assert!(thin_bars_stroke_fill_kart_tanim_ornegi().contains("ThinBarsÖrneği"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1917,7 +1941,7 @@ mod testler {
             assert!(svg.contains("rgba(5, 141, 199, 1)"));
         }
         assert!(time_periods_kart_tanim_ornegi().contains("TimePeriodsÖrneği"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1935,7 +1959,7 @@ mod testler {
             assert!(svg.contains("<rect"));
         }
         assert!(timeline_discrete_kart_tanim_ornegi().contains("TimelineDiscreteÖrneği"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1956,7 +1980,7 @@ mod testler {
             assert_eq!(oturum.en_yakin_noktalar(0.5).len(), beklenen);
         }
         assert!(timeseries_discrete_kart_tanim_ornegi().contains("TimeseriesDiscreteÖrneği"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1972,7 +1996,7 @@ mod testler {
             assert!(svg.contains("red"));
         }
         assert!(timezones_dst_kart_tanim_ornegi().contains("TimezonesDstÖrneği"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -1998,7 +2022,7 @@ mod testler {
         );
         assert!(oturum.svg(960, 400).contains("Summary-opt"));
         assert!(tooltips_closest_kart_tanim_ornegi().contains("en_yakın_tooltip"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -2020,7 +2044,7 @@ mod testler {
         assert!(matches!(oturum.tooltip_yeniden_kur(), Ok(true)));
         assert!(oturum.svg(600, 400).contains("Tooltips"));
         assert!(tooltips_kart_tanim_ornegi().contains("tooltip_bilgileri"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -2037,7 +2061,7 @@ mod testler {
         assert!(matches!(oturum.secim_yakinlastir(0.151, 0.817), Ok(true)));
         assert_eq!(oturum.gorunur_x_araligi(), vec![15.0, 81.0]);
         assert!(trendlines_kart_tanim_ornegi().contains("seçim_yakınlaştır"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -2055,7 +2079,7 @@ mod testler {
         assert!(matches!(oturum.boyut_senkron_ilerlet(), Ok(790)));
         assert_eq!(oturum.kaynak_boyutu(), 790);
         assert!(update_cursor_select_resize_kart_tanim_ornegi().contains("grafik.boyutu_ayarla"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
@@ -2072,7 +2096,7 @@ mod testler {
         assert!(svg.contains("Wind m/s"));
         assert_eq!(svg.matches("stroke=\"blue\"").count(), 139);
         assert!(wind_direction_kart_tanim_ornegi().contains("çekirdekte 15 px vektörlere"));
-        assert_eq!(kart_sayisi(), 361);
+        assert_eq!(kart_sayisi(), 362);
     }
 
     #[test]
