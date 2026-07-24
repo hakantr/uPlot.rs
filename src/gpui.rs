@@ -4,8 +4,8 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use ::gpui::{
-    App, BorderStyle, Bounds, ContentMask, Context, Entity, EventEmitter, FocusHandle, Hsla,
-    IntoElement, KeyDownEvent, KeyUpEvent, MouseButton, MouseDownEvent, MouseExitEvent,
+    App, BorderStyle, Bounds, ContentMask, Context, Corners, Entity, EventEmitter, FocusHandle,
+    Hsla, IntoElement, KeyDownEvent, KeyUpEvent, MouseButton, MouseDownEvent, MouseExitEvent,
     MouseMoveEvent, MouseUpEvent, Path, PathBuilder, PinchEvent, Pixels, Render, ScrollDelta,
     ScrollWheelEvent, SharedString, StyleRefinement, TextAlign, TextRun, TouchPhase, Window,
     canvas, div, linear_color_stop, linear_gradient, point, prelude::*, px, quad, rgb, rgba, size,
@@ -461,6 +461,56 @@ impl GpuiGrafik {
         self.açıklama_seçimi = false;
         self.grafik_bildir(cx);
         Ok(())
+    }
+
+    /// Web tarafındaki lejant düğmeleriyle aynı görünürlük değişimini GPUI
+    /// uygulamalarına sunar ve yalnız gerekli sahne katmanlarını yeniler.
+    pub fn seri_görünürlüğünü_ayarla(
+        &mut self,
+        indeks: usize,
+        görünür: bool,
+        cx: &mut Context<Self>,
+    ) -> Result<bool, UplotHatası> {
+        let değişti = self.grafik.seri_görünürlüğünü_ayarla(indeks, görünür)?;
+        if değişti {
+            self.imleç = None;
+            self.grafik_bildir(cx);
+        }
+        Ok(değişti)
+    }
+
+    /// CSS bulunmayan GPUI yüzeylerinde seri çizgi/dolgu rengini çalışma
+    /// anında değiştirir.
+    pub fn seri_renklerini_ayarla(
+        &mut self,
+        indeks: usize,
+        çizgi: impl Into<String>,
+        dolgu: Option<String>,
+        cx: &mut Context<Self>,
+    ) -> Result<bool, UplotHatası> {
+        let değişti = self.grafik.seri_renklerini_ayarla(indeks, çizgi, dolgu)?;
+        if değişti {
+            self.grafik_bildir(cx);
+        }
+        Ok(değişti)
+    }
+
+    /// GPUI çubuk serilerinin nokta başına dinamik dolgu/vuruş paletini
+    /// değiştirir.
+    pub fn seri_çubuk_renklerini_ayarla(
+        &mut self,
+        indeks: usize,
+        dolgular: Vec<String>,
+        çizgiler: Vec<String>,
+        cx: &mut Context<Self>,
+    ) -> Result<bool, UplotHatası> {
+        let değişti = self
+            .grafik
+            .seri_çubuk_renklerini_ayarla(indeks, dolgular, çizgiler)?;
+        if değişti {
+            self.grafik_bildir(cx);
+        }
+        Ok(değişti)
     }
 
     pub fn boşlukları_birleştir_ayarla(
@@ -1587,6 +1637,30 @@ fn sahneyi_önbellekli_boya(
                 pencere.paint_quad(quad(
                     Bounds::new(konum, size(px(*genişlik * ölçek), px(*yükseklik * ölçek))),
                     px(0.0),
+                    renk_çöz(dolgu),
+                    px(*kalınlık * ölçek),
+                    renk_çöz(çizgi),
+                    BorderStyle::default(),
+                ));
+            }
+            Komut::YuvarlatılmışDikdörtgen {
+                konum,
+                genişlik,
+                yükseklik,
+                yarıçaplar,
+                dolgu,
+                çizgi,
+                kalınlık,
+            } => {
+                let konum = dönüştür(*konum);
+                pencere.paint_quad(quad(
+                    Bounds::new(konum, size(px(*genişlik * ölçek), px(*yükseklik * ölçek))),
+                    Corners {
+                        top_left: px(yarıçaplar.üst_sol * ölçek),
+                        top_right: px(yarıçaplar.üst_sağ * ölçek),
+                        bottom_right: px(yarıçaplar.alt_sağ * ölçek),
+                        bottom_left: px(yarıçaplar.alt_sol * ölçek),
+                    },
                     renk_çöz(dolgu),
                     px(*kalınlık * ölçek),
                     renk_çöz(çizgi),

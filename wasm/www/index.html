@@ -56,6 +56,31 @@
     #chart[data-boyut-senkron="true"] svg {
       width: auto; height: auto; max-width: 100%; max-height: 100%;
     }
+    #chart.multi-bars-yüzeyi {
+      display: grid; grid-template-rows: minmax(0, 1fr) auto auto; place-items: unset;
+      overflow: hidden; padding-bottom: 12px;
+    }
+    #chart.multi-bars-yüzeyi[data-coklu-lejant="true"] { padding-bottom: 12px; }
+    #chart.multi-bars-yüzeyi .multi-bars-kaydırma {
+      min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+    }
+    #chart.multi-bars-yüzeyi .multi-bars-kaydırma svg {
+      display: block; width: auto; height: auto; max-width: none; max-height: none;
+    }
+    #chart.multi-bars-yüzeyi .yardım {
+      position: static; min-width: 0; padding: 5px 6px 2px; white-space: nowrap;
+    }
+    #chart.multi-bars-yüzeyi .lejant {
+      position: static; min-width: 0; max-height: 96px; padding: 7px 6px 2px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      align-items: center; justify-content: stretch; gap: 5px 12px; overflow: auto;
+      border-top: 1px solid #e5e7eb; background: #fff; pointer-events: auto;
+    }
+    #chart.multi-bars-yüzeyi .lejant > span {
+      min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    #chart.multi-bars-yüzeyi .lejant > span:first-child { color: #6b7280; }
     #chart[data-tasima-imleci="hazir"] svg { cursor: grab; }
     #chart[data-tasima-imleci="tasiyor"] svg { cursor: grabbing; }
     #chart[data-eksen-imleci="true"] svg { cursor: move; }
@@ -170,7 +195,7 @@
       </article>
       <article class="kart" data-kart="multi-bars-libraries-vertical" aria-current="false" tabindex="0">
         <strong>Multi Bars · libraries · vertical</strong><small>multi-bars-libraries-vertical</small>
-        <div class="durum">13 kitaplık × 6 benchmark</div>
+        <div class="durum">13 kitaplık × 6 ölçekli benchmark + çizgi</div>
       </article>
       <article class="kart" data-kart="multi-bars-libraries-horizontal" aria-current="false" tabindex="0">
         <strong>Multi Bars · libraries · horizontal</strong><small>multi-bars-libraries-horizontal</small>
@@ -560,6 +585,7 @@
         seriler: [],
         yardım: "Sürükle: seç · tekerlek/dokunma: yakınlaştır ve taşı · çift tıkla: tam görünüm",
         değişkenNokta: false,
+        dinamikSeri: true,
         etkileşimler: () => ortakEtkileşimler(),
       }])),
       ...Object.fromEntries([
@@ -2397,6 +2423,20 @@
       if (aktifKart === "svg-image") {
         return { genişlik: 400, yükseklik: 200 };
       }
+      if (aktifKart === "multi-bars-libraries-vertical") {
+        const lejantPayı = chart.dataset.cokluLejant === "true" ? 64 : 0;
+        return {
+          genişlik: 2300,
+          yükseklik: Math.max(400, Math.round(chart.clientHeight - 24 - lejantPayı)),
+        };
+      }
+      if (aktifKart === "multi-bars-libraries-horizontal") {
+        return { genişlik: 800, yükseklik: 2300 };
+      }
+      if (aktifKart === "multi-bars-variable-colors"
+        || aktifKart === "multi-bars-non-justified") {
+        return { genişlik: 800, yükseklik: 400 };
+      }
       if (kartlar[aktifKart]?.kompakt === true) {
         return { genişlik: 150, yükseklik: 30 };
       }
@@ -2898,6 +2938,7 @@
       if (!oturum) return;
       chart.classList.remove("sync-cursor-yüzeyi");
       chart.classList.remove("timeseries-discrete-yüzeyi");
+      chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
       const sayı = Number(nokta.value);
       değer.value = `${sayı} nokta`;
       const xAralığı = oturum.gorunur_x_araligi();
@@ -2911,8 +2952,6 @@
       chart.classList.toggle("svg-image-yüzeyi", aktifKart === "svg-image");
       chart.dataset.kompakt = String(kart.kompakt === true);
       chart.dataset.boyutSenkron = String(aktifKart === "update-cursor-select-resize");
-      chart.dataset.cokluLejant = kart.seriler.length > 6 ? "true" : "false";
-      const { genişlik, yükseklik } = boyutlar();
       if (kart.dinamikSeri) {
         const etiketler = oturum.seri_etiketleri();
         const renkler = oturum.seri_renkleri();
@@ -2921,6 +2960,8 @@
           renk: renkler[indeks] ?? "#000000",
         }));
       }
+      chart.dataset.cokluLejant = kart.seriler.length > 6 ? "true" : "false";
+      const { genişlik, yükseklik } = boyutlar();
       const seriİmzası = kart.seriler.map((seri, indeks) =>
         `${seri.etiket}\u0000${seri.renk}\u0000${oturum.seri_gorunur(indeks)}`
       ).join("\u0001");
@@ -2940,13 +2981,17 @@
             content so the chart can move through the viewport like the official demo.</p>
             <p>uPlot.rs keeps platform layout in the adapter and performs client-to-scene
             coordinate conversion in the reusable Rust core.</p>
-          </div>` : svgÇıktısı;
+          </div>` : aktifKart.startsWith("multi-bars-")
+            ? `<div class="multi-bars-kaydırma">${svgÇıktısı}</div>`
+            : svgÇıktısı;
         chart.dataset.cizilenKart = aktifKart;
         chart.dataset.seriImzasi = seriİmzası;
       } else {
         const mevcutSvg = kart.scrollSync
           ? chart.querySelector(".scroll-sync-grafik svg")
-          : chart.querySelector(":scope > svg");
+          : aktifKart.startsWith("multi-bars-")
+            ? chart.querySelector(".multi-bars-kaydırma svg")
+            : chart.querySelector(":scope > svg");
         const şablon = document.createElement("template");
         şablon.innerHTML = svgÇıktısı.trim();
         const yeniSvg = şablon.content.firstElementChild;
@@ -2984,10 +3029,11 @@
           ${eksenGöstergeleri}
         </g>`);
       const yığmaLejantı = aktifKart.startsWith("stacked-series-");
+      const değiştirilebilirLejant = yığmaLejantı || aktifKart.startsWith("multi-bars-");
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
-        oturum.seri_gorunur(indeks) || yığmaLejantı
-          ? `<span ${yığmaLejantı ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>
-              <i class="örnek" style="border-color:${seri.renk}"></i>${seri.etiket}: <b id="seri-değeri-${indeks}">--</b></span>`
+        oturum.seri_gorunur(indeks) || değiştirilebilirLejant
+          ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>
+              <i class="örnek" style="border-color:${seri.renk};background:${seri.renk}"></i>${seri.etiket}: <b id="seri-değeri-${indeks}">--</b></span>`
           : ""
       ).join("");
       const arayüzHedefi = kart.scrollSync ? chart.querySelector(".scroll-sync-grafik") : chart;
@@ -3023,7 +3069,10 @@
           const indeks = Number(öğe.dataset.seriToggle);
           if (!Number.isInteger(indeks) || !oturum) return;
           try {
-            if (oturum.stacked_seri_gorunurlugu_ayarla(indeks, !oturum.seri_gorunur(indeks))) {
+            const değişti = yığmaLejantı
+              ? oturum.stacked_seri_gorunurlugu_ayarla(indeks, !oturum.seri_gorunur(indeks))
+              : oturum.seri_gorunurlugu_ayarla(indeks, !oturum.seri_gorunur(indeks));
+            if (değişti) {
               çiz();
             }
           } catch (error) {
@@ -3457,9 +3506,7 @@
         if (sonOlay) pointerHareketiniİşle(sonOlay);
       });
     });
-    chart.addEventListener("scroll", () => {
-      if (kartlar[aktifKart]?.scrollSync) yüzeyiEşitle();
-    }, { passive: true });
+    chart.addEventListener("scroll", yüzeyiEşitle, { passive: true, capture: true });
     chart.addEventListener("pointerdown", olay => {
       if (olay.pointerType === "touch") {
         if (!etkileşimler.dokunma) return;

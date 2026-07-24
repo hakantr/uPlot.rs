@@ -22,7 +22,9 @@ mod zaman;
 #[cfg(feature = "svg")]
 pub mod svg;
 
-pub use cizim::{DoğrusalGradyan, GradyanRenkDurağı, Komut, MetinHizası, Nokta, Sahne};
+pub use cizim::{
+    DoğrusalGradyan, GradyanRenkDurağı, Komut, KöşeYarıçapları, MetinHizası, Nokta, Sahne,
+};
 pub use grafik::{
     DağılımVuruşu, EksenHedefi, Grafik, NullAtlamaYönü, SeçimEylemi, TimelineVuruşu,
     ZoomRangerDurumu, ZoomRangerSürüklemeEkseni,

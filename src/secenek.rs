@@ -571,6 +571,7 @@ pub struct ÇubukDüzeni {
     pub değer_etiketi_otomatik: bool,
     pub değer_etiketleri: bool,
     pub genişlik_oranı: f32,
+    pub uç_yarıçap_oranı: f32,
     pub ek_boşluk: f32,
     pub hizalama: i8,
     pub x_kenar_paylı: bool,
@@ -585,6 +586,7 @@ impl ÇubukDüzeni {
             değer_etiketi_otomatik: false,
             değer_etiketleri: true,
             genişlik_oranı: 0.9,
+            uç_yarıçap_oranı: 0.0,
             ek_boşluk: 0.0,
             hizalama: 0,
             x_kenar_paylı: true,
@@ -614,6 +616,13 @@ impl ÇubukDüzeni {
     pub fn genişlik_oranı(mut self, oran: f32) -> Self {
         if oran.is_finite() {
             self.genişlik_oranı = oran.clamp(0.0, 1.0);
+        }
+        self
+    }
+
+    pub fn uç_yarıçap_oranı(mut self, oran: f32) -> Self {
+        if oran.is_finite() {
+            self.uç_yarıçap_oranı = oran.clamp(0.0, 0.5);
         }
         self
     }

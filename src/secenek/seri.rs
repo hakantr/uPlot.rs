@@ -57,6 +57,8 @@ pub struct SeriSeçenekleri {
     pub yüzen_çubuk_üst_serisi: Option<usize>,
     /// `disp.fill.values` karşılığı nokta başına çubuk dolguları.
     pub çubuk_dolguları: Vec<String>,
+    /// `disp.stroke.values` karşılığı nokta başına çubuk vuruşları.
+    pub çubuk_çizgileri: Vec<String>,
     pub gösterim_değer_çarpanı: f64,
     /// Çizim verisi kümülatif/dönüştürülmüş olduğunda cursor ve lejantta
     /// gösterilecek ham kaynak değerleri. Uzunluk uyuşmazsa güvenle yoksayılır.
@@ -102,6 +104,7 @@ impl SeriSeçenekleri {
             çubuk_hizası: 0,
             yüzen_çubuk_üst_serisi: None,
             çubuk_dolguları: Vec::new(),
+            çubuk_çizgileri: Vec::new(),
             gösterim_değer_çarpanı: 1.0,
             lejant_değerleri: None,
             piksel_hizası: None,
@@ -182,6 +185,15 @@ impl SeriSeçenekleri {
         S: Into<String>,
     {
         self.çubuk_dolguları = dolgular.into_iter().map(Into::into).collect();
+        self
+    }
+
+    pub fn çubuk_çizgileri<I, S>(mut self, çizgiler: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.çubuk_çizgileri = çizgiler.into_iter().map(Into::into).collect();
         self
     }
 

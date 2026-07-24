@@ -584,6 +584,27 @@ impl KartOturumu {
             .is_some_and(|seri| seri.göster)
     }
 
+    pub fn seri_gorunurlugu_ayarla(
+        &mut self,
+        seri_indeksi: usize,
+        görünür: bool,
+    ) -> Result<bool, JsValue> {
+        self.grafik
+            .seri_görünürlüğünü_ayarla(seri_indeksi, görünür)
+            .map_err(js_hatası)
+    }
+
+    pub fn seri_renklerini_ayarla(
+        &mut self,
+        seri_indeksi: usize,
+        çizgi: String,
+        dolgu: Option<String>,
+    ) -> Result<bool, JsValue> {
+        self.grafik
+            .seri_renklerini_ayarla(seri_indeksi, çizgi, dolgu)
+            .map_err(js_hatası)
+    }
+
     pub fn stacked_seri_gorunurlugu_ayarla(
         &mut self,
         seri_indeksi: usize,
@@ -1791,6 +1812,23 @@ mod testler {
             };
             assert!(oturum.svg(800, 400).contains("<rect"));
         }
+        let Ok(mut oturum) = KartOturumu::yeni("multi-bars-libraries-vertical", 100) else {
+            return;
+        };
+        assert!(
+            oturum
+                .seri_gorunurlugu_ayarla(0, false)
+                .is_ok_and(|değişti| değişti)
+        );
+        assert!(!oturum.seri_gorunur(0));
+        assert!(
+            oturum
+                .seri_renklerini_ayarla(1, "#123456".to_string(), Some("#abcdef".to_string()))
+                .is_ok_and(|değişti| değişti)
+        );
+        let svg = oturum.svg(800, 400);
+        assert!(svg.contains("#123456"));
+        assert!(svg.contains("#abcdef"));
         assert!(multi_bars_kart_tanim_ornegi().contains("multi_bars_kartı"));
         assert_eq!(kart_sayisi(), 365);
     }

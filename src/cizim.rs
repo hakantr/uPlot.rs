@@ -35,6 +35,14 @@ pub enum MetinHizası {
     Bitiş,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct KöşeYarıçapları {
+    pub üst_sol: f32,
+    pub üst_sağ: f32,
+    pub alt_sağ: f32,
+    pub alt_sol: f32,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Komut {
     ArkaPlan {
@@ -89,6 +97,15 @@ pub enum Komut {
         konum: Nokta,
         genişlik: f32,
         yükseklik: f32,
+        dolgu: String,
+        çizgi: String,
+        kalınlık: f32,
+    },
+    YuvarlatılmışDikdörtgen {
+        konum: Nokta,
+        genişlik: f32,
+        yükseklik: f32,
+        yarıçaplar: KöşeYarıçapları,
         dolgu: String,
         çizgi: String,
         kalınlık: f32,
@@ -319,6 +336,30 @@ impl Sahne {
                         sayı(*kalınlık)
                     );
                 }
+                Komut::YuvarlatılmışDikdörtgen {
+                    konum,
+                    genişlik,
+                    yükseklik,
+                    yarıçaplar,
+                    dolgu,
+                    çizgi,
+                    kalınlık,
+                } => {
+                    let d = yuvarlatılmış_dikdörtgen_yolu(
+                        *konum,
+                        *genişlik,
+                        *yükseklik,
+                        *yarıçaplar,
+                    );
+                    let _ = writeln!(
+                        çıktı,
+                        "  <path d=\"{}\" fill=\"{}\" stroke=\"{}\" stroke-width=\"{}\"/>",
+                        d,
+                        kaçış(dolgu),
+                        kaçış(çizgi),
+                        sayı(*kalınlık)
+                    );
+                }
                 Komut::Metin {
                     konum,
                     içerik,
@@ -356,6 +397,49 @@ impl Sahne {
             .collect::<Vec<_>>()
             .join("\n")
     }
+}
+
+#[cfg(feature = "svg")]
+fn yuvarlatılmış_dikdörtgen_yolu(
+    konum: Nokta,
+    genişlik: f32,
+    yükseklik: f32,
+    yarıçaplar: KöşeYarıçapları,
+) -> String {
+    let azami = (genişlik / 2.0).min(yükseklik / 2.0).max(0.0);
+    let üst_sol = yarıçaplar.üst_sol.clamp(0.0, azami);
+    let üst_sağ = yarıçaplar.üst_sağ.clamp(0.0, azami);
+    let alt_sağ = yarıçaplar.alt_sağ.clamp(0.0, azami);
+    let alt_sol = yarıçaplar.alt_sol.clamp(0.0, azami);
+    let sol = konum.x;
+    let sağ = konum.x + genişlik;
+    let üst = konum.y;
+    let alt = konum.y + yükseklik;
+    format!(
+        "M{} {} H{} Q{} {} {} {} V{} Q{} {} {} {} H{} Q{} {} {} {} V{} Q{} {} {} {} Z",
+        sayı(sol + üst_sol),
+        sayı(üst),
+        sayı(sağ - üst_sağ),
+        sayı(sağ),
+        sayı(üst),
+        sayı(sağ),
+        sayı(üst + üst_sağ),
+        sayı(alt - alt_sağ),
+        sayı(sağ),
+        sayı(alt),
+        sayı(sağ - alt_sağ),
+        sayı(alt),
+        sayı(sol + alt_sol),
+        sayı(sol),
+        sayı(alt),
+        sayı(sol),
+        sayı(alt - alt_sol),
+        sayı(üst + üst_sol),
+        sayı(sol),
+        sayı(üst),
+        sayı(sol + üst_sol),
+        sayı(üst),
+    )
 }
 
 #[cfg(feature = "svg")]
