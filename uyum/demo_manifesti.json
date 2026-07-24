@@ -1994,6 +1994,7 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "source-exact-33-active-canvases", "single-catalog-card-33-options",
+        "same-surface-option-replacement", "responsive-contained-option-selector",
         "legacy-no-data-id-aliases", "null-and-empty-aligned-data",
         "custom-empty-x-y-range", "undefined-empty-scale-surface",
         "single-time-point-one-day-x-range", "single-numeric-point-range",

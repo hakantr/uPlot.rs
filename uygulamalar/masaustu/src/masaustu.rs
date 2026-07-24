@@ -3701,6 +3701,16 @@ impl Render for ChartListesi {
                  noktası ve üç seri değişmeden kalır; yalnız ölçek, ızgara ve yollar \
                  O(S×N+T) maliyetle yeniden boyanır.",
             ),
+            KartKimliği::NoData => Some(
+                "Amaç: boş veri, tek nokta, neredeyse düz ve tam düz serilerde otomatik \
+                 sayısal aralığın kararlı kalmasını karşılaştırır. API: NoDataÖrneği::TÜMÜ \
+                 kaynak 33 durumu tipli seçenekler olarak sunar; no_data_kartı seçili durumun \
+                 zaman kipini, özel boş aralıklarını ve rangeNum eşdeğerini kurar. İzleme: \
+                 veri gelmeden önce anlamlı bir aralık; tek veya sabit değer geldiğinde sıfır \
+                 genişlikli olmayan güvenli bir ölçek gösterin. Maliyet: 33 eşzamanlı yüzey \
+                 yerine seçili tanım aynı GPUI yüzeyinde değiştirilir ve yalnız eksenlerle en \
+                 fazla iki nokta yeniden kurulur.",
+            ),
             _ => None,
         };
         let kullanım_rehberi_açık = self.kullanım_rehberi_açık;

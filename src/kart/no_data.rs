@@ -9,6 +9,8 @@ let örnek = NoDataÖrneği::kimlikten("no-data-one-x-0-y-0")
     .unwrap_or(NoDataÖrneği::BOŞ_ÖZEL_ARALIK);
 let (seçenekler, veri) = no_data_kartı(örnek)?;
 // NoDataÖrneği::TÜMÜ, kaynak 33 yüzeyinin eksiksiz kanıt kümesidir.
+// Adaptör aynı grafik yüzeyinde yalnız seçili tanımı değiştirerek 33 ayrı
+// çizim yüzeyi ve etkileşim katmanı oluşturma maliyetini taşımaz.
 let grafik = Grafik::yeni(seçenekler, veri)?;"##;
 
 /// Resmî `demos/no-data.html` sayfasındaki 33 etkin uPlot yüzeyi.

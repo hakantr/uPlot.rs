@@ -2895,6 +2895,10 @@ mod testler {
         assert_eq!(web.matches("data-kart=\"no-data-").count(), 0);
         assert!(web.contains("id=\"no-data-variation\""));
         assert_eq!(web.matches("[\"no-data-").count(), 33);
+        assert!(web.contains(
+            "#no-data-variation { display: block; width: 100%; max-width: 100%; min-width: 0;"
+        ));
+        assert!(web.contains("text-overflow: ellipsis"));
     }
 
     #[test]

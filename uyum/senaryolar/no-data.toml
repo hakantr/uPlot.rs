@@ -5,6 +5,13 @@ viewport = [800, 400]
 device_pixel_ratio = 1
 durum = "tek_katalog_karti_33_secilebilir_kaynak_yuzeyi"
 
+[sunum]
+katalog_kart_sayısı = 1
+seçim_türü = "tipli_33_seçenek"
+aynı_yüzeyi_yeniden_kullanır = true
+yatay_taşma = false
+açıklama_varsayılanı = "kapalı"
+
 [veri]
 etkin_yüzey_sayısı = 33
 catalog_kart_sayisi = 1

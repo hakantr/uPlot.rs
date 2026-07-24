@@ -962,6 +962,12 @@
       yardım: "Kaynak yüzeyi seç · sürükle: seç · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Boş veri, tek nokta, neredeyse düz ve tam düz serilerde otomatik sayısal aralığın kararlı ve okunabilir kalmasını karşılaştırır.",
+        api: "NoDataÖrneği::TÜMÜ kaynak 33 durumu tipli seçenekler olarak sunar; no_data_kartı seçili durumun x zaman kipini, özel boş aralıklarını ve uPlot rangeNum eşdeğerini kurar.",
+        izleme: "Henüz örnek gelmeyen panellerde önceden belirlenmiş anlamlı bir aralık gösterin; tek ya da sabit ölçüm geldiğinde sıfır genişlikli ölçek yerine rangeNum ile güvenli bir görünüm üretin.",
+        maliyet: "Kaynak sayfadaki 33 eşzamanlı yüzey yerine tek SVG ve tek etkileşim kabuğu kullanılır. Seçenek değişimi en fazla iki noktayı ve eksenleri yeniden kurar; seçici genişliği kart içinde taşmadan kalır.",
+      },
     };
 
     const pathGapClipYüzeyleri = [
