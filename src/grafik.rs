@@ -2581,6 +2581,11 @@ impl Grafik {
                 .x()
                 .partition_point(|değer| *değer <= x_aralığı.en_çok);
             let görünür_indeks_sayısı = görünür_bitiş.saturating_sub(ilk_görünür);
+            // uPlot, yoğun çizgi yollarını cihaz-pikseli hassasiyetinde kurar; nokta
+            // işaretlerinin gizlenmesi yol koordinatlarını tam CSS pikseline
+            // kuantize etmez. Bir CSS pikselinden sık örneklerde vektör yolu ham
+            // koordinatlarla korumak sinüs gibi düzgün eğrilerde merdivenlenmeyi önler.
+            let yoğun_çizgi = görünür_indeks_sayısı as f32 > x_piksel_uzunluğu.max(1.0);
             let nokta_piksel_açıklığı = ilk_görünür
                 .checked_add(görünür_indeks_sayısı.saturating_sub(1))
                 .and_then(|son| self.veri.x().get(ilk_görünür).zip(self.veri.x().get(son)))
@@ -2605,46 +2610,45 @@ impl Grafik {
                         {
                             ham_parçalar.push(std::mem::take(&mut parça));
                         }
-                        let (x, y) = if self.seçenekler.x_dikey {
+                        let (ham_x, ham_y) = if self.seçenekler.x_dikey {
                             (
-                                piksele_hizala(
-                                    sol + self.y_konumu(
-                                        &seri.ölçek,
-                                        seri_y_aralığı,
-                                        *y_değeri,
-                                        0.0,
-                                        genişlik,
-                                    ),
-                                    piksel_hizası,
+                                sol + self.y_konumu(
+                                    &seri.ölçek,
+                                    seri_y_aralığı,
+                                    *y_değeri,
+                                    0.0,
+                                    genişlik,
                                 ),
-                                piksele_hizala(
-                                    alt - self.x_konumu(x_aralığı, *x_değeri, 0.0, yükseklik),
-                                    piksel_hizası,
-                                ),
+                                alt - self.x_konumu(x_aralığı, *x_değeri, 0.0, yükseklik),
                             )
                         } else {
                             (
-                                piksele_hizala(
-                                    self.x_konumu(x_aralığı, *x_değeri, sol, genişlik),
-                                    piksel_hizası,
-                                ),
-                                piksele_hizala(
-                                    alt - self.y_konumu(
-                                        &seri.ölçek,
-                                        seri_y_aralığı,
-                                        *y_değeri,
-                                        0.0,
-                                        yükseklik,
-                                    ),
-                                    piksel_hizası,
+                                self.x_konumu(x_aralığı, *x_değeri, sol, genişlik),
+                                alt - self.y_konumu(
+                                    &seri.ölçek,
+                                    seri_y_aralığı,
+                                    *y_değeri,
+                                    0.0,
+                                    yükseklik,
                                 ),
                             )
                         };
-                        let nokta = Nokta::yeni(x, y);
-                        parça.push(nokta);
+                        let yol_noktası = if yoğun_çizgi {
+                            Nokta::yeni(ham_x, ham_y)
+                        } else {
+                            Nokta::yeni(
+                                piksele_hizala(ham_x, piksel_hizası),
+                                piksele_hizala(ham_y, piksel_hizası),
+                            )
+                        };
+                        parça.push(yol_noktası);
                         önceki_x = Some(*x_değeri);
-                        if nokta_dikdörtgende(nokta, sol, sağ, üst, alt) {
-                            görünür_noktalar.push((indeks, nokta, *x_değeri, *y_değeri));
+                        let işaret_noktası = Nokta::yeni(
+                            piksele_hizala(ham_x, piksel_hizası),
+                            piksele_hizala(ham_y, piksel_hizası),
+                        );
+                        if nokta_dikdörtgende(işaret_noktası, sol, sağ, üst, alt) {
+                            görünür_noktalar.push((indeks, işaret_noktası, *x_değeri, *y_değeri));
                         }
                     }
                     _ if self.veri.hizalama_eksiği_mi(seri_indeksi, indeks)

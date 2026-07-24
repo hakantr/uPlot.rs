@@ -11,7 +11,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         std::fs::create_dir_all(üst)?;
     }
 
-    let (seçenekler, veri) = resize_kartı(100)?;
+    let nokta_sayısı = std::env::args()
+        .nth(2)
+        .and_then(|değer| değer.parse().ok())
+        .unwrap_or(100);
+    let (seçenekler, veri) = resize_kartı(nokta_sayısı)?;
     let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();
     std::fs::write(&çıktı, svg)?;
     println!("Resize kartı üretildi: {}", çıktı.display());

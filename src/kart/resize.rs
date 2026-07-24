@@ -34,3 +34,47 @@ pub fn resize_kartı(
     let veri = HizalıVeri::yeni(x, vec![y])?;
     Ok((seçenekler, veri))
 }
+
+#[cfg(test)]
+mod testler {
+    use super::*;
+    use crate::{Grafik, Komut};
+
+    #[test]
+    fn bin_noktalı_yoğun_çizgi_tam_piksele_merdivenlenmez() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = resize_kartı(1_000)?;
+        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+        let yol = sahne.komutlar().iter().find_map(|komut| match komut {
+            Komut::Yol { parçalar, .. } => parçalar.first(),
+            _ => None,
+        });
+        assert!(yol.is_some(), "resize çizgi yolu üretilmedi");
+        let Some(yol) = yol else {
+            return Ok(());
+        };
+        assert!(yol.len() >= 900);
+        assert!(
+            yol.iter()
+                .filter(|nokta| nokta.x.fract() != 0.0 || nokta.y.fract() != 0.0)
+                .count()
+                > yol.len() * 9 / 10
+        );
+        let azami_ikinci_fark = yol
+            .windows(3)
+            .filter_map(|üçlü| {
+                let [ilk, orta, son] = üçlü else {
+                    return None;
+                };
+                Some((son.y - 2.0 * orta.y + ilk.y).abs())
+            })
+            .fold(0.0_f32, f32::max);
+        assert!(azami_ikinci_fark < 0.1, "{azami_ikinci_fark}");
+        assert!(
+            !sahne
+                .komutlar()
+                .iter()
+                .any(|komut| matches!(komut, Komut::Daire { .. }))
+        );
+        Ok(())
+    }
+}
