@@ -5,7 +5,7 @@
 use uplot_rs::{
     ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
+    AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, Aralık,
     BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     BOX_WHISKER_KART_TANIM_ÖRNEĞİ, BoyutSenkronAkışı, CANDLESTICK_KART_TANIM_ÖRNEĞİ,
     CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -159,6 +159,7 @@ impl KartOturumu {
                 },
                 points_kartı,
             ),
+            "scales-dir-ori" => scales_dir_ori_kartı(ScalesDirOriÖrneği::XArtıAltYArtıSol),
             kimlik if kimlik.starts_with("scales-dir-ori-") => {
                 ScalesDirOriÖrneği::kimlikten(kimlik).map_or_else(
                     || {
@@ -535,6 +536,11 @@ impl KartOturumu {
         self.grafik.x_dikey_mi()
     }
 
+    pub fn fiziksel_oranlari_mantiksala(&self, yatay: f64, dikey: f64) -> Vec<f64> {
+        let (x, y) = self.grafik.fiziksel_oranları_mantıksala(yatay, dikey);
+        vec![x, y]
+    }
+
     pub fn tekerlek(
         &mut self,
         yatay_odak_oranı: f64,
@@ -579,6 +585,23 @@ impl KartOturumu {
     ) -> Result<bool, JsValue> {
         self.grafik
             .seçim_yakınlaştır(başlangıç_oranı, bitiş_oranı)
+            .map_err(js_hatası)
+    }
+
+    pub fn fiziksel_secim_yakinlastir(
+        &mut self,
+        yatay_başlangıç: f64,
+        dikey_başlangıç: f64,
+        yatay_bitiş: f64,
+        dikey_bitiş: f64,
+    ) -> Result<bool, JsValue> {
+        self.grafik
+            .fiziksel_seçim_yakınlaştır(
+                yatay_başlangıç,
+                dikey_başlangıç,
+                yatay_bitiş,
+                dikey_bitiş,
+            )
             .map_err(js_hatası)
     }
 
@@ -867,6 +890,19 @@ impl KartOturumu {
     pub fn gorunur_y_araligi(&self) -> Vec<f64> {
         let aralık = self.grafik.görünür_y_aralığı();
         vec![aralık.en_az, aralık.en_çok]
+    }
+
+    pub fn gorunur_araliklari_ayarla(
+        &mut self,
+        x_en_az: f64,
+        x_en_çok: f64,
+        y_en_az: f64,
+        y_en_çok: f64,
+        geçmişe_ekle: bool,
+    ) -> Result<bool, JsValue> {
+        let x = Aralık::yeni(x_en_az, x_en_çok).map_err(js_hatası)?;
+        let y = Aralık::yeni(y_en_az, y_en_çok).map_err(js_hatası)?;
+        Ok(self.grafik.görünür_aralıkları_ayarla(x, y, geçmişe_ekle))
     }
 
     pub fn olcum_datumu_ayarla(&mut self, datum: usize, yatay_oran: f64, dikey_oran: f64) -> bool {
@@ -2260,6 +2296,7 @@ mod testler {
 
     #[test]
     fn scales_dir_ori_wasm_on_altı_kaynak_yüzeyini_üretir() {
+        assert!(KartOturumu::yeni("scales-dir-ori", 100).is_ok());
         for örnek in ScalesDirOriÖrneği::TÜMÜ {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             assert!(oturum.is_ok(), "{}", örnek.kimlik());
@@ -2270,7 +2307,39 @@ mod testler {
             let svg = oturum.svg(genişlik, yükseklik);
             assert!(svg.contains(örnek.başlık()));
         }
-        assert!(scales_dir_ori_kart_tanim_ornegi().contains("scales_dir_ori_kartı"));
+        let Ok(mut kaynak) = KartOturumu::yeni("scales-dir-ori-x-plus-bottom-y-plus-left", 100)
+        else {
+            return;
+        };
+        assert_eq!(
+            kaynak.fiziksel_secim_yakinlastir(0.2, 0.2, 0.8, 0.8),
+            Ok(true)
+        );
+        let x = kaynak.gorunur_x_araligi();
+        let y = kaynak.gorunur_y_araligi();
+        let ([x0, x1], [y0, y1]) = (x.as_slice(), y.as_slice()) else {
+            return;
+        };
+        let Ok(mut hedef) = KartOturumu::yeni("scales-dir-ori-x-plus-left-y-plus-top", 100) else {
+            return;
+        };
+        assert_eq!(
+            hedef.gorunur_araliklari_ayarla(*x0, *x1, *y0, *y1, true),
+            Ok(true)
+        );
+        assert_eq!(hedef.gorunur_x_araligi(), x);
+        assert_eq!(hedef.gorunur_y_araligi(), y);
+        assert!(scales_dir_ori_kart_tanim_ornegi().contains("scales_dir_ori_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"scales-dir-ori\"")
+                .count(),
+            1
+        );
+        assert_eq!(web.matches("data-kart=\"scales-dir-ori-").count(), 0);
+        assert!(web.contains("let scalesDirOriOturumları = [];"));
+        assert!(web.contains("function scalesDirOriÇiz()"));
+        assert!(web.contains("scalesDirOriİmleciniUygula"));
         assert_eq!(kart_sayisi(), 365);
     }
 

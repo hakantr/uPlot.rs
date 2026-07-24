@@ -424,6 +424,18 @@ pub struct Grafik {
     çubuk_vuruş_dizini: RefCell<Option<ÇubukVuruşDizini>>,
 }
 
+fn oran_aralığı(
+    mevcut: Aralık, başlangıç: f64, bitiş: f64
+) -> Result<Aralık, UplotHatası> {
+    let en_az_oran = başlangıç.min(bitiş).clamp(0.0, 1.0);
+    let en_çok_oran = başlangıç.max(bitiş).clamp(0.0, 1.0);
+    let uzunluk = mevcut.en_çok - mevcut.en_az;
+    Aralık::yeni(
+        mevcut.en_az + en_az_oran * uzunluk,
+        mevcut.en_az + en_çok_oran * uzunluk,
+    )
+}
+
 impl Grafik {
     pub fn yeni(seçenekler: GrafikSeçenekleri, veri: HizalıVeri) -> Result<Self, UplotHatası> {
         if seçenekler.seriler.len() != veri.seriler().len() {
@@ -1720,6 +1732,54 @@ impl Grafik {
             self.x_aralığını_veriye_yapıştır();
         }
         Ok(değişti)
+    }
+
+    /// Fiziksel bir seçim dikdörtgenini, ölçek yönü ve yöneliminden bağımsız
+    /// biçimde hem X hem Y görünümüne uygular.
+    pub fn fiziksel_seçim_yakınlaştır(
+        &mut self,
+        yatay_başlangıç: f64,
+        dikey_başlangıç: f64,
+        yatay_bitiş: f64,
+        dikey_bitiş: f64,
+    ) -> Result<bool, UplotHatası> {
+        if !self.etkileşim.ayarlar().seçim_yakınlaştır {
+            return Ok(false);
+        }
+        if ![yatay_başlangıç, dikey_başlangıç, yatay_bitiş, dikey_bitiş]
+            .into_iter()
+            .all(f64::is_finite)
+        {
+            return Err(UplotHatası::GeçersizAralık {
+                en_az: yatay_başlangıç,
+                en_çok: yatay_bitiş,
+            });
+        }
+        self.elle_x_aralığını_etkileşime_aktar();
+        self.elle_y_aralıklarını_etkileşime_aktar();
+        let (x0, y0) = self.fiziksel_oranları_mantıksala(yatay_başlangıç, dikey_başlangıç);
+        let (x1, y1) = self.fiziksel_oranları_mantıksala(yatay_bitiş, dikey_bitiş);
+        let mevcut_x = self.görünür_x_aralığı();
+        let mevcut_y = self.görünür_y_aralığı();
+        let x = oran_aralığı(mevcut_x, x0, x1)?;
+        let y = oran_aralığı(mevcut_y, 1.0 - y0, 1.0 - y1)?;
+        let değişti = self.etkileşim.görünür_aralıkları_ayarla(x, y, true);
+        if değişti {
+            self.x_aralığını_veriye_yapıştır();
+        }
+        Ok(değişti)
+    }
+
+    /// Bir senkron grubun kaynak grafiğindeki görünümü hedef grafiğe taşır.
+    pub fn görünür_aralıkları_ayarla(
+        &mut self,
+        x: Aralık,
+        y: Aralık,
+        geçmişe_ekle: bool,
+    ) -> bool {
+        self.elle_x_aralığı = None;
+        self.elle_y_aralıkları.clear();
+        self.etkileşim.görünür_aralıkları_ayarla(x, y, geçmişe_ekle)
     }
 
     /// Seçim bırakma davranışını kart ayarlarına göre çekirdekte çözümler.

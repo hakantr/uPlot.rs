@@ -225,6 +225,21 @@
     .points-grafik svg { display: block; width: auto; height: auto; max-width: none; }
     .points-grafik .lejant { position: absolute; left: 58px; right: 12px;
                              bottom: 7px; justify-content: flex-start; }
+    #chart.scales-dir-ori-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .scales-dir-ori-yığın { min-width: 0; display: grid; gap: 14px; align-items: start; }
+    .scales-dir-ori-grup { display: grid; grid-template-columns: repeat(4, minmax(300px, 1fr));
+                           gap: 8px; padding: 8px; border: 1px solid #dbe3ee;
+                           border-radius: 10px; background: #f8fafc; }
+    .scales-dir-ori-grup > h3 { grid-column: 1 / -1; margin: 0; color: #111827;
+                                font-size: 14px; }
+    .scales-dir-ori-grafik { position: relative; min-width: 0; border: 1px solid #e5e7eb;
+                             border-radius: 8px; background: #fff; overflow: auto; }
+    .scales-dir-ori-grafik svg { display: block; max-width: none; }
+    .scales-dir-ori-grafik .lejant { position: sticky; z-index: 4; left: 8px;
+                                     bottom: 6px; width: max-content;
+                                     margin: -24px 8px 6px; padding: 3px 6px;
+                                     border-radius: 4px; background: rgba(255,255,255,.88);
+                                     justify-content: flex-start; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -1197,55 +1212,58 @@
     };
 
     const scalesDirOriYüzeyleri = [
-      ["scales-dir-ori-x-plus-bottom-y-plus-left", "+x bottom, +y left"],
-      ["scales-dir-ori-x-plus-bottom-y-minus-left", "+x bottom, -y left"],
-      ["scales-dir-ori-x-minus-bottom-y-minus-left", "-x bottom, -y left"],
-      ["scales-dir-ori-x-minus-bottom-y-plus-left", "-x bottom, +y left"],
-      ["scales-dir-ori-x-plus-top-y-plus-right", "+x top, +y right"],
-      ["scales-dir-ori-x-plus-top-y-minus-right", "+x top, -y right"],
-      ["scales-dir-ori-x-minus-top-y-minus-right", "-x top, -y right"],
-      ["scales-dir-ori-x-minus-top-y-plus-right", "-x top, +y right"],
-      ["scales-dir-ori-x-plus-left-y-plus-top", "+x left, +y top"],
-      ["scales-dir-ori-x-plus-left-y-minus-top", "+x left, -y top"],
-      ["scales-dir-ori-x-minus-left-y-minus-top", "-x left, -y top"],
-      ["scales-dir-ori-x-minus-left-y-plus-top", "-x left, +y top"],
-      ["scales-dir-ori-x-plus-right-y-plus-bottom", "+x right, +y bottom"],
-      ["scales-dir-ori-x-plus-right-y-minus-bottom", "+x right, -y bottom"],
-      ["scales-dir-ori-x-minus-right-y-minus-bottom", "-x right, -y bottom"],
-      ["scales-dir-ori-x-minus-right-y-plus-bottom", "-x right, +y bottom"],
+      ["scales-dir-ori-x-plus-bottom-y-plus-left", "+x bottom, +y left", "Direction Inversion", false],
+      ["scales-dir-ori-x-plus-bottom-y-minus-left", "+x bottom, -y left", "Direction Inversion", false],
+      ["scales-dir-ori-x-minus-bottom-y-minus-left", "-x bottom, -y left", "Direction Inversion", false],
+      ["scales-dir-ori-x-minus-bottom-y-plus-left", "-x bottom, +y left", "Direction Inversion", false],
+      ["scales-dir-ori-x-plus-top-y-plus-right", "+x top, +y right", "Direction Inversion", false],
+      ["scales-dir-ori-x-plus-top-y-minus-right", "+x top, -y right", "Direction Inversion", false],
+      ["scales-dir-ori-x-minus-top-y-minus-right", "-x top, -y right", "Direction Inversion", false],
+      ["scales-dir-ori-x-minus-top-y-plus-right", "-x top, +y right", "Direction Inversion", false],
+      ["scales-dir-ori-x-plus-left-y-plus-top", "+x left, +y top", "Orientation Inversion", true],
+      ["scales-dir-ori-x-plus-left-y-minus-top", "+x left, -y top", "Orientation Inversion", true],
+      ["scales-dir-ori-x-minus-left-y-minus-top", "-x left, -y top", "Orientation Inversion", true],
+      ["scales-dir-ori-x-minus-left-y-plus-top", "-x left, +y top", "Orientation Inversion", true],
+      ["scales-dir-ori-x-plus-right-y-plus-bottom", "+x right, +y bottom", "Orientation Inversion", true],
+      ["scales-dir-ori-x-plus-right-y-minus-bottom", "+x right, -y bottom", "Orientation Inversion", true],
+      ["scales-dir-ori-x-minus-right-y-minus-bottom", "-x right, -y bottom", "Orientation Inversion", true],
+      ["scales-dir-ori-x-minus-right-y-plus-bottom", "-x right, +y bottom", "Orientation Inversion", true],
     ];
     document.querySelector('[data-kart="points"]')?.insertAdjacentHTML(
       "afterend",
-      scalesDirOriYüzeyleri.map(([kimlik, başlık]) => `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>${kimlik}</small>
-          <div class="durum">scale.dir · scale.ori · axis.side</div>
-        </article>`).join("")
+      `<article class="kart" data-kart="scales-dir-ori" aria-current="false" tabindex="0">
+        <strong>Scales Direction & Orientation</strong><small>scales-dir-ori</small>
+        <div class="durum">16 eşzamanlı yüzey · ortak cursor + X/Y scale</div>
+      </article>`
     );
-    for (const [kimlik, başlık] of scalesDirOriYüzeyleri) {
-      kartlar[kimlik] = {
-        başlık,
+    kartlar["scales-dir-ori"] = {
+        başlık: "Scales Direction & Orientation",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/scales-dir-ori.html">scales-dir-ori.html</a>
           · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">src/uPlot.js</a>
-          <br>Resmî demodaki 8 yön ve 8 yönelim yüzeyi, aynı 10 X değeri, null konumu ve iki seriyle sunulur.
-          <br><code>scale.dir</code>, <code>scale.ori</code>, eksen tarafı, ızgara ve dolgu dönüşümü Rust çekirdeğinde birlikte çözülür.`,
+          <br>Resmî demodaki 16 grafik tek kaynak sayfasıdır: aynı veri anlık görüntüsünü, kilitlenebilir cursor'u ve iki eksendeki ölçek değişimlerini paylaşır.
+          <br><code>scale.dir</code>, <code>scale.ori</code>, eksen tarafı, ızgara, dolgu ve fiziksel/mantıksal koordinat dönüşümü Rust çekirdeğinde birlikte çözülür.`,
         tanım: () => scales_dir_ori_kart_tanim_ornegi(),
         tanımYolu: "src/kart/scales_dir_ori.rs",
         seriler: [
-          { etiket: "Red", renk: "red" },
-          { etiket: "Blue", renk: "blue" },
+          { etiket: "Value", renk: "red" },
+          { etiket: "Value", renk: "blue" },
         ],
-        yardım: "Yön ve yönelim · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
+        yardım: "16 senkron yüzey · tıkla cursor kilidi · Shift+wheel: X · Ctrl+wheel: Y",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "Aynı verinin ölçek yönü, yönelimi ve eksen tarafı birleşimlerinde nasıl davrandığını tek senkron yüzey grubunda doğrular.",
+          api: "scale.dir ve scale.ori koordinat dönüşümünü, axis.side eksen tarafını; sync grubu cursor.lock ile X/Y ölçeklerini yüzeyler arasında paylaşır.",
+          izleme: "Yatay veya dikey zaman akışını kullanan izleme panellerinde aynı zaman ve değer penceresini farklı yönelimlerde karşılaştırın.",
+          maliyet: "Veri statik ve ortaktır. Cursor yalnız hafif SVG katmanlarını taşır; ana yollar yalnız ölçek değiştiğinde, tek animation-frame içinde yeniden çizilir.",
+        },
       };
-    }
 
     const scatterYüzeyleri = [
       ["scatter-points", "Scatter Plot", "10.000 × 4 sabit boyutlu nokta"],
       ["scatter-bubble", "Bubble Plot", "50 × 4 alan ölçekli, etiketli balon"],
     ];
-    document.querySelector('[data-kart="scales-dir-ori-x-minus-right-y-plus-bottom"]')?.insertAdjacentHTML(
+    document.querySelector('[data-kart="scales-dir-ori"]')?.insertAdjacentHTML(
       "afterend",
       scatterYüzeyleri.map(([kimlik, başlık, durum]) => `
         <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
@@ -2538,6 +2556,9 @@
     let pathGapClipOturumları = [];
     let pixelAlignOturumları = [];
     let pointsOturumları = [];
+    let scalesDirOriOturumları = [];
+    let scalesDirOriİmleci = null;
+    let scalesDirOriÇizimKaresi = null;
     let syncCursorKöprüsü = null;
     let syncCursorDurumları = Array.from({ length: 5 }, () => null);
     let syncCursorSürükleme = null;
@@ -2723,6 +2744,14 @@
           || !pointsOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !pointsOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "scales-dir-ori") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !scalesDirOriOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !scalesDirOriOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -4019,6 +4048,352 @@
       kontrolleriGüncelle();
     }
 
+    function scalesDirOriAlanı(kutu, oturum, olay = null) {
+      const svg = kutu.querySelector("svg");
+      if (!svg) return null;
+      const rect = svg.getBoundingClientRect();
+      const view = svg.viewBox.baseVal;
+      const çizim = Array.from(oturum.cizim_alani(view.width, view.height));
+      if (çizim.length !== 4 || rect.width <= 0 || rect.height <= 0) return null;
+      return {
+        view,
+        x: olay ? (olay.clientX - rect.left) / rect.width * view.width : 0,
+        y: olay ? (olay.clientY - rect.top) / rect.height * view.height : 0,
+        sol: çizim[0], sağ: çizim[1], üst: çizim[2], alt: çizim[3],
+      };
+    }
+
+    function scalesDirOriİmleciniUygula() {
+      scalesDirOriYüzeyleri.forEach((yüzey, indeks) => {
+        const kutu = chart.querySelector(`.scales-dir-ori-grafik[data-scales-index="${indeks}"]`);
+        const yüzeyOturumu = scalesDirOriOturumları[indeks];
+        const a = kutu && yüzeyOturumu ? scalesDirOriAlanı(kutu, yüzeyOturumu) : null;
+        if (!kutu || !yüzeyOturumu || !a || !scalesDirOriİmleci) {
+          kutu?.querySelectorAll(".scales-imleç-x,.scales-imleç-y,.scales-nokta")
+            .forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+          return;
+        }
+        const xDikey = yüzey[3];
+        const xOranı = yüzeyOturumu.x_konum_orani(scalesDirOriİmleci.x);
+        const yOranı = yüzeyOturumu.seri_y_konum_orani(0, scalesDirOriİmleci.y);
+        const xEksenKonumu = xDikey
+          ? a.alt - xOranı * (a.alt - a.üst)
+          : a.sol + xOranı * (a.sağ - a.sol);
+        const yEksenKonumu = xDikey
+          ? a.sol + yOranı * (a.sağ - a.sol)
+          : a.alt - yOranı * (a.alt - a.üst);
+        const xÇizgisi = kutu.querySelector(".scales-imleç-x");
+        const yÇizgisi = kutu.querySelector(".scales-imleç-y");
+        if (xDikey) {
+          xÇizgisi?.setAttribute("x1", a.sol); xÇizgisi?.setAttribute("x2", a.sağ);
+          xÇizgisi?.setAttribute("y1", xEksenKonumu); xÇizgisi?.setAttribute("y2", xEksenKonumu);
+          yÇizgisi?.setAttribute("x1", yEksenKonumu); yÇizgisi?.setAttribute("x2", yEksenKonumu);
+          yÇizgisi?.setAttribute("y1", a.üst); yÇizgisi?.setAttribute("y2", a.alt);
+        } else {
+          xÇizgisi?.setAttribute("x1", xEksenKonumu); xÇizgisi?.setAttribute("x2", xEksenKonumu);
+          xÇizgisi?.setAttribute("y1", a.üst); xÇizgisi?.setAttribute("y2", a.alt);
+          yÇizgisi?.setAttribute("x1", a.sol); yÇizgisi?.setAttribute("x2", a.sağ);
+          yÇizgisi?.setAttribute("y1", yEksenKonumu); yÇizgisi?.setAttribute("y2", yEksenKonumu);
+        }
+        xÇizgisi?.setAttribute("visibility", "visible");
+        yÇizgisi?.setAttribute("visibility", "visible");
+        const eksenUzunluğu = xDikey ? a.alt - a.üst : a.sağ - a.sol;
+        const çözüm = Array.from(yüzeyOturumu.imlec_cozumu(
+          xDikey ? 1 - (xEksenKonumu - a.üst) / (a.alt - a.üst)
+            : (xEksenKonumu - a.sol) / (a.sağ - a.sol),
+          eksenUzunluğu,
+        ));
+        const xHedefi = kutu.querySelector("[data-scales-x]");
+        if (xHedefi) xHedefi.textContent = Number.isFinite(çözüm[1])
+          ? String(Math.round(çözüm[1] * 1000) / 1000) : "--";
+        [0, 1].forEach(seriİndeksi => {
+          const seriX = çözüm[2 + seriİndeksi * 3];
+          const seriY = çözüm[3 + seriİndeksi * 3];
+          const nokta = kutu.querySelector(`[data-scales-point="${seriİndeksi}"]`);
+          const yHedefi = kutu.querySelector(`[data-scales-y="${seriİndeksi}"]`);
+          if (!Number.isFinite(seriX) || !Number.isFinite(seriY)) {
+            nokta?.setAttribute("visibility", "hidden");
+            if (yHedefi) yHedefi.textContent = "--";
+            return;
+          }
+          const px = yüzeyOturumu.x_konum_orani(seriX);
+          const py = yüzeyOturumu.seri_y_konum_orani(seriİndeksi, seriY);
+          nokta?.setAttribute("cx", xDikey ? a.sol + py * (a.sağ - a.sol)
+            : a.sol + px * (a.sağ - a.sol));
+          nokta?.setAttribute("cy", xDikey ? a.alt - px * (a.alt - a.üst)
+            : a.alt - py * (a.alt - a.üst));
+          nokta?.setAttribute("visibility", "visible");
+          if (yHedefi) yHedefi.textContent = String(Math.round(seriY * 1000) / 1000);
+        });
+      });
+      chart.dataset.scalesCursorLocked = String(scalesDirOriİmleci?.kilitli === true);
+    }
+
+    function scalesDirOriAralıklarınıSenkronla(kaynakİndeksi, geçmişeEkle = true) {
+      const kaynak = scalesDirOriOturumları[kaynakİndeksi];
+      if (!kaynak) return;
+      const x = Array.from(kaynak.gorunur_x_araligi());
+      const y = Array.from(kaynak.gorunur_y_araligi());
+      if (x.length !== 2 || y.length !== 2) return;
+      scalesDirOriOturumları.forEach((hedef, indeks) => {
+        if (indeks !== kaynakİndeksi) {
+          hedef.gorunur_araliklari_ayarla(x[0], x[1], y[0], y[1], geçmişeEkle);
+        }
+      });
+    }
+
+    function scalesDirOriÇiziminiPlanla() {
+      if (scalesDirOriÇizimKaresi !== null) return;
+      scalesDirOriÇizimKaresi = requestAnimationFrame(() => {
+        scalesDirOriÇizimKaresi = null;
+        if (aktifKart === "scales-dir-ori") scalesDirOriÇiz();
+      });
+    }
+
+    function scalesDirOriYüzeyiniÇiz(indeks) {
+      const yüzey = scalesDirOriYüzeyleri[indeks];
+      const yüzeyOturumu = scalesDirOriOturumları[indeks];
+      const kutu = chart.querySelector(`.scales-dir-ori-grafik[data-scales-index="${indeks}"]`);
+      if (!yüzey || !yüzeyOturumu || !kutu) return;
+      const [genişlik, yükseklik] = yüzey[3] ? [320, 600] : [600, 300];
+      const çıktı = yüzeyOturumu.svg(genişlik, yükseklik);
+      let svg = kutu.querySelector("svg");
+      if (!svg) {
+        kutu.innerHTML = `<div class="path-gap-clip-başlık">${yüzey[1]}</div>
+          <div class="scales-dir-ori-svg">${çıktı}</div>
+          <div class="lejant"><span>X: <b data-scales-x>--</b></span>
+            <span><i class="örnek" style="border-color:red;background:red"></i>Value:
+              <b data-scales-y="0">--</b></span>
+            <span><i class="örnek" style="border-color:blue;background:blue"></i>Value:
+              <b data-scales-y="1">--</b></span></div>`;
+        svg = kutu.querySelector("svg");
+      } else {
+        const şablon = document.createElement("template");
+        şablon.innerHTML = çıktı.trim();
+        svgYüzeyiniYerindeGüncelle(svg, şablon.content.firstElementChild);
+      }
+      svg = kutu.querySelector("svg");
+      if (!svg) return;
+      svg.querySelector(".scales-etkileşim")?.remove();
+      svg.insertAdjacentHTML("beforeend", `<g class="scales-etkileşim" pointer-events="none">
+        <rect class="scales-seçim" visibility="hidden"
+          fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+        <line class="scales-imleç-x" visibility="hidden" stroke="#6b7280"
+          stroke-dasharray="4 4"/>
+        <line class="scales-imleç-y" visibility="hidden" stroke="#6b7280"
+          stroke-dasharray="4 4"/>
+        <circle class="scales-nokta" data-scales-point="0" visibility="hidden"
+          r="3" fill="red"/>
+        <circle class="scales-nokta" data-scales-point="1" visibility="hidden"
+          r="3" fill="blue"/>
+      </g>`);
+      if (kutu.dataset.etkilesimBagli === "true") return;
+      kutu.dataset.etkilesimBagli = "true";
+      let seçim = null;
+      let taşıma = null;
+      let kıstırma = null;
+      const temaslar = new Map();
+      const imleciGüncelle = olay => {
+        const a = scalesDirOriAlanı(kutu, yüzeyOturumu, olay);
+        if (!a || a.x < a.sol || a.x > a.sağ || a.y < a.üst || a.y > a.alt) return;
+        const yatay = (a.x - a.sol) / (a.sağ - a.sol);
+        const dikey = (a.y - a.üst) / (a.alt - a.üst);
+        const oranlar = Array.from(yüzeyOturumu.fiziksel_oranlari_mantiksala(yatay, dikey));
+        const xAralığı = Array.from(yüzeyOturumu.gorunur_x_araligi());
+        const yAralığı = Array.from(yüzeyOturumu.gorunur_y_araligi());
+        const xEkseniOranı = yüzey[3] ? 1 - dikey : yatay;
+        const çözüm = Array.from(yüzeyOturumu.imlec_cozumu(
+          xEkseniOranı,
+          yüzey[3] ? a.alt - a.üst : a.sağ - a.sol,
+        ));
+        if (oranlar.length !== 2 || xAralığı.length !== 2 || yAralığı.length !== 2
+          || çözüm.length < 2) return;
+        scalesDirOriİmleci = {
+          x: çözüm[0],
+          y: yAralığı[1] - oranlar[1] * (yAralığı[1] - yAralığı[0]),
+          kilitli: scalesDirOriİmleci?.kilitli === true,
+        };
+        scalesDirOriİmleciniUygula();
+      };
+      kutu.addEventListener("pointermove", olay => {
+        olay.stopPropagation();
+        const a = scalesDirOriAlanı(kutu, yüzeyOturumu, olay);
+        if (!a) return;
+        if (olay.pointerType === "touch" && temaslar.has(olay.pointerId)) {
+          temaslar.set(olay.pointerId, { x: a.x, y: a.y });
+          const noktalar = [...temaslar.values()];
+          if (kıstırma && noktalar.length >= 2) {
+            const uzaklık = Math.hypot(
+              noktalar[0].x - noktalar[1].x,
+              noktalar[0].y - noktalar[1].y,
+            );
+            if (kıstırma.uzaklık > 0 && yüzeyOturumu.dokunma_yakinlastir(
+              ((noktalar[0].x + noktalar[1].x) / 2 - a.sol) / (a.sağ - a.sol),
+              ((noktalar[0].y + noktalar[1].y) / 2 - a.üst) / (a.alt - a.üst),
+              uzaklık / kıstırma.uzaklık,
+            )) {
+              scalesDirOriAralıklarınıSenkronla(indeks, !kıstırma.kaydedildi);
+              kıstırma.kaydedildi = true;
+              scalesDirOriÇiziminiPlanla();
+            }
+            kıstırma.uzaklık = uzaklık;
+            return;
+          }
+        }
+        if (taşıma) {
+          if (yüzeyOturumu.tasi(
+            (a.x - taşıma.x) / (a.sağ - a.sol),
+            (a.y - taşıma.y) / (a.alt - a.üst),
+          )) {
+            scalesDirOriAralıklarınıSenkronla(indeks, false);
+            scalesDirOriÇiziminiPlanla();
+          }
+          taşıma = { x: a.x, y: a.y };
+          return;
+        }
+        if (!seçim && !scalesDirOriİmleci?.kilitli) imleciGüncelle(olay);
+        if (!seçim) return;
+        seçim.sonX = Math.max(a.sol, Math.min(a.sağ, a.x));
+        seçim.sonY = Math.max(a.üst, Math.min(a.alt, a.y));
+        const dikdörtgen = kutu.querySelector(".scales-seçim");
+        dikdörtgen?.setAttribute("x", Math.min(seçim.başX, seçim.sonX));
+        dikdörtgen?.setAttribute("y", Math.min(seçim.başY, seçim.sonY));
+        dikdörtgen?.setAttribute("width", Math.abs(seçim.sonX - seçim.başX));
+        dikdörtgen?.setAttribute("height", Math.abs(seçim.sonY - seçim.başY));
+        dikdörtgen?.setAttribute("visibility", "visible");
+      });
+      kutu.addEventListener("pointerdown", olay => {
+        olay.stopPropagation();
+        const a = scalesDirOriAlanı(kutu, yüzeyOturumu, olay);
+        if (!a || a.x < a.sol || a.x > a.sağ || a.y < a.üst || a.y > a.alt) return;
+        kutu.setPointerCapture(olay.pointerId);
+        if (olay.pointerType === "touch") {
+          temaslar.set(olay.pointerId, { x: a.x, y: a.y });
+          const noktalar = [...temaslar.values()];
+          if (noktalar.length === 1 && yüzeyOturumu.tasimayi_baslat()) {
+            taşıma = { x: a.x, y: a.y };
+          } else if (noktalar.length >= 2) {
+            if (taşıma) yüzeyOturumu.tasimayi_bitir();
+            taşıma = null;
+            if (yüzeyOturumu.dokunmayi_baslat()) {
+              kıstırma = {
+                uzaklık: Math.hypot(
+                  noktalar[0].x - noktalar[1].x,
+                  noktalar[0].y - noktalar[1].y,
+                ),
+                kaydedildi: false,
+              };
+            }
+          }
+        } else if (olay.button === 0) {
+          if (boşlukBasılı && yüzeyOturumu.tasimayi_baslat()) {
+            taşıma = { x: a.x, y: a.y };
+          } else {
+            seçim = { başX: a.x, sonX: a.x, başY: a.y, sonY: a.y, pointerId: olay.pointerId };
+          }
+        }
+      });
+      const bitir = olay => {
+        olay.stopPropagation();
+        if (olay.pointerType === "touch") {
+          temaslar.delete(olay.pointerId);
+          if (kıstırma) yüzeyOturumu.dokunmayi_bitir();
+          if (taşıma) yüzeyOturumu.tasimayi_bitir();
+          kıstırma = null;
+          taşıma = null;
+          kontrolleriGüncelle();
+          return;
+        }
+        if (taşıma) {
+          yüzeyOturumu.tasimayi_bitir();
+          taşıma = null;
+          kontrolleriGüncelle();
+          return;
+        }
+        if (!seçim || seçim.pointerId !== olay.pointerId) return;
+        const a = scalesDirOriAlanı(kutu, yüzeyOturumu, olay);
+        const tamamlanan = seçim;
+        seçim = null;
+        kutu.querySelector(".scales-seçim")?.setAttribute("visibility", "hidden");
+        const hareket = Math.hypot(
+          tamamlanan.sonX - tamamlanan.başX,
+          tamamlanan.sonY - tamamlanan.başY,
+        );
+        if (!a || hareket < 4) {
+          imleciGüncelle(olay);
+          if (scalesDirOriİmleci) {
+            scalesDirOriİmleci.kilitli = !scalesDirOriİmleci.kilitli;
+            scalesDirOriİmleciniUygula();
+          }
+          return;
+        }
+        if (Math.abs(tamamlanan.sonX - tamamlanan.başX) < 4
+          || Math.abs(tamamlanan.sonY - tamamlanan.başY) < 4) return;
+        if (yüzeyOturumu.fiziksel_secim_yakinlastir(
+          (tamamlanan.başX - a.sol) / (a.sağ - a.sol),
+          (tamamlanan.başY - a.üst) / (a.alt - a.üst),
+          (tamamlanan.sonX - a.sol) / (a.sağ - a.sol),
+          (tamamlanan.sonY - a.üst) / (a.alt - a.üst),
+        )) {
+          scalesDirOriAralıklarınıSenkronla(indeks, true);
+          scalesDirOriÇiziminiPlanla();
+          kontrolleriGüncelle();
+        }
+      };
+      kutu.addEventListener("pointerup", bitir);
+      kutu.addEventListener("pointercancel", bitir);
+      kutu.addEventListener("pointerleave", () => {
+        if (!seçim && !taşıma && !scalesDirOriİmleci?.kilitli) {
+          scalesDirOriİmleci = null;
+          scalesDirOriİmleciniUygula();
+        }
+      });
+      kutu.addEventListener("wheel", olay => {
+        olay.stopPropagation();
+        const delta = tekerlekDeltası(olay);
+        if (!etkileşimler.tekerlek || delta === 0) return;
+        const a = scalesDirOriAlanı(kutu, yüzeyOturumu, olay);
+        if (!a || a.x < a.sol || a.x > a.sağ || a.y < a.üst || a.y > a.alt) return;
+        olay.preventDefault();
+        if (yüzeyOturumu.tekerlek_eksende(
+          (a.x - a.sol) / (a.sağ - a.sol),
+          (a.y - a.üst) / (a.alt - a.üst),
+          -delta,
+          olay.deltaMode === 0,
+          tekerlekEkseni(olay),
+        )) {
+          scalesDirOriAralıklarınıSenkronla(indeks, true);
+          scalesDirOriÇiziminiPlanla();
+          kontrolleriGüncelle();
+        }
+      }, { passive: false });
+      kutu.addEventListener("dblclick", olay => {
+        olay.stopPropagation();
+        let değişti = false;
+        scalesDirOriOturumları.forEach(oturum => { değişti = oturum.tam_gorunum() || değişti; });
+        if (değişti) scalesDirOriÇiziminiPlanla();
+      });
+    }
+
+    function scalesDirOriÇiz() {
+      if (!chart.classList.contains("scales-dir-ori-yüzeyi")
+        || chart.querySelectorAll(".scales-dir-ori-grafik").length !== scalesDirOriYüzeyleri.length) {
+        chart.className = "scales-dir-ori-yüzeyi";
+        const gruplar = ["Direction Inversion", "Orientation Inversion"];
+        chart.innerHTML = `<div class="scales-dir-ori-yığın">
+          ${gruplar.map(grup => `<section class="scales-dir-ori-grup">
+            <h3>${grup}</h3>
+            ${scalesDirOriYüzeyleri.map((yüzey, indeks) => yüzey[2] === grup
+              ? `<article class="scales-dir-ori-grafik" data-scales-index="${indeks}"></article>`
+              : "").join("")}
+          </section>`).join("")}
+        </div>`;
+      }
+      scalesDirOriYüzeyleri.forEach((_, indeks) => scalesDirOriYüzeyiniÇiz(indeks));
+      scalesDirOriİmleciniUygula();
+      kontrolleriGüncelle();
+    }
+
     function çiz() {
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
@@ -4048,6 +4423,10 @@
         pointsÇiz();
         return;
       }
+      if (aktifKart === "scales-dir-ori") {
+        scalesDirOriÇiz();
+        return;
+      }
       if (!oturum) return;
       const öncekiMultiBarsKartı = chart.dataset.cizilenKart;
       const öncekiMultiBarsKaydırma = chart.querySelector(".multi-bars-kaydırma");
@@ -4062,6 +4441,7 @@
       chart.classList.remove("path-gap-clip-yüzeyi");
       chart.classList.remove("pixel-align-yüzeyi");
       chart.classList.remove("points-yüzeyi");
+      chart.classList.remove("scales-dir-ori-yüzeyi");
       chart.classList.toggle("nice-scale-yüzeyi", aktifKart === "nice-scale");
       chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
       const sayı = Number(nokta.value);
@@ -5063,6 +5443,10 @@
           if (yüzey.onceki_gorunum()) pointsYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "scales-dir-ori") {
+        scalesDirOriOturumları.forEach(yüzey => yüzey.onceki_gorunum());
+        scalesDirOriÇiziminiPlanla();
+        kontrolleriGüncelle();
       } else if (oturum?.onceki_gorunum()) çiz();
     });
     tamGörünüm.addEventListener("click", () => {
@@ -5096,6 +5480,10 @@
           if (yüzey.tam_gorunum()) pointsYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "scales-dir-ori") {
+        scalesDirOriOturumları.forEach(yüzey => yüzey.tam_gorunum());
+        scalesDirOriÇiziminiPlanla();
+        kontrolleriGüncelle();
       } else if (oturum?.tam_gorunum()) çiz();
     });
     tekerlekEtkileşimi.addEventListener("change", () => {
@@ -5122,6 +5510,10 @@
         );
       } else if (aktifKart === "points") {
         pointsOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "scales-dir-ori") {
+        scalesDirOriOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "timeseries-discrete") {
@@ -5225,6 +5617,9 @@
         if (kimlik !== "points" && kimlik.startsWith("points-")) {
           kimlik = "points";
         }
+        if (kimlik !== "scales-dir-ori" && kimlik.startsWith("scales-dir-ori-")) {
+          kimlik = "scales-dir-ori";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -5278,6 +5673,13 @@
         pixelAlignOturumları = [];
         pointsOturumları.forEach(yüzey => yüzey.free());
         pointsOturumları = [];
+        scalesDirOriOturumları.forEach(yüzey => yüzey.free());
+        scalesDirOriOturumları = [];
+        scalesDirOriİmleci = null;
+        if (scalesDirOriÇizimKaresi !== null) {
+          cancelAnimationFrame(scalesDirOriÇizimKaresi);
+          scalesDirOriÇizimKaresi = null;
+        }
         syncCursorKöprüsü?.free();
         syncCursorKöprüsü = null;
         syncCursorDurumları = Array.from({ length: 5 }, () => null);
@@ -5445,6 +5847,15 @@
         if (kimlik === "points") {
           pointsOturumları = pointsYüzeyleri.map(yüzey => {
             const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          çiz();
+          return;
+        }
+        if (kimlik === "scales-dir-ori") {
+          scalesDirOriOturumları = scalesDirOriYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey[0], 100);
             yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
             return yüzeyOturumu;
           });

@@ -3,9 +3,9 @@ use crate::{
     GrafikSeçenekleri, HizalıVeri, OdakDüzeni, SeriSeçenekleri, UplotHatası, YÖlçekSeçenekleri,
 };
 
-pub const SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ: &str = r##"for örnek in ScalesDirOriÖrneği::TÜMÜ {
-    let (seçenekler, veri) = scales_dir_ori_kartı(örnek)?;
+pub const SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in scales_dir_ori_kartları()? {
     // Ölçek yönü, yönelimi ve eksen tarafları çekirdekte çözümlenir.
+    // On altı yüzey aynı veri anlık görüntüsünden üretilir.
     let grafik = Grafik::yeni(seçenekler, veri)?;
 }"##;
 
@@ -91,6 +91,14 @@ impl ScalesDirOriÖrneği {
         }
     }
 
+    pub const fn grup(self) -> &'static str {
+        if self.x_dikey() {
+            "Orientation Inversion"
+        } else {
+            "Direction Inversion"
+        }
+    }
+
     pub const fn x_dikey(self) -> bool {
         matches!(
             self,
@@ -169,8 +177,23 @@ impl ScalesDirOriÖrneği {
 pub fn scales_dir_ori_kartı(
     örnek: ScalesDirOriÖrneği,
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
+    Ok((scales_dir_ori_seçenekleri(örnek)?, ortak_veri()?))
+}
+
+pub fn scales_dir_ori_kartları()
+-> Result<Vec<(ScalesDirOriÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    let veri = ortak_veri()?;
+    ScalesDirOriÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| Ok((örnek, scales_dir_ori_seçenekleri(örnek)?, veri.clone())))
+        .collect()
+}
+
+fn scales_dir_ori_seçenekleri(
+    örnek: ScalesDirOriÖrneği,
+) -> Result<GrafikSeçenekleri, UplotHatası> {
     let (genişlik, yükseklik) = örnek.boyut();
-    let seçenekler = GrafikSeçenekleri::yeni(genişlik, yükseklik)?
+    Ok(GrafikSeçenekleri::yeni(genişlik, yükseklik)?
         .başlık(örnek.başlık())
         .x_zaman(false)
         .x_ters_yön(örnek.x_ters())
@@ -179,13 +202,20 @@ pub fn scales_dir_ori_kartı(
         .birincil_y_karşıda(örnek.y_eksen_karşıda())
         .y_ölçeği(YÖlçekSeçenekleri::yeni("y").ters_yön(örnek.y_ters()))
         .odak(OdakDüzeni::yeni(0.3, 30.0))
-        .etkileşimler(ortak_kart_etkileşimleri())
-        .seri(SeriSeçenekleri::yeni("Red").renk("red").dolgu("#ff00001a"))
+        .etkileşimler(ortak_kart_etkileşimleri().seçim_xy_yakınlaştır(true))
         .seri(
-            SeriSeçenekleri::yeni("Blue")
+            SeriSeçenekleri::yeni("Value")
+                .renk("red")
+                .dolgu("rgba(255,0,0,0.1)"),
+        )
+        .seri(
+            SeriSeçenekleri::yeni("Value")
                 .renk("blue")
-                .dolgu("#0000ff1a"),
-        );
+                .dolgu("rgba(0,0,255,0.1)"),
+        ))
+}
+
+fn ortak_veri() -> Result<HizalıVeri, UplotHatası> {
     let x = vec![-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0];
     let kırmızı = vec![
         Some(-10.0),
@@ -211,7 +241,7 @@ pub fn scales_dir_ori_kartı(
         Some(-2.0),
         Some(2.0),
     ];
-    Ok((seçenekler, HizalıVeri::yeni(x, vec![kırmızı, mavi])?))
+    HizalıVeri::yeni(x, vec![kırmızı, mavi])
 }
 
 #[cfg(test)]
@@ -221,9 +251,18 @@ mod testler {
 
     #[test]
     fn on_altı_kaynak_yüzeyi_aynı_veriyi_korur() -> Result<(), UplotHatası> {
-        for örnek in ScalesDirOriÖrneği::TÜMÜ {
-            let (seçenekler, veri) = scales_dir_ori_kartı(örnek)?;
+        let kartlar = scales_dir_ori_kartları()?;
+        assert_eq!(kartlar.len(), 16);
+        for (örnek, seçenekler, veri) in kartlar {
             assert_eq!((seçenekler.genişlik, seçenekler.yükseklik), örnek.boyut());
+            assert_eq!(
+                örnek.grup(),
+                if örnek.x_dikey() {
+                    "Orientation Inversion"
+                } else {
+                    "Direction Inversion"
+                }
+            );
             assert_eq!(veri.uzunluk(), 10);
             assert_eq!(veri.seriler().len(), 2);
             assert!(
@@ -286,6 +325,28 @@ mod testler {
         let görünür = grafik.görünür_x_aralığı();
         assert!((görünür.en_az - 2.4).abs() < 1e-9);
         assert!((görünür.en_çok - 4.2).abs() < 1e-9);
+        Ok(())
+    }
+
+    #[test]
+    fn dikdörtgen_seçimi_iki_ekseni_yönelimden_bağımsız_yakınlaştırır() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = scales_dir_ori_kartı(ScalesDirOriÖrneği::XArtıSolYArtıÜst)?;
+        let mut kaynak = Grafik::yeni(seçenekler, veri)?;
+        assert!(kaynak.fiziksel_seçim_yakınlaştır(0.25, 0.20, 0.75, 0.80)?);
+        let x = kaynak.görünür_x_aralığı();
+        let y = kaynak.görünür_y_aralığı();
+        assert!((x.en_az - -1.2).abs() < 1e-9);
+        assert!((x.en_çok - 4.2).abs() < 1e-9);
+        assert!(y.en_az > -10.0);
+        assert!(y.en_çok < 6.0);
+
+        let (seçenekler, veri) = scales_dir_ori_kartı(ScalesDirOriÖrneği::XEksiÜstYEksiSağ)?;
+        let mut hedef = Grafik::yeni(seçenekler, veri)?;
+        assert!(hedef.görünür_aralıkları_ayarla(x, y, true));
+        assert_eq!(hedef.görünür_x_aralığı(), x);
+        assert_eq!(hedef.görünür_y_aralığı(), y);
+        assert!(hedef.önceki_görünüm());
+        assert_ne!(hedef.görünür_x_aralığı(), x);
         Ok(())
     }
 }

@@ -44,7 +44,7 @@ pub struct GpuiGrafik {
     ana_sahne: Rc<Sahne>,
     ana_yüzey: Option<Entity<GpuiAnaYüzey>>,
     imleç: Option<İmleçDurumu>,
-    seçim: Option<(f32, f32)>,
+    seçim: Option<(Nokta, Nokta)>,
     açıklama_seçimi: bool,
     taşıma_başlangıcı: Option<Nokta>,
     dokunma_kaydırma: Option<(f64, f64)>,
@@ -363,6 +363,74 @@ impl GpuiGrafik {
         ))
     }
 
+    pub fn senkron_veri_yayını(&self) -> Option<(f64, f64, Option<usize>)> {
+        let imleç = self.imleç.as_ref()?;
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        let yatay = f64::from((imleç.fare.x - sol) / (sağ - sol));
+        let dikey = f64::from((imleç.fare.y - üst) / (alt - üst));
+        let (_, y_oranı) = self.grafik.fiziksel_oranları_mantıksala(yatay, dikey);
+        let y_aralığı = self.grafik.görünür_y_aralığı();
+        let y = y_aralığı.en_çok - y_oranı * (y_aralığı.en_çok - y_aralığı.en_az);
+        Some((imleç.veri_x, y, self.grafik.odak_serisi()))
+    }
+
+    pub fn senkron_veri_imleci_ayarla(
+        &mut self,
+        x: f64,
+        y: f64,
+        odak_serisi: Option<usize>,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        if self.imleç_kilitli || !x.is_finite() || !y.is_finite() {
+            return false;
+        }
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        let (Some(x_oranı), Some(y_oranı)) = (
+            self.grafik.x_konum_oranı(x),
+            self.grafik.seri_y_konum_oranı(0, y),
+        ) else {
+            return false;
+        };
+        let x_dikey = self.grafik.x_dikey_mi();
+        let fare = if x_dikey {
+            Nokta::yeni(
+                sol + y_oranı as f32 * (sağ - sol),
+                alt - x_oranı as f32 * (alt - üst),
+            )
+        } else {
+            Nokta::yeni(
+                sol + x_oranı as f32 * (sağ - sol),
+                alt - y_oranı as f32 * (alt - üst),
+            )
+        };
+        let eksen_uzunluğu = if x_dikey { alt - üst } else { sağ - sol };
+        let Some(çözüm) = self.grafik.imleç_çözümü(x_oranı, f64::from(eksen_uzunluğu))
+        else {
+            return false;
+        };
+        self.imleç = Some(İmleçDurumu {
+            fare,
+            veri_x: çözüm.ortak_x,
+            seri_x_değerleri: çözüm
+                .seriler
+                .iter()
+                .map(|örnek| örnek.map(|örnek| örnek.x))
+                .collect(),
+            seri_değerleri: çözüm
+                .seriler
+                .iter()
+                .map(|örnek| örnek.map(|örnek| örnek.değer))
+                .collect(),
+            dağılım: None,
+        });
+        if self.grafik.imleç_odağını_seriye_ayarla(odak_serisi) {
+            self.grafik_bildir(cx);
+        } else {
+            cx.notify();
+        }
+        true
+    }
+
     pub fn senkron_imleci_ayarla(
         &mut self,
         yatay_oran: f64,
@@ -633,6 +701,20 @@ impl GpuiGrafik {
         değişti
     }
 
+    pub fn görünür_aralıkları_ayarla(
+        &mut self,
+        x: Aralık,
+        y: Aralık,
+        geçmişe_ekle: bool,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let değişti = self.grafik.görünür_aralıkları_ayarla(x, y, geçmişe_ekle);
+        if değişti {
+            self.grafik_bildir(cx);
+        }
+        değişti
+    }
+
     fn çizim_alanı(&self) -> (f32, f32, f32, f32) {
         let (genişlik, yükseklik) = self.grafik.boyut();
         self.grafik.çizim_alanı_boyutta(genişlik, yükseklik)
@@ -729,28 +811,59 @@ impl GpuiGrafik {
             if self.grafik.kutu_bıyık_grafiği() || self.grafik.mum_grafiği() {
                 return sahne;
             }
-            let nokta_x = self
-                .grafik
-                .x_konum_oranı(imleç.veri_x)
-                .map_or(imleç.fare.x, |oran| sol + oran as f32 * (sağ - sol));
-            sahne.ekle(Komut::KesikliÇizgi {
-                başlangıç: Nokta::yeni(imleç.fare.x, üst),
-                bitiş: Nokta::yeni(imleç.fare.x, alt),
-                renk: "#6b7280".to_string(),
-                kalınlık: 1.0,
-                kesik: 4.0,
-            });
-            if !self.grafik.eksen_göstergeleri_etkin() && self.grafik.imleç_y_görünür() {
-                sahne.ekle(Komut::KesikliÇizgi {
-                    başlangıç: Nokta::yeni(sol, imleç.fare.y),
-                    bitiş: Nokta::yeni(sağ, imleç.fare.y),
+            let x_dikey = self.grafik.x_dikey_mi();
+            let x_konumu = self.grafik.x_konum_oranı(imleç.veri_x).map_or(
+                if x_dikey {
+                    imleç.fare.y
+                } else {
+                    imleç.fare.x
+                },
+                |oran| {
+                    if x_dikey {
+                        alt - oran as f32 * (alt - üst)
+                    } else {
+                        sol + oran as f32 * (sağ - sol)
+                    }
+                },
+            );
+            sahne.ekle(if x_dikey {
+                Komut::KesikliÇizgi {
+                    başlangıç: Nokta::yeni(sol, x_konumu),
+                    bitiş: Nokta::yeni(sağ, x_konumu),
                     renk: "#6b7280".to_string(),
                     kalınlık: 1.0,
                     kesik: 4.0,
+                }
+            } else {
+                Komut::KesikliÇizgi {
+                    başlangıç: Nokta::yeni(x_konumu, üst),
+                    bitiş: Nokta::yeni(x_konumu, alt),
+                    renk: "#6b7280".to_string(),
+                    kalınlık: 1.0,
+                    kesik: 4.0,
+                }
+            });
+            if !self.grafik.eksen_göstergeleri_etkin() && self.grafik.imleç_y_görünür() {
+                sahne.ekle(if x_dikey {
+                    Komut::KesikliÇizgi {
+                        başlangıç: Nokta::yeni(imleç.fare.x, üst),
+                        bitiş: Nokta::yeni(imleç.fare.x, alt),
+                        renk: "#6b7280".to_string(),
+                        kalınlık: 1.0,
+                        kesik: 4.0,
+                    }
+                } else {
+                    Komut::KesikliÇizgi {
+                        başlangıç: Nokta::yeni(sol, imleç.fare.y),
+                        bitiş: Nokta::yeni(sağ, imleç.fare.y),
+                        renk: "#6b7280".to_string(),
+                        kalınlık: 1.0,
+                        kesik: 4.0,
+                    }
                 });
             } else {
                 sahne.ekle(Komut::Dikdörtgen {
-                    konum: Nokta::yeni(nokta_x - 24.0, alt + 6.0),
+                    konum: Nokta::yeni(x_konumu - 24.0, alt + 6.0),
                     genişlik: 48.0,
                     yükseklik: 22.0,
                     dolgu: "#111111".to_string(),
@@ -758,7 +871,7 @@ impl GpuiGrafik {
                     kalınlık: 0.0,
                 });
                 sahne.ekle(Komut::Metin {
-                    konum: Nokta::yeni(nokta_x, alt + 21.0),
+                    konum: Nokta::yeni(x_konumu, alt + 21.0),
                     içerik: format!("{:.2}", imleç.veri_x),
                     renk: "#ffffff".to_string(),
                     boyut: 11.0,
@@ -785,22 +898,34 @@ impl GpuiGrafik {
                 let Some(y_oranı) = self.grafik.seri_y_konum_oranı(seri_indeksi, *değer) else {
                     continue;
                 };
-                let nokta_y = alt - y_oranı as f32 * (alt - üst);
-                let seri_nokta_x = self
-                    .grafik
-                    .x_konum_oranı(seri_x)
-                    .map_or(nokta_x, |oran| sol + oran as f32 * (sağ - sol));
+                let y_konumu = if x_dikey {
+                    sol + y_oranı as f32 * (sağ - sol)
+                } else {
+                    alt - y_oranı as f32 * (alt - üst)
+                };
+                let seri_x_konumu = self.grafik.x_konum_oranı(seri_x).map_or(x_konumu, |oran| {
+                    if x_dikey {
+                        alt - oran as f32 * (alt - üst)
+                    } else {
+                        sol + oran as f32 * (sağ - sol)
+                    }
+                });
+                let seri_noktası = if x_dikey {
+                    Nokta::yeni(y_konumu, seri_x_konumu)
+                } else {
+                    Nokta::yeni(seri_x_konumu, y_konumu)
+                };
                 if self.grafik.eksen_göstergeleri_etkin() {
                     sahne.ekle(Komut::KesikliÇizgi {
-                        başlangıç: Nokta::yeni(sol, nokta_y),
-                        bitiş: Nokta::yeni(sağ, nokta_y),
+                        başlangıç: Nokta::yeni(sol, y_konumu),
+                        bitiş: Nokta::yeni(sağ, y_konumu),
                         renk: seri_rengi.clone(),
                         kalınlık: 1.0,
                         kesik: 4.0,
                     });
                     let rozet_x = sol - 50.0 - seri_indeksi as f32 * 56.0;
                     sahne.ekle(Komut::Dikdörtgen {
-                        konum: Nokta::yeni(rozet_x, nokta_y - 11.0),
+                        konum: Nokta::yeni(rozet_x, y_konumu - 11.0),
                         genişlik: 44.0,
                         yükseklik: 22.0,
                         dolgu: seri_rengi.clone(),
@@ -808,7 +933,7 @@ impl GpuiGrafik {
                         kalınlık: 0.0,
                     });
                     sahne.ekle(Komut::Metin {
-                        konum: Nokta::yeni(rozet_x + 22.0, nokta_y + 4.0),
+                        konum: Nokta::yeni(rozet_x + 22.0, y_konumu + 4.0),
                         içerik: format!("{değer:.2}"),
                         renk: "#ffffff".to_string(),
                         boyut: 11.0,
@@ -816,7 +941,7 @@ impl GpuiGrafik {
                     });
                 }
                 sahne.ekle(Komut::Daire {
-                    merkez: Nokta::yeni(seri_nokta_x, nokta_y),
+                    merkez: seri_noktası,
                     yarıçap: 2.5,
                     dolgu: seri_rengi.clone(),
                     çizgi: seri_rengi,
@@ -830,20 +955,25 @@ impl GpuiGrafik {
             } else {
                 ("#3b82f633", "#3b82f6")
             };
+            let xy = self.grafik.etkileşim_seçenekleri().seçim_xy_yakınlaştır;
             let x_dikey = self.grafik.x_dikey_mi();
             sahne.ekle(Komut::Dikdörtgen {
-                konum: if x_dikey {
-                    Nokta::yeni(sol, başlangıç.min(bitiş))
+                konum: if xy {
+                    Nokta::yeni(başlangıç.x.min(bitiş.x), başlangıç.y.min(bitiş.y))
+                } else if x_dikey {
+                    Nokta::yeni(sol, başlangıç.y.min(bitiş.y))
                 } else {
-                    Nokta::yeni(başlangıç.min(bitiş), üst)
+                    Nokta::yeni(başlangıç.x.min(bitiş.x), üst)
                 },
-                genişlik: if x_dikey {
+                genişlik: if xy {
+                    (bitiş.x - başlangıç.x).abs()
+                } else if x_dikey {
                     sağ - sol
                 } else {
-                    (bitiş - başlangıç).abs()
+                    (bitiş.x - başlangıç.x).abs()
                 },
-                yükseklik: if x_dikey {
-                    (bitiş - başlangıç).abs()
+                yükseklik: if xy || x_dikey {
+                    (bitiş.y - başlangıç.y).abs()
                 } else {
                     alt - üst
                 },
@@ -951,7 +1081,8 @@ impl GpuiGrafik {
             },
         );
         let x_oranı = if x_dikey { 1.0 - dikey } else { yatay };
-        let Some(çözüm) = self.grafik.imleç_çözümü(x_oranı, f64::from(sağ - sol)) else {
+        let x_uzunluğu = if x_dikey { alt - üst } else { sağ - sol };
+        let Some(çözüm) = self.grafik.imleç_çözümü(x_oranı, f64::from(x_uzunluğu)) else {
             self.imleç = None;
             return self.grafik.imleç_odağını_temizle() || odak_değişti;
         };
@@ -965,12 +1096,19 @@ impl GpuiGrafik {
             .iter()
             .map(|örnek| örnek.map(|örnek| örnek.değer))
             .collect();
+        let x_konumu = self.grafik.x_konum_oranı(çözüm.imleç_x).unwrap_or(x_oranı) as f32;
         self.imleç = Some(İmleçDurumu {
-            fare: Nokta::yeni(
-                sol + self.grafik.x_konum_oranı(çözüm.imleç_x).unwrap_or(yatay) as f32
-                    * (sağ - sol),
-                üst + (dikey as f32) * (alt - üst),
-            ),
+            fare: if x_dikey {
+                Nokta::yeni(
+                    sol + yatay as f32 * (sağ - sol),
+                    alt - x_konumu * (alt - üst),
+                )
+            } else {
+                Nokta::yeni(
+                    sol + x_konumu * (sağ - sol),
+                    üst + dikey as f32 * (alt - üst),
+                )
+            },
             veri_x: çözüm.ortak_x,
             seri_x_değerleri,
             seri_değerleri,
@@ -1405,12 +1543,15 @@ impl Render for GpuiGrafik {
                     && let Some(konum) = bu.sahne_konumu(olay.position)
                 {
                     let (sol, sağ, üst, alt) = bu.çizim_alanı();
-                    let eksen_konumu = if bu.grafik.x_dikey_mi() {
-                        konum.y.clamp(üst, alt)
+                    let xy = bu.grafik.etkileşim_seçenekleri().seçim_xy_yakınlaştır;
+                    let bitiş = if xy {
+                        Nokta::yeni(konum.x.clamp(sol, sağ), konum.y.clamp(üst, alt))
+                    } else if bu.grafik.x_dikey_mi() {
+                        Nokta::yeni(başlangıç.x, konum.y.clamp(üst, alt))
                     } else {
-                        konum.x.clamp(sol, sağ)
+                        Nokta::yeni(konum.x.clamp(sol, sağ), başlangıç.y)
                     };
-                    bu.seçim = Some((başlangıç, eksen_konumu));
+                    bu.seçim = Some((başlangıç, bitiş));
                 }
                 if !bu.grafik.eksen_sürükleniyor()
                     && let Some(konum) = bu.sahne_konumu(olay.position)
@@ -1497,12 +1638,7 @@ impl Render for GpuiGrafik {
                         && let Some(konum) = bu.sahne_konumu(olay.position)
                         && bu.grafik_alanında(konum)
                     {
-                        let eksen_konumu = if bu.grafik.x_dikey_mi() {
-                            konum.y
-                        } else {
-                            konum.x
-                        };
-                        bu.seçim = Some((eksen_konumu, eksen_konumu));
+                        bu.seçim = Some((konum, konum));
                         bu.açıklama_seçimi = ayarlar.ctrl_açıklama && olay.modifiers.control;
                     }
                     if ana_sahne_değişti {
@@ -1528,34 +1664,63 @@ impl Render for GpuiGrafik {
                     let açıklama_seçimi = std::mem::take(&mut bu.açıklama_seçimi);
                     let mut ana_sahne_değişti = false;
                     if let Some((başlangıç, bitiş)) = bu.seçim.take() {
-                        if (bitiş - başlangıç).abs() >= 4.0 {
+                        let ayarlar = bu.grafik.etkileşim_seçenekleri();
+                        let x_farkı = (bitiş.x - başlangıç.x).abs();
+                        let y_farkı = (bitiş.y - başlangıç.y).abs();
+                        let yeterli = if ayarlar.seçim_xy_yakınlaştır {
+                            x_farkı >= 4.0 && y_farkı >= 4.0
+                        } else if bu.grafik.x_dikey_mi() {
+                            y_farkı >= 4.0
+                        } else {
+                            x_farkı >= 4.0
+                        };
+                        if yeterli {
                             let (sol, sağ, üst, alt) = bu.çizim_alanı();
-                            let (başlangıç_oranı, bitiş_oranı) = if bu.grafik.x_dikey_mi() {
-                                (
-                                    f64::from((alt - başlangıç) / (alt - üst)),
-                                    f64::from((alt - bitiş) / (alt - üst)),
-                                )
+                            if ayarlar.seçim_xy_yakınlaştır {
+                                match bu.grafik.fiziksel_seçim_yakınlaştır(
+                                    f64::from((başlangıç.x - sol) / (sağ - sol)),
+                                    f64::from((başlangıç.y - üst) / (alt - üst)),
+                                    f64::from((bitiş.x - sol) / (sağ - sol)),
+                                    f64::from((bitiş.y - üst) / (alt - üst)),
+                                ) {
+                                    Ok(değişti) => {
+                                        bu.hata = None;
+                                        ana_sahne_değişti = değişti;
+                                    }
+                                    Err(hata) => {
+                                        bu.hata =
+                                            Some(format!("Seçilen aralık uygulanamadı: {hata}"));
+                                    }
+                                }
                             } else {
-                                (
-                                    f64::from((başlangıç - sol) / (sağ - sol)),
-                                    f64::from((bitiş - sol) / (sağ - sol)),
-                                )
-                            };
-                            match bu.grafik.seçimi_bitir(
-                                başlangıç_oranı,
-                                bitiş_oranı,
-                                açıklama_seçimi,
-                            ) {
-                                Ok(SeçimEylemi::Açıklamaİstendi) => {
-                                    bu.hata = None;
-                                    cx.emit(GpuiGrafikOlayı::Açıklamaİstendi);
-                                }
-                                Ok(_) => {
-                                    bu.hata = None;
-                                    ana_sahne_değişti = true;
-                                }
-                                Err(hata) => {
-                                    bu.hata = Some(format!("Seçilen aralık uygulanamadı: {hata}"));
+                                let (başlangıç_oranı, bitiş_oranı) = if bu.grafik.x_dikey_mi() {
+                                    (
+                                        f64::from((alt - başlangıç.y) / (alt - üst)),
+                                        f64::from((alt - bitiş.y) / (alt - üst)),
+                                    )
+                                } else {
+                                    (
+                                        f64::from((başlangıç.x - sol) / (sağ - sol)),
+                                        f64::from((bitiş.x - sol) / (sağ - sol)),
+                                    )
+                                };
+                                match bu.grafik.seçimi_bitir(
+                                    başlangıç_oranı,
+                                    bitiş_oranı,
+                                    açıklama_seçimi,
+                                ) {
+                                    Ok(SeçimEylemi::Açıklamaİstendi) => {
+                                        bu.hata = None;
+                                        cx.emit(GpuiGrafikOlayı::Açıklamaİstendi);
+                                    }
+                                    Ok(_) => {
+                                        bu.hata = None;
+                                        ana_sahne_değişti = true;
+                                    }
+                                    Err(hata) => {
+                                        bu.hata =
+                                            Some(format!("Seçilen aralık uygulanamadı: {hata}"));
+                                    }
                                 }
                             }
                         } else {
@@ -2215,6 +2380,49 @@ mod testler {
 
         assert!(!bileşen.etkileşim_sahnesi().komutlar().is_empty());
         assert_eq!(bileşen.ana_sahne.komutlar().len(), ana_komut_sayısı);
+        Ok(())
+    }
+
+    #[test]
+    fn dikey_x_yüzeyi_imleci_ve_xy_seçimini_fiziksel_yönelimde_çizer() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) =
+            crate::kart::scales_dir_ori_kartı(crate::kart::ScalesDirOriÖrneği::XArtıSolYArtıÜst)?;
+        assert!(seçenekler.etkileşimler.seçim_xy_yakınlaştır);
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        let mut bileşen = GpuiGrafik::yeni(grafik);
+        let (sol, sağ, üst, alt) = bileşen.çizim_alanı();
+        let veri_x = 1.0;
+        let veri_y = 0.0;
+        let x_oranı = bileşen.grafik.x_konum_oranı(veri_x).unwrap_or(0.5) as f32;
+        let y_oranı = bileşen.grafik.seri_y_konum_oranı(0, veri_y).unwrap_or(0.5) as f32;
+        bileşen.imleç = Some(İmleçDurumu {
+            fare: Nokta::yeni(sol + y_oranı * (sağ - sol), alt - x_oranı * (alt - üst)),
+            veri_x,
+            seri_x_değerleri: vec![Some(veri_x), Some(veri_x)],
+            seri_değerleri: vec![Some(veri_y), Some(2.0)],
+            dağılım: None,
+        });
+        let imleç_sahnesi = bileşen.etkileşim_sahnesi();
+        assert!(imleç_sahnesi.komutlar().iter().any(|komut| matches!(
+            komut,
+            Komut::KesikliÇizgi { başlangıç, bitiş, .. }
+                if (başlangıç.y - bitiş.y).abs() <= f32::EPSILON
+        )));
+        assert!(imleç_sahnesi.komutlar().iter().any(|komut| matches!(
+            komut,
+            Komut::KesikliÇizgi { başlangıç, bitiş, .. }
+                if (başlangıç.x - bitiş.x).abs() <= f32::EPSILON
+        )));
+
+        bileşen.imleç = None;
+        bileşen.seçim = Some((Nokta::yeni(90.0, 120.0), Nokta::yeni(190.0, 320.0)));
+        let seçim_sahnesi = bileşen.etkileşim_sahnesi();
+        assert!(seçim_sahnesi.komutlar().iter().any(|komut| matches!(
+            komut,
+            Komut::Dikdörtgen { genişlik, yükseklik, .. }
+                if (*genişlik - 100.0).abs() <= f32::EPSILON
+                    && (*yükseklik - 200.0).abs() <= f32::EPSILON
+        )));
         Ok(())
     }
 

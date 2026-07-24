@@ -95,14 +95,15 @@ pub use kart::{
     multi_bars_kitaplık_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
     ortak_kart_etkileşimleri, path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları,
     pixel_align_kartı, points_kartları, points_kartı, resize_kartı, savitzky_golay,
-    scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
-    soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
-    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
-    sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
-    timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
-    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, zoom_ranger_xy_grafiği,
-    zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
+    scale_padding_kartı, scales_dir_ori_kartları, scales_dir_ori_kartı, scatter_kartı,
+    scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
+    sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
+    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları,
+    sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
+    trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
+    y_shifted_series_kartı, zoom_ranger_xy_grafiği, zoom_touch_kartı, zoom_wheel_kartı,
+    ÇubukÖrneği,
 };
 pub use olcek::{Aralık, SayısalAralıkAyarları, SayısalAralıkParçası, YumuşakSınırKipi};
 pub use secenek::{

@@ -57,13 +57,13 @@ use uplot_rs::{
     months_kartları, multi_bars_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
     ortak_kart_etkileşimleri, path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları,
     pixel_align_kartı, points_kartları, points_kartı, resize_kartı, scale_padding_kartı,
-    scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı,
-    sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
-    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
-    sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
-    timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
-    trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
-    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
+    scales_dir_ori_kartları, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
+    sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
+    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
+    sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
+    timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
+    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
+    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -81,7 +81,7 @@ enum KartKimliği {
     PathGapClip,
     PixelAlign,
     Points,
-    ScalesDirOri(ScalesDirOriÖrneği),
+    ScalesDirOri,
     Scatter(ScatterÖrneği),
     ScrollSync,
     SineStream,
@@ -153,7 +153,7 @@ impl KartKimliği {
             Self::PathGapClip => "Path & Gap Clipping · 15 yüzey",
             Self::PixelAlign => "Pixel Align · canlı A/B",
             Self::Points => "Points · 4 yüzey",
-            Self::ScalesDirOri(örnek) => örnek.başlık(),
+            Self::ScalesDirOri => "Scales Direction & Orientation · 16 yüzey",
             Self::Scatter(örnek) => örnek.başlık(),
             Self::ScrollSync => "Scroll syncRect()",
             Self::SineStream => "6 series x 600 points @ 60fps",
@@ -246,8 +246,8 @@ impl KartKimliği {
             Self::Points => {
                 "points.html · 4 eşzamanlı yüzey · randomWalk.js · points.space, paths:null ve points.filter"
             }
-            Self::ScalesDirOri(_) => {
-                "scales-dir-ori.html · src/uPlot.js · scale.dir, scale.ori ve axis.side"
+            Self::ScalesDirOri => {
+                "scales-dir-ori.html · 16 eşzamanlı yüzey · scale.dir, scale.ori ve axis.side"
             }
             Self::Scatter(_) => "scatter.html · quadtree.js · mode:2 facet ve bubble vuruşu",
             Self::ScrollSync => "scroll-sync.html · syncRect() · kaydırmada istemci/sahne eşlemesi",
@@ -376,7 +376,7 @@ impl KartKimliği {
             Self::PathGapClip => PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
             Self::PixelAlign => PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
             Self::Points => POINTS_KART_TANIM_ÖRNEĞİ,
-            Self::ScalesDirOri(_) => SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
+            Self::ScalesDirOri => SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
             Self::Scatter(_) => SCATTER_KART_TANIM_ÖRNEĞİ,
             Self::ScrollSync => SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
             Self::SineStream => SINE_STREAM_KART_TANIM_ÖRNEĞİ,
@@ -446,7 +446,7 @@ impl KartKimliği {
             Self::PathGapClip => "src/kart/path_gap_clip.rs",
             Self::PixelAlign => "src/kart/pixel_align.rs",
             Self::Points => "src/kart/points.rs",
-            Self::ScalesDirOri(_) => "src/kart/scales_dir_ori.rs",
+            Self::ScalesDirOri => "src/kart/scales_dir_ori.rs",
             Self::Scatter(_) => "src/kart/scatter.rs",
             Self::ScrollSync => "src/kart/scroll_sync.rs",
             Self::SineStream => "src/kart/sine_stream.rs",
@@ -547,6 +547,9 @@ pub struct ChartListesi {
     path_gap_clip_grafikleri: Vec<(PathGapClipÖrneği, Entity<GpuiGrafik>)>,
     pixel_align_grafikleri: Vec<(PixelAlignÖrneği, Entity<GpuiGrafik>)>,
     points_grafikleri: Vec<(PointsÖrneği, Entity<GpuiGrafik>)>,
+    scales_dir_ori_grafikleri: Vec<(ScalesDirOriÖrneği, Entity<GpuiGrafik>)>,
+    scales_dir_ori_senkronlanıyor: bool,
+    scales_dir_ori_kilitli: bool,
     no_data_örneği: NoDataÖrneği,
 }
 
@@ -604,6 +607,14 @@ impl ChartListesi {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
                 }
+            } else if bu.aktif_kart == KartKimliği::ScalesDirOri {
+                bu.scales_dir_ori_senkronlanıyor = true;
+                for (_, grafik) in &bu.scales_dir_ori_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+                bu.scales_dir_ori_senkronlanıyor = false;
             } else if let Some(grafik) = &bu.grafik {
                 grafik.update(cx, |grafik, cx| {
                     grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
@@ -668,6 +679,9 @@ impl ChartListesi {
             path_gap_clip_grafikleri: Vec::new(),
             pixel_align_grafikleri: Vec::new(),
             points_grafikleri: Vec::new(),
+            scales_dir_ori_grafikleri: Vec::new(),
+            scales_dir_ori_senkronlanıyor: false,
+            scales_dir_ori_kilitli: false,
             no_data_örneği: NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
         }
     }
@@ -911,6 +925,114 @@ impl ChartListesi {
         cx.notify();
     }
 
+    fn scales_dir_ori_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = scales_dir_ori_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç.err().map(|hata| {
+                format!("Scales Direction & Orientation ailesi oluşturulamadı: {hata}")
+            });
+            self.grafik = None;
+            self.scales_dir_ori_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.scales_dir_ori_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, move |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if bu.scales_dir_ori_senkronlanıyor {
+                    return;
+                }
+                match olay {
+                    GpuiGrafikOlayı::İmleçDeğişti => {
+                        let yayın = bu
+                            .scales_dir_ori_grafikleri
+                            .iter()
+                            .find(|(kimlik, _)| *kimlik == örnek)
+                            .and_then(|(_, grafik)| grafik.read(cx).senkron_veri_yayını());
+                        let yüzeyler = bu.scales_dir_ori_grafikleri.clone();
+                        bu.scales_dir_ori_senkronlanıyor = true;
+                        for (hedef, hedef_grafik) in yüzeyler {
+                            if hedef == örnek {
+                                continue;
+                            }
+                            if let Some((x, y, seri)) = yayın {
+                                hedef_grafik.update(cx, |grafik, cx| {
+                                    grafik.senkron_veri_imleci_ayarla(x, y, seri, cx);
+                                });
+                            } else {
+                                hedef_grafik.update(cx, |grafik, cx| {
+                                    grafik.senkron_imleci_temizle(cx);
+                                });
+                            }
+                        }
+                        bu.scales_dir_ori_senkronlanıyor = false;
+                    }
+                    GpuiGrafikOlayı::FareBırakıldı => {
+                        bu.scales_dir_ori_kilitli = !bu.scales_dir_ori_kilitli;
+                        let kilitli = bu.scales_dir_ori_kilitli;
+                        let yüzeyler = bu.scales_dir_ori_grafikleri.clone();
+                        bu.scales_dir_ori_senkronlanıyor = true;
+                        for (_, hedef) in yüzeyler {
+                            hedef.update(cx, |grafik, cx| {
+                                grafik.senkron_kilidi_ayarla(kilitli, cx);
+                            });
+                        }
+                        bu.scales_dir_ori_senkronlanıyor = false;
+                    }
+                    GpuiGrafikOlayı::DurumDeğişti => {
+                        let aralıklar = bu
+                            .scales_dir_ori_grafikleri
+                            .iter()
+                            .find(|(kimlik, _)| *kimlik == örnek)
+                            .map(|(_, grafik)| {
+                                let grafik = grafik.read(cx);
+                                (
+                                    grafik.grafik().görünür_x_aralığı(),
+                                    grafik.grafik().görünür_y_aralığı(),
+                                )
+                            });
+                        let yüzeyler = bu.scales_dir_ori_grafikleri.clone();
+                        if let Some((x, y)) = aralıklar {
+                            bu.scales_dir_ori_senkronlanıyor = true;
+                            for (hedef, hedef_grafik) in yüzeyler {
+                                if hedef != örnek {
+                                    hedef_grafik.update(cx, |grafik, cx| {
+                                        grafik.görünür_aralıkları_ayarla(x, y, true, cx);
+                                    });
+                                }
+                            }
+                            bu.scales_dir_ori_senkronlanıyor = false;
+                        }
+                    }
+                    GpuiGrafikOlayı::Açıklamaİstendi => {
+                        bu.açıklama_istendi = true;
+                    }
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.scales_dir_ori_grafikleri = yüzeyler;
+        self.scales_dir_ori_senkronlanıyor = false;
+        self.scales_dir_ori_kilitli = false;
+        self.hata = None;
+        cx.notify();
+    }
+
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
         match grafik_oluştur(
@@ -1132,6 +1254,7 @@ impl ChartListesi {
             anahtar.ayarla(etkileşimler.tekerlek_etkileşimi, cx);
             anahtar.devre_disi_ayarla(false, cx);
         });
+        self.scales_dir_ori_grafikleri.clear();
         if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -1189,6 +1312,15 @@ impl ChartListesi {
             self.path_gap_clip_grafikleri.clear();
             self.pixel_align_grafikleri.clear();
             self.points_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::ScalesDirOri {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.scales_dir_ori_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -1714,7 +1846,7 @@ fn grafik_oluştur(
             pixel_align_kartı(PixelAlignÖrneği::Varsayılan, pixel_align_adımı)
         }
         KartKimliği::Points => points_kartı(PointsÖrneği::Karma),
-        KartKimliği::ScalesDirOri(örnek) => scales_dir_ori_kartı(örnek),
+        KartKimliği::ScalesDirOri => scales_dir_ori_kartı(ScalesDirOriÖrneği::XArtıAltYArtıSol),
         KartKimliği::Scatter(örnek) => scatter_kartı(örnek),
         KartKimliği::ScrollSync => scroll_sync_kartı(),
         KartKimliği::SineStream => sine_stream_kartı(),
@@ -1856,9 +1988,9 @@ impl Render for ChartListesi {
             KartKimliği::Points => {
                 "4 eşzamanlı yüzey · 2 yüzey ortak 180 nokta · piksel-gap filtresi".to_string()
             }
-            KartKimliği::ScalesDirOri(örnek) => {
-                let (genişlik, yükseklik) = örnek.boyut();
-                format!("10 nokta × 2 seri · {genişlik}×{yükseklik} · scale.dir/ori")
+            KartKimliği::ScalesDirOri => {
+                "16 eşzamanlı yüzey · aynı 10 nokta × 2 seri · direction/orientation matrisi"
+                    .to_string()
             }
             KartKimliği::Scatter(örnek) => {
                 format!("{} nokta × 4 mode-2 facet", örnek.seri_başı_nokta())
@@ -2151,6 +2283,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .points_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::ScalesDirOri {
+            geri_var = self
+                .scales_dir_ori_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .scales_dir_ori_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         }
@@ -2801,21 +2942,20 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::Points, cx);
                 })),
             )
-            .children(ScalesDirOriÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::ScalesDirOri(örnek);
+            .child(
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
+                    "kart-scales-dir-ori",
+                    "Scales Direction & Orientation · 16 yüzey",
                     "scales-dir-ori",
-                    aktif_kart == kart,
-                    "scale.dir · scale.ori · axis.side",
+                    aktif_kart == KartKimliği::ScalesDirOri,
+                    "Direction Inversion · Orientation Inversion",
                     panel,
                     vurgu,
                 )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            }))
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::ScalesDirOri, cx);
+                })),
+            )
             .children(ScatterÖrneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::Scatter(örnek);
                 katalog_kartı(
@@ -3569,6 +3709,14 @@ impl Render for ChartListesi {
                                     grafik.önceki_görünüm(cx);
                                 });
                             }
+                        } else if bu.aktif_kart == KartKimliği::ScalesDirOri {
+                            bu.scales_dir_ori_senkronlanıyor = true;
+                            for (_, grafik) in &bu.scales_dir_ori_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.önceki_görünüm(cx);
+                                });
+                            }
+                            bu.scales_dir_ori_senkronlanıyor = false;
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
@@ -3619,6 +3767,14 @@ impl Render for ChartListesi {
                                     grafik.tam_görünüm(cx);
                                 });
                             }
+                        } else if bu.aktif_kart == KartKimliği::ScalesDirOri {
+                            bu.scales_dir_ori_senkronlanıyor = true;
+                            for (_, grafik) in &bu.scales_dir_ori_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.tam_görünüm(cx);
+                                });
+                            }
+                            bu.scales_dir_ori_senkronlanıyor = false;
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.tam_görünüm(cx);
@@ -3645,6 +3801,8 @@ impl Render for ChartListesi {
                             bu.pixel_align_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::Points {
                             bu.points_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::ScalesDirOri {
+                            bu.scales_dir_ori_yüzeylerini_oluştur(cx);
                         } else {
                             bu.grafiği_yenile(100, cx);
                         }
@@ -4094,6 +4252,70 @@ impl Render for ChartListesi {
                                 ),
                         )
                 }))
+        } else if aktif_kart == KartKimliği::ScalesDirOri {
+            let yüzey = |örnek| {
+                self.scales_dir_ori_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            let grup = |başlık: &'static str, dikey: bool| {
+                div()
+                    .mt_3()
+                    .child(
+                        div()
+                            .mb_2()
+                            .text_sm()
+                            .font_weight(FontWeight::BOLD)
+                            .text_color(metin)
+                            .child(başlık),
+                    )
+                    .child(
+                        div().flex().flex_wrap().gap_2().items_start().children(
+                            ScalesDirOriÖrneği::TÜMÜ
+                                .into_iter()
+                                .filter(move |örnek| örnek.x_dikey() == dikey)
+                                .map(|örnek| {
+                                    let (genişlik, yükseklik) = örnek.boyut();
+                                    div()
+                                        .flex_none()
+                                        .w(px(genişlik as f32))
+                                        .child(
+                                            div()
+                                                .mb_1()
+                                                .text_xs()
+                                                .font_weight(FontWeight::SEMIBOLD)
+                                                .text_color(soluk)
+                                                .child(örnek.başlık()),
+                                        )
+                                        .child(
+                                            div()
+                                                .w(px(genişlik as f32))
+                                                .h(px(yükseklik as f32))
+                                                .when_some(yüzey(örnek), |öğe, grafik| {
+                                                    öğe.child(grafik)
+                                                }),
+                                        )
+                                }),
+                        ),
+                    )
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(2100.0))
+                .overflow_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("On altı panel aynı 10 X değeri ile kırmızı ve mavi seri anlık görüntüsünü paylaşır. İlk grup scale.dir yön terslemelerini; ikinci grup scale.ori ile X/Y eksenlerinin yer değiştirmesini karşılaştırır."),
+                )
+                .child(grup("Direction Inversion", false))
+                .child(grup("Orientation Inversion", true))
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
             let boyut = self
                 .boyut_senkron_akışı
@@ -4156,6 +4378,9 @@ impl Render for ChartListesi {
             }
             KartKimliği::Points => {
                 "Dört yüzey bağımsız etkileşir · ortadaki A/B çifti aynı veride X yoğunluk eşiğini karşılaştırır"
+            }
+            KartKimliği::ScalesDirOri => {
+                "İki kaynak grubunda 16 yüzeyi birlikte karşılaştır · yön, yönelim ve eksen taraflarını aynı veride izle"
             }
             _ => {
                 "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır · çift tıkla: tam görünüm"
@@ -4254,6 +4479,17 @@ impl Render for ChartListesi {
                  ana eğriyi okunur tutun. Maliyet: dört statik yüzey toplam 3.321 X konumu tarar; \
                  yoğunluk testi O(1), gap filtresi O(N+G×99), çizilen marker sayısı O(k). \
                  Yakınlaştırma ve boyut değişimi filtreyi görünür piksel düzleminde yeniden hesaplar.",
+            ),
+            KartKimliği::ScalesDirOri => Some(
+                "Amaç: aynı iki serinin dört yön kombinasyonunu, karşı eksen taraflarını ve X/Y \
+                 yönelim değişimini tek matriste karşılaştırır. API: scale.dir veri yönünü, \
+                 scale.ori fiziksel eksen yönelimini, axis.side eksenin top/right/bottom/left \
+                 tarafını belirler. Direction Inversion sekiz 600×300; Orientation Inversion \
+                 sekiz 320×600 yüzeydir. İzleme: ters akan süreçleri veya dikey zaman eksenini \
+                 sunarken veri değerlerini dönüştürmeden fiziksel okumayı değiştirin. Maliyet: \
+                 16 statik yüzeyin her biri aynı 10 X konumu ve iki seriyi O(S×N) çizer; timer \
+                 yoktur. Cursor yalnız hafif etkileşim katmanlarını taşır; ölçek değişiminde \
+                 senkron grubun 16 ana yüzeyi birlikte yeniden boyanır.",
             ),
             _ => None,
         };

@@ -757,6 +757,8 @@ pub struct EtkileşimSeçenekleri {
     pub tekerlek_ayarları: TekerlekAyarları,
     /// uPlot çekirdeğinin sürükleyerek X aralığı seçme davranışı.
     pub seçim_yakınlaştır: bool,
+    /// Seçim dikdörtgeninin X ile birlikte Y ölçeğini de yakınlaştırması.
+    pub seçim_xy_yakınlaştır: bool,
     /// uPlot çekirdeğinin çift tıklamayla tam X aralığına dönme davranışı.
     pub çift_tıkla_tam_görünüm: bool,
     /// uPlot.rs'e özgü adımlı görünüm geçmişi. Varsayılan: kapalı.
@@ -902,6 +904,7 @@ impl Default for EtkileşimSeçenekleri {
             tekerlek_etkileşimi: false,
             tekerlek_ayarları: TekerlekAyarları::default(),
             seçim_yakınlaştır: true,
+            seçim_xy_yakınlaştır: false,
             çift_tıkla_tam_görünüm: true,
             görünüm_geçmişi: false,
             dokunma_etkileşimi: false,
@@ -927,6 +930,11 @@ impl EtkileşimSeçenekleri {
 
     pub fn seçim_yakınlaştır(mut self, etkin: bool) -> Self {
         self.seçim_yakınlaştır = etkin;
+        self
+    }
+
+    pub fn seçim_xy_yakınlaştır(mut self, etkin: bool) -> Self {
+        self.seçim_xy_yakınlaştır = etkin;
         self
     }
 

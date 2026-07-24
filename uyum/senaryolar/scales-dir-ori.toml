@@ -1,14 +1,18 @@
 id = "scales-dir-ori"
 kaynak = "../uPlot/demos/scales-dir-ori.html"
-fixture = "src/kart/scales_dir_ori.rs#scales_dir_ori_kartı"
+fixture = "src/kart/scales_dir_ori.rs#scales_dir_ori_kartları"
 viewport = [1920, 1500]
 device_pixel_ratio = 1
 durum = "on_altı_kaynak_yüzeyi"
+kart_sayısı = 1
+yüzey_sayısı = 16
 
 [veri]
 x = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6]
 kırmızı_null_indeksi = 7
 seri_sayısı = 2
+ortak_anlık_görüntü = true
+zamanlayıcı = false
 
 [yönelim]
 standart_yüzey = 8
@@ -25,6 +29,17 @@ seçim_yakınlaştır = true
 dokunma_xy_yakınlaştır = true
 boşluk_sol_sürükleme_taşıma = true
 yönelim_koordinat_dönüşümü = "çekirdek"
+cursor_sync = "x+y"
+cursor_lock = true
+ölçek_sync = ["x", "y"]
+seçim_eksenleri = ["x", "y"]
+cursor_yeniden_çizimi = "yalnız_etkileşim_katmanı"
+ölçek_yeniden_çizimi = "animation-frame-birleştirmeli"
+
+[uplot_rs_uzantısı]
+tekerlek = "Shift=X, Ctrl=Y, varsayılan=X+Y"
+dokunma = "iki parmak X+Y"
+taşıma = "Space+sol sürükleme"
 
 [kanıt]
 svg_dizini = "target/scales-dir-ori"

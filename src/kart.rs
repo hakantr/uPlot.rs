@@ -170,7 +170,8 @@ pub use points::{
 pub use resize::{RESIZE_KART_TANIM_ÖRNEĞİ, resize_kartı};
 pub use scale_padding::{SCALE_PADDING_KART_TANIM_ÖRNEĞİ, scale_padding_kartı};
 pub use scales_dir_ori::{
-    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, scales_dir_ori_kartı,
+    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği, scales_dir_ori_kartları,
+    scales_dir_ori_kartı,
 };
 pub use scatter::{
     SCATTER_KANIT_TOHUMU, SCATTER_KART_TANIM_ÖRNEĞİ, ScatterÖrneği, scatter_kartı
