@@ -245,13 +245,24 @@ mod testler {
 
     #[test]
     fn ranger_xy_resmî_sinüs_verisini_ve_ilk_x_seçimini_korur() -> Result<(), UplotHatası> {
-        let grafik = zoom_ranger_xy_grafiği()?;
+        let mut grafik = zoom_ranger_xy_grafiği()?;
         assert_eq!(grafik.boyut(), (800, 400));
         assert_eq!(grafik.görünür_x_aralığı(), Aralık::yeni(1.0, 4.5)?);
         let ilk_x = 2.0 * std::f64::consts::PI * 16.0 / 100.0;
         let son_x = 2.0 * std::f64::consts::PI * 71.0 / 100.0;
         assert_eq!(grafik.en_yakın_nokta(0.0, 0), Some((ilk_x, ilk_x.sin())));
         assert_eq!(grafik.en_yakın_nokta(1.0, 0), Some((son_x, son_x.sin())));
+        // Temel zoom-ranger, grips/XY üst-kümesinin yalnız X alt kümesidir.
+        let mut ranger = grafik.zoom_ranger_durumu()?;
+        assert!(ranger.sol_tutamağı_ayarla(2.0));
+        assert!(ranger.sağ_tutamağı_ayarla(4.0));
+        assert!(grafik.zoom_ranger_uygula(ranger));
+        assert_eq!(grafik.görünür_x_aralığı(), Aralık::yeni(2.0, 4.0)?);
+        assert!(grafik.seçim_yakınlaştır(0.25, 0.75)?);
+        assert_eq!(
+            grafik.zoom_ranger_durumu()?.seçim_aralığı(),
+            grafik.görünür_x_aralığı()
+        );
         Ok(())
     }
 }

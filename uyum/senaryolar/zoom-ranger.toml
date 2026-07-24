@@ -1,0 +1,25 @@
+id = "zoom-ranger"
+kaynak = "../uPlot/demos/zoom-ranger.html"
+fixture = "src/kart/zoom_wheel.rs#zoom_ranger_xy_grafiği"
+kart = "zoom-wheel"
+durum = "grips_ve_xy_ortak_api_alt_kumesi"
+veri_politikasi = "kaynak_veri_aynen"
+beklenen_nokta_sayisi = 100
+ilk_x_araligi = [1.0, 4.5]
+overview_secimi_ana_x_senkron = true
+ana_x_overview_secimi_senkron = true
+ust_kume_ozellikleri = [
+  "ZoomRangerDurumu",
+  "sol_tutamağı_ayarla",
+  "sağ_tutamağı_ayarla",
+  "ana_görünümle_senkronla",
+  "zoom_ranger_uygula",
+]
+ayri_katalog_karti = false
+yeni_example_yuzeyi = false
+yeni_masaustu_yuzeyi = false
+yeni_wasm_web_yuzeyi = false
+örnek = "examples/zoom_wheel.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"
+svg = "target/zoom-ranger-xy.svg"
