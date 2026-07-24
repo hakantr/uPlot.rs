@@ -2862,6 +2862,11 @@ mod testler {
         assert!(geniş.contains(">250<"));
         assert!(dar.contains(">-200<"));
         assert!(dar.contains(">400<"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("class=\"nice-scale-boyut\""));
+        assert!(web.contains("resize: both"));
+        assert!(web.contains("niceScaleResizeObserver = new ResizeObserver"));
+        assert!(web.contains("niceScaleResizeAnimationFrame = requestAnimationFrame"));
     }
 
     #[test]

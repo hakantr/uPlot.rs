@@ -231,7 +231,7 @@ impl KartKimliği {
                 "months.html + months-ru.html · 3 ilişkili yüzey · UTC ayları, artık yıl, Rusça fmtDate · sabit kanıt tohumu"
             }
             Self::NiceScale => {
-                "nice-scale.html · boyuta bağlı niceScale/niceNum Y aralığı ve artımı"
+                "nice-scale.html · pencere/panel boyutuna bağlı niceScale/niceNum Y aralığı ve artımı"
             }
             Self::NoData => {
                 "no-data.html · tek kartta 33 boş, tek noktalı, düz ve hassas ölçek seçeneği"
@@ -3691,6 +3691,15 @@ impl Render for ChartListesi {
                  aylık faturalama, SLO ve kapasite raporlarında sabit 30 gün yerine gerçek ay \
                  sınırlarını kullanın. Maliyet: üç bağımsız yüzeyde toplam 108 nokta; çizim \
                  O(N+T), imleç O(log N). Resize bölmeleri yeniden hesaplar, veriyi üretmez.",
+            ),
+            KartKimliği::NiceScale => Some(
+                "Amaç: panel yüksekliğine sığan okunabilir Y bölmelerini ve bu bölmelere tam \
+                 oturan yuvarlak sınırları otomatik seçer. API: GüzelÖlçekDüzeni::yeni(30.0), \
+                 kaynak niceNum eşiklerini (1/2/2,5/5/10), uçlarda %2 payı ve ArtımaGöre \
+                 etiket biçimini birleştirir. İzleme: pencere veya panel boyutu değiştiğinde \
+                 sabit tick sayısı yerine en az 30 piksel aralık korunur. Maliyet: altı X \
+                 noktası ve üç seri değişmeden kalır; yalnız ölçek, ızgara ve yollar \
+                 O(S×N+T) maliyetle yeniden boyanır.",
             ),
             _ => None,
         };

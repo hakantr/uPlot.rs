@@ -1950,6 +1950,8 @@
         "source-exact-three-series", "source-nice-scale-algorithm", "source-nice-num-thresholds",
         "source-two-percent-range-padding", "source-thirty-pixel-axis-space",
         "responsive-range-and-increment", "responsive-grid-and-labels",
+        "source-resize-both-surface", "source-minimum-100px-resize-surface",
+        "resize-observer-frame-coalescing",
         "one-two-two-point-five-five-ten-increments", "translucent-series-fills",
         "gpui-wasm-catalog-parity", "common-interaction-profile",
         "panic-free-invalid-layout-feedback"

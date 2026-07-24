@@ -65,6 +65,17 @@
     #chart[data-boyut-senkron="true"] svg {
       width: auto; height: auto; max-width: 100%; max-height: 100%;
     }
+    #chart.nice-scale-yüzeyi {
+      display: block; overflow: auto; padding: 8px; place-items: unset;
+    }
+    #chart.nice-scale-yüzeyi .nice-scale-boyut {
+      position: relative; display: inline-block; width: 1920px; height: 600px;
+      min-width: 100px; min-height: 100px; resize: both; overflow: hidden;
+      box-sizing: content-box; background: #f5f5f5;
+    }
+    #chart.nice-scale-yüzeyi .nice-scale-boyut svg {
+      display: block; width: 100%; height: 100%; max-width: none; max-height: none;
+    }
     #chart.multi-bars-yüzeyi {
       display: grid; grid-template-rows: minmax(0, 1fr) auto auto; place-items: unset;
       overflow: hidden; padding-bottom: 12px;
@@ -770,7 +781,7 @@
         başlık: "Nice Scale & Ticks",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/nice-scale.html">nice-scale.html</a>
           <br>Resmî <code>niceScale</code>/<code>niceNum</code> algoritması, üç kaynak seri ve 30 piksellik asgari Y etiketi aralığı çekirdektedir.
-          <br>Kart yüksekliği değiştiğinde Y sınırları, artım, ızgara ve değer etiketleri birlikte yeniden hesaplanır.`,
+          <br>Sağ-alt köşeden iki yönde boyutlandırılabilen kaynak yüzey korunur. Yükseklik değiştiğinde Y sınırları, artım, ızgara ve değer etiketleri tek çizim karesinde birlikte yeniden hesaplanır.`,
         tanım: () => nice_scale_kart_tanim_ornegi(),
         tanımYolu: "src/kart/nice_scale.rs",
         seriler: [
@@ -778,9 +789,15 @@
           { etiket: "2", renk: "#008000" },
           { etiket: "3", renk: "#0000ff" },
         ],
-        yardım: "Pencereyi yeniden boyutlandır: Y ölçeğini güncelle · sürükle: seç · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
+        yardım: "Sağ-alt köşeyi sürükle: yüzeyi boyutlandır · sürükle: seç · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "Az sayıdaki ölçüm serisi için, panel yüksekliğine sığan okunabilir Y bölmelerini ve bu bölmelere tam oturan yuvarlak sınırları otomatik seçer.",
+          api: "GüzelÖlçekDüzeni::yeni(30.0), kaynak niceNum eşiklerini (1/2/2,5/5/10), uçlarda %2 payı ve ArtımaGöre etiket biçimini çekirdekte bir araya getirir.",
+          izleme: "Dashboard paneli daralıp büyürken sabit tick sayısı kullanmak yerine, en az 30 CSS piksel aralıkla yeni ölçek üretin; aksi halde etiketler üst üste biner veya bilgi yoğunluğu gereksiz azalır.",
+          maliyet: "ResizeObserver olayları requestAnimationFrame ile birleştirilir. Altı X noktası ve üç seri değişmeden kalır; yalnız ölçek, ızgara ve üç yol O(S×N+T) maliyetle yeniden boyanır.",
+        },
       },
       "cursor-snap": {
         başlık: "Cursor Snap · 10×10 grid",
@@ -2418,8 +2435,11 @@
     let pointerAnimationFrame = null;
     let bekleyenPointerOlayı = null;
     let resizeAnimationFrame = null;
+    let niceScaleResizeAnimationFrame = null;
     let sonResizeBoyutu = "";
     let chartResizeObserver = null;
+    let niceScaleResizeObserver = null;
+    let niceScaleResizeYüzeyi = null;
     let syncYZeroZamanlayıcıları = [];
     const syncCursorYüzeyleri = [
       { kimlik: "sync-cursor-cpu", başlık: "CPU", seriler: [["CPU 1", "red"], ["CPU 2", "green"], ["CPU 3", "blue"]] },
@@ -2580,6 +2600,13 @@
       if (aktifKart === "multi-bars-variable-colors"
         || aktifKart === "multi-bars-non-justified") {
         return { genişlik: 800, yükseklik: 400 };
+      }
+      if (aktifKart === "nice-scale") {
+        const yüzey = chart.querySelector(".nice-scale-boyut");
+        return {
+          genişlik: Math.max(100, Math.round(yüzey?.clientWidth || 1920)),
+          yükseklik: Math.max(100, Math.round(yüzey?.clientHeight || 600)),
+        };
       }
       if (kartlar[aktifKart]?.kompakt === true) {
         return { genişlik: 150, yükseklik: 30 };
@@ -3519,6 +3546,7 @@
       chart.classList.remove("timeseries-discrete-yüzeyi");
       chart.classList.remove("nearest-non-null-yüzeyi");
       chart.classList.remove("months-yüzeyi");
+      chart.classList.toggle("nice-scale-yüzeyi", aktifKart === "nice-scale");
       chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
       const sayı = Number(nokta.value);
       değer.value = `${sayı} nokta`;
@@ -3578,7 +3606,9 @@
             coordinate conversion in the reusable Rust core.</p>
           </div>` : aktifKart.startsWith("multi-bars-")
             ? `<div class="multi-bars-kaydırma">${svgÇıktısı}${multiBarsKategoriKontrolleri}</div>`
-            : svgÇıktısı;
+            : aktifKart === "nice-scale"
+              ? `<div class="nice-scale-boyut">${svgÇıktısı}</div>`
+              : svgÇıktısı;
         chart.dataset.cizilenKart = aktifKart;
         chart.dataset.seriImzasi = seriİmzası;
       } else {
@@ -3586,11 +3616,35 @@
           ? chart.querySelector(".scroll-sync-grafik svg")
           : aktifKart.startsWith("multi-bars-")
             ? chart.querySelector(".multi-bars-kaydırma svg")
-            : chart.querySelector(":scope > svg");
+            : aktifKart === "nice-scale"
+              ? chart.querySelector(".nice-scale-boyut svg")
+              : chart.querySelector(":scope > svg");
         const şablon = document.createElement("template");
         şablon.innerHTML = svgÇıktısı.trim();
         const yeniSvg = şablon.content.firstElementChild;
         svgYüzeyiniYerindeGüncelle(mevcutSvg, yeniSvg);
+      }
+      if (aktifKart === "nice-scale") {
+        const yüzey = chart.querySelector(".nice-scale-boyut");
+        if (yüzey && yüzey !== niceScaleResizeYüzeyi) {
+          niceScaleResizeObserver?.disconnect();
+          niceScaleResizeYüzeyi = yüzey;
+          let sonBoyut = `${yüzey.clientWidth}x${yüzey.clientHeight}`;
+          niceScaleResizeObserver = new ResizeObserver(() => {
+            const boyut = `${yüzey.clientWidth}x${yüzey.clientHeight}`;
+            if (boyut === sonBoyut || niceScaleResizeAnimationFrame !== null) return;
+            sonBoyut = boyut;
+            niceScaleResizeAnimationFrame = requestAnimationFrame(() => {
+              niceScaleResizeAnimationFrame = null;
+              if (aktifKart === "nice-scale" && yüzey.isConnected) çiz();
+            });
+          });
+          niceScaleResizeObserver.observe(yüzey);
+        }
+      } else if (niceScaleResizeObserver) {
+        niceScaleResizeObserver.disconnect();
+        niceScaleResizeObserver = null;
+        niceScaleResizeYüzeyi = null;
       }
       const svg = chart.querySelector("svg");
       if (!svg) return;
@@ -3641,7 +3695,11 @@
               <i class="örnek" style="border-color:${seri.renk};background:${seri.renk}"></i>${seri.etiket}: <b id="seri-değeri-${indeks}">--</b></span>`
           : ""
       ).join("");
-      const arayüzHedefi = kart.scrollSync ? chart.querySelector(".scroll-sync-grafik") : chart;
+      const arayüzHedefi = kart.scrollSync
+        ? chart.querySelector(".scroll-sync-grafik")
+        : aktifKart === "nice-scale"
+          ? chart.querySelector(".nice-scale-boyut")
+          : chart;
       if (tamKurulum) {
         arayüzHedefi?.insertAdjacentHTML("beforeend", `
           ${kart.scrollSync || !kart.yardım ? "" : `<div class="yardım">${kart.yardım}</div>`}
