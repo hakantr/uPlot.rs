@@ -908,6 +908,24 @@
       "rust_karşılığı": "YShiftedSeriesAkışı::ilerlet",
       "durum": "tam_kanıtlı",
       "test": "src/kart/y_shifted_series.rs"
+    },
+    {
+      "kaynak_yolu": "hooks.drawClear annotation visibility filter",
+      "rust_karşılığı": "Grafik annotation görünürlük ve kırpma katmanı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/annotations.rs"
+    },
+    {
+      "kaynak_yolu": "valToPos(mark.from/mark.to, 'x')",
+      "rust_karşılığı": "Grafik::x_konumu annotation geometrisi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/annotations.rs"
+    },
+    {
+      "kaynak_yolu": "annotationsPlugin types and xMarks",
+      "rust_karşılığı": "AçıklamaDüzeni, AçıklamaStili ve Açıklamaİşareti",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/annotations.rs"
     }
   ]
 }

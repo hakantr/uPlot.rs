@@ -2698,6 +2698,126 @@ impl Grafik {
             }
         }
 
+        if let Some(düzen) = self.seçenekler.açıklama_düzeni.as_ref() {
+            for işaret in &düzen.işaretler {
+                if !işaret.başlangıç.is_finite()
+                    || !işaret.bitiş.is_finite()
+                    || işaret.bitiş < işaret.başlangıç
+                {
+                    continue;
+                }
+                let görünür = (işaret.başlangıç >= x_aralığı.en_az
+                    && işaret.başlangıç <= x_aralığı.en_çok)
+                    || (işaret.bitiş >= x_aralığı.en_az && işaret.bitiş <= x_aralığı.en_çok)
+                    || (işaret.başlangıç <= x_aralığı.en_az && işaret.bitiş >= x_aralığı.en_çok);
+                if !görünür {
+                    continue;
+                }
+                let Some(stil) = düzen.stiller.iter().find(|stil| stil.tür == işaret.tür)
+                else {
+                    continue;
+                };
+                let başlangıç_x = self
+                    .x_konumu(x_aralığı, işaret.başlangıç, sol, genişlik)
+                    .round();
+                let bitiş_x = self
+                    .x_konumu(x_aralığı, işaret.bitiş, sol, genişlik)
+                    .round();
+                let kırpılmış_sol = başlangıç_x.clamp(sol, sağ);
+                let kırpılmış_sağ = bitiş_x.clamp(sol, sağ);
+
+                if işaret.bitiş > işaret.başlangıç && kırpılmış_sağ > kırpılmış_sol {
+                    sahne.ekle(Komut::Dikdörtgen {
+                        konum: Nokta::yeni(kırpılmış_sol, üst),
+                        genişlik: kırpılmış_sağ - kırpılmış_sol,
+                        yükseklik,
+                        dolgu: stil.dolgu.clone(),
+                        çizgi: "#00000000".to_string(),
+                        kalınlık: 0.0,
+                    });
+                }
+                if başlangıç_x >= sol && başlangıç_x <= sağ {
+                    sahne.ekle(Komut::KesikliÇizgi {
+                        başlangıç: Nokta::yeni(başlangıç_x, üst),
+                        bitiş: Nokta::yeni(başlangıç_x, alt),
+                        renk: stil.çizgi.clone(),
+                        kalınlık: stil.kalınlık,
+                        kesik: stil.kesik,
+                    });
+                }
+                if işaret.bitiş > işaret.başlangıç && bitiş_x >= sol && bitiş_x <= sağ {
+                    sahne.ekle(Komut::KesikliÇizgi {
+                        başlangıç: Nokta::yeni(bitiş_x, üst),
+                        bitiş: Nokta::yeni(bitiş_x, alt),
+                        renk: stil.çizgi.clone(),
+                        kalınlık: stil.kalınlık,
+                        kesik: stil.kesik,
+                    });
+                }
+
+                // Kaynak etiket `from` çizgisinde ortalanır; aralığın ortasına
+                // taşınmaz. Overlay kırpması nedeniyle `from` görünür değilse
+                // etiket de görünmez.
+                if başlangıç_x < sol || başlangıç_x > sağ {
+                    continue;
+                }
+                let etiket_genişliği = (işaret.etiket.chars().count() as f32 * 7.0 + 8.0).max(12.0);
+                let etiket_yüksekliği = 18.0;
+                let etiket_üst = match stil.hiza {
+                    crate::AçıklamaHizası::Üst => üst,
+                    crate::AçıklamaHizası::Alt => alt - etiket_yüksekliği,
+                };
+                let etiket_sol = başlangıç_x - etiket_genişliği / 2.0;
+                sahne.ekle(Komut::Dikdörtgen {
+                    konum: Nokta::yeni(etiket_sol, etiket_üst),
+                    genişlik: etiket_genişliği,
+                    yükseklik: etiket_yüksekliği,
+                    dolgu: "#ffffff".to_string(),
+                    çizgi: "#00000000".to_string(),
+                    kalınlık: 0.0,
+                });
+                for (başlangıç, bitiş) in [
+                    (
+                        Nokta::yeni(etiket_sol, etiket_üst),
+                        Nokta::yeni(etiket_sol + etiket_genişliği, etiket_üst),
+                    ),
+                    (
+                        Nokta::yeni(etiket_sol + etiket_genişliği, etiket_üst),
+                        Nokta::yeni(
+                            etiket_sol + etiket_genişliği,
+                            etiket_üst + etiket_yüksekliği,
+                        ),
+                    ),
+                    (
+                        Nokta::yeni(
+                            etiket_sol + etiket_genişliği,
+                            etiket_üst + etiket_yüksekliği,
+                        ),
+                        Nokta::yeni(etiket_sol, etiket_üst + etiket_yüksekliği),
+                    ),
+                    (
+                        Nokta::yeni(etiket_sol, etiket_üst + etiket_yüksekliği),
+                        Nokta::yeni(etiket_sol, etiket_üst),
+                    ),
+                ] {
+                    sahne.ekle(Komut::KesikliÇizgi {
+                        başlangıç,
+                        bitiş,
+                        renk: stil.çizgi.clone(),
+                        kalınlık: stil.kalınlık,
+                        kesik: stil.kesik,
+                    });
+                }
+                sahne.ekle(Komut::Metin {
+                    konum: Nokta::yeni(başlangıç_x, etiket_üst + 13.0),
+                    içerik: işaret.etiket.clone(),
+                    renk: "#111111".to_string(),
+                    boyut: 12.0,
+                    hiza: MetinHizası::Orta,
+                });
+            }
+        }
+
         if let Some(düzen) = self.seçenekler.rüzgar_yönü_düzeni.as_ref() {
             self.rüzgar_yönlerini_çiz(
                 &mut sahne,

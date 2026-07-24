@@ -1,0 +1,29 @@
+id = "annotations"
+kaynak = "../uPlot/demos/annotations.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/kart/annotations.rs#annotations_kartı"
+viewport = [1920, 600]
+durum = "tekil_ve_aralik_x_isaretleri"
+
+[veri]
+x_başlangıç = 1
+x_bitiş = 30
+seri_sayısı = 2
+y_değer_aralığı = [-10, 10]
+kanıt_tohumu = 1095650895
+
+[işaretler]
+deprem = [4.0, 4.0]
+kasırga = [9.3, 18.5]
+deprem_etiketi = "eqk_01"
+kasırga_etiketi = "tor_20"
+
+[davranış]
+görünürlük = "uçlardan_biri_içeride_veya_aralık_görünümü_kapsıyor"
+kırpma = "çizim_alanı"
+etiket_konumu = "başlangıç_çizgisi"
+
+[kanıt]
+örnek = "examples/annotations.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+wasm = "wasm/www/index.html"

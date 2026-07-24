@@ -152,6 +152,11 @@
         <small>area-fill</small>
         <div class="durum">Kaynak veri üreteci · 3 alan serisi</div>
       </article>
+      <article class="kart" data-kart="annotations" aria-current="false" tabindex="0">
+        <strong>Annotations</strong>
+        <small>annotations</small>
+        <div class="durum">2 seri · X çizgisi ve aralık işaretleri</div>
+      </article>
       <article class="kart" data-kart="scale-padding" aria-current="false" tabindex="0">
         <strong>Scale Padding</strong>
         <small>scale-padding</small>
@@ -331,6 +336,7 @@
       log_scales_kart_tanim_ornegi,
       log_scales2_kart_tanim_ornegi,
       add_del_series_kart_tanim_ornegi,
+      annotations_kart_tanim_ornegi,
       area_fill_kart_tanim_ornegi,
       resize_kart_tanim_ornegi,
       scale_padding_kart_tanim_ornegi,
@@ -464,6 +470,20 @@
           geçmiş: ortak_kart_gorunum_gecmisi(),
           dokunma: ortak_kart_dokunma_etkilesimi(),
         }),
+      },
+      "annotations": {
+        başlık: "Annotations",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/annotations.html">annotations.html</a>
+          <br>30 noktalı iki seri üzerinde tekil deprem çizgisi ve kasırga aralığı · görünür X ölçeğinde yeniden kırpılır`,
+        tanım: () => annotations_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/annotations.rs",
+        seriler: [
+          { etiket: "Series 1", renk: "red" },
+          { etiket: "Series 2", renk: "blue" },
+        ],
+        yardım: "Sürükle: seç · işaretler yakınlaştırma ve taşımada görünür X aralığına kırpılır",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
       },
       "scale-padding": {
         başlık: "Scale Padding · Flat",

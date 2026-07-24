@@ -10,7 +10,7 @@ use ortak_bilesenler::{
 use std::time::Duration;
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
-    ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ,
+    ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
     BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
@@ -45,13 +45,13 @@ use uplot_rs::{
     Y_SHIFTED_SERIES_ARALIK_MS, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ, YShiftedSeriesAkışı,
     ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
     add_del_series_kartı, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
-    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
-    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
-    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
-    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
-    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
-    log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    annotations_kartı, arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı,
+    axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
+    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
+    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
+    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
+    log_scales_kartı, log_scales2_kartı, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı, nice_scale_kartı,
     no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı,
     resize_kartı, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
@@ -70,6 +70,7 @@ enum KartKimliği {
     AlignDataCost,
     AlignDataLineBars,
     Resize,
+    Annotations,
     AreaFill,
     ScalePadding,
     ZoomWheel,
@@ -141,6 +142,7 @@ impl KartKimliği {
             Self::AlignDataCost => "Align Data · join cost",
             Self::AlignDataLineBars => "Align Data · line + bars",
             Self::Resize => "Resize · sayısal x ölçeği",
+            Self::Annotations => "Annotations",
             Self::AreaFill => "Area Fill",
             Self::ScalePadding => "Scale Padding · Flat",
             Self::ZoomWheel => "Wheel Zoom & Drag",
@@ -215,6 +217,9 @@ impl KartKimliği {
             Self::AlignDataCost => "align-data.html · 5×5×1000 tablo · NULL_EXPAND join",
             Self::AlignDataLineBars => "align-data.html · farklı X dizilerinde çizgi + çubuk",
             Self::Resize => "resize.html + zoom-wheel.html + zoom-touch.html",
+            Self::Annotations => {
+                "annotations.html · X çizgisi/aralığı · üst/alt etiket · görünürlük kırpması"
+            }
             Self::AreaFill => {
                 "area-fill.html · kaynakla aynı veri üreteci · ortak Resize etkileşim profili"
             }
@@ -353,6 +358,7 @@ impl KartKimliği {
             Self::AddDelSeries => ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ,
             Self::AlignDataCost | Self::AlignDataLineBars => ALIGN_DATA_KART_TANIM_ÖRNEĞİ,
             Self::Resize => RESIZE_KART_TANIM_ÖRNEĞİ,
+            Self::Annotations => ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
             Self::AreaFill => AREA_FILL_KART_TANIM_ÖRNEĞİ,
             Self::ScalePadding => SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
             Self::ZoomWheel => ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
@@ -422,6 +428,7 @@ impl KartKimliği {
             Self::AddDelSeries => "src/kart/add_del_series.rs",
             Self::AlignDataCost | Self::AlignDataLineBars => "src/kart/align_data.rs",
             Self::Resize => "src/kart/resize.rs",
+            Self::Annotations => "src/kart/annotations.rs",
             Self::AreaFill => "src/kart/area_fill.rs",
             Self::ScalePadding => "src/kart/scale_padding.rs",
             Self::ZoomWheel => "src/kart/zoom_wheel.rs",
@@ -1342,6 +1349,7 @@ fn grafik_oluştur(
         KartKimliği::AlignDataCost => align_data_maliyet_kartı(),
         KartKimliği::AlignDataLineBars => align_data_çizgi_çubuk_kartı(),
         KartKimliği::Resize => resize_kartı(nokta_sayısı),
+        KartKimliği::Annotations => annotations_kartı(),
         KartKimliği::AreaFill => area_fill_kartı(),
         KartKimliği::ScalePadding => scale_padding_kartı(),
         KartKimliği::ZoomWheel => zoom_wheel_kartı(),
@@ -1453,6 +1461,7 @@ impl Render for ChartListesi {
             }
             KartKimliği::AlignDataLineBars => "38 noktalı çizgi + 4 çubuk".to_string(),
             KartKimliği::Resize => format!("{} nokta", self.nokta_sayısı),
+            KartKimliği::Annotations => "30 nokta × 2 seri · 2 X annotation".to_string(),
             KartKimliği::AreaFill => "30 sabit nokta × 3 seri".to_string(),
             KartKimliği::ScalePadding => "10 nokta × 13 düz seri".to_string(),
             KartKimliği::ZoomWheel => "7 nokta × 2 seri".to_string(),
@@ -2142,6 +2151,20 @@ impl Render for ChartListesi {
                             .text_color(vurgu)
                             .child("uplot-rs/gpui feature bileşeni"),
                     ),
+            )
+            .child(
+                katalog_kartı(
+                    "annotations",
+                    "Annotations",
+                    "annotations",
+                    aktif_kart == KartKimliği::Annotations,
+                    "2 seri · X çizgisi ve aralık işaretleri",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::Annotations, cx);
+                })),
             )
             .child(
                 div()

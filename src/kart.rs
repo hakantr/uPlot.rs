@@ -1,5 +1,6 @@
 mod add_del_series;
 mod align_data;
+mod annotations;
 mod arcsinh_scales;
 mod area_fill;
 mod axis_autosize;
@@ -70,6 +71,9 @@ pub use add_del_series::{
 pub use align_data::{
     ALIGN_DATA_KANIT_TOHUMU, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, align_data_maliyet_kartı,
     align_data_çizgi_çubuk_kartı,
+};
+pub use annotations::{
+    ANNOTATIONS_KANIT_TOHUMU, ANNOTATIONS_KART_TANIM_ÖRNEĞİ, annotations_kartı
 };
 pub use arcsinh_scales::{ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, arcsinh_scales_kartı};
 pub use area_fill::{AREA_FILL_KANIT_TOHUMU, AREA_FILL_KART_TANIM_ÖRNEĞİ, area_fill_kartı};

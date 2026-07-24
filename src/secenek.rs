@@ -111,6 +111,111 @@ pub struct NoktaKatmanı {
     pub boyut: f32,
 }
 
+/// `annotations.html` eklentisindeki etiketin çizim alanının hangi kenarına
+/// yerleşeceğini belirtir.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AçıklamaHizası {
+    Üst,
+    Alt,
+}
+
+/// Aynı türdeki annotation işaretlerinin ortak görünümüdür.
+#[derive(Debug, Clone, PartialEq)]
+pub struct AçıklamaStili {
+    pub tür: String,
+    pub kalınlık: f32,
+    pub kesik: f32,
+    pub çizgi: String,
+    pub dolgu: String,
+    pub hiza: AçıklamaHizası,
+}
+
+impl AçıklamaStili {
+    pub fn yeni(
+        tür: impl Into<String>,
+        çizgi: impl Into<String>,
+        dolgu: impl Into<String>,
+        hiza: AçıklamaHizası,
+    ) -> Self {
+        Self {
+            tür: tür.into(),
+            kalınlık: 2.0,
+            kesik: 5.0,
+            çizgi: çizgi.into(),
+            dolgu: dolgu.into(),
+            hiza,
+        }
+    }
+
+    pub fn çizgi_biçimi(mut self, kalınlık: f32, kesik: f32) -> Self {
+        if kalınlık.is_finite() && kalınlık > 0.0 {
+            self.kalınlık = kalınlık;
+        }
+        if kesik.is_finite() && kesik > 0.0 {
+            self.kesik = kesik;
+        }
+        self
+    }
+}
+
+/// X ölçeğine bağlı tek bir annotation çizgisi veya aralığıdır.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Açıklamaİşareti {
+    pub tür: String,
+    pub başlangıç: f64,
+    pub bitiş: f64,
+    pub etiket: String,
+    pub açıklama: String,
+    /// Kaynak demo bu alanı taşır ancak bir tıklama davranışına bağlamaz.
+    pub bağlantı: Option<String>,
+}
+
+impl Açıklamaİşareti {
+    pub fn yeni(
+        tür: impl Into<String>,
+        başlangıç: f64,
+        bitiş: f64,
+        etiket: impl Into<String>,
+    ) -> Self {
+        Self {
+            tür: tür.into(),
+            başlangıç,
+            bitiş,
+            etiket: etiket.into(),
+            açıklama: String::new(),
+            bağlantı: None,
+        }
+    }
+
+    pub fn açıklama(mut self, açıklama: impl Into<String>) -> Self {
+        self.açıklama = açıklama.into();
+        self
+    }
+
+    pub fn bağlantı(mut self, bağlantı: impl Into<String>) -> Self {
+        self.bağlantı = Some(bağlantı.into());
+        self
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct AçıklamaDüzeni {
+    pub stiller: Vec<AçıklamaStili>,
+    pub işaretler: Vec<Açıklamaİşareti>,
+}
+
+impl AçıklamaDüzeni {
+    pub fn stil(mut self, stil: AçıklamaStili) -> Self {
+        self.stiller.push(stil);
+        self
+    }
+
+    pub fn işaret(mut self, işaret: Açıklamaİşareti) -> Self {
+        self.işaretler.push(işaret);
+        self
+    }
+}
+
 /// `wind-direction.html` özel `series.paths` fonksiyonunun çekirdek
 /// karşılığıdır. Hız serisi vektör başlangıcını, yön serisi dereceyi taşır.
 #[derive(Debug, Clone, PartialEq)]
@@ -758,6 +863,7 @@ pub struct GrafikSeçenekleri {
     pub dağılım_düzeni: Option<DağılımDüzeni>,
     pub bantlar: Vec<SeriBandı>,
     pub nokta_katmanları: Vec<NoktaKatmanı>,
+    pub açıklama_düzeni: Option<AçıklamaDüzeni>,
     pub rüzgar_yönü_düzeni: Option<RüzgarYönüDüzeni>,
     pub çizim_kancaları: Option<ÇizimKancasıDüzeni>,
     pub odak: Option<OdakDüzeni>,
@@ -836,6 +942,7 @@ impl GrafikSeçenekleri {
             dağılım_düzeni: None,
             bantlar: Vec::new(),
             nokta_katmanları: Vec::new(),
+            açıklama_düzeni: None,
             rüzgar_yönü_düzeni: None,
             çizim_kancaları: None,
             odak: None,
@@ -1009,6 +1116,11 @@ impl GrafikSeçenekleri {
 
     pub fn nokta_katmanı(mut self, katman: NoktaKatmanı) -> Self {
         self.nokta_katmanları.push(katman);
+        self
+    }
+
+    pub fn açıklamalar(mut self, düzen: AçıklamaDüzeni) -> Self {
+        self.açıklama_düzeni = Some(düzen);
         self
     }
 
