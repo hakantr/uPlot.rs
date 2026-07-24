@@ -3729,6 +3729,63 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "tam_kanıtlı"
       }
+    },
+    {
+      "id": "zoom-fetch",
+      "başlık": "Fetch Zoom",
+      "kaynak": "demos/zoom-fetch.html",
+      "kaynak_sha256": "42481654ab45eddabc8a9030862faac90036dce5cb65e34651043f49e203c92c",
+      "fixture": "src/kart/zoom_wheel.rs#ZoomFetchAkışı",
+      "örnek": "examples/zoom_wheel.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/zoom-fetch.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/zoom_wheel.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin",
+          "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin",
+          "duyarli-boyutlandirma": "devralındı",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "kartta_etkin",
+          "tekerlek-yakinlastirma": "devralındı",
+          "uyarlanabilir-hassas-tekerlek": "devralındı",
+          "dokunma-yakinlastirma-tasima": "devralındı",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "devralındı",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {
+          "kart-bilgi-ve-tanim-yerlesimi": "Gereksiz tekrar kartı yerine mevcut zoom-wheel doğrulama yüzeyi kullanılır.",
+          "kosullu-bos-ve-dolu-noktalar": "Kaynak veri null örnek içermez."
+        }
+      },
+      "sahip_faz": 4,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "no-duplicate-catalog-card",
+        "selection-to-data-range-request",
+        "atomic-data-and-x-range-update",
+        "full-range-refetch-reset",
+        "existing-zoom-surface-proof",
+        "gpui-wasm-parity"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "tam_kanıtlı"
+      }
     }
   ]
 }

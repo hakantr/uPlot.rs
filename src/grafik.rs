@@ -411,6 +411,32 @@ impl Grafik {
         Ok(())
     }
 
+    /// Uzak veri sağlayıcıdan gelen yeni veriyi uygular ve istenen X aralığını korur.
+    ///
+    /// `zoom-fetch` kaynağındaki `setData(data, false)` + `setScale("x", range)`
+    /// çiftinin atomik, yeniden kullanılabilir karşılığıdır.
+    pub fn veriyi_x_aralığında_ayarla(
+        &mut self,
+        veri: HizalıVeri,
+        aralık: Aralık,
+    ) -> Result<(), UplotHatası> {
+        self.veriyi_ayarla(veri)?;
+        self.etkileşim.görünür_x_ayarla(aralık);
+        Ok(())
+    }
+
+    /// Görünür X ölçeğinde iki normalize edilmiş seçim ucunu veri aralığına dönüştürür.
+    pub fn x_aralığı_oranlardan(
+        &self,
+        başlangıç_oranı: f64,
+        bitiş_oranı: f64,
+    ) -> Result<Aralık, UplotHatası> {
+        let görünür = self.görünür_x_aralığı();
+        let başlangıç = self.x_değeri_orandan(görünür, başlangıç_oranı.clamp(0.0, 1.0));
+        let bitiş = self.x_değeri_orandan(görünür, bitiş_oranı.clamp(0.0, 1.0));
+        Aralık::yeni(başlangıç.min(bitiş), başlangıç.max(bitiş))
+    }
+
     /// Y-serisi seçeneğini ve hizalı değerlerini tek, doğrulanmış işlemle ekler.
     /// İndeks yalnız Y serilerini sayar; uPlot'un X dahil `seriesIdx = 2`
     /// değeri burada `indeks = 1` olur.

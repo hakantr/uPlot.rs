@@ -36,23 +36,23 @@ use uplot_rs::{
     TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği, TimezonesDstÖrneği,
     UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ, UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ,
     Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ, YShiftedSeriesAkışı,
-    YüzeyDikdörtgeni, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, annotations_kartı, arcsinh_scales_kartı, area_fill_kartı,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
-    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
-    months_artık_yılsız_kartı, months_rusça_kartı, multi_bars_kartı, nearest_non_null_kartı,
-    nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı,
-    pixel_align_kartı, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartı,
-    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
-    sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
-    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_kartı,
-    thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    YüzeyDikdörtgeni, ZOOM_FETCH_KANIT_ÖRNEĞİ, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, ZoomFetchAkışı, add_del_series_ek_verisi, add_del_series_kartı,
+    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, annotations_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı, missing_data_null_kartı,
+    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
+    months_rusça_kartı, multi_bars_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
+    ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı, resize_kartı,
+    scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
+    soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
+    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
+    sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
     timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
     trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
     y_shifted_series_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
@@ -1392,6 +1392,22 @@ pub fn zoom_wheel_kart_tanim_ornegi() -> String {
 }
 
 #[wasm_bindgen]
+pub fn zoom_fetch_kanit_ornegi() -> String {
+    ZOOM_FETCH_KANIT_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
+pub fn zoom_fetch_kaniti() -> bool {
+    let Ok(mut akış) = ZoomFetchAkışı::yeni() else {
+        return false;
+    };
+    let Ok(aralık) = akış.aralık_isteği(0.25, 0.75) else {
+        return false;
+    };
+    akış.kaynak_yanıtını_uygula(aralık).is_ok() && akış.grafik().görünür_x_aralığı() == aralık
+}
+
+#[wasm_bindgen]
 pub fn zoom_touch_kart_tanim_ornegi() -> String {
     ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ.to_string()
 }
@@ -2284,6 +2300,8 @@ mod testler {
         assert!(oturum.svg(600, 400).contains("Wheel Zoom &amp; Drag"));
         assert!(oturum.tekerlek(0.5, 0.5, 1.0, false).is_ok());
         assert!(oturum.yakinlastirilmis());
+        assert!(zoom_fetch_kaniti());
+        assert!(zoom_fetch_kanit_ornegi().contains("kaynak_yanıtını_uygula"));
     }
 
     #[test]

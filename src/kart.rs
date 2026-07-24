@@ -233,4 +233,6 @@ pub use y_shifted_series::{
     YShiftedSeriesAkışı, YShiftedSeriesKipi, y_shifted_series_kartı,
 };
 pub use zoom_touch::{ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, zoom_touch_kartı};
-pub use zoom_wheel::{ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, zoom_wheel_kartı};
+pub use zoom_wheel::{
+    ZOOM_FETCH_KANIT_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, ZoomFetchAkışı, zoom_wheel_kartı,
+};

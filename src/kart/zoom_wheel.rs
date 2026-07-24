@@ -1,10 +1,66 @@
 use super::ortak_kart_etkileşimleri;
-use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
+use crate::{Aralık, Grafik, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
 
 pub const ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = zoom_wheel_kartı()?;
 // Resmî wheelZoomPlugin'in 0.75 katsayılı, fare odaklı X/Y
 // yakınlaştırması ve sınır sıkıştırması çekirdekte uygulanır.
 let grafik = Grafik::yeni(seçenekler, veri)?;"##;
+
+pub const ZOOM_FETCH_KANIT_ÖRNEĞİ: &str = r##"let mut akış = ZoomFetchAkışı::yeni()?;
+let istek = akış.aralık_isteği(0.25, 0.75)?;
+akış.kaynak_yanıtını_uygula(istek)?;
+akış.tam_aralığı_yükle()?;"##;
+
+/// Seçim aralığını veri sağlayıcı isteğine dönüştüren, platformdan bağımsız akış.
+pub struct ZoomFetchAkışı {
+    grafik: Grafik,
+}
+
+impl ZoomFetchAkışı {
+    pub fn yeni() -> Result<Self, UplotHatası> {
+        let veri = tam_zoom_fetch_verisi()?;
+        let seçenekler = GrafikSeçenekleri::yeni(800, 400)?
+            .başlık("Fetch Zoom")
+            .x_zaman(false)
+            .etkileşimler(ortak_kart_etkileşimleri().seçim_yakınlaştır(false))
+            .seri(SeriSeçenekleri::yeni("Fetched").renk("red"));
+        Ok(Self {
+            grafik: Grafik::yeni(seçenekler, veri)?,
+        })
+    }
+
+    pub fn grafik(&self) -> &Grafik {
+        &self.grafik
+    }
+
+    pub fn aralık_isteği(&self, başlangıç: f64, bitiş: f64) -> Result<Aralık, UplotHatası> {
+        self.grafik.x_aralığı_oranlardan(başlangıç, bitiş)
+    }
+
+    pub fn kaynak_yanıtını_uygula(&mut self, aralık: Aralık) -> Result<(), UplotHatası> {
+        let veri = HizalıVeri::yeni(
+            vec![3.0, 4.0, 5.0, 6.0],
+            vec![vec![30.0, 23.0, 35.0, 27.0].into_iter().map(Some).collect()],
+        )?;
+        self.grafik.veriyi_x_aralığında_ayarla(veri, aralık)
+    }
+
+    pub fn tam_aralığı_yükle(&mut self) -> Result<(), UplotHatası> {
+        self.grafik.veriyi_ayarla(tam_zoom_fetch_verisi()?)
+    }
+}
+
+fn tam_zoom_fetch_verisi() -> Result<HizalıVeri, UplotHatası> {
+    HizalıVeri::yeni(
+        vec![1., 2., 3., 4., 5., 6., 7., 9., 10.],
+        vec![
+            vec![40., 43., 60., 65., 71., 73., 40., 22., 20.]
+                .into_iter()
+                .map(Some)
+                .collect(),
+        ],
+    )
+}
 
 /// Resmî `demos/zoom-wheel.html` kartının boyutunu, iki serisini ve bütün
 /// sayısal veri noktalarını korur. Eklenti davranışı ortak çekirdek profilidir.
@@ -57,6 +113,20 @@ mod testler {
         assert!(grafik.tekerlek(0.5, 0.5, 1.0, false)?);
         assert!(grafik.yakınlaştırılmış());
         assert!(grafik.görünür_x_aralığı().en_az > 1.0);
+        Ok(())
+    }
+
+    #[test]
+    fn zoom_fetch_seçimi_isteğe_dönüşür_veri_ve_görünüm_atomik_güncellenir()
+    -> Result<(), UplotHatası> {
+        let mut akış = ZoomFetchAkışı::yeni()?;
+        let istek = akış.aralık_isteği(0.25, 0.75)?;
+        assert_eq!(istek, Aralık::yeni(3.25, 7.75)?);
+        akış.kaynak_yanıtını_uygula(istek)?;
+        assert_eq!(akış.grafik().görünür_x_aralığı(), istek);
+        assert_eq!(akış.grafik().en_yakın_nokta(0.0, 0), Some((4.0, 23.0)));
+        akış.tam_aralığı_yükle()?;
+        assert_eq!(akış.grafik().görünür_x_aralığı(), Aralık::yeni(1.0, 10.0)?);
         Ok(())
     }
 }
