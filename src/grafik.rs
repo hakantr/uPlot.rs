@@ -16,8 +16,8 @@ use crate::cizim::{
 };
 use crate::etkilesim::EtkileşimDenetleyicisi;
 use crate::{
-    Aralık, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri, HizalıVeri, UplotHatası,
-    XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi, ÖlçekGradyanı,
+    Aralık, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri, HizalıVeri, TekerlekEkseni,
+    UplotHatası, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi, ÖlçekGradyanı,
 };
 
 /// Bir işaretçi seçiminin çekirdekte çözümlenen sonucu.
@@ -1387,6 +1387,25 @@ impl Grafik {
         delta: f64,
         hassas: bool,
     ) -> Result<bool, UplotHatası> {
+        self.tekerlek_eksende(
+            yatay_odak_oranı,
+            dikey_odak_oranı,
+            delta,
+            hassas,
+            TekerlekEkseni::İkisi,
+        )
+    }
+
+    /// Tekerlek yakınlaştırmasını yalnız X, yalnız Y veya iki eksende uygular.
+    /// Yüzey adaptörleri Shift'i X'e, Ctrl'ü Y'ye bağlayabilir.
+    pub fn tekerlek_eksende(
+        &mut self,
+        yatay_odak_oranı: f64,
+        dikey_odak_oranı: f64,
+        delta: f64,
+        hassas: bool,
+        eksen: TekerlekEkseni,
+    ) -> Result<bool, UplotHatası> {
         self.elle_x_aralığını_etkileşime_aktar();
         self.elle_y_aralıklarını_etkileşime_aktar();
         let görünür_y = self.görünür_y_aralığı();
@@ -1394,8 +1413,8 @@ impl Grafik {
             self.fiziksel_oranları_mantıksala(yatay_odak_oranı, dikey_odak_oranı);
         let değişti = self
             .etkileşim
-            .tekerlek(x_oranı, y_oranı, görünür_y, delta, hassas)?;
-        if değişti {
+            .tekerlek(x_oranı, y_oranı, görünür_y, delta, hassas, eksen)?;
+        if değişti && matches!(eksen, TekerlekEkseni::İkisi | TekerlekEkseni::X) {
             self.x_aralığını_veriye_yapıştır();
         }
         Ok(değişti)
@@ -3995,23 +4014,37 @@ impl Grafik {
                                 } else {
                                     y1 - yazı_boyutu * 0.4
                                 };
-                                sahne.ekle(Komut::Metin {
-                                    konum: Nokta::yeni(x + genişlik / 2.0, etiket_y),
-                                    içerik: kompakt_sayı(değer),
-                                    renk: "#111111".to_string(),
-                                    boyut: yazı_boyutu,
-                                    hiza: MetinHizası::Orta,
-                                });
+                                let etiket_x = x + genişlik / 2.0;
+                                if etiket_x >= sol
+                                    && etiket_x <= sağ
+                                    && etiket_y - yazı_boyutu >= üst
+                                    && etiket_y <= alt
+                                {
+                                    sahne.ekle(Komut::Metin {
+                                        konum: Nokta::yeni(etiket_x, etiket_y),
+                                        içerik: kompakt_sayı(değer),
+                                        renk: "#111111".to_string(),
+                                        boyut: yazı_boyutu,
+                                        hiza: MetinHizası::Orta,
+                                    });
+                                }
                             }
                         } else if düzen.değer_etiketleri {
                             let etiket_y = if değer < 0.0 { y1 + 11.0 } else { y1 - 2.0 };
-                            sahne.ekle(Komut::Metin {
-                                konum: Nokta::yeni(x + genişlik / 2.0, etiket_y),
-                                içerik: format!("{tepe}"),
-                                renk: "#111111".to_string(),
-                                boyut: 10.0,
-                                hiza: MetinHizası::Orta,
-                            });
+                            let etiket_x = x + genişlik / 2.0;
+                            if etiket_x >= sol
+                                && etiket_x <= sağ
+                                && etiket_y - 10.0 >= üst
+                                && etiket_y <= alt
+                            {
+                                sahne.ekle(Komut::Metin {
+                                    konum: Nokta::yeni(etiket_x, etiket_y),
+                                    içerik: format!("{tepe}"),
+                                    renk: "#111111".to_string(),
+                                    boyut: 10.0,
+                                    hiza: MetinHizası::Orta,
+                                });
+                            }
                         }
                     }
                 }
@@ -4163,13 +4196,20 @@ impl Grafik {
                                 } else {
                                     x1 + yarım_metin + yazı_boyutu * 0.4
                                 };
-                                sahne.ekle(Komut::Metin {
-                                    konum: Nokta::yeni(etiket_x, y + yükseklik / 2.0 + 4.0),
-                                    içerik: metin,
-                                    renk: "#111111".to_string(),
-                                    boyut: yazı_boyutu,
-                                    hiza: MetinHizası::Orta,
-                                });
+                                let etiket_y = y + yükseklik / 2.0 + 4.0;
+                                if etiket_x - yarım_metin >= sol
+                                    && etiket_x + yarım_metin <= sağ
+                                    && etiket_y - yazı_boyutu >= üst
+                                    && etiket_y <= alt
+                                {
+                                    sahne.ekle(Komut::Metin {
+                                        konum: Nokta::yeni(etiket_x, etiket_y),
+                                        içerik: metin,
+                                        renk: "#111111".to_string(),
+                                        boyut: yazı_boyutu,
+                                        hiza: MetinHizası::Orta,
+                                    });
+                                }
                             }
                         } else if düzen.değer_etiketleri {
                             let (etiket_x, hiza) = if değer < 0.0 {
@@ -4177,13 +4217,23 @@ impl Grafik {
                             } else {
                                 (x1 + 3.0, MetinHizası::Başlangıç)
                             };
-                            sahne.ekle(Komut::Metin {
-                                konum: Nokta::yeni(etiket_x, y + yükseklik / 2.0 + 4.0),
-                                içerik: format!("{uç}"),
-                                renk: "#111111".to_string(),
-                                boyut: 10.0,
-                                hiza,
-                            });
+                            let içerik = format!("{uç}");
+                            let metin_genişliği = içerik.chars().count() as f32 * 5.5;
+                            let etiket_y = y + yükseklik / 2.0 + 4.0;
+                            let yatay_sığıyor = if değer < 0.0 {
+                                etiket_x - metin_genişliği >= sol
+                            } else {
+                                etiket_x + metin_genişliği <= sağ
+                            };
+                            if yatay_sığıyor && etiket_y - 10.0 >= üst && etiket_y <= alt {
+                                sahne.ekle(Komut::Metin {
+                                    konum: Nokta::yeni(etiket_x, etiket_y),
+                                    içerik,
+                                    renk: "#111111".to_string(),
+                                    boyut: 10.0,
+                                    hiza,
+                                });
+                            }
                         }
                     }
                 }

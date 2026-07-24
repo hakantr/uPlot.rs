@@ -1,6 +1,6 @@
 use uplot_rs::{
-    Aralık, EtkileşimSeçenekleri, Grafik, HizalıVeri, TekerlekAyarları, TekerlekKipi, UplotHatası,
-    ortak_kart_etkileşimleri, resize_kartı,
+    Aralık, EtkileşimSeçenekleri, Grafik, HizalıVeri, TekerlekAyarları, TekerlekEkseni,
+    TekerlekKipi, UplotHatası, ortak_kart_etkileşimleri, resize_kartı,
 };
 
 #[test]
@@ -137,6 +137,23 @@ fn tekerlek_x_ve_y_eksenlerini_fare_odağında_yeniden_ölçekler() -> Result<()
     assert!(yakın_y.en_çok - yakın_y.en_az < tam_y.en_çok - tam_y.en_az);
     assert!(yakın_x.en_az > tam_x.en_az);
     assert!(yakın_y.en_çok < tam_y.en_çok);
+    Ok(())
+}
+
+#[test]
+fn tekerlek_ekseni_çekirdekte_x_ve_y_olarak_ayrılır() -> Result<(), UplotHatası> {
+    let (seçenekler, veri) = resize_kartı(100)?;
+    let mut yalnız_x = Grafik::yeni(seçenekler.clone(), veri.clone())?;
+    let tam_x = yalnız_x.görünür_x_aralığı();
+    let tam_y = yalnız_x.görünür_y_aralığı();
+    assert!(yalnız_x.tekerlek_eksende(0.25, 0.75, 1.0, false, TekerlekEkseni::X)?);
+    assert_ne!(yalnız_x.görünür_x_aralığı(), tam_x);
+    assert_eq!(yalnız_x.görünür_y_aralığı(), tam_y);
+
+    let mut yalnız_y = Grafik::yeni(seçenekler, veri)?;
+    assert!(yalnız_y.tekerlek_eksende(0.25, 0.75, 1.0, false, TekerlekEkseni::Y)?);
+    assert_eq!(yalnız_y.görünür_x_aralığı(), tam_x);
+    assert_ne!(yalnız_y.görünür_y_aralığı(), tam_y);
     Ok(())
 }
 

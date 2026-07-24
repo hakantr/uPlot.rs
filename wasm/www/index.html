@@ -318,7 +318,7 @@
           <button id="gorunum-geri" type="button">↶ Geri</button>
           <button id="tam-gorunum" type="button">Tam görünüm</button>
           <label class="eklenti-anahtarı">
-            <input id="tekerlek-etkilesimi" type="checkbox"> Tekerlek eklentisi · Otomatik
+            <input id="tekerlek-etkilesimi" type="checkbox"> Tekerlek · Shift: X · Ctrl: Y
           </label>
           <label id="nokta-kontrolü">Nokta
             <input id="nokta" type="range" min="10" max="1000" step="10" value="100">
@@ -2374,6 +2374,18 @@
       ctrlAçıklama: false,
     };
 
+    function tekerlekEkseni(olay) {
+      if (olay.shiftKey && !olay.ctrlKey) return 1;
+      if (olay.ctrlKey && !olay.shiftKey) return 2;
+      return 0;
+    }
+
+    function tekerlekDeltası(olay) {
+      return olay.shiftKey && Math.abs(olay.deltaX) > Math.abs(olay.deltaY)
+        ? olay.deltaX
+        : olay.deltaY;
+    }
+
     function taşımaİmleciniGüncelle() {
       if (taşıma) chart.dataset.tasimaImleci = "tasiyor";
       else if (boşlukBasılı && oturum?.yakinlastirilmis()) {
@@ -2797,7 +2809,8 @@
         });
         yüzey.addEventListener("wheel", olay => {
           olay.stopPropagation();
-          if (!etkileşimler.tekerlek || olay.deltaY === 0) return;
+          const delta = tekerlekDeltası(olay);
+          if (!etkileşimler.tekerlek || delta === 0) return;
           const alan = syncCursorYüzeyAlanı(indeks);
           if (!alan) return;
           const rect = alan.svg.getBoundingClientRect();
@@ -2806,11 +2819,12 @@
           if (x < alan.sol || x > alan.sağ || y < alan.üst || y > alan.alt) return;
           olay.preventDefault();
           try {
-            if (alan.oturum.tekerlek(
+            if (alan.oturum.tekerlek_eksende(
               (x - alan.sol) / alan.genişlik,
               (y - alan.üst) / alan.yükseklik,
-              -olay.deltaY,
+              -delta,
               olay.deltaMode === 0,
+              tekerlekEkseni(olay),
             )) {
               syncCursorYüzeyiÇiz(indeks);
               syncCursorİmleciniGüncelle(indeks, olay);
@@ -2904,12 +2918,19 @@
         });
         kutu.addEventListener("wheel", olay => {
           olay.stopPropagation();
-          if (!etkileşimler.tekerlek || olay.deltaY === 0) return;
+          const delta = tekerlekDeltası(olay);
+          if (!etkileşimler.tekerlek || delta === 0) return;
           const oran = konumOranı(olay);
           if (oran === null) return;
           olay.preventDefault();
           try {
-            if (yüzey.tekerlek(oran, 0.5, -olay.deltaY, olay.deltaMode === 0)) {
+            if (yüzey.tekerlek_eksende(
+              oran,
+              0.5,
+              -delta,
+              olay.deltaMode === 0,
+              tekerlekEkseni(olay),
+            )) {
               timeseriesDiscreteÇiz();
               timeseriesDiscreteİmleciniGüncelle(oran);
               kontrolleriGüncelle();
@@ -3708,7 +3729,8 @@
 
     chart.addEventListener("wheel", olay => {
       if (aktifKart === "measure-datums" && oturum?.olcum_datumlarini_temizle()) çiz();
-      if (!etkileşimler.tekerlek || olay.deltaY === 0) return;
+      const delta = tekerlekDeltası(olay);
+      if (!etkileşimler.tekerlek || delta === 0) return;
       const { x, y, view } = svgKonumu(olay);
       const alan = çizimAlanı(view);
       if (x < alan.sol || x > alan.sağ || y < alan.üst || y > alan.alt) return;
@@ -3716,7 +3738,13 @@
       try {
         const yatayOran = (x - alan.sol) / alan.genişlik;
         const dikeyOran = (y - alan.üst) / alan.yükseklik;
-        if (oturum.tekerlek(yatayOran, dikeyOran, -olay.deltaY, olay.deltaMode === 0)) {
+        if (oturum.tekerlek_eksende(
+          yatayOran,
+          dikeyOran,
+          -delta,
+          olay.deltaMode === 0,
+          tekerlekEkseni(olay),
+        )) {
           chart.focus({ preventScroll: true });
           çiz();
         }

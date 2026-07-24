@@ -32,8 +32,8 @@ use uplot_rs::{
     THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
     TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ, TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
     TIMEZONES_DST_KART_TANIM_ÖRNEĞİ, TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ,
-    TOOLTIPS_KART_TANIM_ÖRNEĞİ, TRENDLINES_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği, TimePeriodsÖrneği,
-    TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği, TimezonesDstÖrneği,
+    TOOLTIPS_KART_TANIM_ÖRNEĞİ, TRENDLINES_KART_TANIM_ÖRNEĞİ, TekerlekEkseni, ThinBarsÖrneği,
+    TimePeriodsÖrneği, TimelineDiscreteÖrneği, TimeseriesDiscreteÖrneği, TimezonesDstÖrneği,
     UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ, UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ,
     Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ, YShiftedSeriesAkışı,
     YüzeyDikdörtgeni, ZOOM_FETCH_KANIT_ÖRNEĞİ, ZOOM_RANGER_GRIPS_KANIT_ÖRNEĞİ,
@@ -516,6 +516,31 @@ impl KartOturumu {
     ) -> Result<bool, JsValue> {
         self.grafik
             .tekerlek(yatay_odak_oranı, dikey_odak_oranı, delta, hassas_girdi)
+            .map_err(js_hatası)
+    }
+
+    /// `eksen`: 1 = yalnız X (Shift), 2 = yalnız Y (Ctrl), diğer = ikisi.
+    pub fn tekerlek_eksende(
+        &mut self,
+        yatay_odak_oranı: f64,
+        dikey_odak_oranı: f64,
+        delta: f64,
+        hassas_girdi: bool,
+        eksen: u8,
+    ) -> Result<bool, JsValue> {
+        let eksen = match eksen {
+            1 => TekerlekEkseni::X,
+            2 => TekerlekEkseni::Y,
+            _ => TekerlekEkseni::İkisi,
+        };
+        self.grafik
+            .tekerlek_eksende(
+                yatay_odak_oranı,
+                dikey_odak_oranı,
+                delta,
+                hassas_girdi,
+                eksen,
+            )
             .map_err(js_hatası)
     }
 
@@ -2463,6 +2488,18 @@ mod testler {
         assert!(oturum.svg(600, 400).contains("Wheel Zoom &amp; Drag"));
         assert!(oturum.tekerlek(0.5, 0.5, 1.0, false).is_ok());
         assert!(oturum.yakinlastirilmis());
+        let Ok(mut yalnız_x) = KartOturumu::yeni("zoom-wheel", 100) else {
+            return;
+        };
+        let tam_x = yalnız_x.gorunur_x_araligi();
+        let tam_y = yalnız_x.gorunur_y_araligi();
+        assert!(
+            yalnız_x
+                .tekerlek_eksende(0.5, 0.5, 1.0, false, 1)
+                .is_ok_and(|değişti| değişti)
+        );
+        assert_ne!(yalnız_x.gorunur_x_araligi(), tam_x);
+        assert_eq!(yalnız_x.gorunur_y_araligi(), tam_y);
         assert!(zoom_fetch_kaniti());
         assert!(zoom_fetch_kanit_ornegi().contains("kaynak_yanıtını_uygula"));
         let başlangıç = oturum.zoom_ranger_oranlari();

@@ -243,7 +243,7 @@ fn renkli_kart(
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Grafik, Komut};
+    use crate::{Grafik, Komut, TekerlekEkseni};
 
     #[test]
     fn dört_kaynak_yüzeyi_çizilir() -> Result<(), UplotHatası> {
@@ -384,6 +384,23 @@ mod testler {
             if let Some(aralık) = aralık {
                 assert!(aralık.en_az.is_finite() && aralık.en_çok.is_finite());
                 assert!(aralık.en_çok > aralık.en_az);
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn y_tekerlek_yakınlaştırmasında_değer_etiketleri_yüzeyden_uçmaz() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = multi_bars_kartı(MultiBarsÖrneği::KitaplıklarDikey)?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        for _ in 0..7 {
+            assert!(grafik.tekerlek_eksende(0.5, 0.45, 100.0, true, TekerlekEkseni::Y,)?);
+        }
+        let sahne = grafik.çiz();
+        for komut in sahne.komutlar() {
+            if let Komut::Metin { konum, .. } = komut {
+                assert!(konum.x >= 0.0 && konum.x <= 2_300.0, "{konum:?}");
+                assert!(konum.y >= 0.0 && konum.y <= 800.0, "{konum:?}");
             }
         }
         Ok(())

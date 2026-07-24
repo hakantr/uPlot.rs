@@ -646,6 +646,16 @@ impl ÇubukDüzeni {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TekerlekEkseni {
+    /// Varsayılan uPlot wheelZoom davranışı: X ve Y birlikte değişir.
+    İkisi,
+    /// Yalnız X ekseni değişir. Yüzeyler bunu Shift değiştiricisine bağlar.
+    X,
+    /// Yalnız Y ekseni değişir. Yüzeyler bunu Ctrl değiştiricisine bağlar.
+    Y,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TekerlekKipi {
     /// Piksel ve satır olaylarını giriş aygıtına göre ayrı işler.
     Otomatik,

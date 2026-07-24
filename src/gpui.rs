@@ -13,7 +13,7 @@ use ::gpui::{
 
 use crate::{
     DağılımVuruşu, DoğrusalGradyan, Grafik, HizalıVeri, Komut, MetinHizası, Nokta, Sahne,
-    SeriSeçenekleri, SeçimEylemi, UplotHatası, YüzeyDikdörtgeni,
+    SeriSeçenekleri, SeçimEylemi, TekerlekEkseni, UplotHatası, YüzeyDikdörtgeni,
 };
 
 #[derive(Clone)]
@@ -903,14 +903,44 @@ impl GpuiGrafik {
             }
             return;
         }
+        let eksen = match (olay.modifiers.shift, olay.modifiers.control) {
+            (true, false) => TekerlekEkseni::X,
+            (false, true) => TekerlekEkseni::Y,
+            _ => TekerlekEkseni::İkisi,
+        };
         let (delta, hassas) = match olay.delta {
-            ScrollDelta::Pixels(delta) => (f64::from(f32::from(delta.y)), true),
-            ScrollDelta::Lines(delta) => (f64::from(delta.y), false),
+            ScrollDelta::Pixels(delta) => {
+                let x = f64::from(f32::from(delta.x));
+                let y = f64::from(f32::from(delta.y));
+                (
+                    if eksen == TekerlekEkseni::X && x.abs() > y.abs() {
+                        x
+                    } else {
+                        y
+                    },
+                    true,
+                )
+            }
+            ScrollDelta::Lines(delta) => {
+                let x = f64::from(delta.x);
+                let y = f64::from(delta.y);
+                (
+                    if eksen == TekerlekEkseni::X && x.abs() > y.abs() {
+                        x
+                    } else {
+                        y
+                    },
+                    false,
+                )
+            }
         };
         let (sol, sağ, üst, alt) = self.çizim_alanı();
         let yatay = f64::from((fare.x - sol) / (sağ - sol));
         let dikey = f64::from((fare.y - üst) / (alt - üst));
-        match self.grafik.tekerlek(yatay, dikey, delta, hassas) {
+        match self
+            .grafik
+            .tekerlek_eksende(yatay, dikey, delta, hassas, eksen)
+        {
             Ok(_) => self.hata = None,
             Err(hata) => {
                 self.hata = Some(format!("Tekerlek yakınlaştırması uygulanamadı: {hata}"));

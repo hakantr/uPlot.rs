@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use web_time::{Duration, Instant};
 
-use crate::{Aralık, EtkileşimSeçenekleri, TekerlekKipi, UplotHatası};
+use crate::{Aralık, EtkileşimSeçenekleri, TekerlekEkseni, TekerlekKipi, UplotHatası};
 
 #[derive(Clone, Copy, Default, PartialEq)]
 struct Görünüm {
@@ -146,6 +146,7 @@ impl EtkileşimDenetleyicisi {
         görünür_y: Aralık,
         ham_delta: f64,
         platform_hassas: bool,
+        eksen: TekerlekEkseni,
     ) -> Result<bool, UplotHatası> {
         if !self.ayarlar.tekerlek_etkileşimi {
             return Ok(false);
@@ -193,16 +194,31 @@ impl EtkileşimDenetleyicisi {
         let mevcut_x = self.görünür_x();
         let x_odak =
             mevcut_x.en_az + yatay_odak_oranı.clamp(0.0, 1.0) * (mevcut_x.en_çok - mevcut_x.en_az);
-        let x = mevcut_x
-            .uyarlanabilir_tekerlek_yakınlaştır(self.tam_x, x_odak, delta, hassas, tekerlek)?;
+        let x = if matches!(eksen, TekerlekEkseni::İkisi | TekerlekEkseni::X) {
+            mevcut_x.uyarlanabilir_tekerlek_yakınlaştır(
+                self.tam_x, x_odak, delta, hassas, tekerlek,
+            )?
+        } else {
+            mevcut_x
+        };
         let mevcut_y = self.görünüm.y.unwrap_or(görünür_y);
         let y_odak = mevcut_y.en_az
             + (1.0 - dikey_odak_oranı.clamp(0.0, 1.0)) * (mevcut_y.en_çok - mevcut_y.en_az);
-        let y = mevcut_y
-            .uyarlanabilir_tekerlek_yakınlaştır(self.tam_y, y_odak, delta, hassas, tekerlek)?;
+        let y = if matches!(eksen, TekerlekEkseni::İkisi | TekerlekEkseni::Y) {
+            mevcut_y.uyarlanabilir_tekerlek_yakınlaştır(
+                self.tam_y, y_odak, delta, hassas, tekerlek,
+            )?
+        } else {
+            mevcut_y
+        };
+        let y_görünümü = if y != self.tam_y || (eksen == TekerlekEkseni::X && x != self.tam_x) {
+            Some(y)
+        } else {
+            None
+        };
         let yeni = Görünüm {
             x: (x != self.tam_x).then_some(x),
-            y: (y != self.tam_y).then_some(y),
+            y: y_görünümü,
         };
         let değişti = self.uygula(yeni, !self.tekerlek_hareketi_kaydedildi);
         if değişti {
