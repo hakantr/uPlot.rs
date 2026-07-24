@@ -16,8 +16,12 @@ kanıt_tohumu = "0x5c201144"
 kapsayıcı = [400, 400]
 grafik = [400, 200]
 kaydırma = "yüzey_dikdörtgenini_yenile"
+fare_girişi = "kaydırma_dışı_yerleşim_değişiminden_sonra_yeniden_ölç"
 koordinat_dönüşümü = "istemci_to_sahne_çekirdekte"
 ortak_davranış_profili = "resize-temeli-v1"
+varsayılan_tekerlek = "kapalı_doğal_kapsayıcı_kaydırması"
+varsayılan_dokunma = "kapalı_doğal_kapsayıcı_kaydırması"
+isteğe_bağlı_yakınlaştırma = true
 
 [kanıt]
 svg_dizini = "target/scroll-sync"

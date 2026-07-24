@@ -511,6 +511,10 @@ impl KartKimliği {
             ortak_kart_etkileşimleri().seçim_yakınlaştır(false)
         } else if self == Self::YScaleDrag {
             ortak_kart_etkileşimleri().eksen_sürükleme(true)
+        } else if self == Self::ScrollSync {
+            ortak_kart_etkileşimleri()
+                .tekerlek_etkileşimi(false)
+                .dokunma_etkileşimi(false)
         } else {
             ortak_kart_etkileşimleri()
         }
@@ -4471,7 +4475,8 @@ impl Render for ChartListesi {
                     .p_3()
                     .text_sm()
                     .text_color(soluk)
-                    .child("Contrary to popular belief, Lorem Ipsum is not simply random text. Kaydırılabilir içerik grafiğin pencere konumunu değiştirir.")
+                    .child("Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock traced consectetur through the classical passages in sections 1.10.32 and 1.10.33 of de Finibus Bonorum et Malorum by Cicero.")
+                    .child(div().mt_3().child("The source page deliberately places the chart after two long paragraphs. Scrolling this 400×400 container changes the 400×200 chart's window rectangle before pointer interaction. GPUI refreshes layout bounds while the shared Rust core performs the client-to-scene conversion."))
                     .child(
                         div()
                             .my_3()
@@ -4479,8 +4484,7 @@ impl Render for ChartListesi {
                             .h(px(200.0))
                             .when_some(self.grafik.clone(), |öğe, grafik| öğe.child(grafik)),
                     )
-                    .child("Grafiği kaydırdıktan sonra imleç ve seçim aynı görsel noktada kalır. GPUI sınırları her yerleşimde, istemci → sahne dönüşümü ise ortak Rust çekirdeğinde yenilenir.")
-                    .child(div().h(px(260.0))),
+                    .child("Grafiği kaydırdıktan sonra imleç ve seçim aynı görsel noktada kalır. Kaynak parity için doğal kapsayıcı kaydırması varsayılandır; wheel/touch yakınlaştırma ortak API'den isteğe bağlı açılır."),
                 )
         } else {
             çizim_tabanı
@@ -4624,6 +4628,16 @@ impl Render for ChartListesi {
                  16 statik yüzeyin her biri aynı 10 X konumu ve iki seriyi O(S×N) çizer; timer \
                  yoktur. Cursor yalnız hafif etkileşim katmanlarını taşır; ölçek değişiminde \
                  senkron grubun 16 ana yüzeyi birlikte yeniden boyanır.",
+            ),
+            KartKimliği::ScrollSync => Some(
+                "Amaç: kaydırılabilir panel içinde grafiğin pencere konumu değiştiğinde cursor, \
+                 seçim ve zoom koordinatlarının görsel noktadan kopmamasını gösterir. API: \
+                 adaptör güncel yüzey sınırını iletir; YüzeyDikdörtgeni istemci koordinatını \
+                 aspect-fit sahneye dönüştürür. İzleme: sanallaştırılmış liste, kayan dashboard, \
+                 sabit başlık veya yeniden yerleşen widget içindeki grafikler için gereklidir. \
+                 Maliyet: sınır yenileme tek yerleşim ölçümü ve O(1) dönüşümdür; kaydırma ana \
+                 veri sahnesini yeniden çizmez. Kaynak davranışını korumak için doğal kapsayıcı \
+                 kaydırması varsayılandır; wheel/touch eklentileri ortak API'den açılabilir.",
             ),
             KartKimliği::Scatter => Some(
                 "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \

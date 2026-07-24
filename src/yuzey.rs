@@ -87,4 +87,17 @@ mod testler {
                 .is_none()
         );
     }
+
+    #[test]
+    fn oranı_farklı_css_kutusunda_ortalanmış_svg_sahnesini_korur() {
+        let yüzey = YüzeyDikdörtgeni::yeni(10.0, 20.0, 500.0, 500.0);
+        assert_eq!(
+            yüzey.and_then(|değer| değer.sahne_konumu(260.0, 270.0, 400, 200)),
+            Some(Nokta::yeni(200.0, 100.0))
+        );
+        assert_eq!(
+            yüzey.and_then(|değer| değer.sahne_konumu(60.0, 145.0, 400, 200)),
+            Some(Nokta::yeni(40.0, 0.0))
+        );
+    }
 }

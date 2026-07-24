@@ -10,7 +10,8 @@ let grafik = Grafik::yeni(seçenekler, veri)?;
 // dikdörtgenini yeniler; istemci → sahne dönüşümü çekirdekte çözülür."##;
 
 /// `demos/scroll-sync.html` içindeki `.syncRect()` örneğini aynı 30 x değeri,
-/// −10…10 havuzu ve üç rastgele seriyle üretir.
+/// −10…10 havuzu ve üç seriyle üretir. Kaynaktaki `Math.random()` yerine
+/// tekrarlanabilir görsel/test kanıtı için sabit bir Rust tohumu kullanılır.
 pub fn scroll_sync_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
     let x = (1..=30).map(f64::from).collect::<Vec<_>>();
     let değer_havuzu = (-10..=10).map(f64::from).collect::<Vec<_>>();
@@ -29,10 +30,29 @@ pub fn scroll_sync_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHa
     let seçenekler = GrafikSeçenekleri::yeni(400, 200)?
         .başlık(".syncRect()")
         .x_zaman(false)
-        .etkileşimler(ortak_kart_etkileşimleri())
-        .seri(SeriSeçenekleri::yeni("1").renk("red").dolgu("#ff00001a"))
-        .seri(SeriSeçenekleri::yeni("2").renk("green").dolgu("#00ff001a"))
-        .seri(SeriSeçenekleri::yeni("3").renk("blue").dolgu("#0000ff1a"));
+        // Kaynak örnekte wheel/touch eklentisi yoktur; kapsayıcı doğal
+        // olarak kayar. Ortak eklentiler API'de kalır ve geliştirici
+        // tarafından sonradan açılabilir.
+        .etkileşimler(
+            ortak_kart_etkileşimleri()
+                .tekerlek_etkileşimi(false)
+                .dokunma_etkileşimi(false),
+        )
+        .seri(
+            SeriSeçenekleri::yeni("")
+                .renk("red")
+                .dolgu("rgba(255,0,0,0.1)"),
+        )
+        .seri(
+            SeriSeçenekleri::yeni("")
+                .renk("green")
+                .dolgu("rgba(0,255,0,0.1)"),
+        )
+        .seri(
+            SeriSeçenekleri::yeni("")
+                .renk("blue")
+                .dolgu("rgba(0,0,255,0.1)"),
+        );
     Ok((seçenekler, veri))
 }
 
@@ -49,9 +69,12 @@ mod testler {
         assert!(veri.seriler().iter().flatten().all(|değer| {
             değer.is_some_and(|değer| (-10.0..=10.0).contains(&değer) && değer.fract() == 0.0)
         }));
+        assert!(seçenekler.seriler.iter().all(|seri| seri.etiket.is_empty()));
+        assert!(!seçenekler.etkileşimler.tekerlek_etkileşimi);
+        assert!(!seçenekler.etkileşimler.dokunma_etkileşimi);
         let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();
         assert!(svg.contains(".syncRect()"));
-        assert!(svg.contains("#ff00001a"));
+        assert!(svg.contains("rgba(255,0,0,0.1)"));
         Ok(())
     }
 

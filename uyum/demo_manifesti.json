@@ -2303,14 +2303,15 @@
       "sahip_faz": 5,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-exact-400x200-chart", "source-seeded-three-series",
+        "source-exact-400x200-chart", "deterministic-proof-three-series",
         "surface-rect-resync-after-scroll", "client-to-scene-core-mapping",
-        "gpui-wasm-scroll-surface-parity", "common-interaction-profile"
+        "mouseenter-layout-resync", "gpui-wasm-scroll-surface-parity",
+        "natural-scroll-default", "optional-common-interaction-profile"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
-        "performans": "kısmi"
+        "performans": "uygulandı_kanıtlı"
       }
     },
     {

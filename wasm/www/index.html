@@ -1336,14 +1336,24 @@
       tanım: () => scroll_sync_kart_tanim_ornegi(),
       tanımYolu: "src/kart/scroll_sync.rs",
       seriler: [
-        { etiket: "1", renk: "red" },
-        { etiket: "2", renk: "green" },
-        { etiket: "3", renk: "blue" },
+        { etiket: "", renk: "red" },
+        { etiket: "", renk: "green" },
+        { etiket: "", renk: "blue" },
       ],
-      yardım: "Kutuyu kaydır · grafik üzerinde imleç ve seçim konumu kaydırmadan sonra doğru kalır",
+      yardım: "Kutuyu doğal olarak kaydır · imleç ve seçim konumu kaydırmadan sonra doğru kalır",
       değişkenNokta: false,
       scrollSync: true,
-      etkileşimler: () => ortakEtkileşimler(),
+      etkileşimler: () => ({
+        ...ortakEtkileşimler(),
+        tekerlek: false,
+        dokunma: false,
+      }),
+      kullanım: {
+        amaç: "Kaydırılabilir bir panel içindeki grafiğin ekran konumu değiştiğinde cursor, seçim ve zoom koordinatlarının görsel noktadan kopmamasını gösterir.",
+        api: "Adaptör scroll ve pointer-enter sırasında yüzey dikdörtgenini yeniler; YüzeyDikdörtgeni istemci koordinatını aspect-fit SVG sahnesine dönüştürür. Kaynak parity için wheel/touch varsayılan kapalıdır ve ortak API ile açılabilir.",
+        izleme: "Dashboard içinde kayan panel, sanallaştırılmış liste, sabit başlık veya yeniden yerleşen widget kullanan tüm grafiklerde gereklidir.",
+        maliyet: "syncRect yalnız tek getBoundingClientRect ve O(1) koordinat dönüşümüdür; kaydırma ana veri sahnesini yeniden çizmez.",
+      },
     };
     document.querySelector('[data-kart="scroll-sync"]')?.insertAdjacentHTML(
       "afterend",
@@ -4587,14 +4597,16 @@
         chart.innerHTML = kart.scrollSync ? `
           <div class="scroll-sync-içerik">
             <p>Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots
-            in classical Latin literature, so the chart begins below scrollable content.</p>
-            <p>Scroll this container, then move or drag over the chart. The cached surface
-            rectangle is synchronized after each scroll event.</p>
+            in a piece of classical Latin literature from 45 BC, making it over 2000 years old.
+            Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked
+            up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage and
+            traced it through classical literature. Lorem Ipsum comes from sections 1.10.32 and
+            1.10.33 of “de Finibus Bonorum et Malorum” by Cicero.</p>
+            <p>The standard chunk used since the 1500s is reproduced in the source demo together
+            with the original Latin sections and their English translation. This deliberately
+            long content places the 400×200 chart below the fold so scrolling changes its client
+            rectangle before pointer interaction.</p>
             <div class="scroll-sync-grafik">${svgÇıktısı}</div>
-            <p>The standard chunk used since the 1500s is reproduced here as lower filler
-            content so the chart can move through the viewport like the official demo.</p>
-            <p>uPlot.rs keeps platform layout in the adapter and performs client-to-scene
-            coordinate conversion in the reusable Rust core.</p>
           </div>` : aktifKart.startsWith("multi-bars-")
             ? `<div class="multi-bars-kaydırma">${svgÇıktısı}${multiBarsKategoriKontrolleri}</div>`
             : aktifKart === "nice-scale"
@@ -5436,6 +5448,7 @@
     });
     chart.addEventListener("pointerenter", () => {
       grafikÜzerinde = true;
+      yüzeyiEşitle();
       taşımaİmleciniGüncelle();
     });
     chart.addEventListener("pointerleave", () => {
