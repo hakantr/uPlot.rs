@@ -8,7 +8,8 @@ use std::collections::BTreeMap;
 use seri_geometrisi::seri_yol_noktaları;
 
 use crate::cizim::kirpma::{
-    nokta_dikdörtgende, yolu_dikdörtgene_kırp, çokgeni_dikdörtgene_kırp
+    nokta_dikdörtgende, sahipli_yolu_dikdörtgene_kırp, yolu_dikdörtgene_kırp,
+    çokgeni_dikdörtgene_kırp,
 };
 use crate::cizim::{DoğrusalGradyan, GradyanRenkDurağı, Komut, MetinHizası, Nokta, Sahne};
 use crate::etkilesim::EtkileşimDenetleyicisi;
@@ -2802,15 +2803,25 @@ impl Grafik {
             if !parça.is_empty() {
                 ham_parçalar.push(parça);
             }
-            let ham_parçalar = ham_parçalar
+            let mut ham_parçalar = ham_parçalar
                 .into_iter()
-                .map(|parça| seri_yol_noktaları(&parça, seri.çizim_türü))
+                .map(|parça| seri_yol_noktaları(parça, seri.çizim_türü))
                 .collect::<Vec<_>>();
-            let parçalar = yolu_dikdörtgene_kırp(&ham_parçalar, sol, sağ, üst, alt);
-            if !bant_dolgusu
+            let dolgu_üretilecek = !bant_dolgusu
                 && seri.çizim_türü != crate::SeriÇizimTürü::Noktalar
-                && (seri_dolgusu.is_some() || seri.dolgu_gradyanı.is_some())
-            {
+                && (seri_dolgusu.is_some() || seri.dolgu_gradyanı.is_some());
+            let parçalar = if dolgu_üretilecek {
+                yolu_dikdörtgene_kırp(&ham_parçalar, sol, sağ, üst, alt)
+            } else {
+                sahipli_yolu_dikdörtgene_kırp(
+                    std::mem::take(&mut ham_parçalar),
+                    sol,
+                    sağ,
+                    üst,
+                    alt,
+                )
+            };
+            if dolgu_üretilecek {
                 let taban = if self.seçenekler.x_dikey {
                     sol + self.y_konumu(
                         &seri.ölçek,

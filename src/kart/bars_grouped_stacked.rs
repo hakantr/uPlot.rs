@@ -262,8 +262,13 @@ mod testler {
                 }
                 _ => None,
             });
+            assert!(
+                merkez.is_some(),
+                "zoom sonrası görünür çubuk yok: {}",
+                örnek.kimlik()
+            );
             let Some((x, y)) = merkez else {
-                panic!("zoom sonrası görünür çubuk yok: {}", örnek.kimlik());
+                continue;
             };
             assert!(
                 grafik.çubuk_vuruşu(genişlik, yükseklik, x, y).is_some(),

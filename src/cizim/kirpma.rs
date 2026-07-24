@@ -11,6 +11,34 @@ pub(crate) fn yolu_dikdörtgene_kırp(
     üst: f32,
     alt: f32,
 ) -> Vec<Vec<Nokta>> {
+    yolu_dikdörtgene_kırp_iç(parçalar, sol, sağ, üst, alt)
+}
+
+pub(crate) fn sahipli_yolu_dikdörtgene_kırp(
+    parçalar: Vec<Vec<Nokta>>,
+    sol: f32,
+    sağ: f32,
+    üst: f32,
+    alt: f32,
+) -> Vec<Vec<Nokta>> {
+    if parçalar
+        .iter()
+        .flatten()
+        .all(|nokta| nokta_dikdörtgende(*nokta, sol, sağ, üst, alt))
+    {
+        return parçalar;
+    }
+
+    yolu_dikdörtgene_kırp_iç(&parçalar, sol, sağ, üst, alt)
+}
+
+fn yolu_dikdörtgene_kırp_iç(
+    parçalar: &[Vec<Nokta>],
+    sol: f32,
+    sağ: f32,
+    üst: f32,
+    alt: f32,
+) -> Vec<Vec<Nokta>> {
     let mut sonuç = Vec::new();
     for parça in parçalar {
         if parça.len() == 1 {
@@ -232,6 +260,24 @@ mod testler {
         );
         assert!(kırpılmış.iter().flatten().any(|nokta| nokta.y == 0.0));
         assert!(kırpılmış.iter().flatten().any(|nokta| nokta.y == 10.0));
+    }
+
+    #[test]
+    fn tamamen_içerideki_yol_tahsisatını_yeniden_kullanır() {
+        let parça = vec![
+            Nokta::yeni(1.0, 1.0),
+            Nokta::yeni(5.0, 5.0),
+            Nokta::yeni(9.0, 9.0),
+        ];
+        let parça_işaretçisi = parça.as_ptr();
+
+        let kırpılmış = sahipli_yolu_dikdörtgene_kırp(vec![parça], 0.0, 10.0, 0.0, 10.0);
+
+        assert_eq!(kırpılmış.len(), 1);
+        assert_eq!(
+            kırpılmış.first().map(|parça| parça.as_ptr()),
+            Some(parça_işaretçisi)
+        );
     }
 
     #[test]

@@ -1,6 +1,8 @@
 use crate::Nokta;
 
-pub(super) fn seri_yol_noktaları(noktalar: &[Nokta], tür: crate::SeriÇizimTürü) -> Vec<Nokta> {
+pub(super) fn seri_yol_noktaları(
+    noktalar: Vec<Nokta>, tür: crate::SeriÇizimTürü
+) -> Vec<Nokta> {
     if noktalar.len() < 2
         || matches!(
             tür,
@@ -9,13 +11,13 @@ pub(super) fn seri_yol_noktaları(noktalar: &[Nokta], tür: crate::SeriÇizimTü
                 | crate::SeriÇizimTürü::Çubuk
         )
     {
-        return noktalar.to_vec();
+        return noktalar;
     }
     if tür == crate::SeriÇizimTürü::Eğri {
-        return monoton_eğri_noktaları(noktalar);
+        return monoton_eğri_noktaları(&noktalar);
     }
     if tür == crate::SeriÇizimTürü::CatmullRom {
-        return catmull_rom_noktaları(noktalar);
+        return catmull_rom_noktaları(&noktalar);
     }
     let mut sonuç = Vec::with_capacity(noktalar.len().saturating_mul(8));
     if let Some(ilk) = noktalar.first().copied() {
@@ -322,6 +324,21 @@ fn monoton_eğim_f64(değerler: &[Option<f64>], indeks: usize) -> Option<f64> {
 #[cfg(test)]
 mod catmull_rom_testleri {
     use super::*;
+
+    #[test]
+    fn düz_çizgi_girdi_tahsisatını_yeniden_kullanır() {
+        let kaynak = vec![
+            Nokta::yeni(0.0, 0.0),
+            Nokta::yeni(1.0, 2.0),
+            Nokta::yeni(2.0, 1.0),
+        ];
+        let kaynak_işaretçisi = kaynak.as_ptr();
+
+        let sonuç = seri_yol_noktaları(kaynak, crate::SeriÇizimTürü::Çizgi);
+
+        assert_eq!(sonuç.as_ptr(), kaynak_işaretçisi);
+        assert_eq!(sonuç.len(), 3);
+    }
 
     #[test]
     fn merkezcil_catmull_rom_uçları_korur_ve_sonlu_örnekler_üretir() {
