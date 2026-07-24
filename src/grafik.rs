@@ -37,6 +37,79 @@ pub enum NullAtlamaYönü {
     Önceki,
 }
 
+/// Overview grafiğindeki taşınabilir ve iki uçtan boyutlandırılabilir X seçimi.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ZoomRangerDurumu {
+    tam: Aralık,
+    seçim: Aralık,
+}
+
+impl ZoomRangerDurumu {
+    pub fn yeni(tam: Aralık, seçim: Aralık) -> Result<Self, UplotHatası> {
+        let mut durum = Self { tam, seçim: tam };
+        durum.ana_görünümle_senkronla(seçim)?;
+        Ok(durum)
+    }
+
+    pub fn seçim_aralığı(self) -> Aralık {
+        self.seçim
+    }
+
+    pub fn tam_aralık(self) -> Aralık {
+        self.tam
+    }
+
+    pub fn seçim_oranları(self) -> (f64, f64) {
+        let genişlik = self.tam.en_çok - self.tam.en_az;
+        (
+            (self.seçim.en_az - self.tam.en_az) / genişlik,
+            (self.seçim.en_çok - self.tam.en_az) / genişlik,
+        )
+    }
+
+    pub fn pencereyi_taşı(&mut self, fark: f64) -> bool {
+        if !fark.is_finite() {
+            return false;
+        }
+        let genişlik = self.seçim.en_çok - self.seçim.en_az;
+        let en_az = (self.seçim.en_az + fark).clamp(self.tam.en_az, self.tam.en_çok - genişlik);
+        self.değiştir(Aralık {
+            en_az,
+            en_çok: en_az + genişlik,
+        })
+    }
+
+    pub fn sol_tutamağı_ayarla(&mut self, değer: f64) -> bool {
+        değer.is_finite()
+            && self.değiştir(Aralık {
+                en_az: değer.clamp(self.tam.en_az, self.seçim.en_çok),
+                en_çok: self.seçim.en_çok,
+            })
+    }
+
+    pub fn sağ_tutamağı_ayarla(&mut self, değer: f64) -> bool {
+        değer.is_finite()
+            && self.değiştir(Aralık {
+                en_az: self.seçim.en_az,
+                en_çok: değer.clamp(self.seçim.en_az, self.tam.en_çok),
+            })
+    }
+
+    pub fn ana_görünümle_senkronla(&mut self, aralık: Aralık) -> Result<bool, UplotHatası> {
+        let en_az = aralık.en_az.clamp(self.tam.en_az, self.tam.en_çok);
+        let en_çok = aralık.en_çok.clamp(self.tam.en_az, self.tam.en_çok);
+        Ok(self.değiştir(Aralık::yeni(en_az.min(en_çok), en_az.max(en_çok))?))
+    }
+
+    fn değiştir(&mut self, seçim: Aralık) -> bool {
+        if self.seçim == seçim {
+            return false;
+        }
+        self.seçim = seçim;
+        true
+    }
+}
+
 /// İşaretçi konumunda sürüklenebilen eksenin çekirdek karşılığı.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EksenHedefi {
@@ -317,6 +390,14 @@ impl Grafik {
     pub fn görünür_x_aralığı(&self) -> Aralık {
         self.elle_x_aralığı
             .unwrap_or_else(|| self.etkileşim.görünür_x())
+    }
+
+    pub fn zoom_ranger_durumu(&self) -> Result<ZoomRangerDurumu, UplotHatası> {
+        ZoomRangerDurumu::yeni(self.etkileşim.tam_x(), self.görünür_x_aralığı())
+    }
+
+    pub fn zoom_ranger_uygula(&mut self, ranger: ZoomRangerDurumu) -> bool {
+        self.etkileşim.görünür_x_ayarla(ranger.seçim_aralığı())
     }
 
     pub fn boyut(&self) -> (u32, u32) {

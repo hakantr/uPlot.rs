@@ -207,6 +207,12 @@
         <strong>Wheel Zoom &amp; Drag</strong>
         <small>zoom-wheel</small>
         <div class="durum">Resmî tekerlek eklentisi · 2 seri</div>
+        <div id="zoom-ranger-proof" style="margin-top:8px;height:18px;background:#fee2e2;position:relative">
+          <span style="position:absolute;left:20%;width:55%;height:100%;border-left:5px solid red;border-right:5px solid blue;background:#fecaca"></span>
+        </div>
+        <button data-ranger="left">sol grip</button>
+        <button data-ranger="move">pencereyi taşı</button>
+        <button data-ranger="right">sağ grip</button>
       </article>
       <article class="kart" data-kart="zoom-touch" aria-current="false" tabindex="0">
         <strong>Pinch Zoom &amp; Pan</strong>
@@ -610,8 +616,10 @@
         başlık: "Wheel Zoom & Drag",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-wheel.html">zoom-wheel.html</a>
           · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-fetch.html">zoom-fetch.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-ranger-grips.html">zoom-ranger-grips.html</a>
           <br>Kaynakla aynı 7 X noktası, One/Two serileri ve resmî 0.75 yakınlaştırma katsayısı.
           <br>Fetch zoom ayrı kart üretmeden seçim aralığı → veri isteği → atomik veri/görünüm güncellemesi olarak aynı doğrulama yüzeyinde kanıtlanır.
+          <br>Overview seçim penceresi, tüm pencere taşıma ve kırmızı/mavi grip boyutlandırması çift yönlü senkronlanır.
           <br>Orta tuş taşımasının yanında ortak profilde boşluk + sol sürükleme, touch ve görünüm geçmişi de sunulur.`,
         tanım: () => zoom_wheel_kart_tanim_ornegi(),
         tanımYolu: "src/kart/zoom_wheel.rs",
@@ -3985,6 +3993,22 @@
         öğe.addEventListener("keydown", olay => {
           if (olay.key === " " && grafikÜzerinde) return;
           if (olay.key === "Enter" || olay.key === " ") kartıSeç(öğe.dataset.kart);
+        });
+      });
+      document.querySelectorAll("[data-ranger]").forEach(düğme => {
+        düğme.addEventListener("click", olay => {
+          olay.stopPropagation();
+          if (aktifKart !== "zoom-wheel" || !oturum) return;
+          if (düğme.dataset.ranger === "left") oturum.zoom_ranger_sol(0.3);
+          if (düğme.dataset.ranger === "move") oturum.zoom_ranger_tasi(0.1);
+          if (düğme.dataset.ranger === "right") oturum.zoom_ranger_sag(0.8);
+          const oranlar = oturum.zoom_ranger_oranlari();
+          const seçim = document.querySelector("#zoom-ranger-proof span");
+          if (oranlar.length === 2 && seçim) {
+            seçim.style.left = `${oranlar[0] * 100}%`;
+            seçim.style.width = `${(oranlar[1] - oranlar[0]) * 100}%`;
+          }
+          çiz();
         });
       });
       kartıSeç("resize");

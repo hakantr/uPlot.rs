@@ -1,0 +1,18 @@
+id = "zoom-ranger-grips"
+kaynak = "../uPlot/demos/zoom-ranger-grips.html"
+kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
+fixture = "src/grafik.rs#ZoomRangerDurumu"
+viewport = [800, 400]
+durum = "mevcut_zoom_yüzeyinde_overview_gripleri"
+
+[davranış]
+ayrı_katalog_kartı = false
+pencere = "tamamı sınırlar içinde taşınır"
+sol_grip = "sağ sınırı geçmeden resize"
+sağ_grip = "sol sınırı geçmeden resize"
+senkron = "ranger ↔ ana görünüm"
+
+[kanıt]
+örnek = "examples/zoom_wheel.rs"
+masaüstü = "uygulamalar/masaustu/src/masaustu.rs#ZoomWheel"
+wasm = "wasm/www/index.html#zoom-ranger-proof"

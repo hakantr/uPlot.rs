@@ -11,7 +11,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         std::fs::create_dir_all(üst)?;
     }
     let (seçenekler, veri) = zoom_wheel_kartı()?;
-    let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();
+    let mut grafik = Grafik::yeni(seçenekler, veri)?;
+    let mut ranger = grafik.zoom_ranger_durumu()?;
+    ranger.sol_tutamağı_ayarla(2.0);
+    ranger.sağ_tutamağı_ayarla(5.0);
+    grafik.zoom_ranger_uygula(ranger);
+    let svg = grafik.çiz().svg();
     std::fs::write(&çıktı, svg)?;
     let mut fetch = ZoomFetchAkışı::yeni()?;
     let istek = fetch.aralık_isteği(0.25, 0.75)?;

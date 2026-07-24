@@ -238,7 +238,7 @@ impl KartKimliği {
                 "scale-padding.html · 13 düz seri · kaynakla aynı değer düzeyleri"
             }
             Self::ZoomWheel => {
-                "zoom-wheel.html + zoom-fetch.html · tekerlek ve seçimle uzak veri yenileme"
+                "zoom-wheel + zoom-fetch + zoom-ranger-grips · uzak veri ve çift yönlü overview"
             }
             Self::ZoomTouch => "zoom-touch.html · resmî kıstırma ve tek parmak taşıma eklentisi",
             Self::MonthsNoLeap | Self::MonthsLeap => {
