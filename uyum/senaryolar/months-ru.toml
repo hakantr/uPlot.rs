@@ -5,6 +5,12 @@ viewport = [1920, 600]
 device_pixel_ratio = 1
 durum = "yerellestirilmis_etkilesimli"
 
+[katalog]
+kart_kimliği = "months"
+ilişkili_yüzey_sayısı = 3
+bu_kaynağın_yüzey_sayısı = 1
+bağımsız_görünüm = true
+
 [veri]
 ay_sayısı = 36
 yıllar = [2017, 2018, 2019]

@@ -388,8 +388,12 @@
           "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba"
         }
       ],
-      "fixture": "src/kart/months.rs#months_artık_yılsız_kartı",
-      "alt_fixtureler": ["src/kart/months.rs#months_artık_yıllı_kartı"],
+      "fixture": "src/kart/months.rs#months_kartları",
+      "alt_fixtureler": [
+        "src/kart/months.rs#months_artık_yılsız_kartı",
+        "src/kart/months.rs#months_artık_yıllı_kartı",
+        "src/kart/months.rs#months_rusça_kartı"
+      ],
       "örnek": "examples/months.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -424,10 +428,13 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "two-source-subcharts",
+        "single-family-card-three-independent-surfaces",
         "utc-month-timestamps",
         "leap-year-calendar",
-        "time-axis-labels",
-        "seeded-reference-random-stream",
+        "source-dynamic-28-day-axis-space",
+        "calendar-aligned-month-splits",
+        "source-random-domain-with-fixed-proof-seed",
+        "localized-russian-variant",
         "responsive-width",
         "common-interaction-profile"
       ],
@@ -1896,11 +1903,11 @@
       "sahip_faz": 2,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-exact-36-month-dataset", "fixed-proof-seed", "utc-month-starts",
+        "source-36-month-x-domain", "source-random-domain-with-fixed-proof-seed", "utc-month-starts",
         "calendar-aligned-month-splits", "source-russian-long-month-names",
         "source-russian-short-month-names", "source-russian-long-weekday-names",
         "source-russian-short-weekday-names", "localized-axis-labels",
-        "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "single-family-card-with-months", "gpui-wasm-catalog-parity", "common-interaction-profile",
         "panic-free-calendar-conversion"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }

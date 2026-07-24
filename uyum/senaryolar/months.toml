@@ -6,6 +6,12 @@ viewport = [1920, 200]
 device_pixel_ratio = 1
 durum = "iki_alt_grafikli_etkileşimli"
 
+[katalog]
+kart_kimliği = "months"
+ilişkili_yüzey_sayısı = 3
+bu_kaynağın_yüzey_sayısı = 2
+bağımsız_görünümler = true
+
 [veri]
 ay_sayısı = 36
 artık_yılsız_yıllar = [2017, 2018, 2019]
@@ -21,6 +27,10 @@ ay_günü = 1
 saat = "00:00:00"
 etiket = "İngilizce kısa ay adı ve yıl"
 artık_yıl_kanıtı = "2024-02-01T00:00:00Z"
+artık_yılsız_şubat_günleri = 28
+artık_yıllı_şubat_günleri = 29
+eksen_space = "plotDim / rangeDays * 28"
+takvim_bölme_artımı = "1 gerçek UTC ay"
 
 [etkileşim]
 ortak_davranış_profili = "resize-temeli-v1"

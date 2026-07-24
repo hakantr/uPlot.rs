@@ -144,7 +144,7 @@ pub use missing_data::{
 };
 pub use months::{
     MONTHS_KANIT_TOHUMU, MONTHS_KART_TANIM_ÖRNEĞİ, MONTHS_RU_KANIT_TOHUMU,
-    months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı,
+    months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_kartları, months_rusça_kartı,
 };
 pub use multi_bars::{
     MULTI_BARS_KART_TANIM_ÖRNEĞİ, MultiBarsÖrneği, multi_bars_kartı,

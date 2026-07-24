@@ -91,7 +91,7 @@ pub use kart::{
     high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
     log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı, missing_data_null_kartı,
     missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    months_rusça_kartı, multi_bars_kartı, multi_bars_kitaplık_etiketleri,
+    months_kartları, months_rusça_kartı, multi_bars_kartı, multi_bars_kitaplık_etiketleri,
     multi_bars_kitaplık_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
     ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı, resize_kartı,
     savitzky_golay, scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,

@@ -33,10 +33,13 @@
     header > div:first-child { flex: 1 1 300px; min-width: 260px; }
     h2 { margin: 0; font-size: 19px; }
     .kaynak { margin-top: 5px; color: #6b7280; font-size: 13px; }
-    .kart-rehberi { margin-top: 8px; padding: 8px 10px; display: grid;
+    .açıklama-kutusu { margin-top: 8px; border: 1px solid #d1d5db; border-radius: 8px;
+                       background: #fff; overflow: hidden; }
+    .açıklama-kutusu summary { padding: 8px 10px; color: #374151; cursor: pointer;
+                               font-size: 12px; font-weight: 700; }
+    .kart-rehberi { padding: 0 10px 9px; display: grid;
                     grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 5px 14px;
-                    border: 1px solid #e5e7eb; border-radius: 8px; color: #4b5563;
-                    background: #fff; font-size: 11px; line-height: 1.35; }
+                    color: #4b5563; font-size: 11px; line-height: 1.35; }
     .kart-rehberi strong { color: #111827; }
     .denetimler { flex: 1 1 500px; display: flex; align-items: center; justify-content: flex-end;
                   flex-wrap: wrap; gap: 12px; }
@@ -153,6 +156,21 @@
                                  pointer-events: none; }
     .nearest-non-null-grafik .lejant { position: absolute; left: 58px; right: 12px;
                                        bottom: 7px; justify-content: flex-start; }
+    #chart.months-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .months-yığın { min-width: 0; display: grid; gap: 10px; align-items: start; }
+    .months-grafik { position: relative; min-width: 0; height: 240px;
+                     border: 1px solid #e5e7eb; border-radius: 8px;
+                     background: #fff; overflow: auto; }
+    .months-grafik[data-months-index="2"] { height: 640px; }
+    #chart.months-yüzeyi .months-grafik svg {
+      display: block; width: 1920px; max-width: none; height: 200px;
+    }
+    #chart.months-yüzeyi .months-grafik[data-months-index="2"] svg { height: 600px; }
+    .months-açıklama { position: absolute; z-index: 3; top: 38px; left: 64px;
+                       right: 12px; color: #6b7280; font-size: 10px;
+                       pointer-events: none; }
+    .months-grafik .lejant { position: absolute; left: 58px; right: 12px;
+                             bottom: 7px; justify-content: flex-start; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -251,20 +269,10 @@
         <small>scale-padding</small>
         <div class="durum">13 düz seri · otomatik Y payı</div>
       </article>
-      <article class="kart" data-kart="months-no-leap" aria-current="false" tabindex="0">
-        <strong>No leap year</strong>
-        <small>months-no-leap</small>
-        <div class="durum">UTC ay ekseni · months.html</div>
-      </article>
-      <article class="kart" data-kart="months-leap" aria-current="false" tabindex="0">
-        <strong>2024 leap year</strong>
-        <small>months-leap</small>
-        <div class="durum">UTC ay ekseni · months.html</div>
-      </article>
-      <article class="kart" data-kart="months-russian" aria-current="false" tabindex="0">
-        <strong>Months · Russian</strong>
-        <small>months-russian</small>
-        <div class="durum">Rusça tarih adları · months-ru.html</div>
+      <article class="kart" data-kart="months" aria-current="false" tabindex="0">
+        <strong>Months · calendar ticks</strong>
+        <small>months.html + months-ru.html</small>
+        <div class="durum">3 ilişkili yüzey · normal/artık yıl + Rusça</div>
       </article>
       <article class="kart" data-kart="nice-scale" aria-current="false" tabindex="0">
         <strong>Nice Scale &amp; Ticks</strong>
@@ -334,12 +342,15 @@
             · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/zoom-touch.html">zoom-touch.html</a>
             <br>Çekirdek: seçim + çift tık · Resmi eklentiler: tekerlek + taşıma matematiği · uPlot.rs: boşluk + sol sürükleme bağı
           </div>
-          <section class="kart-rehberi" id="kart-rehberi" aria-label="Kullanım ve kaynak maliyeti" hidden>
-            <span><strong>Amaç:</strong> <span data-rehber="amaç"></span></span>
-            <span><strong>API / durum:</strong> <span data-rehber="api"></span></span>
-            <span><strong>İzleme kullanımı:</strong> <span data-rehber="izleme"></span></span>
-            <span><strong>Kaynak maliyeti:</strong> <span data-rehber="maliyet"></span></span>
-          </section>
+          <details class="açıklama-kutusu" id="kart-rehberi-kutusu" hidden>
+            <summary>Açıklama · kullanım ve kaynak maliyeti</summary>
+            <section class="kart-rehberi" id="kart-rehberi" aria-label="Kullanım ve kaynak maliyeti">
+              <span><strong>Amaç:</strong> <span data-rehber="amaç"></span></span>
+              <span><strong>API / durum:</strong> <span data-rehber="api"></span></span>
+              <span><strong>İzleme kullanımı:</strong> <span data-rehber="izleme"></span></span>
+              <span><strong>Kaynak maliyeti:</strong> <span data-rehber="maliyet"></span></span>
+            </section>
+          </details>
         </div>
         <div class="denetimler">
           <button id="gorunum-geri" type="button">↶ Geri</button>
@@ -496,6 +507,7 @@
     const kartBaşlığı = document.getElementById("kart-başlığı");
     const kartKaynağı = document.getElementById("kart-kaynağı");
     const kartRehberi = document.getElementById("kart-rehberi");
+    const kartRehberiKutusu = document.getElementById("kart-rehberi-kutusu");
     const noktaKontrolü = document.getElementById("nokta-kontrolü");
     const arcsinhKontrolü = document.getElementById("arcsinh-kontrolü");
     const arcsinhEşiği = document.getElementById("arcsinh-esigi");
@@ -735,38 +747,24 @@
           dokunma: ortak_kart_dokunma_etkilesimi(),
         }),
       },
-      "months-no-leap": {
-        başlık: "Months · No leap year",
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months.html">months.html</a>
-          <br>2017–2019 arasındaki 36 UTC ay başlangıcı ve kaynaktaki 0…10 değer örneklemesi.`,
+      "months": {
+        başlık: "Months · takvim ve yerelleştirme",
+        kaynak: `Kaynaklar: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months.html">months.html</a>
+          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months-ru.html">months-ru.html</a>
+          <br>Resmî sayfadaki normal ve artık yıl yüzeyleri birlikte; ayrı yerelleştirme sayfası aynı API ailesinin üçüncü karşılaştırma yüzeyi olarak gösterilir.
+          <br>Kaynak 0…10 rastgele Y alanı korunur; ekran görüntüsü ve testler tekrarlanabilir olsun diye Rust kanıtında sabit tohum kullanılır.`,
         tanım: () => months_kart_tanim_ornegi(),
         tanımYolu: "src/kart/months.rs",
-        seriler: [{ etiket: "Value", renk: "#ff0000" }],
-        yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı · çift tıkla: tam görünüm",
+        seriler: [],
+        yardım: "Yüzeyler bağımsızdır · sürükle: seç · tekerlek: Shift X / Ctrl Y · çift tıkla: o yüzeyi sıfırla",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
-      },
-      "months-leap": {
-        başlık: "Months · 2024 leap year",
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months.html">months.html</a>
-          <br>2024–2026 arasındaki 36 UTC ay başlangıcı; Şubat 2024 artık yıl takviminde korunur.`,
-        tanım: () => months_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/months.rs",
-        seriler: [{ etiket: "Value", renk: "#ff0000" }],
-        yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı · çift tıkla: tam görünüm",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      },
-      "months-russian": {
-        başlık: "Months · Russian",
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months-ru.html">months-ru.html</a>
-          <br>Resmî örnekteki 2017–2019 UTC ay başlangıçları, aynı 0…10 veri üretimi ve Rusça <code>fmtDate</code> adları.`,
-        tanım: () => months_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/months.rs",
-        seriler: [{ etiket: "Value", renk: "#ff0000" }],
-        yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı · çift tıkla: tam görünüm",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "Her nokta UTC'de ayın ilk günüdür. İlk iki yüzey aynı monthly tick politikasını normal ve artık yıl dizilerinde karşılaştırır; üçüncü yüzey tarih adlarının Rusça sunumunu gösterir.",
+          api: "Takvim-ay bölmeleri sabit 30 günlük saniye adımı değildir. months.html içindeki axes[0].space = 28 günlük piksel karşılığı, çekirdekte gerçek UTC ay sınırlarına bağlanır; TarihAdları yalnız formatter sözlüğünü değiştirir.",
+          izleme: "Aylık faturalama, kapasite ve SLO raporlarında Şubat'ı 30 gün varsaymayın. Ölçüm timestamp'lerini UTC'de tutup locale'i yalnız gösterim katmanında uygulayın.",
+          maliyet: "Üç bağımsız yüzey toplam 108 nokta ve yaklaşık 108 takvim bölmesi taşır. Çizim O(N+T), imleç O(log N); resize bölmeleri yeniden hesaplar, veriyi yeniden üretmez.",
+        },
       },
       "nice-scale": {
         başlık: "Nice Scale & Ticks",
@@ -2393,6 +2391,7 @@
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
     let nearestNonNullOturumları = [];
+    let monthsOturumları = [];
     let syncCursorKöprüsü = null;
     let syncCursorDurumları = Array.from({ length: 5 }, () => null);
     let syncCursorSürükleme = null;
@@ -2462,6 +2461,26 @@
         seriler: [["foo", "blue"]], boyut: [600, 300],
       },
     ];
+    const monthsYüzeyleri = [
+      {
+        kimlik: "months-no-leap",
+        başlık: "No leap year · 2017–2019",
+        açıklama: "months.html yüzeyi · her X UTC ay başlangıcı · kaynak 28 günlük axes.space kuralı.",
+        boyut: [1920, 200], dil: "en-US",
+      },
+      {
+        kimlik: "months-leap",
+        başlık: "2024 leap year · 2024–2026",
+        açıklama: "months.html yüzeyi · Şubat 2024 → Mart 2024 aralığı 29 gün · diğer yüzeyden bağımsız.",
+        boyut: [1920, 200], dil: "en-US",
+      },
+      {
+        kimlik: "months-russian",
+        başlık: "Months · Русские названия",
+        açıklama: "months-ru.html yüzeyi · aynı UTC timestamp modeli, ruNames ile yerelleştirilmiş eksen.",
+        boyut: [1920, 600], dil: "ru-RU",
+      },
+    ];
     let etkileşimler = {
       tekerlek: false,
       seçim: false,
@@ -2521,6 +2540,14 @@
           || !nearestNonNullOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !nearestNonNullOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "months") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !monthsOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !monthsOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -3222,6 +3249,248 @@
       kontrolleriGüncelle();
     }
 
+    function monthsYüzeyiniÇiz(indeks) {
+      const kutu = chart.querySelector(`[data-months-index="${indeks}"]`);
+      const yüzey = monthsYüzeyleri[indeks];
+      const yüzeyOturumu = monthsOturumları[indeks];
+      if (!kutu || !yüzey || !yüzeyOturumu) return;
+      const [genişlik, yükseklik] = yüzey.boyut;
+      kutu.innerHTML = `
+        ${yüzeyOturumu.svg(genişlik, yükseklik)}
+        <div class="months-açıklama">${yüzey.açıklama}</div>
+        <div class="lejant">
+          <span>UTC: <b data-months-x>--</b></span>
+          <span><i class="örnek" style="border-color:#ff0000;background:#ff0000"></i>Value:
+            <b data-months-y>--</b></span>
+        </div>`;
+      const svg = kutu.querySelector("svg");
+      if (!svg) return;
+      svg.insertAdjacentHTML("beforeend", `
+        <g class="months-etkileşim" pointer-events="none">
+          <rect class="months-seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+          <line class="months-imleç-x" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
+          <line class="months-imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
+          <circle class="months-nokta" visibility="hidden" r="3" fill="#ff0000"/>
+        </g>`);
+      if (kutu.dataset.etkilesimBagli === "true") return;
+      kutu.dataset.etkilesimBagli = "true";
+      const tarihBiçimi = new Intl.DateTimeFormat(yüzey.dil, {
+        timeZone: "UTC", year: "numeric", month: "short", day: "2-digit",
+      });
+
+      const alan = olay => {
+        const canlıSvg = kutu.querySelector("svg");
+        if (!canlıSvg) return null;
+        const rect = canlıSvg.getBoundingClientRect();
+        const view = canlıSvg.viewBox.baseVal;
+        const çizim = Array.from(yüzeyOturumu.cizim_alani(view.width, view.height));
+        if (çizim.length !== 4 || rect.width <= 0 || rect.height <= 0) return null;
+        const x = (olay.clientX - rect.left) / rect.width * view.width;
+        const y = (olay.clientY - rect.top) / rect.height * view.height;
+        return { view, x, y, sol: çizim[0], sağ: çizim[1], üst: çizim[2], alt: çizim[3] };
+      };
+      const gizle = () => kutu
+        .querySelectorAll(".months-imleç-x,.months-imleç-y,.months-nokta")
+        .forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+      const imleciGüncelle = olay => {
+        const a = alan(olay);
+        if (!a || a.x < a.sol || a.x > a.sağ || a.y < a.üst || a.y > a.alt) {
+          gizle();
+          return;
+        }
+        const çözüm = Array.from(yüzeyOturumu.imlec_cozumu(
+          (a.x - a.sol) / (a.sağ - a.sol),
+          a.sağ - a.sol,
+        ));
+        if (çözüm.length < 5) {
+          gizle();
+          return;
+        }
+        const [imleçX, ortakX, seriX, seriY] = çözüm;
+        const imleçPx = a.sol + yüzeyOturumu.x_konum_orani(imleçX) * (a.sağ - a.sol);
+        const seriPx = a.sol + yüzeyOturumu.x_konum_orani(seriX) * (a.sağ - a.sol);
+        const seriPy = a.alt - yüzeyOturumu.seri_y_konum_orani(0, seriY) * (a.alt - a.üst);
+        const dikey = kutu.querySelector(".months-imleç-x");
+        const yatay = kutu.querySelector(".months-imleç-y");
+        const nokta = kutu.querySelector(".months-nokta");
+        dikey?.setAttribute("x1", imleçPx); dikey?.setAttribute("x2", imleçPx);
+        dikey?.setAttribute("y1", a.üst); dikey?.setAttribute("y2", a.alt);
+        dikey?.setAttribute("visibility", "visible");
+        yatay?.setAttribute("x1", a.sol); yatay?.setAttribute("x2", a.sağ);
+        yatay?.setAttribute("y1", seriPy); yatay?.setAttribute("y2", seriPy);
+        yatay?.setAttribute("visibility", "visible");
+        nokta?.setAttribute("cx", seriPx); nokta?.setAttribute("cy", seriPy);
+        nokta?.setAttribute("visibility", "visible");
+        const xHedefi = kutu.querySelector("[data-months-x]");
+        const yHedefi = kutu.querySelector("[data-months-y]");
+        if (xHedefi) xHedefi.textContent = Number.isFinite(ortakX)
+          ? tarihBiçimi.format(new Date(ortakX * 1000))
+          : "--";
+        if (yHedefi) yHedefi.textContent = Number.isFinite(seriY) ? String(seriY) : "--";
+      };
+      let seçim = null;
+      let taşıma = null;
+      let kıstırma = null;
+      const temaslar = new Map();
+      kutu.addEventListener("pointermove", olay => {
+        olay.stopPropagation();
+        const a = alan(olay);
+        if (!a) return;
+        if (olay.pointerType === "touch" && temaslar.has(olay.pointerId)) {
+          temaslar.set(olay.pointerId, { x: a.x, y: a.y });
+          const noktalar = [...temaslar.values()];
+          if (kıstırma && noktalar.length >= 2) {
+            const uzaklık = Math.hypot(
+              noktalar[0].x - noktalar[1].x,
+              noktalar[0].y - noktalar[1].y,
+            );
+            if (kıstırma.uzaklık > 0 && yüzeyOturumu.dokunma_yakinlastir(
+              ((noktalar[0].x + noktalar[1].x) / 2 - a.sol) / (a.sağ - a.sol),
+              ((noktalar[0].y + noktalar[1].y) / 2 - a.üst) / (a.alt - a.üst),
+              uzaklık / kıstırma.uzaklık,
+            )) monthsYüzeyiniÇiz(indeks);
+            kıstırma.uzaklık = uzaklık;
+            return;
+          }
+          if (taşıma) {
+            if (yüzeyOturumu.tasi(
+              (a.x - taşıma.x) / (a.sağ - a.sol),
+              (a.y - taşıma.y) / (a.alt - a.üst),
+            )) monthsYüzeyiniÇiz(indeks);
+            taşıma = { x: a.x, y: a.y };
+            return;
+          }
+        }
+        if (taşıma) {
+          if (yüzeyOturumu.tasi(
+            (a.x - taşıma.x) / (a.sağ - a.sol),
+            (a.y - taşıma.y) / (a.alt - a.üst),
+          )) monthsYüzeyiniÇiz(indeks);
+          taşıma = { x: a.x, y: a.y };
+          return;
+        }
+        imleciGüncelle(olay);
+        if (!seçim) return;
+        seçim.son = Math.max(a.sol, Math.min(a.sağ, a.x));
+        const dikdörtgen = kutu.querySelector(".months-seçim");
+        dikdörtgen?.setAttribute("x", Math.min(seçim.baş, seçim.son));
+        dikdörtgen?.setAttribute("y", a.üst);
+        dikdörtgen?.setAttribute("width", Math.abs(seçim.son - seçim.baş));
+        dikdörtgen?.setAttribute("height", a.alt - a.üst);
+        dikdörtgen?.setAttribute("visibility", "visible");
+      });
+      kutu.addEventListener("pointerdown", olay => {
+        olay.stopPropagation();
+        const a = alan(olay);
+        if (!a || a.x < a.sol || a.x > a.sağ || a.y < a.üst || a.y > a.alt) return;
+        if (olay.pointerType === "touch") {
+          temaslar.set(olay.pointerId, { x: a.x, y: a.y });
+          kutu.setPointerCapture(olay.pointerId);
+          const noktalar = [...temaslar.values()];
+          if (noktalar.length === 1 && yüzeyOturumu.tasimayi_baslat()) {
+            taşıma = { x: a.x, y: a.y };
+          } else if (noktalar.length >= 2) {
+            if (taşıma) yüzeyOturumu.tasimayi_bitir();
+            taşıma = null;
+            const uzaklık = Math.hypot(
+              noktalar[0].x - noktalar[1].x,
+              noktalar[0].y - noktalar[1].y,
+            );
+            if (yüzeyOturumu.dokunmayi_baslat()) kıstırma = { uzaklık };
+          }
+          return;
+        }
+        if (olay.button !== 0) return;
+        kutu.setPointerCapture(olay.pointerId);
+        if (boşlukBasılı && yüzeyOturumu.tasimayi_baslat()) {
+          taşıma = { x: a.x, y: a.y };
+        } else {
+          seçim = { baş: a.x, son: a.x, pointerId: olay.pointerId };
+        }
+      });
+      const bitir = olay => {
+        olay.stopPropagation();
+        if (olay.pointerType === "touch") {
+          temaslar.delete(olay.pointerId);
+          if (kıstırma) yüzeyOturumu.dokunmayi_bitir();
+          if (taşıma) yüzeyOturumu.tasimayi_bitir();
+          kıstırma = null;
+          taşıma = null;
+          if (kutu.hasPointerCapture(olay.pointerId)) kutu.releasePointerCapture(olay.pointerId);
+          kontrolleriGüncelle();
+          return;
+        }
+        if (taşıma) {
+          yüzeyOturumu.tasimayi_bitir();
+          taşıma = null;
+          if (kutu.hasPointerCapture(olay.pointerId)) kutu.releasePointerCapture(olay.pointerId);
+          kontrolleriGüncelle();
+          return;
+        }
+        if (!seçim || seçim.pointerId !== olay.pointerId) return;
+        const a = alan(olay);
+        const tamamlanan = seçim;
+        seçim = null;
+        if (kutu.hasPointerCapture(olay.pointerId)) kutu.releasePointerCapture(olay.pointerId);
+        if (!a || Math.abs(tamamlanan.son - tamamlanan.baş) < 4) return;
+        const başlangıç = (Math.min(tamamlanan.baş, tamamlanan.son) - a.sol) / (a.sağ - a.sol);
+        const bitiş = (Math.max(tamamlanan.baş, tamamlanan.son) - a.sol) / (a.sağ - a.sol);
+        try {
+          if (yüzeyOturumu.secimi_bitir(başlangıç, bitiş, false) === 1) {
+            monthsYüzeyiniÇiz(indeks);
+            kontrolleriGüncelle();
+          }
+        } catch (neden) {
+          hata.textContent = `Months seçimi uygulanamadı: ${String(neden)}`;
+        }
+      };
+      kutu.addEventListener("pointerup", bitir);
+      kutu.addEventListener("pointercancel", bitir);
+      kutu.addEventListener("pointerleave", () => {
+        if (!seçim && !taşıma) gizle();
+      });
+      kutu.addEventListener("wheel", olay => {
+        olay.stopPropagation();
+        const delta = tekerlekDeltası(olay);
+        if (!etkileşimler.tekerlek || delta === 0) return;
+        const a = alan(olay);
+        if (!a || a.x < a.sol || a.x > a.sağ || a.y < a.üst || a.y > a.alt) return;
+        olay.preventDefault();
+        try {
+          if (yüzeyOturumu.tekerlek_eksende(
+            (a.x - a.sol) / (a.sağ - a.sol),
+            (a.y - a.üst) / (a.alt - a.üst),
+            -delta,
+            olay.deltaMode === 0,
+            tekerlekEkseni(olay),
+          )) {
+            monthsYüzeyiniÇiz(indeks);
+            kontrolleriGüncelle();
+          }
+        } catch (neden) {
+          hata.textContent = `Months yakınlaştırması uygulanamadı: ${String(neden)}`;
+        }
+      }, { passive: false });
+      kutu.addEventListener("dblclick", olay => {
+        olay.stopPropagation();
+        if (yüzeyOturumu.tam_gorunum()) {
+          monthsYüzeyiniÇiz(indeks);
+          kontrolleriGüncelle();
+        }
+      });
+    }
+
+    function monthsÇiz() {
+      chart.className = "months-yüzeyi";
+      chart.innerHTML = `<div class="months-yığın">
+        ${monthsYüzeyleri.map((_, indeks) =>
+          `<section class="months-grafik" data-months-index="${indeks}"></section>`
+        ).join("")}
+      </div>`;
+      monthsYüzeyleri.forEach((_, indeks) => monthsYüzeyiniÇiz(indeks));
+      kontrolleriGüncelle();
+    }
+
     function çiz() {
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
@@ -3235,6 +3504,10 @@
         nearestNonNullÇiz();
         return;
       }
+      if (aktifKart === "months") {
+        monthsÇiz();
+        return;
+      }
       if (!oturum) return;
       const öncekiMultiBarsKartı = chart.dataset.cizilenKart;
       const öncekiMultiBarsKaydırma = chart.querySelector(".multi-bars-kaydırma");
@@ -3245,6 +3518,7 @@
       chart.classList.remove("sync-cursor-yüzeyi");
       chart.classList.remove("timeseries-discrete-yüzeyi");
       chart.classList.remove("nearest-non-null-yüzeyi");
+      chart.classList.remove("months-yüzeyi");
       chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
       const sayı = Number(nokta.value);
       değer.value = `${sayı} nokta`;
@@ -4195,12 +4469,27 @@
           if (yüzey.onceki_gorunum()) nearestNonNullYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "months") {
+        monthsOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.onceki_gorunum()) monthsYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (oturum?.onceki_gorunum()) çiz();
     });
     tamGörünüm.addEventListener("click", () => {
       if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.tam_gorunum()) syncCursorYüzeyiÇiz(indeks);
+        });
+        kontrolleriGüncelle();
+      } else if (aktifKart === "nearest-non-null") {
+        nearestNonNullOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.tam_gorunum()) nearestNonNullYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
+      } else if (aktifKart === "months") {
+        monthsOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.tam_gorunum()) monthsYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
       } else if (oturum?.tam_gorunum()) çiz();
@@ -4212,16 +4501,15 @@
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "nearest-non-null") {
-        nearestNonNullOturumları.forEach((yüzey, indeks) => {
-          if (yüzey.tam_gorunum()) nearestNonNullYüzeyiniÇiz(indeks);
-        });
-        kontrolleriGüncelle();
-      } else if (aktifKart === "timeseries-discrete") {
-        timeseriesDiscreteOturumları.forEach(yüzey =>
+        nearestNonNullOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
-      } else if (aktifKart === "nearest-non-null") {
-        nearestNonNullOturumları.forEach(yüzey =>
+      } else if (aktifKart === "months") {
+        monthsOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "timeseries-discrete") {
+        timeseriesDiscreteOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else {
@@ -4309,6 +4597,9 @@
         if (kimlik !== "nearest-non-null" && kimlik.startsWith("nearest-non-null-")) {
           kimlik = "nearest-non-null";
         }
+        if (["months-no-leap", "months-leap", "months-russian"].includes(kimlik)) {
+          kimlik = "months";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -4349,6 +4640,8 @@
         timeseriesDiscreteOturumları = [];
         nearestNonNullOturumları.forEach(yüzey => yüzey.free());
         nearestNonNullOturumları = [];
+        monthsOturumları.forEach(yüzey => yüzey.free());
+        monthsOturumları = [];
         syncCursorKöprüsü?.free();
         syncCursorKöprüsü = null;
         syncCursorDurumları = Array.from({ length: 5 }, () => null);
@@ -4358,6 +4651,8 @@
         syncCursorDokunmalar.clear();
         sonDatumOranı = null;
         aktifKart = kimlik;
+        chart.scrollLeft = 0;
+        chart.scrollTop = 0;
         if (kimlik === "sync-y-zero") {
           chart.dataset.syncYZeroAsamasi = "raw";
         } else {
@@ -4368,7 +4663,8 @@
         );
         kartBaşlığı.textContent = kart.başlık;
         kartKaynağı.innerHTML = kart.kaynak;
-        kartRehberi.hidden = !kart.kullanım;
+        kartRehberiKutusu.hidden = !kart.kullanım;
+        kartRehberiKutusu.open = false;
         if (kart.kullanım) {
           for (const [alan, değer] of Object.entries(kart.kullanım)) {
             const hedef = kartRehberi.querySelector(`[data-rehber="${alan}"]`);
@@ -4431,6 +4727,15 @@
         }
         if (kimlik === "nearest-non-null") {
           nearestNonNullOturumları = nearestNonNullYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          çiz();
+          return;
+        }
+        if (kimlik === "months") {
+          monthsOturumları = monthsYüzeyleri.map(yüzey => {
             const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
             yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
             return yüzeyOturumu;

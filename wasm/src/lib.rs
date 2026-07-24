@@ -113,6 +113,7 @@ impl KartOturumu {
             "scale-padding" => scale_padding_kartı(),
             "zoom-wheel" => zoom_wheel_kartı(),
             "zoom-touch" => zoom_touch_kartı(),
+            "months" => months_artık_yılsız_kartı(),
             "months-no-leap" => months_artık_yılsız_kartı(),
             "months-leap" => months_artık_yıllı_kartı(),
             "months-russian" => months_rusça_kartı(),
@@ -2830,7 +2831,7 @@ mod testler {
 
     #[test]
     fn months_wasm_kaynak_grafiklerini_üretir() {
-        for kimlik in ["months-no-leap", "months-leap", "months-russian"] {
+        for kimlik in ["months", "months-no-leap", "months-leap", "months-russian"] {
             let oturum = KartOturumu::yeni(kimlik, 100);
             assert!(oturum.is_ok());
             let Ok(oturum) = oturum else {

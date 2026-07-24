@@ -53,14 +53,13 @@ use uplot_rs::{
     dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
     grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
     log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
-    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
-    months_artık_yılsız_kartı, months_rusça_kartı, multi_bars_kartı, nearest_non_null_kartı,
-    nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı,
-    pixel_align_kartı, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartı,
-    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
-    sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
-    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_kartı,
-    thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yılsız_kartı,
+    months_kartları, multi_bars_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
+    ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı, resize_kartı,
+    scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
+    soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
+    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
+    sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
     timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
     trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
     y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
@@ -75,9 +74,7 @@ enum KartKimliği {
     Annotations,
     AreaFill,
     ScalePadding,
-    MonthsNoLeap,
-    MonthsLeap,
-    MonthsRussian,
+    Months,
     NiceScale,
     NoData,
     PathGapClip(PathGapClipÖrneği),
@@ -149,9 +146,7 @@ impl KartKimliği {
             Self::Annotations => "Annotations",
             Self::AreaFill => "Area Fill",
             Self::ScalePadding => "Scale Padding · Flat",
-            Self::MonthsNoLeap => "Months · No leap year",
-            Self::MonthsLeap => "Months · 2024 leap year",
-            Self::MonthsRussian => "Months · Russian",
+            Self::Months => "Months · takvim ve yerelleştirme",
             Self::NiceScale => "Nice Scale & Ticks",
             Self::NoData => "No Data · 33 seçenek",
             Self::PathGapClip(örnek) => örnek.başlık(),
@@ -232,11 +227,8 @@ impl KartKimliği {
             Self::ScalePadding => {
                 "scale-padding.html · 13 düz seri · kaynakla aynı değer düzeyleri"
             }
-            Self::MonthsNoLeap | Self::MonthsLeap => {
-                "months.html · UTC ay ekseni · resmî sayfadaki iki alt grafik"
-            }
-            Self::MonthsRussian => {
-                "months-ru.html · UTC ay ekseni · resmî Rusça fmtDate tarih adları"
+            Self::Months => {
+                "months.html + months-ru.html · 3 ilişkili yüzey · UTC ayları, artık yıl, Rusça fmtDate · sabit kanıt tohumu"
             }
             Self::NiceScale => {
                 "nice-scale.html · boyuta bağlı niceScale/niceNum Y aralığı ve artımı"
@@ -377,9 +369,7 @@ impl KartKimliği {
             Self::Annotations => ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
             Self::AreaFill => AREA_FILL_KART_TANIM_ÖRNEĞİ,
             Self::ScalePadding => SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-            Self::MonthsNoLeap | Self::MonthsLeap | Self::MonthsRussian => {
-                MONTHS_KART_TANIM_ÖRNEĞİ
-            }
+            Self::Months => MONTHS_KART_TANIM_ÖRNEĞİ,
             Self::NiceScale => NICE_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::NoData => NO_DATA_KART_TANIM_ÖRNEĞİ,
             Self::PathGapClip(_) => PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
@@ -449,7 +439,7 @@ impl KartKimliği {
             Self::Annotations => "src/kart/annotations.rs",
             Self::AreaFill => "src/kart/area_fill.rs",
             Self::ScalePadding => "src/kart/scale_padding.rs",
-            Self::MonthsNoLeap | Self::MonthsLeap | Self::MonthsRussian => "src/kart/months.rs",
+            Self::Months => "src/kart/months.rs",
             Self::NiceScale => "src/kart/nice_scale.rs",
             Self::NoData => "src/kart/no_data.rs",
             Self::PathGapClip(_) => "src/kart/path_gap_clip.rs",
@@ -530,6 +520,7 @@ pub struct ChartListesi {
     grafik: Option<Entity<GpuiGrafik>>,
     hata: Option<String>,
     kart_tanımı_açık: bool,
+    kullanım_rehberi_açık: bool,
     tekerlek_etkin: bool,
     tekerlek_anahtarı: Entity<Anahtar>,
     arcsinh_kuvvet: i32,
@@ -550,6 +541,7 @@ pub struct ChartListesi {
     sync_cursor_grubu: SyncCursorGrubu,
     timeseries_discrete_grafikleri: Vec<(TimeseriesDiscreteÖrneği, Entity<GpuiGrafik>)>,
     nearest_non_null_grafikleri: Vec<(NearestNonNullÖrneği, Entity<GpuiGrafik>)>,
+    months_grafikleri: Vec<Entity<GpuiGrafik>>,
     no_data_örneği: NoDataÖrneği,
 }
 
@@ -579,6 +571,12 @@ impl ChartListesi {
                 }
             } else if bu.aktif_kart == KartKimliği::NearestNonNull {
                 for (_, grafik) in &bu.nearest_non_null_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if bu.aktif_kart == KartKimliği::Months {
+                for grafik in &bu.months_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -621,6 +619,7 @@ impl ChartListesi {
             grafik,
             hata,
             kart_tanımı_açık: false,
+            kullanım_rehberi_açık: false,
             tekerlek_etkin: etkileşimler.tekerlek_etkileşimi,
             tekerlek_anahtarı,
             arcsinh_kuvvet: 0,
@@ -641,6 +640,7 @@ impl ChartListesi {
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
             timeseries_discrete_grafikleri: Vec::new(),
             nearest_non_null_grafikleri: Vec::new(),
+            months_grafikleri: Vec::new(),
             no_data_örneği: NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
         }
     }
@@ -743,6 +743,38 @@ impl ChartListesi {
             self.nearest_non_null_grafikleri = yüzeyler;
             self.hata = None;
         }
+        cx.notify();
+    }
+
+    fn months_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = months_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Months ailesi oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.months_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("Months yüzeyi oluşturulamadı: {hata}"));
+                    self.grafik = None;
+                    self.months_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            yüzeyler.push(cx.new(|_| GpuiGrafik::yeni(grafik)));
+        }
+        self.grafik = yüzeyler.first().cloned();
+        self.months_grafikleri = yüzeyler;
+        self.hata = None;
         cx.notify();
     }
 
@@ -913,6 +945,7 @@ impl ChartListesi {
         }
         self.aktif_kart = kart;
         self.kart_tanımı_açık = false;
+        self.kullanım_rehberi_açık = false;
         self.arcsinh_kuvvet = 0;
         self.autosize_kuvvet = 0;
         self.latency_kova = 5;
@@ -969,19 +1002,28 @@ impl ChartListesi {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
             self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
             self.sync_cursor_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::TimeseriesDiscrete {
             self.sync_cursor_grafikleri.clear();
             self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
             self.timeseries_discrete_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::NearestNonNull {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
+            self.months_grafikleri.clear();
             self.nearest_non_null_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::Months {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
             self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
             self.grafiği_yenile(self.nokta_sayısı, cx);
         }
         if kart == KartKimliği::AlignDataCost
@@ -1447,9 +1489,7 @@ fn grafik_oluştur(
         KartKimliği::Annotations => annotations_kartı(),
         KartKimliği::AreaFill => area_fill_kartı(),
         KartKimliği::ScalePadding => scale_padding_kartı(),
-        KartKimliği::MonthsNoLeap => months_artık_yılsız_kartı(),
-        KartKimliği::MonthsLeap => months_artık_yıllı_kartı(),
-        KartKimliği::MonthsRussian => months_rusça_kartı(),
+        KartKimliği::Months => months_artık_yılsız_kartı(),
         KartKimliği::NiceScale => nice_scale_kartı(),
         KartKimliği::NoData => no_data_kartı(no_data_örneği),
         KartKimliği::PathGapClip(örnek) => path_gap_clip_kartı(örnek),
@@ -1563,11 +1603,8 @@ impl Render for ChartListesi {
             KartKimliği::Annotations => "30 nokta × 2 seri · 2 X annotation".to_string(),
             KartKimliği::AreaFill => "30 sabit nokta × 3 seri".to_string(),
             KartKimliği::ScalePadding => "10 nokta × 13 düz seri".to_string(),
-            KartKimliği::MonthsNoLeap | KartKimliği::MonthsLeap => {
-                "36 aylık nokta × 1 seri".to_string()
-            }
-            KartKimliği::MonthsRussian => {
-                "36 aylık nokta × 1 seri · Rusça tarih adları".to_string()
+            KartKimliği::Months => {
+                "3 ilişkili yüzey · 108 aylık nokta · UTC/artık yıl/yerel adlar".to_string()
             }
             KartKimliği::NiceScale => {
                 "6 nokta × 3 seri · boyuta duyarlı güzel Y ölçeği".to_string()
@@ -1863,6 +1900,15 @@ impl Render for ChartListesi {
                 .nearest_non_null_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::Months {
+            geri_var = self
+                .months_grafikleri
+                .iter()
+                .any(|grafik| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .months_grafikleri
+                .iter()
+                .any(|grafik| grafik.read(cx).grafik().yakınlaştırılmış());
         }
         let çizim_hatası = self.hata.clone().or(bileşen_hatası);
         let seri_adları = if aktif_kart == KartKimliği::TimeseriesDiscrete {
@@ -2429,44 +2475,16 @@ impl Render for ChartListesi {
             )
             .child(
                 katalog_kartı(
-                    "kart-months-no-leap",
-                    "No leap year",
-                    "months-no-leap",
-                    aktif_kart == KartKimliği::MonthsNoLeap,
-                    "UTC ay ekseni · months.html",
+                    "kart-months",
+                    "Months · calendar ticks",
+                    "months",
+                    aktif_kart == KartKimliği::Months,
+                    "3 ilişkili yüzey · normal/artık yıl + Rusça",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::MonthsNoLeap, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-months-leap",
-                    "2024 leap year",
-                    "months-leap",
-                    aktif_kart == KartKimliği::MonthsLeap,
-                    "UTC ay ekseni · months.html",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::MonthsLeap, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-months-russian",
-                    "Months · Russian",
-                    "months-russian",
-                    aktif_kart == KartKimliği::MonthsRussian,
-                    "Rusça tarih adları · months-ru.html",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::MonthsRussian, cx);
+                    bu.kartı_seç(KartKimliği::Months, cx);
                 })),
             )
             .child(
@@ -3286,6 +3304,12 @@ impl Render for ChartListesi {
                                     grafik.önceki_görünüm(cx);
                                 });
                             }
+                        } else if bu.aktif_kart == KartKimliği::Months {
+                            for grafik in &bu.months_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.önceki_görünüm(cx);
+                                });
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
@@ -3312,6 +3336,12 @@ impl Render for ChartListesi {
                                     grafik.tam_görünüm(cx);
                                 });
                             }
+                        } else if bu.aktif_kart == KartKimliği::Months {
+                            for grafik in &bu.months_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.tam_görünüm(cx);
+                                });
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.tam_görünüm(cx);
@@ -3330,6 +3360,8 @@ impl Render for ChartListesi {
                             bu.sync_cursor_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::NearestNonNull {
                             bu.nearest_non_null_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::Months {
+                            bu.months_yüzeylerini_oluştur(cx);
                         } else {
                             bu.grafiği_yenile(100, cx);
                         }
@@ -3491,6 +3523,74 @@ impl Render for ChartListesi {
                                 )
                         })),
                 )
+        } else if aktif_kart == KartKimliği::Months {
+            let yüzey = |indeks: usize| self.months_grafikleri.get(indeks).cloned();
+            çizim_tabanı
+                .flex_none()
+                .h(px(1160.0))
+                .overflow_y_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("İlk iki yüzey aynı months.html sayfasının bağımsız normal/artık yıl karşılaştırmasıdır; yakınlaştırmaları birbirine bağlı değildir. ")
+                        .child("Her X UTC'de ayın ilk günüdür. Kaynak 28 günlük piksel-space kuralı gerçek takvim ayı bölmelerini korur; 2024 Şubat 29 gündür. ")
+                        .child("Üçüncü yüzey months-ru.html fmtDate adlarını gösterir; yerelleştirme timestamp'i değiştirmez."),
+                )
+                .children(
+                    [
+                        (
+                            0,
+                            "2017–2019 · artık yıl yok",
+                            "Normal Gregoryen ay uzunlukları; kaynak monthly tick politikası.",
+                            200.0,
+                        ),
+                        (
+                            1,
+                            "2024–2026 · artık yıl var",
+                            "Şubat 2024 → Mart 2024 aralığı 29 gün; yüzey bağımsızdır.",
+                            200.0,
+                        ),
+                        (
+                            2,
+                            "2017–2019 · Rusça tarih adları",
+                            "Aynı UTC takvimi, ruNames ile yerelleştirilmiş ay/hafta adları.",
+                            600.0,
+                        ),
+                    ]
+                    .into_iter()
+                    .map(|(indeks, başlık, açıklama, yükseklik)| {
+                        div()
+                            .mt_2()
+                            .child(
+                                div()
+                                    .text_sm()
+                                    .font_weight(FontWeight::BOLD)
+                                    .text_color(metin)
+                                    .child(başlık),
+                            )
+                            .child(div().text_xs().text_color(soluk).child(açıklama))
+                            .child(
+                                div()
+                                    .id(SharedString::from(format!("months-kaydirma-{indeks}")))
+                                    .w_full()
+                                    .h(px(yükseklik))
+                                    .overflow_x_scroll()
+                                    .child(
+                                        div()
+                                            .w(px(1920.0))
+                                            .h(px(yükseklik))
+                                            .when_some(yüzey(indeks), |öğe, grafik| {
+                                                öğe.child(grafik)
+                                            }),
+                                    ),
+                            )
+                    }),
+                )
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
             let boyut = self
                 .boyut_senkron_akışı
@@ -3584,8 +3684,17 @@ impl Render for ChartListesi {
                  sıfıra yakın görünmesi doğrudur. Maliyet: 13×10 hizalı nokta O(S×N), imleç \
                  O(log N + S); cursor ve lejant ana yolları yeniden üretmeden güncellenir.",
             ),
+            KartKimliği::Months => Some(
+                "Amaç: gerçek UTC ay sınırlarını normal ve artık yıllarda karşılaştırır; Rusça \
+                 yüzey yalnız sunum adlarını değiştirir. API: x tarih ölçeği, TarihAdları ve \
+                 kaynak 28 günlük axes.space karşılığı takvim-ay bölmelerini belirler. İzleme: \
+                 aylık faturalama, SLO ve kapasite raporlarında sabit 30 gün yerine gerçek ay \
+                 sınırlarını kullanın. Maliyet: üç bağımsız yüzeyde toplam 108 nokta; çizim \
+                 O(N+T), imleç O(log N). Resize bölmeleri yeniden hesaplar, veriyi üretmez.",
+            ),
             _ => None,
         };
+        let kullanım_rehberi_açık = self.kullanım_rehberi_açık;
         let ayrıntı = div()
             .flex_1()
             .h_full()
@@ -3620,12 +3729,36 @@ impl Render for ChartListesi {
                 öğe.child(
                     div()
                         .mb_2()
-                        .p_2()
-                        .rounded_md()
+                        .rounded_lg()
+                        .border_1()
+                        .border_color(rgb(0xd1d5db))
                         .bg(rgb(0xf8fafc))
-                        .text_xs()
-                        .text_color(soluk)
-                        .child(rehber),
+                        .child(
+                            Dugme::yeni(
+                                "kullanim-rehberi-toggle",
+                                if kullanım_rehberi_açık {
+                                    "▾ Açıklama · kullanım ve kaynak maliyeti"
+                                } else {
+                                    "▸ Açıklama · kullanım ve kaynak maliyeti"
+                                },
+                            )
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Hayalet)
+                            .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                bu.kullanım_rehberi_açık = !bu.kullanım_rehberi_açık;
+                                cx.notify();
+                            })),
+                        )
+                        .when(kullanım_rehberi_açık, |öğe| {
+                            öğe.child(
+                                div()
+                                    .px_2()
+                                    .pb_2()
+                                    .text_xs()
+                                    .text_color(soluk)
+                                    .child(rehber),
+                            )
+                        }),
                 )
             })
             .child(div().mb_2().text_xs().text_color(vurgu).child(lejant))
