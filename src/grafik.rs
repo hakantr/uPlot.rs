@@ -1958,14 +1958,12 @@ impl Grafik {
         let seri = self.veri.seriler().get(seri_indeksi)?;
         let aralık = self.görünür_x_aralığı();
         let hedef = self.x_değeri_orandan(aralık, yatay_oran.clamp(0.0, 1.0));
-        self.veri
-            .x()
-            .iter()
-            .copied()
-            .zip(seri.iter().copied())
-            .filter_map(|(x, y)| y.map(|y| (x, y)))
-            .filter(|(x, _)| *x >= aralık.en_az && *x <= aralık.en_çok)
-            .min_by(|(x_a, _), (x_b, _)| (x_a - hedef).abs().total_cmp(&(x_b - hedef).abs()))
+        let indeks =
+            en_yakın_dolu_x_indeksi(self.veri.x(), seri, aralık, hedef, NullAtlamaYönü::EnYakın)?;
+        Some((
+            self.veri.x().get(indeks).copied()?,
+            seri.get(indeks).copied().flatten()?,
+        ))
     }
 
     /// Hizalı seride null değerleri atlayıp kaynak X ölçeği uzaklığına göre bir indeks seçer.
@@ -1981,22 +1979,7 @@ impl Grafik {
         let seri = self.veri.seriler().get(seri_indeksi)?;
         let aralık = self.görünür_x_aralığı();
         let hedef = self.x_değeri_orandan(aralık, yatay_oran.clamp(0.0, 1.0));
-        self.veri
-            .x()
-            .iter()
-            .copied()
-            .enumerate()
-            .zip(seri)
-            .filter(|((_, x), y)| {
-                y.is_some()
-                    && *x >= aralık.en_az
-                    && *x <= aralık.en_çok
-                    && (yön == NullAtlamaYönü::EnYakın || *x <= hedef)
-            })
-            .min_by(|((_, x_a), _), ((_, x_b), _)| {
-                (x_a - hedef).abs().total_cmp(&(x_b - hedef).abs())
-            })
-            .map(|((indeks, _), _)| indeks)
+        en_yakın_dolu_x_indeksi(self.veri.x(), seri, aralık, hedef, yön)
     }
 
     /// En yakın ortak X indeksini ve o indeksteki tüm seri değerlerini döndürür.
@@ -2007,14 +1990,8 @@ impl Grafik {
         }
         let aralık = self.görünür_x_aralığı();
         let hedef = self.x_değeri_orandan(aralık, yatay_oran.clamp(0.0, 1.0));
-        let (indeks, x) = self
-            .veri
-            .x()
-            .iter()
-            .copied()
-            .enumerate()
-            .filter(|(_, x)| *x >= aralık.en_az && *x <= aralık.en_çok)
-            .min_by(|(_, x_a), (_, x_b)| (x_a - hedef).abs().total_cmp(&(x_b - hedef).abs()))?;
+        let indeks = en_yakın_x_indeksi(self.veri.x(), aralık, hedef)?;
+        let x = self.veri.x().get(indeks).copied()?;
         let değerler = self
             .veri
             .seriler()
@@ -2052,14 +2029,8 @@ impl Grafik {
         let düzen = self.seçenekler.en_yakın_tooltip.as_ref()?;
         let aralık = self.görünür_x_aralığı();
         let hedef = self.x_değeri_orandan(aralık, yatay_oran.clamp(0.0, 1.0));
-        let (indeks, zaman) = self
-            .veri
-            .x()
-            .iter()
-            .copied()
-            .enumerate()
-            .filter(|(_, x)| *x >= aralık.en_az && *x <= aralık.en_çok)
-            .min_by(|(_, a), (_, b)| (a - hedef).abs().total_cmp(&(b - hedef).abs()))?;
+        let indeks = en_yakın_x_indeksi(self.veri.x(), aralık, hedef)?;
+        let zaman = self.veri.x().get(indeks).copied()?;
         let değer = self.ham_seri_değeri(seri, indeks)?;
         let başlangıç = self
             .ham_seri_değeri(seri, 0)
@@ -5645,6 +5616,115 @@ fn tam_x_aralığı(veri: &HizalıVeri) -> Result<Aralık, UplotHatası> {
     }
 }
 
+fn görünür_x_indeksleri(x: &[f64], aralık: Aralık) -> std::ops::Range<usize> {
+    let başlangıç = x.partition_point(|değer| *değer < aralık.en_az);
+    let bitiş = x.partition_point(|değer| *değer <= aralık.en_çok);
+    başlangıç..bitiş
+}
+
+/// uPlot `closestIdx()` gibi sıralı hizalı X sütununda ikili arama yapar.
+/// Eşit uzaklıkta soldaki (daha küçük) indeks kazanır.
+fn en_yakın_x_indeksi(x: &[f64], aralık: Aralık, hedef: f64) -> Option<usize> {
+    let görünür = görünür_x_indeksleri(x, aralık);
+    let kesit = x.get(görünür.clone())?;
+    if kesit.is_empty() {
+        return None;
+    }
+    let sağ_göreli = kesit.partition_point(|değer| *değer < hedef);
+    let sağ = (sağ_göreli < kesit.len()).then(|| görünür.start + sağ_göreli);
+    let sol = if sağ_göreli == 0 {
+        None
+    } else {
+        görünür.start.checked_add(sağ_göreli.saturating_sub(1))
+    };
+    match (sol, sağ) {
+        (Some(sol), Some(sağ)) => {
+            let sol_uzaklık = (x.get(sol)? - hedef).abs();
+            let sağ_uzaklık = (x.get(sağ)? - hedef).abs();
+            Some(if sol_uzaklık <= sağ_uzaklık {
+                sol
+            } else {
+                sağ
+            })
+        }
+        (Some(sol), None) => Some(sol),
+        (None, Some(sağ)) => Some(sağ),
+        (None, None) => None,
+    }
+}
+
+/// İkili arama konumundan iki yana yalnız gerektiği kadar ilerleyerek null
+/// koşusunu atlar. Dolu hizalı serilerde sorgu O(log N), null koşusunda
+/// O(log N + K) olur.
+fn en_yakın_dolu_x_indeksi(
+    x: &[f64],
+    y: &[Option<f64>],
+    aralık: Aralık,
+    hedef: f64,
+    yön: NullAtlamaYönü,
+) -> Option<usize> {
+    let görünür = görünür_x_indeksleri(x, aralık);
+    let kesit = x.get(görünür.clone())?;
+    if kesit.is_empty() {
+        return None;
+    }
+
+    if yön == NullAtlamaYönü::Önceki {
+        let göreli_bitiş = kesit.partition_point(|değer| *değer <= hedef);
+        let mut aday = görünür.start.checked_add(göreli_bitiş)?.checked_sub(1);
+        while let Some(indeks) = aday.filter(|indeks| *indeks >= görünür.start) {
+            if y.get(indeks).is_some_and(Option::is_some) {
+                return Some(indeks);
+            }
+            aday = indeks.checked_sub(1);
+        }
+        return None;
+    }
+
+    let sağ_göreli = kesit.partition_point(|değer| *değer < hedef);
+    let mut sol = if sağ_göreli == 0 {
+        None
+    } else {
+        görünür.start.checked_add(sağ_göreli.saturating_sub(1))
+    };
+    let mut sağ = (sağ_göreli < kesit.len()).then(|| görünür.start + sağ_göreli);
+    loop {
+        let aday = match (sol, sağ) {
+            (Some(sol_indeksi), Some(sağ_indeksi)) => {
+                let sol_uzaklık = (x.get(sol_indeksi)? - hedef).abs();
+                let sağ_uzaklık = (x.get(sağ_indeksi)? - hedef).abs();
+                if sol_uzaklık <= sağ_uzaklık {
+                    sol = sol_indeksi
+                        .checked_sub(1)
+                        .filter(|indeks| *indeks >= görünür.start);
+                    sol_indeksi
+                } else {
+                    sağ = sağ_indeksi
+                        .checked_add(1)
+                        .filter(|indeks| *indeks < görünür.end);
+                    sağ_indeksi
+                }
+            }
+            (Some(sol_indeksi), None) => {
+                sol = sol_indeksi
+                    .checked_sub(1)
+                    .filter(|indeks| *indeks >= görünür.start);
+                sol_indeksi
+            }
+            (None, Some(sağ_indeksi)) => {
+                sağ = sağ_indeksi
+                    .checked_add(1)
+                    .filter(|indeks| *indeks < görünür.end);
+                sağ_indeksi
+            }
+            (None, None) => return None,
+        };
+        if y.get(aday).is_some_and(Option::is_some) {
+            return Some(aday);
+        }
+    }
+}
+
 fn çizilecek_indeksler(
     x: &[f64],
     y: &[Option<f64>],
@@ -5652,21 +5732,29 @@ fn çizilecek_indeksler(
     piksel_genişliği: f32,
 ) -> Vec<usize> {
     let eşik = (piksel_genişliği.max(1.0) as usize).saturating_mul(4);
-    if y.len() <= eşik || y.iter().any(Option::is_none) {
-        return (0..y.len()).collect();
+    let görünür = görünür_x_indeksleri(x, aralık);
+    let görünür_sayı = görünür.end.saturating_sub(görünür.start);
+    let Some(görünür_y) = y.get(görünür.clone()) else {
+        return Vec::new();
+    };
+    if görünür_sayı.saturating_sub(1) < eşik || görünür_y.iter().any(Option::is_none) {
+        return görünür.collect();
     }
 
     let mut sonuç = Vec::with_capacity(eşik);
     let mut kova = None::<(usize, usize, usize, usize, usize, f64, f64)>;
-    for (indeks, (x_değeri, y_değeri)) in x.iter().zip(y.iter()).enumerate() {
-        if *x_değeri < aralık.en_az || *x_değeri > aralık.en_çok {
-            continue;
-        }
+    let Some(görünür_x) = x.get(görünür.clone()) else {
+        return sonuç;
+    };
+    for (göreli, (x_değeri, y_değeri)) in görünür_x.iter().zip(görünür_y).enumerate() {
+        let indeks = görünür.start.saturating_add(göreli);
         let Some(y_değeri) = y_değeri else {
             continue;
         };
         let oran = (*x_değeri - aralık.en_az) / (aralık.en_çok - aralık.en_az);
-        let yeni_kova = (oran * f64::from(piksel_genişliği)).floor().max(0.0) as usize;
+        let yeni_kova = (oran * f64::from(piksel_genişliği))
+            .round()
+            .clamp(0.0, f64::from(piksel_genişliği.max(0.0))) as usize;
         match kova.as_mut() {
             Some((kimlik, _ilk, son, en_az_i, en_çok_i, en_az, en_çok)) if *kimlik == yeni_kova =>
             {
@@ -5703,10 +5791,13 @@ fn kova_indekslerini_ekle(
     en_çok: usize,
     son: usize,
 ) {
-    let mut adaylar = vec![ilk, en_az, en_çok, son];
+    let mut adaylar = [ilk, en_az, en_çok, son];
     adaylar.sort_unstable();
-    adaylar.dedup();
-    sonuç.extend(adaylar);
+    for aday in adaylar {
+        if sonuç.last().copied() != Some(aday) {
+            sonuç.push(aday);
+        }
+    }
 }
 
 /// uPlot'un sayısal eksen yaklaşımı gibi görünür aralık ve piksel yoğunluğuna
@@ -6221,6 +6312,53 @@ mod eksen_testleri {
         assert_eq!(dizin.vuruş(120.0, 150.0).map(|vuruş| vuruş.seri), Some(0));
         assert_eq!(dizin.vuruş(170.0, 150.0).map(|vuruş| vuruş.seri), Some(1));
         assert!(dizin.vuruş(300.0, 150.0).is_none());
+    }
+
+    #[test]
+    fn sıralı_x_imleci_ikili_arama_ve_null_koşusu_kuralını_korur() {
+        let aralık = Aralık {
+            en_az: 0.0,
+            en_çok: 4.0,
+        };
+        let x = [0.0, 1.0, 1.0, 2.0, 3.0, 4.0];
+        assert_eq!(en_yakın_x_indeksi(&x, aralık, 1.0), Some(1));
+        assert_eq!(en_yakın_x_indeksi(&x, aralık, 1.5), Some(2));
+
+        let y = [Some(0.0), None, None, None, Some(3.0), Some(4.0)];
+        assert_eq!(
+            en_yakın_dolu_x_indeksi(&x, &y, aralık, 2.0, NullAtlamaYönü::EnYakın),
+            Some(4)
+        );
+        assert_eq!(
+            en_yakın_dolu_x_indeksi(&x, &y, aralık, 2.0, NullAtlamaYönü::Önceki),
+            Some(0)
+        );
+    }
+
+    #[test]
+    fn çizgi_seyrekleştirme_yalnız_görünür_x_dilimini_tarar() {
+        let x = (0..=1_000).map(f64::from).collect::<Vec<_>>();
+        let y = x.iter().copied().map(Some).collect::<Vec<_>>();
+        let dar = Aralık {
+            en_az: 400.0,
+            en_çok: 420.0,
+        };
+        let dar_indeksler = çizilecek_indeksler(&x, &y, dar, 100.0);
+        assert_eq!(dar_indeksler.first().copied(), Some(400));
+        assert_eq!(dar_indeksler.last().copied(), Some(420));
+        assert_eq!(dar_indeksler.len(), 21);
+
+        let yoğun = çizilecek_indeksler(
+            &x,
+            &y,
+            Aralık {
+                en_az: 0.0,
+                en_çok: 1_000.0,
+            },
+            10.0,
+        );
+        assert!(yoğun.len() <= 44);
+        assert!(yoğun.windows(2).all(|çift| çift.first() < çift.get(1)));
     }
 
     #[test]

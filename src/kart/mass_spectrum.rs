@@ -16,7 +16,7 @@ pub fn mass_spectrum_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), Uplot
         .y_eksen_etiketi("relative abundance (%)")
         .kütle_spektrumu_y_aralığı(true)
         .etkileşimler(ortak_kart_etkileşimleri())
-        .seri(SeriSeçenekleri::yeni("Intensity").renk("#305CDE"));
+        .seri(SeriSeçenekleri::yeni("Value").renk("#305CDE"));
     Ok((seçenekler, veri))
 }
 
@@ -71,6 +71,10 @@ mod testler {
         );
         assert_eq!(seçenekler.x_eksen_etiketi, "m/z");
         assert_eq!(seçenekler.y_eksen_etiketi, "relative abundance (%)");
+        assert_eq!(
+            seçenekler.seriler.first().map(|seri| seri.etiket.as_str()),
+            Some("Value")
+        );
         assert!(seçenekler.kütle_spektrumu_y_aralığı);
         Ok(())
     }
@@ -106,6 +110,24 @@ mod testler {
         assert!(svg.contains("m/z"));
         assert!(svg.contains("relative abundance (%)"));
         assert!(svg.contains("#305CDE"));
+        Ok(())
+    }
+
+    #[test]
+    fn yoğun_kaynakta_imleç_ve_zoom_y_aralığı_korunur() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = mass_spectrum_kartı()?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        let orta = grafik
+            .en_yakın_noktalar(0.5)
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!((orta.0 - 680.005).abs() < 0.02);
+        assert_eq!(orta.1.len(), 1);
+
+        assert!(grafik.seçim_yakınlaştır(0.49, 0.51)?);
+        let yakın_y = grafik.görünür_y_aralığı();
+        assert!(yakın_y.en_az >= 0.0);
+        assert!(yakın_y.en_çok <= 100.0);
+        assert!(yakın_y.en_çok > yakın_y.en_az);
         Ok(())
     }
 }

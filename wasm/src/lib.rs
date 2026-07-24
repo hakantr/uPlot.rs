@@ -2032,6 +2032,9 @@ mod testler {
         assert!(svg.contains("#305CDE"));
         assert_eq!(oturum.gorunur_y_araligi(), vec![0.0, 100.0]);
         assert!(mass_spectrum_kart_tanim_ornegi().contains("mass_spectrum_kartı"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("seriler: [{ etiket: \"Value\", renk: \"#305CDE\" }]"));
+        assert!(web.contains("hover sıralı X üzerinde O(log N)"));
         assert_eq!(kart_sayisi(), 365);
     }
 

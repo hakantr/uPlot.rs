@@ -589,13 +589,19 @@
         başlık: "Mass Spectrum",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/mass-spectrum.html">mass-spectrum.html</a>
           · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/ms_spectrum.csv">ms_spectrum.csv</a>
-          <br>41.986 kaynak m/z ve relative abundance noktası · düz görünümde kaynak 0…100 / 0…2v Y kuralı`,
+          <br>Tek yüzey · 41.986 kaynak noktası · resmî görünür-aralık ve piksel-kovası çizgi azaltımı`,
         tanım: () => mass_spectrum_kart_tanim_ornegi(),
         tanımYolu: "src/kart/mass_spectrum.rs",
-        seriler: [{ etiket: "Intensity", renk: "#305CDE" }],
-        yardım: "Sürükle: seç · tekerlek/dokunma: yakınlaştır ve taşı · çift tıkla: tam görünüm",
+        seriler: [{ etiket: "Value", renk: "#305CDE" }],
+        yardım: "",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "m/z eksenindeki iyon tepelerini bağıl bollukla gösterir; baskın peak, izotop kümeleri ve düşük yoğunluklu sinyaller birlikte incelenir.",
+          api: "Sıralı tek X sütunu ve tek Value sütunu kullanır. Kartın CSV'si çevrimdışı kanıt için gömülüdür; uygulama canlı sonuçları Grafik::veriyi_ayarla ile aynı yüzeye aktarabilir.",
+          izleme: "En yüksek peak'in %100'e normalize görünümünü, beklenen m/z bölgesindeki peak kaybını, yeni peak oluşumunu ve koşular arasındaki spektral drift'i izlemek için uygundur.",
+          maliyet: "İlk parse O(N). Ana çizim resmî uPlot gibi görünür aralıkta N ≥ 4×piksel olduğunda min/max kovaları kullanır; hover sıralı X üzerinde O(log N), null koşusunda O(log N + K) çalışır.",
+        },
       },
       "measure-datums": {
         başlık: "Measure / Datums",
@@ -3131,7 +3137,7 @@
       const arayüzHedefi = kart.scrollSync ? chart.querySelector(".scroll-sync-grafik") : chart;
       if (tamKurulum) {
         arayüzHedefi?.insertAdjacentHTML("beforeend", `
-          ${kart.scrollSync ? "" : `<div class="yardım">${kart.yardım}</div>`}
+          ${kart.scrollSync || !kart.yardım ? "" : `<div class="yardım">${kart.yardım}</div>`}
           <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
           ${lejantSerileri}</div>`);
       }
