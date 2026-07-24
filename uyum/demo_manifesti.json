@@ -2117,7 +2117,7 @@
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" },
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
-      "fixture": "src/kart/points.rs#points_kartı",
+      "fixture": "src/kart/points.rs#points_kartları",
       "örnek": "examples/points.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -2141,10 +2141,13 @@
       "sahip_faz": 1,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-exact-four-surfaces", "source-random-walk-generator",
+        "single-catalog-family-four-simultaneous-surfaces",
+        "source-static-no-timer-lifecycle", "source-captured-random-walk-fixture",
+        "shared-default-and-too-dense-data-snapshot",
         "source-exact-sparse-2761-index-data", "source-null-indexes",
         "conditional-point-density", "points-space-zero", "points-paths-null",
-        "points-fill-size-width", "single-point-between-gaps-filter",
+        "points-fill-size-width", "pixel-gap-single-point-filter",
+        "viewport-edge-and-nearest-index-gap-scan",
         "gpui-wasm-catalog-parity", "common-interaction-profile",
         "panic-free-source-data-feedback"
       ],

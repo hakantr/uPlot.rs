@@ -164,7 +164,9 @@ pub use pixel_align::{
     PIXEL_ALIGN_PENCERE_MS, PixelAlignAkışı, PixelAlignÖrneği, pixel_align_kartları,
     pixel_align_kartı,
 };
-pub use points::{POINTS_KANIT_TOHUMU, POINTS_KART_TANIM_ÖRNEĞİ, PointsÖrneği, points_kartı};
+pub use points::{
+    POINTS_KANIT_TOHUMU, POINTS_KART_TANIM_ÖRNEĞİ, PointsÖrneği, points_kartları, points_kartı,
+};
 pub use resize::{RESIZE_KART_TANIM_ÖRNEĞİ, resize_kartı};
 pub use scale_padding::{SCALE_PADDING_KART_TANIM_ÖRNEĞİ, scale_padding_kartı};
 pub use scales_dir_ori::{

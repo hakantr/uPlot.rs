@@ -122,6 +122,7 @@ impl KartOturumu {
             "no-data" => no_data_kartı(NoDataÖrneği::BOŞ_ÖZEL_ARALIK),
             "path-gap-clip" => path_gap_clip_kartı(PathGapClipÖrneği::VeriDışınaTaşanÖlçek),
             "pixel-align" => pixel_align_kartı(PixelAlignÖrneği::Varsayılan, 140),
+            "points" => points_kartı(PointsÖrneği::Karma),
             kimlik if kimlik.starts_with("no-data-") => NoDataÖrneği::kimlikten(kimlik)
                 .map_or_else(
                     || {
@@ -2233,16 +2234,27 @@ mod testler {
 
     #[test]
     fn points_wasm_dört_kaynak_yüzeyini_üretir() {
+        assert!(KartOturumu::yeni("points", 100).is_ok());
         for örnek in PointsÖrneği::TÜMÜ {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             assert!(oturum.is_ok(), "{}", örnek.kimlik());
             let Ok(oturum) = oturum else {
                 continue;
             };
-            let svg = oturum.svg(1_200, 500);
+            let (genişlik, yükseklik) = örnek.kaynak_boyutu();
+            let svg = oturum.svg(genişlik, yükseklik);
             assert!(svg.contains(örnek.başlık()));
         }
-        assert!(points_kart_tanim_ornegi().contains("points_kartı"));
+        assert!(points_kart_tanim_ornegi().contains("points_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"points\"")
+                .count(),
+            1
+        );
+        assert_eq!(web.matches("data-kart=\"points-").count(), 0);
+        assert!(web.contains("let pointsOturumları = [];"));
+        assert!(web.contains("function pointsÇiz()"));
         assert_eq!(kart_sayisi(), 365);
     }
 

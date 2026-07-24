@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::path::PathBuf;
-use uplot_rs::{Grafik, PointsÖrneği, points_kartı};
+use uplot_rs::{Grafik, points_kartları};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let çıktı_dizini = std::env::args()
@@ -9,8 +9,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .unwrap_or_else(|| PathBuf::from("target/points"));
     std::fs::create_dir_all(&çıktı_dizini)?;
 
-    for örnek in PointsÖrneği::TÜMÜ {
-        let (seçenekler, veri) = points_kartı(örnek)?;
+    for (örnek, seçenekler, veri) in points_kartları()? {
         let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();
         std::fs::write(çıktı_dizini.join(format!("{}.svg", örnek.kimlik())), svg)?;
     }

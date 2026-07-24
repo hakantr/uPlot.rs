@@ -1,22 +1,30 @@
 id = "points"
 kaynak = "../uPlot/demos/points.html"
-fixture = "src/kart/points.rs#points_kartı"
+fixture = "src/kart/points.rs#points_kartları"
 viewport = [1920, 1500]
 device_pixel_ratio = 1
 durum = "dört_kaynak_yüzeyi"
+
+[sunum]
+katalog_kartı = 1
+eşzamanlı_yüzey_sayısı = 4
+ortak_veri_yüzeyleri = ["points-default-density", "points-too-dense"]
+kullanım_rehberi_varsayılan_kapalı = true
 
 [veri]
 random_walk_serileri = [200, 200, 200, 200, 180]
 seyrek_indeks_sayısı = 2761
 seyrek_değer_sayısı = 96
-kanıt_tohumu = "0x504f494e"
+yaşam_döngüsü = "statik_timer_yok"
 null_indeksleri = [1, 100, 102, 130, 133, 198]
 
 [noktalar]
 varsayılan_space = 10
 space_sıfır = true
 paths_null = true
-tekil_boşluk_filtresi = true
+tekil_boşluk_filtresi = "yuvarlanmış_piksel_gap_sınırları"
+yaklaşık_indeks_null_tarama = 99
+yaklaşık_indeks_eşitlik_önceliği = "sağ"
 özel_dolgu = ["red", "orange", "magenta"]
 
 [etkileşim]

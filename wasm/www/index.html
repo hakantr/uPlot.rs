@@ -215,6 +215,16 @@
     .pixel-align-grafik svg { display: block; width: auto; height: auto; max-width: none; }
     .pixel-align-grafik .lejant { position: absolute; left: 58px; right: 12px;
                                   bottom: 7px; justify-content: flex-start; }
+    #chart.points-yüzeyi { display: block; min-width: 0; overflow-y: auto;
+                           overflow-x: hidden; padding: 8px; box-sizing: border-box; }
+    .points-yığın { width: 100%; max-width: 100%; min-width: 0; display: grid;
+                    grid-template-columns: minmax(0, 1fr); gap: 10px; align-items: start; }
+    .points-grafik { position: relative; width: 100%; max-width: 100%; min-width: 0;
+                     border: 1px solid #e5e7eb; border-radius: 8px;
+                     background: #fff; overflow-x: auto; overflow-y: hidden; }
+    .points-grafik svg { display: block; width: auto; height: auto; max-width: none; }
+    .points-grafik .lejant { position: absolute; left: 58px; right: 12px;
+                             bottom: 7px; justify-content: flex-start; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -1136,37 +1146,55 @@
     };
 
     const pointsYüzeyleri = [
-      ["points-mixed", "Points", [
-        ["Green", "green"], ["Red", "red"], ["Blue", "blue"], ["Orange", "orange"],
-      ]],
-      ["points-default-density", "Points", [["Green", "green"]]],
-      ["points-too-dense", "Too dense test", [["Green", "green"]]],
-      ["points-sparse", "Sparse Points", [["Magenta", "magenta"]]],
+      {
+        kimlik: "points-mixed", başlık: "Points",
+        açıklama: "Varsayılan yoğunluk, space:0, paths:null ve boşluk tekili filtresi",
+        boyut: [1920, 600],
+        seriler: [["Value", "green"], ["Value", "red"], ["Value", "blue"], ["Value", "orange"]],
+      },
+      {
+        kimlik: "points-default-density", başlık: "Points",
+        açıklama: "180 nokta, 1920 px genişlikte varsayılan nokta yoğunluğu",
+        boyut: [1920, 300], seriler: [["Value", "green"]],
+      },
+      {
+        kimlik: "points-too-dense", başlık: "Too dense test",
+        açıklama: "Aynı 180 nokta ve veri; −400…180 X aralığında noktalar gizlenir",
+        boyut: [1920, 300], seriler: [["Value", "green"]],
+      },
+      {
+        kimlik: "points-sparse", başlık: "Sparse Points",
+        açıklama: "2761 X konumunda boşluklar arasındaki tekil ölçümler",
+        boyut: [1200, 300], seriler: [["Value", "magenta"]],
+      },
     ];
     document.querySelector('[data-kart="pixel-align"]')?.insertAdjacentHTML(
       "afterend",
-      pointsYüzeyleri.map(([kimlik, başlık]) => `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>${kimlik}</small>
-          <div class="durum">space · paths:null · tekil boşluk filtresi</div>
-        </article>`).join("")
+      `<article class="kart" data-kart="points" aria-current="false" tabindex="0">
+        <strong>Points · 4 yüzey</strong><small>points.html</small>
+        <div class="durum">Yoğunluk · paths:null · piksel-gap filtresi</div>
+      </article>`
     );
-    for (const [kimlik, başlık, seriler] of pointsYüzeyleri) {
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/points.html">points.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/randomWalk.js">randomWalk.js</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/points.js">paths/points.js</a>
-          <br>Dört etkin kaynak yüzeyi; aynı randomWalk üreteci, null yerleri ve 2761 indeksli seyrek veriyle sunulur.
-          <br>Nokta yoğunluğu, <code>space: 0</code>, <code>paths: null</code> ve tekil-boşluk filtresi Rust çekirdeğindedir.`,
-        tanım: () => points_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/points.rs",
-        seriler: seriler.map(([etiket, renk]) => ({etiket, renk})),
-        yardım: "Koşullu noktalar · tekerlek: yakınlaştır · çift tıkla: tam görünüm",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    kartlar.points = {
+      başlık: "Points · 4 yüzey",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/points.html">points.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/randomWalk.js">randomWalk.js</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/points.js">paths/points.js</a>
+        <br>Dört statik kaynak yüzeyi aynı anda gösterilir. Ortadaki iki A/B yüzeyi aynı 180 noktalı fixture'ı paylaşır; timer veya setData yoktur.
+        <br>Nokta yoğunluğu, <code>space:0</code>, <code>paths:null</code> ve görünür piksel-gap filtresi Rust çekirdeğinde çözülür.`,
+      tanım: () => points_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/points.rs",
+      seriler: [],
+      yardım: "Dört bağımsız yüzey · Shift+wheel: X · Ctrl+wheel: Y · çift tıkla: tam görünüm",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Varsayılan marker yoğunluğu, space=0, yalnız-nokta yolu ve boşluklar arasındaki tekil ölçümleri birlikte karşılaştırır.",
+        api: "points.space görünür piksel kapasitesini, paths:null yalnız marker çizimini, NoktaFiltreKipi ise gap sınırlarından seçilen indeksleri belirler.",
+        izleme: "Seyrek olayları çizgiyle süreklilik izlenimi vermeden gösterin; yoğun telemetride marker'ları otomatik gizleyin.",
+        maliyet: "Dört statik yüzey toplam 3321 X konumu tarar. Gap filtresi O(N+G×99), işaret çizimi seçilen k kadar; zoom filtreyi görünür piksel düzleminde yeniden hesaplar.",
+      },
+    };
 
     const scalesDirOriYüzeyleri = [
       ["scales-dir-ori-x-plus-bottom-y-plus-left", "+x bottom, +y left"],
@@ -1186,7 +1214,7 @@
       ["scales-dir-ori-x-minus-right-y-minus-bottom", "-x right, -y bottom"],
       ["scales-dir-ori-x-minus-right-y-plus-bottom", "-x right, +y bottom"],
     ];
-    document.querySelector('[data-kart="points-sparse"]')?.insertAdjacentHTML(
+    document.querySelector('[data-kart="points"]')?.insertAdjacentHTML(
       "afterend",
       scalesDirOriYüzeyleri.map(([kimlik, başlık]) => `
         <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
@@ -2509,6 +2537,7 @@
     let monthsOturumları = [];
     let pathGapClipOturumları = [];
     let pixelAlignOturumları = [];
+    let pointsOturumları = [];
     let syncCursorKöprüsü = null;
     let syncCursorDurumları = Array.from({ length: 5 }, () => null);
     let syncCursorSürükleme = null;
@@ -2686,6 +2715,14 @@
           || !pixelAlignOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !pixelAlignOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "points") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !pointsOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !pointsOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -3638,14 +3675,22 @@
 
     function bağımsızAileYüzeyiniÇiz(aile, indeks) {
       const pixelMi = aile === "pixel-align";
-      const kutu = chart.querySelector(pixelMi
-        ? `.pixel-align-grafik[data-aile-index="${indeks}"]`
-        : `.path-gap-clip-grafik[data-aile-index="${indeks}"]`);
-      const yüzey = (pixelMi ? pixelAlignYüzeyleri : pathGapClipYüzeyleri)[indeks];
-      const yüzeyOturumu = (pixelMi ? pixelAlignOturumları : pathGapClipOturumları)[indeks];
+      const pointsMi = aile === "points";
+      const sınıf = pixelMi ? "pixel-align" : pointsMi ? "points" : "path-gap-clip";
+      const yüzeyler = pixelMi
+        ? pixelAlignYüzeyleri
+        : pointsMi ? pointsYüzeyleri : pathGapClipYüzeyleri;
+      const oturumlar = pixelMi
+        ? pixelAlignOturumları
+        : pointsMi ? pointsOturumları : pathGapClipOturumları;
+      const kutu = chart.querySelector(
+        `.${sınıf}-grafik[data-aile-index="${indeks}"]`
+      );
+      const yüzey = yüzeyler[indeks];
+      const yüzeyOturumu = oturumlar[indeks];
       const yenidenÇiz = () => pixelMi
         ? pixelAlignYüzeyiniÇiz(indeks)
-        : pathGapClipYüzeyiniÇiz(indeks);
+        : pointsMi ? pointsYüzeyiniÇiz(indeks) : pathGapClipYüzeyiniÇiz(indeks);
       if (!kutu || !yüzey || !yüzeyOturumu) return;
       const [kaynakGenişliği, kaynakYüksekliği] = yüzey.boyut;
       const genişlik = pixelMi
@@ -3684,6 +3729,10 @@
       }
       svg = kutu.querySelector("svg");
       if (!svg) return;
+      if (pixelMi || pointsMi) {
+        svg.style.width = `${genişlik}px`;
+        svg.style.height = `${yükseklik}px`;
+      }
       svg.querySelector(".path-gap-etkileşim")?.remove();
       svg.insertAdjacentHTML("beforeend", `
         <g class="path-gap-etkileşim" pointer-events="none">
@@ -3872,7 +3921,7 @@
             kontrolleriGüncelle();
           }
         } catch (neden) {
-          hata.textContent = `${pixelMi ? "Pixel Align" : "Path & Gap"} seçimi uygulanamadı: ${String(neden)}`;
+          hata.textContent = `${pixelMi ? "Pixel Align" : pointsMi ? "Points" : "Path & Gap"} seçimi uygulanamadı: ${String(neden)}`;
         }
       };
       kutu.addEventListener("pointerup", bitir);
@@ -3899,7 +3948,7 @@
             kontrolleriGüncelle();
           }
         } catch (neden) {
-          hata.textContent = `${pixelMi ? "Pixel Align" : "Path & Gap"} yakınlaştırması uygulanamadı: ${String(neden)}`;
+          hata.textContent = `${pixelMi ? "Pixel Align" : pointsMi ? "Points" : "Path & Gap"} yakınlaştırması uygulanamadı: ${String(neden)}`;
         }
       }, { passive: false });
       kutu.addEventListener("dblclick", olay => {
@@ -3917,6 +3966,10 @@
 
     function pixelAlignYüzeyiniÇiz(indeks) {
       bağımsızAileYüzeyiniÇiz("pixel-align", indeks);
+    }
+
+    function pointsYüzeyiniÇiz(indeks) {
+      bağımsızAileYüzeyiniÇiz("points", indeks);
     }
 
     function pathGapClipÇiz() {
@@ -3951,6 +4004,21 @@
       kontrolleriGüncelle();
     }
 
+    function pointsÇiz() {
+      if (!chart.classList.contains("points-yüzeyi")
+        || chart.querySelectorAll(".points-grafik").length !== pointsYüzeyleri.length) {
+        chart.className = "points-yüzeyi";
+        chart.innerHTML = `<div class="points-yığın">
+          <div class="path-gap-clip-açıklama">Dört panel resmî points.html sayfasının tek anlatımıdır. Ortadaki iki panel aynı 180 noktalı veride yalnız X aralığını değiştirir.</div>
+          ${pointsYüzeyleri.map((_, indeks) =>
+            `<article class="points-grafik" data-aile-index="${indeks}"></article>`
+          ).join("")}
+        </div>`;
+      }
+      pointsYüzeyleri.forEach((_, indeks) => pointsYüzeyiniÇiz(indeks));
+      kontrolleriGüncelle();
+    }
+
     function çiz() {
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
@@ -3976,6 +4044,10 @@
         pixelAlignÇiz();
         return;
       }
+      if (aktifKart === "points") {
+        pointsÇiz();
+        return;
+      }
       if (!oturum) return;
       const öncekiMultiBarsKartı = chart.dataset.cizilenKart;
       const öncekiMultiBarsKaydırma = chart.querySelector(".multi-bars-kaydırma");
@@ -3989,6 +4061,7 @@
       chart.classList.remove("months-yüzeyi");
       chart.classList.remove("path-gap-clip-yüzeyi");
       chart.classList.remove("pixel-align-yüzeyi");
+      chart.classList.remove("points-yüzeyi");
       chart.classList.toggle("nice-scale-yüzeyi", aktifKart === "nice-scale");
       chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
       const sayı = Number(nokta.value);
@@ -4985,6 +5058,11 @@
           if (yüzey.onceki_gorunum()) pixelAlignYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "points") {
+        pointsOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.onceki_gorunum()) pointsYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (oturum?.onceki_gorunum()) çiz();
     });
     tamGörünüm.addEventListener("click", () => {
@@ -5013,6 +5091,11 @@
           if (yüzey.tam_gorunum()) pixelAlignYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "points") {
+        pointsOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.tam_gorunum()) pointsYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (oturum?.tam_gorunum()) çiz();
     });
     tekerlekEtkileşimi.addEventListener("change", () => {
@@ -5035,6 +5118,10 @@
         );
       } else if (aktifKart === "pixel-align") {
         pixelAlignOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "points") {
+        pointsOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "timeseries-discrete") {
@@ -5135,6 +5222,9 @@
         if (kimlik !== "pixel-align" && kimlik.startsWith("pixel-align-")) {
           kimlik = "pixel-align";
         }
+        if (kimlik !== "points" && kimlik.startsWith("points-")) {
+          kimlik = "points";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -5186,6 +5276,8 @@
         pathGapClipOturumları = [];
         pixelAlignOturumları.forEach(yüzey => yüzey.free());
         pixelAlignOturumları = [];
+        pointsOturumları.forEach(yüzey => yüzey.free());
+        pointsOturumları = [];
         syncCursorKöprüsü?.free();
         syncCursorKöprüsü = null;
         syncCursorDurumları = Array.from({ length: 5 }, () => null);
@@ -5348,6 +5440,15 @@
             }
           };
           pixelAlignAnimationFrame = requestAnimationFrame(pixelAlignKaresi);
+          return;
+        }
+        if (kimlik === "points") {
+          pointsOturumları = pointsYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          çiz();
           return;
         }
         oturum = new KartOturumu(

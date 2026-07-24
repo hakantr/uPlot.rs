@@ -3451,6 +3451,20 @@ impl Grafik {
                         || görünür_indeks_sayısı.saturating_sub(1) as f32
                             <= nokta_piksel_açıklığı / seri.nokta_boşluğu.max(f32::EPSILON)
                 });
+                let filtreli_indeksler = (!noktalar_görünür
+                    && seri.nokta_filtresi == crate::NoktaFiltreKipi::BoşlukArasındakiTekiller)
+                    .then(|| {
+                        boşluk_tekil_indeksleri(
+                            self.veri.x(),
+                            değerler,
+                            ilk_görünür,
+                            görünür_bitiş,
+                            x_aralığı,
+                            sol,
+                            genişlik,
+                            piksel_hizası,
+                        )
+                    });
                 for (indeks, nokta, x_değeri, y_değeri) in &görünür_noktalar {
                     if seri
                         .nokta_indeksleri
@@ -3459,10 +3473,9 @@ impl Grafik {
                     {
                         continue;
                     }
-                    let filtreli_tekil = !noktalar_görünür
-                        && seri.nokta_filtresi
-                            == crate::NoktaFiltreKipi::BoşlukArasındakiTekiller
-                        && tekil_değer_mi(değerler, *indeks);
+                    let filtreli_tekil = filtreli_indeksler
+                        .as_ref()
+                        .is_some_and(|indeksler| indeksler.binary_search(indeks).is_ok());
                     if !noktalar_görünür && !filtreli_tekil {
                         continue;
                     }
@@ -6439,20 +6452,176 @@ fn piksele_hizala(değer: f32, adım: f32) -> f32 {
     }
 }
 
-fn tekil_değer_mi(değerler: &[Option<f64>], indeks: usize) -> bool {
-    değerler.get(indeks).is_some_and(Option::is_some)
-        && indeks
-            .checked_sub(1)
-            .and_then(|önceki| değerler.get(önceki))
-            .is_none_or(Option::is_none)
-        && değerler
-            .get(indeks.saturating_add(1))
-            .is_none_or(Option::is_none)
+#[allow(clippy::too_many_arguments)]
+fn boşluk_tekil_indeksleri(
+    x: &[f64],
+    y: &[Option<f64>],
+    görünür_başlangıç: usize,
+    görünür_bitiş: usize,
+    x_aralığı: Aralık,
+    sol: f32,
+    genişlik: f32,
+    piksel_hizası: f32,
+) -> Vec<usize> {
+    if x.is_empty() || y.is_empty() || görünür_başlangıç >= görünür_bitiş {
+        return Vec::new();
+    }
+    let son_indeks = x.len().min(y.len()).saturating_sub(1);
+    let ilk_görünür = görünür_başlangıç.min(son_indeks);
+    let son_görünür = görünür_bitiş.saturating_sub(1).min(son_indeks);
+    let piksel = |indeks: usize| {
+        x.get(indeks).map_or(sol, |değer| {
+            piksele_hizala(sol + x_aralığı.konum(*değer, 0.0, genişlik), piksel_hizası)
+        })
+    };
+
+    // uPlot getOuterIdxs() görünümün iki yanından bir örnek alır ve kenardaki
+    // null koşusunun sonuna kadar genişler. linear.findGaps() bundan sonra
+    // ilk/son non-null değere kırpar.
+    let mut yol_başı = ilk_görünür.saturating_sub(1);
+    while yol_başı > 0 && y.get(yol_başı).is_some_and(Option::is_none) {
+        yol_başı -= 1;
+    }
+    let mut yol_sonu = son_görünür.saturating_add(1).min(son_indeks);
+    while yol_sonu < son_indeks && y.get(yol_sonu).is_some_and(Option::is_none) {
+        yol_sonu += 1;
+    }
+    while yol_başı <= yol_sonu && y.get(yol_başı).is_none_or(Option::is_none) {
+        yol_başı += 1;
+    }
+    while yol_sonu >= yol_başı && y.get(yol_sonu).is_none_or(Option::is_none) {
+        if yol_sonu == 0 {
+            return Vec::new();
+        }
+        yol_sonu -= 1;
+    }
+    if yol_başı > yol_sonu {
+        return Vec::new();
+    }
+
+    let mut boşluklar = Vec::<(f32, f32)>::new();
+    let mut indeks = yol_başı;
+    while indeks <= yol_sonu {
+        if y.get(indeks).is_some_and(Option::is_none) {
+            let başlangıç = indeks;
+            while indeks < yol_sonu && y.get(indeks + 1).is_some_and(Option::is_none) {
+                indeks += 1;
+            }
+            let son = indeks;
+            let ilk_piksel = başlangıç
+                .checked_sub(1)
+                .map_or_else(|| piksel(başlangıç), piksel);
+            let son_piksel = son
+                .checked_add(1)
+                .filter(|sonraki| *sonraki <= son_indeks)
+                .map_or_else(|| piksel(son), piksel);
+            if son_piksel >= ilk_piksel {
+                boşluklar.push((ilk_piksel, son_piksel));
+            }
+        }
+        indeks = indeks.saturating_add(1);
+    }
+    if boşluklar.is_empty() {
+        return Vec::new();
+    }
+
+    let en_yakın_indeks = |hedef_piksel: f32| {
+        let hedef_oran = ((hedef_piksel - sol) / genişlik).clamp(0.0, 1.0);
+        let hedef_x =
+            x_aralığı.en_az + f64::from(hedef_oran) * (x_aralığı.en_çok - x_aralığı.en_az);
+        let ekleme = x.partition_point(|değer| *değer < hedef_x);
+        match (
+            ekleme
+                .checked_sub(1)
+                .and_then(|indeks| x.get(indeks).map(|değer| (indeks, *değer))),
+            x.get(ekleme).map(|değer| (ekleme, *değer)),
+        ) {
+            (Some((sol_indeks, sol_değer)), Some((_, sağ_değer)))
+                if (sol_değer - hedef_x).abs() <= (sağ_değer - hedef_x).abs() =>
+            {
+                sol_indeks
+            }
+            (_, Some((sağ_indeks, _))) => sağ_indeks,
+            (Some((sol_indeks, _)), None) => sol_indeks,
+            (None, None) => 0,
+        }
+    };
+
+    let mut filtreli = Vec::new();
+    if boşluklar
+        .first()
+        .is_some_and(|boşluk| boşluk.0 == piksel(ilk_görünür))
+    {
+        filtreli.push(ilk_görünür);
+    }
+    for çift in boşluklar.windows(2) {
+        let [bu_boşluk, sonraki_boşluk] = çift else {
+            continue;
+        };
+        if bu_boşluk.1 != sonraki_boşluk.0 {
+            continue;
+        }
+        let mut yaklaşık = en_yakın_indeks(bu_boşluk.1);
+        if y.get(yaklaşık).is_none_or(Option::is_none) {
+            for uzaklık in 1..100 {
+                if yaklaşık
+                    .checked_add(uzaklık)
+                    .and_then(|aday| y.get(aday).map(|değer| (aday, değer)))
+                    .is_some_and(|(aday, değer)| {
+                        if değer.is_some() {
+                            yaklaşık = aday;
+                            true
+                        } else {
+                            false
+                        }
+                    })
+                {
+                    break;
+                }
+                if yaklaşık
+                    .checked_sub(uzaklık)
+                    .and_then(|aday| y.get(aday).map(|değer| (aday, değer)))
+                    .is_some_and(|(aday, değer)| {
+                        if değer.is_some() {
+                            yaklaşık = aday;
+                            true
+                        } else {
+                            false
+                        }
+                    })
+                {
+                    break;
+                }
+            }
+        }
+        filtreli.push(yaklaşık);
+    }
+    if boşluklar
+        .last()
+        .is_some_and(|boşluk| boşluk.1 == piksel(son_görünür))
+    {
+        filtreli.push(son_görünür);
+    }
+    filtreli.sort_unstable();
+    filtreli.dedup();
+    filtreli
 }
 
 #[cfg(test)]
 mod eksen_testleri {
     use super::*;
+
+    #[test]
+    fn nokta_filtresi_aynı_pikselde_buluşan_boşlukların_tekilini_seçer() -> Result<(), UplotHatası>
+    {
+        let x = [0.0, 1.0, 2.0, 3.0, 4.0];
+        let y = [Some(1.0), None, Some(2.0), None, Some(3.0)];
+        assert_eq!(
+            boşluk_tekil_indeksleri(&x, &y, 0, x.len(), Aralık::yeni(0.0, 4.0)?, 0.0, 2.0, 1.0,),
+            vec![0, 2, 4]
+        );
+        Ok(())
+    }
 
     #[test]
     fn çubuk_vuruş_dizini_yalnız_hedef_hücredeki_dikdörtgeni_döndürür() {

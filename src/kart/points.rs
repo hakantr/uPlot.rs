@@ -10,10 +10,9 @@ use crate::{
 const KAYNAK_JSON: &str = include_str!("veri/points.json");
 pub const POINTS_KANIT_TOHUMU: u32 = 0x504F_494E;
 
-pub const POINTS_KART_TANIM_ÖRNEĞİ: &str = r##"for örnek in PointsÖrneği::TÜMÜ {
-    let (seçenekler, veri) = points_kartı(örnek)?;
+pub const POINTS_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in points_kartları()? {
     // points.space, fill, paths:null ve points.filter davranışları
-    // platform yüzeyinden bağımsız olarak çekirdekte çözülür.
+    // tek kaynak sayfasındaki dört eşzamanlı yüzeyde karşılaştırılır.
     let grafik = Grafik::yeni(seçenekler, veri)?;
 }"##;
 
@@ -58,6 +57,27 @@ impl PointsÖrneği {
         }
     }
 
+    pub const fn kaynak_boyutu(self) -> (u32, u32) {
+        match self {
+            Self::Karma => (1_920, 600),
+            Self::VarsayılanYoğunluk | Self::AşırıYoğun => (1_920, 300),
+            Self::Seyrek => (1_200, 300),
+        }
+    }
+
+    pub const fn kısa_açıklama(self) -> &'static str {
+        match self {
+            Self::Karma => "Varsayılan yoğunluk, space:0, paths:null ve boşluk tekili filtresi",
+            Self::VarsayılanYoğunluk => {
+                "180 nokta, 1920 px genişlikte varsayılan nokta yoğunluğu"
+            }
+            Self::AşırıYoğun => {
+                "Aynı 180 nokta ve veri; −400…180 X aralığında noktalar gizlenir"
+            }
+            Self::Seyrek => "2761 X konumunda boşluklar arasındaki tekil ölçümleri gösterir",
+        }
+    }
+
     pub fn kimlikten(kimlik: &str) -> Option<Self> {
         Self::TÜMÜ
             .into_iter()
@@ -98,23 +118,23 @@ pub fn points_kartı(
                 });
             }
             let seçenekler = temel(1_920, 600, örnek.başlık())?
-                .seri(SeriSeçenekleri::yeni("Green").renk("green"))
+                .seri(SeriSeçenekleri::yeni("Value").renk("green"))
                 .seri(
-                    SeriSeçenekleri::yeni("Red")
+                    SeriSeçenekleri::yeni("Value")
                         .renk("red")
-                        .dolgu("#ff00001a")
+                        .dolgu("rgba(255,0,0,0.1)")
                         .nokta_boşluğu(0.0)
                         .nokta_stili(5.0, 1.0, Some("red")),
                 )
                 .seri(
-                    SeriSeçenekleri::yeni("Blue")
+                    SeriSeçenekleri::yeni("Value")
                         .renk("blue")
-                        .dolgu("#0000ff1a")
+                        .dolgu("rgba(0,0,255,0.1)")
                         .yalnız_noktalar()
                         .nokta_boşluğu(0.0),
                 )
                 .seri(
-                    SeriSeçenekleri::yeni("Orange")
+                    SeriSeçenekleri::yeni("Value")
                         .renk("orange")
                         .nokta_stili(5.0, 1.0, Some("orange"))
                         .nokta_filtresi(NoktaFiltreKipi::BoşlukArasındakiTekiller),
@@ -126,7 +146,7 @@ pub fn points_kartı(
         }
         PointsÖrneği::VarsayılanYoğunluk | PointsÖrneği::AşırıYoğun => {
             let mut seçenekler = temel(1_920, 300, örnek.başlık())?
-                .seri(SeriSeçenekleri::yeni("Green").renk("green"));
+                .seri(SeriSeçenekleri::yeni("Value").renk("green"));
             if örnek == PointsÖrneği::AşırıYoğun {
                 seçenekler = seçenekler.x_aralığı(Aralık::yeni(-400.0, 180.0)?);
             }
@@ -137,7 +157,7 @@ pub fn points_kartı(
         }
         PointsÖrneği::Seyrek => {
             let seçenekler = temel(1_200, 300, örnek.başlık())?.seri(
-                SeriSeçenekleri::yeni("Magenta")
+                SeriSeçenekleri::yeni("Value")
                     .renk("magenta")
                     .nokta_stili(5.0, 1.0, Some("magenta"))
                     .nokta_filtresi(NoktaFiltreKipi::BoşlukArasındakiTekiller),
@@ -151,6 +171,34 @@ pub fn points_kartı(
             ))
         }
     }
+}
+
+/// `points.html` içindeki dört uPlot yüzeyini kaynak sırasıyla tek aile
+/// olarak üretir. Varsayılan ve aşırı yoğun yüzeyler kaynakta aynı `data`
+/// nesnesini kullandığından burada de aynı veri anlık görüntüsünü paylaşır.
+pub fn points_kartları() -> Result<Vec<(PointsÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası>
+{
+    let mut kartlar = Vec::with_capacity(PointsÖrneği::TÜMÜ.len());
+    let (karma_seçenekleri, karma_verisi) = points_kartı(PointsÖrneği::Karma)?;
+    kartlar.push((PointsÖrneği::Karma, karma_seçenekleri, karma_verisi));
+
+    let (varsayılan_seçenekleri, ortak_yoğun_veri) =
+        points_kartı(PointsÖrneği::VarsayılanYoğunluk)?;
+    kartlar.push((
+        PointsÖrneği::VarsayılanYoğunluk,
+        varsayılan_seçenekleri,
+        ortak_yoğun_veri.clone(),
+    ));
+    let (aşırı_seçenekleri, _) = points_kartı(PointsÖrneği::AşırıYoğun)?;
+    kartlar.push((
+        PointsÖrneği::AşırıYoğun,
+        aşırı_seçenekleri,
+        ortak_yoğun_veri,
+    ));
+
+    let (seyrek_seçenekleri, seyrek_veri) = points_kartı(PointsÖrneği::Seyrek)?;
+    kartlar.push((PointsÖrneği::Seyrek, seyrek_seçenekleri, seyrek_veri));
+    Ok(kartlar)
 }
 
 fn temel(
@@ -183,11 +231,19 @@ mod testler {
 
     #[test]
     fn dört_kaynak_yüzeyi_boyut_ve_veriyi_korur() -> Result<(), UplotHatası> {
-        for örnek in PointsÖrneği::TÜMÜ {
-            let (seçenekler, veri) = points_kartı(örnek)?;
+        let kartlar = points_kartları()?;
+        assert_eq!(kartlar.len(), 4);
+        for (örnek, seçenekler, veri) in &kartlar {
             assert_eq!(veri.uzunluk(), örnek.nokta_sayısı());
             assert_eq!(seçenekler.başlık, örnek.başlık());
+            assert_eq!(
+                (seçenekler.genişlik, seçenekler.yükseklik),
+                örnek.kaynak_boyutu()
+            );
         }
+        let varsayılan_veri = kartlar.get(1).map(|kart| &kart.2);
+        let aşırı_veri = kartlar.get(2).map(|kart| &kart.2);
+        assert_eq!(varsayılan_veri, aşırı_veri);
         let (seçenekler, veri) = points_kartı(PointsÖrneği::Karma)?;
         assert_eq!(veri.seriler().len(), 4);
         assert!(
@@ -195,6 +251,21 @@ mod testler {
                 .seriler
                 .get(2)
                 .is_some_and(|seri| seri.çizim_türü == SeriÇizimTürü::Noktalar)
+        );
+        assert!(seçenekler.seriler.iter().all(|seri| seri.etiket == "Value"));
+        assert_eq!(
+            seçenekler
+                .seriler
+                .get(1)
+                .and_then(|seri| seri.dolgu.as_deref()),
+            Some("rgba(255,0,0,0.1)")
+        );
+        assert_eq!(
+            seçenekler
+                .seriler
+                .get(2)
+                .and_then(|seri| seri.dolgu.as_deref()),
+            Some("rgba(0,0,255,0.1)")
         );
         assert_eq!(
             veri.seriler().get(3).map_or(0, |seri| seri
@@ -215,26 +286,29 @@ mod testler {
     }
 
     #[test]
-    fn seyrek_filtre_yalnız_boşluklar_arasındaki_tekilleri_gösterir() -> Result<(), UplotHatası> {
+    fn seyrek_filtre_kaynak_piksel_boşluklarını_gösterir() -> Result<(), UplotHatası> {
         let kaynak = kaynak_veri()?;
-        let beklenen = kaynak
-            .seyrek
+        let dolu_değer = kaynak.seyrek.iter().filter(|değer| değer.is_some()).count();
+        assert_eq!(dolu_değer, 96);
+        // Kaynak pointsFilter görünür kenarlar ve aynı piksele yuvarlanan
+        // ardışık gap sınırları üzerinden 94 işaret seçer.
+        assert_eq!(daire_sayısı(PointsÖrneği::Seyrek)?, 94);
+        Ok(())
+    }
+
+    #[test]
+    fn seyrek_filtre_zoomda_görünür_piksel_boşluklarından_yeniden_hesaplanır()
+    -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = points_kartı(PointsÖrneği::Seyrek)?;
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        let yakın = grafik.çiz_aralıkta(Some(Aralık::yeni(2_000.0, 2_500.0)?));
+        let yakın_daireler = yakın
+            .komutlar()
             .iter()
-            .enumerate()
-            .filter(|(indeks, değer)| {
-                değer.is_some()
-                    && indeks
-                        .checked_sub(1)
-                        .and_then(|önceki| kaynak.seyrek.get(önceki))
-                        .is_none_or(Option::is_none)
-                    && kaynak
-                        .seyrek
-                        .get(indeks.saturating_add(1))
-                        .is_none_or(Option::is_none)
-            })
+            .filter(|komut| matches!(komut, Komut::Daire { .. }))
             .count();
-        assert_eq!(daire_sayısı(PointsÖrneği::Seyrek)?, beklenen);
-        assert!(beklenen > 0);
+        assert!(yakın_daireler > 0);
+        assert!(yakın_daireler < 94);
         Ok(())
     }
 }
