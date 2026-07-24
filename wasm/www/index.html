@@ -68,6 +68,17 @@
     #chart.multi-bars-yüzeyi .multi-bars-kaydırma svg {
       display: block; width: auto; height: auto; max-width: none; max-height: none;
     }
+    #chart.multi-bars-yüzeyi .multi-bars-kategori-kontrolleri {
+      width: max-content; min-width: 100%; padding: 8px 12px 14px;
+      display: flex; justify-content: center; gap: 8px; box-sizing: border-box;
+    }
+    #chart.multi-bars-yüzeyi .multi-bars-kategori-kontrolleri button {
+      flex: 0 0 auto; padding: 5px 9px; border: 1px solid #d1d5db;
+      border-radius: 6px; background: #fff; color: #111827; cursor: pointer;
+    }
+    #chart.multi-bars-yüzeyi .multi-bars-kategori-kontrolleri button[data-etkin="false"] {
+      color: #9ca3af; background: #f9fafb;
+    }
     #chart.multi-bars-yüzeyi .yardım {
       position: static; min-width: 0; padding: 5px 6px 2px; white-space: nowrap;
     }
@@ -586,6 +597,7 @@
         yardım: "Sürükle: seç · tekerlek/dokunma: yakınlaştır ve taşı · çift tıkla: tam görünüm",
         değişkenNokta: false,
         dinamikSeri: true,
+        çubuk: kimlik !== "multi-bars-non-justified",
         etkileşimler: () => ortakEtkileşimler(),
       }])),
       ...Object.fromEntries([
@@ -2957,6 +2969,12 @@
         return;
       }
       if (!oturum) return;
+      const öncekiMultiBarsKartı = chart.dataset.cizilenKart;
+      const öncekiMultiBarsKaydırma = chart.querySelector(".multi-bars-kaydırma");
+      const öncekiMultiBarsKaydırmaKonumu = öncekiMultiBarsKaydırma ? {
+        sol: öncekiMultiBarsKaydırma.scrollLeft,
+        üst: öncekiMultiBarsKaydırma.scrollTop,
+      } : null;
       chart.classList.remove("sync-cursor-yüzeyi");
       chart.classList.remove("timeseries-discrete-yüzeyi");
       chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
@@ -2983,12 +3001,26 @@
       }
       chart.dataset.cokluLejant = kart.seriler.length > 6 ? "true" : "false";
       const { genişlik, yükseklik } = boyutlar();
-      const seriİmzası = kart.seriler.map((seri, indeks) =>
-        `${seri.etiket}\u0000${seri.renk}\u0000${oturum.seri_gorunur(indeks)}`
+      // `setSeries({show})` eşdeğeri görünürlükte dış yüzeyi ve kaydırma
+      // kabını korur. Yalnız seri yapısı veya stili değişirse kabuk yenilenir.
+      const seriİmzası = kart.seriler.map(seri =>
+        `${seri.etiket}\u0000${seri.renk}`
       ).join("\u0001");
       const tamKurulum = chart.dataset.cizilenKart !== aktifKart
         || chart.dataset.seriImzasi !== seriİmzası
         || !chart.querySelector("svg");
+      const multiBarsKategoriEtiketleri =
+        Array.from(oturum.multi_bars_kategori_etiketleri?.() ?? []);
+      const multiBarsKategoriDurumları =
+        Array.from(oturum.multi_bars_kategori_durumlari?.() ?? []);
+      const multiBarsKategoriKontrolleri = multiBarsKategoriEtiketleri.length > 0 ? `
+        <div class="multi-bars-kategori-kontrolleri" aria-label="Kitaplık görünürlüğü">
+          ${multiBarsKategoriEtiketleri.map((etiket, indeks) => `
+            <button type="button" data-multi-bars-kategori="${indeks}"
+              data-etkin="${multiBarsKategoriDurumları[indeks] !== 0}"
+              aria-pressed="${multiBarsKategoriDurumları[indeks] !== 0}">${etiket}</button>
+          `).join("")}
+        </div>` : "";
       const svgÇıktısı = oturum.svg(genişlik, yükseklik);
       if (tamKurulum) {
         chart.innerHTML = kart.scrollSync ? `
@@ -3003,7 +3035,7 @@
             <p>uPlot.rs keeps platform layout in the adapter and performs client-to-scene
             coordinate conversion in the reusable Rust core.</p>
           </div>` : aktifKart.startsWith("multi-bars-")
-            ? `<div class="multi-bars-kaydırma">${svgÇıktısı}</div>`
+            ? `<div class="multi-bars-kaydırma">${svgÇıktısı}${multiBarsKategoriKontrolleri}</div>`
             : svgÇıktısı;
         chart.dataset.cizilenKart = aktifKart;
         chart.dataset.seriImzasi = seriİmzası;
@@ -3020,10 +3052,19 @@
       }
       const svg = chart.querySelector("svg");
       if (!svg) return;
+      if (tamKurulum
+        && öncekiMultiBarsKartı === aktifKart
+        && öncekiMultiBarsKaydırmaKonumu) {
+        const yeniKaydırma = chart.querySelector(".multi-bars-kaydırma");
+        if (yeniKaydırma) {
+          yeniKaydırma.scrollLeft = öncekiMultiBarsKaydırmaKonumu.sol;
+          yeniKaydırma.scrollTop = öncekiMultiBarsKaydırmaKonumu.üst;
+        }
+      }
       yüzeyiEşitle();
       svg.dataset.etkileşim = "hover-x-zoom";
       const imleçNoktaları = kart.seriler.map((seri, indeks) =>
-        oturum.seri_gorunur(indeks)
+        !kart.çubuk && oturum.seri_gorunur(indeks)
           ? `<circle id="imleç-nokta-${indeks}" visibility="hidden" r="2.5" fill="${seri.renk}"/>`
           : ""
       ).join("");
@@ -3107,6 +3148,33 @@
             değiştir();
           }
         });
+      });
+      if (tamKurulum) chart.querySelectorAll("[data-multi-bars-kategori]").forEach(düğme => {
+        düğme.addEventListener("click", () => {
+          const indeks = Number(düğme.dataset.multiBarsKategori);
+          const etkin = düğme.dataset.etkin !== "true";
+          if (!Number.isInteger(indeks) || !oturum) return;
+          try {
+            if (oturum.multi_bars_kategorisini_ayarla(indeks, etkin)) çiz();
+          } catch (error) {
+            hata.textContent = String(error);
+          }
+        });
+      });
+      chart.querySelectorAll("[data-seri-toggle]").forEach(öğe => {
+        const indeks = Number(öğe.dataset.seriToggle);
+        if (Number.isInteger(indeks)) {
+          öğe.style.opacity = oturum.seri_gorunur(indeks) ? "1" : ".4";
+        }
+      });
+      const güncelKategoriDurumları =
+        Array.from(oturum.multi_bars_kategori_durumlari?.() ?? []);
+      chart.querySelectorAll("[data-multi-bars-kategori]").forEach(düğme => {
+        const indeks = Number(düğme.dataset.multiBarsKategori);
+        if (!Number.isInteger(indeks)) return;
+        const etkin = güncelKategoriDurumları[indeks] !== 0;
+        düğme.dataset.etkin = String(etkin);
+        düğme.setAttribute("aria-pressed", String(etkin));
       });
       if (kart.bilgiKutusu && tamKurulum) {
         chart.insertAdjacentHTML("beforeend", `<div id="imlec-bilgi-kutusu" class="imlec-bilgi-kutusu" hidden></div>`);
@@ -3675,6 +3743,8 @@
       const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
       if (bilgiKutusu) bilgiKutusu.hidden = true;
       chart.querySelectorAll(".coklu-tooltip").forEach(öğe => öğe.remove());
+      chart.querySelector("#çubuk-vurgu")?.setAttribute("visibility", "hidden");
+      chart.querySelector("#kutu-biyik-vurgu")?.setAttribute("visibility", "hidden");
       chart.querySelector("#timeline-vurgu")?.setAttribute("visibility", "hidden");
     });
     document.addEventListener("keydown", olay => {

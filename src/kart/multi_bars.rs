@@ -8,6 +8,18 @@ use crate::{
 
 const RESULTS_JSON: &str = include_str!("veri/multi-bars-results.json");
 
+pub fn multi_bars_kitaplık_etiketleri() -> Result<Vec<String>, UplotHatası> {
+    let satırlar: Vec<Vec<Value>> =
+        serde_json::from_str(RESULTS_JSON).map_err(|hata| UplotHatası::GeçersizKaynakVeri {
+            varlık: "bench/results.json",
+            açıklama: hata.to_string(),
+        })?;
+    Ok(satırlar
+        .iter()
+        .filter_map(|satır| satır.first()?.as_str().map(str::to_owned))
+        .collect())
+}
+
 pub const MULTI_BARS_KART_TANIM_ÖRNEĞİ: &str = r##"for örnek in MultiBarsÖrneği::TÜMÜ {
     let (seçenekler, veri) = multi_bars_kartı(örnek)?;
     // Metrik sayısı sabit değildir; her SeriSeçenekleri kendi ölçeğini,
@@ -64,7 +76,7 @@ pub fn multi_bars_kartı(
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
     match örnek {
         MultiBarsÖrneği::KitaplıklarDikey | MultiBarsÖrneği::KitaplıklarYatay => {
-            kitaplık_kartı(örnek)
+            multi_bars_kitaplık_kartı(örnek, &[], 0)
         }
         MultiBarsÖrneği::DeğişkenRenkler | MultiBarsÖrneği::HizasızÇubuklar => {
             renkli_kart(örnek)
@@ -72,14 +84,32 @@ pub fn multi_bars_kartı(
     }
 }
 
-fn kitaplık_kartı(
+/// Kaynak `makeData()` akışının karşılığı olarak etkin kitaplıkları süzer ve
+/// aynı grafik seçeneklerini yeni hizalı veriyle döndürür. Boş `etkin`
+/// dilimi bütün kitaplıkları etkin kabul eder.
+pub fn multi_bars_kitaplık_kartı(
     örnek: MultiBarsÖrneği,
+    etkin: &[bool],
+    veri_sürümü: u64,
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
-    let satırlar: Vec<Vec<Value>> =
+    if !matches!(
+        örnek,
+        MultiBarsÖrneği::KitaplıklarDikey | MultiBarsÖrneği::KitaplıklarYatay
+    ) {
+        return Err(UplotHatası::BilinmeyenKart {
+            kimlik: örnek.kimlik().to_string(),
+        });
+    }
+    let bütün_satırlar: Vec<Vec<Value>> =
         serde_json::from_str(RESULTS_JSON).map_err(|hata| UplotHatası::GeçersizKaynakVeri {
             varlık: "bench/results.json",
             açıklama: hata.to_string(),
         })?;
+    let satırlar = bütün_satırlar
+        .iter()
+        .enumerate()
+        .filter_map(|(indeks, satır)| etkin.get(indeks).copied().unwrap_or(true).then_some(satır))
+        .collect::<Vec<_>>();
     let kategoriler = satırlar
         .iter()
         .filter_map(|satır| satır.first()?.as_str().map(str::to_owned))
@@ -110,7 +140,10 @@ fn kitaplık_kartı(
         satırlar.iter().map(|s| toplam(s, 5)).collect(),
         satırlar.iter().map(|s| toplam(s, 6)).collect(),
         (0..satırlar.len())
-            .map(|indeks| Some(3_000.0 + ((indeks * 677 + 131) % 1_001) as f64))
+            .map(|indeks| {
+                let karışım = indeks as u64 * 677 + 131 + veri_sürümü.wrapping_mul(389);
+                Some(3_000.0 + (karışım % 1_001) as f64)
+            })
             .collect(),
     ];
     let ölçek_aralığı = |indeksler: &[usize]| -> Result<Aralık, UplotHatası> {
@@ -209,8 +242,13 @@ fn renkli_kart(
         }
     });
     let veri = HizalıVeri::yeni(x, vec![değerler])?;
+    let temel_çizgi = if örnek == MultiBarsÖrneği::HizasızÇubuklar {
+        "red"
+    } else {
+        "#33BB55"
+    };
     let seri = SeriSeçenekleri::yeni("Server #SNAFU")
-        .renk("#33BB55")
+        .renk(temel_çizgi)
         .dolgu("#33BB55A0")
         .çizgi_kalınlığı(if örnek == MultiBarsÖrneği::DeğişkenRenkler {
             2.0
@@ -263,6 +301,53 @@ mod testler {
     }
 
     #[test]
+    fn eklenti_kullanan_üç_yüzeyde_hover_yalnız_vurulan_çubuğu_döndürür() -> Result<(), UplotHatası>
+    {
+        for örnek in [
+            MultiBarsÖrneği::KitaplıklarDikey,
+            MultiBarsÖrneği::KitaplıklarYatay,
+            MultiBarsÖrneği::DeğişkenRenkler,
+        ] {
+            let (seçenekler, veri) = multi_bars_kartı(örnek)?;
+            let (yüzey_genişliği, yüzey_yüksekliği) = (seçenekler.genişlik, seçenekler.yükseklik);
+            let grafik = Grafik::yeni(seçenekler, veri)?;
+            let sahne = grafik.çiz();
+            let merkez = sahne.komutlar().iter().find_map(|komut| match komut {
+                Komut::YuvarlatılmışDikdörtgen {
+                    konum,
+                    genişlik,
+                    yükseklik,
+                    ..
+                }
+                | Komut::Dikdörtgen {
+                    konum,
+                    genişlik,
+                    yükseklik,
+                    ..
+                } if *genişlik > 0.0 && *yükseklik > 0.0 => {
+                    let x = konum.x + *genişlik / 2.0;
+                    let y = konum.y + *yükseklik / 2.0;
+                    grafik
+                        .çubuk_vuruşu(yüzey_genişliği, yüzey_yüksekliği, x, y)
+                        .map(|_| (x, y))
+                }
+                _ => None,
+            });
+            assert!(
+                merkez.is_some(),
+                "{} için vurulabilir çubuk bulunmalı",
+                örnek.kimlik()
+            );
+            let Some((x, y)) = merkez else {
+                continue;
+            };
+            let vuruş = grafik.çubuk_vuruşu(yüzey_genişliği, yüzey_yüksekliği, x, y);
+            assert!(vuruş.is_some(), "{}", örnek.kimlik());
+        }
+        Ok(())
+    }
+
+    #[test]
     fn kaynak_benchmark_null_değerlerini_korur() -> Result<(), UplotHatası> {
         let (_, veri) = multi_bars_kartı(MultiBarsÖrneği::KitaplıklarDikey)?;
         assert_eq!(veri.uzunluk(), 13);
@@ -273,6 +358,23 @@ mod testler {
                 .and_then(|seri| seri.get(2))
                 .is_some_and(Option::is_none)
         );
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_kategori_set_data_akışı_satırları_süzer_ve_çizgiyi_yeniler() -> Result<(), UplotHatası>
+    {
+        let etiketler = multi_bars_kitaplık_etiketleri()?;
+        let mut etkin = vec![true; etiketler.len()];
+        if let Some(ilk) = etkin.first_mut() {
+            *ilk = false;
+        }
+        let (_, önceki) =
+            multi_bars_kitaplık_kartı(MultiBarsÖrneği::KitaplıklarDikey, &etkin, 0)?;
+        let (_, sonraki) =
+            multi_bars_kitaplık_kartı(MultiBarsÖrneği::KitaplıklarDikey, &etkin, 1)?;
+        assert_eq!(önceki.uzunluk(), etiketler.len().saturating_sub(1));
+        assert_ne!(önceki.seriler().last(), sonraki.seriler().last());
         Ok(())
     }
 
@@ -329,6 +431,17 @@ mod testler {
                     && (yarıçaplar.üst_sol > 0.0 || yarıçaplar.alt_sol > 0.0)
             )
         }));
+        Ok(())
+    }
+
+    #[test]
+    fn hizasız_çubuk_kaynak_kırmızı_cursor_serisini_korur() -> Result<(), UplotHatası> {
+        let (seçenekler, _) = multi_bars_kartı(MultiBarsÖrneği::HizasızÇubuklar)?;
+        assert_eq!(
+            seçenekler.seriler.first().map(|seri| seri.renk.as_str()),
+            Some("red")
+        );
+        assert!(seçenekler.çubuk_düzeni.is_none());
         Ok(())
     }
 

@@ -47,7 +47,8 @@ use uplot_rs::{
     grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
     log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
     missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
-    months_artık_yılsız_kartı, months_rusça_kartı, multi_bars_kartı, nearest_non_null_kartı,
+    months_artık_yılsız_kartı, months_rusça_kartı, multi_bars_kartı,
+    multi_bars_kitaplık_etiketleri, multi_bars_kitaplık_kartı, nearest_non_null_kartı,
     nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı,
     pixel_align_kartı, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartı,
     scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
@@ -73,6 +74,8 @@ pub struct KartOturumu {
     soft_minmax_akışı: Option<SoftMinMaxAkışı>,
     boyut_senkron_akışı: Option<BoyutSenkronAkışı>,
     y_shifted_series_akışı: Option<YShiftedSeriesAkışı>,
+    multi_bars_kategorileri: Option<Vec<bool>>,
+    multi_bars_veri_sürümü: u64,
 }
 
 #[wasm_bindgen]
@@ -405,6 +408,19 @@ impl KartOturumu {
         } else {
             None
         };
+        let multi_bars_kategorileri = MultiBarsÖrneği::kimlikten(kart_kimliği)
+            .filter(|örnek| {
+                matches!(
+                    örnek,
+                    MultiBarsÖrneği::KitaplıklarDikey | MultiBarsÖrneği::KitaplıklarYatay
+                )
+            })
+            .map(|_| {
+                multi_bars_kitaplık_etiketleri()
+                    .map(|etiketler| vec![true; etiketler.len()])
+                    .map_err(js_hatası)
+            })
+            .transpose()?;
         Ok(Self {
             grafik,
             kart_kimliği: kart_kimliği.to_string(),
@@ -415,6 +431,8 @@ impl KartOturumu {
             soft_minmax_akışı,
             boyut_senkron_akışı,
             y_shifted_series_akışı,
+            multi_bars_kategorileri,
+            multi_bars_veri_sürümü: 0,
         })
     }
 
@@ -617,6 +635,86 @@ impl KartOturumu {
         self.grafik
             .seri_görünürlüğünü_ayarla(seri_indeksi, görünür)
             .map_err(js_hatası)
+    }
+
+    pub fn multi_bars_kategori_etiketleri(&self) -> Vec<String> {
+        if self.multi_bars_kategorileri.is_none() {
+            return Vec::new();
+        }
+        multi_bars_kitaplık_etiketleri().unwrap_or_default()
+    }
+
+    pub fn multi_bars_kategori_durumlari(&self) -> Vec<u8> {
+        self.multi_bars_kategorileri
+            .as_ref()
+            .map(|durumlar| durumlar.iter().map(|etkin| u8::from(*etkin)).collect())
+            .unwrap_or_default()
+    }
+
+    pub fn multi_bars_kategorisini_ayarla(
+        &mut self,
+        indeks: usize,
+        etkin: bool,
+    ) -> Result<bool, JsValue> {
+        let Some(örnek) = MultiBarsÖrneği::kimlikten(&self.kart_kimliği).filter(|örnek| {
+            matches!(
+                örnek,
+                MultiBarsÖrneği::KitaplıklarDikey | MultiBarsÖrneği::KitaplıklarYatay
+            )
+        }) else {
+            return Ok(false);
+        };
+        let Some(durumlar) = self.multi_bars_kategorileri.as_mut() else {
+            return Ok(false);
+        };
+        let kategori_sayısı = durumlar.len();
+        let Some(durum) = durumlar.get_mut(indeks) else {
+            return Err(js_hatası(UplotHatası::GeçersizSeriİndeksi {
+                indeks,
+                seri_sayısı: kategori_sayısı,
+                ekleme: false,
+            }));
+        };
+        if *durum == etkin {
+            return Ok(false);
+        }
+        *durum = etkin;
+        self.multi_bars_veri_sürümü = self.multi_bars_veri_sürümü.wrapping_add(1);
+        let stiller = self
+            .grafik
+            .seri_seçenekleri()
+            .iter()
+            .map(|seri| {
+                (
+                    seri.göster,
+                    seri.renk.clone(),
+                    seri.dolgu.clone(),
+                    seri.çubuk_dolguları.clone(),
+                    seri.çubuk_çizgileri.clone(),
+                )
+            })
+            .collect::<Vec<_>>();
+        let tekerlek = self.grafik.etkileşim_seçenekleri().tekerlek_etkileşimi;
+        let (seçenekler, veri) =
+            multi_bars_kitaplık_kartı(örnek, durumlar, self.multi_bars_veri_sürümü)
+                .map_err(js_hatası)?;
+        let mut grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
+        grafik.tekerlek_etkileşimi_ayarla(tekerlek);
+        for (seri, (görünür, çizgi, dolgu, çubuk_dolguları, çubuk_çizgileri)) in
+            stiller.into_iter().enumerate()
+        {
+            grafik
+                .seri_görünürlüğünü_ayarla(seri, görünür)
+                .map_err(js_hatası)?;
+            grafik
+                .seri_renklerini_ayarla(seri, çizgi, dolgu)
+                .map_err(js_hatası)?;
+            grafik
+                .seri_çubuk_renklerini_ayarla(seri, çubuk_dolguları, çubuk_çizgileri)
+                .map_err(js_hatası)?;
+        }
+        self.grafik = grafik;
+        Ok(true)
     }
 
     pub fn seri_renklerini_ayarla(
@@ -1736,6 +1834,39 @@ mod testler {
     }
 
     #[test]
+    fn multi_bars_genel_seri_noktaları_yerine_tek_çubuk_vurgusu_kullanır() {
+        let katalog = include_str!("../www/index.html");
+        let başlangıç = katalog.find("[\"multi-bars-libraries-vertical\"");
+        assert!(
+            başlangıç.is_some(),
+            "Multi Bars kart grubu katalogda bulunmalı"
+        );
+        let Some(başlangıç) = başlangıç else {
+            return;
+        };
+        let bitiş = katalog[başlangıç..]
+            .find("}])),")
+            .map(|uzaklık| başlangıç + uzaklık);
+        assert!(bitiş.is_some(), "Multi Bars kart grubu kapanmalı");
+        let Some(bitiş) = bitiş else {
+            return;
+        };
+        let grup = &katalog[başlangıç..bitiş];
+        assert!(grup.contains("çubuk: kimlik !== \"multi-bars-non-justified\""));
+        assert!(katalog.contains("!kart.çubuk && oturum.seri_gorunur(indeks)"));
+        assert!(katalog.contains("oturum?.cubuk_vurusu"));
+        assert!(katalog.contains("fill=\"rgba(255,255,255,.3)\""));
+        assert!(katalog.contains("öncekiMultiBarsKaydırma.scrollLeft"));
+        assert!(katalog.contains("yeniKaydırma.scrollLeft = öncekiMultiBarsKaydırmaKonumu.sol"));
+        assert!(katalog.contains("const seriİmzası = kart.seriler.map(seri =>"));
+        assert!(
+            katalog.contains("öğe.style.opacity = oturum.seri_gorunur(indeks) ? \"1\" : \".4\"")
+        );
+        assert!(katalog.contains("data-multi-bars-kategori"));
+        assert!(katalog.contains("oturum.multi_bars_kategorisini_ayarla(indeks, etkin)"));
+    }
+
+    #[test]
     fn resize_kartı_wasm_svg_üretir() {
         let oturum = KartOturumu::yeni("resize", 100);
         assert!(oturum.is_ok());
@@ -1851,9 +1982,25 @@ mod testler {
                 .seri_renklerini_ayarla(1, "#123456".to_string(), Some("#abcdef".to_string()))
                 .is_ok_and(|değişti| değişti)
         );
+        let etiketler = oturum.multi_bars_kategori_etiketleri();
+        assert_eq!(etiketler.len(), 13);
+        let ilk_etiket = etiketler.first().cloned();
+        assert!(
+            oturum
+                .multi_bars_kategorisini_ayarla(0, false)
+                .is_ok_and(|değişti| değişti)
+        );
+        assert_eq!(
+            oturum.multi_bars_kategori_durumlari().first().copied(),
+            Some(0)
+        );
         let svg = oturum.svg(800, 400);
         assert!(svg.contains("#123456"));
         assert!(svg.contains("#abcdef"));
+        assert!(!oturum.seri_gorunur(0));
+        if let Some(ilk_etiket) = ilk_etiket {
+            assert!(!svg.contains(&ilk_etiket));
+        }
         assert!(multi_bars_kart_tanim_ornegi().contains("multi_bars_kartı"));
         assert_eq!(kart_sayisi(), 365);
     }

@@ -3,7 +3,7 @@ mod isi_haritasi;
 mod seri_geometrisi;
 mod timeline;
 
-use std::collections::BTreeMap;
+use std::{cell::RefCell, collections::BTreeMap};
 
 use seri_geometrisi::seri_yol_noktaları;
 
@@ -280,6 +280,99 @@ pub struct TimelineVuruşu {
     pub değer: String,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+struct ÇubukVuruşAnahtarı {
+    genişlik: u32,
+    yükseklik: u32,
+    x_aralığı: Aralık,
+    y_aralığı: Aralık,
+    görünür_seriler: Vec<bool>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct ÇubukVuruşKaydı {
+    seri: usize,
+    indeks: usize,
+    konum: Nokta,
+    genişlik: f32,
+    yükseklik: f32,
+    değer: f64,
+}
+
+#[derive(Debug, Clone)]
+struct ÇubukVuruşDizini {
+    anahtar: ÇubukVuruşAnahtarı,
+    sütun_sayısı: usize,
+    satır_sayısı: usize,
+    hücreler: Vec<Vec<usize>>,
+    kayıtlar: Vec<ÇubukVuruşKaydı>,
+}
+
+impl ÇubukVuruşDizini {
+    fn yeni(anahtar: ÇubukVuruşAnahtarı, kayıtlar: Vec<ÇubukVuruşKaydı>) -> Self {
+        let kenar = (kayıtlar.len() as f64).sqrt().ceil().clamp(1.0, 32.0) as usize;
+        let sütun_sayısı = kenar;
+        let satır_sayısı = kenar;
+        let mut hücreler = vec![Vec::new(); sütun_sayısı * satır_sayısı];
+        let yüzey_genişliği = anahtar.genişlik.max(1) as f32;
+        let yüzey_yüksekliği = anahtar.yükseklik.max(1) as f32;
+        for (kayıt_indeksi, kayıt) in kayıtlar.iter().enumerate() {
+            let sütun = |x: f32| {
+                ((x / yüzey_genişliği * sütun_sayısı as f32).floor() as isize)
+                    .clamp(0, sütun_sayısı.saturating_sub(1) as isize) as usize
+            };
+            let satır = |y: f32| {
+                ((y / yüzey_yüksekliği * satır_sayısı as f32).floor() as isize)
+                    .clamp(0, satır_sayısı.saturating_sub(1) as isize) as usize
+            };
+            let ilk_sütun = sütun(kayıt.konum.x);
+            let son_sütun = sütun(kayıt.konum.x + kayıt.genişlik);
+            let ilk_satır = satır(kayıt.konum.y);
+            let son_satır = satır(kayıt.konum.y + kayıt.yükseklik);
+            for satır in ilk_satır..=son_satır {
+                for sütun in ilk_sütun..=son_sütun {
+                    if let Some(hücre) = hücreler.get_mut(satır * sütun_sayısı + sütun) {
+                        hücre.push(kayıt_indeksi);
+                    }
+                }
+            }
+        }
+        Self {
+            anahtar,
+            sütun_sayısı,
+            satır_sayısı,
+            hücreler,
+            kayıtlar,
+        }
+    }
+
+    fn vuruş(&self, x: f32, y: f32) -> Option<ÇubukVuruşKaydı> {
+        if x < 0.0
+            || y < 0.0
+            || x > self.anahtar.genişlik as f32
+            || y > self.anahtar.yükseklik as f32
+        {
+            return None;
+        }
+        let sütun = ((x / self.anahtar.genişlik.max(1) as f32 * self.sütun_sayısı as f32).floor()
+            as usize)
+            .min(self.sütun_sayısı.saturating_sub(1));
+        let satır = ((y / self.anahtar.yükseklik.max(1) as f32 * self.satır_sayısı as f32).floor()
+            as usize)
+            .min(self.satır_sayısı.saturating_sub(1));
+        self.hücreler
+            .get(satır * self.sütun_sayısı + sütun)?
+            .iter()
+            .filter_map(|indeks| self.kayıtlar.get(*indeks).copied())
+            .find(|kayıt| {
+                x >= kayıt.konum.x
+                    && x <= kayıt.konum.x + kayıt.genişlik
+                    && y >= kayıt.konum.y
+                    && y <= kayıt.konum.y + kayıt.yükseklik
+            })
+    }
+}
+
 /// Doğrulanmış seçenek ve veriyi taşıyan çizelge örneği.
 pub struct Grafik {
     seçenekler: GrafikSeçenekleri,
@@ -290,6 +383,7 @@ pub struct Grafik {
     elle_y_aralıkları: BTreeMap<String, Aralık>,
     eksen_sürükleme: Option<EksenSürüklemeBaşlangıcı>,
     ölçüm_datumları: [Option<(f64, f64)>; 2],
+    çubuk_vuruş_dizini: RefCell<Option<ÇubukVuruşDizini>>,
 }
 
 impl Grafik {
@@ -461,6 +555,7 @@ impl Grafik {
             elle_y_aralıkları: BTreeMap::new(),
             eksen_sürükleme: None,
             ölçüm_datumları: [None, None],
+            çubuk_vuruş_dizini: RefCell::new(None),
         })
     }
 
@@ -999,6 +1094,27 @@ impl Grafik {
         self.seçenekler.çubuk_düzeni.is_some()
     }
 
+    fn çubuk_vuruş_anahtarı(
+        &self,
+        genişlik: u32,
+        yükseklik: u32,
+        x_aralığı: Aralık,
+        y_aralığı: Aralık,
+    ) -> ÇubukVuruşAnahtarı {
+        ÇubukVuruşAnahtarı {
+            genişlik,
+            yükseklik,
+            x_aralığı,
+            y_aralığı,
+            görünür_seriler: self
+                .seçenekler
+                .seriler
+                .iter()
+                .map(|seri| seri.göster)
+                .collect(),
+        }
+    }
+
     pub fn kutu_bıyık_grafiği(&self) -> bool {
         self.seçenekler.kutu_bıyık_düzeni.is_some()
     }
@@ -1073,84 +1189,35 @@ impl Grafik {
         if self.veri.seriler().is_empty() {
             return None;
         }
-        let görünür_x = self.görünür_x_aralığı();
-        let karışık_çizim = self
-            .seçenekler
-            .seriler
-            .iter()
-            .any(|seri| seri.çizim_türü == crate::SeriÇizimTürü::Çubuk);
-        let çizilenler = self
-            .veri
-            .x()
-            .iter()
-            .copied()
-            .enumerate()
-            .filter(|(_, x_değeri)| {
-                *x_değeri + 0.45 >= görünür_x.en_az && *x_değeri - 0.45 <= görünür_x.en_çok
-            })
-            .flat_map(|(indeks, _)| {
-                self.veri
-                    .seriler()
-                    .iter()
-                    .enumerate()
-                    .filter_map(move |(seri, değerler)| {
-                        if self.seçenekler.seriler.get(seri).is_none_or(|ayarlar| {
-                            !ayarlar.göster
-                                || (karışık_çizim
-                                    && ayarlar.çizim_türü != crate::SeriÇizimTürü::Çubuk)
-                        }) {
-                            return None;
-                        }
-                        değerler
-                            .get(indeks)
-                            .copied()
-                            .flatten()
-                            .map(|değer| (seri, indeks, değer))
-                    })
-            })
-            .collect::<Vec<_>>();
-        let sahne = self.çiz_görünür_boyutta(genişlik_px, yükseklik_px);
-        let mut sıra = 0_usize;
-        for komut in sahne.komutlar() {
-            let (konum, genişlik, yükseklik, dolgu, çizgi) = match komut {
-                Komut::Dikdörtgen {
-                    konum,
-                    genişlik,
-                    yükseklik,
-                    dolgu,
-                    çizgi,
-                    ..
-                }
-                | Komut::YuvarlatılmışDikdörtgen {
-                    konum,
-                    genişlik,
-                    yükseklik,
-                    dolgu,
-                    çizgi,
-                    ..
-                } => (konum, genişlik, yükseklik, dolgu, çizgi),
-                _ => continue,
-            };
-            if !self.seçenekler.seriler.iter().any(|seri| {
-                seri.dolgu.as_deref() == Some(dolgu.as_str())
-                    || seri.renk == *dolgu
-                    || seri.renk == *çizgi
-                    || seri.çubuk_dolguları.iter().any(|renk| renk == dolgu)
-                    || seri.çubuk_çizgileri.iter().any(|renk| renk == çizgi)
-            }) {
-                continue;
-            }
-            let (seri, indeks, değer) = çizilenler.get(sıra).copied()?;
-            sıra = sıra.saturating_add(1);
-            if x >= konum.x
-                && x <= konum.x + *genişlik
-                && y >= konum.y
-                && y <= konum.y + *yükseklik
-            {
-                return Some((seri, indeks, *konum, *genişlik, *yükseklik, değer));
-            }
+        let beklenen = self.çubuk_vuruş_anahtarı(
+            genişlik_px,
+            yükseklik_px,
+            self.görünür_x_aralığı(),
+            self.görünür_y_aralığı(),
+        );
+        let güncel = self
+            .çubuk_vuruş_dizini
+            .borrow()
+            .as_ref()
+            .is_some_and(|dizin| dizin.anahtar == beklenen);
+        if !güncel {
+            // İlk vuruşta geometri bir kez ana çizim yolundan kurulur. Sonraki
+            // pointer hareketleri yalnız uzamsal hücreyi tarar; sahne yeniden
+            // üretilmez ve seri renkleri üzerinden komut eşleştirilmez.
+            drop(self.çiz_görünür_boyutta(genişlik_px, yükseklik_px));
         }
-        None
+        self.çubuk_vuruş_dizini.borrow().as_ref().and_then(|dizin| {
+            dizin.vuruş(x, y).map(|kayıt| {
+                (
+                    kayıt.seri,
+                    kayıt.indeks,
+                    kayıt.konum,
+                    kayıt.genişlik,
+                    kayıt.yükseklik,
+                    kayıt.değer,
+                )
+            })
+        })
     }
 
     /// Yüzey imlecinin normalize edilmiş konumunu kartın çekirdek ayarına göre
@@ -3784,6 +3851,9 @@ impl Grafik {
             });
         let x_aralığı = görünür_x.unwrap_or(tam_x);
         let x_açıklığı = (x_aralığı.en_çok - x_aralığı.en_az).max(f64::EPSILON);
+        let vuruş_anahtarı =
+            self.çubuk_vuruş_anahtarı(genişlik_px, yükseklik_px, x_aralığı, aralık);
+        let mut vuruş_kayıtları = Vec::<ÇubukVuruşKaydı>::new();
         let birincil_y_birimi = self
             .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
             .map_or("", |ölçek| ölçek.birim.as_str());
@@ -3980,8 +4050,9 @@ impl Grafik {
                             .and_then(|seri| seri.çubuk_çizgileri.get(indeks))
                             .cloned()
                             .unwrap_or(vuruş_rengi);
+                        let çubuk_konumu = Nokta::yeni(çubuk_sol, çubuk_üst);
                         sahne.ekle(çubuk_komutu(
-                            Nokta::yeni(çubuk_sol, çubuk_üst),
+                            çubuk_konumu,
                             çubuk_genişliği,
                             çubuk_yüksekliği,
                             dolgu,
@@ -3991,6 +4062,16 @@ impl Grafik {
                             düzen.yön,
                             değer < 0.0,
                         ));
+                        if çubuk_genişliği > 0.0 && çubuk_yüksekliği > 0.0 {
+                            vuruş_kayıtları.push(ÇubukVuruşKaydı {
+                                seri: seri_indeksi,
+                                indeks,
+                                konum: çubuk_konumu,
+                                genişlik: çubuk_genişliği,
+                                yükseklik: çubuk_yüksekliği,
+                                değer,
+                            });
+                        }
                         if let Some(komut) = nokta_komutu {
                             sahne.ekle(komut);
                         }
@@ -4163,10 +4244,13 @@ impl Grafik {
                         let kalınlık = seri.map_or(0.0, |seri| seri.çizgi_kalınlığı);
                         let çubuk_sol = x0.min(x1).clamp(sol, sağ);
                         let çubuk_sağ = x0.max(x1).clamp(sol, sağ);
+                        let çubuk_konumu = Nokta::yeni(çubuk_sol, çubuk_üst);
+                        let çubuk_genişliği = (çubuk_sağ - çubuk_sol).max(0.0);
+                        let çubuk_yüksekliği = (çubuk_alt - çubuk_üst).max(0.0);
                         sahne.ekle(çubuk_komutu(
-                            Nokta::yeni(çubuk_sol, çubuk_üst),
-                            (çubuk_sağ - çubuk_sol).max(0.0),
-                            (çubuk_alt - çubuk_üst).max(0.0),
+                            çubuk_konumu,
+                            çubuk_genişliği,
+                            çubuk_yüksekliği,
                             dolgu,
                             çizgi,
                             kalınlık,
@@ -4174,6 +4258,16 @@ impl Grafik {
                             düzen.yön,
                             değer < 0.0,
                         ));
+                        if çubuk_genişliği > 0.0 && çubuk_yüksekliği > 0.0 {
+                            vuruş_kayıtları.push(ÇubukVuruşKaydı {
+                                seri: seri_indeksi,
+                                indeks,
+                                konum: çubuk_konumu,
+                                genişlik: çubuk_genişliği,
+                                yükseklik: çubuk_yüksekliği,
+                                değer,
+                            });
+                        }
                         if let Some(yazı_boyutu) = otomatik_yazı_boyutu {
                             let (alan_x, alan_genişliği) = if değer < 0.0 {
                                 (sol, x1 - sol)
@@ -4239,6 +4333,8 @@ impl Grafik {
                 }
             }
         }
+        *self.çubuk_vuruş_dizini.borrow_mut() =
+            Some(ÇubukVuruşDizini::yeni(vuruş_anahtarı, vuruş_kayıtları));
         for seri_indeksi in çizgi_serileri {
             self.gruplu_çizgi_serisini_çiz(
                 sahne,
@@ -5881,6 +5977,45 @@ fn tekil_değer_mi(değerler: &[Option<f64>], indeks: usize) -> bool {
 #[cfg(test)]
 mod eksen_testleri {
     use super::*;
+
+    #[test]
+    fn çubuk_vuruş_dizini_yalnız_hedef_hücredeki_dikdörtgeni_döndürür() {
+        let anahtar = ÇubukVuruşAnahtarı {
+            genişlik: 800,
+            yükseklik: 400,
+            x_aralığı: Aralık {
+                en_az: -0.5,
+                en_çok: 1.5,
+            },
+            y_aralığı: Aralık {
+                en_az: 0.0,
+                en_çok: 10.0,
+            },
+            görünür_seriler: vec![true, true],
+        };
+        let kayıtlar = vec![
+            ÇubukVuruşKaydı {
+                seri: 0,
+                indeks: 0,
+                konum: Nokta::yeni(100.0, 100.0),
+                genişlik: 40.0,
+                yükseklik: 200.0,
+                değer: 5.0,
+            },
+            ÇubukVuruşKaydı {
+                seri: 1,
+                indeks: 0,
+                konum: Nokta::yeni(150.0, 60.0),
+                genişlik: 40.0,
+                yükseklik: 240.0,
+                değer: 8.0,
+            },
+        ];
+        let dizin = ÇubukVuruşDizini::yeni(anahtar, kayıtlar);
+        assert_eq!(dizin.vuruş(120.0, 150.0).map(|vuruş| vuruş.seri), Some(0));
+        assert_eq!(dizin.vuruş(170.0, 150.0).map(|vuruş| vuruş.seri), Some(1));
+        assert!(dizin.vuruş(300.0, 150.0).is_none());
+    }
 
     #[test]
     fn bölmeler_sıfıra_hizalanır_ve_yakınlaştıkça_ondalık_detayı_artırır() {

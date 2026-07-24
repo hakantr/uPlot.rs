@@ -146,7 +146,10 @@ pub use months::{
     MONTHS_KANIT_TOHUMU, MONTHS_KART_TANIM_ÖRNEĞİ, MONTHS_RU_KANIT_TOHUMU,
     months_artık_yıllı_kartı, months_artık_yılsız_kartı, months_rusça_kartı,
 };
-pub use multi_bars::{MULTI_BARS_KART_TANIM_ÖRNEĞİ, MultiBarsÖrneği, multi_bars_kartı};
+pub use multi_bars::{
+    MULTI_BARS_KART_TANIM_ÖRNEĞİ, MultiBarsÖrneği, multi_bars_kartı,
+    multi_bars_kitaplık_etiketleri, multi_bars_kitaplık_kartı,
+};
 pub use nearest_non_null::{
     NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, nearest_non_null_kartı,
 };
