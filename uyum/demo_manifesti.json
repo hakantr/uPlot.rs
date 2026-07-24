@@ -211,7 +211,7 @@
           "paniksiz-hata-bildirimi": "devralındı"
         },
         "gerekçeler": {
-          "kosullu-bos-ve-dolu-noktalar": "Resmî scale-padding kartı seri noktalarını çizmez."
+          "kosullu-bos-ve-dolu-noktalar": "Tüm 13 seri her X konumunda doludur; null/undefined koşulu yoktur. Resmî varsayılan beyaz dolgulu kırmızı nokta işaretleri korunur."
         }
       },
       "sahip_faz": 1,
@@ -221,7 +221,8 @@
         "numeric-x-scale",
         "thirteen-aligned-series",
         "linear-path",
-        "numeric-auto-scale-padding",
+        "source-rangeNum-snapped-padding",
+        "source-default-point-markers",
         "dynamic-axis-grid",
         "multi-series-cursor-legend",
         "common-interaction-profile"

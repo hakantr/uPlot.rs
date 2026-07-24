@@ -3573,6 +3573,19 @@ impl Render for ChartListesi {
                     bu.no_data_örneğini_seç(örnek, cx);
                 }))
             }));
+        let kullanım_rehberi = match aktif_kart {
+            KartKimliği::ScalePadding => Some(
+                "Amaç: farklı büyüklüklerdeki düz eşik ve taban çizgilerini tek Y ölçeğinde \
+                 uçlara değmeden gösterir; kaynak rangeNum hesabı %10 payı dışa doğru uygun \
+                 artıma yapıştırarak −13000…13000 üretir. API: YÖlçekSeçenekleri::sayısal_aralık \
+                 alt/üst payı ve soft sınır kipini tanımlar; okunabilirliği ayrılması gereken \
+                 metrik aileleri adlandırılmış farklı ölçeklere atanabilir. İzleme: alarm ve \
+                 kapasite eşikleri için uygundur; ±0.1 ile ±10500 aynı ölçekteyse küçük değerlerin \
+                 sıfıra yakın görünmesi doğrudur. Maliyet: 13×10 hizalı nokta O(S×N), imleç \
+                 O(log N + S); cursor ve lejant ana yolları yeniden üretmeden güncellenir.",
+            ),
+            _ => None,
+        };
         let ayrıntı = div()
             .flex_1()
             .h_full()
@@ -3603,6 +3616,18 @@ impl Render for ChartListesi {
                 .child(no_data_seçenekleri)
             })
             .child(div().mb_2().text_xs().text_color(soluk).child(yardım))
+            .when_some(kullanım_rehberi, |öğe, rehber| {
+                öğe.child(
+                    div()
+                        .mb_2()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child(rehber),
+                )
+            })
             .child(div().mb_2().text_xs().text_color(vurgu).child(lejant))
             .when(açıklama_istendi, |öğe| {
                 öğe.child(

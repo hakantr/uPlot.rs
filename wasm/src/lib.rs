@@ -2743,9 +2743,14 @@ mod testler {
         let Ok(oturum) = oturum else {
             return;
         };
+        assert_eq!(oturum.gorunur_y_araligi(), vec![-13_000.0, 13_000.0]);
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("Flat"));
         assert_eq!(svg.matches("fill=\"none\"").count(), 13);
+        assert_eq!(
+            svg.matches("fill=\"#ffffff\" stroke=\"#ff0000\"").count(),
+            130
+        );
     }
 
     #[test]

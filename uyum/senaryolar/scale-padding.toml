@@ -14,11 +14,16 @@ düzeyler = [-10500.0, -10000.0, -9500.0, -0.105, -0.100, -0.095, 0.0, 0.095, 0.
 [ölçek]
 x_zaman = false
 y_veri_aralığı = [-10500.0, 10500.0]
-y_otomatik_paylı_aralık = [-12600.0, 12600.0]
+y_otomatik_paylı_aralık = [-13000.0, 13000.0]
+algoritma = "rangeNum(min,max,0.1,true)-10-uslu-artima-yapisir"
 
 [seri]
 çizgi_rengi = "#ff0000"
 çizgi_sayısı = 13
+nokta_sayısı = 130
+nokta_boyutu = 5
+nokta_dolgusu = "#ffffff"
+nokta_çizgisi = "#ff0000"
 
 [etkileşim]
 ortak_davranış_profili = "resize-temeli-v1"
@@ -27,6 +32,7 @@ seçim_yakınlaştır = true
 çift_tıkla_tam_görünüm = true
 dokunma_xy_yakınlaştır = true
 boşluk_sol_sürükleme_taşıma = true
+x_yakınlaştırmasında_sabit_y_aralığı = [-13000.0, 13000.0]
 
 [kanıt]
 masaüstü = "uygulamalar/masaustu/src/masaustu.rs"

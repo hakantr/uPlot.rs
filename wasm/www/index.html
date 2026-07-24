@@ -671,6 +671,12 @@
         ].map(etiket => ({ etiket, renk: "#ff0000" })),
         yardım: "Sürükle: seç · boşluk + sürükle: taşı · iki parmak: yakınlaştır · tek parmak: taşı · çift tıkla: tam görünüm",
         değişkenNokta: false,
+        kullanım: {
+          amaç: "Çok farklı büyüklüklerdeki düz eşik ve taban çizgilerinin tek Y ölçeğinde, uçlara değmeden nasıl gösterildiğini kanıtlar. Kaynak uPlot aralığı %10 paydan sonra dışa doğru uygun artıma yapıştırarak −13000…13000 üretir.",
+          api: "YÖlçekSeçenekleri::sayısal_aralık ile alt/üst pay, soft sınır ve koşullu kip ayrı ayrı tanımlanabilir. Ayrı okunabilirlik gereken metrik aileleri aynı adlandırılmış ölçeğe zorlanmamalı; farklı ölçeklere atanmalıdır.",
+          izleme: "Alarm eşikleri, kapasite sınırları ve sıfır tabanları için uygundur. ±0.1 serileri ±10500 ile aynı ölçekte doğal olarak sıfıra yakın görünür; bunu büyütmek veriyi çarpıtmak yerine ayrı ölçek/panel gerektirir.",
+          maliyet: "13 × 10 hizalı nokta tek çizim geçişinde O(S×N) işlenir; imleç araması O(log N + S), lejant/cursor güncellemesi ana yolları yeniden üretmez. Bu veri boyutunda örnek azaltma gerekmez.",
+        },
         etkileşimler: () => ({
           tekerlek: ortak_kart_tekerlek_etkilesimi(),
           seçim: ortak_kart_secim_yakinlastir(),
