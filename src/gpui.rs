@@ -1369,7 +1369,9 @@ impl Render for GpuiGrafik {
                 }
             }))
             .on_pinch(cx.listener(|bu, olay: &PinchEvent, _, cx| {
-                if bu.dokunma_yakınlaştır(olay) {
+                let datum_değişti = bu.grafik.ölçüm_datumlarını_temizle();
+                let görünüm_değişti = bu.dokunma_yakınlaştır(olay);
+                if datum_değişti || görünüm_değişti {
                     bu.grafik_bildir(cx);
                 } else {
                     GpuiGrafik::bildir(cx);
@@ -1418,8 +1420,9 @@ impl Render for GpuiGrafik {
                         bu.imleç = None;
                         bu.açıklama_vuruşu = None;
                     } else if olay.click_count >= 2 && ayarlar.çift_tıkla_tam_görünüm {
-                        bu.grafik.ölçüm_datumlarını_temizle();
-                        ana_sahne_değişti = bu.grafik.tam_görünüm();
+                        let datum_değişti = bu.grafik.ölçüm_datumlarını_temizle();
+                        let görünüm_değişti = bu.grafik.tam_görünüm();
+                        ana_sahne_değişti = datum_değişti || görünüm_değişti;
                         bu.seçim = None;
                         bu.açıklama_seçimi = false;
                     } else if ayarlar.seçim_yakınlaştır

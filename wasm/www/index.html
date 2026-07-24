@@ -606,13 +606,19 @@
       "measure-datums": {
         başlık: "Measure / Datums",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/measure-datums.html">measure-datums.html</a>
-          <br>Grafiğe odaklanın; imleçte 1 ve 2 ile datum yerleştirin, Esc ile temizleyin.`,
+          <br>Tek yüzey · grafiğe odaklanın; imleçte 1 ve 2 ile iki ölçüm datumunu yerleştirin`,
         tanım: () => measure_datums_kart_tanim_ornegi(),
         tanımYolu: "src/kart/measure_datums.rs",
         seriler: [{ etiket: "Data 1", renk: "red" }],
         yardım: "1: mavi datum · 2: turuncu datum ve dx/dy · Esc, tekerlek veya çift tık: temizle",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "Seriye yapışmadan iki serbest X/Y referansı koyar ve aralarındaki dx/dy farkını ölçer; aynı görünümde başlangıç-bitiş karşılaştırması sağlar.",
+          api: "Grafik::ölçüm_datumunu_ayarla(1|2, yatay_oran, dikey_oran) görünür ölçeğe veri koordinatı kaydeder. Grafik odaktayken 1/2 yerleştirir; Esc, plot içindeki wheel ve çift tık temizler.",
+          izleme: "Incident başlangıcı/sonu arasındaki süreyi ve CPU, gecikme ya da throughput değişimini yaklaşık okumak; iki anomali arasındaki farkı not etmek için uygundur.",
+          maliyet: "Pointer hareketi yalnız hafif imleç katmanını günceller. Seyrek 1/2/Esc olayları kaynak draw hook'u gibi kalıcı datum sahnesini bir kez yeniden kurar; wheel temizleme ve zoom tek redraw'da birleştirilir.",
+        },
       },
       ...Object.fromEntries([
         ["multi-bars-libraries-vertical", "Multi Bars · library benchmark · vertical"],
@@ -3600,11 +3606,14 @@
           const alan = çizimAlanı(view);
           try {
             const çarpan = kıstırma.uzaklık > 0 ? uzaklık / kıstırma.uzaklık : 1;
-            if (oturum?.dokunma_yakinlastir(
+            const datumTemizlendi = aktifKart === "measure-datums"
+              && (oturum?.olcum_datumlarini_temizle() ?? false);
+            const görünümDeğişti = oturum?.dokunma_yakinlastir(
               (x - alan.sol) / alan.genişlik,
               (y - alan.üst) / alan.yükseklik,
               çarpan,
-            )) çiz();
+            ) ?? false;
+            if (datumTemizlendi || görünümDeğişti) çiz();
             kıstırma.uzaklık = uzaklık;
             hata.textContent = "";
           } catch (neden) {
@@ -3831,6 +3840,7 @@
     });
     chart.addEventListener("pointerleave", () => {
       grafikÜzerinde = false;
+      sonDatumOranı = null;
       eksenİmleciniGüncelle();
       sonTooltipİmleci = null;
       if (oturum?.imlec_odagini_temizle()) çiz();
@@ -3842,7 +3852,7 @@
       chart.querySelector("#timeline-vurgu")?.setAttribute("visibility", "hidden");
     });
     document.addEventListener("keydown", olay => {
-      if (aktifKart === "measure-datums" && oturum && olay.target !== açıklamaMetni) {
+      if (aktifKart === "measure-datums" && oturum && document.activeElement === chart) {
         if (olay.key === "Escape") {
           if (oturum.olcum_datumlarini_temizle()) çiz();
           olay.preventDefault();
@@ -3886,30 +3896,42 @@
       }
       taşımaİmleciniGüncelle();
     });
-    chart.addEventListener("dblclick", () => {
-      if (aktifKart === "measure-datums") oturum?.olcum_datumlarini_temizle();
-      if (etkileşimler.çiftTık && oturum?.tam_gorunum()) çiz();
-    });
-
-    chart.addEventListener("wheel", olay => {
-      if (aktifKart === "measure-datums" && oturum?.olcum_datumlarini_temizle()) çiz();
-      const delta = tekerlekDeltası(olay);
-      if (!etkileşimler.tekerlek || delta === 0) return;
+    chart.addEventListener("dblclick", olay => {
       const { x, y, view } = svgKonumu(olay);
       const alan = çizimAlanı(view);
       if (x < alan.sol || x > alan.sağ || y < alan.üst || y > alan.alt) return;
+      const datumTemizlendi = aktifKart === "measure-datums"
+        && (oturum?.olcum_datumlarini_temizle() ?? false);
+      const görünümDeğişti = etkileşimler.çiftTık && (oturum?.tam_gorunum() ?? false);
+      if (datumTemizlendi || görünümDeğişti) çiz();
+    });
+
+    chart.addEventListener("wheel", olay => {
+      const delta = tekerlekDeltası(olay);
+      const { x, y, view } = svgKonumu(olay);
+      const alan = çizimAlanı(view);
+      if (x < alan.sol || x > alan.sağ || y < alan.üst || y > alan.alt) return;
+      const datumTemizlendi = aktifKart === "measure-datums"
+        && (oturum?.olcum_datumlarini_temizle() ?? false);
+      if (!etkileşimler.tekerlek || delta === 0) {
+        if (datumTemizlendi) çiz();
+        return;
+      }
       olay.preventDefault();
       try {
         const yatayOran = (x - alan.sol) / alan.genişlik;
         const dikeyOran = (y - alan.üst) / alan.yükseklik;
-        if (oturum.tekerlek_eksende(
+        const görünümDeğişti = oturum.tekerlek_eksende(
           yatayOran,
           dikeyOran,
           -delta,
           olay.deltaMode === 0,
           tekerlekEkseni(olay),
-        )) {
+        );
+        if (görünümDeğişti) {
           chart.focus({ preventScroll: true });
+        }
+        if (datumTemizlendi || görünümDeğişti) {
           çiz();
         }
         hata.textContent = "";
@@ -4071,6 +4093,7 @@
         syncCursorTaşıma = null;
         syncCursorKıstırma = null;
         syncCursorDokunmalar.clear();
+        sonDatumOranı = null;
         aktifKart = kimlik;
         if (kimlik === "sync-y-zero") {
           chart.dataset.syncYZeroAsamasi = "raw";

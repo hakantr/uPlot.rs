@@ -73,4 +73,22 @@ mod testler {
         assert_eq!(grafik.ölçüm_datumları(), [None, None]);
         Ok(())
     }
+
+    #[test]
+    fn ikinci_datum_önce_konursa_geçersiz_delta_çizilmez() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = measure_datums_kartı()?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        assert!(grafik.ölçüm_datumunu_ayarla(2, 0.75, 0.6));
+        let sahne = grafik.çiz();
+        assert!(
+            sahne
+                .komutlar()
+                .iter()
+                .any(|komut| matches!(komut, Komut::Daire { çizgi, .. } if çizgi == "orange"))
+        );
+        assert!(!sahne.komutlar().iter().any(
+            |komut| matches!(komut, Komut::Metin { içerik, .. } if içerik.starts_with("dx: "))
+        ));
+        Ok(())
+    }
 }

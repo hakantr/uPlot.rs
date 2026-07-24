@@ -2051,6 +2051,10 @@ mod testler {
         assert!(svg.contains("dx:"));
         assert!(oturum.olcum_datumlarini_temizle());
         assert!(!oturum.svg(800, 400).contains("dx:"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("document.activeElement === chart"));
+        assert!(web.contains("datumTemizlendi || görünümDeğişti"));
+        assert!(web.contains("wheel temizleme ve zoom tek redraw'da birleştirilir"));
         assert_eq!(kart_sayisi(), 365);
     }
 

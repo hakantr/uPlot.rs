@@ -3564,7 +3564,9 @@ impl Grafik {
             {
                 let orta = datum_noktası(((x1 + x2) / 2.0, (y1 + y2) / 2.0));
                 sahne.ekle(Komut::Metin {
-                    konum: orta,
+                    // Canvas `textBaseline = "middle"` karşılığı: SVG/GPUI
+                    // baseline konumunu 12 px yazının optik merkezine taşır.
+                    konum: Nokta::yeni(orta.x, orta.y + 4.0),
                     içerik: format!(
                         "dx: {}, dy: {}",
                         üç_anlamlı_basamak(x2 - x1),
@@ -5927,14 +5929,39 @@ fn eksen_bölmeleri_artımla(aralık: Aralık, artım: f64) -> Vec<f64> {
 }
 
 fn üç_anlamlı_basamak(değer: f64) -> String {
+    if değer.is_nan() {
+        return "NaN".to_string();
+    }
+    if değer == f64::INFINITY {
+        return "Infinity".to_string();
+    }
+    if değer == f64::NEG_INFINITY {
+        return "-Infinity".to_string();
+    }
     if değer == 0.0 {
         return "0.00".to_string();
     }
-    let basamak = 2 - değer.abs().log10().floor() as i32;
-    if basamak > 0 {
-        format!("{değer:.basamak$}", basamak = basamak as usize)
+
+    let ilk_üs = değer.abs().log10().floor() as i32;
+    let yuvarlanmış = if (-6..3).contains(&ilk_üs) {
+        let çarpan = 10_f64.powi(2 - ilk_üs);
+        (değer * çarpan).round() / çarpan
     } else {
-        format!("{:.0}", değer / 10_f64.powi(-basamak)) + &"0".repeat((-basamak) as usize)
+        değer
+    };
+    let üs = yuvarlanmış.abs().log10().floor() as i32;
+    if !(-6..3).contains(&üs) {
+        let bilimsel = format!("{yuvarlanmış:.2e}");
+        let Some((mantis, üs)) = bilimsel.split_once('e') else {
+            return bilimsel;
+        };
+        let Ok(üs) = üs.parse::<i32>() else {
+            return bilimsel;
+        };
+        format!("{mantis}e{üs:+}")
+    } else {
+        let ondalık = usize::try_from((2 - üs).max(0)).unwrap_or(0);
+        format!("{yuvarlanmış:.ondalık$}")
     }
 }
 
@@ -6359,6 +6386,17 @@ mod eksen_testleri {
         );
         assert!(yoğun.len() <= 44);
         assert!(yoğun.windows(2).all(|çift| çift.first() < çift.get(1)));
+    }
+
+    #[test]
+    fn datum_delta_biçimi_javascript_to_precision_üç_kuralını_korur() {
+        assert_eq!(üç_anlamlı_basamak(0.0), "0.00");
+        assert_eq!(üç_anlamlı_basamak(12.345), "12.3");
+        assert_eq!(üç_anlamlı_basamak(0.000_001_234), "0.00000123");
+        assert_eq!(üç_anlamlı_basamak(0.000_000_123_4), "1.23e-7");
+        assert_eq!(üç_anlamlı_basamak(12_345.0), "1.23e+4");
+        assert_eq!(üç_anlamlı_basamak(-9_876.0), "-9.88e+3");
+        assert_eq!(üç_anlamlı_basamak(999.9), "1.00e+3");
     }
 
     #[test]
