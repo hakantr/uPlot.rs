@@ -731,6 +731,53 @@ pub struct EtkileşimSeçenekleri {
     /// `y-scale-drag` demosundaki ekseni sürükleyerek ölçeği kaydırma ve
     /// Shift ile büyütüp daraltma davranışını etkinleştirir.
     pub eksen_sürükleme: bool,
+    /// Overview/ranger yüzeyinin X/Y seçim ve uyarlanabilir sürükleme ayarları.
+    /// Yüzey adaptörleri bu seçeneği her kartta açıp kapatabilir.
+    pub zoom_ranger: ZoomRangerSeçenekleri,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ZoomRangerSeçenekleri {
+    pub etkin: bool,
+    pub x: bool,
+    pub y: bool,
+    pub en_az_sürükleme_px: f64,
+    pub tek_eksen_eşiği_px: f64,
+}
+
+impl Default for ZoomRangerSeçenekleri {
+    fn default() -> Self {
+        Self {
+            etkin: false,
+            x: true,
+            y: false,
+            en_az_sürükleme_px: 10.0,
+            tek_eksen_eşiği_px: 10.0,
+        }
+    }
+}
+
+impl ZoomRangerSeçenekleri {
+    pub fn etkin(mut self, etkin: bool) -> Self {
+        self.etkin = etkin;
+        self
+    }
+
+    pub fn eksenler(mut self, x: bool, y: bool) -> Self {
+        self.x = x;
+        self.y = y;
+        self
+    }
+
+    pub fn sürükleme_eşikleri(mut self, en_az_px: f64, tek_eksen_px: f64) -> Self {
+        if en_az_px.is_finite() {
+            self.en_az_sürükleme_px = en_az_px.max(0.0);
+        }
+        if tek_eksen_px.is_finite() {
+            self.tek_eksen_eşiği_px = tek_eksen_px.max(0.0);
+        }
+        self
+    }
 }
 
 impl Default for EtkileşimSeçenekleri {
@@ -745,6 +792,7 @@ impl Default for EtkileşimSeçenekleri {
             ctrl_açıklama: false,
             imleç_bilgi_kutusu: false,
             eksen_sürükleme: false,
+            zoom_ranger: ZoomRangerSeçenekleri::default(),
         }
     }
 }
@@ -793,6 +841,11 @@ impl EtkileşimSeçenekleri {
 
     pub fn eksen_sürükleme(mut self, etkin: bool) -> Self {
         self.eksen_sürükleme = etkin;
+        self
+    }
+
+    pub fn zoom_ranger(mut self, ayarlar: ZoomRangerSeçenekleri) -> Self {
+        self.zoom_ranger = ayarlar;
         self
     }
 }

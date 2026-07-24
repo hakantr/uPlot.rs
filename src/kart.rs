@@ -234,6 +234,6 @@ pub use y_shifted_series::{
 };
 pub use zoom_touch::{ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, zoom_touch_kartı};
 pub use zoom_wheel::{
-    ZOOM_FETCH_KANIT_ÖRNEĞİ, ZOOM_RANGER_GRIPS_KANIT_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    ZoomFetchAkışı, zoom_wheel_kartı,
+    ZOOM_FETCH_KANIT_ÖRNEĞİ, ZOOM_RANGER_GRIPS_KANIT_ÖRNEĞİ, ZOOM_RANGER_XY_KANIT_ÖRNEĞİ,
+    ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, ZoomFetchAkışı, zoom_ranger_xy_grafiği, zoom_wheel_kartı,
 };

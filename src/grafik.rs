@@ -37,33 +37,82 @@ pub enum NullAtlamaYönü {
     Önceki,
 }
 
-/// Overview grafiğindeki taşınabilir ve iki uçtan boyutlandırılabilir X seçimi.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ZoomRangerSürüklemeEkseni {
+    Yok,
+    X,
+    Y,
+    XY,
+}
+
+/// Overview grafiğindeki taşınabilir ve uçlardan boyutlandırılabilir X/Y seçimi.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ZoomRangerDurumu {
-    tam: Aralık,
-    seçim: Aralık,
+    tam_x: Aralık,
+    seçim_x: Aralık,
+    tam_y: Aralık,
+    seçim_y: Aralık,
+    ayarlar: crate::ZoomRangerSeçenekleri,
 }
 
 impl ZoomRangerDurumu {
     pub fn yeni(tam: Aralık, seçim: Aralık) -> Result<Self, UplotHatası> {
-        let mut durum = Self { tam, seçim: tam };
-        durum.ana_görünümle_senkronla(seçim)?;
+        Self::xy(
+            tam,
+            seçim,
+            Aralık::yeni(0.0, 1.0)?,
+            Aralık::yeni(0.0, 1.0)?,
+            crate::ZoomRangerSeçenekleri::default().etkin(true),
+        )
+    }
+
+    pub fn xy(
+        tam_x: Aralık,
+        seçim_x: Aralık,
+        tam_y: Aralık,
+        seçim_y: Aralık,
+        ayarlar: crate::ZoomRangerSeçenekleri,
+    ) -> Result<Self, UplotHatası> {
+        let mut durum = Self {
+            tam_x,
+            seçim_x: tam_x,
+            tam_y,
+            seçim_y: tam_y,
+            ayarlar,
+        };
+        durum.ana_görünümle_xy_senkronla(seçim_x, seçim_y)?;
         Ok(durum)
     }
 
     pub fn seçim_aralığı(self) -> Aralık {
-        self.seçim
+        self.seçim_x
     }
 
     pub fn tam_aralık(self) -> Aralık {
-        self.tam
+        self.tam_x
+    }
+
+    pub fn y_seçim_aralığı(self) -> Aralık {
+        self.seçim_y
+    }
+
+    pub fn y_tam_aralık(self) -> Aralık {
+        self.tam_y
     }
 
     pub fn seçim_oranları(self) -> (f64, f64) {
-        let genişlik = self.tam.en_çok - self.tam.en_az;
+        let genişlik = self.tam_x.en_çok - self.tam_x.en_az;
         (
-            (self.seçim.en_az - self.tam.en_az) / genişlik,
-            (self.seçim.en_çok - self.tam.en_az) / genişlik,
+            (self.seçim_x.en_az - self.tam_x.en_az) / genişlik,
+            (self.seçim_x.en_çok - self.tam_x.en_az) / genişlik,
+        )
+    }
+
+    pub fn y_seçim_oranları(self) -> (f64, f64) {
+        let yükseklik = self.tam_y.en_çok - self.tam_y.en_az;
+        (
+            (self.seçim_y.en_az - self.tam_y.en_az) / yükseklik,
+            (self.seçim_y.en_çok - self.tam_y.en_az) / yükseklik,
         )
     }
 
@@ -71,41 +120,116 @@ impl ZoomRangerDurumu {
         if !fark.is_finite() {
             return false;
         }
-        let genişlik = self.seçim.en_çok - self.seçim.en_az;
-        let en_az = (self.seçim.en_az + fark).clamp(self.tam.en_az, self.tam.en_çok - genişlik);
-        self.değiştir(Aralık {
+        let genişlik = self.seçim_x.en_çok - self.seçim_x.en_az;
+        let en_az =
+            (self.seçim_x.en_az + fark).clamp(self.tam_x.en_az, self.tam_x.en_çok - genişlik);
+        self.x_değiştir(Aralık {
             en_az,
             en_çok: en_az + genişlik,
         })
     }
 
+    pub fn y_pencereyi_taşı(&mut self, fark: f64) -> bool {
+        if !fark.is_finite() {
+            return false;
+        }
+        let yükseklik = self.seçim_y.en_çok - self.seçim_y.en_az;
+        let en_az =
+            (self.seçim_y.en_az + fark).clamp(self.tam_y.en_az, self.tam_y.en_çok - yükseklik);
+        self.y_değiştir(Aralık {
+            en_az,
+            en_çok: en_az + yükseklik,
+        })
+    }
+
     pub fn sol_tutamağı_ayarla(&mut self, değer: f64) -> bool {
         değer.is_finite()
-            && self.değiştir(Aralık {
-                en_az: değer.clamp(self.tam.en_az, self.seçim.en_çok),
-                en_çok: self.seçim.en_çok,
+            && self.x_değiştir(Aralık {
+                en_az: değer.clamp(self.tam_x.en_az, self.seçim_x.en_çok),
+                en_çok: self.seçim_x.en_çok,
             })
     }
 
     pub fn sağ_tutamağı_ayarla(&mut self, değer: f64) -> bool {
         değer.is_finite()
-            && self.değiştir(Aralık {
-                en_az: self.seçim.en_az,
-                en_çok: değer.clamp(self.seçim.en_az, self.tam.en_çok),
+            && self.x_değiştir(Aralık {
+                en_az: self.seçim_x.en_az,
+                en_çok: değer.clamp(self.seçim_x.en_az, self.tam_x.en_çok),
+            })
+    }
+
+    pub fn alt_tutamağı_ayarla(&mut self, değer: f64) -> bool {
+        değer.is_finite()
+            && self.y_değiştir(Aralık {
+                en_az: değer.clamp(self.tam_y.en_az, self.seçim_y.en_çok),
+                en_çok: self.seçim_y.en_çok,
+            })
+    }
+
+    pub fn üst_tutamağı_ayarla(&mut self, değer: f64) -> bool {
+        değer.is_finite()
+            && self.y_değiştir(Aralık {
+                en_az: self.seçim_y.en_az,
+                en_çok: değer.clamp(self.seçim_y.en_az, self.tam_y.en_çok),
             })
     }
 
     pub fn ana_görünümle_senkronla(&mut self, aralık: Aralık) -> Result<bool, UplotHatası> {
-        let en_az = aralık.en_az.clamp(self.tam.en_az, self.tam.en_çok);
-        let en_çok = aralık.en_çok.clamp(self.tam.en_az, self.tam.en_çok);
-        Ok(self.değiştir(Aralık::yeni(en_az.min(en_çok), en_az.max(en_çok))?))
+        let en_az = aralık.en_az.clamp(self.tam_x.en_az, self.tam_x.en_çok);
+        let en_çok = aralık.en_çok.clamp(self.tam_x.en_az, self.tam_x.en_çok);
+        Ok(self.x_değiştir(Aralık::yeni(en_az.min(en_çok), en_az.max(en_çok))?))
     }
 
-    fn değiştir(&mut self, seçim: Aralık) -> bool {
-        if self.seçim == seçim {
+    pub fn ana_görünümle_xy_senkronla(
+        &mut self,
+        x: Aralık,
+        y: Aralık,
+    ) -> Result<bool, UplotHatası> {
+        let x_değişti = self.ana_görünümle_senkronla(x)?;
+        let en_az = y.en_az.clamp(self.tam_y.en_az, self.tam_y.en_çok);
+        let en_çok = y.en_çok.clamp(self.tam_y.en_az, self.tam_y.en_çok);
+        let y_değişti = self.y_değiştir(Aralık::yeni(en_az.min(en_çok), en_az.max(en_çok))?);
+        Ok(x_değişti || y_değişti)
+    }
+
+    pub fn uyarlanabilir_sürükleme_ekseni(
+        self,
+        yatay_fark_px: f64,
+        dikey_fark_px: f64,
+    ) -> ZoomRangerSürüklemeEkseni {
+        if !self.ayarlar.etkin || !yatay_fark_px.is_finite() || !dikey_fark_px.is_finite() {
+            return ZoomRangerSürüklemeEkseni::Yok;
+        }
+        let x = yatay_fark_px.abs();
+        let y = dikey_fark_px.abs();
+        if x.hypot(y) < self.ayarlar.en_az_sürükleme_px {
+            return ZoomRangerSürüklemeEkseni::Yok;
+        }
+        if self.ayarlar.x && self.ayarlar.y && (x - y).abs() < self.ayarlar.tek_eksen_eşiği_px {
+            return ZoomRangerSürüklemeEkseni::XY;
+        }
+        if self.ayarlar.x && (!self.ayarlar.y || x >= y) {
+            ZoomRangerSürüklemeEkseni::X
+        } else if self.ayarlar.y {
+            ZoomRangerSürüklemeEkseni::Y
+        } else {
+            ZoomRangerSürüklemeEkseni::Yok
+        }
+    }
+
+    fn x_değiştir(&mut self, seçim: Aralık) -> bool {
+        if self.seçim_x == seçim {
             return false;
         }
-        self.seçim = seçim;
+        self.seçim_x = seçim;
+        true
+    }
+
+    fn y_değiştir(&mut self, seçim: Aralık) -> bool {
+        if self.seçim_y == seçim {
+            return false;
+        }
+        self.seçim_y = seçim;
         true
     }
 }
@@ -393,11 +517,19 @@ impl Grafik {
     }
 
     pub fn zoom_ranger_durumu(&self) -> Result<ZoomRangerDurumu, UplotHatası> {
-        ZoomRangerDurumu::yeni(self.etkileşim.tam_x(), self.görünür_x_aralığı())
+        ZoomRangerDurumu::xy(
+            self.etkileşim.tam_x(),
+            self.görünür_x_aralığı(),
+            self.etkileşim.tam_y(),
+            self.görünür_y_aralığı(),
+            self.seçenekler.etkileşimler.zoom_ranger,
+        )
     }
 
     pub fn zoom_ranger_uygula(&mut self, ranger: ZoomRangerDurumu) -> bool {
-        self.etkileşim.görünür_x_ayarla(ranger.seçim_aralığı())
+        let x = self.etkileşim.görünür_x_ayarla(ranger.seçim_aralığı());
+        let y = self.etkileşim.görünür_y_ayarla(ranger.y_seçim_aralığı());
+        x || y
     }
 
     pub fn boyut(&self) -> (u32, u32) {

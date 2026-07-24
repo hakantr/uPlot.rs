@@ -3843,6 +3843,64 @@
         "davranış": "uygulandı_kanıtlı",
         "performans": "tam_kanıtlı"
       }
+    },
+    {
+      "id": "zoom-ranger-xy",
+      "başlık": "Zoom Ranger XY",
+      "kaynak": "demos/zoom-ranger-xy.html",
+      "kaynak_sha256": "1f3551db91cdc3dd07f147c62ec96addf1a08c31e994cfa7ad215f1cc52ca83a",
+      "fixture": "src/kart/zoom_wheel.rs#zoom_ranger_xy_grafiği",
+      "örnek": "examples/zoom_wheel.rs",
+      "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
+      "wasm_örneği": "wasm/www/index.html",
+      "senaryo": "uyum/senaryolar/zoom-ranger-xy.toml",
+      "ortak_davranış_sözleşmesi": {
+        "sürüm": 1,
+        "uygulama": "src/kart/zoom_wheel.rs#ortak_kart_etkileşimleri",
+        "kararlar": {
+          "kaynak-veri-esligi": "kartta_etkin",
+          "cekirdek-davranis-sahipligi": "kartta_etkin",
+          "gpui-wasm-yuzey-esdegerligi": "kartta_etkin",
+          "duyarli-boyutlandirma": "kartta_etkin",
+          "cizim-alani-kirpmasi": "devralındı",
+          "dinamik-eksen-izgara": "devralındı",
+          "surekli-imlec-izleme": "devralındı",
+          "canli-coklu-seri-lejanti": "devralındı",
+          "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
+          "secim-yakinlastirma": "kartta_etkin",
+          "cift-tik-tam-gorunum": "devralındı",
+          "tekerlek-yakinlastirma": "devralındı",
+          "uyarlanabilir-hassas-tekerlek": "devralındı",
+          "dokunma-yakinlastirma-tasima": "devralındı",
+          "bosluk-sol-surukleme-tasima": "devralındı",
+          "gorunum-gecmisi": "devralındı",
+          "gorunur-geri-ve-tam-gorunum-kontrolleri": "devralındı",
+          "kart-bilgi-ve-tanim-yerlesimi": "devralındı",
+          "paniksiz-hata-bildirimi": "kartta_etkin"
+        },
+        "gerekçeler": {
+          "kart-bilgi-ve-tanim-yerlesimi": "Ayrı katalog kartı yerine mevcut zoom-wheel yüzeyindeki açılıp kapanabilir ortak zoom seçeneği kullanılır.",
+          "kosullu-bos-ve-dolu-noktalar": "Sinüs kaynağı null içermez."
+        }
+      },
+      "sahip_faz": 4,
+      "kapsam_durumu": "uygulandı_kanıtlı",
+      "özellikler": [
+        "no-duplicate-catalog-card",
+        "xy-overview-selection",
+        "source-dist-10",
+        "source-uni-10-adaptive-axis",
+        "bidirectional-xy-sync",
+        "reusable-toggleable-ranger-option",
+        "gpui-wasm-parity"
+      ],
+      "kanıt": {
+        "api": "tam_kanıtlı",
+        "sayısal": "tam_kanıtlı",
+        "statik_görsel": "uygulandı_kanıtlı",
+        "davranış": "uygulandı_kanıtlı",
+        "performans": "tam_kanıtlı"
+      }
     }
   ]
 }

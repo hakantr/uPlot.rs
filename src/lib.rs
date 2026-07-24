@@ -25,7 +25,7 @@ pub mod svg;
 pub use cizim::{DoğrusalGradyan, GradyanRenkDurağı, Komut, MetinHizası, Nokta, Sahne};
 pub use grafik::{
     DağılımVuruşu, EksenHedefi, Grafik, NullAtlamaYönü, SeçimEylemi, TimelineVuruşu,
-    ZoomRangerDurumu,
+    ZoomRangerDurumu, ZoomRangerSürüklemeEkseni,
 };
 pub use hata::UplotHatası;
 #[cfg(feature = "svg")]
@@ -78,8 +78,8 @@ pub use kart::{
     WIND_DIRECTION_KART_TANIM_ÖRNEĞİ, Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ, Y_SHIFTED_SERIES_ARALIK_MS,
     Y_SHIFTED_SERIES_KANIT_TOHUMU, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ, YShiftedSeriesAkışı,
     YShiftedSeriesKipi, ZOOM_FETCH_KANIT_ÖRNEĞİ, ZOOM_RANGER_GRIPS_KANIT_ÖRNEĞİ,
-    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, ZoomFetchAkışı,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
+    ZOOM_RANGER_XY_KANIT_ÖRNEĞİ, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+    ZoomFetchAkışı, add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
     align_data_çizgi_çubuk_kartı, annotations_kartı, arcsinh_scales_kartı, area_fill_kartı,
     asap_yumuşat, axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı,
     bars_grouped_stacked_kartı, bars_values_autosize_kartı, box_whisker_kartı,
@@ -97,8 +97,8 @@ pub use kart::{
     sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartı,
     time_periods_kartı, timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
     tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukÖrneği,
+    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, zoom_ranger_xy_grafiği,
+    zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
 };
 pub use olcek::{Aralık, SayısalAralıkAyarları, SayısalAralıkParçası, YumuşakSınırKipi};
 pub use secenek::{
@@ -109,8 +109,8 @@ pub use secenek::{
     NoktaFiltreKipi, NoktaKatmanı, NoktaŞekli, OdakDüzeni, OdakStili, RüzgarYönüDüzeni, SeriBandı,
     SeriSeçenekleri, SeriÇizimTürü, TarihAdları, TekerlekAyarları, TekerlekKipi, TimelineDüzeni,
     TimelineHücresi, TooltipBilgisi, TooltipDüzeni, XÖlçekDağılımı, YÖlçekDağılımı,
-    YÖlçekEtiketBiçimi, YÖlçekSeçenekleri, ZamanDilimi, ÇizimKancasıDüzeni, ÇizimSırası,
-    ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı, İkincilXEksen,
+    YÖlçekEtiketBiçimi, YÖlçekSeçenekleri, ZamanDilimi, ZoomRangerSeçenekleri, ÇizimKancasıDüzeni,
+    ÇizimSırası, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı, İkincilXEksen,
 };
 pub use veri::{BoşlukKipi, HizalıDeğer, HizalıVeri, hizalı_verileri_birleştir};
 pub use yuzey::YüzeyDikdörtgeni;

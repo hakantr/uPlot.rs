@@ -60,6 +60,10 @@ impl EtkileşimDenetleyicisi {
         self.tam_x
     }
 
+    pub(crate) fn tam_y(&self) -> Aralık {
+        self.tam_y
+    }
+
     pub(crate) fn görünür_x_ayarla(&mut self, aralık: Aralık) -> bool {
         let yeni = (aralık != self.tam_x).then_some(aralık);
         if self.görünüm.x == yeni {

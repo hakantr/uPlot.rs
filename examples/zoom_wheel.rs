@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::path::PathBuf;
-use uplot_rs::{Grafik, ZoomFetchAkışı, zoom_wheel_kartı};
+use uplot_rs::{Grafik, ZoomFetchAkışı, zoom_ranger_xy_grafiği, zoom_wheel_kartı};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let çıktı = std::env::args()
@@ -15,13 +15,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut ranger = grafik.zoom_ranger_durumu()?;
     ranger.sol_tutamağı_ayarla(2.0);
     ranger.sağ_tutamağı_ayarla(5.0);
+    let tam_y = ranger.y_tam_aralık();
+    let y_uzunluğu = tam_y.en_çok - tam_y.en_az;
+    ranger.alt_tutamağı_ayarla(tam_y.en_az + y_uzunluğu * 0.2);
+    ranger.üst_tutamağı_ayarla(tam_y.en_az + y_uzunluğu * 0.8);
     grafik.zoom_ranger_uygula(ranger);
     let svg = grafik.çiz().svg();
     std::fs::write(&çıktı, svg)?;
+    let xy_çıktı = çıktı.with_file_name("zoom-ranger-xy.svg");
+    std::fs::write(&xy_çıktı, zoom_ranger_xy_grafiği()?.çiz().svg())?;
     let mut fetch = ZoomFetchAkışı::yeni()?;
     let istek = fetch.aralık_isteği(0.25, 0.75)?;
     fetch.kaynak_yanıtını_uygula(istek)?;
     fetch.tam_aralığı_yükle()?;
-    println!("Wheel Zoom & Drag kartı üretildi: {}", çıktı.display());
+    println!(
+        "Wheel Zoom & Drag ve XY ranger kanıtı üretildi: {}, {}",
+        çıktı.display(),
+        xy_çıktı.display()
+    );
     Ok(())
 }

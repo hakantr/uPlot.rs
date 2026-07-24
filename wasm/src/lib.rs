@@ -37,8 +37,8 @@ use uplot_rs::{
     UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ, UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ,
     Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ, YShiftedSeriesAkışı,
     YüzeyDikdörtgeni, ZOOM_FETCH_KANIT_ÖRNEĞİ, ZOOM_RANGER_GRIPS_KANIT_ÖRNEĞİ,
-    ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ, ZoomFetchAkışı,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
+    ZOOM_RANGER_XY_KANIT_ÖRNEĞİ, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
+    ZoomFetchAkışı, add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
     align_data_çizgi_çubuk_kartı, annotations_kartı, arcsinh_scales_kartı, area_fill_kartı,
     axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
     bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
@@ -1032,7 +1032,8 @@ impl KartOturumu {
             .zoom_ranger_durumu()
             .map(|durum| {
                 let (sol, sağ) = durum.seçim_oranları();
-                vec![sol, sağ]
+                let (alt, üst) = durum.y_seçim_oranları();
+                vec![sol, sağ, alt, üst]
             })
             .unwrap_or_default()
     }
@@ -1062,6 +1063,36 @@ impl KartOturumu {
         let tam = durum.tam_aralık();
         let değer = tam.en_az + oran.clamp(0.0, 1.0) * (tam.en_çok - tam.en_az);
         durum.sağ_tutamağı_ayarla(değer) && self.grafik.zoom_ranger_uygula(durum)
+    }
+
+    pub fn zoom_ranger_alt(&mut self, oran: f64) -> bool {
+        let Ok(mut durum) = self.grafik.zoom_ranger_durumu() else {
+            return false;
+        };
+        let tam = durum.y_tam_aralık();
+        let değer = tam.en_az + oran.clamp(0.0, 1.0) * (tam.en_çok - tam.en_az);
+        durum.alt_tutamağı_ayarla(değer) && self.grafik.zoom_ranger_uygula(durum)
+    }
+
+    pub fn zoom_ranger_ust(&mut self, oran: f64) -> bool {
+        let Ok(mut durum) = self.grafik.zoom_ranger_durumu() else {
+            return false;
+        };
+        let tam = durum.y_tam_aralık();
+        let değer = tam.en_az + oran.clamp(0.0, 1.0) * (tam.en_çok - tam.en_az);
+        durum.üst_tutamağı_ayarla(değer) && self.grafik.zoom_ranger_uygula(durum)
+    }
+
+    pub fn zoom_ranger_surukleme_ekseni(&self, x_px: f64, y_px: f64) -> u8 {
+        use uplot_rs::ZoomRangerSürüklemeEkseni::{X, XY, Y, Yok};
+        self.grafik.zoom_ranger_durumu().map_or(0, |durum| {
+            match durum.uyarlanabilir_sürükleme_ekseni(x_px, y_px) {
+                Yok => 0,
+                X => 1,
+                Y => 2,
+                XY => 3,
+            }
+        })
     }
 
     pub fn geri_var(&self) -> bool {
@@ -1437,6 +1468,11 @@ pub fn zoom_fetch_kanit_ornegi() -> String {
 #[wasm_bindgen]
 pub fn zoom_ranger_grips_kanit_ornegi() -> String {
     ZOOM_RANGER_GRIPS_KANIT_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
+pub fn zoom_ranger_xy_kanit_ornegi() -> String {
+    ZOOM_RANGER_XY_KANIT_ÖRNEĞİ.to_owned()
 }
 
 #[wasm_bindgen]
@@ -2346,11 +2382,15 @@ mod testler {
         assert!(zoom_fetch_kaniti());
         assert!(zoom_fetch_kanit_ornegi().contains("kaynak_yanıtını_uygula"));
         let başlangıç = oturum.zoom_ranger_oranlari();
-        assert_eq!(başlangıç.len(), 2);
+        assert_eq!(başlangıç.len(), 4);
         assert!(oturum.zoom_ranger_sol(0.3));
         assert!(oturum.zoom_ranger_sag(0.7));
         assert!(oturum.zoom_ranger_tasi(0.1));
         assert!(zoom_ranger_grips_kanit_ornegi().contains("pencereyi_taşı"));
+        assert!(oturum.zoom_ranger_alt(0.2));
+        assert!(oturum.zoom_ranger_ust(0.8));
+        assert_eq!(oturum.zoom_ranger_surukleme_ekseni(18.0, 15.0), 3);
+        assert!(zoom_ranger_xy_kanit_ornegi().contains("alt_tutamağı_ayarla"));
     }
 
     #[test]
