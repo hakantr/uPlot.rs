@@ -152,6 +152,7 @@ pub struct Sahne {
     genişlik: u32,
     yükseklik: u32,
     komutlar: Vec<Komut>,
+    geometri_kimlikleri: Vec<u64>,
 }
 
 impl Sahne {
@@ -160,15 +161,22 @@ impl Sahne {
             genişlik,
             yükseklik,
             komutlar: Vec::new(),
+            geometri_kimlikleri: Vec::new(),
         }
     }
 
     pub fn ekle(&mut self, komut: Komut) {
+        self.geometri_kimlikleri
+            .push(komut_geometri_kimliği(&komut));
         self.komutlar.push(komut);
     }
 
     pub fn komutlar(&self) -> &[Komut] {
         &self.komutlar
+    }
+
+    pub(crate) fn geometri_kimlikleri(&self) -> &[u64] {
+        &self.geometri_kimlikleri
     }
 
     pub(crate) fn komut_aralığını_sona_taşı(&mut self, başlangıç: usize, bitiş: usize) {
@@ -178,6 +186,9 @@ impl Sahne {
         let eksen_komutu_sayısı = bitiş - başlangıç;
         if let Some(komutlar) = self.komutlar.get_mut(başlangıç..) {
             komutlar.rotate_left(eksen_komutu_sayısı);
+        }
+        if let Some(kimlikler) = self.geometri_kimlikleri.get_mut(başlangıç..) {
+            kimlikler.rotate_left(eksen_komutu_sayısı);
         }
     }
 
@@ -568,6 +579,240 @@ impl Sahne {
             .map(|komut| format!("{komut:?}"))
             .collect::<Vec<_>>()
             .join("\n")
+    }
+}
+
+/// GPUI path önbelleğinin geometri değişimini sabit zamanda sınamasını sağlar.
+///
+/// Renk ve dolgu gibi tessellation'ı değiştirmeyen sunum alanları bilerek
+/// kimliğe katılmaz. Kimlik komut oluşturulurken bir kez hesaplanır; sonraki
+/// sahne geçişinde büyük nokta dizileri yeniden karşılaştırılmaz.
+fn komut_geometri_kimliği(komut: &Komut) -> u64 {
+    let mut özet = GeometriÖzeti::yeni();
+    match komut {
+        Komut::ArkaPlan { .. } => özet.tür(0),
+        Komut::Çizgi {
+            başlangıç,
+            bitiş,
+            kalınlık,
+            ..
+        } => {
+            özet.tür(1);
+            özet.nokta(*başlangıç);
+            özet.nokta(*bitiş);
+            özet.sayı(*kalınlık);
+        }
+        Komut::KesikliÇizgi {
+            başlangıç,
+            bitiş,
+            kalınlık,
+            kesik,
+            ..
+        } => {
+            özet.tür(2);
+            özet.nokta(*başlangıç);
+            özet.nokta(*bitiş);
+            özet.sayı(*kalınlık);
+            özet.sayı(*kesik);
+        }
+        Komut::Yol {
+            parçalar, kalınlık,
+        ..
+        }
+        | Komut::GradyanYol {
+            parçalar, kalınlık,
+        ..
+        } => {
+            özet.tür(3);
+            özet.parçalar(parçalar);
+            özet.sayı(*kalınlık);
+        }
+        Komut::KesikliYol {
+            parçalar,
+            kalınlık,
+            çizgi,
+            boşluk,
+            ..
+        } => {
+            özet.tür(4);
+            özet.parçalar(parçalar);
+            özet.sayı(*kalınlık);
+            özet.sayı(*çizgi);
+            özet.sayı(*boşluk);
+        }
+        Komut::Alan { çokgenler, .. } | Komut::GradyanAlan { çokgenler, .. } => {
+            özet.tür(5);
+            özet.parçalar(çokgenler);
+        }
+        Komut::Daire {
+            merkez,
+            yarıçap,
+            kalınlık,
+            ..
+        } => {
+            özet.tür(6);
+            özet.nokta(*merkez);
+            özet.sayı(*yarıçap);
+            özet.sayı(*kalınlık);
+        }
+        Komut::Daireler {
+            merkezler,
+            yarıçap,
+            kalınlık,
+            kesme_sınırları,
+            ..
+        } => {
+            özet.tür(7);
+            özet.noktalar(merkezler);
+            özet.sayı(*yarıçap);
+            özet.sayı(*kalınlık);
+            özet.kesme(*kesme_sınırları);
+        }
+        Komut::DeğişkenDaireler {
+            daireler,
+            kalınlık,
+            kesme_sınırları,
+            ..
+        } => {
+            özet.tür(8);
+            özet.uzunluk(daireler.len());
+            for (merkez, yarıçap) in daireler {
+                özet.nokta(*merkez);
+                özet.sayı(*yarıçap);
+            }
+            özet.sayı(*kalınlık);
+            özet.kesme(*kesme_sınırları);
+        }
+        Komut::Dikdörtgen {
+            konum,
+            genişlik,
+            yükseklik,
+            kalınlık,
+            ..
+        } => {
+            özet.tür(9);
+            özet.nokta(*konum);
+            özet.sayı(*genişlik);
+            özet.sayı(*yükseklik);
+            özet.sayı(*kalınlık);
+        }
+        Komut::YuvarlatılmışDikdörtgen {
+            konum,
+            genişlik,
+            yükseklik,
+            yarıçaplar,
+            kalınlık,
+            ..
+        } => {
+            özet.tür(10);
+            özet.nokta(*konum);
+            özet.sayı(*genişlik);
+            özet.sayı(*yükseklik);
+            özet.sayı(yarıçaplar.üst_sol);
+            özet.sayı(yarıçaplar.üst_sağ);
+            özet.sayı(yarıçaplar.alt_sağ);
+            özet.sayı(yarıçaplar.alt_sol);
+            özet.sayı(*kalınlık);
+        }
+        Komut::Metin {
+            konum,
+            içerik,
+            boyut,
+            hiza,
+            ..
+        } => {
+            özet.tür(11);
+            özet.nokta(*konum);
+            özet.metin(içerik);
+            özet.sayı(*boyut);
+            özet.tür(*hiza as u8);
+        }
+        Komut::DöndürülmüşMetin {
+            konum,
+            içerik,
+            boyut,
+            hiza,
+            açı,
+            ..
+        } => {
+            özet.tür(12);
+            özet.nokta(*konum);
+            özet.metin(içerik);
+            özet.sayı(*boyut);
+            özet.tür(*hiza as u8);
+            özet.sayı(*açı);
+        }
+    }
+    özet.bitir()
+}
+
+struct GeometriÖzeti(u64);
+
+impl GeometriÖzeti {
+    const FNV_BAŞLANGIÇ: u64 = 0xcbf2_9ce4_8422_2325;
+    const FNV_ASAL: u64 = 0x0000_0100_0000_01b3;
+
+    fn yeni() -> Self {
+        Self(Self::FNV_BAŞLANGIÇ)
+    }
+
+    fn byte(&mut self, değer: u8) {
+        self.0 ^= u64::from(değer);
+        self.0 = self.0.wrapping_mul(Self::FNV_ASAL);
+    }
+
+    fn tür(&mut self, değer: u8) {
+        self.byte(değer);
+    }
+
+    fn uzunluk(&mut self, değer: usize) {
+        for byte in (değer as u64).to_le_bytes() {
+            self.byte(byte);
+        }
+    }
+
+    fn sayı(&mut self, değer: f32) {
+        for byte in değer.to_bits().to_le_bytes() {
+            self.byte(byte);
+        }
+    }
+
+    fn nokta(&mut self, nokta: Nokta) {
+        self.sayı(nokta.x);
+        self.sayı(nokta.y);
+    }
+
+    fn noktalar(&mut self, noktalar: &[Nokta]) {
+        self.uzunluk(noktalar.len());
+        for nokta in noktalar {
+            self.nokta(*nokta);
+        }
+    }
+
+    fn parçalar(&mut self, parçalar: &[Vec<Nokta>]) {
+        self.uzunluk(parçalar.len());
+        for parça in parçalar {
+            self.noktalar(parça);
+        }
+    }
+
+    fn kesme(&mut self, kesme: Option<(Nokta, Nokta)>) {
+        self.tür(u8::from(kesme.is_some()));
+        if let Some((başlangıç, bitiş)) = kesme {
+            self.nokta(başlangıç);
+            self.nokta(bitiş);
+        }
+    }
+
+    fn metin(&mut self, metin: &str) {
+        self.uzunluk(metin.len());
+        for byte in metin.bytes() {
+            self.byte(byte);
+        }
+    }
+
+    fn bitir(self) -> u64 {
+        self.0
     }
 }
 

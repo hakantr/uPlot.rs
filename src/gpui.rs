@@ -155,34 +155,31 @@ impl GpuiYolÖnbelleği {
             return 0;
         }
 
-        let mut eski_yollar = std::mem::take(&mut self.yollar);
-        let mut eski_ikincil_yollar = std::mem::take(&mut self.ikincil_yollar);
-        let mut yeni_yollar = vec![None; yeni.komutlar().len()];
-        let mut yeni_ikincil_yollar = vec![None; yeni.komutlar().len()];
         let mut korunan = 0;
-        for (indeks, (eski_komut, yeni_komut)) in
-            eski.komutlar().iter().zip(yeni.komutlar()).enumerate()
+        for (indeks, (eski_kimlik, yeni_kimlik)) in eski
+            .geometri_kimlikleri()
+            .iter()
+            .zip(yeni.geometri_kimlikleri())
+            .enumerate()
         {
-            if !aynı_yol_geometrisi(eski_komut, yeni_komut) {
+            if eski_kimlik != yeni_kimlik {
+                if let Some(yol) = self.yollar.get_mut(indeks) {
+                    *yol = None;
+                }
+                if let Some(yol) = self.ikincil_yollar.get_mut(indeks) {
+                    *yol = None;
+                }
                 continue;
             }
-            let Some(eski_yol) = eski_yollar.get_mut(indeks).and_then(Option::take) else {
-                continue;
-            };
-            let Some(yeni_yol) = yeni_yollar.get_mut(indeks) else {
-                continue;
-            };
-            *yeni_yol = Some(eski_yol);
-            if let (Some(eski_ikincil), Some(yeni_ikincil)) = (
-                eski_ikincil_yollar.get_mut(indeks).and_then(Option::take),
-                yeni_ikincil_yollar.get_mut(indeks),
-            ) {
-                *yeni_ikincil = Some(eski_ikincil);
+            if self.yollar.get(indeks).is_some_and(Option::is_some) {
+                korunan += 1;
             }
-            korunan += 1;
         }
-        self.yollar = yeni_yollar;
-        self.ikincil_yollar = yeni_ikincil_yollar;
+        self.yollar.truncate(yeni.komutlar().len());
+        self.ikincil_yollar.truncate(yeni.komutlar().len());
+        self.yollar.resize_with(yeni.komutlar().len(), || None);
+        self.ikincil_yollar
+            .resize_with(yeni.komutlar().len(), || None);
         korunan
     }
 
@@ -224,155 +221,6 @@ impl GpuiYolÖnbelleği {
             *hedef = Some(yol.clone());
         }
         Some(yol)
-    }
-}
-
-fn aynı_yol_geometrisi(eski: &Komut, yeni: &Komut) -> bool {
-    match (eski, yeni) {
-        (
-            Komut::Çizgi {
-                başlangıç: eski_başlangıç,
-                bitiş: eski_bitiş,
-                kalınlık: eski_kalınlık,
-                ..
-            },
-            Komut::Çizgi {
-                başlangıç: yeni_başlangıç,
-                bitiş: yeni_bitiş,
-                kalınlık: yeni_kalınlık,
-                ..
-            },
-        ) => {
-            eski_başlangıç == yeni_başlangıç
-                && eski_bitiş == yeni_bitiş
-                && eski_kalınlık == yeni_kalınlık
-        }
-        (
-            Komut::KesikliÇizgi {
-                başlangıç: eski_başlangıç,
-                bitiş: eski_bitiş,
-                kalınlık: eski_kalınlık,
-                kesik: eski_kesik,
-                ..
-            },
-            Komut::KesikliÇizgi {
-                başlangıç: yeni_başlangıç,
-                bitiş: yeni_bitiş,
-                kalınlık: yeni_kalınlık,
-                kesik: yeni_kesik,
-                ..
-            },
-        ) => {
-            eski_başlangıç == yeni_başlangıç
-                && eski_bitiş == yeni_bitiş
-                && eski_kalınlık == yeni_kalınlık
-                && eski_kesik == yeni_kesik
-        }
-        (
-            Komut::Yol {
-                parçalar: eski_parçalar,
-                kalınlık: eski_kalınlık,
-                ..
-            },
-            Komut::Yol {
-                parçalar: yeni_parçalar,
-                kalınlık: yeni_kalınlık,
-                ..
-            },
-        )
-        | (
-            Komut::GradyanYol {
-                parçalar: eski_parçalar,
-                kalınlık: eski_kalınlık,
-                ..
-            },
-            Komut::GradyanYol {
-                parçalar: yeni_parçalar,
-                kalınlık: yeni_kalınlık,
-                ..
-            },
-        ) => eski_parçalar == yeni_parçalar && eski_kalınlık == yeni_kalınlık,
-        (
-            Komut::KesikliYol {
-                parçalar: eski_parçalar,
-                kalınlık: eski_kalınlık,
-                çizgi: eski_çizgi,
-                boşluk: eski_boşluk,
-                ..
-            },
-            Komut::KesikliYol {
-                parçalar: yeni_parçalar,
-                kalınlık: yeni_kalınlık,
-                çizgi: yeni_çizgi,
-                boşluk: yeni_boşluk,
-                ..
-            },
-        ) => {
-            eski_parçalar == yeni_parçalar
-                && eski_kalınlık == yeni_kalınlık
-                && eski_çizgi == yeni_çizgi
-                && eski_boşluk == yeni_boşluk
-        }
-        (
-            Komut::Alan {
-                çokgenler: eski_çokgenler,
-                ..
-            },
-            Komut::Alan {
-                çokgenler: yeni_çokgenler,
-                ..
-            },
-        )
-        | (
-            Komut::GradyanAlan {
-                çokgenler: eski_çokgenler,
-                ..
-            },
-            Komut::GradyanAlan {
-                çokgenler: yeni_çokgenler,
-                ..
-            },
-        ) => eski_çokgenler == yeni_çokgenler,
-        (
-            Komut::Daireler {
-                merkezler: eski_merkezler,
-                yarıçap: eski_yarıçap,
-                kalınlık: eski_kalınlık,
-                kesme_sınırları: eski_kesme,
-                ..
-            },
-            Komut::Daireler {
-                merkezler: yeni_merkezler,
-                yarıçap: yeni_yarıçap,
-                kalınlık: yeni_kalınlık,
-                kesme_sınırları: yeni_kesme,
-                ..
-            },
-        ) => {
-            eski_merkezler == yeni_merkezler
-                && eski_yarıçap == yeni_yarıçap
-                && eski_kalınlık == yeni_kalınlık
-                && eski_kesme == yeni_kesme
-        }
-        (
-            Komut::DeğişkenDaireler {
-                daireler: eski_daireler,
-                kalınlık: eski_kalınlık,
-                kesme_sınırları: eski_kesme,
-                ..
-            },
-            Komut::DeğişkenDaireler {
-                daireler: yeni_daireler,
-                kalınlık: yeni_kalınlık,
-                kesme_sınırları: yeni_kesme,
-                ..
-            },
-        ) => {
-            eski_daireler == yeni_daireler
-                && eski_kalınlık == yeni_kalınlık
-                && eski_kesme == yeni_kesme
-        }
-        _ => false,
     }
 }
 
@@ -3516,6 +3364,54 @@ mod testler {
             assert_eq!(önbellek.sahneyi_değiştir(&eski, &yeni), 0);
             assert!(önbellek.yollar.first().is_some_and(Option::is_none));
         }
+    }
+
+    #[test]
+    fn yalnız_değişen_serinin_yolu_geçersizleşir() {
+        let mut eski = yol_sahnesi("#ff0000", 2.0, 200.0);
+        eski.ekle(Komut::Yol {
+            parçalar: vec![vec![Nokta::yeni(10.0, 100.0), Nokta::yeni(200.0, 40.0)]],
+            renk: "#00ff00".to_string(),
+            kalınlık: 2.0,
+        });
+        let mut yeni = yol_sahnesi("#ff0000", 2.0, 200.0);
+        yeni.ekle(Komut::Yol {
+            parçalar: vec![vec![Nokta::yeni(10.0, 100.0), Nokta::yeni(240.0, 20.0)]],
+            renk: "#00ff00".to_string(),
+            kalınlık: 2.0,
+        });
+        let mut önbellek = GpuiYolÖnbelleği {
+            sahne_boyutu: Some(eski.boyut()),
+            sınırlar: None,
+            yollar: vec![
+                Some(Path::new(point(px(0.0), px(0.0)))),
+                Some(Path::new(point(px(0.0), px(0.0)))),
+            ],
+            ikincil_yollar: vec![None, None],
+        };
+
+        assert_eq!(önbellek.sahneyi_değiştir(&eski, &yeni), 1);
+        assert!(önbellek.yollar[0].is_some());
+        assert!(önbellek.yollar[1].is_none());
+    }
+
+    #[test]
+    fn önbellek_vektör_kapasitesini_sahne_geçişinde_yeniden_kullanır() {
+        let eski = yol_sahnesi("#ff0000", 2.0, 200.0);
+        let yeni = yol_sahnesi("#0000ff", 2.0, 200.0);
+        let mut önbellek = GpuiYolÖnbelleği {
+            sahne_boyutu: Some(eski.boyut()),
+            sınırlar: None,
+            yollar: Vec::with_capacity(32),
+            ikincil_yollar: Vec::with_capacity(32),
+        };
+        önbelleğe_örnek_yol_ekle(&mut önbellek);
+        let yol_kapasitesi = önbellek.yollar.capacity();
+        let ikincil_kapasite = önbellek.ikincil_yollar.capacity();
+
+        assert_eq!(önbellek.sahneyi_değiştir(&eski, &yeni), 1);
+        assert_eq!(önbellek.yollar.capacity(), yol_kapasitesi);
+        assert_eq!(önbellek.ikincil_yollar.capacity(), ikincil_kapasite);
     }
 
     #[test]
