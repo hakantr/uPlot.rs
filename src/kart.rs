@@ -92,7 +92,8 @@ pub use axis_indicators::{
     AXIS_INDICATORS_KANIT_TOHUMU, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, axis_indicators_kartı,
 };
 pub use bars_grouped_stacked::{
-    BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, bars_grouped_stacked_kartı, ÇubukÖrneği,
+    BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, bars_grouped_stacked_kartları,
+    bars_grouped_stacked_kartı, ÇubukÖrneği,
 };
 pub use bars_values_autosize::{
     BARS_VALUES_AUTOSIZE_KANIT_TOHUMU, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,

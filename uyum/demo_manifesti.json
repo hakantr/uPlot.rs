@@ -972,21 +972,30 @@
         },
         "gerekçeler": {
           "canli-coklu-seri-lejanti": "Resmî demo legend.live=false kullanır ve yalnız vurulan çubuğu işaretler.",
-          "kosullu-bos-ve-dolu-noktalar": "Çubuk yollarında nokta işaretçisi bulunmaz."
+          "kosullu-bos-ve-dolu-noktalar": "Çubuk yollarında nokta işaretçisi bulunmaz.",
+          "secim-yakinlastirma": "Resmî seriesBarsPlugin select.show=false kullanır; ortak seçim profili yalnız portun isteğe bağlı etkileşim uzantısıdır.",
+          "tekerlek-yakinlastirma": "Resmî kaynak wheel eklentisi kurmaz; port uzantısı kaynak paritesi olarak değerlendirilmez.",
+          "dokunma-yakinlastirma-tasima": "Resmî kaynak touch/pan eklentisi kurmaz; port uzantısı kaynak paritesi olarak değerlendirilmez."
         }
       },
       "sahip_faz": 3,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "source-exact-category-and-metric-data",
-        "all-ten-source-subcharts",
+        "single-card-ten-independent-source-ordered-surfaces",
         "vertical-and-horizontal-orientation",
         "grouped-and-stacked-layouts",
         "single-group-and-single-series-support",
         "space-between-distribution",
+        "source-range-num-zero-to-eleven-and-thirty-two",
+        "static-legend-live-false-zero-width-markers",
+        "set-series-preserves-grouped-slots",
+        "set-series-hides-prestacked-cumulative-layer-without-restack",
+        "stacked-cumulative-label-and-hover-values",
+        "source-quadtree-bbox-hover-rectangle",
         "core-bar-hit-testing",
         "gpui-wasm-hover-rectangle",
-        "common-interaction-profile"
+        "optional-common-interaction-extension-not-source-parity"
       ],
       "kanıt": {
         "api": "kısmi",

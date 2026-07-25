@@ -3872,6 +3872,13 @@ mod testler {
             assert!(svg.contains("Group A"));
             assert!(svg.matches("<rect").count() >= 2);
         }
+        let web = include_str!("../www/index.html");
+        assert_eq!(web.matches("data-kart=\"bars-grouped-stacked\"").count(), 1);
+        assert!(!web.contains("data-kart=\"bars-multi-group-grouped\""));
+        assert!(web.contains("barsGroupedStackedYüzeyleri"));
+        assert!(web.contains("barsGroupedStackedOturumları"));
+        assert!(web.contains("data-bars-seri"));
+        assert!(web.contains("independent-bars-grouped-stacked"));
     }
 
     #[test]

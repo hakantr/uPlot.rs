@@ -5001,8 +5001,7 @@ impl Grafik {
         let çubuk_serileri = (0..self.veri.seriler().len())
             .filter(|indeks| {
                 self.seçenekler.seriler.get(*indeks).is_some_and(|seri| {
-                    seri.göster
-                        && (!karışık_çizim || seri.çizim_türü == crate::SeriÇizimTürü::Çubuk)
+                    !karışık_çizim || seri.çizim_türü == crate::SeriÇizimTürü::Çubuk
                 })
             })
             .collect::<Vec<_>>();
@@ -5286,6 +5285,9 @@ impl Grafik {
                         } else {
                             değer
                         };
+                        if !seri.is_some_and(|seri| seri.göster) {
+                            continue;
+                        }
                         let y0 = alt - seri_aralığı.konum(taban, 0.0, çizim_y);
                         let y1 = alt - seri_aralığı.konum(tepe, 0.0, çizim_y);
                         let nokta_komutu = seri
@@ -5358,7 +5360,7 @@ impl Grafik {
                                 konum: çubuk_konumu,
                                 genişlik: çubuk_genişliği,
                                 yükseklik: çubuk_yüksekliği,
-                                değer,
+                                değer: if düzen.yığılmış { tepe } else { değer },
                             });
                         }
                         if let Some(komut) = nokta_komutu {
@@ -5511,6 +5513,9 @@ impl Grafik {
                         } else {
                             değer
                         };
+                        if !seri.is_some_and(|seri| seri.göster) {
+                            continue;
+                        }
                         let x0 = seri_aralığı.konum(taban, sol, çizim_g);
                         let x1 = seri_aralığı.konum(uç, sol, çizim_g);
                         let çubuk_üst = y.clamp(üst, alt);
@@ -5554,7 +5559,7 @@ impl Grafik {
                                 konum: çubuk_konumu,
                                 genişlik: çubuk_genişliği,
                                 yükseklik: çubuk_yüksekliği,
-                                değer,
+                                değer: if düzen.yığılmış { uç } else { değer },
                             });
                         }
                         if let Some(yazı_boyutu) = otomatik_yazı_boyutu {

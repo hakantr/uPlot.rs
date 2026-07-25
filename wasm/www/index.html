@@ -282,6 +282,27 @@
     .scatter-grafik .imlec-bilgi-kutusu { position: sticky; z-index: 5; left: 8px;
                                           bottom: 32px; width: max-content;
                                           margin: -26px 8px 4px; }
+    #chart.bars-grouped-stacked-yüzeyi { display: block; min-width: 0; overflow: auto;
+                                         place-items: unset; padding: 8px;
+                                         box-sizing: border-box; }
+    .bars-grouped-stacked-yığın { width: 820px; display: grid; gap: 14px;
+                                  align-items: start; }
+    .bars-grouped-stacked-grafik { position: relative; width: max-content;
+                                   border: 1px solid #dbe3ee; border-radius: 8px;
+                                   background: #fff; overflow: hidden; }
+    .bars-grouped-stacked-grafik > h3 { margin: 7px 10px 2px; color: #111827;
+                                        font-size: 13px; }
+    .bars-grouped-stacked-grafik > p { margin: 0 10px 5px; color: #6b7280;
+                                       font-size: 11px; }
+    .bars-grouped-stacked-grafik svg { display: block; width: auto; height: auto; max-width: none; }
+    .bars-grouped-stacked-grafik .lejant { position: static; padding: 3px 10px 8px;
+                                           justify-content: flex-start; pointer-events: auto; }
+    .bars-grouped-stacked-grafik .lejant button { border: 1px solid #d1d5db;
+                                                  border-radius: 5px; background: #fff;
+                                                  padding: 3px 7px; cursor: pointer; }
+    .bars-grouped-stacked-grafik .lejant button[aria-pressed="false"] {
+      opacity: .42;
+    }
     #chart.soft-minmax-yüzeyi { display: block; min-width: 0; overflow: auto;
                                 place-items: unset;
                                 padding: 8px; box-sizing: border-box; }
@@ -517,16 +538,11 @@
         <small>axis-indicators</small>
         <div class="durum">3 renkli eksen · canlı değer rozetleri</div>
       </article>
-      <article class="kart" data-kart="bars-multi-group-grouped" aria-current="false" tabindex="0"><strong>Bars · grouped</strong><small>bars-multi-group-grouped</small><div class="durum">4 grup × 3 seri · dikey</div></article>
-      <article class="kart" data-kart="bars-multi-group-stacked" aria-current="false" tabindex="0"><strong>Bars · stacked</strong><small>bars-multi-group-stacked</small><div class="durum">4 grup × 3 seri · dikey</div></article>
-      <article class="kart" data-kart="bars-horizontal-grouped" aria-current="false" tabindex="0"><strong>Bars · horizontal grouped</strong><small>bars-horizontal-grouped</small><div class="durum">4 grup × 3 seri · yatay</div></article>
-      <article class="kart" data-kart="bars-horizontal-stacked" aria-current="false" tabindex="0"><strong>Bars · horizontal stacked</strong><small>bars-horizontal-stacked</small><div class="durum">4 grup × 3 seri · yatay</div></article>
-      <article class="kart" data-kart="bars-single-series-grouped" aria-current="false" tabindex="0"><strong>Bars · single series grouped</strong><small>bars-single-series-grouped</small><div class="durum">4 grup × 1 seri</div></article>
-      <article class="kart" data-kart="bars-single-series-stacked" aria-current="false" tabindex="0"><strong>Bars · single series stacked</strong><small>bars-single-series-stacked</small><div class="durum">4 grup × 1 seri</div></article>
-      <article class="kart" data-kart="bars-single-group-grouped" aria-current="false" tabindex="0"><strong>Bars · single group grouped</strong><small>bars-single-group-grouped</small><div class="durum">1 grup × 3 seri</div></article>
-      <article class="kart" data-kart="bars-single-group-stacked" aria-current="false" tabindex="0"><strong>Bars · single group stacked</strong><small>bars-single-group-stacked</small><div class="durum">1 grup × 3 seri</div></article>
-      <article class="kart" data-kart="bars-single-bar-grouped" aria-current="false" tabindex="0"><strong>Bars · single bar grouped</strong><small>bars-single-bar-grouped</small><div class="durum">1 grup × 1 seri</div></article>
-      <article class="kart" data-kart="bars-single-bar-stacked" aria-current="false" tabindex="0"><strong>Bars · single bar stacked</strong><small>bars-single-bar-stacked</small><div class="durum">1 grup × 1 seri</div></article>
+      <article class="kart" data-kart="bars-grouped-stacked" aria-current="false" tabindex="0">
+        <strong>Bars · Grouped / Stacked</strong>
+        <small>bars-grouped-stacked</small>
+        <div class="durum">10 bağımsız yüzey · setSeries</div>
+      </article>
       <article class="kart" data-kart="bars-values-autosize-vertical" aria-current="false" tabindex="0"><strong>Bars values autosize · vertical</strong><small>bars-values-autosize-vertical</small><div class="durum">12 değer · otomatik kompakt yazı</div></article>
       <article class="kart" data-kart="bars-values-autosize-horizontal" aria-current="false" tabindex="0"><strong>Bars values autosize · horizontal</strong><small>bars-values-autosize-horizontal</small><div class="durum">12 değer · otomatik kompakt yazı</div></article>
     </aside>
@@ -2344,29 +2360,46 @@
       "bars-single-group-grouped", "bars-single-group-stacked",
       "bars-single-bar-grouped", "bars-single-bar-stacked",
     ];
-    for (const kimlik of çubukAltGrafikleri) {
-      const tekSeri = kimlik.includes("single-series") || kimlik.includes("single-bar");
-      kartlar[kimlik] = {
-        başlık: kimlik,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/bars-grouped-stacked.html">bars-grouped-stacked.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/grouped-bars.js">grouped-bars.js</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/distr.js">distr.js</a>
-          <br>Resmî sayfadaki on alt grafik aynı kategori, değer, yön, grup dağılımı ve yığma davranışıyla ayrı doğrulama kartlarıdır.`,
-        tanım: () => bars_grouped_stacked_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/bars_grouped_stacked.rs",
-        seriler: tekSeri
-          ? [{ etiket: "Metric 1", renk: "#33BB55" }]
-          : [
-              { etiket: "Metric 1", renk: "#33BB55" },
-              { etiket: "Metric 2", renk: "#B56FAB" },
-              { etiket: "Metric 3", renk: "#BB1133" },
-            ],
-        yardım: "Kategorik çubuk düzeni · kaynak eklentisi seçim yakınlaştırmasını kapatır",
-        değişkenNokta: false,
-        çubuk: true,
-        etkileşimler: () => ({tekerlek: false, seçim: false, çiftTık: false, geçmiş: false, dokunma: false}),
-      };
-    }
+    const barsGroupedStackedYüzeyleri = [
+      ["Multi group / multi series · grouped", "Dört kategori içinde üç seri, sabit grup yuvalarında.", 800, 400, 3],
+      ["Multi group / multi series · stacked", "Önceden yığılmış kümülatif tepeler; setSeries yeniden yığmaz.", 800, 400, 3],
+      ["Horizontal · grouped", "Dikey grouped düzenin 400×800 yön çevrimi.", 400, 800, 3],
+      ["Horizontal · stacked", "Kümülatif yığının yatay ve ters eksen karşılığı.", 400, 800, 3],
+      ["Multi group / single series · grouped", "Dört kategori, tek grup yuvası.", 800, 400, 1],
+      ["Multi group / single series · stacked", "Tek serili stacked sınır durumu.", 800, 400, 1],
+      ["Single group / multi series · grouped", "Tek kategoride üç sabit seri yuvası.", 800, 400, 3],
+      ["Single group / multi series · stacked", "Tek kategoride üç kümülatif katman.", 800, 400, 3],
+      ["Single group / single series · grouped", "Tek kategori ve tek seri grouped sınırı.", 800, 400, 1],
+      ["Single group / single series · stacked", "Tek kategori ve tek seri stacked sınırı.", 800, 400, 1],
+    ].map(([başlık, açıklama, genişlik, yükseklik, seriSayısı], indeks) => ({
+      kimlik: çubukAltGrafikleri[indeks],
+      başlık, açıklama, genişlik, yükseklik, seriSayısı,
+    }));
+    kartlar["bars-grouped-stacked"] = {
+      başlık: "Bars · Grouped / Stacked · 10 yüzey",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/bars-grouped-stacked.html">bars-grouped-stacked.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/grouped-bars.js">grouped-bars.js</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/stack.js">stack.js</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/distr.js">distr.js</a>
+        <br>Kaynak sayfanın on bağımsız uPlot örneği görünüm, setSeries ve hover davranışları birlikte karşılaştırılabilsin diye tek kart sayfasındadır.`,
+      tanım: () => bars_grouped_stacked_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/bars_grouped_stacked.rs",
+      seriler: [
+        { etiket: "Metric 1", renk: "#33BB55" },
+        { etiket: "Metric 2", renk: "#B56FAB" },
+        { etiket: "Metric 3", renk: "#BB1133" },
+      ],
+      yardım: "10 bağımsız yüzey · setSeries yuvası korunur · hover yalnız vurulan barı vurgular",
+      değişkenNokta: false,
+      çubuk: true,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Grouped/stacked, dikey/yatay ve tek grup/tek seri sınır durumlarını kaynak sırasındaki on bağımsız yüzeyde birlikte karşılaştırır.",
+        api: "bars_grouped_stacked_kartları on Grafik üretir. setSeries grouped serinin yuvasını, önceden stacked serinin kümülatif boşluğunu korur; gizlemede yeniden yığma yapılmaz.",
+        izleme: "Bölge, sürüm, servis veya kapasite gibi kategorik metriklerin düzen kararlarını ve sınır durumlarını tek sayfada doğrulamak için kullanılır.",
+        maliyet: "Her yüzey O(grup×seri) tek sahne geçişi çizer; hover bbox uzamsal dizisini sorgular ve yalnız hafif vurgu dikdörtgenini taşır. Wheel/touch/drag kaynakta kapalı, portta isteğe bağlı ortak çekirdek uzantısıdır.",
+      },
+    };
 
     for (const kimlik of ["bars-values-autosize-vertical", "bars-values-autosize-horizontal"]) {
       kartlar[kimlik] = {
@@ -2857,6 +2890,8 @@
     let scalesDirOriOturumları = [];
     let scatterOturumları = [];
     let scatterEtkinİndeks = 0;
+    let barsGroupedStackedOturumları = [];
+    let barsGroupedStackedEtkinİndeks = 0;
     let softMinMaxOturumları = [];
     let softMinMaxEtkinİndeks = 0;
     let sparklinesBarsOturumları = [];
@@ -5406,6 +5441,89 @@
       kontrolleriGüncelle();
     }
 
+    function barsGroupedStackedÇiz() {
+      const kaydırmaÜst = chart.scrollTop;
+      const kaydırmaSol = chart.scrollLeft;
+      chart.className = "bars-grouped-stacked-yüzeyi";
+      chart.innerHTML = `<div class="bars-grouped-stacked-yığın">
+        ${barsGroupedStackedYüzeyleri.map((tanım, indeks) => {
+          const yüzeyOturumu = barsGroupedStackedOturumları[indeks];
+          const seriler = kartlar["bars-grouped-stacked"].seriler.slice(0, tanım.seriSayısı);
+          return `<article class="bars-grouped-stacked-grafik"
+              data-bars-grouped-stacked-index="${indeks}">
+            <h3>${tanım.başlık}</h3>
+            <p>${tanım.açıklama}</p>
+            ${yüzeyOturumu?.svg(tanım.genişlik, tanım.yükseklik) ?? ""}
+            <div class="lejant" aria-label="${tanım.başlık} seri görünürlüğü">
+              ${seriler.map((seri, seriİndeksi) => {
+                const görünür = yüzeyOturumu?.seri_gorunur(seriİndeksi) ?? false;
+                return `<button type="button" data-bars-seri="${seriİndeksi}"
+                  aria-pressed="${görünür}" style="color:${seri.renk}">
+                  ● ${seri.etiket}${görünür ? "" : " · gizli"}
+                </button>`;
+              }).join("")}
+            </div>
+          </article>`;
+        }).join("")}
+      </div>`;
+      barsGroupedStackedYüzeyleri.forEach((tanım, indeks) => {
+        const kapsam = chart.querySelector(
+          `[data-bars-grouped-stacked-index="${indeks}"]`
+        );
+        const yüzeyOturumu = barsGroupedStackedOturumları[indeks];
+        const svg = kapsam?.querySelector("svg");
+        if (!kapsam || !yüzeyOturumu || !svg) return;
+        svg.dataset.etkileşim = "independent-bars-grouped-stacked";
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden"
+              fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+            <rect id="çubuk-vurgu" visibility="hidden"
+              fill="rgba(255,255,255,.42)" stroke="none"/>
+            <line id="imleç-x" visibility="hidden"
+              stroke="#6b7280" stroke-dasharray="4 4"/>
+            <line id="imleç-y" visibility="hidden"
+              stroke="#6b7280" stroke-dasharray="4 4"/>
+          </g>`);
+        oturum = yüzeyOturumu;
+        yüzeyiEşitle(svg);
+        kapsam.addEventListener("pointerenter", () => {
+          barsGroupedStackedEtkinİndeks = indeks;
+          oturum = yüzeyOturumu;
+          yüzeyiEşitle(svg);
+          kontrolleriGüncelle();
+        });
+        kapsam.querySelectorAll("[data-bars-seri]").forEach(düğme => {
+          düğme.addEventListener("pointerdown", olay => olay.stopPropagation());
+          düğme.addEventListener("click", olay => {
+            olay.stopPropagation();
+            const seriİndeksi = Number(düğme.dataset.barsSeri);
+            const görünür = yüzeyOturumu.seri_gorunur(seriİndeksi);
+            try {
+              yüzeyOturumu.seri_gorunurlugu_ayarla(seriİndeksi, !görünür);
+              barsGroupedStackedEtkinİndeks = indeks;
+              oturum = yüzeyOturumu;
+              barsGroupedStackedÇiz();
+            } catch (neden) {
+              hata.textContent = `${tanım.başlık} setSeries uygulanamadı: ${String(neden)}`;
+            }
+          });
+        });
+      });
+      oturum = barsGroupedStackedOturumları[barsGroupedStackedEtkinİndeks]
+        ?? barsGroupedStackedOturumları[0]
+        ?? null;
+      const xAralığı = oturum?.gorunur_x_araligi() ?? [];
+      const yAralığı = oturum?.gorunur_y_araligi() ?? [];
+      chart.dataset.xEnAz = String(xAralığı[0] ?? "");
+      chart.dataset.xEnCok = String(xAralığı[1] ?? "");
+      chart.dataset.yEnAz = String(yAralığı[0] ?? "");
+      chart.dataset.yEnCok = String(yAralığı[1] ?? "");
+      chart.scrollTop = kaydırmaÜst;
+      chart.scrollLeft = kaydırmaSol;
+      kontrolleriGüncelle();
+    }
+
     function softMinMaxEtkileşimKatmanınıKur(svg) {
       if (!svg || svg.querySelector(":scope > #etkileşim")) return;
       svg.insertAdjacentHTML("beforeend", `
@@ -6220,6 +6338,10 @@
         scatterÇiz();
         return;
       }
+      if (aktifKart === "bars-grouped-stacked") {
+        barsGroupedStackedÇiz();
+        return;
+      }
       if (aktifKart === "soft-minmax") {
         softMinMaxÇiz();
         return;
@@ -6663,6 +6785,11 @@
       const bağımsızYüzey = aktifKart === "scatter"
         ? olay.target?.closest?.(".scatter-grafik")
           ?? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"]`)
+        : aktifKart === "bars-grouped-stacked"
+          ? olay.target?.closest?.(".bars-grouped-stacked-grafik")
+            ?? chart.querySelector(
+              `[data-bars-grouped-stacked-index="${barsGroupedStackedEtkinİndeks}"]`
+            )
         : aktifKart === "soft-minmax"
           ? olay.target?.closest?.(".soft-minmax-grafik")
             ?? chart.querySelector(`[data-soft-minmax-index="${softMinMaxEtkinİndeks}"]`)
@@ -7662,7 +7789,9 @@
       }
       chart.querySelectorAll("svg").forEach(svg => { svg.style.cursor = ""; });
       çokluTooltipGizle();
-      chart.querySelector("#çubuk-vurgu")?.setAttribute("visibility", "hidden");
+      chart.querySelectorAll("#çubuk-vurgu").forEach(vurgu =>
+        vurgu.setAttribute("visibility", "hidden")
+      );
       chart.querySelector("#kutu-biyik-vurgu")?.setAttribute("visibility", "hidden");
       chart.querySelector("#timeline-vurgu")?.setAttribute("visibility", "hidden");
     });
@@ -7824,6 +7953,9 @@
       } else if (aktifKart === "scatter") {
         scatterOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         scatterÇiz();
+      } else if (aktifKart === "bars-grouped-stacked") {
+        barsGroupedStackedOturumları.forEach(yüzey => yüzey.onceki_gorunum());
+        barsGroupedStackedÇiz();
       } else if (aktifKart === "soft-minmax") {
         softMinMaxOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         softMinMaxÇiz();
@@ -7889,6 +8021,9 @@
       } else if (aktifKart === "scatter") {
         scatterOturumları.forEach(yüzey => yüzey.tam_gorunum());
         scatterÇiz();
+      } else if (aktifKart === "bars-grouped-stacked") {
+        barsGroupedStackedOturumları.forEach(yüzey => yüzey.tam_gorunum());
+        barsGroupedStackedÇiz();
       } else if (aktifKart === "soft-minmax") {
         softMinMaxOturumları.forEach(yüzey => yüzey.tam_gorunum());
         softMinMaxÇiz();
@@ -7939,6 +8074,10 @@
         );
       } else if (aktifKart === "scatter") {
         scatterOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "bars-grouped-stacked") {
+        barsGroupedStackedOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "timeseries-discrete") {
@@ -8199,6 +8338,7 @@
           pointsOturumları,
           scalesDirOriOturumları,
           scatterOturumları,
+          barsGroupedStackedOturumları,
           softMinMaxOturumları,
           sparklinesBarsOturumları,
           sparklinesOturumları,
@@ -8233,6 +8373,8 @@
         scalesDirOriOturumları = [];
         scatterOturumları.forEach(yüzey => yüzey.free());
         scatterOturumları = [];
+        barsGroupedStackedOturumları.forEach(yüzey => yüzey.free());
+        barsGroupedStackedOturumları = [];
         softMinMaxOturumları.forEach(yüzey => yüzey.free());
         softMinMaxOturumları = [];
         sparklinesBarsOturumları.forEach(yüzey => yüzey.free());
@@ -8473,6 +8615,17 @@
             return yüzeyOturumu;
           });
           oturum = scatterOturumları[scatterEtkinİndeks] ?? scatterOturumları[0] ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "bars-grouped-stacked") {
+          barsGroupedStackedEtkinİndeks = 0;
+          barsGroupedStackedOturumları = barsGroupedStackedYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = barsGroupedStackedOturumları[0] ?? null;
           çiz();
           return;
         }

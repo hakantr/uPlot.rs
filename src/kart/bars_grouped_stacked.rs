@@ -1,6 +1,6 @@
 use super::ortak_kart_etkileşimleri;
 use crate::{
-    GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, ÇubukDüzeni, ÇubukYönü
+    Aralık, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, ÇubukDüzeni, ÇubukYönü,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -56,7 +56,51 @@ impl ÇubukÖrneği {
         if self.tek_seri() { 1 } else { 3 }
     }
 
-    fn yatay(self) -> bool {
+    pub fn başlık(self) -> &'static str {
+        match self {
+            Self::ÇokGrupÇokSeriDikeyGruplu => "Multi group / multi series · grouped",
+            Self::ÇokGrupÇokSeriDikeyYığılmış => "Multi group / multi series · stacked",
+            Self::ÇokGrupÇokSeriYatayGruplu => "Horizontal · grouped",
+            Self::ÇokGrupÇokSeriYatayYığılmış => "Horizontal · stacked",
+            Self::ÇokGrupTekSeriGruplu => "Multi group / single series · grouped",
+            Self::ÇokGrupTekSeriYığılmış => "Multi group / single series · stacked",
+            Self::TekGrupÇokSeriGruplu => "Single group / multi series · grouped",
+            Self::TekGrupÇokSeriYığılmış => "Single group / multi series · stacked",
+            Self::TekGrupTekSeriGruplu => "Single group / single series · grouped",
+            Self::TekGrupTekSeriYığılmış => "Single group / single series · stacked",
+        }
+    }
+
+    pub fn açıklama(self) -> &'static str {
+        match self {
+            Self::ÇokGrupÇokSeriDikeyGruplu => {
+                "Dört kategori içinde üç seri, her seri için sabit bir grup yuvası."
+            }
+            Self::ÇokGrupÇokSeriDikeyYığılmış => {
+                "Aynı değerler kümülatif tepelere önceden yığılır; gizlenen seri yeniden yığılmaz."
+            }
+            Self::ÇokGrupÇokSeriYatayGruplu => {
+                "Dikey örneğin yönü çevrilmiş 400×800 bağımsız yüzeyi."
+            }
+            Self::ÇokGrupÇokSeriYatayYığılmış => {
+                "Kümülatif yığının yatay yönelim ve ters kategorik eksen karşılığı."
+            }
+            Self::ÇokGrupTekSeriGruplu => {
+                "Dört kategoride tek seri; grouped dağılımının tek yuvalı sınır durumu."
+            }
+            Self::ÇokGrupTekSeriYığılmış => {
+                "Dört kategoride tek seri; stacked algoritmasının tek serili sınır durumu."
+            }
+            Self::TekGrupÇokSeriGruplu => "Tek kategoride üç seri, sabit yuvalarla yan yana.",
+            Self::TekGrupÇokSeriYığılmış => "Tek kategoride üç serinin kümülatif yığını.",
+            Self::TekGrupTekSeriGruplu => "Tek kategori ve tek seri için grouped sınır durumu.",
+            Self::TekGrupTekSeriYığılmış => {
+                "Tek kategori ve tek seri için stacked sınır durumu."
+            }
+        }
+    }
+
+    pub fn yatay(self) -> bool {
         matches!(
             self,
             Self::ÇokGrupÇokSeriYatayGruplu | Self::ÇokGrupÇokSeriYatayYığılmış
@@ -98,7 +142,21 @@ impl ÇubukÖrneği {
 pub const BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ: &str = r##"let örnek = ÇubukÖrneği::ÇokGrupÇokSeriDikeyGruplu;
 let (seçenekler, veri) = bars_grouped_stacked_kartı(örnek)?;
 // Kategorik eksen, grup dağılımı ve yığma çekirdekte çözülür.
-let grafik = Grafik::yeni(seçenekler, veri)?;"##;
+let grafik = Grafik::yeni(seçenekler, veri)?;
+
+// Resmî sayfadaki ilişkili on bağımsız yüzeyi kaynak sırasında birlikte kurar.
+let yüzeyler = bars_grouped_stacked_kartları()?;"##;
+
+/// Resmî sayfadaki ilişkili on bağımsız yüzeyi DOM sırasıyla döndürür.
+pub fn bars_grouped_stacked_kartları()
+-> Result<Vec<(ÇubukÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    ÇubukÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| {
+            bars_grouped_stacked_kartı(örnek).map(|(seçenekler, veri)| (örnek, seçenekler, veri))
+        })
+        .collect()
+}
 
 /// `demos/bars-grouped-stacked.html` içindeki on alt grafikten birini üretir.
 pub fn bars_grouped_stacked_kartı(
@@ -120,6 +178,17 @@ pub fn bars_grouped_stacked_kartı(
     };
     let seri_sayısı = örnek.seri_sayısı();
     let ham = ham.into_iter().take(seri_sayısı).collect::<Vec<_>>();
+    let veri_en_çok = (0..kategoriler.len())
+        .map(|indeks| {
+            let değerler = ham.iter().filter_map(|seri| seri.get(indeks).copied());
+            if örnek.yığılmış() {
+                değerler.sum::<f64>()
+            } else {
+                değerler.fold(0.0_f64, f64::max)
+            }
+        })
+        .fold(0.0_f64, f64::max);
+    let kaynak_y_aralığı = Aralık::uplot_sayısal(0.0, veri_en_çok, 0.05, true)?;
     let x = (0..kategoriler.len()).map(|indeks| indeks as f64).collect();
     let veri = HizalıVeri::yeni(
         x,
@@ -144,10 +213,11 @@ pub fn bars_grouped_stacked_kartı(
     let renkler = ["#33BB55", "#B56FAB", "#BB1133"];
     let etiketler = ["Metric 1", "Metric 2", "Metric 3"];
     let mut seçenekler = GrafikSeçenekleri::yeni(genişlik, yükseklik)?
-        .başlık(örnek.kimlik())
+        .y_aralığı(kaynak_y_aralığı)
         .x_zaman(false)
         .kategoriler(kategoriler)
         .çubuk_düzeni(düzen)
+        .lejant_canlı(false)
         .etkileşimler(etkileşimler);
     for indeks in 0..seri_sayısı {
         let renk = renkler.get(indeks).copied().unwrap_or("#6b7280");
@@ -169,7 +239,11 @@ mod testler {
 
     #[test]
     fn kaynaktaki_on_düzen_ve_tek_noktalı_veriler_çizilir() -> Result<(), UplotHatası> {
-        for örnek in ÇubukÖrneği::TÜMÜ {
+        let kartlar = bars_grouped_stacked_kartları()?;
+        assert_eq!(kartlar.len(), 10);
+        for (örnek, seçenekler, _veri) in kartlar {
+            assert!(seçenekler.başlık.is_empty(), "{}", örnek.kimlik());
+            assert!(!seçenekler.lejant_canlı, "{}", örnek.kimlik());
             let (seçenekler, veri) = bars_grouped_stacked_kartı(örnek)?;
             let beklenen = veri.uzunluk() * veri.seriler().len();
             let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
@@ -182,6 +256,73 @@ mod testler {
                 .count();
             assert_eq!(çubuklar, beklenen, "{}", örnek.kimlik());
         }
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_range_num_ve_set_series_yerleşimi_korunur() -> Result<(), UplotHatası> {
+        let (gruplu_seçenekler, gruplu_veri) =
+            bars_grouped_stacked_kartı(ÇubukÖrneği::ÇokGrupÇokSeriDikeyGruplu)?;
+        assert_eq!(
+            gruplu_seçenekler.y_aralığı,
+            Some(Aralık {
+                en_az: 0.0,
+                en_çok: 11.0
+            })
+        );
+        let mut gruplu = Grafik::yeni(gruplu_seçenekler, gruplu_veri)?;
+        let kırmızı_x = |grafik: &Grafik| {
+            grafik
+                .çiz()
+                .komutlar()
+                .iter()
+                .find_map(|komut| match komut {
+                    Komut::Dikdörtgen {
+                        konum,
+                        dolgu,
+                        kalınlık,
+                        ..
+                    } if dolgu == "#BB1133" && *kalınlık == 0.0 => Some(konum.x),
+                    _ => None,
+                })
+        };
+        let önceki_kırmızı_x = kırmızı_x(&gruplu);
+        assert!(gruplu.seri_görünürlüğünü_ayarla(1, false)?);
+        assert_eq!(kırmızı_x(&gruplu), önceki_kırmızı_x);
+
+        let (yığılmış_seçenekler, yığılmış_veri) =
+            bars_grouped_stacked_kartı(ÇubukÖrneği::ÇokGrupÇokSeriDikeyYığılmış)?;
+        assert_eq!(
+            yığılmış_seçenekler.y_aralığı,
+            Some(Aralık {
+                en_az: 0.0,
+                en_çok: 32.0
+            })
+        );
+        let mut yığılmış = Grafik::yeni(yığılmış_seçenekler, yığılmış_veri)?;
+        assert!(yığılmış.seri_görünürlüğünü_ayarla(1, false)?);
+        let kırmızı_merkez = yığılmış
+            .çiz()
+            .komutlar()
+            .iter()
+            .find_map(|komut| match komut {
+                Komut::Dikdörtgen {
+                    konum,
+                    genişlik,
+                    yükseklik,
+                    dolgu,
+                    kalınlık,
+                    ..
+                } if dolgu == "#BB1133" && *kalınlık == 0.0 => {
+                    Some((konum.x + genişlik / 2.0, konum.y + yükseklik / 2.0))
+                }
+                _ => None,
+            });
+        assert!(kırmızı_merkez.is_some_and(|(x, y)| {
+            yığılmış
+                .çubuk_vuruşu(800, 400, x, y)
+                .is_some_and(|(_, _, _, _, _, değer)| değer == 9.0)
+        }));
         Ok(())
     }
 
