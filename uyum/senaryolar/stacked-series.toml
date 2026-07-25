@@ -2,9 +2,9 @@ id = "stacked-series"
 kaynak = "../uPlot/demos/stacked-series.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
 fixture = "src/kart/stacked_series.rs#stacked_series_kartları"
-yüzey_sayısı = 16
-kart_sayısı = 1
-yüzeyler = [
+"yüzey_sayısı" = 16
+"kart_sayısı" = 1
+"yüzeyler" = [
   "stacked-series-stacked-1", "stacked-series-stacked-2",
   "stacked-series-bars", "stacked-series-interpolated",
   "stacked-series-unstacked", "stacked-series-stacked",
@@ -15,25 +15,36 @@ yüzeyler = [
   "stacked-series-groups", "stacked-series-joined-mixed",
 ]
 
-[kanıt]
-algoritmalar = ["stack", "getStackedOpts", "stack2"]
-boyutlar = ["2x800x400", "2x1600x400", "12x400x300"]
-anlamlar = ["null", "undefined", "zero", "negY", "percent", "groups", "join"]
-rastgele_tohum = 1470942933
-ham_lejant = true
-interpolasyon_nokta_filtresi = true
-set_series_yeniden_yığma = true
-set_series_yeniden_yığılan_yüzeyler = 4
-set_series_yalnız_görünürlük_yüzeyleri = 12
-set_series_sırası = ["setSeries", "delBand/addBand", "setData"]
-grafik_nesnesi_yeniden_kurulur = false
-terminal_eksi_bir_bandı = "SeriBandı usize modelinde taban serisinin 0'a dolgusuyla eşdeğer"
-y_aralıkları = [
+["ilişki"]
+"grup" = "tek_kaynak_sayfasında_on_altı_bağımsız_yüzey"
+"yüzeyler_arası_senkron" = false
+"ilk_iki" = "aynı_ham_veri_ters_seri_sırası"
+"görünüm" = "cursor_zoom_ve_geçmiş_yüzey_başına_bağımsız"
+
+["davranış"]
+"algoritmalar" = ["stack", "getStackedOpts", "stack2"]
+"anlamlar" = ["null", "undefined", "zero", "negY", "percent", "groups", "join"]
+"set_series_yeniden_yığılan_yüzeyler" = 4
+"set_series_yalnız_görünürlük_yüzeyleri" = 12
+"set_series_sırası" = ["setSeries", "delBand/addBand", "setData"]
+"grafik_nesnesi_yeniden_kurulur" = false
+"ham_lejant" = true
+"interpolasyon_nokta_filtresi" = true
+
+["performans"]
+"etkileşim_yeniden_çizimi" = "yalnız_etkin_yüzey"
+"korunan_etkin_olmayan_yüzey" = 15
+"svg_güncelleme" = "yerinde"
+"rastgele_tohum" = 1470942933
+
+["kanıt"]
+"boyutlar" = ["2x800x400", "2x1600x400", "12x400x300"]
+"terminal_eksi_bir_bandı" = "SeriBandı_usize_modelinde_taban_serisinin_sıfıra_dolgusuyla_eşdeğer"
+"y_aralıkları" = [
   "stacked-1=0..71", "stacked-2=0..71", "interpolated=0..5.5",
   "unstacked=-12..12", "stacked/null/undef/zero=-18..18",
   "negY=-7..12", "percent=-1.2..1.2", "groups=0..56", "joined=0..12",
 ]
-yüzeyler_arası_senkron = false
-rehber_varsayılanı = "kapalı"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"rehber_varsayılanı" = "kapalı"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
+"wasm" = "wasm/www/index.html"

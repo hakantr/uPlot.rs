@@ -2774,6 +2774,7 @@
         "null-undefined-zero-distinction", "negative-y-and-percent-stacking",
         "independent-stacking-groups", "joined-line-and-stacked-bars",
         "source-series-band-colors", "independent-cross-surface-interactions",
+        "single-active-surface-interaction-redraw", "fifteen-inactive-svg-nodes-retained",
         "collapsible-usage-guide", "gpui-wasm-parity",
         "common-interaction-profile", "panic-free-stacking"
       ],

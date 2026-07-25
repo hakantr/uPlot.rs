@@ -7360,6 +7360,7 @@
       const yüzey = chart.querySelector(`[data-stacked-series-index="${indeks}"]`);
       const yüzeyOturumu = stackedSeriesOturumları[indeks];
       if (!tanım || !yüzey || !yüzeyOturumu) return;
+      yüzey.dataset.renderCount = String(Number(yüzey.dataset.renderCount ?? "0") + 1);
       const [kimlik] = tanım;
       const [genişlik, yükseklik] = stackedSeriesBoyutu(indeks);
       const renkler = stackedSeriesStilleri(kimlik);
@@ -7465,9 +7466,10 @@
     }
 
     function stackedSeriesÇiz() {
-      if (!chart.classList.contains("stacked-series-yüzeyi")
+      const kabukYenilendi = !chart.classList.contains("stacked-series-yüzeyi")
         || chart.querySelectorAll(".stacked-series-grafik").length
-          !== stackedSeriesYüzeyleri.length) {
+          !== stackedSeriesYüzeyleri.length;
+      if (kabukYenilendi) {
         chart.className = "stacked-series-yüzeyi";
         chart.innerHTML = `<div class="stacked-series-yığın">${
           stackedSeriesYüzeyleri.map((_, indeks) =>
@@ -7475,7 +7477,11 @@
           ).join("")
         }</div>`;
       }
-      stackedSeriesYüzeyleri.forEach((_, indeks) => stackedSeriesYüzeyiniÇiz(indeks));
+      if (kabukYenilendi) {
+        stackedSeriesYüzeyleri.forEach((_, indeks) => stackedSeriesYüzeyiniÇiz(indeks));
+      } else {
+        stackedSeriesYüzeyiniÇiz(stackedSeriesEtkinİndeks);
+      }
       oturum = stackedSeriesOturumları[stackedSeriesEtkinİndeks]
         ?? stackedSeriesOturumları[0]
         ?? null;

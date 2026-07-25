@@ -3093,6 +3093,8 @@ mod testler {
             1
         );
         assert!(web.contains("function stackedSeriesÇiz()"));
+        assert!(web.contains("stackedSeriesYüzeyiniÇiz(stackedSeriesEtkinİndeks)"));
+        assert!(web.contains("yüzey.dataset.renderCount"));
         assert!(web.contains("setSeries → delBand/addBand → setData"));
         assert!(web.contains("svgYüzeyiniYerindeGüncelle(mevcutSvg"));
         assert_eq!(kart_sayisi(), 365);
