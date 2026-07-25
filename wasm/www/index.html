@@ -11565,10 +11565,9 @@
       noDataSeçimi?.addEventListener("click", olay => olay.stopPropagation());
       noDataSeçimi?.addEventListener("change", olay => {
         olay.stopPropagation();
-        if (aktifKart !== "no-data") return;
+        if (aktifKart !== "no-data" || !oturum) return;
         try {
-          oturum?.free();
-          oturum = new KartOturumu(noDataSeçimi.value, Number(nokta.value));
+          oturum.no_data_ornegini_ayarla(noDataSeçimi.value);
           oturum.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
           const başlık = noDataSeçimi.selectedOptions[0]?.textContent ?? "No Data";
           kartBaşlığı.textContent = başlık;

@@ -453,6 +453,24 @@ impl KartOturumu {
         })
     }
 
+    /// Tek No Data katalog kartının seçili kaynak varyantını aynı WASM
+    /// oturumu ve aynı DOM/SVG kabuğu içinde değiştirir.
+    ///
+    /// Varyantların ölçek/zaman seçenekleri farklı olduğundan çekirdek Grafik
+    /// doğrulanmış olarak yenilenir; JS nesnesi, olay bağları ve yüzey ölçümü
+    /// korunur. Yakınlaştırma/geçmiş yeni kaynak durumuna taşınmaz.
+    pub fn no_data_ornegini_ayarla(&mut self, kimlik: &str) -> Result<(), JsValue> {
+        let örnek = NoDataÖrneği::kimlikten(kimlik).ok_or_else(|| {
+            js_hatası(UplotHatası::BilinmeyenKart {
+                kimlik: kimlik.to_string(),
+            })
+        })?;
+        let (seçenekler, veri) = no_data_kartı(örnek).map_err(js_hatası)?;
+        self.grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
+        self.kart_kimliği = "no-data".to_string();
+        Ok(())
+    }
+
     pub fn svg(&self, genişlik: u32, yükseklik: u32) -> String {
         self.grafik.çiz_görünür_boyutta(genişlik, yükseklik).svg()
     }
@@ -3664,6 +3682,28 @@ mod testler {
             "#no-data-variation { display: block; width: 100%; max-width: 100%; min-width: 0;"
         ));
         assert!(web.contains("text-overflow: ellipsis"));
+        assert!(
+            !web.contains("oturum?.free();\n          oturum = new KartOturumu(noDataSeçimi.value")
+        );
+        assert!(web.contains("oturum.no_data_ornegini_ayarla(noDataSeçimi.value)"));
+    }
+
+    #[test]
+    fn no_data_wasm_aynı_oturumda_varyantı_değiştirip_geçmişi_temizler() {
+        let Ok(mut oturum) = KartOturumu::yeni("no-data", 100) else {
+            return;
+        };
+        assert!(
+            oturum
+                .tekerlek_eksende(0.5, 0.5, 1.0, false, 1)
+                .is_ok_and(|değişti| değişti)
+        );
+        assert!(oturum.yakinlastirilmis());
+        assert!(oturum.no_data_ornegini_ayarla("no-data-flat-100").is_ok());
+        assert!(!oturum.yakinlastirilmis());
+        assert_eq!(oturum.gorunur_x_araligi(), vec![0.0, 1.0]);
+        assert_eq!(oturum.gorunur_y_araligi(), vec![0.0, 200.0]);
+        assert!(oturum.svg(800, 400).contains("[[0,1],[100,100]]"));
     }
 
     #[test]

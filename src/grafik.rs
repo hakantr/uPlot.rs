@@ -704,6 +704,7 @@ impl Grafik {
         let mut tam = seçenekler
             .x_aralığı
             .or_else(|| tam_x_aralığı(&veri).ok())
+            .or(seçenekler.boş_x_aralığı)
             .unwrap_or(Aralık {
                 en_az: 0.0,
                 en_çok: 1.0,
@@ -731,6 +732,22 @@ impl Grafik {
         let mut tam_y = birincil_ölçek
             .and_then(|ölçek| ölçek.aralık)
             .or(seçenekler.y_aralığı)
+            .or_else(|| {
+                let sonlu_veri_var = veri
+                    .seriler()
+                    .iter()
+                    .zip(seçenekler.seriler.iter())
+                    .filter(|(_, ayarlar)| {
+                        ayarlar.göster
+                            && ayarlar.otomatik_ölçeğe_katıl
+                            && ayarlar.ölçek == seçenekler.birincil_y_ölçeği
+                    })
+                    .flat_map(|(seri, _)| seri.iter().flatten())
+                    .any(|değer| değer.is_finite());
+                (!sonlu_veri_var)
+                    .then_some(seçenekler.boş_y_aralığı)
+                    .flatten()
+            })
             .unwrap_or_else(|| {
                 let değerler = || {
                     veri.seriler()
@@ -1397,6 +1414,7 @@ impl Grafik {
             .seçenekler
             .x_aralığı
             .or_else(|| tam_x_aralığı(&veri).ok())
+            .or(self.seçenekler.boş_x_aralığı)
             .unwrap_or(Aralık {
                 en_az: 0.0,
                 en_çok: 1.0,
@@ -3582,7 +3600,9 @@ impl Grafik {
         // yüzeyler ise normal eksen ve ızgara çiziminden geçer.
         if self.veri.x().is_empty()
             && self.seçenekler.x_aralığı.is_none()
+            && self.seçenekler.boş_x_aralığı.is_none()
             && self.seçenekler.y_aralığı.is_none()
+            && self.seçenekler.boş_y_aralığı.is_none()
         {
             return sahne;
         }
@@ -6411,6 +6431,24 @@ impl Grafik {
             .or_else(|| {
                 (anahtar == self.seçenekler.birincil_y_ölçeği)
                     .then_some(self.seçenekler.y_aralığı)
+                    .flatten()
+            })
+            .or_else(|| {
+                if anahtar != self.seçenekler.birincil_y_ölçeği {
+                    return None;
+                }
+                let sonlu_veri_var = self
+                    .veri
+                    .seriler()
+                    .iter()
+                    .zip(self.seçenekler.seriler.iter())
+                    .filter(|(_, ayarlar)| {
+                        ayarlar.göster && ayarlar.otomatik_ölçeğe_katıl && ayarlar.ölçek == anahtar
+                    })
+                    .flat_map(|(seri, _)| seri.iter().flatten())
+                    .any(|değer| değer.is_finite());
+                (!sonlu_veri_var)
+                    .then_some(self.seçenekler.boş_y_aralığı)
                     .flatten()
             })
             .unwrap_or_else(|| {

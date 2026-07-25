@@ -1,7 +1,7 @@
 use super::ortak_kart_etkileşimleri;
 use crate::{
-    Aralık, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, YÖlçekEtiketBiçimi,
-    YÖlçekSeçenekleri,
+    Aralık, GrafikSeçenekleri, HizalıVeri, SayısalAralıkAyarları, SayısalAralıkParçası,
+    SeriSeçenekleri, UplotHatası, YumuşakSınırKipi, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri,
 };
 
 pub const NO_DATA_KART_TANIM_ÖRNEĞİ: &str = r##"// Tek katalog kartındaki 33 seçenekten biri tipli olarak seçilir.
@@ -411,14 +411,21 @@ pub fn no_data_kartı(
         .başlık(kayıt.başlık)
         .x_zaman(kayıt.zaman)
         .x_eksen_etiket_biçimi(YÖlçekEtiketBiçimi::ArtımaGöre)
-        .y_ölçeği(YÖlçekSeçenekleri::yeni("y").etiket_biçimi(YÖlçekEtiketBiçimi::ArtımaGöre))
+        .y_ölçeği(
+            YÖlçekSeçenekleri::yeni("y")
+                .etiket_biçimi(YÖlçekEtiketBiçimi::ArtımaGöre)
+                .sayısal_aralık(SayısalAralıkAyarları::yeni(
+                    SayısalAralıkParçası::yeni(0.1, Some(0.0), YumuşakSınırKipi::Koşullu),
+                    SayısalAralıkParçası::yeni(0.1, Some(0.0), YumuşakSınırKipi::Koşullu),
+                )),
+        )
         .etkileşimler(ortak_kart_etkileşimleri())
         .seri(SeriSeçenekleri::yeni("Value").renk("#000000"));
 
     if kayıt.özel_boş_aralık {
         seçenekler = seçenekler
-            .x_aralığı(Aralık::yeni(1_566_453_600.0, 1_566_497_660.0)?)
-            .y_aralığı(Aralık::yeni(0.0, 100.0)?);
+            .boş_x_aralığı(Aralık::yeni(1_566_453_600.0, 1_566_497_660.0)?)
+            .boş_y_aralığı(Aralık::yeni(0.0, 100.0)?);
     } else if let (Some(x_alt), Some(x_üst)) = (
         kayıt.x.iter().copied().reduce(f64::min),
         kayıt.x.iter().copied().reduce(f64::max),
@@ -433,13 +440,6 @@ pub fn no_data_kartı(
             Aralık::yeni(x_alt, x_üst)?
         };
         seçenekler = seçenekler.x_aralığı(x_aralığı);
-    }
-
-    if let (Some(y_alt), Some(y_üst)) = (
-        kayıt.y.iter().copied().reduce(f64::min),
-        kayıt.y.iter().copied().reduce(f64::max),
-    ) {
-        seçenekler = seçenekler.y_aralığı(Aralık::uplot_sayısal(y_alt, y_üst, 0.1, true)?);
     }
 
     let y = kayıt.y.iter().copied().map(Some).collect();
@@ -528,6 +528,88 @@ mod testler {
         assert!(metinler.contains(&"0"));
         assert!(!metinler.contains(&"0.10"));
         assert!(!metinler.contains(&"0.0"));
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_30_sayısal_yüzeyinin_x_y_aralıkları_altın_matrisi_korunur() -> Result<(), UplotHatası>
+    {
+        let beklenen_y: [(f64, f64); 30] = [
+            (-2.0, 0.0),
+            (0.0, 100.0),
+            (0.0, 2.0),
+            (-2.0, 0.0),
+            (0.0, 100.0),
+            (0.0, 2.0),
+            (-2.0, 0.0),
+            (0.0, 100.0),
+            (0.0, 2.0),
+            (34.0, 53.0),
+            (9.999_998_800_000_002, 10.000_001_200_000_002),
+            (0.0, 20.0),
+            (0.0, 20.0),
+            (0.0, 20_000_000.0),
+            (0.0, 2.0),
+            (-53.0, -34.0),
+            (-10.000_001_200_000_002, -9.999_998_800_000_002),
+            (-20.0, 0.0),
+            (-20.0, 0.0),
+            (-20_000_000.0, 0.0),
+            (-2.0, 0.0),
+            (-200.0, 0.0),
+            (-20.0, 0.0),
+            (-2.0, 0.0),
+            (-0.200_000_000_000_000_07, 0.0),
+            (0.0, 100.0),
+            (0.0, 0.200_000_000_000_000_07),
+            (0.0, 2.0),
+            (0.0, 20.0),
+            (0.0, 200.0),
+        ];
+        for (örnek, (beklenen_alt, beklenen_üst)) in
+            NoDataÖrneği::TÜMÜ.into_iter().skip(3).zip(beklenen_y)
+        {
+            let (seçenekler, veri) = no_data_kartı(örnek)?;
+            let grafik = Grafik::yeni(seçenekler, veri)?;
+            let beklenen_x = if örnek.nokta_sayısı() == 1 {
+                match grafik.hizalı_veri().x().first().copied() {
+                    Some(-1.0) => Aralık::yeni(-2.0, 0.0)?,
+                    Some(0.0) => Aralık::yeni(0.0, 100.0)?,
+                    Some(_) => Aralık::yeni(0.0, 2.0)?,
+                    None => return Err(UplotHatası::YetersizVeri { uzunluk: 0 }),
+                }
+            } else {
+                Aralık::yeni(0.0, 1.0)?
+            };
+            assert_eq!(grafik.görünür_x_aralığı(), beklenen_x, "{}", örnek.kimlik());
+            let gerçekleşen = grafik.görünür_y_aralığı();
+            let tolerans = beklenen_alt.abs().max(beklenen_üst.abs()).max(1.0) * 1e-12;
+            assert!(
+                (gerçekleşen.en_az - beklenen_alt).abs() <= tolerans
+                    && (gerçekleşen.en_çok - beklenen_üst).abs() <= tolerans,
+                "{}: {gerçekleşen:?}",
+                örnek.kimlik()
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn özel_boş_aralık_set_data_sonrası_otomatik_aralığa_döner() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = no_data_kartı(NoDataÖrneği::BOŞ_ÖZEL_ARALIK)?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        assert_eq!(
+            grafik.görünür_x_aralığı(),
+            Aralık::yeni(1_566_453_600.0, 1_566_497_660.0)?
+        );
+        assert_eq!(grafik.görünür_y_aralığı(), Aralık::yeni(0.0, 100.0)?);
+
+        grafik.veriyi_ayarla(HizalıVeri::yeni(
+            vec![10.0, 20.0],
+            vec![vec![Some(36.0), Some(51.0)]],
+        )?)?;
+        assert_eq!(grafik.görünür_x_aralığı(), Aralık::yeni(10.0, 20.0)?);
+        assert_eq!(grafik.görünür_y_aralığı(), Aralık::yeni(34.0, 53.0)?);
         Ok(())
     }
 }

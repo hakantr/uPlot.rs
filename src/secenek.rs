@@ -1098,10 +1098,21 @@ pub struct GrafikSeçenekleri {
     pub x_eksen_görünür: bool,
     pub x_ızgara_görünür: bool,
     pub x_aralığı: Option<Aralık>,
+    /// Yalnız X verisi boşken kullanılan `scale.range` geri dönüşü.
+    ///
+    /// Veri geldikten sonra otomatik X aralığı yeniden devreye girer; bu,
+    /// uPlot range callback'lerinin `dataMin == null` dalını sabit bir ölçeğe
+    /// dönüştürmeden taşır.
+    pub boş_x_aralığı: Option<Aralık>,
     /// uPlot `scales.x.range` içinde `valToIdx` ile görünür uçları veri
     /// değerlerine yapıştıran aralık callback'inin karşılığıdır.
     pub x_aralığı_veriye_yapışık: bool,
     pub y_aralığı: Option<Aralık>,
+    /// Yalnız birincil Y ölçeğinde sonlu veri yokken kullanılan geri dönüş.
+    ///
+    /// Sonlu bir değer geldiğinde ölçeğin normal otomatik/rangeNum hesabı
+    /// uygulanır.
+    pub boş_y_aralığı: Option<Aralık>,
     /// `mass-spectrum.html` içindeki veri min/max'ını doğrudan kullanan ve
     /// düz görünümde sıfır için 0..100, diğer değerler için 0..2v üreten kip.
     pub kütle_spektrumu_y_aralığı: bool,
@@ -1207,8 +1218,10 @@ impl GrafikSeçenekleri {
             x_eksen_görünür: true,
             x_ızgara_görünür: true,
             x_aralığı: None,
+            boş_x_aralığı: None,
             x_aralığı_veriye_yapışık: false,
             y_aralığı: None,
+            boş_y_aralığı: None,
             kütle_spektrumu_y_aralığı: false,
             y_ölçekleri: Vec::new(),
             birincil_y_ölçeği: "y".to_string(),
@@ -1529,6 +1542,11 @@ impl GrafikSeçenekleri {
         self
     }
 
+    pub fn boş_y_aralığı(mut self, aralık: Aralık) -> Self {
+        self.boş_y_aralığı = Some(aralık);
+        self
+    }
+
     pub fn kütle_spektrumu_y_aralığı(mut self, etkin: bool) -> Self {
         self.kütle_spektrumu_y_aralığı = etkin;
         self
@@ -1536,6 +1554,11 @@ impl GrafikSeçenekleri {
 
     pub fn x_aralığı(mut self, aralık: Aralık) -> Self {
         self.x_aralığı = Some(aralık);
+        self
+    }
+
+    pub fn boş_x_aralığı(mut self, aralık: Aralık) -> Self {
+        self.boş_x_aralığı = Some(aralık);
         self
     }
 
