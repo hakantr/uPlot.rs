@@ -215,7 +215,7 @@ pub use sync_y_zero::{
 };
 pub use thin_bars_stroke_fill::{
     THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, ThinBarsYoğunluk, ThinBarsÖrneği,
-    thin_bars_stroke_fill_kartı,
+    thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı,
 };
 pub use time_periods::{
     TIME_PERIODS_KART_TANIM_ÖRNEĞİ, TimePeriodsÖrneği, time_periods_kartı

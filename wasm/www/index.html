@@ -330,6 +330,19 @@
     .stream-data-grafik svg { display: block; width: 1600px; height: 600px; }
     .stream-data-grafik .lejant { position: static; padding: 4px 8px 8px;
                                   justify-content: flex-start; pointer-events: auto; }
+    #chart.thin-bars-yüzeyi { display: block; min-width: 0; overflow: auto;
+                              place-items: unset; padding: 8px; box-sizing: border-box; }
+    .thin-bars-yığın { width: 1600px; display: grid; gap: 14px; align-items: start; }
+    .thin-bars-yoğunluklar { display: flex; flex-wrap: wrap; gap: 10px;
+                             align-items: start; }
+    .thin-bars-geometri-grup { display: grid; grid-template-columns: repeat(4, 400px);
+                               gap: 0; border-top: 1px solid #d1d5db;
+                               padding-top: 10px; }
+    .thin-bars-grafik { position: relative; flex: none; background: #fff;
+                        border: 1px solid #e5e7eb; box-sizing: content-box; }
+    .thin-bars-grafik svg { display: block; max-width: none; }
+    .thin-bars-grafik .lejant { position: static; min-height: 20px;
+                                padding: 3px 8px 7px; border-top: 1px solid #f3f4f6; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -1798,13 +1811,13 @@
     };
 
     const inceÇubukYüzeyleri = [
-      ["thin-bars-normal-30", "Normal", "800×200 · 30 bars"],
-      ["thin-bars-no-stroke-red-fill-200", "No stroke, red fill", "800×200 · 200 bars"],
-      ["thin-bars-width-zero-normal-fill-200", "Too thin, but stroke width 0, use normal fill", "800×200 · 200 bars"],
-      ["thin-bars-thin-stroke-fallback-200", "Too thin, use stroke color for fill", "800×200 · 200 bars"],
-      ["thin-bars-stroke-fill-1000", "Still stroke & fill", "1000×200 · 200 bars"],
-      ["thin-bars-stroke-fill-1200", "Still stroke & fill", "1200×200 · 200 bars"],
-      ["thin-bars-stroke-fill-1600", "Still stroke & fill", "1600×200 · 200 bars"],
+      ["thin-bars-normal-30", "Normal", "800×200 · 30 bars", 800, 200],
+      ["thin-bars-no-stroke-red-fill-200", "No stroke, red fill", "800×200 · 200 bars", 800, 200],
+      ["thin-bars-width-zero-normal-fill-200", "Too thin, but stroke width 0, use normal fill", "800×200 · 200 bars", 800, 200],
+      ["thin-bars-thin-stroke-fallback-200", "Too thin, use stroke color for fill", "800×200 · 200 bars", 800, 200],
+      ["thin-bars-stroke-fill-1000", "Still stroke & fill", "1000×200 · 200 bars", 1000, 200],
+      ["thin-bars-stroke-fill-1200", "Still stroke & fill", "1200×200 · 200 bars", 1200, 200],
+      ["thin-bars-stroke-fill-1600", "Still stroke & fill", "1600×200 · 200 bars", 1600, 200],
     ];
     for (const [hizalama, genişlikYüzdesi, boşluk] of [
       [0, 60, 0], [0, 60, 16], [0, 100, 0], [0, 100, 16],
@@ -1818,34 +1831,40 @@
             `thin-bars-a${hizalama}-w${genişlikYüzdesi}-g${boşluk}-d${yön}-s${vuruş}`,
             `{align: ${hizalama}, width: ${genişlik}, gap: ${boşluk}, dir: ${yön}, stroke: ${vuruş}}`,
             "400×200 · paths.bars() geometry",
+            400,
+            200,
           ]);
         }
       }
     }
-    let inceÇubukEklemeNoktası = document.querySelector('[data-kart="sync-y-zero"]');
-    for (const [kimlik, başlık, durum] of inceÇubukYüzeyleri) {
-      inceÇubukEklemeNoktası?.insertAdjacentHTML(
-        "afterend",
-        `<article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>${kimlik}</small><div class="durum">${durum}</div>
-        </article>`
-      );
-      inceÇubukEklemeNoktası = document.querySelector(`[data-kart="${kimlik}"]`);
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak:
-          <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/thin-bars-stroke-fill.html">thin-bars-stroke-fill.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/bars.js">src/paths/bars.js</a>
-          <br>Resmî örneğin 7 yoğunluk yüzeyi ile align, width, gap, dir ve stroke
-          birleşimlerinden oluşan 48 geometri yüzeyi aynı veri ve boyutlarla Rust çekirdeğinde çizilir.`,
-        tanım: () => thin_bars_stroke_fill_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/thin_bars_stroke_fill.rs",
-        seriler: [{ etiket: "Value", renk: kimlik.includes("-a") ? "#00f" : "red" }],
-        yardım: "Vuruş/dolgu düşümü, hizalama, boşluk ve ters yön çekirdekte çözülür",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    document.querySelector('[data-kart="sync-y-zero"]')?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="thin-bars-stroke-fill"
+        aria-current="false" tabindex="0">
+        <strong>Thin bar stroke &amp; fill</strong><small>thin-bars-stroke-fill</small>
+        <div class="durum">55 bağımsız yüzey · 7 yoğunluk + 48 geometri</div>
+      </article>`
+    );
+    kartlar["thin-bars-stroke-fill"] = {
+      başlık: "Thin bar stroke & fill · 55 yüzey",
+      kaynak: `Kaynak:
+        <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/thin-bars-stroke-fill.html">thin-bars-stroke-fill.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/bars.js">src/paths/bars.js</a>
+        <br>Resmî sayfadaki 7 yoğunluk yüzeyi ile 12 grup × 4 align/width/gap/dir/stroke
+        karşılaştırması tek kartta, 55 bağımsız grafik ve kaynak sırasıyla gösterilir.`,
+      tanım: () => thin_bars_stroke_fill_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/thin_bars_stroke_fill.rs",
+      seriler: [{ etiket: "Value", renk: "red" }],
+      yardım: "Her yüzey bağımsızdır · zoom sonrası nokta görünürlüğü piksel aralığından yeniden hesaplanır",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "İnce çubuklarda vuruşun ne zaman dolguya düştüğünü ve align, width, gap, dir, stroke birleşimlerinin geometriyi nasıl değiştirdiğini yan yana karşılaştırır.",
+        api: "thin_bars_stroke_fill_kartları 7 yoğunluk ve 48 geometri yüzeyini tek kaynak grubunda döndürür. Her Grafik kendi cursor, seçim ve görünüm geçmişini bağımsız tutar.",
+        izleme: "Çok sık örnekli histogram ve sütun serilerinde farklı panel genişliklerinde vuruş/dolgu okunabilirliğini seçmek; RTL/ters X ve hizalama kararlarını doğrulamak için kullanılır.",
+        maliyet: "Kaynak gibi 55 yüzey ve toplam 1.422 çubuk kurulur. Her yüzey barları tek sahne geçişinde üretir; pointer yalnız etkin yüzeyin hafif cursor/legend katmanını, zoom yalnız etkin yüzeyin geometrisini günceller.",
+      },
+    };
 
     const zamanDönemiYüzeyleri = [
       ["time-periods-hourly-users", "Hourly Users", "8712 saat · 2019/2018/2017"],
@@ -1853,7 +1872,7 @@
       ["time-periods-daily-users", "Daily Users", "363 UTC gün · saatlik toplam"],
     ];
     let zamanDönemiEklemeNoktası =
-      document.querySelector('[data-kart="thin-bars-a-1-w100-g16-d-1-s4"]');
+      document.querySelector('[data-kart="thin-bars-stroke-fill"]');
     for (const [kimlik, başlık, durum] of zamanDönemiYüzeyleri) {
       zamanDönemiEklemeNoktası?.insertAdjacentHTML(
         "afterend",
@@ -2723,6 +2742,8 @@
     let stackedSeriesEtkinİndeks = 0;
     let streamDataOturumları = [];
     let streamDataEtkinİndeks = 0;
+    let thinBarsOturumları = [];
+    let thinBarsEtkinİndeks = 0;
     let scalesDirOriİmleci = null;
     let scalesDirOriÇizimKaresi = null;
     let syncCursorKöprüsü = null;
@@ -5161,6 +5182,82 @@
       kontrolleriGüncelle();
     }
 
+    function thinBarsYüzeyiniÇiz(indeks) {
+      const tanım = inceÇubukYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-thin-bars-index="${indeks}"]`);
+      const yüzeyOturumu = thinBarsOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const [kimlik, başlık, durum, genişlik, yükseklik] = tanım;
+      const svgÇıktısı = yüzeyOturumu.svg(genişlik, yükseklik);
+      const mevcutSvg = yüzey.querySelector("svg");
+      if (!mevcutSvg) {
+        const renk = kimlik.includes("-a") ? "#00f" : "red";
+        yüzey.style.width = `${genişlik}px`;
+        yüzey.innerHTML = `
+          ${svgÇıktısı}
+          <div class="lejant" aria-label="${başlık} · ${durum}">
+            <span>x: <b id="x-değeri">--</b></span>
+            <span><i class="örnek" style="border-color:${renk};background:${renk}"></i>
+              Value: <b id="seri-değeri-0">--</b></span>
+          </div>`;
+      } else {
+        const şablon = document.createElement("template");
+        şablon.innerHTML = svgÇıktısı.trim();
+        svgYüzeyiniYerindeGüncelle(mevcutSvg, şablon.content.firstElementChild);
+      }
+      const svg = yüzey.querySelector("svg");
+      if (!svg) return;
+      softMinMaxEtkileşimKatmanınıKur(svg);
+      svg.dataset.etkileşim = "independent-thin-bars";
+      const nokta = svg.querySelector("#imleç-nokta-0");
+      if (nokta) nokta.setAttribute("fill", kimlik.includes("-a") ? "#00f" : "red");
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      const xAralığı = yüzeyOturumu.gorunur_x_araligi();
+      const yAralığı = yüzeyOturumu.gorunur_y_araligi();
+      yüzey.dataset.xEnAz = String(xAralığı[0] ?? "");
+      yüzey.dataset.xEnCok = String(xAralığı[1] ?? "");
+      yüzey.dataset.yEnAz = String(yAralığı[0] ?? "");
+      yüzey.dataset.yEnCok = String(yAralığı[1] ?? "");
+    }
+
+    function thinBarsÇiz() {
+      const ilkKurulum = !chart.classList.contains("thin-bars-yüzeyi")
+        || chart.querySelectorAll(".thin-bars-grafik").length !== inceÇubukYüzeyleri.length;
+      if (ilkKurulum) {
+        const yoğunluklar = inceÇubukYüzeyleri.slice(0, 7)
+          .map((_, indeks) =>
+            `<article class="thin-bars-grafik" data-thin-bars-index="${indeks}"></article>`
+          ).join("");
+        const geometriGrupları = Array.from({ length: 12 }, (_, grup) => {
+          const başlangıç = 7 + grup * 4;
+          return `<section class="thin-bars-geometri-grup">${
+            Array.from({ length: 4 }, (_, yer) =>
+              `<article class="thin-bars-grafik"
+                data-thin-bars-index="${başlangıç + yer}"></article>`
+            ).join("")
+          }</section>`;
+        }).join("");
+        chart.className = "thin-bars-yüzeyi";
+        chart.innerHTML = `<div class="thin-bars-yığın">
+          <div class="thin-bars-yoğunluklar">${yoğunluklar}</div>
+          ${geometriGrupları}
+        </div>`;
+        inceÇubukYüzeyleri.forEach((_, indeks) => thinBarsYüzeyiniÇiz(indeks));
+        const etkinYüzey = chart.querySelector(
+          `[data-thin-bars-index="${thinBarsEtkinİndeks}"]`
+        );
+        if (etkinYüzey && thinBarsEtkinİndeks > 0) {
+          chart.scrollTop = Math.max(0, etkinYüzey.offsetTop - 8);
+          chart.scrollLeft = Math.max(0, etkinYüzey.offsetLeft - 8);
+        }
+      } else {
+        thinBarsYüzeyiniÇiz(thinBarsEtkinİndeks);
+      }
+      oturum = thinBarsOturumları[thinBarsEtkinİndeks] ?? thinBarsOturumları[0] ?? null;
+      kontrolleriGüncelle();
+    }
+
     function svgImageCanvasınıÇiz(canvas, svgMetni) {
       if (!canvas) return;
       const cssGenişliği = 400;
@@ -5264,6 +5361,10 @@
       }
       if (aktifKart === "stream-data") {
         streamDataÇiz();
+        return;
+      }
+      if (aktifKart === "thin-bars-stroke-fill") {
+        thinBarsÇiz();
         return;
       }
       if (!oturum) return;
@@ -5576,6 +5677,10 @@
             ? chart.querySelector(
                 `[data-stream-data-index="${streamDataEtkinİndeks}"] svg`
               )
+          : aktifKart === "thin-bars-stroke-fill"
+            ? chart.querySelector(
+                `[data-thin-bars-index="${thinBarsEtkinİndeks}"] svg`
+              )
         : chart.querySelector("svg"));
       if (!svg || !oturum) return false;
       const rect = svg.getBoundingClientRect();
@@ -5666,6 +5771,9 @@
           : aktifKart === "stream-data"
             ? olay.target?.closest?.(".stream-data-grafik")
               ?? chart.querySelector(`[data-stream-data-index="${streamDataEtkinİndeks}"]`)
+          : aktifKart === "thin-bars-stroke-fill"
+            ? olay.target?.closest?.(".thin-bars-grafik")
+              ?? chart.querySelector(`[data-thin-bars-index="${thinBarsEtkinİndeks}"]`)
           : null;
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
       if (!svg) return { x: NaN, y: NaN, svg: null, view: { width: 0, height: 0 } };
@@ -5887,6 +5995,7 @@
         ?? svg.closest(".sparse-grafik")
         ?? svg.closest(".stacked-series-grafik")
         ?? svg.closest(".stream-data-grafik")
+        ?? svg.closest(".thin-bars-grafik")
         ?? chart;
       const noktalar = kartlar[aktifKart].seriler.map((_, indeks) => svg.querySelector(`#imleç-nokta-${indeks}`));
       const öğeler = [...çizgiler, ...noktalar];
@@ -6208,6 +6317,19 @@
         if (svg) yüzeyiEşitle(svg);
       }
     }
+    function thinBarsOturumunuSeç(olay) {
+      if (aktifKart !== "thin-bars-stroke-fill") return;
+      const yüzey = olay.target?.closest?.(".thin-bars-grafik");
+      const indeks = Number(yüzey?.dataset.thinBarsIndex);
+      if (Number.isInteger(indeks) && thinBarsOturumları[indeks]) {
+        thinBarsEtkinİndeks = indeks;
+        oturum = thinBarsOturumları[indeks];
+        kartlar["thin-bars-stroke-fill"].seriler[0].renk =
+          inceÇubukYüzeyleri[indeks]?.[0].includes("-a") ? "#00f" : "red";
+        const svg = yüzey.querySelector("svg");
+        if (svg) yüzeyiEşitle(svg);
+      }
+    }
     for (const olayTürü of ["pointerdown", "pointermove", "pointerup", "wheel", "dblclick", "scroll"]) {
       chart.addEventListener(olayTürü, scatterOturumunuSeç, { capture: true, passive: true });
       chart.addEventListener(olayTürü, softMinMaxOturumunuSeç, { capture: true, passive: true });
@@ -6224,6 +6346,9 @@
         capture: true, passive: true,
       });
       chart.addEventListener(olayTürü, streamDataOturumunuSeç, {
+        capture: true, passive: true,
+      });
+      chart.addEventListener(olayTürü, thinBarsOturumunuSeç, {
         capture: true, passive: true,
       });
     }
@@ -6681,6 +6806,10 @@
         streamDataOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
+      } else if (aktifKart === "thin-bars-stroke-fill") {
+        thinBarsOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
       } else {
         oturum?.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
       }
@@ -6819,6 +6948,11 @@
           streamDataEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "stream-data";
         }
+        if (kimlik !== "thin-bars-stroke-fill" && kimlik.startsWith("thin-bars-")) {
+          const indeks = inceÇubukYüzeyleri.findIndex(yüzey => yüzey[0] === kimlik);
+          thinBarsEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "thin-bars-stroke-fill";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -6872,6 +7006,7 @@
           sparseOturumları,
           stackedSeriesOturumları,
           streamDataOturumları,
+          thinBarsOturumları,
         ].some(yüzeyler => yüzeyler.includes(oturum));
         if (!gruplanmışOturum) oturum?.free();
         oturum = null;
@@ -6905,6 +7040,8 @@
         stackedSeriesOturumları = [];
         streamDataOturumları.forEach(yüzey => yüzey.free());
         streamDataOturumları = [];
+        thinBarsOturumları.forEach(yüzey => yüzey.free());
+        thinBarsOturumları = [];
         scalesDirOriİmleci = null;
         if (scalesDirOriÇizimKaresi !== null) {
           cancelAnimationFrame(scalesDirOriÇizimKaresi);
@@ -7196,6 +7333,18 @@
               streamDataZamanlayıcı = null;
             }
           }, 100);
+          return;
+        }
+        if (kimlik === "thin-bars-stroke-fill") {
+          thinBarsOturumları = inceÇubukYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey[0], 200);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = thinBarsOturumları[thinBarsEtkinİndeks]
+            ?? thinBarsOturumları[0]
+            ?? null;
+          çiz();
           return;
         }
         oturum = new KartOturumu(

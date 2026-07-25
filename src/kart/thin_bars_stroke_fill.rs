@@ -3,12 +3,12 @@ use crate::{
     Aralık, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, ÇubukDüzeni, ÇubukYönü,
 };
 
-pub const THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ: &str = r##"let örnek = ThinBarsÖrneği::Geometri {
-    hizalama: 0, genişlik_yüzdesi: 60, boşluk: 0, yön: 1, vuruş: 1,
-};
-let (seçenekler, veri) = thin_bars_stroke_fill_kartı(örnek)?;
-// Vuruş/dolgu düşümü, hizalama, boşluk ve ters yön çekirdekte çözülür.
-let grafik = Grafik::yeni(seçenekler, veri)?;"##;
+pub const THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ: &str = r##"let yüzeyler = thin_bars_stroke_fill_kartları()?;
+for (örnek, seçenekler, veri) in yüzeyler {
+    // 7 yoğunluk + 48 geometri yüzeyi bağımsız Grafik örnekleridir.
+    let grafik = Grafik::yeni(seçenekler, veri)?;
+    yüzeyi_ekle(örnek.kimlik(), grafik);
+}"##;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ThinBarsYoğunluk {
@@ -202,10 +202,6 @@ pub fn thin_bars_stroke_fill_kartı(
         ThinBarsÖrneği::Yoğunluk(_) => Aralık::yeni(0.0, 10.0)?,
         ThinBarsÖrneği::Geometri { .. } => Aralık::yeni(0.0, 4.0)?,
     };
-    let noktalar_görünür = matches!(
-        örnek,
-        ThinBarsÖrneği::Yoğunluk(ThinBarsYoğunluk::Normal30) | ThinBarsÖrneği::Geometri { .. }
-    );
     let düzen = ÇubukDüzeni::yeni(ÇubukYönü::Dikey)
         .ters(ters)
         .genişlik_oranı(genişlik_oranı)
@@ -224,10 +220,21 @@ pub fn thin_bars_stroke_fill_kartı(
                 .renk(renk)
                 .dolgu(dolgu)
                 .çizgi_kalınlığı(vuruş)
-                .noktaları_göster(noktalar_görünür)
                 .nokta_stili(5.0, 1.0, Some("#ffffff")),
         );
     Ok((seçenekler, veri))
+}
+
+/// Resmî `thin-bars-stroke-fill.html` sayfasındaki 7 yoğunluk ve 48 geometri
+/// yüzeyini kaynak sırasıyla tek karşılaştırma grubu olarak üretir.
+pub fn thin_bars_stroke_fill_kartları()
+-> Result<Vec<(ThinBarsÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    ThinBarsÖrneği::tümü()
+        .into_iter()
+        .map(|örnek| {
+            thin_bars_stroke_fill_kartı(örnek).map(|(seçenekler, veri)| (örnek, seçenekler, veri))
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -277,22 +284,76 @@ mod testler {
     fn ince_vuruş_kaynak_kuralıyla_vuruş_rengine_düşer() -> Result<(), UplotHatası> {
         let örnek = ThinBarsÖrneği::Yoğunluk(ThinBarsYoğunluk::İnceVuruşDolguyaDönüşür200);
         let (seçenekler, veri) = thin_bars_stroke_fill_kartı(örnek)?;
-        let sahne = Grafik::yeni(seçenekler, veri)?.çiz_boyutta(600, 200, None);
+        let sahne = Grafik::yeni(seçenekler, veri)?.çiz_boyutta(800, 200, None);
         assert!(sahne.komutlar().iter().all(|komut| match komut {
             Komut::Dikdörtgen {
                 dolgu, kalınlık, ..
             } => dolgu == "red" && *kalınlık == 0.0,
             _ => true,
         }));
+        let örnek = ThinBarsÖrneği::Yoğunluk(ThinBarsYoğunluk::VuruşVeDolgu1000);
+        let (seçenekler, veri) = thin_bars_stroke_fill_kartı(örnek)?;
+        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+        assert!(sahne.komutlar().iter().all(|komut| match komut {
+            Komut::Dikdörtgen {
+                dolgu, kalınlık, ..
+            } => dolgu == "rgba(255,0,0,0.2)" && *kalınlık == 1.0,
+            _ => true,
+        }));
         Ok(())
     }
 
     #[test]
-    fn hizalama_boşluk_yön_ve_vuruş_birleşimleri_benzersizdir() {
-        let kimlikler = ThinBarsÖrneği::tümü()
+    fn yoğun_çubuk_noktaları_yakınlaştırmada_kaynak_gibi_görünür() -> Result<(), UplotHatası> {
+        let örnek = ThinBarsÖrneği::Yoğunluk(ThinBarsYoğunluk::VuruşVeDolgu1000);
+        let (seçenekler, veri) = thin_bars_stroke_fill_kartı(örnek)?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        let nokta_sayısı = |grafik: &Grafik| {
+            grafik
+                .çiz()
+                .komutlar()
+                .iter()
+                .filter(|komut| matches!(komut, Komut::Daire { .. }))
+                .count()
+        };
+        assert_eq!(nokta_sayısı(&grafik), 0);
+        grafik.seçimi_bitir(0.45, 0.55, false)?;
+        assert!(nokta_sayısı(&grafik) > 0);
+        Ok(())
+    }
+
+    #[test]
+    fn yoğun_sayısal_x_ekseni_okunabilir_kaynak_bölmelerini_kullanır() -> Result<(), UplotHatası> {
+        let örnek = ThinBarsÖrneği::Yoğunluk(ThinBarsYoğunluk::İnceVuruşDolguyaDönüşür200);
+        let (seçenekler, veri) = thin_bars_stroke_fill_kartı(örnek)?;
+        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+        let x_etiketleri = sahne
+            .komutlar()
+            .iter()
+            .filter_map(|komut| match komut {
+                Komut::Metin { konum, içerik, .. } if (konum.y - 150.0).abs() < f32::EPSILON => {
+                    Some(içerik.as_str())
+                }
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            x_etiketleri,
+            [
+                "0", "20", "40", "60", "80", "100", "120", "140", "160", "180"
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn hizalama_boşluk_yön_ve_vuruş_birleşimleri_benzersizdir() -> Result<(), UplotHatası> {
+        let örnekler = thin_bars_stroke_fill_kartları()?;
+        let kimlikler = örnekler
             .into_iter()
-            .map(ThinBarsÖrneği::kimlik)
+            .map(|(örnek, _, _)| örnek.kimlik())
             .collect::<std::collections::BTreeSet<_>>();
         assert_eq!(kimlikler.len(), 55);
+        Ok(())
     }
 }

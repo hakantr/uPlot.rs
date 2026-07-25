@@ -4670,6 +4670,26 @@ impl Grafik {
                 } else {
                     çizim_g
                 };
+                let sayısal_x_adımı = self
+                    .seçenekler
+                    .kategoriler
+                    .is_empty()
+                    .then(|| uygun_artım(x_aralığı, çizim_g, 40.0));
+                let ilk_görünür = self
+                    .veri
+                    .x()
+                    .partition_point(|değer| *değer < x_aralığı.en_az);
+                let görünür_bitiş = self
+                    .veri
+                    .x()
+                    .partition_point(|değer| *değer <= x_aralığı.en_çok);
+                let görünür_indeks_sayısı = görünür_bitiş.saturating_sub(ilk_görünür);
+                let nokta_piksel_açıklığı = ilk_görünür
+                    .checked_add(görünür_indeks_sayısı.saturating_sub(1))
+                    .and_then(|son| self.veri.x().get(ilk_görünür).zip(self.veri.x().get(son)))
+                    .map_or(0.0, |(ilk, son)| {
+                        (((son - ilk) / x_açıklığı) as f32 * çizim_g).abs()
+                    });
                 let mut tam_boşluk = grup_adımı * (1.0 - düzen.genişlik_oranı) + düzen.ek_boşluk;
                 if tam_boşluk < 1.0 {
                     tam_boşluk = 0.0;
@@ -4715,13 +4735,28 @@ impl Grafik {
                     {
                         continue;
                     }
-                    sahne.ekle(Komut::Metin {
-                        konum: Nokta::yeni(merkez, alt + 22.0),
-                        içerik: kategoriler.get(indeks).cloned().unwrap_or_default(),
-                        renk: "#4b5563".to_string(),
-                        boyut: 11.0,
-                        hiza: MetinHizası::Orta,
-                    });
+                    let x_etiketi = sayısal_x_adımı.map_or_else(
+                        || kategoriler.get(indeks).cloned(),
+                        |adım| {
+                            let en_yakın = (x_değeri / adım).round() * adım;
+                            ((x_değeri - en_yakın).abs() <= adım.abs() * 1e-9).then(|| {
+                                if adım.abs() >= 1.0 && x_değeri.fract().abs() <= f64::EPSILON {
+                                    format!("{x_değeri:.0}")
+                                } else {
+                                    eksen_değerini_yaz(x_değeri, adım)
+                                }
+                            })
+                        },
+                    );
+                    if let Some(içerik) = x_etiketi {
+                        sahne.ekle(Komut::Metin {
+                            konum: Nokta::yeni(merkez, alt + 22.0),
+                            içerik,
+                            renk: "#4b5563".to_string(),
+                            boyut: 11.0,
+                            hiza: MetinHizası::Orta,
+                        });
+                    }
                     let mut birikim = 0.0_f64;
                     for (çubuk_sırası, seri_indeksi) in çubuk_serileri.iter().copied().enumerate()
                     {
@@ -4744,7 +4779,13 @@ impl Grafik {
                             }
                         });
                         let istenen_vuruş = seri.map_or(0.0, |seri| seri.çizgi_kalınlığı);
-                        let vuruş = if istenen_vuruş >= grup_genişliği / 2.0 {
+                        // `bars.js`, canvas genişliğini piksel ızgarasına yuvarlayan
+                        // `pxRound` sonucu üzerinden ince vuruşu düşürür. Vektör
+                        // sahnesinde de aynı sınır kararını CSS pikseline hizalanmış
+                        // bar genişliğiyle vermek 800/1000 px kaynak eşiğini korur.
+                        let eşik_genişliği =
+                            piksele_hizala(grup_genişliği, self.seçenekler.piksel_hizası);
+                        let vuruş = if istenen_vuruş >= eşik_genişliği / 2.0 {
                             0.0
                         } else {
                             istenen_vuruş
@@ -4784,7 +4825,14 @@ impl Grafik {
                         let y0 = alt - seri_aralığı.konum(taban, 0.0, çizim_y);
                         let y1 = alt - seri_aralığı.konum(tepe, 0.0, çizim_y);
                         let nokta_komutu = seri
-                            .filter(|seri| seri.noktaları_göster == Some(true))
+                            .filter(|seri| {
+                                seri.noktaları_göster.unwrap_or_else(|| {
+                                    seri.nokta_boşluğu <= 0.0
+                                        || görünür_indeks_sayısı.saturating_sub(1) as f32
+                                            <= nokta_piksel_açıklığı
+                                                / seri.nokta_boşluğu.max(f32::EPSILON)
+                                })
+                            })
                             .map(|seri| Komut::Daire {
                                 merkez: Nokta::yeni(merkez, y1.clamp(üst, alt)),
                                 yarıçap: ((seri.nokta_boyutu - seri.nokta_kalınlığı) / 2.0)

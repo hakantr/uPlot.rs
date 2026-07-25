@@ -2794,7 +2794,23 @@ mod testler {
             assert!(svg.contains(&svg_başlığı));
             assert!(svg.contains("<rect"));
         }
-        assert!(thin_bars_stroke_fill_kart_tanim_ornegi().contains("ThinBarsÖrneği"));
+        let yoğun = KartOturumu::yeni("thin-bars-stroke-fill-1000", 200);
+        assert!(yoğun.is_ok());
+        if let Ok(mut yoğun) = yoğun {
+            assert!(!yoğun.svg(1_000, 200).contains("<circle"));
+            assert!(
+                yoğun
+                    .secimi_bitir(0.45, 0.55, false)
+                    .is_ok_and(|eylem| eylem == 1)
+            );
+            assert!(yoğun.svg(1_000, 200).contains("<circle"));
+        }
+        let web = include_str!("../www/index.html");
+        assert!(web.contains(r#"data-kart="thin-bars-stroke-fill""#));
+        assert!(web.contains("thinBarsOturumları = inceÇubukYüzeyleri.map"));
+        assert!(
+            thin_bars_stroke_fill_kart_tanim_ornegi().contains("thin_bars_stroke_fill_kartları")
+        );
         assert_eq!(kart_sayisi(), 365);
     }
 

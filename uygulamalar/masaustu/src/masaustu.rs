@@ -62,10 +62,10 @@ use uplot_rs::{
     sparklines_bars_kartı, sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı,
     stacked_series_kartları, stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı,
     svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı,
-    thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
-    timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
-    trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
-    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
+    thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı, time_periods_kartı,
+    timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
+    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
+    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -554,6 +554,7 @@ pub struct ChartListesi {
     sparse_grafikleri: Vec<(SparseÖrneği, Entity<GpuiGrafik>)>,
     stacked_series_grafikleri: Vec<(StackedSeriesÖrneği, Entity<GpuiGrafik>)>,
     stream_data_grafikleri: Vec<(StreamDataÖrneği, Entity<GpuiGrafik>)>,
+    thin_bars_grafikleri: Vec<(ThinBarsÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grubu: SyncCursorGrubu,
     sync_cursor_senkronlanıyor: bool,
@@ -674,6 +675,12 @@ impl ChartListesi {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
                 }
+            } else if matches!(bu.aktif_kart, KartKimliği::ThinBars(_)) {
+                for (_, grafik) in &bu.thin_bars_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
             } else if let Some(grafik) = &bu.grafik {
                 grafik.update(cx, |grafik, cx| {
                     grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
@@ -737,6 +744,7 @@ impl ChartListesi {
             sparse_grafikleri: Vec::new(),
             stacked_series_grafikleri: Vec::new(),
             stream_data_grafikleri: Vec::new(),
+            thin_bars_grafikleri: Vec::new(),
             sync_cursor_grafikleri: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
             sync_cursor_senkronlanıyor: false,
@@ -1436,6 +1444,49 @@ impl ChartListesi {
         cx.notify();
     }
 
+    fn thin_bars_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let kartlar = match thin_bars_stroke_fill_kartları() {
+            Ok(kartlar) => kartlar,
+            Err(hata) => {
+                self.grafik = None;
+                self.thin_bars_grafikleri.clear();
+                self.hata = Some(format!("Thin Bars grubu oluşturulamadı: {hata}"));
+                cx.notify();
+                return;
+            }
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.grafik = None;
+                    self.thin_bars_grafikleri.clear();
+                    self.hata = Some(format!(
+                        "{} Thin Bars yüzeyi oluşturulamadı: {hata}",
+                        örnek.başlık()
+                    ));
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                    bu.açıklama_istendi = true;
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.thin_bars_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
         match grafik_oluştur(
@@ -1728,6 +1779,7 @@ impl ChartListesi {
         self.sparse_grafikleri.clear();
         self.stacked_series_grafikleri.clear();
         self.stream_data_grafikleri.clear();
+        self.thin_bars_grafikleri.clear();
         if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -1857,6 +1909,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.stream_data_yüzeylerini_oluştur(cx);
+        } else if matches!(kart, KartKimliği::ThinBars(_)) {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.thin_bars_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -2738,9 +2799,8 @@ impl Render for ChartListesi {
             KartKimliği::SyncYZero(aşama) => {
                 format!("3 nokta × 3 Y ölçeği · {}", aşama.açıklama())
             }
-            KartKimliği::ThinBars(örnek) => {
-                let (genişlik, yükseklik) = örnek.boyut();
-                format!("{genişlik}×{yükseklik} · {}", örnek.başlık())
+            KartKimliği::ThinBars(_) => {
+                "55 bağımsız yüzey · 1.422 çubuk · 270 otomatik nokta".to_string()
             }
             KartKimliği::TimePeriods(örnek) => {
                 format!("1920×200 · {}", örnek.başlık())
@@ -2937,6 +2997,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .stream_data_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if matches!(aktif_kart, KartKimliği::ThinBars(_)) {
+            geri_var = self
+                .thin_bars_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .thin_bars_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         }
@@ -3776,22 +3845,22 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::SyncYZero(SyncYZeroAşaması::Ham), cx);
                 })),
             )
-            .children(ThinBarsÖrneği::tümü().into_iter().map(|örnek| {
+            .child({
+                let örnek = ThinBarsÖrneği::Yoğunluk(uplot_rs::ThinBarsYoğunluk::Normal30);
                 let kart = KartKimliği::ThinBars(örnek);
-                let (genişlik, yükseklik) = örnek.boyut();
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
                     "thin-bars-stroke-fill",
-                    aktif_kart == kart,
-                    format!("{genişlik}×{yükseklik} · paths.bars vuruş/dolgu"),
+                    "Thin bar stroke & fill",
+                    "thin-bars-stroke-fill",
+                    matches!(aktif_kart, KartKimliği::ThinBars(_)),
+                    "55 bağımsız yüzey · 7 yoğunluk + 48 geometri",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .children(TimePeriodsÖrneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::TimePeriods(örnek);
                 katalog_kartı(
@@ -4374,6 +4443,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.stream_data_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::ThinBars(_)) {
+                            for (_, grafik) in &bu.thin_bars_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
@@ -4468,6 +4541,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.stream_data_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::ThinBars(_)) {
+                            for (_, grafik) in &bu.thin_bars_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.tam_görünüm(cx);
@@ -4500,6 +4577,8 @@ impl Render for ChartListesi {
                             bu.scatter_yüzeylerini_oluştur(cx);
                         } else if matches!(bu.aktif_kart, KartKimliği::StreamData(_)) {
                             bu.stream_data_yüzeylerini_oluştur(cx);
+                        } else if matches!(bu.aktif_kart, KartKimliği::ThinBars(_)) {
+                            bu.thin_bars_yüzeylerini_oluştur(cx);
                         } else {
                             bu.grafiği_yenile(100, cx);
                         }
@@ -5385,6 +5464,69 @@ impl Render for ChartListesi {
                         .border_color(rgb(0xc0c0c0))
                         .when_some(grafik, |öğe, grafik| öğe.child(grafik))
                 }))
+        } else if matches!(aktif_kart, KartKimliği::ThinBars(_)) {
+            let yüzey = |örnek| {
+                self.thin_bars_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            let örnekler = ThinBarsÖrneği::tümü();
+            let yoğunluklar = örnekler.iter().take(7).copied().collect::<Vec<_>>();
+            let geometri_grupları = örnekler
+                .iter()
+                .skip(7)
+                .copied()
+                .collect::<Vec<_>>()
+                .chunks(4)
+                .map(|grup| grup.to_vec())
+                .collect::<Vec<_>>();
+            çizim_tabanı
+                .flex_none()
+                .h(px(2100.0))
+                .overflow_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .w(px(1600.0))
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("Resmî thin-bars-stroke-fill.html sayfası 7 yoğunluk yüzeyini ve 12 align/width/gap grubundaki 48 geometri yüzeyini birlikte gösterir. Yüzeyler veri veya cursor paylaşmaz; her biri bağımsız zoom geçmişi tutar. Noktalar görünür X aralığındaki piksel açıklığı yeterli olduğunda otomatik açılır."),
+                )
+                .child(
+                    div().w(px(1600.0)).flex().flex_wrap().gap_2().children(
+                        yoğunluklar.into_iter().map(|örnek| {
+                            let (genişlik, yükseklik) = örnek.boyut();
+                            div()
+                                .flex_none()
+                                .w(px(genişlik as f32))
+                                .h(px(yükseklik as f32))
+                                .border_1()
+                                .border_color(rgb(0xe5e7eb))
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik))
+                        }),
+                    ),
+                )
+                .children(geometri_grupları.into_iter().map(|grup| {
+                    div()
+                        .w(px(1600.0))
+                        .flex()
+                        .border_t_1()
+                        .border_color(rgb(0xd1d5db))
+                        .pt_2()
+                        .children(grup.into_iter().map(|örnek| {
+                            div()
+                                .flex_none()
+                                .w(px(400.0))
+                                .h(px(200.0))
+                                .border_1()
+                                .border_color(rgb(0xe5e7eb))
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik))
+                        }))
+                }))
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
             let boyut = self
                 .boyut_senkron_akışı
@@ -5688,6 +5830,19 @@ impl Render for ChartListesi {
                  Maliyet: her aşama O(3) dönüşüm ve tek sahne boyamasıdır; veri, seçenek ağacı, \
                  Grafik ve GPUI entity yeniden kurulmaz. Cursor, legend, X zoom ve ortak \
                  wheel/touch uzantılarının görünüm durumu korunur.",
+            ),
+            KartKimliği::ThinBars(_) => Some(
+                "Amaç: ince çubuklarda vuruşun ne zaman dolguya düştüğünü ve align, width, \
+                 gap, dir, stroke birleşimlerinin geometriyi nasıl değiştirdiğini yan yana \
+                 karşılaştırır. API: thin_bars_stroke_fill_kartları kaynak sırasıyla 7 \
+                 yoğunluk ve 48 geometri yüzeyini tek grup olarak döndürür; her Grafik kendi \
+                 cursor, seçim ve geçmişini bağımsız tutar. İzleme: yoğun histogram veya \
+                 sütun telemetrisinde panel genişliğine göre okunabilir vuruş/dolgu seçmek ve \
+                 ters X/hizalama kararlarını doğrulamak için uygundur. Maliyet: kaynak gibi \
+                 55 yüzey ve toplam 1.422 çubuk kurulur; bar başına element ağı kurulmaz. \
+                 Pointer yalnız ilgili GpuiGrafik etkileşim katmanını, zoom yalnız ilgili \
+                 sahneyi günceller. Noktalar görünür X piksel açıklığı yeterli olduğunda \
+                 otomatik açılır; wheel/touch/drag isteğe bağlı çekirdek uzantısıdır.",
             ),
             KartKimliği::Scatter => Some(
                 "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \
