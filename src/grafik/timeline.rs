@@ -38,11 +38,29 @@ impl Grafik {
         }
 
         for hücre in &düzen.hücreler {
-            if hücre.bitiş < x_aralığı.en_az || hücre.başlangıç > x_aralığı.en_çok {
+            if !düzen
+                .seri_görünürlükleri
+                .get(hücre.seri_indeksi)
+                .copied()
+                .unwrap_or(false)
+            {
+                continue;
+            }
+            let görünür_bitiş = if hücre.sağ_kenara_uzat {
+                x_aralığı.en_çok
+            } else {
+                hücre.bitiş
+            };
+            if görünür_bitiş < x_aralığı.en_az || hücre.başlangıç > x_aralığı.en_çok
+            {
                 continue;
             }
             let mut x0 = self.x_konumu(x_aralığı, hücre.başlangıç, sol, genişlik);
-            let mut x1 = self.x_konumu(x_aralığı, hücre.bitiş, sol, genişlik);
+            let mut x1 = if hücre.sağ_kenara_uzat {
+                sağ
+            } else {
+                self.x_konumu(x_aralığı, hücre.bitiş, sol, genişlik)
+            };
             if let Some(azami) = hücre.azami_genişlik
                 && x1 - x0 > azami
             {
@@ -70,13 +88,21 @@ impl Grafik {
             if x1 - x0 >= metin_genişliği {
                 sahne.ekle(Komut::Metin {
                     konum: Nokta::yeni(
-                        x0 + kalınlık + 2.0,
+                        if hücre.etiket_ortala {
+                            (x0 + x1) / 2.0
+                        } else {
+                            x0 + kalınlık + 2.0
+                        },
                         şerit_üstü + şerit_yüksekliği / 2.0 + 5.0,
                     ),
                     içerik: hücre.değer.clone(),
                     renk: "#111111".to_string(),
                     boyut: 14.0,
-                    hiza: MetinHizası::Başlangıç,
+                    hiza: if hücre.etiket_ortala {
+                        MetinHizası::Orta
+                    } else {
+                        MetinHizası::Başlangıç
+                    },
                 });
             }
         }

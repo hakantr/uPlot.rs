@@ -879,7 +879,10 @@ impl GpuiGrafik {
                 } else {
                     0.0
                 };
-                for vuruş in self.grafik.timeline_vuruşları(yatay_oran) {
+                for vuruş in self
+                    .grafik
+                    .timeline_vuruşları_pikselde(yatay_oran, f64::from(sağ - sol))
+                {
                     let x0 = self
                         .grafik
                         .x_konum_oranı(vuruş.başlangıç)

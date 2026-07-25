@@ -222,7 +222,8 @@ pub use time_periods::{
 };
 pub use timeline_discrete::{
     TIMELINE_DISCRETE_KANIT_TOHUMU, TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,
-    TIMELINE_DISCRETE_ZAMAN_ÇAPASI, TimelineDiscreteÖrneği, timeline_discrete_kartı,
+    TIMELINE_DISCRETE_ZAMAN_ÇAPASI, TimelineDiscreteÖrneği, timeline_discrete_kartları,
+    timeline_discrete_kartı,
 };
 pub use timeseries_discrete::{
     TIMESERIES_DISCRETE_KANIT_TOHUMU, TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,

@@ -352,6 +352,13 @@
     .time-periods-grafik .lejant { position: static; min-height: 24px;
                                    padding: 4px 8px 8px; border-top: 1px solid #f3f4f6;
                                    justify-content: flex-start; pointer-events: auto; }
+    #chart.timeline-discrete-yüzeyi { display: block; min-width: 0; overflow: auto;
+                                      place-items: unset; padding: 8px; box-sizing: border-box; }
+    .timeline-discrete-yığın { width: 1920px; display: grid; gap: 16px; align-items: start; }
+    .timeline-discrete-grafik { position: relative; width: 1920px;
+                                background: #fff; border: 1px solid #e5e7eb;
+                                overflow: hidden; }
+    .timeline-discrete-grafik svg { display: block; width: 1920px; height: 300px; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -1918,36 +1925,40 @@
       ["timeline-discrete-repeating-states", "Repeating consecutive states", "28 x · null/undefined"],
       ["timeline-discrete-merged-states", "Merged same consecutive states", "ardışık durum birleştirme"],
     ];
-    let timelineEklemeNoktası =
-      document.querySelector('[data-kart="time-periods"]');
-    for (const [kimlik, başlık, durum] of timelineYüzeyleri) {
-      timelineEklemeNoktası?.insertAdjacentHTML(
-        "afterend",
-        `<article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>${kimlik}</small><div class="durum">${durum}</div>
-        </article>`
-      );
-      timelineEklemeNoktası = document.querySelector(`[data-kart="${kimlik}"]`);
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak:
-          <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/timeline-discrete.html">timeline-discrete.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/distr.js">distr.js</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/quadtree.js">quadtree.js</a>
-          <br>Üç şeritli özel timeline yolu; semantic süreler, periyodik hücreler,
-          null/undefined ayrımı ve ardışık durum birleştirmesi Rust çekirdeğindedir.`,
-        tanım: () => timeline_discrete_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/timeline_discrete.rs",
-        seriler: [
-          { etiket: "Device A", renk: "green" },
-          { etiket: "Device B", renk: "orange" },
-          { etiket: "Device C", renk: "cyan" },
-        ],
-        yardım: "Şeritler: Device A/B/C · sürükle: seç · tekerlek: yakınlaştır · boşluk+sürükle: taşı",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    let timelineEklemeNoktası = document.querySelector('[data-kart="time-periods"]');
+    timelineEklemeNoktası?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="timeline-discrete" aria-current="false" tabindex="0">
+        <strong>Timeline / Discrete</strong><small>timeline-discrete</small>
+        <div class="durum">4 bağımsız yüzey · semantic/matrix karşılaştırması</div>
+      </article>`
+    );
+    timelineEklemeNoktası = document.querySelector('[data-kart="timeline-discrete"]');
+    kartlar["timeline-discrete"] = {
+      başlık: "Timeline / Discrete · 4 bağımsız yüzey",
+      kaynak: `Kaynak:
+        <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/timeline-discrete.html">timeline-discrete.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/distr.js">distr.js</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/quadtree.js">quadtree.js</a>
+        <br>Resmî sayfadaki semantic süre, periyodik matrix, yinelenen ve
+        birleştirilmiş durum yüzeyleri birlikte fakat bağımsız gösterilir.`,
+      tanım: () => timeline_discrete_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/timeline_discrete.rs",
+      seriler: [
+        { etiket: "Device A", renk: "green" },
+        { etiket: "Device B", renk: "orange" },
+        { etiket: "Device C", renk: "cyan" },
+      ],
+      yardım: "Dört yüzey bağımsızdır · hücre hover tam dikdörtgeni vurgular",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Durum geçişlerinin gerçek süresini, sabit örnek hücrelerini ve aynı ardışık değerlerin birleştirilmesinin etkisini aynı kaynak bağlamında karşılaştırır.",
+        api: "timeline_discrete_kartları dört bağımsız Grafik döndürür. Hizalı null ve undefined ayrımı, şerit dağılımı, renk/etiket ve hücre vuruş bilgisi çekirdekte kalır.",
+        izleme: "Cihaz çalışma durumu, duty-cycle, dağıtık servis sağlığı ve periyodik durum geçmişinde olay süresi ile örnek sıklığını birbirine karıştırmadan göstermek için kullanılır.",
+        maliyet: "Hücreler DOM düğümü değildir; tek Grafik sahnesinde renkli dikdörtgen komutları halinde boyanır. Hover veri hücresini sorgular ve yalnız hafif vurgu katmanını günceller; zoom yalnız etkin yüzeyi yeniden boyar.",
+      },
+    };
 
     timelineEklemeNoktası?.insertAdjacentHTML(
       "afterend",
@@ -2751,6 +2762,8 @@
     let thinBarsEtkinİndeks = 0;
     let timePeriodsOturumları = [];
     let timePeriodsEtkinİndeks = 0;
+    let timelineDiscreteOturumları = [];
+    let timelineDiscreteEtkinİndeks = 0;
     let scalesDirOriİmleci = null;
     let scalesDirOriÇizimKaresi = null;
     let syncCursorKöprüsü = null;
@@ -5370,6 +5383,102 @@
       kontrolleriGüncelle();
     }
 
+    function timelineDiscreteYüzeyiniÇiz(indeks) {
+      const tanım = timelineYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-timeline-discrete-index="${indeks}"]`);
+      const yüzeyOturumu = timelineDiscreteOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const [, başlık, durum] = tanım;
+      const svgÇıktısı = yüzeyOturumu.svg(1920, 300);
+      const mevcutSvg = yüzey.querySelector("svg");
+      if (!mevcutSvg) {
+        yüzey.innerHTML = `
+          ${svgÇıktısı}
+          <div class="lejant" aria-label="${başlık} · ${durum}">
+            <span>x: <b id="x-değeri">--</b></span>
+            ${kartlar["timeline-discrete"].seriler.map((seri, seriİndeksi) =>
+              `<span data-timeline-seri-toggle="${seriİndeksi}" role="button" tabindex="0"
+                title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer">
+                <i class="örnek"
+                style="border-color:${seri.renk};background:${seri.renk}"></i>
+                ${seri.etiket}: <b id="seri-değeri-${seriİndeksi}">--</b></span>`
+            ).join("")}
+          </div>`;
+        yüzey.querySelectorAll("[data-timeline-seri-toggle]").forEach(öğe => {
+          const değiştir = () => {
+            const seri = Number(öğe.dataset.timelineSeriToggle);
+            if (!Number.isInteger(seri)) return;
+            try {
+              if (yüzeyOturumu.seri_gorunurlugu_ayarla(
+                seri, !yüzeyOturumu.seri_gorunur(seri)
+              )) {
+                timelineDiscreteYüzeyiniÇiz(indeks);
+              }
+            } catch (neden) {
+              hata.textContent = String(neden);
+            }
+          };
+          öğe.addEventListener("click", değiştir);
+          öğe.addEventListener("keydown", olay => {
+            if (olay.key === "Enter" || olay.key === " ") {
+              olay.preventDefault();
+              değiştir();
+            }
+          });
+        });
+      } else {
+        const şablon = document.createElement("template");
+        şablon.innerHTML = svgÇıktısı.trim();
+        svgYüzeyiniYerindeGüncelle(mevcutSvg, şablon.content.firstElementChild);
+      }
+      const svg = yüzey.querySelector("svg");
+      if (!svg) return;
+      yüzey.querySelectorAll("[data-timeline-seri-toggle]").forEach(öğe => {
+        const seri = Number(öğe.dataset.timelineSeriToggle);
+        if (Number.isInteger(seri)) {
+          öğe.style.opacity = yüzeyOturumu.seri_gorunur(seri) ? "1" : ".4";
+        }
+      });
+      softMinMaxEtkileşimKatmanınıKur(svg);
+      svg.dataset.etkileşim = "independent-timeline-discrete";
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      const xAralığı = yüzeyOturumu.gorunur_x_araligi();
+      const yAralığı = yüzeyOturumu.gorunur_y_araligi();
+      yüzey.dataset.xEnAz = String(xAralığı[0] ?? "");
+      yüzey.dataset.xEnCok = String(xAralığı[1] ?? "");
+      yüzey.dataset.yEnAz = String(yAralığı[0] ?? "");
+      yüzey.dataset.yEnCok = String(yAralığı[1] ?? "");
+    }
+
+    function timelineDiscreteÇiz() {
+      const ilkKurulum = !chart.classList.contains("timeline-discrete-yüzeyi")
+        || chart.querySelectorAll(".timeline-discrete-grafik").length
+          !== timelineYüzeyleri.length;
+      if (ilkKurulum) {
+        chart.className = "timeline-discrete-yüzeyi";
+        chart.innerHTML = `<div class="timeline-discrete-yığın">${
+          timelineYüzeyleri.map((_, indeks) =>
+            `<article class="timeline-discrete-grafik"
+              data-timeline-discrete-index="${indeks}"></article>`
+          ).join("")
+        }</div>`;
+        timelineYüzeyleri.forEach((_, indeks) => timelineDiscreteYüzeyiniÇiz(indeks));
+        const etkinYüzey = chart.querySelector(
+          `[data-timeline-discrete-index="${timelineDiscreteEtkinİndeks}"]`
+        );
+        if (etkinYüzey && timelineDiscreteEtkinİndeks > 0) {
+          chart.scrollTop = Math.max(0, etkinYüzey.offsetTop - 8);
+        }
+      } else {
+        timelineDiscreteYüzeyiniÇiz(timelineDiscreteEtkinİndeks);
+      }
+      oturum = timelineDiscreteOturumları[timelineDiscreteEtkinİndeks]
+        ?? timelineDiscreteOturumları[0]
+        ?? null;
+      kontrolleriGüncelle();
+    }
+
     function svgImageCanvasınıÇiz(canvas, svgMetni) {
       if (!canvas) return;
       const cssGenişliği = 400;
@@ -5481,6 +5590,10 @@
       }
       if (aktifKart === "time-periods") {
         timePeriodsÇiz();
+        return;
+      }
+      if (aktifKart === "timeline-discrete") {
+        timelineDiscreteÇiz();
         return;
       }
       if (!oturum) return;
@@ -5801,6 +5914,10 @@
             ? chart.querySelector(
                 `[data-time-periods-index="${timePeriodsEtkinİndeks}"] svg`
               )
+          : aktifKart === "timeline-discrete"
+            ? chart.querySelector(
+                `[data-timeline-discrete-index="${timelineDiscreteEtkinİndeks}"] svg`
+              )
         : chart.querySelector("svg"));
       if (!svg || !oturum) return false;
       const rect = svg.getBoundingClientRect();
@@ -5898,6 +6015,11 @@
             ? olay.target?.closest?.(".time-periods-grafik")
               ?? chart.querySelector(
                 `[data-time-periods-index="${timePeriodsEtkinİndeks}"]`
+              )
+          : aktifKart === "timeline-discrete"
+            ? olay.target?.closest?.(".timeline-discrete-grafik")
+              ?? chart.querySelector(
+                `[data-timeline-discrete-index="${timelineDiscreteEtkinİndeks}"]`
               )
           : null;
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
@@ -6078,23 +6200,33 @@
         }
         return;
       }
-      if (aktifKart.startsWith("timeline-discrete-")) {
+      if (aktifKart === "timeline-discrete") {
         const vurgu = svg.querySelector("#timeline-vurgu");
         const dikey = svg.querySelector("#imleç-x");
         const yatay = svg.querySelector("#imleç-y");
+        const kapsam = svg.closest(".timeline-discrete-grafik") ?? chart;
         if (hamX < sol || hamX > sağ || hamY < üst || hamY > alt) {
           vurgu?.setAttribute("visibility", "hidden");
           dikey?.setAttribute("visibility", "hidden");
           yatay?.setAttribute("visibility", "hidden");
+          kapsam.querySelectorAll('[id^="seri-değeri-"]').forEach(hedef => {
+            hedef.textContent = "--";
+          });
+          const xHedefi = kapsam.querySelector("#x-değeri");
+          if (xHedefi) xHedefi.textContent = "--";
           return;
         }
         const oran = Math.max(0, Math.min(1, (hamX - sol) / (sağ - sol)));
-        const vuruşlar = oturum?.timeline_vuruslari(oran) ?? [];
+        const vuruşlar = oturum?.timeline_vuruslari(oran, sağ - sol) ?? [];
+        const etiketler = oturum?.timeline_vurus_etiketleri(oran, sağ - sol) ?? [];
         const şeritYüksekliği = (alt - üst) * 0.9 / 3;
         const şeritBoşluğu = (alt - üst) * 0.1 / 2;
+        kapsam.querySelectorAll('[id^="seri-değeri-"]').forEach(hedef => {
+          hedef.textContent = "--";
+        });
         if (vurgu) {
           vurgu.innerHTML = "";
-          for (let i = 0; i + 3 < vuruşlar.length; i += 4) {
+          for (let i = 0, etiketİndeksi = 0; i + 3 < vuruşlar.length; i += 4, etiketİndeksi++) {
             const [seri, , başlangıç, bitiş] = vuruşlar.slice(i, i + 4);
             const x0 = sol + oturum.x_konum_orani(başlangıç) * (sağ - sol);
             const x1 = sol + oturum.x_konum_orani(bitiş) * (sağ - sol);
@@ -6105,8 +6237,18 @@
             rect.setAttribute("height", şeritYüksekliği);
             rect.setAttribute("fill", "rgba(0,0,0,.3)");
             vurgu.appendChild(rect);
+            const değerHedefi = kapsam.querySelector(`#seri-değeri-${seri}`);
+            if (değerHedefi) değerHedefi.textContent = etiketler[etiketİndeksi] ?? "--";
           }
           vurgu.setAttribute("visibility", vuruşlar.length ? "visible" : "hidden");
+        }
+        const xDeğeri = oturum.gorunur_x_araligi();
+        const veriX = Number(xDeğeri[0]) + oran * (Number(xDeğeri[1]) - Number(xDeğeri[0]));
+        const xHedefi = kapsam.querySelector("#x-değeri");
+        if (xHedefi) {
+          xHedefi.textContent = timelineDiscreteEtkinİndeks < 2
+            ? zamanDönemiTarihiniBiçimlendir(veriX)
+            : veriX.toFixed(2);
         }
         dikey?.setAttribute("x1", hamX); dikey?.setAttribute("x2", hamX);
         dikey?.setAttribute("y1", üst); dikey?.setAttribute("y2", alt);
@@ -6122,6 +6264,7 @@
         ?? svg.closest(".stream-data-grafik")
         ?? svg.closest(".thin-bars-grafik")
         ?? svg.closest(".time-periods-grafik")
+        ?? svg.closest(".timeline-discrete-grafik")
         ?? chart;
       const noktalar = kartlar[aktifKart].seriler.map((_, indeks) => svg.querySelector(`#imleç-nokta-${indeks}`));
       const öğeler = [...çizgiler, ...noktalar];
@@ -6470,6 +6613,17 @@
         if (svg) yüzeyiEşitle(svg);
       }
     }
+    function timelineDiscreteOturumunuSeç(olay) {
+      if (aktifKart !== "timeline-discrete") return;
+      const yüzey = olay.target?.closest?.(".timeline-discrete-grafik");
+      const indeks = Number(yüzey?.dataset.timelineDiscreteIndex);
+      if (Number.isInteger(indeks) && timelineDiscreteOturumları[indeks]) {
+        timelineDiscreteEtkinİndeks = indeks;
+        oturum = timelineDiscreteOturumları[indeks];
+        const svg = yüzey.querySelector("svg");
+        if (svg) yüzeyiEşitle(svg);
+      }
+    }
     for (const olayTürü of ["pointerdown", "pointermove", "pointerup", "wheel", "dblclick", "scroll"]) {
       chart.addEventListener(olayTürü, scatterOturumunuSeç, { capture: true, passive: true });
       chart.addEventListener(olayTürü, softMinMaxOturumunuSeç, { capture: true, passive: true });
@@ -6492,6 +6646,9 @@
         capture: true, passive: true,
       });
       chart.addEventListener(olayTürü, timePeriodsOturumunuSeç, {
+        capture: true, passive: true,
+      });
+      chart.addEventListener(olayTürü, timelineDiscreteOturumunuSeç, {
         capture: true, passive: true,
       });
     }
@@ -6957,6 +7114,10 @@
         timePeriodsOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
+      } else if (aktifKart === "timeline-discrete") {
+        timelineDiscreteOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
       } else {
         oturum?.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
       }
@@ -7105,6 +7266,11 @@
           timePeriodsEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "time-periods";
         }
+        if (kimlik !== "timeline-discrete" && kimlik.startsWith("timeline-discrete-")) {
+          const indeks = timelineYüzeyleri.findIndex(yüzey => yüzey[0] === kimlik);
+          timelineDiscreteEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "timeline-discrete";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -7160,6 +7326,7 @@
           streamDataOturumları,
           thinBarsOturumları,
           timePeriodsOturumları,
+          timelineDiscreteOturumları,
         ].some(yüzeyler => yüzeyler.includes(oturum));
         if (!gruplanmışOturum) oturum?.free();
         oturum = null;
@@ -7197,6 +7364,8 @@
         thinBarsOturumları = [];
         timePeriodsOturumları.forEach(yüzey => yüzey.free());
         timePeriodsOturumları = [];
+        timelineDiscreteOturumları.forEach(yüzey => yüzey.free());
+        timelineDiscreteOturumları = [];
         scalesDirOriİmleci = null;
         if (scalesDirOriÇizimKaresi !== null) {
           cancelAnimationFrame(scalesDirOriÇizimKaresi);
@@ -7514,6 +7683,18 @@
           kartlar["time-periods"].seriler = zamanDönemiYüzeyleri[
             timePeriodsEtkinİndeks
           ][3].map(([etiket, renk]) => ({ etiket, renk }));
+          çiz();
+          return;
+        }
+        if (kimlik === "timeline-discrete") {
+          timelineDiscreteOturumları = timelineYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey[0], 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = timelineDiscreteOturumları[timelineDiscreteEtkinİndeks]
+            ?? timelineDiscreteOturumları[0]
+            ?? null;
           çiz();
           return;
         }

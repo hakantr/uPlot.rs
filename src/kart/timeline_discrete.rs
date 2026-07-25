@@ -6,8 +6,7 @@ use crate::{
 
 pub const TIMELINE_DISCRETE_KANIT_TOHUMU: u32 = 0x5449_4D45;
 pub const TIMELINE_DISCRETE_ZAMAN_ÇAPASI: f64 = 1_700_002_800.0;
-pub const TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ: &str = r##"for örnek in TimelineDiscreteÖrneği::TÜMÜ {
-    let (seçenekler, veri) = timeline_discrete_kartı(örnek)?;
+pub const TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in timeline_discrete_kartları()? {
     // Şerit dağılımı, semantic süreler, null/undefined ve hücre renkleri çekirdektedir.
     let grafik = Grafik::yeni(seçenekler, veri)?;
 }"##;
@@ -113,6 +112,18 @@ pub fn timeline_discrete_kartı(
         );
     }
     Ok((seçenekler, veri))
+}
+
+/// Resmî `timeline-discrete.html` sayfasındaki dört bağımsız yüzeyi kaynak
+/// sırasıyla tek katalog grubu olarak döndürür.
+pub fn timeline_discrete_kartları()
+-> Result<Vec<(TimelineDiscreteÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    TimelineDiscreteÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| {
+            timeline_discrete_kartı(örnek).map(|(seçenekler, veri)| (örnek, seçenekler, veri))
+        })
+        .collect()
 }
 
 fn durum_zaman_verisi() -> Result<HizalıVeri, UplotHatası> {
@@ -271,9 +282,10 @@ fn semantic_hücreler(veri: &HizalıVeri, sayısal: bool) -> Vec<TimelineHücres
             let sonraki = ((indeks + 1)..değerler.len())
                 .find(|aday| !veri.hizalama_eksiği_mi(seri_indeksi, *aday))
                 .and_then(|aday| veri.x().get(aday))
-                .copied()
-                .unwrap_or(son_x);
-            if sonraki <= başlangıç {
+                .copied();
+            let bitiş = sonraki.unwrap_or(son_x);
+            let sağ_kenara_uzat = sonraki.is_none();
+            if bitiş < başlangıç || (bitiş == başlangıç && !sağ_kenara_uzat) {
                 continue;
             }
             let (dolgu, çizgi, etiket) = durum_stili(seri_indeksi, *değer, sayısal);
@@ -282,12 +294,13 @@ fn semantic_hücreler(veri: &HizalıVeri, sayısal: bool) -> Vec<TimelineHücres
                     seri_indeksi,
                     indeks,
                     başlangıç,
-                    sonraki,
+                    bitiş,
                     etiket,
                     dolgu,
                     çizgi,
                 )
-                .çizgi_kalınlığı(4.0),
+                .çizgi_kalınlığı(4.0)
+                .sağ_kenara_uzat(sağ_kenara_uzat),
             );
         }
     }
@@ -318,7 +331,8 @@ fn periyodik_hücreler(veri: &HizalıVeri) -> Vec<TimelineHücresi> {
                             çizgi,
                         )
                         .çizgi_kalınlığı(4.0)
-                        .azami_genişlik(100.0),
+                        .azami_genişlik(100.0)
+                        .etiketi_ortala(true),
                     )
                 })
         })
@@ -369,7 +383,7 @@ fn durum_stili(seri: usize, değer: f64, sayısal: bool) -> (&'static str, &'sta
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Grafik, Komut};
+    use crate::{Grafik, Komut, MetinHizası};
 
     #[test]
     fn dört_kaynak_yüzeyi_şerit_geometrisini_korur() -> Result<(), UplotHatası> {
@@ -439,6 +453,123 @@ mod testler {
         let vuruşlar = grafik.timeline_vuruşları(0.2);
         assert!(!vuruşlar.is_empty());
         assert!(vuruşlar.iter().all(|vuruş| vuruş.bitiş > vuruş.başlangıç));
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_grubu_dört_bağımsız_görünümü_sırayla_döndürür() -> Result<(), UplotHatası> {
+        let kartlar = timeline_discrete_kartları()?;
+        assert_eq!(kartlar.len(), TimelineDiscreteÖrneği::TÜMÜ.len());
+        assert_eq!(
+            kartlar
+                .iter()
+                .map(|(örnek, _, _)| *örnek)
+                .collect::<Vec<_>>(),
+            TimelineDiscreteÖrneği::TÜMÜ
+        );
+        let mut grafikler = kartlar
+            .into_iter()
+            .map(|(_, seçenekler, veri)| Grafik::yeni(seçenekler, veri))
+            .collect::<Result<Vec<_>, _>>()?;
+        let Some((ilk, diğerleri)) = grafikler.split_first_mut() else {
+            return Err(UplotHatası::GeçersizKaynakVeri {
+                varlık: "demos/timeline-discrete.html",
+                açıklama: "Timeline / Discrete grubu boş döndü".to_string(),
+            });
+        };
+        let diğer_aralıklar = diğerleri
+            .iter()
+            .map(Grafik::görünür_x_aralığı)
+            .collect::<Vec<_>>();
+        ilk.seçim_yakınlaştır(0.25, 0.75)?;
+        assert_eq!(
+            diğerleri
+                .iter()
+                .map(Grafik::görünür_x_aralığı)
+                .collect::<Vec<_>>(),
+            diğer_aralıklar
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn semantic_son_durum_sağ_kenara_uzanır_ve_matrix_etiketi_ortalanır() -> Result<(), UplotHatası>
+    {
+        let (semantic_seçenekler, _) =
+            timeline_discrete_kartı(TimelineDiscreteÖrneği::DurumZamanÇizelgesi)?;
+        let semantic = semantic_seçenekler
+            .timeline_düzeni
+            .as_ref()
+            .map(|düzen| {
+                düzen
+                    .hücreler
+                    .iter()
+                    .filter(|hücre| hücre.sağ_kenara_uzat)
+                    .count()
+            })
+            .unwrap_or_default();
+        assert_eq!(semantic, 3);
+
+        let (matrix_seçenekler, matrix_veri) =
+            timeline_discrete_kartı(TimelineDiscreteÖrneği::PeriyodikDurumGeçmişi)?;
+        assert!(
+            matrix_seçenekler
+                .timeline_düzeni
+                .as_ref()
+                .is_some_and(|düzen| düzen.hücreler.iter().all(|hücre| hücre.etiket_ortala))
+        );
+        let sahne = Grafik::yeni(matrix_seçenekler, matrix_veri)?.çiz();
+        assert!(sahne.komutlar().iter().any(
+            |komut| matches!(komut, Komut::Metin { içerik, hiza: MetinHizası::Orta, .. } if içerik == "1")
+        ));
+        Ok(())
+    }
+
+    #[test]
+    fn matrix_hover_yüz_piksellik_boyalı_hücreyle_sınırlanır() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) =
+            timeline_discrete_kartı(TimelineDiscreteÖrneği::PeriyodikDurumGeçmişi)?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        let merkez = TIMELINE_DISCRETE_ZAMAN_ÇAPASI - 15.0 * 3_600.0;
+        grafik.görünür_x_aralığını_ayarla(
+            Aralık::yeni(merkez - 5_400.0, merkez + 5_400.0)?,
+            false,
+        );
+        let hedef = merkez + 800.0;
+        let oran = grafik.x_konum_oranı(hedef).unwrap_or_default();
+        assert!(!grafik.timeline_vuruşları(oran).is_empty());
+        assert!(grafik.timeline_vuruşları_pikselde(oran, 1_800.0).is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn set_series_ve_set_data_özel_timeline_katmanını_yeniler() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) =
+            timeline_discrete_kartı(TimelineDiscreteÖrneği::DurumZamanÇizelgesi)?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        assert!(grafik.seri_görünür_mü(0));
+        assert!(grafik.seri_görünürlüğünü_ayarla(0, false)?);
+        assert!(!grafik.seri_görünür_mü(0));
+        assert!(
+            grafik
+                .timeline_vuruşları(0.5)
+                .iter()
+                .all(|vuruş| vuruş.seri != 0)
+        );
+
+        let (mut yeni_seçenekler, yeni_veri) =
+            timeline_discrete_kartı(TimelineDiscreteÖrneği::PeriyodikDurumGeçmişi)?;
+        let Some(yeni_düzen) = yeni_seçenekler.timeline_düzeni.take() else {
+            return Err(UplotHatası::GeçersizKaynakVeri {
+                varlık: "demos/timeline-discrete.html",
+                açıklama: "matrix timeline düzeni bulunamadı".to_string(),
+            });
+        };
+        grafik.timeline_verisini_ayarla(yeni_veri, yeni_düzen)?;
+        assert!(grafik.seri_görünür_mü(0));
+        assert!(grafik.çiz().komutlar().iter().any(
+            |komut| matches!(komut, Komut::Metin { içerik, hiza: MetinHizası::Orta, .. } if içerik == "1")
+        ));
         Ok(())
     }
 }

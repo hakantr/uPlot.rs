@@ -1137,6 +1137,24 @@ impl Grafik {
         Ok(())
     }
 
+    /// Timeline eklentisinin `setData()` + path/quadtree yenilemesini aynı
+    /// Grafik örneğinde atomik olarak uygular.
+    pub fn timeline_verisini_ayarla(
+        &mut self,
+        veri: HizalıVeri,
+        düzen: crate::TimelineDüzeni,
+    ) -> Result<(), UplotHatası> {
+        if !düzen.geçerli_mi(veri.seriler().len()) {
+            return Err(UplotHatası::GeçersizKaynakVeri {
+                varlık: "TimelineDüzeni",
+                açıklama: "şerit, hücre sınırı, renk veya boyut geçersiz".to_string(),
+            });
+        }
+        self.veriyi_ayarla(veri)?;
+        self.seçenekler.timeline_düzeni = Some(düzen);
+        Ok(())
+    }
+
     /// `setData(data)` ile birlikte sabit birincil Y aralığını aynı grafik
     /// örneğinde yeniler. Kaynak eklentinin veriyi yeniden yığdıktan sonra
     /// yaptığı ölçek sıfırlamasını, seçenek ağacını yeniden kurmadan uygular.
@@ -1362,6 +1380,20 @@ impl Grafik {
         görünür: bool,
     ) -> Result<bool, UplotHatası> {
         let seri_sayısı = self.seçenekler.seriler.len();
+        if let Some(düzen) = self.seçenekler.timeline_düzeni.as_mut() {
+            let Some(seri_görünür) = düzen.seri_görünürlükleri.get_mut(indeks) else {
+                return Err(UplotHatası::GeçersizSeriİndeksi {
+                    indeks,
+                    seri_sayısı,
+                    ekleme: false,
+                });
+            };
+            if *seri_görünür == görünür {
+                return Ok(false);
+            }
+            *seri_görünür = görünür;
+            return Ok(true);
+        }
         let Some(seri) = self.seçenekler.seriler.get_mut(indeks) else {
             return Err(UplotHatası::GeçersizSeriİndeksi {
                 indeks,
@@ -1374,6 +1406,16 @@ impl Grafik {
         }
         seri.göster = görünür;
         Ok(true)
+    }
+
+    pub fn seri_görünür_mü(&self, indeks: usize) -> bool {
+        self.seçenekler
+            .timeline_düzeni
+            .as_ref()
+            .and_then(|düzen| düzen.seri_görünürlükleri.get(indeks))
+            .copied()
+            .or_else(|| self.seçenekler.seriler.get(indeks).map(|seri| seri.göster))
+            .unwrap_or(false)
     }
 
     /// Çalışan grafik örneğini yeniden kurmadan seri bantlarını değiştirir.
@@ -2372,6 +2414,17 @@ impl Grafik {
     /// Timeline eklentisinin kaynak quadtree hover davranışı gibi, geçerli
     /// X konumunu kapsayan her şeridin tam hücresini döndürür.
     pub fn timeline_vuruşları(&self, yatay_oran: f64) -> Vec<TimelineVuruşu> {
+        self.timeline_vuruşları_pikselde(yatay_oran, f64::INFINITY)
+    }
+
+    /// Timeline vuruşunu gerçek çizim genişliğinde çözer. `azami_genişlik`
+    /// kullanan matrix hücrelerinde veri aralığı yerine ekranda boyanan
+    /// dikdörtgen sınırını kullanır.
+    pub fn timeline_vuruşları_pikselde(
+        &self,
+        yatay_oran: f64,
+        çizim_genişliği: f64,
+    ) -> Vec<TimelineVuruşu> {
         if !yatay_oran.is_finite() {
             return Vec::new();
         }
@@ -2380,16 +2433,46 @@ impl Grafik {
         };
         let aralık = self.görünür_x_aralığı();
         let hedef = self.x_değeri_orandan(aralık, yatay_oran.clamp(0.0, 1.0));
+        let aralık_genişliği = aralık.en_çok - aralık.en_az;
         düzen
             .hücreler
             .iter()
-            .filter(|hücre| hedef >= hücre.başlangıç && hedef <= hücre.bitiş)
-            .map(|hücre| TimelineVuruşu {
-                seri: hücre.seri_indeksi,
-                indeks: hücre.veri_indeksi,
-                başlangıç: hücre.başlangıç,
-                bitiş: hücre.bitiş,
-                değer: hücre.değer.clone(),
+            .filter_map(|hücre| {
+                if !düzen
+                    .seri_görünürlükleri
+                    .get(hücre.seri_indeksi)
+                    .copied()
+                    .unwrap_or(false)
+                {
+                    return None;
+                }
+                let bitiş = if hücre.sağ_kenara_uzat {
+                    aralık.en_çok
+                } else {
+                    hücre.bitiş
+                };
+                let (mut başlangıç, mut bitiş) = (hücre.başlangıç, bitiş);
+                if let Some(azami) = hücre.azami_genişlik
+                    && çizim_genişliği.is_finite()
+                    && çizim_genişliği > 0.0
+                    && aralık_genişliği > 0.0
+                {
+                    let veri_genişliği = bitiş - başlangıç;
+                    let piksel_genişliği = veri_genişliği / aralık_genişliği * çizim_genişliği;
+                    if piksel_genişliği > f64::from(azami) {
+                        let merkez = (başlangıç + bitiş) / 2.0;
+                        let yarı = f64::from(azami) / çizim_genişliği * aralık_genişliği / 2.0;
+                        başlangıç = merkez - yarı;
+                        bitiş = merkez + yarı;
+                    }
+                }
+                (hedef >= başlangıç && hedef <= bitiş).then(|| TimelineVuruşu {
+                    seri: hücre.seri_indeksi,
+                    indeks: hücre.veri_indeksi,
+                    başlangıç,
+                    bitiş,
+                    değer: hücre.değer.clone(),
+                })
             })
             .collect()
     }

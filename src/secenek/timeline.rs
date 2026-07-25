@@ -10,6 +10,8 @@ pub struct TimelineHücresi {
     pub çizgi: String,
     pub çizgi_kalınlığı: f32,
     pub azami_genişlik: Option<f32>,
+    pub etiket_ortala: bool,
+    pub sağ_kenara_uzat: bool,
 }
 
 impl TimelineHücresi {
@@ -32,6 +34,8 @@ impl TimelineHücresi {
             çizgi: çizgi.into(),
             çizgi_kalınlığı: 4.0,
             azami_genişlik: None,
+            etiket_ortala: false,
+            sağ_kenara_uzat: false,
         }
     }
 
@@ -48,6 +52,16 @@ impl TimelineHücresi {
         }
         self
     }
+
+    pub fn etiketi_ortala(mut self, ortala: bool) -> Self {
+        self.etiket_ortala = ortala;
+        self
+    }
+
+    pub fn sağ_kenara_uzat(mut self, uzat: bool) -> Self {
+        self.sağ_kenara_uzat = uzat;
+        self
+    }
 }
 
 /// `timelinePlugin()` tarafından üretilen şerit yerleşimi ve hücre katmanı.
@@ -56,6 +70,7 @@ pub struct TimelineDüzeni {
     pub seri_etiketleri: Vec<String>,
     pub hücreler: Vec<TimelineHücresi>,
     pub şerit_oranı: f32,
+    pub seri_görünürlükleri: Vec<bool>,
 }
 
 impl TimelineDüzeni {
@@ -64,8 +79,13 @@ impl TimelineDüzeni {
         I: IntoIterator<Item = S>,
         S: Into<String>,
     {
+        let seri_etiketleri = seri_etiketleri
+            .into_iter()
+            .map(Into::into)
+            .collect::<Vec<_>>();
         Self {
-            seri_etiketleri: seri_etiketleri.into_iter().map(Into::into).collect(),
+            seri_görünürlükleri: vec![true; seri_etiketleri.len()],
+            seri_etiketleri,
             hücreler,
             şerit_oranı: 0.9,
         }
@@ -74,13 +94,15 @@ impl TimelineDüzeni {
     pub(crate) fn geçerli_mi(&self, seri_sayısı: usize) -> bool {
         !self.seri_etiketleri.is_empty()
             && self.seri_etiketleri.len() == seri_sayısı
+            && self.seri_görünürlükleri.len() == seri_sayısı
             && self.şerit_oranı.is_finite()
             && (0.0..=1.0).contains(&self.şerit_oranı)
             && self.hücreler.iter().all(|hücre| {
                 hücre.seri_indeksi < seri_sayısı
                     && hücre.başlangıç.is_finite()
                     && hücre.bitiş.is_finite()
-                    && hücre.bitiş > hücre.başlangıç
+                    && (hücre.bitiş > hücre.başlangıç
+                        || (hücre.sağ_kenara_uzat && hücre.bitiş == hücre.başlangıç))
                     && hücre.çizgi_kalınlığı.is_finite()
                     && hücre.çizgi_kalınlığı >= 0.0
                     && hücre

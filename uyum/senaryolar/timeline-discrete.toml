@@ -1,9 +1,9 @@
 id = "timeline-discrete"
 kaynak = "../uPlot/demos/timeline-discrete.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/timeline_discrete.rs#timeline_discrete_kartı"
+fixture = "src/kart/timeline_discrete.rs#timeline_discrete_kartları"
 viewport = [1920, 300]
-durum = "dört_kaynak_timeline_yüzeyi"
+durum = "tek_kartta_dört_bağımsız_timeline_yüzeyi"
 
 [veri]
 kanıt_tohumu = 1414090053
@@ -13,11 +13,16 @@ yinelenen_x_sayısı = 28
 periyodik_x_sayısı = 30
 
 [geometri]
+tek_katalog_karti = true
+bağımsız_cursor_zoom_geçmiş = true
 şerit_oranı = 0.9
 şerit_dağılımı = "SPACE_BETWEEN"
 periyodik_hücre_oranı = 0.9
 periyodik_azami_genişlik_px = 100
 çizgi_kalınlığı = 4
+semantic_son_hücre_sağ_kenara_uzanır = true
+periyodik_etiket_ortalanır = true
+vuruş_görsel_hücre_genişliğini_kullanır = true
 
 [anlam]
 null = "gerçek_kesinti"
@@ -26,6 +31,8 @@ ardışık_birleştirme = true
 
 [etkileşim]
 ortak_davranış_profili = "resize-temeli-v1"
+set_data_hücreleri_atomik_yeniler = true
+set_series_timeline_görünürlüğünü_değiştirir = true
 
 [kanıt]
 örnek = "examples/timeline_discrete.rs"

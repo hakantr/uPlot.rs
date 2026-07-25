@@ -655,10 +655,7 @@ impl KartOturumu {
     }
 
     pub fn seri_gorunur(&self, seri_indeksi: usize) -> bool {
-        self.grafik
-            .seri_seçenekleri()
-            .get(seri_indeksi)
-            .is_some_and(|seri| seri.göster)
+        self.grafik.seri_görünür_mü(seri_indeksi)
     }
 
     pub fn seri_gorunurlugu_ayarla(
@@ -1169,9 +1166,9 @@ impl KartOturumu {
         self.grafik.imleç_y_görünür()
     }
 
-    pub fn timeline_vuruslari(&self, yatay_oran: f64) -> Vec<f64> {
+    pub fn timeline_vuruslari(&self, yatay_oran: f64, çizim_genişliği: f64) -> Vec<f64> {
         self.grafik
-            .timeline_vuruşları(yatay_oran)
+            .timeline_vuruşları_pikselde(yatay_oran, çizim_genişliği)
             .into_iter()
             .flat_map(|vuruş| {
                 [
@@ -1181,6 +1178,16 @@ impl KartOturumu {
                     vuruş.bitiş,
                 ]
             })
+            .collect()
+    }
+
+    pub fn timeline_vurus_etiketleri(
+        &self, yatay_oran: f64, çizim_genişliği: f64
+    ) -> Vec<String> {
+        self.grafik
+            .timeline_vuruşları_pikselde(yatay_oran, çizim_genişliği)
+            .into_iter()
+            .map(|vuruş| vuruş.değer)
             .collect()
     }
 
@@ -2864,7 +2871,19 @@ mod testler {
             assert!(svg.contains("Device A"));
             assert!(svg.contains("<rect"));
         }
-        assert!(timeline_discrete_kart_tanim_ornegi().contains("TimelineDiscreteÖrneği"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains(r#"data-kart="timeline-discrete""#));
+        assert!(!web.contains(r#"data-kart="timeline-discrete-state-timeline""#));
+        assert!(web.contains("timelineDiscreteOturumları = timelineYüzeyleri.map"));
+        assert!(timeline_discrete_kart_tanim_ornegi().contains("timeline_discrete_kartları"));
+        let oturum = KartOturumu::yeni("timeline-discrete-periodic-history", 100);
+        assert!(oturum.is_ok());
+        if let Ok(oturum) = oturum {
+            assert_eq!(
+                oturum.timeline_vuruslari(0.5, 1_800.0).len(),
+                oturum.timeline_vurus_etiketleri(0.5, 1_800.0).len() * 4
+            );
+        }
         assert_eq!(kart_sayisi(), 365);
     }
 

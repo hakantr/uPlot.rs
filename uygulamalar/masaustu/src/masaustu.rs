@@ -63,9 +63,10 @@ use uplot_rs::{
     stacked_series_kartları, stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı,
     svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı,
     thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı, time_periods_kartları,
-    time_periods_kartı, timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
-    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
+    time_periods_kartı, timeline_discrete_kartları, timeline_discrete_kartı,
+    timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
+    trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
+    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -556,6 +557,7 @@ pub struct ChartListesi {
     stream_data_grafikleri: Vec<(StreamDataÖrneği, Entity<GpuiGrafik>)>,
     thin_bars_grafikleri: Vec<(ThinBarsÖrneği, Entity<GpuiGrafik>)>,
     time_periods_grafikleri: Vec<(TimePeriodsÖrneği, Entity<GpuiGrafik>)>,
+    timeline_discrete_grafikleri: Vec<(TimelineDiscreteÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grubu: SyncCursorGrubu,
     sync_cursor_senkronlanıyor: bool,
@@ -688,6 +690,12 @@ impl ChartListesi {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
                 }
+            } else if matches!(bu.aktif_kart, KartKimliği::TimelineDiscrete(_)) {
+                for (_, grafik) in &bu.timeline_discrete_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
             } else if let Some(grafik) = &bu.grafik {
                 grafik.update(cx, |grafik, cx| {
                     grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
@@ -753,6 +761,7 @@ impl ChartListesi {
             stream_data_grafikleri: Vec::new(),
             thin_bars_grafikleri: Vec::new(),
             time_periods_grafikleri: Vec::new(),
+            timeline_discrete_grafikleri: Vec::new(),
             sync_cursor_grafikleri: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
             sync_cursor_senkronlanıyor: false,
@@ -1538,6 +1547,49 @@ impl ChartListesi {
         cx.notify();
     }
 
+    fn timeline_discrete_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let kartlar = match timeline_discrete_kartları() {
+            Ok(kartlar) => kartlar,
+            Err(hata) => {
+                self.grafik = None;
+                self.timeline_discrete_grafikleri.clear();
+                self.hata = Some(format!("Timeline / Discrete grubu oluşturulamadı: {hata}"));
+                cx.notify();
+                return;
+            }
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.grafik = None;
+                    self.timeline_discrete_grafikleri.clear();
+                    self.hata = Some(format!(
+                        "{} Timeline / Discrete yüzeyi oluşturulamadı: {hata}",
+                        örnek.başlık()
+                    ));
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                    bu.açıklama_istendi = true;
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.timeline_discrete_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
         match grafik_oluştur(
@@ -1832,6 +1884,7 @@ impl ChartListesi {
         self.stream_data_grafikleri.clear();
         self.thin_bars_grafikleri.clear();
         self.time_periods_grafikleri.clear();
+        self.timeline_discrete_grafikleri.clear();
         if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -1979,6 +2032,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.time_periods_yüzeylerini_oluştur(cx);
+        } else if matches!(kart, KartKimliği::TimelineDiscrete(_)) {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.timeline_discrete_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -2509,6 +2571,35 @@ impl ChartListesi {
         }
         cx.notify();
     }
+
+    fn timeline_serisini_değiştir(
+        &mut self,
+        örnek: TimelineDiscreteÖrneği,
+        seri_indeksi: usize,
+        cx: &mut Context<Self>,
+    ) {
+        if !matches!(self.aktif_kart, KartKimliği::TimelineDiscrete(_)) {
+            return;
+        }
+        let Some((_, yüzey)) = self
+            .timeline_discrete_grafikleri
+            .iter()
+            .find(|(kimlik, _)| *kimlik == örnek)
+            .cloned()
+        else {
+            return;
+        };
+        let görünür = yüzey.read(cx).grafik().seri_görünür_mü(seri_indeksi);
+        match yüzey.update(cx, |grafik, cx| {
+            grafik.seri_görünürlüğünü_ayarla(seri_indeksi, !görünür, cx)
+        }) {
+            Ok(_) => self.hata = None,
+            Err(hata) => {
+                self.hata = Some(format!("Timeline seri görünürlüğü değiştirilemedi: {hata}"));
+            }
+        }
+        cx.notify();
+    }
 }
 
 fn grafik_oluştur(
@@ -2866,9 +2957,7 @@ impl Render for ChartListesi {
             KartKimliği::TimePeriods(_) => {
                 "3 bağımsız 1920×200 yüzey · tek traffic.json kaynağı".to_string()
             }
-            KartKimliği::TimelineDiscrete(örnek) => {
-                format!("1920×300 · {}", örnek.başlık())
-            }
+            KartKimliği::TimelineDiscrete(_) => "4 bağımsız 1920×300 yüzey · 3 şerit".to_string(),
             KartKimliği::TimeseriesDiscrete => {
                 "50 ortak zaman noktası · 1 float + 3 ayrık seri".to_string()
             }
@@ -3076,6 +3165,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .time_periods_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if matches!(aktif_kart, KartKimliği::TimelineDiscrete(_)) {
+            geri_var = self
+                .timeline_discrete_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .timeline_discrete_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         }
@@ -3946,21 +4044,22 @@ impl Render for ChartListesi {
                     bu.kartı_seç(kart, cx);
                 }))
             })
-            .children(TimelineDiscreteÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::TimelineDiscrete(örnek);
+            .child({
+                let kart =
+                    KartKimliği::TimelineDiscrete(TimelineDiscreteÖrneği::DurumZamanÇizelgesi);
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
                     "timeline-discrete",
-                    aktif_kart == kart,
-                    "1920×300 · 3 şerit · semantic/discrete hücreler",
+                    "Timeline / Discrete",
+                    "timeline-discrete",
+                    matches!(aktif_kart, KartKimliği::TimelineDiscrete(_)),
+                    "4 bağımsız yüzey · semantic/matrix karşılaştırması",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .child(
                 katalog_kartı(
                     "timeseries-discrete",
@@ -4521,6 +4620,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.time_periods_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::TimelineDiscrete(_)) {
+                            for (_, grafik) in &bu.timeline_discrete_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
@@ -4623,6 +4726,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.time_periods_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::TimelineDiscrete(_)) {
+                            for (_, grafik) in &bu.timeline_discrete_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.tam_görünüm(cx);
@@ -4659,6 +4766,8 @@ impl Render for ChartListesi {
                             bu.thin_bars_yüzeylerini_oluştur(cx);
                         } else if matches!(bu.aktif_kart, KartKimliği::TimePeriods(_)) {
                             bu.time_periods_yüzeylerini_oluştur(cx);
+                        } else if matches!(bu.aktif_kart, KartKimliği::TimelineDiscrete(_)) {
+                            bu.timeline_discrete_yüzeylerini_oluştur(cx);
                         } else {
                             bu.grafiği_yenile(100, cx);
                         }
@@ -5649,6 +5758,104 @@ impl Render for ChartListesi {
                                 .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
                         )
                 }))
+        } else if matches!(aktif_kart, KartKimliği::TimelineDiscrete(_)) {
+            çizim_tabanı
+                .flex_none()
+                .h(px(760.0))
+                .overflow_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .w(px(1920.0))
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("Resmî timeline-discrete.html sayfasındaki dört Grafik ayrı plugin/hover ve görünüm durumları taşır. İlk yüzey semantic süreleri, ikincisi sabit örnek matrisini, son ikisi yinelenen ve birleştirilmiş durumları karşılaştırır."),
+                )
+                .children(TimelineDiscreteÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    let grafik = self
+                        .timeline_discrete_grafikleri
+                        .iter()
+                        .find(|(kimlik, _)| *kimlik == örnek)
+                        .map(|(_, grafik)| grafik.clone());
+                    let görünürlük = grafik
+                        .as_ref()
+                        .map(|grafik| {
+                            (0..3)
+                                .map(|indeks| grafik.read(cx).grafik().seri_görünür_mü(indeks))
+                                .collect::<Vec<_>>()
+                        })
+                        .unwrap_or_default();
+                    div()
+                        .mb_4()
+                        .w(px(1920.0))
+                        .child(
+                            div()
+                                .px_2()
+                                .py_1()
+                                .text_xs()
+                                .font_weight(FontWeight::SEMIBOLD)
+                                .child(örnek.başlık()),
+                        )
+                        .child(
+                            div()
+                                .w(px(1920.0))
+                                .h(px(300.0))
+                                .border_1()
+                                .border_color(rgb(0xe5e7eb))
+                                .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
+                        )
+                        .child(
+                            div()
+                                .flex()
+                                .gap_2()
+                                .px_2()
+                                .py_1()
+                                .children(
+                                    ["Device A", "Device B", "Device C"]
+                                        .into_iter()
+                                        .enumerate()
+                                        .map(|(seri_indeksi, etiket)| {
+                                            let görünür = görünürlük
+                                                .get(seri_indeksi)
+                                                .copied()
+                                                .unwrap_or(false);
+                                            div()
+                                                .id(SharedString::from(format!(
+                                                    "timeline-toggle-{}-{seri_indeksi}",
+                                                    örnek.kimlik()
+                                                )))
+                                                .px_2()
+                                                .py_1()
+                                                .rounded_sm()
+                                                .cursor_pointer()
+                                                .text_xs()
+                                                .bg(if görünür {
+                                                    rgb(0xe2e8f0)
+                                                } else {
+                                                    rgb(0xf8fafc)
+                                                })
+                                                .text_color(if görünür {
+                                                    rgb(0x111827)
+                                                } else {
+                                                    rgb(0x94a3b8)
+                                                })
+                                                .child(etiket)
+                                                .on_click(cx.listener(
+                                                    move |bu, _: &ClickEvent, _, cx| {
+                                                        bu.timeline_serisini_değiştir(
+                                                            örnek,
+                                                            seri_indeksi,
+                                                            cx,
+                                                        );
+                                                    },
+                                                ))
+                                        }),
+                                ),
+                        )
+                }))
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
             let boyut = self
                 .boyut_senkron_akışı
@@ -5975,6 +6182,17 @@ impl Render for ChartListesi {
                  Grafana benzeri panellerde karşılaştırmak için uygundur. Maliyet: traffic.json \
                  bir kez ayrıştırılır; her yüzey kendi cursor, seçim, wheel/touch/drag ve \
                  görünüm geçmişini tutar; etkileşim yalnız ilgili GpuiGrafik sahnesini yeniler.",
+            ),
+            KartKimliği::TimelineDiscrete(_) => Some(
+                "Amaç: gerçek süreli durum geçişlerini, sabit örnek hücrelerini ve yinelenen \
+                 değer birleştirmesini aynı kaynak bağlamında karşılaştırır. API: \
+                 timeline_discrete_kartları dört bağımsız Grafik döndürür; null/undefined \
+                 ayrımı, şerit dağılımı, renk/etiket, sağ kenara uzanan son durum ve 100px \
+                 sınırlı matrix vuruşu çekirdektedir. timeline_verisini_ayarla setData ile \
+                 hücre dizinini atomik yeniler; setSeries görünürlüğü özel timeline katmanını \
+                 değiştirir. İzleme: cihaz duty-cycle ve servis durum geçmişi için uygundur. \
+                 Maliyet: hücreler element ağı değil tek sahne boyamasıdır; hover yalnız gerçek \
+                 boyalı hücreyi ve hafif vurgu katmanını günceller.",
             ),
             KartKimliği::Scatter => Some(
                 "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \
