@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::path::PathBuf;
-use uplot_rs::{Grafik, StreamDataÖrneği, stream_data_kartı};
+use uplot_rs::{Grafik, stream_data_kartları};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let çıktı = std::env::args()
@@ -8,8 +8,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("target/stream-data"));
     std::fs::create_dir_all(&çıktı)?;
-    for örnek in StreamDataÖrneği::TÜMÜ {
-        let (seçenekler, veri) = stream_data_kartı(örnek)?;
+    for (örnek, seçenekler, veri) in stream_data_kartları()? {
         let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();
         std::fs::write(çıktı.join(format!("{}.svg", örnek.kimlik())), svg)?;
     }

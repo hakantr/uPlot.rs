@@ -515,7 +515,7 @@
     },
     {
       "kaynak_yolu": "uPlot.setData sliding/increasing stream slices",
-      "rust_karşılığı": "StreamDataAkışı::ilerlet / Grafik::veriyi_ayarla",
+      "rust_karşılığı": "StreamDataGrubu::ilerlet / Grafik::canlı_veriyi_ayarla",
       "durum": "tam_kanıtlı",
       "test": "src/kart/stream_data.rs"
     },

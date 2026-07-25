@@ -1145,6 +1145,57 @@ impl Grafik {
         Ok(())
     }
 
+    /// uPlot `setData(data)` için seçenek/stil ağacını yeniden kurmayan canlı yol.
+    ///
+    /// Seri sayısı değişmeyen akışlarda yalnız veri, tam ölçekler ve veriye
+    /// bağlı vuruş dizinleri yenilenir. Kullanıcı yakınlaştırılmışsa görünür
+    /// aralık ve geçmiş korunur; tam görünümdeyse yeni tam ölçek izlenir.
+    /// Böylece native/WASM yüzeyleri 100 ms gibi sık tiklerde aynı grafik ve
+    /// etkileşim katmanlarını korur.
+    pub fn canlı_veriyi_ayarla(&mut self, veri: HizalıVeri) -> Result<(), UplotHatası> {
+        if self.seçenekler.seriler.len() != veri.seriler().len() {
+            return Err(UplotHatası::SeriSeçeneğiEksik {
+                beklenen: veri.seriler().len(),
+                bulunan: self.seçenekler.seriler.len(),
+            });
+        }
+        let mut tam_x = self
+            .seçenekler
+            .x_aralığı
+            .or_else(|| tam_x_aralığı(&veri).ok())
+            .unwrap_or(Aralık {
+                en_az: 0.0,
+                en_çok: 1.0,
+            });
+        if (self
+            .seçenekler
+            .çubuk_düzeni
+            .is_some_and(|düzen| düzen.x_kenar_paylı)
+            || self.seçenekler.kutu_bıyık_düzeni.is_some()
+            || self.seçenekler.mum_düzeni.is_some())
+            && veri.uzunluk() > 1
+        {
+            tam_x = Aralık::yeni(tam_x.en_az - 0.5, tam_x.en_çok + 0.5)?;
+        }
+        self.veri = veri;
+        let tam_y = self
+            .seçenekler
+            .y_ölçekleri
+            .iter()
+            .find(|ölçek| ölçek.anahtar == self.seçenekler.birincil_y_ölçeği)
+            .and_then(|ölçek| ölçek.aralık)
+            .or(self.seçenekler.y_aralığı)
+            .unwrap_or_else(|| self.y_aralığı(tam_x));
+        self.etkileşim.canlı_tam_x_ayarla(tam_x);
+        self.etkileşim.canlı_tam_y_ayarla(tam_y);
+        self.odak_serisi = None;
+        self.eksen_sürükleme = None;
+        self.ölçüm_datumları = [None, None];
+        *self.çubuk_vuruş_dizini.borrow_mut() = None;
+        *self.dağılım_vuruş_dizini.borrow_mut() = None;
+        Ok(())
+    }
+
     /// Uzak veri sağlayıcıdan gelen yeni veriyi uygular ve istenen X aralığını korur.
     ///
     /// `zoom-fetch` kaynağındaki `setData(data, false)` + `setScale("x", range)`

@@ -1,6 +1,7 @@
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use flate2::read::ZlibDecoder;
 use std::io::Read;
+use std::sync::{Arc, OnceLock};
 
 use crate::UplotHatası;
 
@@ -17,7 +18,13 @@ pub(crate) struct StreamKaynakVerisi {
     pub tcp_out: Vec<Option<f64>>,
 }
 
-pub(crate) fn stream_kaynak_verisi() -> Result<StreamKaynakVerisi, UplotHatası> {
+static KAYNAK: OnceLock<Result<Arc<StreamKaynakVerisi>, UplotHatası>> = OnceLock::new();
+
+pub(crate) fn stream_kaynak_verisi() -> Result<Arc<StreamKaynakVerisi>, UplotHatası> {
+    KAYNAK.get_or_init(stream_kaynağını_çöz).clone()
+}
+
+fn stream_kaynağını_çöz() -> Result<Arc<StreamKaynakVerisi>, UplotHatası> {
     let sıkıştırılmış = STANDARD
         .decode(SIKIŞTIRILMIŞ.split_whitespace().collect::<String>())
         .map_err(|hata| kaynak_hatası(format!("base64 çözülemedi: {hata}")))?;
@@ -55,12 +62,12 @@ pub(crate) fn stream_kaynak_verisi() -> Result<StreamKaynakVerisi, UplotHatası>
         ram.push(Some(f64::from(ram_ham) / 100.0));
         tcp_out.push(Some(f64::from(tcp_ham) / 100.0));
     }
-    Ok(StreamKaynakVerisi {
+    Ok(Arc::new(StreamKaynakVerisi {
         x,
         cpu,
         ram,
         tcp_out,
-    })
+    }))
 }
 
 fn u16_oku(baytlar: &[u8], ofset: usize) -> Result<u16, UplotHatası> {
@@ -92,6 +99,8 @@ mod testler {
     #[test]
     fn kaynak_elli_beş_bin_beş_yüz_elli_satırı_aynen_korur() -> Result<(), UplotHatası> {
         let veri = stream_kaynak_verisi()?;
+        let yeniden = stream_kaynak_verisi()?;
+        assert!(Arc::ptr_eq(&veri, &yeniden));
         assert_eq!(veri.x.len(), SATIR_SAYISI);
         assert_eq!(veri.cpu.len(), SATIR_SAYISI);
         assert_eq!(veri.ram.len(), SATIR_SAYISI);

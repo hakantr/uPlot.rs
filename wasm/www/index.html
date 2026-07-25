@@ -313,6 +313,14 @@
     .stacked-series-grafik svg { display: block; }
     .stacked-series-grafik .lejant { position: static; padding: 4px 8px 8px;
                                      justify-content: flex-start; pointer-events: auto; }
+    #chart.stream-data-yüzeyi { display: block; min-width: 0; overflow: auto;
+                                place-items: unset; padding: 8px; box-sizing: border-box; }
+    .stream-data-yığın { width: 1600px; display: grid; gap: 16px; align-items: start; }
+    .stream-data-grafik { position: relative; width: 1600px; background: #fff;
+                          border: 1px solid silver; overflow: hidden; }
+    .stream-data-grafik svg { display: block; width: 1600px; height: 600px; }
+    .stream-data-grafik .lejant { position: static; padding: 4px 8px 8px;
+                                  justify-content: flex-start; pointer-events: auto; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -1665,32 +1673,35 @@
     ];
     document.querySelector('[data-kart="stacked-series"]')?.insertAdjacentHTML(
       "afterend",
-      streamDataYüzeyleri.map(([kimlik, başlık, durum]) => `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>stream-data</small>
-          <div class="durum">${durum} · 100 ms/10 satır</div>
-        </article>`).join("")
+      `<article class="kart" data-kart="stream-data" aria-current="false" tabindex="0">
+        <strong>Data Stream · 3 yüzey</strong><small>stream-data</small>
+        <div class="durum">55.550 ortak satır · 100 ms/10 satır</div>
+      </article>`
     );
-    for (const [kimlik, başlık, yardım] of streamDataYüzeyleri) {
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/stream-data.html">stream-data.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/bench/data.json">bench/data.json</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">uPlot.setData()</a>
-          <br>Resmî 55.550 satırlık veri; CPU, RAM ve TCP Out dönüşümleriyle kayıpsız türetilir. Üç 1600×600 yüzey 100 ms'de 10 satır ilerler; seçimle yakınlaştırma kaynakta olduğu gibi kapalıdır.`,
-        tanım: () => stream_data_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/stream_data.rs",
-        seriler: [
-          { etiket: "CPU", renk: "red" },
-          { etiket: "RAM", renk: "blue" },
-          { etiket: "TCP Out", renk: "green" },
-        ],
-        yardım: `${yardım} · canlı setData · tekerlek: yakınlaştır · çift tıkla: tam görünüm`,
-        değişkenNokta: false,
-        etkileşimler: () => ({ ...ortakEtkileşimler(), seçim: false }),
-      };
-    }
-    document.querySelector('[data-kart="stream-data-increasing-static-x"]')?.insertAdjacentHTML(
+    kartlar["stream-data"] = {
+      başlık: "Data Stream · 3 yüzey",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/stream-data.html">stream-data.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/bench/data.json">bench/data.json</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">uPlot.setData()</a>
+        <br>Kaynağın üç ayrı uPlot örneği tek kartta ve kaynak sırasıyla gösterilir. Üçü aynı hazırlanmış 55.550 satırı paylaşır; kayan, büyüyen ve sabit-X büyüyen yüzeylerin imleçleri ile ölçekleri birbirinden bağımsızdır.`,
+      tanım: () => stream_data_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/stream_data.rs",
+      seriler: [
+        { etiket: "CPU", renk: "red" },
+        { etiket: "RAM", renk: "blue" },
+        { etiket: "TCP Out", renk: "green" },
+      ],
+      yardım: "Üç bağımsız canlı setData yüzeyi · 100 ms/10 satır",
+      değişkenNokta: false,
+      etkileşimler: () => ({ ...ortakEtkileşimler(), seçim: false }),
+      kullanım: {
+        amaç: "Sabit uzunlukta kayan pencere, sürekli büyüyen veri ve sabit ölçekli büyüyen veri akışlarının kaynak ve görünüm maliyetlerini aynı bağlamda karşılaştırır.",
+        api: "StreamDataGrubu tek decode edilmiş Arc kaynağı paylaşır. kartları() üç bağımsız Grafik seçeneği/verisi üretir; canlı_veriyi_ayarla aynı seçenek ve yüzey ağacını koruyarak setData karşılığı günceller.",
+        izleme: "CPU, RAM ve ağ çıkışı yerine servis telemetrisi, log oranları veya sensör değerleri geçirilebilir. İlk yüzey boşta son değeri gösterir; kaynak eşliği için diğer iki yüzey imleç yokken -- bırakır.",
+        maliyet: "Kaynak üç ayrı 100 ms timer kullanır; port aynı anda çalışan üç akışı tek zamanlayıcı tikinde birleştirerek uyumlu kare üretir. Kaynak timerları veri bittiğinde de çalışırken port gereksiz kopya/çizimi durdurur. Seçim yakınlaştırma kaynakta kapalıdır; wheel/touch/drag ortak ve isteğe bağlı çekirdek uzantısıdır.",
+      },
+    };
+    document.querySelector('[data-kart="stream-data"]')?.insertAdjacentHTML(
       "afterend",
       `<article class="kart" data-kart="svg-image" aria-current="false" tabindex="0">
         <strong>uPlot to image PoC</strong><small>svg-image</small>
@@ -2683,6 +2694,8 @@
     let sparseEtkinİndeks = 0;
     let stackedSeriesOturumları = [];
     let stackedSeriesEtkinİndeks = 0;
+    let streamDataOturumları = [];
+    let streamDataEtkinİndeks = 0;
     let scalesDirOriİmleci = null;
     let scalesDirOriÇizimKaresi = null;
     let syncCursorKöprüsü = null;
@@ -4946,6 +4959,90 @@
       kontrolleriGüncelle();
     }
 
+    function streamDataYüzeyiniÇiz(indeks) {
+      const tanım = streamDataYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-stream-data-index="${indeks}"]`);
+      const yüzeyOturumu = streamDataOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const svgÇıktısı = yüzeyOturumu.svg(1600, 600);
+      const mevcutSvg = yüzey.querySelector("svg");
+      let etkileşimKatmanı = mevcutSvg?.querySelector(":scope > #etkileşim") ?? null;
+      if (!mevcutSvg) {
+        yüzey.innerHTML = `${svgÇıktısı}<div class="lejant"></div>`;
+      } else {
+        etkileşimKatmanı?.remove();
+        const şablon = document.createElement("template");
+        şablon.innerHTML = svgÇıktısı.trim();
+        svgYüzeyiniYerindeGüncelle(mevcutSvg, şablon.content.firstElementChild);
+        if (etkileşimKatmanı) mevcutSvg.appendChild(etkileşimKatmanı);
+      }
+      const sonDeğerler = indeks === 0 ? Array.from(yüzeyOturumu.son_degerler()) : [];
+      const xDeğeri = Number.isFinite(sonDeğerler[0])
+        ? Number(sonDeğerler[0]).toLocaleString("tr-TR", { maximumFractionDigits: 3 })
+        : "--";
+      const lejant = kartlar["stream-data"].seriler.map((seri, seriİndeksi) => {
+        const değer = sonDeğerler[seriİndeksi + 1];
+        const metin = Number.isFinite(değer)
+          ? Number(değer).toLocaleString("tr-TR", { maximumFractionDigits: 3 })
+          : "--";
+        return `<span><i class="örnek"
+          style="border-color:${seri.renk};background:${seri.renk}"></i>
+          ${seri.etiket}: <b id="seri-değeri-${seriİndeksi}">${metin}</b></span>`;
+      }).join("");
+      const lejantHedefi = yüzey.querySelector(".lejant");
+      if (lejantHedefi) {
+        lejantHedefi.innerHTML = `<span>x: <b id="x-değeri">${xDeğeri}</b></span>${lejant}`;
+      }
+      const svg = yüzey.querySelector("svg");
+      if (!svg) return;
+      svg.dataset.etkileşim = "independent-stream-data";
+      const yeniEtkileşimKatmanı = !etkileşimKatmanı;
+      if (!etkileşimKatmanı) {
+        etkileşimKatmanı = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        etkileşimKatmanı.id = "etkileşim";
+        etkileşimKatmanı.setAttribute("pointer-events", "none");
+        svg.appendChild(etkileşimKatmanı);
+      }
+      if (yeniEtkileşimKatmanı) {
+        etkileşimKatmanı.innerHTML = `
+          <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+          <line id="imleç-x" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
+          <line id="imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
+          ${kartlar["stream-data"].seriler.map((seri, seriİndeksi) =>
+            `<circle id="imleç-nokta-${seriİndeksi}" visibility="hidden"
+              r="2.5" fill="${seri.renk}"/>`
+          ).join("")}
+        `;
+      }
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      const xAralığı = yüzeyOturumu.gorunur_x_araligi();
+      const yAralığı = yüzeyOturumu.gorunur_y_araligi();
+      yüzey.dataset.xEnAz = String(xAralığı[0] ?? "");
+      yüzey.dataset.xEnCok = String(xAralığı[1] ?? "");
+      yüzey.dataset.yEnAz = String(yAralığı[0] ?? "");
+      yüzey.dataset.yEnCok = String(yAralığı[1] ?? "");
+    }
+
+    function streamDataÇiz() {
+      if (!chart.classList.contains("stream-data-yüzeyi")
+        || chart.querySelectorAll(".stream-data-grafik").length
+          !== streamDataYüzeyleri.length) {
+        chart.className = "stream-data-yüzeyi";
+        chart.innerHTML = `<div class="stream-data-yığın">${
+          streamDataYüzeyleri.map((_, indeks) =>
+            `<article class="stream-data-grafik" data-stream-data-index="${indeks}"></article>`
+          ).join("")
+        }</div>`;
+      }
+      streamDataYüzeyleri.forEach((_, indeks) => streamDataYüzeyiniÇiz(indeks));
+      oturum = streamDataOturumları[streamDataEtkinİndeks]
+        ?? streamDataOturumları[0]
+        ?? null;
+      if (grafikÜzerinde && sonPointerOlayı) imleciGüncelle(sonPointerOlayı);
+      kontrolleriGüncelle();
+    }
+
     function çiz() {
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
@@ -5003,6 +5100,10 @@
         stackedSeriesÇiz();
         return;
       }
+      if (aktifKart === "stream-data") {
+        streamDataÇiz();
+        return;
+      }
       if (!oturum) return;
       const öncekiMultiBarsKartı = chart.dataset.cizilenKart;
       const öncekiMultiBarsKaydırma = chart.querySelector(".multi-bars-kaydırma");
@@ -5024,6 +5125,7 @@
       chart.classList.remove("sparklines-yüzeyi");
       chart.classList.remove("sparse-yüzeyi");
       chart.classList.remove("stacked-series-yüzeyi");
+      chart.classList.remove("stream-data-yüzeyi");
       chart.classList.toggle("nice-scale-yüzeyi", aktifKart === "nice-scale");
       chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
       const sayı = Number(nokta.value);
@@ -5303,6 +5405,10 @@
             ? chart.querySelector(
                 `[data-stacked-series-index="${stackedSeriesEtkinİndeks}"] svg`
               )
+          : aktifKart === "stream-data"
+            ? chart.querySelector(
+                `[data-stream-data-index="${streamDataEtkinİndeks}"] svg`
+              )
         : chart.querySelector("svg"));
       if (!svg || !oturum) return false;
       const rect = svg.getBoundingClientRect();
@@ -5390,6 +5496,9 @@
           : aktifKart === "sparse"
             ? olay.target?.closest?.(".sparse-grafik")
               ?? chart.querySelector(`[data-sparse-index="${sparseEtkinİndeks}"]`)
+          : aktifKart === "stream-data"
+            ? olay.target?.closest?.(".stream-data-grafik")
+              ?? chart.querySelector(`[data-stream-data-index="${streamDataEtkinİndeks}"]`)
           : null;
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
       if (!svg) return { x: NaN, y: NaN, svg: null, view: { width: 0, height: 0 } };
@@ -5610,6 +5719,7 @@
         ?? svg.closest(".sparklines-grafik")
         ?? svg.closest(".sparse-grafik")
         ?? svg.closest(".stacked-series-grafik")
+        ?? svg.closest(".stream-data-grafik")
         ?? chart;
       const noktalar = kartlar[aktifKart].seriler.map((_, indeks) => svg.querySelector(`#imleç-nokta-${indeks}`));
       const öğeler = [...çizgiler, ...noktalar];
@@ -5920,6 +6030,17 @@
         if (svg) yüzeyiEşitle(svg);
       }
     }
+    function streamDataOturumunuSeç(olay) {
+      if (aktifKart !== "stream-data") return;
+      const yüzey = olay.target?.closest?.(".stream-data-grafik");
+      const indeks = Number(yüzey?.dataset.streamDataIndex);
+      if (Number.isInteger(indeks) && streamDataOturumları[indeks]) {
+        streamDataEtkinİndeks = indeks;
+        oturum = streamDataOturumları[indeks];
+        const svg = yüzey.querySelector("svg");
+        if (svg) yüzeyiEşitle(svg);
+      }
+    }
     for (const olayTürü of ["pointerdown", "pointermove", "pointerup", "wheel", "dblclick", "scroll"]) {
       chart.addEventListener(olayTürü, scatterOturumunuSeç, { capture: true, passive: true });
       chart.addEventListener(olayTürü, softMinMaxOturumunuSeç, { capture: true, passive: true });
@@ -5933,6 +6054,9 @@
         capture: true, passive: true,
       });
       chart.addEventListener(olayTürü, stackedSeriesOturumunuSeç, {
+        capture: true, passive: true,
+      });
+      chart.addEventListener(olayTürü, streamDataOturumunuSeç, {
         capture: true, passive: true,
       });
     }
@@ -6386,6 +6510,10 @@
         stackedSeriesOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
+      } else if (aktifKart === "stream-data") {
+        streamDataOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
       } else {
         oturum?.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
       }
@@ -6526,6 +6654,11 @@
           stackedSeriesEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "stacked-series";
         }
+        if (kimlik !== "stream-data" && kimlik.startsWith("stream-data-")) {
+          const indeks = streamDataYüzeyleri.findIndex(yüzey => yüzey[0] === kimlik);
+          streamDataEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "stream-data";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -6578,6 +6711,7 @@
           sparklinesOturumları,
           sparseOturumları,
           stackedSeriesOturumları,
+          streamDataOturumları,
         ].some(yüzeyler => yüzeyler.includes(oturum));
         if (!gruplanmışOturum) oturum?.free();
         oturum = null;
@@ -6609,6 +6743,8 @@
         sparseOturumları = [];
         stackedSeriesOturumları.forEach(yüzey => yüzey.free());
         stackedSeriesOturumları = [];
+        streamDataOturumları.forEach(yüzey => yüzey.free());
+        streamDataOturumları = [];
         scalesDirOriİmleci = null;
         if (scalesDirOriÇizimKaresi !== null) {
           cancelAnimationFrame(scalesDirOriÇizimKaresi);
@@ -6865,6 +7001,43 @@
           çiz();
           return;
         }
+        if (kimlik === "stream-data") {
+          streamDataOturumları = streamDataYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey[0], 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = streamDataOturumları[streamDataEtkinİndeks]
+            ?? streamDataOturumları[0]
+            ?? null;
+          çiz();
+          streamDataZamanlayıcı = setInterval(() => {
+            if (aktifKart !== "stream-data"
+              || streamDataOturumları.length !== streamDataYüzeyleri.length) {
+              clearInterval(streamDataZamanlayıcı);
+              streamDataZamanlayıcı = null;
+              return;
+            }
+            try {
+              let değişti = false;
+              streamDataOturumları.forEach(yüzey => {
+                değişti = yüzey.stream_data_ilerlet() || değişti;
+              });
+              if (değişti) {
+                streamDataÇiz();
+                hata.textContent = "";
+              } else {
+                clearInterval(streamDataZamanlayıcı);
+                streamDataZamanlayıcı = null;
+              }
+            } catch (neden) {
+              hata.textContent = `Data Stream güncellenemedi: ${String(neden)}`;
+              clearInterval(streamDataZamanlayıcı);
+              streamDataZamanlayıcı = null;
+            }
+          }, 100);
+          return;
+        }
         oturum = new KartOturumu(
           kimlik === "no-data" && oturumKimliği !== "no-data"
             ? oturumKimliği
@@ -6995,27 +7168,6 @@
             }
           };
           sineAnimationFrame = requestAnimationFrame(sineAdımı);
-        } else if (kimlik.startsWith("stream-data-")) {
-          streamDataZamanlayıcı = setInterval(() => {
-            if (aktifKart !== kimlik || !oturum) {
-              clearInterval(streamDataZamanlayıcı);
-              streamDataZamanlayıcı = null;
-              return;
-            }
-            try {
-              if (oturum.stream_data_ilerlet()) {
-                çiz();
-                hata.textContent = "";
-              } else {
-                clearInterval(streamDataZamanlayıcı);
-                streamDataZamanlayıcı = null;
-              }
-            } catch (neden) {
-              hata.textContent = `Data Stream güncellenemedi: ${String(neden)}`;
-              clearInterval(streamDataZamanlayıcı);
-              streamDataZamanlayıcı = null;
-            }
-          }, 100);
         }
       }
       document.querySelectorAll("[data-kart]").forEach(öğe => {

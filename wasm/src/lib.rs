@@ -492,7 +492,7 @@ impl KartOturumu {
             return Ok(false);
         }
         let (_, veri) = akış.kartı().map_err(js_hatası)?;
-        self.grafik.veriyi_ayarla(veri).map_err(js_hatası)?;
+        self.grafik.canlı_veriyi_ayarla(veri).map_err(js_hatası)?;
         Ok(true)
     }
 
@@ -2629,6 +2629,7 @@ mod testler {
 
     #[test]
     fn stream_data_wasm_üç_canlı_yüzeyi_korur() {
+        let web = include_str!("../www/index.html");
         for örnek in StreamDataÖrneği::TÜMÜ {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             assert!(oturum.is_ok(), "{}", örnek.kimlik());
@@ -2643,7 +2644,16 @@ mod testler {
             assert!(oturum.stream_data_ilerlet().is_ok_and(|değişti| değişti));
             assert_ne!(oturum.svg(1_600, 600), önce);
         }
-        assert!(stream_data_kart_tanim_ornegi().contains("StreamDataAkışı"));
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"stream-data\"")
+                .count(),
+            1
+        );
+        assert!(!web.contains("data-kart=\"stream-data-fixed-sliding\""));
+        assert!(web.contains("function streamDataÇiz()"));
+        assert!(web.contains("independent-stream-data"));
+        assert!(stream_data_kart_tanim_ornegi().contains("StreamDataGrubu"));
+        assert!(stream_data_kart_tanim_ornegi().contains("canlı_veriyi_ayarla"));
         assert_eq!(kart_sayisi(), 365);
     }
 

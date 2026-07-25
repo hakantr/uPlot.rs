@@ -36,7 +36,7 @@ use uplot_rs::{
     SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
     ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı, SmoothingÖrneği,
     SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği,
-    StackedSeriesÖrneği, StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği,
+    StackedSeriesÖrneği, StreamDataGrubu, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği,
     SyncYZeroAşaması, THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
     TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ, TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
     TIMEZONES_DST_KART_TANIM_ÖRNEĞİ, TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ,
@@ -163,7 +163,7 @@ impl KartKimliği {
             Self::Sparklines(_) => "Sparklines · 10×2 tablo",
             Self::Sparse(_) => "Sparse · 3 pathBuilder",
             Self::StackedSeries(_) => "Stacked Series · 16 yüzey",
-            Self::StreamData(örnek) => örnek.başlık(),
+            Self::StreamData(_) => "Data Stream · 3 yüzey",
             Self::SvgImage => "uPlot to image PoC",
             Self::SyncCursor => "Sync Cursor",
             Self::SyncYZero(_) => "Sync Y Zero",
@@ -542,7 +542,7 @@ pub struct ChartListesi {
     pixel_align_son_kare: Option<Instant>,
     sine_akışı: Option<SineAkışı>,
     sine_kare_bekleniyor: bool,
-    stream_data_akışı: Option<StreamDataAkışı>,
+    stream_data_grubu: Option<StreamDataGrubu>,
     soft_minmax_akışı: Option<SoftMinMaxAkışı>,
     boyut_senkron_akışı: Option<BoyutSenkronAkışı>,
     y_shifted_series_akışı: Option<YShiftedSeriesAkışı>,
@@ -552,6 +552,7 @@ pub struct ChartListesi {
     sparklines_grafikleri: Vec<(SparklineÖrneği, Entity<GpuiGrafik>)>,
     sparse_grafikleri: Vec<(SparseÖrneği, Entity<GpuiGrafik>)>,
     stacked_series_grafikleri: Vec<(StackedSeriesÖrneği, Entity<GpuiGrafik>)>,
+    stream_data_grafikleri: Vec<(StreamDataÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grubu: SyncCursorGrubu,
     timeseries_discrete_grafikleri: Vec<(TimeseriesDiscreteÖrneği, Entity<GpuiGrafik>)>,
@@ -665,6 +666,12 @@ impl ChartListesi {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
                 }
+            } else if matches!(bu.aktif_kart, KartKimliği::StreamData(_)) {
+                for (_, grafik) in &bu.stream_data_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
             } else if let Some(grafik) = &bu.grafik {
                 grafik.update(cx, |grafik, cx| {
                     grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
@@ -717,7 +724,7 @@ impl ChartListesi {
             pixel_align_son_kare: None,
             sine_akışı: None,
             sine_kare_bekleniyor: false,
-            stream_data_akışı: None,
+            stream_data_grubu: None,
             soft_minmax_akışı: None,
             boyut_senkron_akışı: None,
             y_shifted_series_akışı: None,
@@ -727,6 +734,7 @@ impl ChartListesi {
             sparklines_grafikleri: Vec::new(),
             sparse_grafikleri: Vec::new(),
             stacked_series_grafikleri: Vec::new(),
+            stream_data_grafikleri: Vec::new(),
             sync_cursor_grafikleri: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
             timeseries_discrete_grafikleri: Vec::new(),
@@ -1367,6 +1375,60 @@ impl ChartListesi {
         cx.notify();
     }
 
+    fn stream_data_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let grup = match StreamDataGrubu::yeni() {
+            Ok(grup) => grup,
+            Err(hata) => {
+                self.hata = Some(format!("Data Stream grubu oluşturulamadı: {hata}"));
+                self.grafik = None;
+                self.stream_data_grubu = None;
+                self.stream_data_grafikleri.clear();
+                cx.notify();
+                return;
+            }
+        };
+        let kartlar = match grup.kartları() {
+            Ok(kartlar) => kartlar,
+            Err(hata) => {
+                self.hata = Some(format!("Data Stream yüzeyleri üretilemedi: {hata}"));
+                self.grafik = None;
+                self.stream_data_grubu = None;
+                self.stream_data_grafikleri.clear();
+                cx.notify();
+                return;
+            }
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.stream_data_grubu = None;
+                    self.stream_data_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                    bu.açıklama_istendi = true;
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.stream_data_grubu = Some(grup);
+        self.stream_data_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
         match grafik_oluştur(
@@ -1556,17 +1618,7 @@ impl ChartListesi {
         } else {
             None
         };
-        self.stream_data_akışı = if let KartKimliği::StreamData(örnek) = kart {
-            match StreamDataAkışı::yeni(örnek) {
-                Ok(akış) => Some(akış),
-                Err(hata) => {
-                    self.hata = Some(format!("Data Stream başlatılamadı: {hata}"));
-                    None
-                }
-            }
-        } else {
-            None
-        };
+        self.stream_data_grubu = None;
         self.soft_minmax_akışı =
             matches!(kart, KartKimliği::SoftMinMax(_)).then(SoftMinMaxAkışı::yeni);
         self.boyut_senkron_akışı =
@@ -1596,6 +1648,7 @@ impl ChartListesi {
         self.sparklines_grafikleri.clear();
         self.sparse_grafikleri.clear();
         self.stacked_series_grafikleri.clear();
+        self.stream_data_grafikleri.clear();
         if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -1716,6 +1769,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.stacked_series_yüzeylerini_oluştur(cx);
+        } else if matches!(kart, KartKimliği::StreamData(_)) {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.stream_data_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -1835,32 +1897,46 @@ impl ChartListesi {
                             if bu.aktif_kart != kart {
                                 return false;
                             }
-                            let sonuç = bu.stream_data_akışı.as_mut().map_or_else(
+                            let sonuç = bu.stream_data_grubu.as_mut().map_or_else(
                                 || {
                                     Err(UplotHatası::GeçersizKaynakVeri {
-                                        varlık: "StreamDataAkışı",
-                                        açıklama: "masaüstü akış durumu bulunamadı".to_string(),
+                                        varlık: "StreamDataGrubu",
+                                        açıklama: "masaüstü akış grubu bulunamadı".to_string(),
                                     })
                                 },
-                                |akış| {
-                                    if !akış.ilerlet() {
+                                |grup| {
+                                    if !grup.ilerlet() {
                                         return Ok(None);
                                     }
-                                    akış.kartı().map(|(_, veri)| Some(veri))
+                                    grup.kartları().map(Some)
                                 },
                             );
                             match sonuç {
-                                Ok(Some(veri)) => {
-                                    if let Some(grafik) = &bu.grafik {
+                                Ok(Some(kartlar)) => {
+                                    for (örnek, _, veri) in kartlar {
+                                        let Some((_, grafik)) = bu
+                                            .stream_data_grafikleri
+                                            .iter()
+                                            .find(|(kimlik, _)| *kimlik == örnek)
+                                        else {
+                                            bu.hata = Some(format!(
+                                                "{} Data Stream yüzeyi bulunamadı",
+                                                örnek.başlık()
+                                            ));
+                                            return false;
+                                        };
                                         let güncellendi = grafik.update(cx, |grafik, cx| {
-                                            grafik.veriyi_ayarla(veri, cx)
+                                            grafik.canlı_veriyi_ayarla(veri, cx)
                                         });
                                         if let Err(hata) = güncellendi {
-                                            bu.hata =
-                                                Some(format!("Data Stream güncellenemedi: {hata}"));
+                                            bu.hata = Some(format!(
+                                                "{} Data Stream yüzeyi güncellenemedi: {hata}",
+                                                örnek.başlık()
+                                            ));
                                             return false;
                                         }
                                     }
+                                    bu.hata = None;
                                     true
                                 }
                                 Ok(None) => false,
@@ -2178,6 +2254,9 @@ impl ChartListesi {
         if let Some(hedef) = yeni_görünürlük.get_mut(seri_indeksi) {
             *hedef = !*hedef;
         }
+        let Some(&seri_görünür) = yeni_görünürlük.get(seri_indeksi) else {
+            return;
+        };
         let sonuç = if örnek.yeniden_yığılan_mı() {
             stacked_series_kartı_görünür(örnek, &yeni_görünürlük).and_then(|(seçenekler, veri)| {
                 yüzey.update(cx, |grafik, cx| {
@@ -2195,11 +2274,7 @@ impl ChartListesi {
         } else {
             stacked_series_kartı_görünür(örnek, &yeni_görünürlük).and_then(|(seçenekler, _)| {
                 yüzey.update(cx, |grafik, cx| {
-                    grafik.seri_görünürlüğünü_ayarla(
-                        seri_indeksi,
-                        yeni_görünürlük[seri_indeksi],
-                        cx,
-                    )?;
+                    grafik.seri_görünürlüğünü_ayarla(seri_indeksi, seri_görünür, cx)?;
                     if let Some(y_aralığı) = seçenekler.y_aralığı {
                         grafik.canlı_y_aralığını_ayarla(y_aralığı, cx);
                     }
@@ -2421,14 +2496,19 @@ impl Render for ChartListesi {
             KartKimliği::StackedSeries(_) => {
                 "16 bağımsız yüzey · 2×800×400 + 2×1600×400 + 12×400×300".to_string()
             }
-            KartKimliği::StreamData(örnek) => {
-                let (başlangıç, uzunluk) = self
-                    .stream_data_akışı
-                    .as_ref()
-                    .map_or((0, 0), |akış| (akış.başlangıç(), akış.uzunluk()));
+            KartKimliği::StreamData(_) => {
+                let durum = |örnek| {
+                    self.stream_data_grubu
+                        .as_ref()
+                        .and_then(|grup| grup.akış(örnek))
+                        .map_or((0, 0), |akış| (akış.başlangıç(), akış.uzunluk()))
+                };
+                let (kayan_başlangıç, kayan_uzunluk) = durum(StreamDataÖrneği::SabitUzunluk);
+                let (_, artan_uzunluk) = durum(StreamDataÖrneği::ArtanUzunluk);
+                let (_, sabit_x_uzunluk) = durum(StreamDataÖrneği::SabitXArtanUzunluk);
                 format!(
-                    "{} · satır {başlangıç} · {uzunluk} görünür · 100 ms/10 satır setData",
-                    örnek.başlık()
+                    "3 bağımsız yüzey · kayan {kayan_başlangıç}+{kayan_uzunluk} · \
+                     artan {artan_uzunluk} · sabit X {sabit_x_uzunluk} · 100 ms/10 satır setData"
                 )
             }
             KartKimliği::SvgImage => {
@@ -2751,6 +2831,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .stacked_series_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if matches!(aktif_kart, KartKimliği::StreamData(_)) {
+            geri_var = self
+                .stream_data_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .stream_data_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         }
@@ -3533,21 +3622,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(kart, cx);
                 }))
             })
-            .children(StreamDataÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::StreamData(örnek);
+            .child({
+                let kart = KartKimliği::StreamData(StreamDataÖrneği::SabitUzunluk);
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
                     "stream-data",
-                    aktif_kart == kart,
-                    "55.550 kaynak satırı · 100 ms/10 satır setData",
+                    "Data Stream · 3 yüzey",
+                    "stream-data",
+                    matches!(aktif_kart, KartKimliği::StreamData(_)),
+                    "55.550 ortak satır · 100 ms/10 satır",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .child(
                 katalog_kartı(
                     "svg-image",
@@ -4184,6 +4273,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.stacked_series_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::StreamData(_)) {
+                            for (_, grafik) in &bu.stream_data_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
@@ -4274,6 +4367,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.stacked_series_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::StreamData(_)) {
+                            for (_, grafik) in &bu.stream_data_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.tam_görünüm(cx);
@@ -4304,6 +4401,8 @@ impl Render for ChartListesi {
                             bu.scales_dir_ori_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::Scatter {
                             bu.scatter_yüzeylerini_oluştur(cx);
+                        } else if matches!(bu.aktif_kart, KartKimliği::StreamData(_)) {
+                            bu.stream_data_yüzeylerini_oluştur(cx);
                         } else {
                             bu.grafiği_yenile(100, cx);
                         }
@@ -5139,6 +5238,26 @@ impl Render for ChartListesi {
                                 ))
                             }),
                         ))
+                }))
+        } else if matches!(aktif_kart, KartKimliği::StreamData(_)) {
+            çizim_tabanı
+                .flex_none()
+                .h(px(760.0))
+                .overflow_scroll()
+                .p_2()
+                .children(StreamDataÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    let grafik = self
+                        .stream_data_grafikleri
+                        .iter()
+                        .find(|(kimlik, _)| *kimlik == örnek)
+                        .map(|(_, grafik)| grafik.clone());
+                    div()
+                        .mb_4()
+                        .w(px(1_600.0))
+                        .h(px(600.0))
+                        .border_1()
+                        .border_color(rgb(0xc0c0c0))
+                        .when_some(grafik, |öğe, grafik| öğe.child(grafik))
                 }))
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
             let boyut = self

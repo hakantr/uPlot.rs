@@ -1154,7 +1154,12 @@ mod testler {
         ];
         for (örnek, (en_az, en_çok)) in beklentiler {
             let (ayarlar, _) = stacked_series_kartı(örnek)?;
-            let aralık = ayarlar.y_aralığı.expect("kaynak rangeNum aralığı");
+            let Some(aralık) = ayarlar.y_aralığı else {
+                return Err(UplotHatası::GeçersizKaynakVeri {
+                    varlık: "demos/stacked-series.html",
+                    açıklama: format!("{} kaynak rangeNum aralığı eksik", örnek.kimlik()),
+                });
+            };
             assert!((aralık.en_az - en_az).abs() < 1e-12, "{}", örnek.kimlik());
             assert!(
                 (aralık.en_çok - en_çok).abs() < 1e-12,
