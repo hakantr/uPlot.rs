@@ -11,11 +11,13 @@ nokta_sayısı = 30
 seri_sayısı = 3
 değer_havuzu = [-10, 10]
 kanıt_tohumu = "0x6A120E51"
-y_ölçeği = [-12, 12]
+y_ölçeği = "görünür X verisinden otomatik; tam görünümde [-12, 12]"
 
 [çizim]
 sıra = ["series", "axes"]
 ızgara = "rgba(0,0,0,0.2)"
+çentikler = "rgba(0,0,0,0.2)"
+eksen_etiketleri = "#000000"
 çizgiler = ["#D32F2F", "#2E7D32", "#1565C0"]
 dolgular = ["#E57373", "#66BB6A", "#42A5F5"]
 

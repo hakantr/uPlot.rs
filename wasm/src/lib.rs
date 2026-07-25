@@ -3865,7 +3865,11 @@ mod testler {
         let seri = svg.rfind("fill=\"#42A5F5\"");
         let ızgara = svg.rfind("stroke=\"#00000033\"");
         assert!(matches!((seri, ızgara), (Some(seri), Some(ızgara)) if ızgara > seri));
+        assert_eq!(svg.matches("<circle").count(), 90);
+        assert!(svg.contains("fill=\"#000000\""));
         assert!(grid_over_series_kart_tanim_ornegi().contains("ÇizimSırası"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("Eksen komutları geçici Vec ayırmadan yerinde rotate"));
     }
 
     #[test]

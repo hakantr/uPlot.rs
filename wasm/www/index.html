@@ -2828,6 +2828,12 @@
       yardım: "Izgara ve eksen çizgileri dolgulu serilerin üzerinde kalır",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Üç opak dolgulu serinin kesişimlerinde ızgara, çentik ve eksen bilgisinin seri boyasının altında kaybolmamasını gösterir.",
+        api: "ÇizimSırası::SerilerEksenler kaynak drawOrder dizisini taşır. Izgara, X/Y çentik ve eksen/etiket renkleri CSS olmadan ayrı ayrı ayarlanabilir; otomatik Y aralığı görünür X verisinden yeniden hesaplanır.",
+        izleme: "Yoğun ve üst üste binen CPU, bellek veya ağ alanlarında ortak eşik düzlemini her serinin üzerinde okunabilir tutmak için uygundur.",
+        maliyet: "Üç 30 noktalı seri tek retained yüzeyde çizilir. Eksen komutları geçici Vec ayırmadan yerinde rotate ile seri katmanının arkasından önüne alınır; pointer yalnız hafif cursor/lejant katmanını günceller.",
+      },
     };
 
     for (const [kimlik, başlık, durum, seriler] of [

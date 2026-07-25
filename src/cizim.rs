@@ -165,8 +165,10 @@ impl Sahne {
         if başlangıç >= bitiş || bitiş > self.komutlar.len() {
             return;
         }
-        let taşınan = self.komutlar.drain(başlangıç..bitiş).collect::<Vec<_>>();
-        self.komutlar.extend(taşınan);
+        let eksen_komutu_sayısı = bitiş - başlangıç;
+        if let Some(komutlar) = self.komutlar.get_mut(başlangıç..) {
+            komutlar.rotate_left(eksen_komutu_sayısı);
+        }
     }
 
     pub fn boyut(&self) -> (u32, u32) {

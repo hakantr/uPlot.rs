@@ -7720,6 +7720,18 @@ impl Render for ChartListesi {
                  etkin yüzeyin cursor/lejant katmanını günceller. Gradyan ve ana geometri yalnız \
                  veri, ölçek, görünürlük, zoom/pan veya boyut değişiminde yeniden çözülür.",
             ),
+            KartKimliği::GridOverSeries => Some(
+                "Amaç: üç opak dolgulu serinin kesişimlerinde ızgara, çentik ve eksen bilgisini \
+                 seri boyasının altında kaybetmeden gösterir. API: \
+                 ÇizimSırası::SerilerEksenler kaynak drawOrder dizisini taşır; ızgara, X/Y \
+                 çentik ve eksen/etiket renkleri CSS olmadan ayrı ayrı ayarlanabilir. Otomatik \
+                 Y aralığı görünür X verisinden yeniden hesaplanır. İzleme: yoğun ve üst üste \
+                 binen CPU, bellek veya ağ alanlarında ortak eşik düzlemini her serinin üzerinde \
+                 okunabilir tutmak için uygundur. Maliyet: üç 30 noktalı seri tek retained \
+                 yüzeyde çizilir. Eksen komutları geçici Vec ayırmadan yerinde rotate ile seri \
+                 katmanının arkasından önüne alınır; pointer yalnız hafif cursor/lejant \
+                 katmanını günceller.",
+            ),
             KartKimliği::DrawHooks => Some(
                 "Amaç: uPlot yaşam döngüsünün drawClear, drawSeries, özel points.show ve draw \
                  aşamalarının tek yüzeyde hangi sırayla birleştiğini gösterir. API: \

@@ -3785,7 +3785,11 @@ impl Grafik {
                 sahne.ekle(Komut::Çizgi {
                     başlangıç: Nokta::yeni(başlangıç_x, y),
                     bitiş: Nokta::yeni(bitiş_x, y),
-                    renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                    renk: self
+                        .seçenekler
+                        .birincil_y_eksen_çentik_rengi
+                        .clone()
+                        .unwrap_or_else(|| self.seçenekler.birincil_y_eksen_rengi.clone()),
                     kalınlık: 1.0,
                 });
             }
@@ -4061,7 +4065,11 @@ impl Grafik {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(x, başlangıç_y),
                         bitiş: Nokta::yeni(x, bitiş_y),
-                        renk: self.seçenekler.x_eksen_rengi.clone(),
+                        renk: self
+                            .seçenekler
+                            .x_eksen_çentik_rengi
+                            .clone()
+                            .unwrap_or_else(|| self.seçenekler.x_eksen_rengi.clone()),
                         kalınlık: 1.0,
                     });
                 }

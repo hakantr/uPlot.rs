@@ -1756,12 +1756,14 @@
       "sahip_faz": 2,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-three-by-thirty-data-generator", "fixed-proof-seed", "source-series-colors",
+        "source-three-by-thirty-data-generator", "fixed-proof-seed-normalization",
+        "visible-x-auto-y-range", "source-series-colors",
         "source-opaque-fills", "series-before-axes-draw-order", "grid-over-series",
+        "independent-grid-tick-axis-colors", "allocation-free-in-place-layer-reorder",
         "core-owned-layer-order", "gpui-wasm-catalog-parity", "common-interaction-profile",
         "panic-free-layer-reordering"
       ],
-      "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
     },
     {
       "sıra": 28,

@@ -1109,6 +1109,8 @@ pub struct GrafikSeçenekleri {
     pub birincil_y_ölçeği: String,
     pub x_eksen_etiketi: String,
     pub x_eksen_rengi: String,
+    /// `None` iken çentikler `x_eksen_rengi` değerini devralır.
+    pub x_eksen_çentik_rengi: Option<String>,
     /// uPlot `axes[0].ticks.size` karşılığı X çentik uzunluğu.
     pub x_eksen_çentik_uzunluğu: f32,
     pub x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi,
@@ -1129,6 +1131,8 @@ pub struct GrafikSeçenekleri {
     pub birincil_y_özel_etiketler: Vec<(f64, String)>,
     pub birincil_y_ızgara_kesik: Option<f32>,
     pub birincil_y_eksen_rengi: String,
+    /// `None` iken çentikler `birincil_y_eksen_rengi` değerini devralır.
+    pub birincil_y_eksen_çentik_rengi: Option<String>,
     /// uPlot `axes[1].ticks.size` karşılığı birincil Y çentik uzunluğu.
     pub birincil_y_eksen_çentik_uzunluğu: f32,
     /// uPlot `axes[1].size` karşılığı sabit Y ekseni payı.
@@ -1210,6 +1214,7 @@ impl GrafikSeçenekleri {
             birincil_y_ölçeği: "y".to_string(),
             x_eksen_etiketi: String::new(),
             x_eksen_rengi: "#4b5563".to_string(),
+            x_eksen_çentik_rengi: None,
             x_eksen_çentik_uzunluğu: 5.0,
             x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi::Otomatik,
             ikincil_x_eksen: None,
@@ -1224,6 +1229,7 @@ impl GrafikSeçenekleri {
             birincil_y_özel_etiketler: Vec::new(),
             birincil_y_ızgara_kesik: None,
             birincil_y_eksen_rengi: "#4b5563".to_string(),
+            birincil_y_eksen_çentik_rengi: None,
             birincil_y_eksen_çentik_uzunluğu: 5.0,
             birincil_y_eksen_genişliği: None,
             x_eksen_değer_çarpanı: 1.0,
@@ -1304,6 +1310,12 @@ impl GrafikSeçenekleri {
 
     pub fn x_eksen_rengi(mut self, renk: impl Into<String>) -> Self {
         self.x_eksen_rengi = renk.into();
+        self
+    }
+
+    /// X ekseni çentik rengini etiket ve sınır renginden bağımsız ayarlar.
+    pub fn x_eksen_çentik_rengi(mut self, renk: impl Into<String>) -> Self {
+        self.x_eksen_çentik_rengi = Some(renk.into());
         self
     }
 
@@ -1576,6 +1588,12 @@ impl GrafikSeçenekleri {
 
     pub fn birincil_y_eksen_rengi(mut self, renk: impl Into<String>) -> Self {
         self.birincil_y_eksen_rengi = renk.into();
+        self
+    }
+
+    /// Birincil Y ekseni çentik rengini etiket ve sınır renginden bağımsız ayarlar.
+    pub fn birincil_y_eksen_çentik_rengi(mut self, renk: impl Into<String>) -> Self {
+        self.birincil_y_eksen_çentik_rengi = Some(renk.into());
         self
     }
 
