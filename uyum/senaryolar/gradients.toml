@@ -11,9 +11,9 @@ dikey = [[20, 30, 40, 50, 60], [-5, 10, -2, -30, 30]]
 dolgular = [[0, 1, 2, 3, 4, 5], [10, 20, 30, 40, 50, 60], [1, 3, 5, 8, 15, 20]]
 
 [gradyan]
-yatay_ayrık = [[0, "red"], [30, "orange"], [50, "blue"]]
-dikey_ayrık = [[-100, "blue"], [0, "red"]]
-arcsinh_ayrık = [["-Infinity", "blue"], [-10, "red"], [0, "green"]]
+"yatay_ayrık" = [[0, "red"], [30, "orange"], [50, "blue"]]
+"dikey_ayrık" = [[-100, "blue"], [0, "red"]]
+"arcsinh_ayrık" = [["-Infinity", "blue"], [-10, "red"], [0, "green"]]
 goreli_oranlar = [0.0, 0.5, 1.0]
 ortak_veri_depolari = ["data2: vertical+arcsinh", "data4: scale-fills+relative-fill"]
 callback_kapsami = "fixture çıktısı; keyfi JS callback kimliği/yan etkisi değil"

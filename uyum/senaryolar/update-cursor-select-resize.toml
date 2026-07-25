@@ -11,39 +11,39 @@ y = [0, 1, 2]
 seri_rengi = "red"
 seri_dolgusu = "rgba(255,0,0,0.1)"
 
-[başlangıç]
-çizim_alanı = [725, 733]
-imleç = [200, 200]
-imleç_kilitli = true
-seçim = [100, 0, 100, 733]
-hover_noktası = [363, 400]
+["başlangıç"]
+"çizim_alanı" = [725, 733]
+"imleç" = [200, 200]
+"imleç_kilitli" = true
+"seçim" = [100, 0, 100, 733]
+"hover_noktası" = [363, 400]
 
-[boyut_akışı]
-başlangıç = 800
+["boyut_akışı"]
+"başlangıç" = 800
 en_az = 400
-en_çok = 800
-adım = 10
-aralık_ms = 100
-kaynak_sınır_aşımı_korunur = true
+"en_çok" = 800
+"adım" = 10
+"aralık_ms" = 100
+"kaynak_sınır_aşımı_korunur" = true
 
-[çekirdek]
+["çekirdek"]
 set_size = "Grafik::boyutu_ayarla"
-başlangıç_oran_düzeni = "BoyutSenkronDüzeni"
-akış = "BoyutSenkronAkışı"
-ana_veri_sahnesinde_etkileşim_komutu_yok = true
+"başlangıç_oran_düzeni" = "BoyutSenkronDüzeni"
+"akış" = "BoyutSenkronAkışı"
+"ana_veri_sahnesinde_etkileşim_komutu_yok" = true
 
-[adaptör]
-gpui_ayrı_etkileşim_canvası = true
-wasm_kararlı_svg_overlay_düğümleri = true
-resize_ana_yolu_yeniden_çizer = true
-resize_overlay_düğümlerini_yeniden_kurmaz = true
+["adaptör"]
+"gpui_ayrı_etkileşim_canvası" = true
+"wasm_kararlı_svg_overlay_düğümleri" = true
+"resize_ana_yolu_yeniden_çizer" = true
+"resize_overlay_düğümlerini_yeniden_kurmaz" = true
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
-imleç_kilitli = true
-lejant_set_series_hover_noktasını_da_gizler = true
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
+"imleç_kilitli" = true
+"lejant_set_series_hover_noktasını_da_gizler" = true
 
-[kanıt]
-örnek = "examples/update_cursor_select_resize.rs"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"örnek" = "examples/update_cursor_select_resize.rs"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"

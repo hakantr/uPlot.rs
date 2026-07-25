@@ -6,44 +6,44 @@ viewport = [1920, 600]
 durum = "aynı_ham_veri_normal_ve_kaydırılmış_kipte"
 
 [veri]
-x_başlangıç = 1
-x_bitiş = 30
-seri_sayısı = 3
-ham_değer_aralığı = [0, 10]
-kanıt_tohumu = 1498630214
+"x_başlangıç" = 1
+"x_bitiş" = 30
+"seri_sayısı" = 3
+"ham_değer_aralığı" = [0, 10]
+"kanıt_tohumu" = 1498630214
 
 [kipler]
-kaydırılmış_y_aralığı = [0, 30]
-kaydırmalar = [0, 10, 20]
-normal_y_aralığı = [0, 10]
-dolgu_tabanları_kaydırılmış = [0, 10, 20]
-dolgu_tabanları_normal = [0, 0, 0]
-değişim_ms = 2000
+"kaydırılmış_y_aralığı" = [0, 30]
+"kaydırmalar" = [0, 10, 20]
+"normal_y_aralığı" = [0, 10]
+"dolgu_tabanları_kaydırılmış" = [0, 10, 20]
+"dolgu_tabanları_normal" = [0, 0, 0]
+"değişim_ms" = 2000
 
 [seriler]
 birinci = "kırmızı_çizgi"
 ikinci = "yeşil_çizgi"
-üçüncü = "mavi_çubuk"
+"üçüncü" = "mavi_çubuk"
 lejant = "ham_değerleri_korur"
-hover_noktası = "kaydırılmış_geometriyi_korur"
-mavi_çubuk_tabanı_kaydırılmış = 20
-mavi_çubuk_tabanı_normal = 0
-mavi_çubuk_tek_fill_path = true
-mavi_çubuk_tek_stroke_path = true
+"hover_noktası" = "kaydırılmış_geometriyi_korur"
+"mavi_çubuk_tabanı_kaydırılmış" = 20
+"mavi_çubuk_tabanı_normal" = 0
+"mavi_çubuk_tek_fill_path" = true
+"mavi_çubuk_tek_stroke_path" = true
 
-[yaşam_döngüsü]
-aynı_grafik_örneği = true
-güncelleme_api = "Grafik::veriyi_y_sunumunda_ayarla"
-set_data_seçenek_ağacını_yeniden_kurmaz = true
-seri_görünürlüğü_kipte_korunur = true
-cursor_konumu_kipte_yeniden_çözülür = true
-timer_karttan_çıkınca_temizlenir = true
+["yaşam_döngüsü"]
+"aynı_grafik_örneği" = true
+"güncelleme_api" = "Grafik::veriyi_y_sunumunda_ayarla"
+"set_data_seçenek_ağacını_yeniden_kurmaz" = true
+"seri_görünürlüğü_kipte_korunur" = true
+"cursor_konumu_kipte_yeniden_çözülür" = true
+"timer_karttan_çıkınca_temizlenir" = true
 
-[etkileşim]
+["etkileşim"]
 lejant_set_series = true
-ortak_davranış_profili = "resize-temeli-v1"
+"ortak_davranış_profili" = "resize-temeli-v1"
 
-[kanıt]
-örnek = "examples/y_shifted_series.rs"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"örnek" = "examples/y_shifted_series.rs"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"

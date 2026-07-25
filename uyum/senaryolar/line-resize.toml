@@ -6,58 +6,58 @@ device_pixel_ratio = 1
 durum = "etkileşimli"
 
 [veri]
-nokta_sayısı = 100
+"nokta_sayısı" = 100
 x_en_az = 0.0
-x_en_çok_hariç = 6.283185307179586
+"x_en_çok_hariç" = 6.283185307179586
 y_fonksiyonu = "sin(x)"
 
-[ölçekler.x]
+["ölçekler.x"]
 zaman = false
 
-[ölçekler.y]
+["ölçekler.y"]
 otomatik = true
 
-[etkileşim]
-koşullu_boş_noktalar = true
+["etkileşim"]
+"koşullu_boş_noktalar" = true
 hover_dolu_nokta = true
-kesikli_imleç = true
-imleç_çizgileri_fareyi_izler = true
-seri_noktası_en_yakın_örneğe_kilitlenir = true
-canlı_lejant = true
-sayısal_eksen_artım_ailesi = "1_2_2.5_5_x_10n"
-eksen_bölmeleri_görünür_aralığa_hizalı = true
-sıfır_bölmesi_korunur = true
-seri_yolu_çizim_dikdörtgenine_kırpılır = true
-x_sürükle_yakınlaştır = true
-çift_tıkla_sıfırla = true
-çift_tıkla_tam_görünüm_kaynağı = "src/uPlot.js#dblClick"
-tekerlek_x_yakınlaştır = true
-tekerlek_katsayısı = 0.75
-tekerlek_kaynağı = "demos/zoom-wheel.html#wheelZoomPlugin"
-tekerlek_uyum_türü = "resmi_plugin_portu"
-tekerlek_odak_davranışı = "farenin_göreli_ekran_konumunu_koru"
-tekerlek_canlı_anahtar = true
+"kesikli_imleç" = true
+"imleç_çizgileri_fareyi_izler" = true
+"seri_noktası_en_yakın_örneğe_kilitlenir" = true
+"canlı_lejant" = true
+"sayısal_eksen_artım_ailesi" = "1_2_2.5_5_x_10n"
+"eksen_bölmeleri_görünür_aralığa_hizalı" = true
+"sıfır_bölmesi_korunur" = true
+"seri_yolu_çizim_dikdörtgenine_kırpılır" = true
+"x_sürükle_yakınlaştır" = true
+"çift_tıkla_sıfırla" = true
+"çift_tıkla_tam_görünüm_kaynağı" = "src/uPlot.js#dblClick"
+"tekerlek_x_yakınlaştır" = true
+"tekerlek_katsayısı" = 0.75
+"tekerlek_kaynağı" = "demos/zoom-wheel.html#wheelZoomPlugin"
+"tekerlek_uyum_türü" = "resmi_plugin_portu"
+"tekerlek_odak_davranışı" = "farenin_göreli_ekran_konumunu_koru"
+"tekerlek_canlı_anahtar" = true
 tekerlek_girdi_kipi = "otomatik_satır_ve_hassas_piksel"
-tekerlek_hassas_piksel_adımı = 100.0
-tekerlek_hassas_ölü_bölge = 1.5
-tekerlek_hareket_birleştirme_ms = 140
+"tekerlek_hassas_piksel_adımı" = 100.0
+"tekerlek_hassas_ölü_bölge" = 1.5
+"tekerlek_hareket_birleştirme_ms" = 140
 tekerlek_girdi_normalizasyonu = "uplot_rs_uyarlaması"
-dokunma_xy_yakınlaştır = true
-dokunma_tek_parmak_taşıma = true
-dokunma_kaynağı = "demos/zoom-touch.html#touchZoomPlugin"
-dokunma_uyum_türü = "resmi_plugin_portu"
-masaüstü_boşluk_sol_sürükle_taşıma = true
-boşluk_ve_grafiğe_giriş_sırası_bağımsız = true
-zoom_sonrası_grafik_otomatik_odak = true
-masaüstü_taşıma_uyum_türü = "resmi_matematik_girdi_uyarlaması"
-önceki_görünüme_dön = true
-önceki_görünüm_uyum_türü = "uplot_rs_uzantısı"
+"dokunma_xy_yakınlaştır" = true
+"dokunma_tek_parmak_taşıma" = true
+"dokunma_kaynağı" = "demos/zoom-touch.html#touchZoomPlugin"
+"dokunma_uyum_türü" = "resmi_plugin_portu"
+"masaüstü_boşluk_sol_sürükle_taşıma" = true
+"boşluk_ve_grafiğe_giriş_sırası_bağımsız" = true
+"zoom_sonrası_grafik_otomatik_odak" = true
+"masaüstü_taşıma_uyum_türü" = "resmi_matematik_girdi_uyarlaması"
+"önceki_görünüme_dön" = true
+"önceki_görünüm_uyum_türü" = "uplot_rs_uzantısı"
 
 [web]
 port = 8081
-kanıt = "target/wasm-resize-etkilesim.png"
+"kanıt" = "target/wasm-resize-etkilesim.png"
 
 [beklenti]
-seri_sayısı = 1
-çizim_komutu_sayısı = 47
-svg_başlığı = "Resize"
+"seri_sayısı" = 1
+"çizim_komutu_sayısı" = 47
+"svg_başlığı" = "Resize"

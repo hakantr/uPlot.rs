@@ -10,50 +10,50 @@ device_pixel_ratio = 1
 durum = "iki_alt_grafikli_etkileşimli"
 
 [grup]
-katalog_kartı = "missing-data"
-yüzey_sayısı = 2
-aynı_anda_görünür = true
+"katalog_kartı" = "missing-data"
+"yüzey_sayısı" = 2
+"aynı_anda_görünür" = true
 cursor_senkronu = false
-seçim_senkronu = false
-görünüm_senkronu = false
+"seçim_senkronu" = false
+"görünüm_senkronu" = false
 
 [veri]
-nokta_sayısı = 200
+"nokta_sayısı" = 200
 seriler = ["CPU", "RAM", "TCP Out"]
-cpu_null_sayısı = 6
-ram_null_sayısı = 6
-varlık = "assets/data/missing-data.csv"
+"cpu_null_sayısı" = 6
+"ram_null_sayısı" = 6
+"varlık" = "assets/data/missing-data.csv"
 
-[ölçek]
+["ölçek"]
 birincil = "%"
 ikincil = "mb"
 ikincil_konum = "sağ"
 ikincil_birim = "MB"
-yüzde_bitişik = true
+"yüzde_bitişik" = true
 tcp_rengi = "#008000"
 
-[boşluk]
-x_değerleri = [0, 1, 2, 3, 25, 26, 27, 28]
-azami_x_farkı = 1.0
-beklenen_yol_parçası = 2
-komşuluk = "seyrekleştirme öncesi gerçek veri indeksleri"
-sahte_yoğun_veri_boşluğu = false
+["boşluk"]
+"x_değerleri" = [0, 1, 2, 3, 25, 26, 27, 28]
+"azami_x_farkı" = 1.0
+"beklenen_yol_parçası" = 2
+"komşuluk" = "seyrekleştirme öncesi gerçek veri indeksleri"
+"sahte_yoğun_veri_boşluğu" = false
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
-tekerlek_x_yakınlaştır = true
-seçim_yakınlaştır = true
-çift_tıkla_tam_görünüm = true
-dokunma_xy_yakınlaştır = true
-boşluk_sol_sürükleme_taşıma = true
-set_series_lejantı = true
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
+"tekerlek_x_yakınlaştır" = true
+"seçim_yakınlaştır" = true
+"çift_tıkla_tam_görünüm" = true
+"dokunma_xy_yakınlaştır" = true
+"boşluk_sol_sürükleme_taşıma" = true
+"set_series_lejantı" = true
 
 [performans]
-yol_hesabı = "O(N), yalnız veri/görünüm/resize/setSeries değişiminde"
-pointer_ana_yolu_yeniden_çizmez = true
-yüzeyler_bağımsız = true
+"yol_hesabı" = "O(N), yalnız veri/görünüm/resize/setSeries değişiminde"
+"pointer_ana_yolu_yeniden_çizmez" = true
+"yüzeyler_bağımsız" = true
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg_dizini = "target/missing-data"

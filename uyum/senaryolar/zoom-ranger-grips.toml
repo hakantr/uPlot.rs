@@ -5,14 +5,14 @@ fixture = "src/grafik.rs#ZoomRangerDurumu"
 viewport = [800, 400]
 durum = "çekirdek_durum_makinesi_ayrı_katalog_yüzeyi_yok"
 
-[davranış]
-ayrı_katalog_kartı = false
+["davranış"]
+"ayrı_katalog_kartı" = false
 pencere = "tamamı sınırlar içinde taşınır"
 sol_grip = "sağ sınırı geçmeden resize"
-sağ_grip = "sol sınırı geçmeden resize"
+"sağ_grip" = "sol sınırı geçmeden resize"
 senkron = "ranger ↔ ana görünüm"
 
-[kanıt]
-örnek = "examples/zoom_wheel.rs"
-ortak_çekirdek = "src/grafik.rs#ZoomRangerDurumu"
+["kanıt"]
+"örnek" = "examples/zoom_wheel.rs"
+"ortak_çekirdek" = "src/grafik.rs#ZoomRangerDurumu"
 wasm = "wasm/src/lib.rs#zoom_wheel_wasm_kaynak_serilerini_üretir"

@@ -6,40 +6,40 @@ viewport = [800, 400]
 durum = "saatlik_hız_konumlarında_yön_vektörleri"
 
 [veri]
-nokta_sayısı = 143
-seri_sayısı = 3
-null_sayısı = 4
-zaman_adımı_saniye = 3600
+"nokta_sayısı" = 143
+"seri_sayısı" = 3
+"null_sayısı" = 4
+"zaman_adımı_saniye" = 3600
 
 [eksenler]
 birincil = "Temp °C"
 ikincil = "Wind m/s"
-ikincil_aralık = [0, 30]
-ikincil_sağda = true
-ikincil_ızgara = false
-gizli_seri_otomatik_aralığa_katılmaz = true
+"ikincil_aralık" = [0, 30]
+"ikincil_sağda" = true
+"ikincil_ızgara" = false
+"gizli_seri_otomatik_aralığa_katılmaz" = true
 
-[özel_yol]
-hız_serisi = 1
-yön_serisi = 2
+["özel_yol"]
+"hız_serisi" = 1
+"yön_serisi" = 2
 uzunluk_px = 15
 renk = "blue"
-beklenen_vektör = 139
-kırpma = false
+"beklenen_vektör" = 139
+"kırpma" = false
 tek_begin_path_tek_stroke = true
 outer_indices = true
-yön_serisi_gizlenince_vektörler_gizlenir = true
+"yön_serisi_gizlenince_vektörler_gizlenir" = true
 stil_api = "RüzgarYönüDüzeni::stil"
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
 lejant_set_series = true
-pointer_ana_yolu_yeniden_çizmez = true
+"pointer_ana_yolu_yeniden_çizmez" = true
 
-[görünüm]
-kaynak_grafik_başlığı_yok = true
+["görünüm"]
+"kaynak_grafik_başlığı_yok" = true
 
-[kanıt]
-örnek = "examples/wind_direction.rs"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"örnek" = "examples/wind_direction.rs"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"

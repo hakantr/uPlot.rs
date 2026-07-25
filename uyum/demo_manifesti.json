@@ -1507,7 +1507,7 @@
       "senaryo": "uyum/senaryolar/custom-scales.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
-        "uygulama": "src/kart/custom_scales.rs#custom_scales_kartları",
+        "uygulama": "src/kart/custom_scales.rs#ortak_kart_etkileşimleri",
         "kararlar": {
           "kaynak-veri-esligi": "devralındı", "cekirdek-davranis-sahipligi": "devralındı",
           "gpui-wasm-yuzey-esdegerligi": "devralındı", "duyarli-boyutlandirma": "devralındı",

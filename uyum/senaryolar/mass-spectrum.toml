@@ -6,19 +6,19 @@ viewport = [1920, 600]
 durum = "kaynak_csv_ve_ozel_y_araligi"
 
 [veri]
-nokta_sayısı = 41986
-x_aralığı = [260.01, 1100.0]
-y_aralığı = [0.0, 100.0]
+"nokta_sayısı" = 41986
+"x_aralığı" = [260.01, 1100.0]
+"y_aralığı" = [0.0, 100.0]
 kaynak = "demos/data/ms_spectrum.csv"
 
-[ölçek]
+["ölçek"]
 x_zaman = false
 x_etiketi = "m/z"
 y_etiketi = "relative abundance (%)"
-düz_sıfır = [0.0, 100.0]
-düz_diğer_kuralı = "0..2v"
+"düz_sıfır" = [0.0, 100.0]
+"düz_diğer_kuralı" = "0..2v"
 
-[kanıt]
-örnek = "examples/mass_spectrum.rs"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"örnek" = "examples/mass_spectrum.rs"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"

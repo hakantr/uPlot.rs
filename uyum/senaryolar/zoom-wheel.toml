@@ -11,23 +11,23 @@ one = [40.0, 43.0, 60.0, 65.0, 71.0, 73.0, 80.0]
 two = [18.0, 24.0, 37.0, 55.0, 55.0, 60.0, 63.0]
 
 [eklenti]
-kaynak_adı = "wheelZoomPlugin"
-yakınlaştırma_katsayısı = 0.75
-fare_odağı = true
+"kaynak_adı" = "wheelZoomPlugin"
+"yakınlaştırma_katsayısı" = 0.75
+"fare_odağı" = true
 x_y_birlikte = true
-tam_aralığa_sıkıştır = true
+"tam_aralığa_sıkıştır" = true
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
-tekerlek_x_yakınlaştır = true
-seçim_yakınlaştır = true
-çift_tıkla_tam_görünüm = true
-dokunma_xy_yakınlaştır = true
-boşluk_sol_sürükleme_taşıma = true
-görünüm_geçmişi = true
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
+"tekerlek_x_yakınlaştır" = true
+"seçim_yakınlaştır" = true
+"çift_tıkla_tam_görünüm" = true
+"dokunma_xy_yakınlaştır" = true
+"boşluk_sol_sürükleme_taşıma" = true
+"görünüm_geçmişi" = true
 
-[kanıt]
-ortak_çekirdek = "src/kart/zoom_wheel.rs#zoom_wheel_kartı"
+["kanıt"]
+"ortak_çekirdek" = "src/kart/zoom_wheel.rs#zoom_wheel_kartı"
 wasm_testi = "wasm/src/lib.rs#zoom_wheel_wasm_kaynak_serilerini_üretir"
 svg = "target/zoom-wheel.svg"
 sunum = "Resize dahil tüm kartlarda ortak ve tercihe bağlı; ayrı katalog kartı yok"

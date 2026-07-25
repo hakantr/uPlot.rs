@@ -11,22 +11,22 @@ one = [40.0, 43.0, 60.0, 65.0, 71.0, 73.0, 80.0]
 two = [18.0, 24.0, 37.0, 55.0, 55.0, 60.0, 63.0]
 
 [eklenti]
-kaynak_adı = "touchZoomPlugin"
-kıstırarak_x_y_yakınlaştır = true
-tek_parmak_taşıma = true
-duyarlı_ekran_genişliği = true
+"kaynak_adı" = "touchZoomPlugin"
+"kıstırarak_x_y_yakınlaştır" = true
+"tek_parmak_taşıma" = true
+"duyarlı_ekran_genişliği" = true
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
-dokunma_xy_yakınlaştır = true
-dokunma_tek_parmak_taşıma = true
-tekerlek_x_yakınlaştır = true
-seçim_yakınlaştır = true
-çift_tıkla_tam_görünüm = true
-görünüm_geçmişi = true
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
+"dokunma_xy_yakınlaştır" = true
+"dokunma_tek_parmak_taşıma" = true
+"tekerlek_x_yakınlaştır" = true
+"seçim_yakınlaştır" = true
+"çift_tıkla_tam_görünüm" = true
+"görünüm_geçmişi" = true
 
-[kanıt]
-ortak_çekirdek = "src/kart/zoom_touch.rs#zoom_touch_kartı"
+["kanıt"]
+"ortak_çekirdek" = "src/kart/zoom_touch.rs#zoom_touch_kartı"
 wasm_testi = "wasm/src/lib.rs#zoom_touch_wasm_kıstırmayı_çekirdekte_uygular"
 svg = "target/zoom-touch.svg"
 sunum = "Tüm kartlarda ortak touch davranışı; ayrı katalog kartı yok"

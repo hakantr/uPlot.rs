@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const kok = resolve(import.meta.dirname, "../..");
@@ -45,6 +45,28 @@ const kaynakEnvanteri = JSON.parse(
 const davranışSözleşmesi = JSON.parse(
   readFileSync(resolve(kok, "uyum/ortak_davranis_sozlesmesi.json"), "utf8"),
 );
+const senaryoDizini = resolve(kok, "uyum/senaryolar");
+const senaryoKimlikleri = new Map();
+for (const dosya of readdirSync(senaryoDizini).filter((ad) => ad.endsWith(".toml"))) {
+  const yol = resolve(senaryoDizini, dosya);
+  try {
+    const kimlik = execFileSync(
+      "python3",
+      [
+        "-c",
+        "import sys,tomllib; print(tomllib.load(open(sys.argv[1], 'rb')).get('id', ''))",
+        yol,
+      ],
+      { encoding: "utf8" },
+    ).trim();
+    senaryoKimlikleri.set(yol, kimlik);
+  } catch {
+    hata(`senaryo standart TOML olarak ayrıştırılamıyor: ${dosya}`);
+  }
+}
+if (senaryoKimlikleri.size !== 73) {
+  hata(`senaryo envanteri 73 kayıt içermiyor: ${senaryoKimlikleri.size}`);
+}
 
 const masaüstüKataloğu = readFileSync(
   resolve(kok, "uygulamalar/masaustu/src/masaustu.rs"),
@@ -167,6 +189,10 @@ for (const kart of manifest.kartlar) {
     kart.senaryo,
   ]) {
     readFileSync(resolve(kok, yerelYol));
+  }
+  const senaryoYolu = resolve(kok, kart.senaryo);
+  if (senaryoKimlikleri.get(senaryoYolu) !== kart.id) {
+    hata(`${kart.id} senaryo kimliği manifest ile eşleşmiyor`);
   }
 
   const kartSözleşmesi = kart.ortak_davranış_sözleşmesi;

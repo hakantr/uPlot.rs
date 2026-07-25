@@ -6,37 +6,37 @@ device_pixel_ratio = 1
 durum = "etkileşimli"
 
 [veri]
-x_değerleri = "1..=30"
-değer_havuzu = "-10..=10"
-seri_sayısı = 3
-seri_uzunluğu = 30
-kaynak_örnekleme = "vals[Math.floor(random * vals.length)]"
-kanıt_rastgele_üreteci = "mulberry32"
-kanıt_tohumu = 3235779124
+"x_değerleri" = "1..=30"
+"değer_havuzu" = "-10..=10"
+"seri_sayısı" = 3
+"seri_uzunluğu" = 30
+"kaynak_örnekleme" = "vals[Math.floor(random * vals.length)]"
+"kanıt_rastgele_üreteci" = "mulberry32"
+"kanıt_tohumu" = 3235779124
 
 [seri]
-çizgi_renkleri = ["#ff0000", "#008000", "#0000ff"]
+"çizgi_renkleri" = ["#ff0000", "#008000", "#0000ff"]
 dolgu_renkleri = ["#ff00001a", "#00ff001a", "#0000ff1a"]
-dolgu_tabanı = 0.0
-dolgu_kırpma = "tek_çokgeni_çizim_dikdörtgenine_kırp"
+"dolgu_tabanı" = 0.0
+"dolgu_kırpma" = "tek_çokgeni_çizim_dikdörtgenine_kırp"
 
-[etkileşim]
+["etkileşim"]
 cursor = true
-canlı_lejant = true
-x_sürükle_yakınlaştır = true
-çift_tıkla_tam_görünüm = true
-tekerlek_x_yakınlaştır = true
-tekerlek_canlı_anahtar = true
+"canlı_lejant" = true
+"x_sürükle_yakınlaştır" = true
+"çift_tıkla_tam_görünüm" = true
+"tekerlek_x_yakınlaştır" = true
+"tekerlek_canlı_anahtar" = true
 tekerlek_girdi_kipi = "otomatik_satır_ve_hassas_piksel"
-dokunma_xy_yakınlaştır = true
-dokunma_tek_parmak_taşıma = true
-masaüstü_boşluk_sol_sürükle_taşıma = true
-boşluk_ve_grafiğe_giriş_sırası_bağımsız = true
-zoom_sonrası_grafik_otomatik_odak = true
-önceki_görünüme_dön = true
-ortak_davranış_profili = "resize-temeli-v1"
+"dokunma_xy_yakınlaştır" = true
+"dokunma_tek_parmak_taşıma" = true
+"masaüstü_boşluk_sol_sürükle_taşıma" = true
+"boşluk_ve_grafiğe_giriş_sırası_bağımsız" = true
+"zoom_sonrası_grafik_otomatik_odak" = true
+"önceki_görünüme_dön" = true
+"ortak_davranış_profili" = "resize-temeli-v1"
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg = "target/area-fill.svg"

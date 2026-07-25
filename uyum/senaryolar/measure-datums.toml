@@ -9,15 +9,15 @@ durum = "klavye_ile_iki_olcum_datumu"
 x = [0, 1, 2, 3, 4]
 y = [0, 100, 30, 25, 7]
 
-[davranış]
-birinci_tuş = "1"
-ikinci_tuş = "2"
+["davranış"]
+"birinci_tuş" = "1"
+"ikinci_tuş" = "2"
 temizleme = ["Escape", "wheel", "double-click"]
 birinci_renk = "blue"
 ikinci_renk = "orange"
 delta = "dx ve dy üç anlamlı basamak"
 
-[kanıt]
-örnek = "examples/measure_datums.rs"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"örnek" = "examples/measure_datums.rs"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"

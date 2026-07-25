@@ -6,44 +6,44 @@ device_pixel_ratio = 1
 durum = "etkileşimli"
 
 [veri]
-x_değerleri = "1..=30"
-değer_havuzu = "-10..=10"
-seri_sayısı = 3
-seri_uzunluğu = 30
-kanıt_rastgele_üreteci = "mulberry32"
-kanıt_tohumu = 1397637456
+"x_değerleri" = "1..=30"
+"değer_havuzu" = "-10..=10"
+"seri_sayısı" = 3
+"seri_uzunluğu" = 30
+"kanıt_rastgele_üreteci" = "mulberry32"
+"kanıt_tohumu" = 1397637456
 
-[imleç]
+["imleç"]
 kaynak_callback = "cursor.move"
-ızgara_x_piksel = 10.0
-ızgara_y_piksel = 10.0
+"ızgara_x_piksel" = 10.0
+"ızgara_y_piksel" = 10.0
 sahiplik = "çekirdek"
-gpui_adaptörü = true
-wasm_adaptörü = true
-css_pikseline_duyarlı = true
-sınır_sonrası_tekrar_kırpma = false
-hover_noktası = "snap edilmiş cursor X'ine en yakın gerçek veri örneği"
+"gpui_adaptörü" = true
+"wasm_adaptörü" = true
+"css_pikseline_duyarlı" = true
+"sınır_sonrası_tekrar_kırpma" = false
+"hover_noktası" = "snap edilmiş cursor X'ine en yakın gerçek veri örneği"
 
-[seçim]
-başlangıç_ızgaraya_oturur = true
-bitiş_ızgaraya_oturur = true
-yakınlaştırma_dönüştürülmüş_uçları_kullanır = true
+["seçim"]
+"başlangıç_ızgaraya_oturur" = true
+"bitiş_ızgaraya_oturur" = true
+"yakınlaştırma_dönüştürülmüş_uçları_kullanır" = true
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
-tekerlek_x_yakınlaştır = true
-seçim_yakınlaştır = true
-çift_tıkla_tam_görünüm = true
-dokunma_xy_yakınlaştır = true
-boşluk_sol_sürükleme_taşıma = true
-set_series_lejantı = true
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
+"tekerlek_x_yakınlaştır" = true
+"seçim_yakınlaştır" = true
+"çift_tıkla_tam_görünüm" = true
+"dokunma_xy_yakınlaştır" = true
+"boşluk_sol_sürükleme_taşıma" = true
+"set_series_lejantı" = true
 
 [performans]
 snap = "O(1)"
-en_yakın_hizalı_x = "O(log N)"
-pointer_ana_yolları_yeniden_çizmez = true
+"en_yakın_hizalı_x" = "O(log N)"
+"pointer_ana_yolları_yeniden_çizmez" = true
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg = "target/cursor-snap.svg"

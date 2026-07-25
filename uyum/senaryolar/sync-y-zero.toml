@@ -20,10 +20,10 @@ simetrik_araliklar = [[-100, 100], [-1732, 1732], [-10000, 10000]]
 asama_gecikmeleri_ms = [3000, 6000]
 son_asamada_sifir_pikseli_ortak = true
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
 
-[kanıt]
-örnek = "examples/sync_y_zero.rs"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"örnek" = "examples/sync_y_zero.rs"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"

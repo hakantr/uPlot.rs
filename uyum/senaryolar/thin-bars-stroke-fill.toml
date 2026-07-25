@@ -27,10 +27,10 @@ vurus_kalinliklari = [1, 4]
 minimum_cubuk_genisligi = 1
 ince_vurusta_vurus_rengi_dolguya_duser = true
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
 
-[kanıt]
-örnek = "examples/thin_bars_stroke_fill.rs"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"örnek" = "examples/thin_bars_stroke_fill.rs"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"

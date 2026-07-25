@@ -41,10 +41,10 @@ ortak_x_lejant_tarihi = true
 seri_bazli_gecmis_yil_tarihleri = true
 yerel_tarih_bicimlendirme_yuzey_adaptorunde = true
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
 
-[kanıt]
-örnek = "examples/time_periods.rs"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"örnek" = "examples/time_periods.rs"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
