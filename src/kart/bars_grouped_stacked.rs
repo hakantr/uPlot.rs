@@ -203,7 +203,9 @@ pub fn bars_grouped_stacked_kartı(
     };
     let düzen = ÇubukDüzeni::yeni(yön)
         .yığılmış(örnek.yığılmış())
-        .ters(örnek.yatay());
+        .ters(örnek.yatay())
+        .x_kenar_paylı(false)
+        .grupları_kenarlara_yay(true);
     let (genişlik, yükseklik) = if örnek.yatay() {
         (400, 800)
     } else {
@@ -214,6 +216,7 @@ pub fn bars_grouped_stacked_kartı(
     let etiketler = ["Metric 1", "Metric 2", "Metric 3"];
     let mut seçenekler = GrafikSeçenekleri::yeni(genişlik, yükseklik)?
         .y_aralığı(kaynak_y_aralığı)
+        .x_aralığı(space_between_x_aralığı(kategoriler.len())?)
         .x_zaman(false)
         .kategoriler(kategoriler)
         .çubuk_düzeni(düzen)
@@ -230,6 +233,15 @@ pub fn bars_grouped_stacked_kartı(
         );
     }
     Ok((seçenekler, veri))
+}
+
+fn space_between_x_aralığı(grup_sayısı: usize) -> Result<Aralık, UplotHatası> {
+    let grup_sayısı = grup_sayısı.max(1) as f64;
+    let ham_açıklık = (grup_sayısı - 1.0).max(1.0);
+    let ilk_merkez_oranı = 0.9 / grup_sayısı / 2.0;
+    let büyütme = 1.0 / (1.0 - ilk_merkez_oranı * 2.0);
+    let ofset = (büyütme * ham_açıklık - ham_açıklık) / 2.0;
+    Aralık::yeni(-ofset, ham_açıklık + ofset)
 }
 
 #[cfg(test)]
@@ -348,9 +360,13 @@ mod testler {
         let Some((x, y)) = merkez else {
             return Ok(());
         };
-        assert!(grafik.çubuk_vuruşu(800, 400, x, y).is_some_and(
-            |(seri, indeks, _, _, _, değer)| { seri == 0 && indeks == 0 && değer == 1.0 }
-        ));
+        let vuruş = grafik.çubuk_vuruşu(800, 400, x, y);
+        assert!(
+            vuruş.is_some_and(|(seri, indeks, _, _, _, değer)| {
+                seri == 0 && indeks == 0 && değer == 1.0
+            }),
+            "{vuruş:?}"
+        );
         Ok(())
     }
 
@@ -435,6 +451,43 @@ mod testler {
         assert!(etiketler.clone().any(|etiket| etiket == "4"));
         assert!(etiketler.clone().any(|etiket| etiket == "9"));
         assert!(etiketler.clone().any(|etiket| etiket == "30"));
+        Ok(())
+    }
+
+    #[test]
+    fn space_between_ilk_ve_son_grubu_çizim_kenarlarına_yaslar() -> Result<(), UplotHatası> {
+        for (örnek, beklenen_baş, beklenen_son, yatay) in [
+            (ÇubukÖrneği::ÇokGrupÇokSeriDikeyGruplu, 64.0, 776.0, false),
+            (ÇubukÖrneği::ÇokGrupÇokSeriYatayGruplu, 48.0, 752.0, true),
+        ] {
+            let (seçenekler, veri) = bars_grouped_stacked_kartı(örnek)?;
+            assert!(
+                seçenekler
+                    .çubuk_düzeni
+                    .is_some_and(|düzen| düzen.grupları_kenarlara_yay && !düzen.x_kenar_paylı)
+            );
+            let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+            let sınırlar = sahne.komutlar().iter().filter_map(|komut| match komut {
+                Komut::Dikdörtgen {
+                    konum,
+                    genişlik,
+                    yükseklik,
+                    kalınlık,
+                    ..
+                } if *kalınlık == 0.0 => Some(if yatay {
+                    (konum.y, konum.y + yükseklik)
+                } else {
+                    (konum.x, konum.x + genişlik)
+                }),
+                _ => None,
+            });
+            let (en_az, en_çok) = sınırlar
+                .fold((f32::INFINITY, f32::NEG_INFINITY), |sonuç, sınır| {
+                    (sonuç.0.min(sınır.0), sonuç.1.max(sınır.1))
+                });
+            assert!((en_az - beklenen_baş).abs() <= 0.01, "{}", örnek.kimlik());
+            assert!((en_çok - beklenen_son).abs() <= 0.01, "{}", örnek.kimlik());
+        }
         Ok(())
     }
 }

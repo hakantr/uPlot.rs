@@ -644,6 +644,10 @@ pub struct ÇubukDüzeni {
     pub ek_boşluk: f32,
     pub hizalama: i8,
     pub x_kenar_paylı: bool,
+    /// Kaynak `distr(..., SPACE_BETWEEN)` grup yerleşimi. İlk grup çizim
+    /// alanının başına, son grup sonuna yaslanır; grup genişliği toplam
+    /// alanın `genişlik_oranı / grup_sayısı` bölümüdür.
+    pub grupları_kenarlara_yay: bool,
 }
 
 impl ÇubukDüzeni {
@@ -659,6 +663,7 @@ impl ÇubukDüzeni {
             ek_boşluk: 0.0,
             hizalama: 0,
             x_kenar_paylı: true,
+            grupları_kenarlara_yay: false,
         }
     }
 
@@ -710,6 +715,11 @@ impl ÇubukDüzeni {
 
     pub fn x_kenar_paylı(mut self, etkin: bool) -> Self {
         self.x_kenar_paylı = etkin;
+        self
+    }
+
+    pub fn grupları_kenarlara_yay(mut self, etkin: bool) -> Self {
+        self.grupları_kenarlara_yay = etkin;
         self
     }
 }

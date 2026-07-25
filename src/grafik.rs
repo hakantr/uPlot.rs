@@ -5498,8 +5498,10 @@ impl Grafik {
             })
             .or(self.seçenekler.y_aralığı)
             .unwrap_or(veri_aralığı);
-        let tam_x = tam_x_aralığı(&self.veri)
-            .ok()
+        let tam_x = self
+            .seçenekler
+            .x_aralığı
+            .or_else(|| tam_x_aralığı(&self.veri).ok())
             .and_then(|aralık| {
                 if grup_sayısı > 1 && düzen.x_kenar_paylı {
                     Aralık::yeni(aralık.en_az - 0.5, aralık.en_çok + 0.5).ok()
@@ -5575,11 +5577,21 @@ impl Grafik {
                     .map_or(0.0, |(ilk, son)| {
                         (((son - ilk) / x_açıklığı) as f32 * çizim_g).abs()
                     });
-                let mut tam_boşluk = grup_adımı * (1.0 - düzen.genişlik_oranı) + düzen.ek_boşluk;
+                let grup_genişliği = if düzen.grupları_kenarlara_yay {
+                    space_between_grup_boyutu(
+                        self.veri.x(),
+                        x_aralığı,
+                        çizim_g,
+                        düzen.genişlik_oranı,
+                    )
+                } else {
+                    grup_adımı * düzen.genişlik_oranı - düzen.ek_boşluk
+                }
+                .max(1.0);
+                let mut tam_boşluk = (grup_adımı - grup_genişliği).max(0.0) + düzen.ek_boşluk;
                 if tam_boşluk < 1.0 {
                     tam_boşluk = 0.0;
                 }
-                let grup_genişliği = (grup_adımı - tam_boşluk).max(1.0);
                 let otomatik_yazı_boyutu = düzen.değer_etiketi_otomatik.then(|| {
                     let (azami_metin_genişliği, azami_metin_yüksekliği) = self
                         .otomatik_çubuk_metinleri
@@ -5681,8 +5693,11 @@ impl Grafik {
                             istenen_vuruş
                         };
                         let iç_vuruş = tam_boşluk > 0.0 && vuruş > 0.0;
-                        let ham_genişlik =
-                            grup_adımı - tam_boşluk - if iç_vuruş { vuruş } else { 0.0 };
+                        let ham_genişlik = if düzen.grupları_kenarlara_yay {
+                            grup_genişliği
+                        } else {
+                            grup_adımı - tam_boşluk
+                        } - if iç_vuruş { vuruş } else { 0.0 };
                         let kaynak_genişliği = ham_genişlik.max(1.0);
                         let yön = if düzen.ters { -1_i8 } else { 1_i8 };
                         let hizalama = düzen.hizalama;
@@ -5886,7 +5901,16 @@ impl Grafik {
                     });
                 }
                 let grup_adımı = çizim_y / x_açıklığı as f32;
-                let grup_yüksekliği = grup_adımı * 0.9;
+                let grup_yüksekliği = if düzen.grupları_kenarlara_yay {
+                    space_between_grup_boyutu(
+                        self.veri.x(),
+                        x_aralığı,
+                        çizim_y,
+                        düzen.genişlik_oranı,
+                    )
+                } else {
+                    grup_adımı * düzen.genişlik_oranı
+                };
                 let otomatik_yazı_boyutu = düzen
                     .değer_etiketi_otomatik
                     .then_some((grup_yüksekliği * 0.8).min(25.0));
@@ -7420,6 +7444,27 @@ fn görünür_x_indeksleri(x: &[f64], aralık: Aralık) -> std::ops::Range<usize
     let başlangıç = x.partition_point(|değer| *değer < aralık.en_az);
     let bitiş = x.partition_point(|değer| *değer <= aralık.en_çok);
     başlangıç..bitiş
+}
+
+fn space_between_grup_boyutu(
+    x: &[f64],
+    görünür_aralık: Aralık,
+    piksel_boyutu: f32,
+    genişlik_oranı: f32,
+) -> f32 {
+    let grup_sayısı = x.len().max(1) as f64;
+    let oran = f64::from(genişlik_oranı.clamp(0.0, 1.0));
+    let veri_boyutu = if x.len() > 1 {
+        let ham_açıklık = x
+            .first()
+            .zip(x.last())
+            .map_or(1.0, |(ilk, son)| (son - ilk).abs().max(f64::EPSILON));
+        ham_açıklık * oran / (grup_sayısı - oran).max(f64::EPSILON)
+    } else {
+        oran / (1.0 - oran).max(f64::EPSILON)
+    };
+    let görünür_açıklık = (görünür_aralık.en_çok - görünür_aralık.en_az).max(f64::EPSILON);
+    (veri_boyutu / görünür_açıklık * f64::from(piksel_boyutu)) as f32
 }
 
 /// uPlot `closestIdx()` gibi sıralı hizalı X sütununda ikili arama yapar.
