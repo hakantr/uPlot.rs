@@ -627,7 +627,8 @@ impl Grafik {
                         .iter()
                         .zip(seçenekler.seriler.iter())
                         .filter(|(_, ayarlar)| {
-                            ayarlar.otomatik_ölçeğe_katıl
+                            ayarlar.göster
+                                && ayarlar.otomatik_ölçeğe_katıl
                                 && ayarlar.ölçek == seçenekler.birincil_y_ölçeği
                         })
                         .flat_map(|(seri, _)| seri.iter())
@@ -657,7 +658,8 @@ impl Grafik {
                     .iter()
                     .zip(seçenekler.seriler.iter())
                     .filter(|(_, ayarlar)| {
-                        ayarlar.otomatik_ölçeğe_katıl
+                        ayarlar.göster
+                            && ayarlar.otomatik_ölçeğe_katıl
                             && ayarlar.ölçek == seçenekler.birincil_y_ölçeği
                     })
                     .flat_map(|(seri, _)| seri.iter().flatten().copied()),
@@ -4449,25 +4451,50 @@ impl Grafik {
         let Some(yönler) = self.veri.seriler().get(düzen.yön_serisi) else {
             return;
         };
+        let Some(yön_serisi) = self.seçenekler.seriler.get(düzen.yön_serisi) else {
+            return;
+        };
+        if !yön_serisi.göster {
+            return;
+        }
+        let uzunluk = self.veri.x().len().min(hızlar.len()).min(yönler.len());
+        if uzunluk == 0 {
+            return;
+        }
         let genişlik = sağ - sol;
         let yükseklik = alt - üst;
         let y_aralığı = self.görünür_ölçek_aralığı(&düzen.ölçek, x_aralığı, görünür_y);
+        let xs = &self.veri.x()[..uzunluk];
+        let görünür_başlangıç = xs.partition_point(|x| *x < x_aralığı.en_az);
+        let görünür_bitiş = xs.partition_point(|x| *x <= x_aralığı.en_çok);
+        if görünür_başlangıç >= görünür_bitiş {
+            return;
+        }
 
-        for (indeks, x_değeri) in self.veri.x().iter().copied().enumerate() {
-            if x_değeri < x_aralığı.en_az || x_değeri > x_aralığı.en_çok {
-                continue;
-            }
-            let Some((hız, yön)) = hızlar
-                .get(indeks)
-                .copied()
-                .flatten()
-                .zip(yönler.get(indeks).copied().flatten())
-            else {
+        // Resmî özel path kurucusu `getOuterIdxs()` ile görünümün iki
+        // yanındaki ilk veri noktasını da alır ve null yönleri dışa doğru
+        // geçer. Böylece yakınlaştırma sınırındaki vektörler kopmaz.
+        let mut başlangıç = görünür_başlangıç.saturating_sub(1);
+        let mut bitiş = görünür_bitiş.min(uzunluk.saturating_sub(1));
+        while başlangıç > 0 && yönler[başlangıç].is_none() {
+            başlangıç -= 1;
+        }
+        while bitiş < uzunluk.saturating_sub(1) && yönler[bitiş].is_none() {
+            bitiş += 1;
+        }
+
+        let mut parçalar = Vec::with_capacity(bitiş.saturating_sub(başlangıç) + 1);
+        for indeks in başlangıç..=bitiş {
+            let Some(hız) = hızlar[indeks] else {
                 continue;
             };
+            // JavaScript'te `null - 90` sayısal olarak çalışır. Kaynak
+            // demoda null yön ve hızlar hizalıdır; bu dönüşüm uyumu korur.
+            let yön = yönler[indeks].unwrap_or(0.0);
             if !hız.is_finite() || !yön.is_finite() {
                 continue;
             }
+            let x_değeri = xs[indeks];
             let (x, y) = if self.seçenekler.x_dikey {
                 (
                     sol + self.y_konumu(&düzen.ölçek, y_aralığı, hız, 0.0, genişlik),
@@ -4482,9 +4509,13 @@ impl Grafik {
             let açı = (yön - 90.0).to_radians();
             let dx = düzen.uzunluk * açı.cos() as f32;
             let dy = düzen.uzunluk * açı.sin() as f32;
-            sahne.ekle(Komut::Çizgi {
-                başlangıç: Nokta::yeni(x, y),
-                bitiş: Nokta::yeni(x + dx, y + dy),
+            parçalar.push(vec![Nokta::yeni(x, y), Nokta::yeni(x + dx, y + dy)]);
+        }
+        if !parçalar.is_empty() {
+            // uPlot tek beginPath/stroke kullanır; SVG ve GPUI de bütün
+            // vektörleri tek bir yol komutuyla boyar.
+            sahne.ekle(Komut::Yol {
+                parçalar,
                 renk: düzen.renk.clone(),
                 kalınlık: düzen.kalınlık,
             });
@@ -5676,7 +5707,9 @@ impl Grafik {
                         .iter()
                         .zip(self.seçenekler.seriler.iter())
                         .filter(move |(_, ayarlar)| {
-                            ayarlar.otomatik_ölçeğe_katıl && ayarlar.ölçek == anahtar
+                            ayarlar.göster
+                                && ayarlar.otomatik_ölçeğe_katıl
+                                && ayarlar.ölçek == anahtar
                         })
                         .filter_map(move |(seri, _)| seri.get(indeks).copied().flatten())
                 }),
@@ -5731,7 +5764,9 @@ impl Grafik {
                                 .iter()
                                 .zip(self.seçenekler.seriler.iter())
                                 .filter(move |(_, ayarlar)| {
-                                    ayarlar.otomatik_ölçeğe_katıl && ayarlar.ölçek == anahtar
+                                    ayarlar.göster
+                                        && ayarlar.otomatik_ölçeğe_katıl
+                                        && ayarlar.ölçek == anahtar
                                 })
                                 .filter_map(move |(seri, _)| seri.get(indeks))
                         })

@@ -3150,16 +3150,24 @@ mod testler {
     fn wind_direction_wasm_kaynak_vektörlerini_ve_eksenlerini_üretir() {
         let oturum = KartOturumu::yeni("wind-direction", 100);
         assert!(oturum.is_ok());
-        let Ok(oturum) = oturum else {
+        let Ok(mut oturum) = oturum else {
             return;
         };
         assert_eq!(oturum.seri_sayisi(), 3);
         let svg = oturum.svg(800, 400);
-        assert!(svg.contains("Wind Direction"));
+        assert!(!svg.contains(">Wind Direction<"));
         assert!(svg.contains("Temp °C"));
         assert!(svg.contains("Wind m/s"));
-        assert_eq!(svg.matches("stroke=\"blue\"").count(), 139);
+        assert_eq!(svg.matches("stroke=\"blue\"").count(), 1);
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(2, false), Ok(true)));
+        assert_eq!(oturum.svg(800, 400).matches("stroke=\"blue\"").count(), 0);
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(2, true), Ok(true)));
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(0, false), Ok(true)));
+        assert_eq!(oturum.gorunur_y_araligi(), vec![0.0, 1.0]);
         assert!(wind_direction_kart_tanim_ornegi().contains("çekirdekte 15 px vektörlere"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("139 vektör kaynak gibi tek beginPath/stroke"));
+        assert!(web.contains("aktifKart === \"wind-direction\""));
         assert_eq!(kart_sayisi(), 365);
     }
 

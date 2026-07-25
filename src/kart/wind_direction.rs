@@ -17,7 +17,6 @@ let grafik = Grafik::yeni(seçenekler, veri)?;"##;
 /// yön-vektörü yolunu birebir taşır.
 pub fn wind_direction_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
     let seçenekler = GrafikSeçenekleri::yeni(800, 400)?
-        .başlık("Wind Direction")
         .y_eksen_etiketi("Temp °C")
         .birincil_y_eksen_rengi("orangered")
         .y_ölçeği(
@@ -57,35 +56,73 @@ mod testler {
     use crate::{Grafik, Komut};
 
     #[test]
-    fn kaynak_veri_eksenler_ve_yön_vektörleri_korunur() -> Result<(), UplotHatası> {
+    fn kaynak_veri_eksenler_ve_tek_yolda_yön_vektörleri_korunur() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = wind_direction_kartı()?;
         assert_eq!(veri.uzunluk(), 143);
         assert_eq!(veri.seriler().len(), 3);
+        assert!(seçenekler.başlık.is_empty());
+        assert!(!seçenekler.seriler[2].otomatik_ölçeğe_katıl);
+        assert_eq!(seçenekler.seriler[2].noktaları_göster, Some(false));
         assert!(
             veri.seriler()
                 .iter()
                 .all(|seri| seri.iter().filter(|değer| değer.is_none()).count() == 4)
         );
-        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
-        let yön_çizgileri = sahne
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        let ilk_y = grafik.görünür_y_aralığı();
+        let sahne = grafik.çiz();
+        let yön_yolları = sahne
             .komutlar()
             .iter()
             .filter_map(|komut| match komut {
-                Komut::Çizgi {
-                    başlangıç,
-                    bitiş,
+                Komut::Yol {
+                    parçalar,
                     renk,
-                    ..
-                } if renk == "blue" => Some((başlangıç, bitiş)),
+                    kalınlık,
+                } if renk == "blue" && (*kalınlık - 1.0).abs() <= f32::EPSILON => Some(parçalar),
                 _ => None,
             })
             .collect::<Vec<_>>();
-        assert_eq!(yön_çizgileri.len(), 139);
-        assert!(yön_çizgileri.iter().all(|(başlangıç, bitiş)| {
+        assert_eq!(yön_yolları.len(), 1);
+        assert_eq!(yön_yolları[0].len(), 139);
+        assert!(yön_yolları[0].iter().all(|parça| {
+            let [başlangıç, bitiş] = parça.as_slice() else {
+                return false;
+            };
             let dx = bitiş.x - başlangıç.x;
             let dy = bitiş.y - başlangıç.y;
             ((dx * dx + dy * dy).sqrt() - 15.0).abs() < 0.001
         }));
+
+        assert!(grafik.seri_görünürlüğünü_ayarla(2, false)?);
+        assert!(
+            !grafik
+                .çiz()
+                .komutlar()
+                .iter()
+                .any(|komut| matches!(komut, Komut::Yol { renk, .. } if renk == "blue"))
+        );
+        assert!(grafik.seri_görünürlüğünü_ayarla(2, true)?);
+        assert!(grafik.seri_görünürlüğünü_ayarla(0, false)?);
+        assert_ne!(grafik.görünür_y_aralığı(), ilk_y);
+        assert_eq!(grafik.görünür_y_aralığı(), Aralık::yeni(0.0, 1.0)?);
+        assert!(grafik.seri_görünürlüğünü_ayarla(0, true)?);
+
+        assert!(grafik.seçim_yakınlaştır(0.25, 0.75)?);
+        let (sol, sağ, _, _) = grafik.çizim_alanı_boyutta(800, 400);
+        let yakın_sahne = grafik.çiz();
+        let yakın_parçalar = yakın_sahne
+            .komutlar()
+            .iter()
+            .find_map(|komut| match komut {
+                Komut::Yol {
+                    parçalar, renk, ..
+                } if renk == "blue" => Some(parçalar),
+                _ => None,
+            })
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!(yakın_parçalar.iter().any(|parça| parça[0].x < sol));
+        assert!(yakın_parçalar.iter().any(|parça| parça[0].x > sağ));
         Ok(())
     }
 }

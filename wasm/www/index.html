@@ -2228,6 +2228,12 @@
       yardım: "Mavi çizgiler hız konumundan rüzgâr yönüne uzanır · sürükle/tekerlek/dokunma ortak çekirdek davranışıdır",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Sıcaklık ile sabit 0…30 m/s ölçekli rüzgâr hızını aynı hizalı zaman dizisinde gösterir; üçüncü seri hız konumlarından derece yönüne uzanan 15 CSS piksellik vektörleri üretir.",
+        api: "RüzgarYönüDüzeni::yeni hız/yön serisini ve ölçeği bağlar; stil ile uzunluk, renk ve kalınlık CSS olmadan seçilir. Direction auto=false ile Y ölçeğine katılmaz; lejant setSeries üç katmanı bağımsız değiştirir.",
+        izleme: "Sıcaklık, rüzgâr hızı ve yön gibi aynı zamanlı fakat farklı birimli telemetriyi tek inceleme yüzeyinde ilişkilendirmek için kullanılır.",
+        maliyet: "139 vektör kaynak gibi tek beginPath/stroke eşdeğeri SVG path'te toplu boyanır; görünüm sınırındaki dış komşular korunur. Pointer ana yolu yeniden üretmez; setSeries, ölçek ve resize yeniden hesaplar.",
+      },
     };
     document.querySelector('[data-kart="wind-direction"]')?.insertAdjacentHTML(
       "afterend",
@@ -6307,7 +6313,8 @@
         || aktifKart === "tooltips-closest"
         || aktifKart === "tooltips"
         || aktifKart === "trendlines"
-        || aktifKart === "update-cursor-select-resize";
+        || aktifKart === "update-cursor-select-resize"
+        || aktifKart === "wind-direction";
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks) || değiştirilebilirLejant
           ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>

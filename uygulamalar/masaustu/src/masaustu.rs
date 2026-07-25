@@ -3487,6 +3487,7 @@ impl Render for ChartListesi {
                 | KartKimliği::Tooltips
                 | KartKimliği::Trendlines
                 | KartKimliği::UpdateCursorSelectResize
+                | KartKimliği::WindDirection
         ) {
             self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
                 grafik
@@ -6364,6 +6365,20 @@ impl Render for ChartListesi {
                  ve hover için ikinci bir ana yol üretmez, yalnız hafif katman koordinatları \
                  güncellenir. 100 ms zamanlayıcı karttan çıkıldığında durdurulur.",
             ),
+            KartKimliği::WindDirection => Some(
+                "Amaç: sıcaklık çizgisini ve sabit 0…30 m/s ölçekli rüzgâr hızını aynı hizalı \
+                 zaman dizisinde gösterir; üçüncü seri, hız konumlarından derece yönüne uzanan \
+                 15 CSS piksellik vektörleri özel path olarak üretir. API: \
+                 RüzgarYönüDüzeni::yeni hız/yön serisini ve ölçeği bağlar; stil ile vektör \
+                 uzunluğu, rengi ve kalınlığı CSS olmadan geliştirici tarafından seçilebilir. \
+                 Direction serisinin auto=false kararı dereceleri Y aralığından çıkarır; \
+                 lejant setSeries ile üç katman bağımsız açılıp kapanır. İzleme: sıcaklık, \
+                 rüzgâr hızı ve yönü gibi aynı zamanlı fakat farklı birimli telemetriyi tek \
+                 inceleme yüzeyinde ilişkilendirmek içindir. Maliyet: 139 vektör kaynak gibi \
+                 tek beginPath/stroke eşdeğeri Yol komutunda toplu boyanır; görünüm sınırındaki \
+                 dış komşular getOuterIdxs eşdeğeriyle korunur. Pointer yalnız hafif cursor \
+                 katmanını taşır; ana yollar setSeries, ölçek veya resize ile yeniden hesaplanır.",
+            ),
             KartKimliği::TimeseriesDiscrete => Some(
                 "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
                  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
@@ -6704,6 +6719,7 @@ impl Render for ChartListesi {
                         | KartKimliği::Tooltips
                         | KartKimliği::Trendlines
                         | KartKimliği::UpdateCursorSelectResize
+                        | KartKimliği::WindDirection
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )
@@ -6714,6 +6730,7 @@ impl Render for ChartListesi {
                         | KartKimliği::Tooltips
                         | KartKimliği::Trendlines
                         | KartKimliği::UpdateCursorSelectResize
+                        | KartKimliği::WindDirection
                 ),
                 |öğe| {
                 öğe.child(

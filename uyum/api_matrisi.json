@@ -898,6 +898,24 @@
       "test": "src/kart/wind_direction.rs"
     },
     {
+      "kaynak_yolu": "getOuterIdxs(data[seriesIdx]) and unclipped boundary vectors",
+      "rust_karşılığı": "Grafik::rüzgar_yönlerini_çiz görünüm dışı komşu taraması",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/wind_direction.rs"
+    },
+    {
+      "kaynak_yolu": "single beginPath() + stroke() for all wind vectors",
+      "rust_karşılığı": "tek Komut::Yol içinde iki noktalı vektör parçaları",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/wind_direction.rs + wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "setSeries show gates custom paths and autoscale",
+      "rust_karşılığı": "seri_görünürlüğünü_ayarla + görünür seri autoscale filtresi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/wind_direction.rs + wasm/src/lib.rs"
+    },
+    {
       "kaynak_yolu": "hooks.ready: .u-axis mousedown",
       "rust_karşılığı": "Grafik::eksen_sürüklemeyi_başlat",
       "durum": "tam_kanıtlı",

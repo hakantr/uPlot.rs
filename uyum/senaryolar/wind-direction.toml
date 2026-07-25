@@ -17,6 +17,7 @@ ikincil = "Wind m/s"
 ikincil_aralık = [0, 30]
 ikincil_sağda = true
 ikincil_ızgara = false
+gizli_seri_otomatik_aralığa_katılmaz = true
 
 [özel_yol]
 hız_serisi = 1
@@ -25,9 +26,18 @@ uzunluk_px = 15
 renk = "blue"
 beklenen_vektör = 139
 kırpma = false
+tek_begin_path_tek_stroke = true
+outer_indices = true
+yön_serisi_gizlenince_vektörler_gizlenir = true
+stil_api = "RüzgarYönüDüzeni::stil"
 
 [etkileşim]
 ortak_davranış_profili = "resize-temeli-v1"
+lejant_set_series = true
+pointer_ana_yolu_yeniden_çizmez = true
+
+[görünüm]
+kaynak_grafik_başlığı_yok = true
 
 [kanıt]
 örnek = "examples/wind_direction.rs"
