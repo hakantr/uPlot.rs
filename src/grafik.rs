@@ -683,6 +683,14 @@ impl Grafik {
                 en_az: 0.0,
                 en_çok: 1.0,
             });
+        if seçenekler.x_aralığı.is_none()
+            && let XÖlçekDağılımı::Logaritmik { taban } = seçenekler.x_dağılımı
+            && let Some((en_az, en_çok)) =
+                sonlu_sınırlar(veri.x().iter().copied().filter(|değer| *değer > 0.0))
+            && let Some(log_aralığı) = logaritmik_aralık_sınırlardan(en_az, en_çok, taban, true)
+        {
+            tam = log_aralığı;
+        }
         if (seçenekler
             .çubuk_düzeni
             .is_some_and(|düzen| düzen.x_kenar_paylı)
@@ -6631,6 +6639,18 @@ impl Grafik {
                 let dönüştür = |sayı: f64| (-(-sayı).ln_1p()).ln();
                 dönüştürülmüş_konum(aralık, değer, başlangıç, uzunluk, dönüştür)
             }
+            Some(YÖlçekDağılımı::Özel(dönüşüm)) => {
+                let dönüştürülmüş = (dönüşüm.ileri)(aralık.en_az)
+                    .zip((dönüşüm.ileri)(aralık.en_çok))
+                    .zip((dönüşüm.ileri)(değer));
+                dönüştürülmüş.map_or_else(
+                    || aralık.konum(değer, başlangıç, uzunluk),
+                    |((en_az, en_çok), değer)| {
+                        let oran = (değer - en_az) / (en_çok - en_az);
+                        başlangıç + oran as f32 * uzunluk
+                    },
+                )
+            }
             Some(YÖlçekDağılımı::ArcSinh { eşik }) if eşik.is_finite() && eşik > 0.0 => {
                 let dönüştür = |sayı: f64| (sayı / eşik).asinh();
                 let en_az = dönüştür(aralık.en_az);
@@ -6664,6 +6684,11 @@ impl Grafik {
             .into_iter()
             .filter(|değer| (*değer >= aralık.en_az) && (*değer <= aralık.en_çok))
             .collect(),
+            Some(YÖlçekDağılımı::Özel(_)) => eksen_bölmeleri(
+                aralık,
+                boyut,
+                ölçek.map_or(30.0, |ölçek| ölçek.eksen_en_az_etiket_boşluğu),
+            ),
             _ => eksen_bölmeleri(
                 aralık,
                 boyut,
@@ -6968,6 +6993,24 @@ fn logaritmik_otomatik_aralık<'a>(
         en_çok = en_çok.max(*değer);
     }
     if !en_az.is_finite() || !en_çok.is_finite() {
+        return None;
+    }
+    logaritmik_aralık_sınırlardan(en_az, en_çok, taban, tam_büyüklükler)
+}
+
+fn logaritmik_aralık_sınırlardan(
+    mut en_az: f64,
+    mut en_çok: f64,
+    taban: f64,
+    tam_büyüklükler: bool,
+) -> Option<Aralık> {
+    if !taban.is_finite()
+        || taban <= 1.0
+        || !en_az.is_finite()
+        || !en_çok.is_finite()
+        || en_az <= 0.0
+        || en_çok <= 0.0
+    {
         return None;
     }
     if en_az == en_çok {
@@ -7541,6 +7584,7 @@ fn ölçek_eksen_değerini_yaz(
             Some(YÖlçekDağılımı::Logaritmik { .. } | YÖlçekDağılımı::Weibull) => {
                 format!("{değer:e}")
             }
+            Some(YÖlçekDağılımı::Özel(_)) => eksen_değerini_yaz(değer, artım),
             _ => eksen_değerini_yaz(değer, artım),
         },
     };

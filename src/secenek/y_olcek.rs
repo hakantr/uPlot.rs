@@ -1,4 +1,33 @@
 use crate::{Aralık, SayısalAralıkAyarları, UplotHatası};
+use std::fmt;
+
+/// Kullanıcı tanımlı Y ölçeğinin ileri veya geri dönüşüm fonksiyonu.
+///
+/// `None`, değerin dönüşümün geçerli tanım kümesinde olmadığını bildirir.
+pub type YÖlçekDönüşümFn = fn(f64) -> Option<f64>;
+
+/// uPlot `distr: 100`, `fwd` ve `bwd` özel ölçek sözleşmesinin Rust karşılığı.
+#[derive(Clone, Copy)]
+pub struct ÖzelYÖlçekDönüşümü {
+    pub anahtar: &'static str,
+    pub ileri: YÖlçekDönüşümFn,
+    pub geri: YÖlçekDönüşümFn,
+}
+
+impl fmt::Debug for ÖzelYÖlçekDönüşümü {
+    fn fmt(&self, biçimleyici: &mut fmt::Formatter<'_>) -> fmt::Result {
+        biçimleyici
+            .debug_struct("ÖzelYÖlçekDönüşümü")
+            .field("anahtar", &self.anahtar)
+            .finish_non_exhaustive()
+    }
+}
+
+impl PartialEq for ÖzelYÖlçekDönüşümü {
+    fn eq(&self, diğer: &Self) -> bool {
+        self.anahtar == diğer.anahtar
+    }
+}
 
 /// `nice-scale.html` içindeki piksel yüksekliğine bağlı güzel sayı
 /// algoritmasının doğrulanmış ayarları.
@@ -32,6 +61,8 @@ pub enum YÖlçekDağılımı {
     },
     /// `log(-log(1-y))` ileri ve `1-exp(-exp(v))` geri dönüşümü.
     Weibull,
+    /// Tüketicinin sağladığı, çift yönlü ve adlandırılmış özel dönüşüm.
+    Özel(ÖzelYÖlçekDönüşümü),
     ArcSinh {
         eşik: f64,
     },
@@ -216,6 +247,26 @@ impl YÖlçekSeçenekleri {
 
     pub fn weibull(mut self) -> Self {
         self.dağılım = YÖlçekDağılımı::Weibull;
+        self
+    }
+
+    /// uPlot `distr: 100`, `fwd` ve `bwd` karşılığı özel ölçek tanımlar.
+    ///
+    /// Aynı `anahtar`a sahip dönüşümler yapılandırma eşitliğinde aynı ölçek
+    /// türü kabul edilir; bu nedenle anahtar uygulama içinde benzersiz olmalıdır.
+    pub fn özel(
+        mut self,
+        anahtar: &'static str,
+        ileri: YÖlçekDönüşümFn,
+        geri: YÖlçekDönüşümFn,
+    ) -> Self {
+        if !anahtar.is_empty() {
+            self.dağılım = YÖlçekDağılımı::Özel(ÖzelYÖlçekDönüşümü {
+                anahtar,
+                ileri,
+                geri,
+            });
+        }
         self
     }
 

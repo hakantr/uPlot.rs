@@ -114,7 +114,8 @@ pub use cursor_snap::{
 };
 pub use cursor_tooltip::{CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ, cursor_tooltip_kartı};
 pub use custom_scales::{
-    CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, custom_scales_kartı
+    CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CUSTOM_WEIBULL_BÖLMELERİ, CustomScaleÖrneği,
+    custom_scales_kartları, custom_scales_kartı, custom_weibull_geri, custom_weibull_ileri,
 };
 pub use data_smoothing::{
     DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ, SmoothingÖrneği, asap_yumuşat, data_smoothing_kartı,

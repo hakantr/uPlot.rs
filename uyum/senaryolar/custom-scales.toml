@@ -1,24 +1,39 @@
 id = "custom-scales"
 kaynak = "../uPlot/demos/custom-scales.html"
-fixture = "src/kart/custom_scales.rs#custom_scales_kartı"
+fixture = "src/kart/custom_scales.rs#custom_scales_kartları"
 viewport = [800, 800]
 device_pixel_ratio = 1
-durum = "üç-ölçek-alt-grafiği"
+durum = "tek-kart-üç-bağımsız-yüzey"
 
 [veri]
-x_ve_seri_uzunluğu = 199
-seri_sayısı = 3
-draw_noktası = 20
+x_ve_seri_uzunlugu = 199
+seri_sayisi = 3
+draw_noktasi = 20
 aktarim = "tools/uyum/custom_scales_veri_aktar.mjs"
 
 [alt_grafikler]
 kimlikler = ["custom-scales-linear", "custom-scales-log-log", "custom-scales-weibull"]
-özel_fwd = "log(-log(1-y))"
-özel_bwd = "1-exp(-exp(v))"
+tek_katalog_karti = "custom-scales"
+boyutlar = [[800, 800], [800, 800], [800, 800]]
+etkilesim = "bağımsız-cursor-zoom-pan-geçmiş"
+ozel_fwd = "log(-log(1-y))"
+ozel_bwd = "1-exp(-exp(v))"
 band = "upper_ci/lower_ci #ffa50030"
 fitted_dash = [10, 5]
+weibull_eksen_genisligi = 80
+weibull_bolmeleri = [0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99, 0.999, 0.9999, 0.99999, 0.999999]
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+[araliklar]
+log_x = [0.1, 100.0]
+log_y = [0.000001, 1.0]
+linear_ve_weibull_y = "ham-min-max"
+
+[performans]
+ilk_kurulum = "O(3N)"
+pointer = "requestAnimationFrame + yalnız etkin hafif katman"
+ana_yol_pointerda_yeniden_cizilir = false
+
+[kanit]
+masaustu = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg = "target/custom-scales.svg"

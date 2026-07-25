@@ -52,11 +52,11 @@ use uplot_rs::{
     area_fill_kartı, axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı,
     bars_grouped_stacked_kartları, bars_grouped_stacked_kartı, bars_values_autosize_kartları,
     bars_values_autosize_kartı, box_whisker_kartları, box_whisker_kartı, candlestick_ohlc_kartı,
-    cursor_bind_kartı, cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı,
-    data_smoothing_kartı, dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı,
-    gradients_kartı, grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı,
-    line_paths_kartı, log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı,
-    measure_datums_kartı, missing_data_kartları, missing_data_null_kartı,
+    cursor_bind_kartı, cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartları,
+    custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı, draw_hooks_kartı,
+    focus_cursor_kartı, gradients_kartı, grid_over_series_kartı, high_low_bands_kartı,
+    latency_heatmap_kartı, line_paths_kartı, log_scales_kartı, log_scales2_kartı,
+    mass_spectrum_kartı, measure_datums_kartı, missing_data_kartları, missing_data_null_kartı,
     months_artık_yılsız_kartı, months_kartları, multi_bars_kartı, nearest_non_null_kartı,
     nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartları,
     path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı, points_kartları, points_kartı,
@@ -115,7 +115,7 @@ enum KartKimliği {
     CursorBind,
     CursorSnap,
     CursorTooltip,
-    CustomScales(CustomScaleÖrneği),
+    CustomScales,
     DataSmoothing(SmoothingÖrneği),
     DrawHooks,
     FocusCursor(FocusÖrneği),
@@ -185,7 +185,7 @@ impl KartKimliği {
             Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
-            Self::CustomScales(örnek) => örnek.başlık(),
+            Self::CustomScales => "Custom Scales · 3 independent surfaces",
             Self::DataSmoothing(örnek) => örnek.başlık(),
             Self::DrawHooks => "Draw Hooks",
             Self::FocusCursor(örnek) => örnek.başlık(),
@@ -313,8 +313,8 @@ impl KartKimliği {
             }
             Self::CursorSnap => "cursor-snap.html · çekirdek 10×10 piksel imleç ızgarası",
             Self::CursorTooltip => "cursor-tooltip.html · sınırlara duyarlı canlı bilgi kutusu",
-            Self::CustomScales(_) => {
-                "custom-scales.html · doğrusal, log-log ve özel Weibull ölçeği"
+            Self::CustomScales => {
+                "custom-scales.html · aynı sayfada doğrusal, log-log ve özel Weibull ölçeği"
             }
             Self::DataSmoothing(_) => {
                 "data-smoothing.html · taxi-trips + SGG + ASAP FFT + Moving Avg 300"
@@ -409,7 +409,7 @@ impl KartKimliği {
             Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
-            Self::CustomScales(_) => CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ,
+            Self::CustomScales => CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ,
             Self::DataSmoothing(_) => DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
             Self::DrawHooks => DRAW_HOOKS_KART_TANIM_ÖRNEĞİ,
             Self::FocusCursor(_) => FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ,
@@ -479,7 +479,7 @@ impl KartKimliği {
             Self::CursorBind => "src/kart/cursor_bind.rs",
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
-            Self::CustomScales(_) => "src/kart/custom_scales.rs",
+            Self::CustomScales => "src/kart/custom_scales.rs",
             Self::DataSmoothing(_) => "src/kart/data_smoothing.rs",
             Self::DrawHooks => "src/kart/draw_hooks.rs",
             Self::FocusCursor(_) => "src/kart/focus_cursor.rs",
@@ -546,6 +546,7 @@ pub struct ChartListesi {
     align_data_zamanlayıcısı: Option<Task<()>>,
     align_data_grafikleri: Vec<(AlignDataÖrneği, Entity<GpuiGrafik>)>,
     align_data_kurulum_ms: Option<f64>,
+    custom_scales_grafikleri: Vec<(CustomScaleÖrneği, Entity<GpuiGrafik>)>,
     pixel_align_akışı: Option<PixelAlignAkışı>,
     pixel_align_son_kare: Option<Instant>,
     sine_akışı: Option<SineAkışı>,
@@ -634,6 +635,12 @@ impl ChartListesi {
             let AnahtarOlayi::Degisti(etkin) = *olay;
             if bu.aktif_kart == KartKimliği::AlignDataCost {
                 for (_, grafik) in &bu.align_data_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if bu.aktif_kart == KartKimliği::CustomScales {
+                for (_, grafik) in &bu.custom_scales_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -829,6 +836,7 @@ impl ChartListesi {
             align_data_zamanlayıcısı: None,
             align_data_grafikleri: Vec::new(),
             align_data_kurulum_ms: None,
+            custom_scales_grafikleri: Vec::new(),
             pixel_align_akışı: None,
             pixel_align_son_kare: None,
             sine_akışı: None,
@@ -1197,6 +1205,43 @@ impl ChartListesi {
         self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
         self.align_data_grafikleri = yüzeyler;
         self.align_data_kurulum_ms = Some(başlangıç.elapsed().as_secs_f64() * 1_000.0);
+        self.hata = None;
+        cx.notify();
+    }
+
+    fn custom_scales_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = custom_scales_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Custom Scales yüzeyleri oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.custom_scales_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.custom_scales_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                bu.standart_grafik_olayını_işle(olay, cx);
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.custom_scales_grafikleri = yüzeyler;
         self.hata = None;
         cx.notify();
     }
@@ -2419,6 +2464,7 @@ impl ChartListesi {
         });
         self.align_data_grafikleri.clear();
         self.align_data_kurulum_ms = None;
+        self.custom_scales_grafikleri.clear();
         self.scales_dir_ori_grafikleri.clear();
         self.scatter_grafikleri.clear();
         self.bars_grouped_stacked_grafikleri.clear();
@@ -2444,6 +2490,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.align_data_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::CustomScales {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.custom_scales_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -3341,7 +3396,7 @@ fn grafik_oluştur(
         KartKimliği::CursorBind => cursor_bind_kartı(),
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
-        KartKimliği::CustomScales(örnek) => custom_scales_kartı(örnek),
+        KartKimliği::CustomScales => custom_scales_kartı(CustomScaleÖrneği::Doğrusal),
         KartKimliği::DataSmoothing(örnek) => data_smoothing_kartı(örnek),
         KartKimliği::DrawHooks => draw_hooks_kartı(),
         KartKimliği::FocusCursor(örnek) => focus_cursor_kartı(örnek),
@@ -3522,8 +3577,8 @@ impl Render for ChartListesi {
             KartKimliği::CursorBind => "30 nokta × 3 seri · Ctrl açıklama bağı".to_string(),
             KartKimliği::CursorSnap => "30 nokta × 3 seri".to_string(),
             KartKimliği::CursorTooltip => "7 nokta × 1 seri · canlı bilgi kutusu".to_string(),
-            KartKimliği::CustomScales(_) => {
-                "199 nokta × 3 seri · güven bandı + 20 gözlem".to_string()
+            KartKimliği::CustomScales => {
+                "3 bağımsız 800×800 yüzey · aynı 199×3 veri + 20 draw noktası".to_string()
             }
             KartKimliği::DataSmoothing(SmoothingÖrneği::Ham) => {
                 "3600 resmî Taxi Trips örneği".to_string()
@@ -3710,6 +3765,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .align_data_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::CustomScales {
+            geri_var = self
+                .custom_scales_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .custom_scales_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         } else if aktif_kart == KartKimliği::SyncCursor {
@@ -4873,21 +4937,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::CursorTooltip, cx);
                 })),
             )
-            .children(CustomScaleÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::CustomScales(örnek);
+            .child({
+                let kart = KartKimliği::CustomScales;
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
+                    "kart-custom-scales",
+                    "Custom Scales · 3 independent surfaces",
                     "custom-scales",
                     aktif_kart == kart,
-                    "199 nokta · güven bandı · 20 draw noktası",
+                    "3×800×800 · aynı veri, bağımsız linear/log/Weibull ölçekleri",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .children(SmoothingÖrneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::DataSmoothing(örnek);
                 katalog_kartı(
@@ -5293,6 +5357,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.align_data_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
                             }
+                        } else if bu.aktif_kart == KartKimliği::CustomScales {
+                            for (_, grafik) in &bu.custom_scales_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             for (_, grafik) in &bu.sync_cursor_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5425,6 +5493,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.align_data_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
                             }
+                        } else if bu.aktif_kart == KartKimliği::CustomScales {
+                            for (_, grafik) in &bu.custom_scales_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             for (_, grafik) in &bu.sync_cursor_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5554,6 +5626,8 @@ impl Render for ChartListesi {
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
                         if bu.aktif_kart == KartKimliği::AlignDataCost {
                             bu.align_data_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::CustomScales {
+                            bu.custom_scales_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             bu.sync_cursor_grubu = SyncCursorGrubu::yeni();
                             bu.sync_cursor_yüzeylerini_oluştur(cx);
@@ -5673,6 +5747,31 @@ impl Render for ChartListesi {
                                 ),
                         )
                 }))
+        } else if aktif_kart == KartKimliği::CustomScales {
+            let yüzey = |örnek| {
+                self.custom_scales_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(1_700.0))
+                .overflow_y_scroll()
+                .p_2()
+                .child(div().flex().flex_wrap().items_start().gap_3().children(
+                    CustomScaleÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                        div()
+                            .id(SharedString::from(format!(
+                                "custom-scales-{}-surface",
+                                örnek.kimlik()
+                            )))
+                            .flex_none()
+                            .w(px(800.0))
+                            .h(px(800.0))
+                            .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik))
+                    }),
+                ))
         } else if aktif_kart == KartKimliği::SyncCursor {
             let cpu = sync_yüzeyi(SyncCursorÖrneği::Cpu);
             let ram = sync_yüzeyi(SyncCursorÖrneği::Ram);
@@ -7269,6 +7368,19 @@ impl Render for ChartListesi {
                  GPUI ana yol önbelleğini korur ve yalnız etkileşim canvas'ı ile overlay'i \
                  yeniler, WASM pointer olaylarını requestAnimationFrame ile birleştirip aynı \
                  SVG/path düğümlerini yerinde tutar.",
+            ),
+            KartKimliği::CustomScales => Some(
+                "Amaç: aynı 199×4 kaynak veriyi ve 20 siyah draw noktasını resmî sayfadaki \
+                 sırayla üç bağımsız 800×800 yüzeyde karşılaştırır: doğrusal, log10/log10 ve \
+                 log10 X + özel Weibull Y. API: custom_scales_kartları aynı veri/seri/bant \
+                 tanımından üç Grafik üretir; YÖlçekSeçenekleri::özel adlandırılmış fwd/bwd \
+                 fonksiyonlarını, y_sabit_bölmeler ile y_özel_etiketler kaynak axis callback \
+                 sonuçlarını taşır. İzleme: olasılık ve güven aralığı verisinde ham, log ve \
+                 dağılıma özgü görünümün aynı örnekleri nasıl ayırdığını kıyaslamak içindir. \
+                 Üç yüzeyin cursor, zoom, pan ve geçmiş durumları paylaşılmaz. Maliyet: ilk \
+                 kurulum üç retained sahnede O(3N)'dir; pointer yalnız hafif etkileşim katmanını \
+                 günceller, ana band/path yalnız ölçek, resize veya görünürlük değişiminde \
+                 yeniden üretilir.",
             ),
             KartKimliği::MissingData => Some(
                 "Amaç: aynı resmî sayfadaki iki bağımsız yüzeyi birlikte karşılaştırır. İlk \

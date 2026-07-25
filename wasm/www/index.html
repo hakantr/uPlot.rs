@@ -298,6 +298,16 @@
     .align-data-grafik svg { display: block; height: 600px !important; max-width: none; }
     .align-data-grafik[data-align-data-index="0"] svg { width: 2560px !important; }
     .align-data-grafik[data-align-data-index="1"] svg { width: 1920px !important; }
+    #chart.custom-scales-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .custom-scales-yığın { min-width: min-content; display: flex; flex-wrap: wrap;
+      align-items: flex-start; gap: 12px; }
+    .custom-scales-grafik { position: relative; flex: 0 0 800px; width: 800px;
+      height: 800px; border: 1px solid #e5e7eb; border-radius: 8px;
+      background: #fff; overflow: hidden; }
+    .custom-scales-grafik svg { display: block; width: 800px !important;
+      height: 800px !important; }
+    .custom-scales-grafik .lejant { position: absolute; left: 82px; right: 12px;
+      bottom: 8px; }
     #chart.bars-grouped-stacked-yüzeyi { display: block; min-width: 0; overflow: auto;
                                          place-items: unset; padding: 8px;
                                          box-sizing: border-box; }
@@ -2642,32 +2652,32 @@
         maliyet: "Pointer olayları requestAnimationFrame ile birleştirilir. Ana SVG/path düğümleri korunur; yalnız imleç ve tooltip overlay özellikleri güncellenir. Yerleşim hesabı O(1)'dir.",
       },
     };
-    for (const [kimlik, başlık] of [
-      ["custom-scales-linear", "x linear; y linear"],
-      ["custom-scales-log-log", "log(x); log(y)"],
-      ["custom-scales-weibull", "log(x); log(-log(1 - y))"],
-    ]) {
-      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>custom-scales</small>
-          <div class="durum">199 nokta · güven bandı · 20 gözlem</div>
-        </article>`);
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/custom-scales.html">custom-scales.html</a>
-          <br>Kaynaktaki 199×4 veri, 20 draw-hook noktası, turuncu güven bandı ve kesikli Weibull fitted çizgisi aynen kullanılır. Ölçek dönüşümü geometri, eksen ve imleç hesabında çekirdektedir.`,
-        tanım: () => custom_scales_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/custom_scales.rs",
-        seriler: [
-          { etiket: "upper_ci", renk: "#0000ff" },
-          { etiket: "lower_ci", renk: "#008000" },
-          { etiket: "weibull_fitted", renk: "#ffa500" },
-        ],
-        yardım: "Aynı veri · doğrusal, log-log veya özel fwd/bwd Weibull geometrisi",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="custom-scales" aria-current="false" tabindex="0">
+        <strong>Custom Scales · 3 independent surfaces</strong><small>custom-scales</small>
+        <div class="durum">3×800×800 · aynı veri · linear/log/Weibull</div>
+      </article>`);
+    kartlar["custom-scales"] = {
+      başlık: "Custom Scales · 3 independent surfaces",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/custom-scales.html">custom-scales.html</a>
+        <br>Resmî sayfadaki üç bağımsız 800×800 yüzey aynı 199×4 veriyi, 20 draw-hook karesini, güven bandını ve kesikli fitted yolu paylaşır; kaynak sırasıyla birlikte gösterilir. Cursor, zoom, pan ve geçmiş durumları yüzeyler arasında paylaşılmaz.`,
+      tanım: () => custom_scales_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/custom_scales.rs",
+      seriler: [
+        { etiket: "upper_ci", renk: "#0000ff" },
+        { etiket: "lower_ci", renk: "#008000" },
+        { etiket: "weibull_fitted", renk: "#ffa500" },
+      ],
+      yardım: "Üç bağımsız yüzey · aynı veri · özel fwd/bwd + sabit tick/label API",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Aynı olasılık ve güven aralığı verisini doğrusal, log10/log10 ve özel Weibull olasılık ölçeğinde eşzamanlı karşılaştırır.",
+        api: "custom_scales_kartları() üç bağımsız Grafik döndürür. YÖlçekSeçenekleri::özel genel fwd/bwd fonksiyonlarını; y_sabit_bölmeler ve y_özel_etiketler eksen callback sonuçlarını taşır.",
+        izleme: "Ham oranları, büyüklük farklarını ve Weibull uyumunu aynı örnekler üzerinde yan yana incelemek için kullanılır; bir yüzeyin görünümü diğerlerini değiştirmez.",
+        maliyet: "İlk kurulum üç retained sahnede O(3N)'dir. Pointer hareketi requestAnimationFrame ile birleştirilir ve yalnız etkin yüzeyin hafif cursor/lejant katmanını günceller; ana band/path sabit kalır.",
+      },
+    };
     for (const [kimlik, başlık, durum] of [
       ["data-smoothing-raw", "Taxi Trips (raw)", "3600 resmî Taxi Trips örneği"],
       ["data-smoothing-sgg", "Savitzky-Golay", "3600 nokta · pencere 101"],
@@ -2963,6 +2973,8 @@
     let oturum = null;
     let alignDataOturumları = [];
     let alignDataEtkinİndeks = 0;
+    let customScalesOturumları = [];
+    let customScalesEtkinİndeks = 0;
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
     let timeseriesDiscreteEtkinİndeks = 0;
@@ -3058,6 +3070,11 @@
         açıklama: "38 noktalı kırmızı çizgi + dört mavi bar · bağımsız görünür aralık",
         boyut: [1920, 600],
       },
+    ];
+    const customScalesYüzeyleri = [
+      { kimlik: "custom-scales-linear", başlık: "x linear; y linear" },
+      { kimlik: "custom-scales-log-log", başlık: "log(x); log(y)" },
+      { kimlik: "custom-scales-weibull", başlık: "log(x); log(-log(1 - y))" },
     ];
     const nearestNonNullYüzeyleri = [
       {
@@ -3163,6 +3180,14 @@
           || !alignDataOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !alignDataOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "custom-scales") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !customScalesOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !customScalesOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -5572,6 +5597,79 @@
       kontrolleriGüncelle();
     }
 
+    function customScalesYüzeyiniÇiz(indeks) {
+      const tanım = customScalesYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-custom-scales-index="${indeks}"]`);
+      const yüzeyOturumu = customScalesOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const şablon = document.createElement("template");
+      şablon.innerHTML = yüzeyOturumu.svg(800, 800).trim();
+      const yeniSvg = şablon.content.querySelector("svg");
+      let svg = yüzey.querySelector("svg");
+      if (svg && yeniSvg) {
+        svgYüzeyiniYerindeGüncelle(svg, yeniSvg);
+      } else {
+        yüzey.innerHTML = `${yüzeyOturumu.svg(800, 800)}
+          <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
+            ${kartlar["custom-scales"].seriler.map((seri, seriİndeksi) =>
+              `<span><i class="örnek" style="border-color:${seri.renk};background:${seri.renk}"></i>
+                ${seri.etiket}: <b id="seri-değeri-${seriİndeksi}">--</b></span>`
+            ).join("")}
+          </div>`;
+        svg = yüzey.querySelector("svg");
+      }
+      if (!svg) return;
+      if (!svg.querySelector(":scope > #etkileşim")) {
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)"
+              stroke="#3b82f6"/>
+            <line id="imleç-x" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            <line id="imleç-y" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            ${kartlar["custom-scales"].seriler.map((seri, seriİndeksi) =>
+              `<circle id="imleç-nokta-${seriİndeksi}" visibility="hidden" r="2.5"
+                fill="${seri.renk}"/>`
+            ).join("")}
+          </g>`);
+      }
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      svg.dataset.etkileşim = "independent-custom-scale";
+      yüzey.onpointerenter = () => {
+        customScalesEtkinİndeks = indeks;
+        oturum = customScalesOturumları[indeks] ?? null;
+        kontrolleriGüncelle();
+      };
+      yüzey.onpointerleave = () => {
+        svg.querySelectorAll("#imleç-x, #imleç-y, [id^='imleç-nokta-']")
+          .forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+      };
+    }
+
+    function customScalesÇiz() {
+      const ilkKurulum = !chart.classList.contains("custom-scales-yüzeyi")
+        || chart.querySelectorAll(".custom-scales-grafik").length
+          !== customScalesYüzeyleri.length;
+      if (ilkKurulum) {
+        chart.className = "custom-scales-yüzeyi";
+        chart.innerHTML = `<div class="custom-scales-yığın">
+          ${customScalesYüzeyleri.map((_, indeks) =>
+            `<article class="custom-scales-grafik"
+              data-custom-scales-index="${indeks}"></article>`
+          ).join("")}
+        </div>`;
+        customScalesYüzeyleri.forEach((_, indeks) => customScalesYüzeyiniÇiz(indeks));
+      } else {
+        customScalesYüzeyiniÇiz(customScalesEtkinİndeks);
+      }
+      oturum = customScalesOturumları[customScalesEtkinİndeks]
+        ?? customScalesOturumları[0]
+        ?? null;
+      kontrolleriGüncelle();
+    }
+
     function scatterYüzeyiniÇiz(indeks) {
       const tanım = scatterYüzeyleri[indeks];
       const yüzey = chart.querySelector(`[data-scatter-index="${indeks}"]`);
@@ -6631,6 +6729,10 @@
         alignDataÇiz();
         return;
       }
+      if (aktifKart === "custom-scales") {
+        customScalesÇiz();
+        return;
+      }
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
         return;
@@ -6742,6 +6844,7 @@
       chart.classList.remove("scales-dir-ori-yüzeyi");
       chart.classList.remove("scatter-yüzeyi");
       chart.classList.remove("align-data-yüzeyi");
+      chart.classList.remove("custom-scales-yüzeyi");
       chart.classList.remove("soft-minmax-yüzeyi");
       chart.classList.remove("sparklines-bars-yüzeyi");
       chart.classList.remove("sparklines-yüzeyi");
@@ -7050,6 +7153,10 @@
         && hedefSvg instanceof SVGSVGElement ? hedefSvg : null;
       const svg = doğrudanSvg ?? (aktifKart === "align-data-cost"
         ? chart.querySelector(`[data-align-data-index="${alignDataEtkinİndeks}"] svg`)
+        : aktifKart === "custom-scales"
+        ? chart.querySelector(
+            `[data-custom-scales-index="${customScalesEtkinİndeks}"] svg`
+          )
         : aktifKart === "scatter"
         ? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"] svg`)
         : aktifKart === "box-whisker"
@@ -7157,6 +7264,11 @@
       const bağımsızYüzey = aktifKart === "align-data-cost"
         ? olay.target?.closest?.(".align-data-grafik")
           ?? chart.querySelector(`[data-align-data-index="${alignDataEtkinİndeks}"]`)
+        : aktifKart === "custom-scales"
+        ? olay.target?.closest?.(".custom-scales-grafik")
+          ?? chart.querySelector(
+            `[data-custom-scales-index="${customScalesEtkinİndeks}"]`
+          )
         : aktifKart === "scatter"
         ? olay.target?.closest?.(".scatter-grafik")
           ?? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"]`)
@@ -7213,6 +7325,12 @@
         if (Number.isInteger(indeks) && alignDataOturumları[indeks]) {
           alignDataEtkinİndeks = indeks;
           oturum = alignDataOturumları[indeks];
+        }
+      } else if (aktifKart === "custom-scales" && bağımsızYüzey) {
+        const indeks = Number(bağımsızYüzey.dataset.customScalesIndex);
+        if (Number.isInteger(indeks) && customScalesOturumları[indeks]) {
+          customScalesEtkinİndeks = indeks;
+          oturum = customScalesOturumları[indeks];
         }
       }
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
@@ -7555,6 +7673,7 @@
       }
       const çizgiler = ["imleç-x", "imleç-y"].map(id => svg.querySelector(`#${id}`));
       const etkileşimKapsamı = svg.closest(".soft-minmax-grafik")
+        ?? svg.closest(".custom-scales-grafik")
         ?? svg.closest(".sparklines-grafik")
         ?? svg.closest(".sparse-grafik")
         ?? svg.closest(".stacked-series-grafik")
@@ -8384,6 +8503,11 @@
       if (aktifKart === "align-data-cost") {
         alignDataOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         alignDataÇiz();
+      } else if (aktifKart === "custom-scales") {
+        customScalesOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.onceki_gorunum()) customScalesYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.onceki_gorunum()) syncCursorYüzeyiÇiz(indeks);
@@ -8461,6 +8585,11 @@
       if (aktifKart === "align-data-cost") {
         alignDataOturumları.forEach(yüzey => yüzey.tam_gorunum());
         alignDataÇiz();
+      } else if (aktifKart === "custom-scales") {
+        customScalesOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.tam_gorunum()) customScalesYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.tam_gorunum()) syncCursorYüzeyiÇiz(indeks);
@@ -8538,6 +8667,10 @@
       etkileşimler.tekerlek = tekerlekEtkileşimi.checked;
       if (aktifKart === "align-data-cost") {
         alignDataOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "custom-scales") {
+        customScalesOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "sync-cursor") {
@@ -8733,6 +8866,11 @@
         if (kimlik !== "nearest-non-null" && kimlik.startsWith("nearest-non-null-")) {
           kimlik = "nearest-non-null";
         }
+        if (kimlik !== "custom-scales" && kimlik.startsWith("custom-scales-")) {
+          const indeks = customScalesYüzeyleri.findIndex(yüzey => yüzey.kimlik === kimlik);
+          customScalesEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "custom-scales";
+        }
         if (["months-no-leap", "months-leap", "months-russian"].includes(kimlik)) {
           kimlik = "months";
         }
@@ -8856,6 +8994,7 @@
         syncYZeroZamanlayıcıları = [];
         const gruplanmışOturum = [
           alignDataOturumları,
+          customScalesOturumları,
           syncCursorOturumları,
           timeseriesDiscreteOturumları,
           timezonesDstOturumları,
@@ -8885,6 +9024,9 @@
         alignDataOturumları.forEach(yüzey => yüzey.free());
         alignDataOturumları = [];
         alignDataEtkinİndeks = 0;
+        customScalesOturumları.forEach(yüzey => yüzey.free());
+        customScalesOturumları = [];
+        customScalesEtkinİndeks = 0;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
         syncCursorOturumları = [];
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
@@ -8946,6 +9088,7 @@
         sonDatumOranı = null;
         aktifKart = kimlik;
         delete chart.dataset.alignDataOlcumMs;
+        delete chart.dataset.customScalesOlcumMs;
         chart.scrollLeft = 0;
         chart.scrollTop = 0;
         if (kimlik === "sync-y-zero") {
@@ -9023,6 +9166,28 @@
             alignDataOturumları[0].bosluklari_birlestir_ayarla(boşluklarıBirleştir);
             alignDataÇiz(true);
           }, 1000);
+          return;
+        }
+        if (kimlik === "custom-scales") {
+          const istenenİndeks = customScalesYüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === oturumKimliği
+          );
+          customScalesEtkinİndeks = istenenİndeks >= 0 ? istenenİndeks : 0;
+          const customScalesBaşlangıcı = performance.now();
+          customScalesOturumları = customScalesYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          const customScalesOturumMs = performance.now() - customScalesBaşlangıcı;
+          chart.dataset.customScalesOlcumMs = customScalesOturumMs.toFixed(2);
+          console.info(
+            `[custom-scales] 3 retained surfaces: ${customScalesOturumMs.toFixed(2)} ms`
+          );
+          oturum = customScalesOturumları[customScalesEtkinİndeks]
+            ?? customScalesOturumları[0]
+            ?? null;
+          çiz();
           return;
         }
         if (kimlik === "sync-cursor") {

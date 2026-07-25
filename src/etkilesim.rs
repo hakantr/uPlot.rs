@@ -488,6 +488,7 @@ pub(crate) fn y_değerini_dönüştür(
         YÖlçekDağılımı::Weibull if değer > 0.0 && değer < 1.0 => {
             Some((-(-değer).ln_1p()).ln())
         }
+        YÖlçekDağılımı::Özel(dönüşüm) => (dönüşüm.ileri)(değer),
         _ => None,
     }
 }
@@ -500,6 +501,7 @@ pub(crate) fn y_değerini_geri_dönüştür(
         YÖlçekDağılımı::Logaritmik { taban } if taban > 1.0 => Some(taban.powf(değer)),
         YÖlçekDağılımı::ArcSinh { eşik } if eşik > 0.0 => Some(değer.sinh() * eşik),
         YÖlçekDağılımı::Weibull => Some(1.0 - (-değer.exp()).exp()),
+        YÖlçekDağılımı::Özel(dönüşüm) => (dönüşüm.geri)(değer),
         _ => None,
     }
 }

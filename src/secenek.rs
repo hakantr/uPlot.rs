@@ -16,7 +16,8 @@ pub use isi_haritasi::{IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu};
 pub use seri::{NoktaFiltreKipi, NoktaŞekli, SeriSeçenekleri, SeriÇizimTürü};
 pub use timeline::{TimelineDüzeni, TimelineHücresi};
 pub use y_olcek::{
-    GüzelÖlçekDüzeni, YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri
+    GüzelÖlçekDüzeni, YÖlçekDağılımı, YÖlçekDönüşümFn, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri,
+    ÖzelYÖlçekDönüşümü,
 };
 pub use zaman::{TarihAdları, ZamanDilimi};
 

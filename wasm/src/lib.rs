@@ -3717,7 +3717,16 @@ mod testler {
         }
         assert_ne!(svgler.first(), svgler.get(1));
         assert_ne!(svgler.get(1), svgler.get(2));
-        assert!(custom_scales_kart_tanim_ornegi().contains("CustomScaleÖrneği"));
+        assert!(custom_scales_kart_tanim_ornegi().contains("custom_scales_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("data-kart=\"custom-scales\"").count(),
+            1,
+            "aynı kaynak sayfası tek katalog kartı olmalıdır"
+        );
+        assert!(web.contains("customScalesOturumları"));
+        assert!(web.contains("custom-scales-grafik"));
+        assert!(web.contains("independent-custom-scale"));
     }
 
     #[test]

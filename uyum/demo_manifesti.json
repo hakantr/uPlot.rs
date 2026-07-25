@@ -1502,14 +1502,14 @@
       "ek_kaynaklar": [
         { "yol": "dist/uPlot.d.ts", "sha256": "c9fb5d1fe8f2084b44690c841e84ab63402549d9420535a6081b389a461fefe5" }
       ],
-      "fixture": "src/kart/custom_scales.rs#custom_scales_kartı",
+      "fixture": "src/kart/custom_scales.rs#custom_scales_kartları",
       "örnek": "examples/custom_scales.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
       "senaryo": "uyum/senaryolar/custom-scales.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
-        "uygulama": "src/kart/custom_scales.rs#ortak_kart_etkileşimleri",
+        "uygulama": "src/kart/custom_scales.rs#custom_scales_kartları",
         "kararlar": {
           "kaynak-veri-esligi": "devralındı", "cekirdek-davranis-sahipligi": "devralındı",
           "gpui-wasm-yuzey-esdegerligi": "devralındı", "duyarli-boyutlandirma": "devralındı",
@@ -1528,11 +1528,18 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "source-exact-199-by-four-data", "source-exact-twenty-draw-points",
-        "linear-log-log-and-custom-weibull-subcharts", "scale-forward-backward-geometry",
+        "one-card-three-independent-800x800-surfaces",
+        "linear-log-log-and-custom-weibull-subcharts",
+        "public-custom-forward-backward-function-api",
+        "distribution-aware-log-range",
         "upper-lower-confidence-band", "ten-five-dashed-fitted-path",
-        "weibull-exponential-axis-splits", "gpui-wasm-catalog-parity", "common-interaction-profile"
+        "weibull-eighty-pixel-axis",
+        "weibull-exponential-axis-splits-and-labels",
+        "independent-cursor-zoom-pan-history",
+        "stable-main-path-on-pointer",
+        "gpui-wasm-catalog-parity", "common-interaction-profile"
       ],
-      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "bekliyor" }
+      "kanıt": { "api": "uygulandı_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "uygulandı_kanıtlı" }
     },
     {
       "sıra": 23,
