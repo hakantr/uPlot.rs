@@ -606,6 +606,28 @@ impl KartOturumu {
             .map_err(js_hatası)
     }
 
+    #[allow(clippy::too_many_arguments)]
+    pub fn fiziksel_secim_yakinlastir_eksenlerde(
+        &mut self,
+        yatay_başlangıç: f64,
+        dikey_başlangıç: f64,
+        yatay_bitiş: f64,
+        dikey_bitiş: f64,
+        yatay_etkin: bool,
+        dikey_etkin: bool,
+    ) -> Result<bool, JsValue> {
+        self.grafik
+            .fiziksel_seçim_yakınlaştır_eksenlerde(
+                yatay_başlangıç,
+                dikey_başlangıç,
+                yatay_bitiş,
+                dikey_bitiş,
+                yatay_etkin,
+                dikey_etkin,
+            )
+            .map_err(js_hatası)
+    }
+
     /// 0: değişmedi, 1: yakınlaştırıldı, 2: açıklama metni istenmeli.
     pub fn secimi_bitir(
         &mut self,
@@ -1166,6 +1188,10 @@ impl KartOturumu {
         self.grafik.imleç_y_görünür()
     }
 
+    pub fn secim_xy_yakinlastir(&self) -> bool {
+        self.grafik.etkileşim_seçenekleri().seçim_xy_yakınlaştır
+    }
+
     pub fn timeline_vuruslari(&self, yatay_oran: f64, çizim_genişliği: f64) -> Vec<f64> {
         self.grafik
             .timeline_vuruşları_pikselde(yatay_oran, çizim_genişliği)
@@ -1292,6 +1318,21 @@ impl KartOturumu {
                     bilgi.interpolasyon.to_string(),
                 ]
             })
+    }
+
+    /// En yakın tooltip'in kaynak veri noktasını `[x_oranı, y_oranı]`
+    /// biçiminde döndürür. Arayüz kutuyu fareye değil bu noktaya bağlar.
+    pub fn en_yakin_tooltip_konumu(&self, yatay_oran: f64, seri_indeksi: i32) -> Vec<f64> {
+        usize::try_from(seri_indeksi)
+            .ok()
+            .and_then(|seri| self.grafik.en_yakın_tooltip(yatay_oran, seri))
+            .and_then(|bilgi| {
+                Some(vec![
+                    self.grafik.x_konum_oranı(bilgi.zaman)?,
+                    self.grafik.seri_y_konum_oranı(bilgi.seri, bilgi.değer)?,
+                ])
+            })
+            .unwrap_or_default()
     }
 
     pub fn tooltip_bilgileri(&self, yatay_oran: f64, dikey_oran: f64) -> Vec<String> {
@@ -2933,11 +2974,23 @@ mod testler {
     fn tooltips_closest_wasm_kaynak_tooltipini_üretir() {
         let oturum = KartOturumu::yeni("tooltips-closest", 100);
         assert!(oturum.is_ok());
-        let Ok(oturum) = oturum else {
+        let Ok(mut oturum) = oturum else {
             return;
         };
         assert_eq!(oturum.seri_sayisi(), 4);
         assert!(!oturum.lejant_canli());
+        assert!(oturum.secim_xy_yakinlastir());
+        let başlangıç_x = oturum.gorunur_x_araligi();
+        let başlangıç_y = oturum.gorunur_y_araligi();
+        assert!(
+            oturum
+                .fiziksel_secim_yakinlastir_eksenlerde(0.2, 0.5, 0.8, 0.5, true, false)
+                .unwrap_or(false)
+        );
+        assert_eq!(oturum.gorunur_y_araligi(), başlangıç_y);
+        let yakın_x = oturum.gorunur_x_araligi();
+        assert!(yakın_x[1] - yakın_x[0] < başlangıç_x[1] - başlangıç_x[0]);
+        assert!(oturum.tam_gorunum());
         let tooltip = oturum.en_yakin_tooltip(0.0, 0);
         assert_eq!(tooltip.len(), 4);
         assert!(
@@ -2950,7 +3003,16 @@ mod testler {
                 .get(2)
                 .is_some_and(|url| url.contains("stat=instructions:u"))
         );
-        assert!(oturum.svg(960, 400).contains("Summary-opt"));
+        let konum = oturum.en_yakin_tooltip_konumu(0.0, 0);
+        assert_eq!(konum.len(), 2);
+        assert!(konum.iter().all(|değer| değer.is_finite()));
+        let svg = oturum.svg(960, 400);
+        assert!(svg.contains("Summary-opt"));
+        assert_eq!(svg.matches("<circle").count(), 0);
+        assert!(oturum.imlec_odagini_seriye_ayarla(0));
+        assert_eq!(oturum.odak_serisi(), 0);
+        assert!(oturum.seri_gorunurlugu_ayarla(0, false).is_ok());
+        assert_eq!(oturum.odak_serisi(), -1);
         assert!(tooltips_closest_kart_tanim_ornegi().contains("en_yakın_tooltip"));
         assert_eq!(kart_sayisi(), 365);
     }

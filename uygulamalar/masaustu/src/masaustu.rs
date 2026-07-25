@@ -916,6 +916,20 @@ impl ChartListesi {
         cx.notify();
     }
 
+    fn tooltips_closest_serisini_değiştir(&mut self, seri: usize, cx: &mut Context<Self>) {
+        let Some(grafik) = self.grafik.clone() else {
+            return;
+        };
+        let görünür = grafik.read(cx).grafik().seri_görünür_mü(seri);
+        match grafik.update(cx, |grafik, cx| {
+            grafik.seri_görünürlüğünü_ayarla(seri, !görünür, cx)
+        }) {
+            Ok(_) => self.hata = None,
+            Err(hata) => self.hata = Some(format!("Tooltip serisi değiştirilemedi: {hata}")),
+        }
+        cx.notify();
+    }
+
     fn timezones_dst_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
         let kartlar = match timezones_dst_kartları() {
             Ok(kartlar) => kartlar,
@@ -3467,6 +3481,20 @@ impl Render for ChartListesi {
                 format!("x: {x}    {seriler}")
             },
         );
+        let tooltips_closest_serileri = if aktif_kart == KartKimliği::TooltipsClosest {
+            self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
+                grafik
+                    .read(cx)
+                    .grafik()
+                    .seri_seçenekleri()
+                    .iter()
+                    .enumerate()
+                    .map(|(indeks, seri)| (indeks, seri.etiket.clone(), seri.göster))
+                    .collect()
+            })
+        } else {
+            Vec::new()
+        };
 
         let liste = div()
             .id("kart-listesi")
@@ -6275,6 +6303,20 @@ impl Render for ChartListesi {
                 }))
             }));
         let kullanım_rehberi = match aktif_kart {
+            KartKimliği::TooltipsClosest => Some(
+                "Amaç: dört rustc-perf çalışma kipinden imlece beş CSS piksel içinde en yakın \
+                 görünür seriyi bulur; commit, değer ve başlangıca göre değişimi gerçek veri \
+                 noktasına bağlı tek kutuda gösterir. API: OdakDüzeni yakınlık/alfa kararını, \
+                 EnYakınTooltipDüzeni commit dizisini, 100 interpolasyon indeksini ve perf URL \
+                 istatistiğini çekirdekte tutar; lejant setSeries, alan seçimi X+Y çalışır. \
+                 İzleme: derleyici, servis veya sürüm regresyonunda aynı commit anındaki çalışma \
+                 kiplerini karşılaştırmak için uygundur; yerinde plot tıklaması karşılaştırma \
+                 bağlantısını açar, sürükleme bağlantı açmaz. Maliyet: 234×4 çizgi noktası ve \
+                 100 dikey kılavuz vardır; kılavuzlar tek path komutunda boyanır, pointer araması \
+                 O(log N + görünür seri sayısı) ve kutu ana yolları yeniden çizmeden taşınır. \
+                 Tarih metni platformlar arası belirlenim için UTC'dir; kaynak browser-local \
+                 Date kullandığından bu bilinçli, belgeli tek sunum farkıdır.",
+            ),
             KartKimliği::TimeseriesDiscrete => Some(
                 "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
                  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
@@ -6608,7 +6650,38 @@ impl Render for ChartListesi {
                         }),
                 )
             })
-            .child(div().mb_2().text_xs().text_color(vurgu).child(lejant))
+            .when(
+                aktif_kart != KartKimliği::TooltipsClosest,
+                |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
+            )
+            .when(aktif_kart == KartKimliği::TooltipsClosest, |öğe| {
+                öğe.child(
+                    div().mb_2().flex().flex_wrap().gap_2().children(
+                        tooltips_closest_serileri.into_iter().map(
+                            |(indeks, etiket, görünür)| {
+                                Dugme::yeni(
+                                    SharedString::from(format!(
+                                        "tooltips-closest-seri-{indeks}"
+                                    )),
+                                    SharedString::from(format!(
+                                        "● {etiket}{}",
+                                        if görünür { "" } else { " · gizli" }
+                                    )),
+                                )
+                                .boyutu(DugmeBoyutu::Kucuk)
+                                .turu(if görünür {
+                                    DugmeTuru::Hayalet
+                                } else {
+                                    DugmeTuru::Ikincil
+                                })
+                                .tiklaninca(cx.listener(move |bu, _, _, cx| {
+                                    bu.tooltips_closest_serisini_değiştir(indeks, cx);
+                                }))
+                            },
+                        ),
+                    ),
+                )
+            })
             .when(açıklama_istendi, |öğe| {
                 öğe.child(
                     div()

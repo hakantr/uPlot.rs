@@ -387,8 +387,8 @@
                           border-radius: 4px; color: #fff; background: rgba(0,0,0,.8);
                           font-size: 12px; pointer-events: none; white-space: nowrap; }
     .imlec-bilgi-kutusu.en-yakin { max-width: 280px; border: 2px solid transparent;
-                                   color: #111; background: #fff; cursor: pointer;
-                                   pointer-events: auto; white-space: pre-line; }
+                                   color: #111; background: #fff; cursor: default;
+                                   pointer-events: none; white-space: pre-line; }
     .coklu-tooltip { position: absolute; z-index: 13; max-width: 190px; padding: 5px 7px;
                      border-radius: 4px; font-size: 12px; line-height: 1.25;
                      pointer-events: none; white-space: nowrap; }
@@ -2105,11 +2105,17 @@
         { etiket: "incr-full", renk: "#90ed7d" },
         { etiket: "incr-patched: println", renk: "#f7a35c" },
       ],
-      yardım: "Çizgiye yaklaş: en yakın commit · tooltip'e tıkla: perf karşılaştırması",
+      yardım: "Çizgiye yaklaş: en yakın commit · grafikte yerinde tıkla: perf karşılaştırması",
       değişkenNokta: false,
       bilgiKutusu: true,
       enYakınTooltip: true,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Dört rustc-perf serisinden imlece beş piksel içinde en yakın olanı seçer; commit, değer ve başlangıca göre değişimi tek bilgi kutusunda gösterir.",
+        api: "OdakDüzeni yakın seri seçimini, EnYakınTooltipDüzeni commit/interpolasyon bilgisini ve perf compare URL'sini çekirdekte tutar. Kaynak gibi X+Y alan seçimi yapılır.",
+        izleme: "Sürüm veya commit bazlı performans regresyonunda aynı andaki dört çalışma kipinden hangisinin değişime en yakın olduğunu incelemek ve karşılaştırma sayfasına geçmek için kullanılır.",
+        maliyet: "234×4 çizgi noktası ve 100 interpolasyon kılavuzu tek sahnededir. Kılavuzlar tek path'te boyanır; pointer araması O(log N + seri sayısı), kutu hafif overlay güncellemesidir.",
+      },
     };
     document.querySelector('[data-kart="tooltips-closest"]')?.insertAdjacentHTML(
       "afterend",
@@ -6277,7 +6283,9 @@
           ${eksenGöstergeleri}
         </g>`);
       const yığmaLejantı = aktifKart.startsWith("stacked-series-");
-      const değiştirilebilirLejant = yığmaLejantı || aktifKart.startsWith("multi-bars-");
+      const değiştirilebilirLejant = yığmaLejantı
+        || aktifKart.startsWith("multi-bars-")
+        || aktifKart === "tooltips-closest";
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks) || değiştirilebilirLejant
           ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>
@@ -6383,10 +6391,6 @@
         const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
         if (kart.enYakınTooltip) {
           bilgiKutusu?.classList.add("en-yakin");
-          bilgiKutusu?.addEventListener("click", () => {
-            const url = bilgiKutusu.dataset.karsilastirmaUrl;
-            if (url) window.open(url, "_blank", "noopener,noreferrer");
-          });
         }
       }
       if (aktifKart === "sine-stream" && grafikÜzerinde && sonPointerOlayı) {
@@ -6788,7 +6792,11 @@
         sparseİmleciSenkronla(svg);
         svg.querySelectorAll(".eksen-gosterge").forEach(öğe => öğe.setAttribute("visibility", "hidden"));
         const bilgiKutusu = etkileşimKapsamı.querySelector("#imlec-bilgi-kutusu");
-        if (bilgiKutusu) bilgiKutusu.hidden = true;
+        if (bilgiKutusu) {
+          bilgiKutusu.hidden = true;
+          delete bilgiKutusu.dataset.karsilastirmaUrl;
+        }
+        if (kartlar[aktifKart].enYakınTooltip) svg.style.cursor = "";
         chart.querySelectorAll(".coklu-tooltip").forEach(öğe => öğe.remove());
         return;
       }
@@ -6831,8 +6839,15 @@
       const tooltipBilgisi = kartlar[aktifKart].enYakınTooltip
         ? Array.from(oturum?.en_yakin_tooltip(xEksenOranı, oturum.odak_serisi()) ?? [])
         : [];
+      const tooltipKonumu = tooltipBilgisi.length === 4
+        ? Array.from(
+            oturum?.en_yakin_tooltip_konumu(xEksenOranı, oturum.odak_serisi()) ?? []
+          )
+        : [];
       if (bilgiKutusu && kartlar[aktifKart].enYakınTooltip && tooltipBilgisi.length !== 4) {
         bilgiKutusu.hidden = true;
+        delete bilgiKutusu.dataset.karsilastirmaUrl;
+        svg.style.cursor = "";
       } else if (bilgiKutusu && (tooltipBilgisi.length === 4 || Number.isFinite(seriDeğerleri[0]))) {
         if (tooltipBilgisi.length === 4) {
           bilgiKutusu.textContent = tooltipBilgisi[0];
@@ -6844,13 +6859,22 @@
         }
         const chartKutusu = chart.getBoundingClientRect();
         const svgKutusu = svg.getBoundingClientRect();
-        const pikselX = svgKutusu.left - chartKutusu.left + hamX / view.width * svgKutusu.width;
-        const pikselY = svgKutusu.top - chartKutusu.top + hamY / view.height * svgKutusu.height;
+        const kaynakX = tooltipKonumu.length === 2 && Number.isFinite(tooltipKonumu[0])
+          ? sol + tooltipKonumu[0] * (sağ - sol)
+          : hamX;
+        const kaynakY = tooltipKonumu.length === 2 && Number.isFinite(tooltipKonumu[1])
+          ? alt - tooltipKonumu[1] * (alt - üst)
+          : hamY;
+        const pikselX = svgKutusu.left - chartKutusu.left
+          + kaynakX / view.width * svgKutusu.width;
+        const pikselY = svgKutusu.top - chartKutusu.top
+          + kaynakY / view.height * svgKutusu.height;
         bilgiKutusu.hidden = false;
+        if (tooltipBilgisi.length === 4) svg.style.cursor = "pointer";
         const bilgiG = bilgiKutusu.offsetWidth;
         const bilgiY = bilgiKutusu.offsetHeight;
-        bilgiKutusu.style.left = `${Math.min(pikselX + 12, chart.clientWidth - bilgiG - 4)}px`;
-        bilgiKutusu.style.top = `${Math.min(pikselY + 12, chart.clientHeight - bilgiY - 4)}px`;
+        bilgiKutusu.style.left = `${Math.min(pikselX + 10, chart.clientWidth - bilgiG - 4)}px`;
+        bilgiKutusu.style.top = `${Math.min(pikselY + 10, chart.clientHeight - bilgiY - 4)}px`;
       }
       const [dikey, yatay] = çizgiler;
       // Varsayılan kartlarda kesintisiz; cursor-snap kartında çekirdek ayarının
@@ -7001,14 +7025,23 @@
       const { x, y, svg, view } = svgKonumu(olay);
       const alan = çizimAlanı(view);
       const xDikey = oturum?.x_dikey() ?? false;
-      sürükleme.son = xDikey
-        ? Math.max(alan.üst, Math.min(alan.alt, y))
-        : Math.max(alan.sol, Math.min(alan.sağ, x));
+      const xySeçim = oturum?.secim_xy_yakinlastir() ?? false;
+      sürükleme.sonX = Math.max(alan.sol, Math.min(alan.sağ, x));
+      sürükleme.sonY = Math.max(alan.üst, Math.min(alan.alt, y));
+      sürükleme.son = xDikey ? sürükleme.sonY : sürükleme.sonX;
       const seçim = svg.querySelector("#seçim");
-      seçim.setAttribute("x", xDikey ? alan.sol : Math.min(sürükleme.baş, sürükleme.son));
-      seçim.setAttribute("y", xDikey ? Math.min(sürükleme.baş, sürükleme.son) : alan.üst);
-      seçim.setAttribute("width", xDikey ? alan.genişlik : Math.abs(sürükleme.son - sürükleme.baş));
-      seçim.setAttribute("height", xDikey ? Math.abs(sürükleme.son - sürükleme.baş) : alan.yükseklik);
+      seçim.setAttribute("x", xySeçim
+        ? Math.min(sürükleme.başX, sürükleme.sonX)
+        : xDikey ? alan.sol : Math.min(sürükleme.baş, sürükleme.son));
+      seçim.setAttribute("y", xySeçim
+        ? Math.min(sürükleme.başY, sürükleme.sonY)
+        : xDikey ? Math.min(sürükleme.baş, sürükleme.son) : alan.üst);
+      seçim.setAttribute("width", xySeçim
+        ? Math.abs(sürükleme.sonX - sürükleme.başX)
+        : xDikey ? alan.genişlik : Math.abs(sürükleme.son - sürükleme.baş));
+      seçim.setAttribute("height", xySeçim
+        ? Math.abs(sürükleme.sonY - sürükleme.başY)
+        : xDikey ? Math.abs(sürükleme.son - sürükleme.baş) : alan.yükseklik);
       seçim.setAttribute("fill", sürükleme.açıklama ? "rgba(255,255,0,.3)" : "rgba(59,130,246,.18)");
       seçim.setAttribute("stroke", sürükleme.açıklama ? "#d4a800" : "#3b82f6");
       seçim.setAttribute("visibility", "visible");
@@ -7172,6 +7205,10 @@
       if (olay.pointerType === "touch" || eksenSürükleme || taşıma) {
         olay.preventDefault();
       }
+      if (sürükleme
+        && (olay.clientX !== sürükleme.clientX || olay.clientY !== sürükleme.clientY)) {
+        sürükleme.hareketEtti = true;
+      }
       sonPointerOlayı = olay;
       bekleyenPointerOlayı = olay;
       if (pointerAnimationFrame !== null) return;
@@ -7235,6 +7272,13 @@
       sürükleme = {
         baş: xDikey ? y : x,
         son: xDikey ? y : x,
+        başX: x,
+        sonX: x,
+        başY: y,
+        sonY: y,
+        clientX: olay.clientX,
+        clientY: olay.clientY,
+        hareketEtti: false,
         açıklama: etkileşimler.ctrlAçıklama && olay.ctrlKey,
       };
     });
@@ -7276,17 +7320,30 @@
       const alan = çizimAlanı(view);
       const seçim = sürükleme;
       sürükleme = null;
-      const geçerli = Math.abs(seçim.son - seçim.baş) >= 4;
+      const xySeçim = oturum?.secim_xy_yakinlastir() ?? false;
+      const geçerli = xySeçim
+        ? Math.abs(seçim.sonX - seçim.başX) >= 4
+          || Math.abs(seçim.sonY - seçim.başY) >= 4
+        : Math.abs(seçim.son - seçim.baş) >= 4;
       if (geçerli) {
         const xDikey = oturum?.x_dikey() ?? false;
         const a = Math.min(seçim.baş, seçim.son);
         const b = Math.max(seçim.baş, seçim.son);
         try {
-          const eylem = oturum.secimi_bitir(
-            xDikey ? (alan.alt - b) / alan.yükseklik : (a - alan.sol) / alan.genişlik,
-            xDikey ? (alan.alt - a) / alan.yükseklik : (b - alan.sol) / alan.genişlik,
-            seçim.açıklama,
-          );
+          const eylem = xySeçim
+            ? oturum.fiziksel_secim_yakinlastir_eksenlerde(
+                (seçim.başX - alan.sol) / alan.genişlik,
+                (seçim.başY - alan.üst) / alan.yükseklik,
+                (seçim.sonX - alan.sol) / alan.genişlik,
+                (seçim.sonY - alan.üst) / alan.yükseklik,
+                Math.abs(seçim.sonX - seçim.başX) >= 4,
+                Math.abs(seçim.sonY - seçim.başY) >= 4,
+              ) ? 1 : 0
+            : oturum.secimi_bitir(
+                xDikey ? (alan.alt - b) / alan.yükseklik : (a - alan.sol) / alan.genişlik,
+                xDikey ? (alan.alt - a) / alan.yükseklik : (b - alan.sol) / alan.genişlik,
+                seçim.açıklama,
+              );
           if (aktifKart === "sparse" && !seçim.açıklama) {
             const enAz = xDikey
               ? (alan.alt - b) / alan.yükseklik
@@ -7311,6 +7368,14 @@
       }
       if (!geçerli) {
         chart.querySelector("#seçim")?.setAttribute("visibility", "hidden");
+        if (aktifKart === "tooltips-closest"
+          && !seçim.hareketEtti
+          && olay.clientX === seçim.clientX
+          && olay.clientY === seçim.clientY) {
+          const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
+          const url = !bilgiKutusu?.hidden ? bilgiKutusu.dataset.karsilastirmaUrl : null;
+          if (url) window.open(url, "_blank", "noopener,noreferrer");
+        }
       }
     });
     chart.addEventListener("pointercancel", olay => {
@@ -7342,7 +7407,11 @@
       sonTooltipİmleci = null;
       if (oturum?.imlec_odagini_temizle()) çiz();
       const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
-      if (bilgiKutusu) bilgiKutusu.hidden = true;
+      if (bilgiKutusu) {
+        bilgiKutusu.hidden = true;
+        delete bilgiKutusu.dataset.karsilastirmaUrl;
+      }
+      chart.querySelectorAll("svg").forEach(svg => { svg.style.cursor = ""; });
       chart.querySelectorAll(".coklu-tooltip").forEach(öğe => öğe.remove());
       chart.querySelector("#çubuk-vurgu")?.setAttribute("visibility", "hidden");
       chart.querySelector("#kutu-biyik-vurgu")?.setAttribute("visibility", "hidden");

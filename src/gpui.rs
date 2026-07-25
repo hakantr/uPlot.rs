@@ -13,9 +13,9 @@ use ::gpui::{
 };
 
 use crate::{
-    Aralık, AçıklamaVuruşu, DağılımVuruşu, DoğrusalGradyan, Grafik, HizalıVeri, Komut, MetinHizası,
-    Nokta, Sahne, SeriBandı, SeriSeçenekleri, SeçimEylemi, TekerlekEkseni, UplotHatası,
-    YüzeyDikdörtgeni,
+    Aralık, AçıklamaVuruşu, DağılımVuruşu, DoğrusalGradyan, EnYakınTooltipBilgisi, Grafik,
+    HizalıVeri, Komut, MetinHizası, Nokta, Sahne, SeriBandı, SeriSeçenekleri, SeçimEylemi,
+    TekerlekEkseni, UplotHatası, YüzeyDikdörtgeni,
 };
 
 #[derive(Clone)]
@@ -61,6 +61,8 @@ pub struct GpuiGrafik {
     imleç_kilitli: bool,
     eksen_üzerinde: bool,
     açıklama_vuruşu: Option<AçıklamaVuruşu>,
+    tooltip_tıklama_başlangıcı: Option<(Nokta, String)>,
+    tooltip_tıklaması_sürüklendi: bool,
 }
 
 struct GpuiAnaYüzey {
@@ -318,6 +320,8 @@ impl GpuiGrafik {
             imleç_kilitli: false,
             eksen_üzerinde: false,
             açıklama_vuruşu: None,
+            tooltip_tıklama_başlangıcı: None,
+            tooltip_tıklaması_sürüklendi: false,
         }
     }
 
@@ -367,6 +371,14 @@ impl GpuiGrafik {
             f64::from((imleç.fare.y - üst) / yükseklik),
             self.grafik.odak_serisi(),
         ))
+    }
+
+    fn etkin_en_yakın_tooltip(&self) -> Option<EnYakınTooltipBilgisi> {
+        let imleç = self.imleç.as_ref()?;
+        let seri = self.grafik.odak_serisi()?;
+        let (sol, sağ, _, _) = self.çizim_alanı();
+        let yatay_oran = f64::from(((imleç.fare.x - sol) / (sağ - sol)).clamp(0.0, 1.0));
+        self.grafik.en_yakın_tooltip(yatay_oran, seri)
     }
 
     pub fn senkron_veri_yayını(&self) -> Option<(f64, f64, Option<usize>)> {
@@ -1480,10 +1492,6 @@ impl Render for GpuiGrafik {
                     .max(0.01);
                 let yatay_pay = (f32::from(sınırlar.size.width) - kaynak_g as f32 * ölçek) / 2.0;
                 let dikey_pay = (f32::from(sınırlar.size.height) - kaynak_y as f32 * ölçek) / 2.0;
-                let sol = (yatay_pay + imleç.fare.x * ölçek + 12.0)
-                    .clamp(4.0, (f32::from(sınırlar.size.width) - 190.0).max(4.0));
-                let üst = (dikey_pay + imleç.fare.y * ölçek + 12.0)
-                    .clamp(4.0, (f32::from(sınırlar.size.height) - 42.0).max(4.0));
                 let (çizim_sol, çizim_sağ, _, _) = self.çizim_alanı();
                 let yatay_oran = f64::from(
                     ((imleç.fare.x - çizim_sol) / (çizim_sağ - çizim_sol)).clamp(0.0, 1.0),
@@ -1500,6 +1508,22 @@ impl Render for GpuiGrafik {
                 let bağlantı = en_yakın
                     .as_ref()
                     .map(|bilgi| bilgi.karşılaştırma_url.clone());
+                let (bağlantı_sol, bağlantı_üst) = en_yakın
+                    .as_ref()
+                    .and_then(|bilgi| {
+                        let x = self.grafik.x_konum_oranı(bilgi.zaman)?;
+                        let y = self.grafik.seri_y_konum_oranı(bilgi.seri, bilgi.değer)?;
+                        let (_, _, çizim_üst, çizim_alt) = self.çizim_alanı();
+                        Some((
+                            çizim_sol + (çizim_sağ - çizim_sol) * x as f32,
+                            çizim_alt - (çizim_alt - çizim_üst) * y as f32,
+                        ))
+                    })
+                    .unwrap_or((imleç.fare.x, imleç.fare.y));
+                let sol = (yatay_pay + bağlantı_sol * ölçek + 10.0)
+                    .clamp(4.0, (f32::from(sınırlar.size.width) - 190.0).max(4.0));
+                let üst = (dikey_pay + bağlantı_üst * ölçek + 10.0)
+                    .clamp(4.0, (f32::from(sınırlar.size.height) - 42.0).max(4.0));
                 Some((
                     sol,
                     üst,
@@ -1714,6 +1738,13 @@ impl Render for GpuiGrafik {
                     };
                     bu.seçim = Some((başlangıç, bitiş));
                 }
+                if olay.dragging()
+                    && let Some((başlangıç, _)) = bu.tooltip_tıklama_başlangıcı.as_ref()
+                    && let Some(konum) = bu.sahne_konumu(olay.position)
+                    && (başlangıç.x != konum.x || başlangıç.y != konum.y)
+                {
+                    bu.tooltip_tıklaması_sürüklendi = true;
+                }
                 if !bu.grafik.eksen_sürükleniyor()
                     && let Some(konum) = bu.sahne_konumu(olay.position)
                 {
@@ -1771,6 +1802,15 @@ impl Render for GpuiGrafik {
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(|bu, olay: &MouseDownEvent, window, cx| {
+                    bu.tooltip_tıklaması_sürüklendi = false;
+                    bu.tooltip_tıklama_başlangıcı =
+                        bu.sahne_konumu(olay.position).and_then(|konum| {
+                            if !bu.grafik_alanında(konum) {
+                                return None;
+                            }
+                            bu.etkin_en_yakın_tooltip()
+                                .map(|bilgi| (konum, bilgi.karşılaştırma_url))
+                        });
                     let mut ana_sahne_değişti = false;
                     let mut görünüm_değişti = false;
                     if let Some(odak) = bu.odak.as_ref() {
@@ -1825,7 +1865,23 @@ impl Render for GpuiGrafik {
             )
             .on_mouse_up(
                 MouseButton::Left,
-                cx.listener(|bu, _: &MouseUpEvent, _, cx| {
+                cx.listener(|bu, olay: &MouseUpEvent, _, cx| {
+                    let sürüklendi = std::mem::take(&mut bu.tooltip_tıklaması_sürüklendi);
+                    let tooltip_tıklaması = if sürüklendi {
+                        bu.tooltip_tıklama_başlangıcı = None;
+                        None
+                    } else {
+                        bu.tooltip_tıklama_başlangıcı
+                            .take()
+                            .and_then(|(başlangıç, url)| {
+                                let bitiş = bu.sahne_konumu(olay.position)?;
+                                let aynı_konum = başlangıç.x == bitiş.x && başlangıç.y == bitiş.y;
+                                let aynı_url = bu
+                                    .etkin_en_yakın_tooltip()
+                                    .is_some_and(|bilgi| bilgi.karşılaştırma_url == url);
+                                (aynı_konum && aynı_url).then_some(url)
+                            })
+                    };
                     if bu.grafik.eksen_sürükleniyor() {
                         bu.grafik.eksen_sürüklemeyi_bitir();
                         GpuiGrafik::bildir(cx);
@@ -1843,7 +1899,7 @@ impl Render for GpuiGrafik {
                         let x_farkı = (bitiş.x - başlangıç.x).abs();
                         let y_farkı = (bitiş.y - başlangıç.y).abs();
                         let yeterli = if ayarlar.seçim_xy_yakınlaştır {
-                            x_farkı >= 4.0 && y_farkı >= 4.0
+                            x_farkı >= 4.0 || y_farkı >= 4.0
                         } else if bu.grafik.x_dikey_mi() {
                             y_farkı >= 4.0
                         } else {
@@ -1852,11 +1908,13 @@ impl Render for GpuiGrafik {
                         if yeterli {
                             let (sol, sağ, üst, alt) = bu.çizim_alanı();
                             if ayarlar.seçim_xy_yakınlaştır {
-                                match bu.grafik.fiziksel_seçim_yakınlaştır(
+                                match bu.grafik.fiziksel_seçim_yakınlaştır_eksenlerde(
                                     f64::from((başlangıç.x - sol) / (sağ - sol)),
                                     f64::from((başlangıç.y - üst) / (alt - üst)),
                                     f64::from((bitiş.x - sol) / (sağ - sol)),
                                     f64::from((bitiş.y - üst) / (alt - üst)),
+                                    x_farkı >= 4.0,
+                                    y_farkı >= 4.0,
                                 ) {
                                     Ok(değişti) => {
                                         bu.hata = None;
@@ -1907,6 +1965,9 @@ impl Render for GpuiGrafik {
                     } else {
                         GpuiGrafik::bildir(cx);
                     }
+                    if let Some(url) = tooltip_tıklaması {
+                        cx.open_url(&url);
+                    }
                 }),
             )
             .child(ana_yüzey.cached(StyleRefinement::default().size_full()))
@@ -1923,7 +1984,6 @@ impl Render for GpuiGrafik {
             .when_some(
                 bilgi_kutusu,
                 |yüzey, (sol, üst, metin, kenarlık, bağlantı)| {
-                    let tıklama_bağlantısı = bağlantı.clone();
                     yüzey.child(
                         div()
                             .absolute()
@@ -1945,16 +2005,6 @@ impl Render for GpuiGrafik {
                                 rgb(0xffffff)
                             })
                             .text_xs()
-                            .when(bağlantı.is_some(), |kutu| {
-                                kutu.cursor_pointer().on_mouse_down(
-                                    MouseButton::Left,
-                                    cx.listener(move |_, _: &MouseDownEvent, _, cx| {
-                                        if let Some(url) = tıklama_bağlantısı.as_deref() {
-                                            cx.open_url(url);
-                                        }
-                                    }),
-                                )
-                            })
                             .child(metin),
                     )
                 },

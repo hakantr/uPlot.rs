@@ -1405,6 +1405,9 @@ impl Grafik {
             return Ok(false);
         }
         seri.göster = görünür;
+        if !görünür && self.odak_serisi == Some(indeks) {
+            self.odak_serisi = None;
+        }
         Ok(true)
     }
 
@@ -2125,7 +2128,33 @@ impl Grafik {
         yatay_bitiş: f64,
         dikey_bitiş: f64,
     ) -> Result<bool, UplotHatası> {
+        self.fiziksel_seçim_yakınlaştır_eksenlerde(
+            yatay_başlangıç,
+            dikey_başlangıç,
+            yatay_bitiş,
+            dikey_bitiş,
+            true,
+            true,
+        )
+    }
+
+    /// Fiziksel seçimin yalnız hareket eden ekran eksenlerini uygular.
+    /// Böylece uPlot'un `drag.x`/`drag.y` davranışındaki gibi yatay veya dikey
+    /// tek eksenli bir sürükleme, öteki ölçeği sıfır genişliğe indirmez.
+    #[allow(clippy::too_many_arguments)]
+    pub fn fiziksel_seçim_yakınlaştır_eksenlerde(
+        &mut self,
+        yatay_başlangıç: f64,
+        dikey_başlangıç: f64,
+        yatay_bitiş: f64,
+        dikey_bitiş: f64,
+        yatay_etkin: bool,
+        dikey_etkin: bool,
+    ) -> Result<bool, UplotHatası> {
         if !self.etkileşim.ayarlar().seçim_yakınlaştır {
+            return Ok(false);
+        }
+        if !yatay_etkin && !dikey_etkin {
             return Ok(false);
         }
         if ![yatay_başlangıç, dikey_başlangıç, yatay_bitiş, dikey_bitiş]
@@ -2143,8 +2172,19 @@ impl Grafik {
         let (x1, y1) = self.fiziksel_oranları_mantıksala(yatay_bitiş, dikey_bitiş);
         let mevcut_x = self.görünür_x_aralığı();
         let mevcut_y = self.görünür_y_aralığı();
-        let x = oran_aralığı(mevcut_x, x0, x1)?;
-        let y = oran_aralığı(mevcut_y, 1.0 - y0, 1.0 - y1)?;
+        let x_dikey = self.x_dikey_mi();
+        let x_etkin = if x_dikey { dikey_etkin } else { yatay_etkin };
+        let y_etkin = if x_dikey { yatay_etkin } else { dikey_etkin };
+        let x = if x_etkin {
+            oran_aralığı(mevcut_x, x0, x1)?
+        } else {
+            mevcut_x
+        };
+        let y = if y_etkin {
+            oran_aralığı(mevcut_y, 1.0 - y0, 1.0 - y1)?
+        } else {
+            mevcut_y
+        };
         let değişti = self.etkileşim.görünür_aralıkları_ayarla(x, y, true);
         if değişti {
             self.x_aralığını_veriye_yapıştır();
@@ -2710,7 +2750,10 @@ impl Grafik {
             interpolasyon,
             kenarlık_rengi,
             karşılaştırma_url,
-            metin: format!("{tarih} - {kısa_commit}\n{değer} ({yüzde:.2}% since start)"),
+            metin: format!(
+                "{tarih} - {kısa_commit}\n{} ({yüzde:.2}% since start)",
+                tooltip_sayısını_biçimlendir(değer)
+            ),
         })
     }
 
@@ -2915,6 +2958,9 @@ impl Grafik {
             let Some(seri) = self.seçenekler.seriler.get(indeks) else {
                 continue;
             };
+            if !seri.göster {
+                continue;
+            }
             let aralık = self.görünür_ölçek_aralığı(&seri.ölçek, x_aralığı, None);
             if düzen.yön_eğilimi != 0 {
                 let aynı_işaret = değer.is_sign_negative() == fare_değeri.is_sign_negative();
@@ -3660,24 +3706,6 @@ impl Grafik {
             }
         }
 
-        if let Some(düzen) = self.seçenekler.en_yakın_tooltip.as_ref() {
-            for indeks in &düzen.interpolasyonlar {
-                let Some(x_değeri) = self.veri.x().get(*indeks).copied() else {
-                    continue;
-                };
-                if x_değeri < x_aralığı.en_az || x_değeri > x_aralığı.en_çok {
-                    continue;
-                }
-                let x = self.x_konumu(x_aralığı, x_değeri, sol, genişlik);
-                sahne.ekle(Komut::Çizgi {
-                    başlangıç: Nokta::yeni(x, üst),
-                    bitiş: Nokta::yeni(x, alt),
-                    renk: renk_alfa(&düzen.interpolasyon_rengi, 0x7a),
-                    kalınlık: 1.0,
-                });
-            }
-        }
-
         for (seri_indeksi, değerler) in self.veri.seriler().iter().enumerate() {
             let Some(seri) = self.seçenekler.seriler.get(seri_indeksi) else {
                 continue;
@@ -4032,20 +4060,6 @@ impl Grafik {
                             .unwrap_or_else(|| seri_rengi.clone()),
                     });
                 }
-
-                if let Some(düzen) = self.seçenekler.en_yakın_tooltip.as_ref() {
-                    for (indeks, nokta, _, _) in &görünür_noktalar {
-                        if düzen.interpolasyonlar.contains(indeks) {
-                            sahne.ekle(Komut::Daire {
-                                merkez: *nokta,
-                                yarıçap: 3.0,
-                                dolgu: "#ffffff".to_string(),
-                                çizgi: düzen.interpolasyon_rengi.clone(),
-                                kalınlık: 1.5,
-                            });
-                        }
-                    }
-                }
             }
 
             if let Some(düzen) = kanca.filter(|düzen| düzen.seri_uç_trendleri)
@@ -4085,6 +4099,29 @@ impl Grafik {
                         kalınlık: düzen.medyan_kalınlığı,
                     });
                 }
+            }
+        }
+
+        // Kaynak `drawAxes` kancası gibi interpolasyon kılavuzları seri
+        // yollarından sonra, görünür X dilimiyle sınırlı tek bir path'te boyanır.
+        if let Some(düzen) = self.seçenekler.en_yakın_tooltip.as_ref() {
+            let mut kılavuzlar = Vec::new();
+            for indeks in &düzen.interpolasyonlar {
+                let Some(x_değeri) = self.veri.x().get(*indeks).copied() else {
+                    continue;
+                };
+                if x_değeri < x_aralığı.en_az || x_değeri > x_aralığı.en_çok {
+                    continue;
+                }
+                let x = self.x_konumu(x_aralığı, x_değeri, sol, genişlik);
+                kılavuzlar.push(vec![Nokta::yeni(x, üst), Nokta::yeni(x, alt)]);
+            }
+            if !kılavuzlar.is_empty() {
+                sahne.ekle(Komut::Yol {
+                    parçalar: kılavuzlar,
+                    renk: renk_alfa(&düzen.interpolasyon_rengi, 0x7a),
+                    kalınlık: 1.0,
+                });
             }
         }
 
@@ -6391,6 +6428,16 @@ fn en_yakın_x_indeksi(x: &[f64], aralık: Aralık, hedef: f64) -> Option<usize>
         (None, Some(sağ)) => Some(sağ),
         (None, None) => None,
     }
+}
+
+/// JavaScript `Intl.NumberFormat()` varsayılanındaki en çok üç ondalık
+/// basamaklı kompakt tooltip değerini, platform yerel ayarından bağımsız üretir.
+fn tooltip_sayısını_biçimlendir(değer: f64) -> String {
+    let biçimli = format!("{değer:.3}");
+    biçimli
+        .trim_end_matches('0')
+        .trim_end_matches('.')
+        .to_string()
 }
 
 /// İkili arama konumundan iki yana yalnız gerektiği kadar ilerleyerek null

@@ -3107,8 +3107,9 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "source-exact-rustc-perf-json", "source-exact-234-commits-and-four-series",
-        "duplicate-x-timestamps", "closest-series-focus", "source-tooltip-format",
-        "percent-since-start", "clickable-perf-compare-url", "interpolation-guides-and-markers",
+        "duplicate-x-timestamps", "closest-visible-series-focus", "source-tooltip-format",
+        "percent-since-start", "plot-in-place-click-perf-url", "data-point-tooltip-anchor",
+        "single-path-interpolation-guides", "xy-selection-zoom", "legend-set-series",
         "gpui-wasm-parity", "common-interaction-profile", "panic-free-tooltip-resolution"
       ],
       "kanıt": {

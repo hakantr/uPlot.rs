@@ -20,11 +20,21 @@ tarih_biçimi = "{M}/{D}/{YY} {h}:{mm}:{ss} {AA}"
 commit_karakteri = 10
 başlangıçtan_yüzde = true
 tıklanabilir_karşılaştırma = true
+tıklama_hedefi = "plot"
+tıklama_hareketi = "mousedown ve mouseup aynı istemci konumu"
+ankraj = "seçilen gerçek veri noktası +10 CSS px"
+pointer_events = "none"
 stat = "instructions:u"
 interpolasyon_rengi = "#fcb0f1"
+interpolasyon_tek_yol = true
+interpolasyon_noktaları = false
+zaman_dilimi = "platformlar arası belirlenim için UTC; kaynak tarayıcı yerel Date kullanır"
 
 [etkileşim]
 ortak_davranış_profili = "resize-temeli-v1"
+seçim_yakınlaştırma = "x+y"
+lejant_set_series = true
+gizli_seri_odak_adayı = false
 
 [kanıt]
 örnek = "examples/tooltips_closest.rs"

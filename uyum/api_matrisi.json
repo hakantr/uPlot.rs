@@ -736,14 +736,20 @@
       "test": "src/kart/tooltips_closest.rs"
     },
     {
-      "kaynak_yolu": "interpolated indices vertical guides and point markers",
-      "rust_karşılığı": "EnYakınTooltipDüzeni / ortak Sahne komutları",
+      "kaynak_yolu": "drawAxes hook / interpolated indices as one vertical-guide path",
+      "rust_karşılığı": "EnYakınTooltipDüzeni / tek Komut::Yol kılavuz grubu",
       "durum": "tam_kanıtlı",
       "test": "src/kart/tooltips_closest.rs"
     },
     {
-      "kaynak_yolu": "tooltip click opens perf compare start/end/stat URL",
-      "rust_karşılığı": "EnYakınTooltipBilgisi::karşılaştırma_url / GPUI ve WASM bağdaştırıcıları",
+      "kaynak_yolu": "cursor.drag x+y / legend setSeries / hidden series focus exclusion",
+      "rust_karşılığı": "seçim_xy_yakınlaştır / seri_görünürlüğünü_ayarla / odak adayı filtresi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/tooltips_closest.rs"
+    },
+    {
+      "kaynak_yolu": "plot same-position click opens perf compare start/end/stat URL; tooltip is pointer-transparent",
+      "rust_karşılığı": "EnYakınTooltipBilgisi::karşılaştırma_url / GPUI ve WASM plot olay bağdaştırıcıları",
       "durum": "tam_kanıtlı",
       "test": "wasm/src/lib.rs"
     },
