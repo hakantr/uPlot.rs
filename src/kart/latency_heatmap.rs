@@ -159,14 +159,16 @@ fn kovalanmış_ısı_haritası() -> Result<(GrafikSeçenekleri, HizalıVeri), U
         let azami = kovalar.values().copied().max().unwrap_or(1).max(1);
         for (kova, sayı) in kovalar {
             let oran = f64::from(sayı) / f64::from(azami);
-            hücreler.push(IsıHücresi::yeni(
-                x,
-                kova as f64 * 5.0 + 2.5,
-                IsıHücresiBoyutu::Piksel(10.0),
-                IsıHücresiBoyutu::Veri(5.0),
-                hsl_renk(180.0 + oran * 180.0, 0.8, 0.5),
-            )
-            .piksel_ofseti(1.0, 0.0));
+            hücreler.push(
+                IsıHücresi::yeni(
+                    x,
+                    kova as f64 * 5.0 + 2.5,
+                    IsıHücresiBoyutu::Piksel(10.0),
+                    IsıHücresiBoyutu::Veri(5.0),
+                    hsl_renk(180.0 + oran * 180.0, 0.8, 0.5),
+                )
+                .piksel_ofseti(1.0, 0.0),
+            );
         }
     }
     ısı_haritası_seçenekleri(LatencyHeatmapÖrneği::Kovalanmış, hücreler, false)

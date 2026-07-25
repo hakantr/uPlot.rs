@@ -50,6 +50,11 @@ pub(crate) fn yerel_eksen_etiketi(
 ) -> Option<(String, i64)> {
     let yerel_zaman = zaman_damgası + f64::from(zaman_dilimi_ofseti(zaman_dilimi, zaman_damgası));
     let (yıl, ay, gün, saat, dakika, saniye) = utc_alanları(yerel_zaman)?;
+    let dönem = if saat < 12 { "am" } else { "pm" };
+    let saat12 = match saat % 12 {
+        0 => 12,
+        değer => değer,
+    };
     let içerik = if artım >= 28.0 * 86_400.0 {
         let ay_adı = adlar.kısa_ay(ay)?;
         if önceki_yıl == Some(yıl) {
@@ -58,34 +63,93 @@ pub(crate) fn yerel_eksen_etiketi(
             format!("{ay_adı}\n{yıl:04}")
         }
     } else if artım >= 86_400.0 {
-        format!("{ay:02}-{gün:02}")
+        if önceki_yıl == Some(yıl) {
+            format!("{ay}/{gün}")
+        } else {
+            format!("{ay}/{gün}\n{yıl:04}")
+        }
+    } else if artım >= 3_600.0 && saat == 0 && dakika == 0 {
+        format!("{ay}/{gün}\n{saat12}{dönem}")
+    } else if artım >= 3_600.0 {
+        format!("{saat12}{dönem}")
     } else if artım >= 60.0 && saat == 0 && dakika == 0 {
-        format!("{ay:02}-{gün:02} {saat:02}:{dakika:02}")
+        format!("{ay}/{gün}\n{saat12}:{dakika:02}{dönem}")
     } else if artım >= 60.0 {
-        format!("{saat:02}:{dakika:02}")
+        format!("{saat12}:{dakika:02}{dönem}")
     } else {
-        format!("{saat:02}:{dakika:02}:{saniye:02}")
+        format!("{saniye:02}")
     };
     Some((içerik, yıl))
 }
 
 pub(crate) fn zaman_dilimi_ofseti(zaman_dilimi: crate::ZamanDilimi, zaman: f64) -> i32 {
+    let Some((yıl, _, _, _, _, _)) = utc_alanları(zaman) else {
+        return 0;
+    };
     match zaman_dilimi {
         crate::ZamanDilimi::Utc => 0,
         crate::ZamanDilimi::EuropeLondon => {
-            if (1_711_846_800.0..1_729_990_800.0).contains(&zaman) {
+            let başlangıç = ayın_son_pazarı(yıl, 3)
+                .and_then(|gün| utc_zaman_damgası(yıl, 3, gün))
+                .map(|zaman| zaman + 3_600.0);
+            let bitiş = ayın_son_pazarı(yıl, 10)
+                .and_then(|gün| utc_zaman_damgası(yıl, 10, gün))
+                .map(|zaman| zaman + 3_600.0);
+            if başlangıç
+                .zip(bitiş)
+                .is_some_and(|(başlangıç, bitiş)| (başlangıç..bitiş).contains(&zaman))
+            {
                 3_600
             } else {
                 0
             }
         }
         crate::ZamanDilimi::AmericaChicago => {
-            if (1_710_057_600.0..1_730_617_200.0).contains(&zaman) {
+            let başlangıç = ayın_ninci_pazarı(yıl, 3, 2)
+                .and_then(|gün| utc_zaman_damgası(yıl, 3, gün))
+                .map(|zaman| zaman + 8.0 * 3_600.0);
+            let bitiş = ayın_ninci_pazarı(yıl, 11, 1)
+                .and_then(|gün| utc_zaman_damgası(yıl, 11, gün))
+                .map(|zaman| zaman + 7.0 * 3_600.0);
+            if başlangıç
+                .zip(bitiş)
+                .is_some_and(|(başlangıç, bitiş)| (başlangıç..bitiş).contains(&zaman))
+            {
                 -5 * 3_600
             } else {
                 -6 * 3_600
             }
         }
+    }
+}
+
+fn ayın_ninci_pazarı(yıl: i64, ay: u32, sıra: u32) -> Option<u32> {
+    if sıra == 0 {
+        return None;
+    }
+    let ilk = utc_zaman_damgası(yıl, ay, 1)? as i64 / 86_400;
+    let ilk_hafta_günü = (ilk + 4).rem_euclid(7) as u32;
+    let gün = 1 + (7 - ilk_hafta_günü) % 7 + (sıra - 1) * 7;
+    (gün <= aydaki_gün_sayısı(yıl, ay)?).then_some(gün)
+}
+
+fn ayın_son_pazarı(yıl: i64, ay: u32) -> Option<u32> {
+    let son_gün = aydaki_gün_sayısı(yıl, ay)?;
+    let son = utc_zaman_damgası(yıl, ay, son_gün)? as i64 / 86_400;
+    let son_hafta_günü = (son + 4).rem_euclid(7) as u32;
+    Some(son_gün - son_hafta_günü)
+}
+
+fn aydaki_gün_sayısı(yıl: i64, ay: u32) -> Option<u32> {
+    match ay {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => Some(31),
+        4 | 6 | 9 | 11 => Some(30),
+        2 => Some(if yıl % 4 == 0 && (yıl % 100 != 0 || yıl % 400 == 0) {
+            29
+        } else {
+            28
+        }),
+        _ => None,
     }
 }
 
@@ -137,7 +201,7 @@ mod testler {
                     None,
                 )
             }),
-            Some(("02-01 00:00".to_string(), 2024))
+            Some(("2/1\n12am".to_string(), 2024))
         );
         assert_eq!(
             zaman.and_then(|z| {
@@ -150,6 +214,33 @@ mod testler {
                 )
             }),
             Some(("Февр\n2024".to_string(), 2024))
+        );
+    }
+
+    #[test]
+    fn dst_kuralları_yıldan_bağımsız_hesaplanır() {
+        let london_önce = utc_zaman_damgası(2025, 3, 30).map(|zaman| zaman + 3_599.0);
+        let london_sonra = utc_zaman_damgası(2025, 3, 30).map(|zaman| zaman + 3_600.0);
+        assert_eq!(
+            london_önce.map(|zaman| zaman_dilimi_ofseti(crate::ZamanDilimi::EuropeLondon, zaman)),
+            Some(0)
+        );
+        assert_eq!(
+            london_sonra.map(|zaman| zaman_dilimi_ofseti(crate::ZamanDilimi::EuropeLondon, zaman)),
+            Some(3_600)
+        );
+
+        let chicago_önce = utc_zaman_damgası(2025, 3, 9).map(|zaman| zaman + 28_799.0);
+        let chicago_sonra = utc_zaman_damgası(2025, 3, 9).map(|zaman| zaman + 28_800.0);
+        assert_eq!(
+            chicago_önce
+                .map(|zaman| zaman_dilimi_ofseti(crate::ZamanDilimi::AmericaChicago, zaman)),
+            Some(-6 * 3_600)
+        );
+        assert_eq!(
+            chicago_sonra
+                .map(|zaman| zaman_dilimi_ofseti(crate::ZamanDilimi::AmericaChicago, zaman)),
+            Some(-5 * 3_600)
         );
     }
 }

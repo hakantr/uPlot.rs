@@ -462,9 +462,9 @@ mod testler {
                 _ => None,
             })
             .collect::<Vec<_>>();
-        assert!(etiketler.contains(&"03-31 00:00"));
-        assert!(etiketler.contains(&"02:00"));
-        assert!(!etiketler.contains(&"01:00"));
+        assert!(etiketler.contains(&"3/31\n12am"));
+        assert!(etiketler.contains(&"2am"));
+        assert!(!etiketler.contains(&"1am"));
         Ok(())
     }
 

@@ -7116,7 +7116,7 @@ fn zaman_bölmeleri(
     zaman_dilimi: crate::ZamanDilimi,
     sabit_artım: Option<f64>,
 ) -> (Vec<f64>, f64) {
-    const SANİYE_ADIMLARI: [f64; 25] = [
+    const SANİYE_ADIMLARI: [f64; 35] = [
         1.0,
         2.0,
         5.0,
@@ -7132,11 +7132,21 @@ fn zaman_bölmeleri(
         3_600.0,
         7_200.0,
         10_800.0,
+        14_400.0,
         21_600.0,
+        28_800.0,
         43_200.0,
         86_400.0,
         172_800.0,
+        259_200.0,
+        345_600.0,
+        432_000.0,
+        518_400.0,
         604_800.0,
+        691_200.0,
+        777_600.0,
+        864_000.0,
+        1_296_000.0,
         2_592_000.0,
         7_776_000.0,
         15_552_000.0,
@@ -8534,6 +8544,17 @@ mod eksen_testleri {
                 .iter()
                 .all(|değer| (*değer % 3_600.0).abs() <= f64::EPSILON)
         );
+    }
+
+    #[test]
+    fn zaman_bölmeleri_kaynak_dört_sekiz_saat_ve_üç_gün_adımlarını_seçer() {
+        let adımı_seç = |hedef: f64| {
+            let aralık = Aralık::yeni(0.0, hedef * 28.0).expect("geçerli zaman aralığı");
+            zaman_bölmeleri(aralık, 1_400.0, 50.0, false, crate::ZamanDilimi::Utc, None).1
+        };
+        assert_eq!(adımı_seç(4.0 * 3_600.0), 4.0 * 3_600.0);
+        assert_eq!(adımı_seç(8.0 * 3_600.0), 8.0 * 3_600.0);
+        assert_eq!(adımı_seç(3.0 * 86_400.0), 3.0 * 86_400.0);
     }
 
     #[test]
