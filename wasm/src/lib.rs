@@ -930,6 +930,16 @@ impl KartOturumu {
         Ok(self.grafik.görünür_aralıkları_ayarla(x, y, geçmişe_ekle))
     }
 
+    pub fn gorunur_x_araligini_ayarla(
+        &mut self,
+        x_en_az: f64,
+        x_en_çok: f64,
+        geçmişe_ekle: bool,
+    ) -> Result<bool, JsValue> {
+        let x = Aralık::yeni(x_en_az, x_en_çok).map_err(js_hatası)?;
+        Ok(self.grafik.görünür_x_aralığını_ayarla(x, geçmişe_ekle))
+    }
+
     pub fn olcum_datumu_ayarla(&mut self, datum: usize, yatay_oran: f64, dikey_oran: f64) -> bool {
         self.grafik
             .ölçüm_datumunu_ayarla(datum, yatay_oran, dikey_oran)
@@ -1486,6 +1496,20 @@ impl SyncCursorKoprusu {
         örnek_from_index(kaynak_indeksi).map_or_else(Vec::new, |kaynak| {
             self.grup
                 .imleç_hedefleri(kaynak)
+                .into_iter()
+                .filter_map(|hedef| u32::try_from(örnek_index(hedef)).ok())
+                .collect()
+        })
+    }
+
+    pub fn gorunum_hedefleri(
+        &self,
+        kaynak_indeksi: usize,
+        fare_basma_birakma_olayi: bool,
+    ) -> Vec<u32> {
+        örnek_from_index(kaynak_indeksi).map_or_else(Vec::new, |kaynak| {
+            self.grup
+                .görünüm_hedefleri(kaynak, fare_basma_birakma_olayi)
                 .into_iter()
                 .filter_map(|hedef| u32::try_from(örnek_index(hedef)).ok())
                 .collect()
@@ -2703,6 +2727,15 @@ mod testler {
         assert_eq!(köprü.seri_hedefi(3, 4, 1), -1);
         assert_eq!(köprü.fare_birak(0), vec![0, 1, 1, 1, 2, 1]);
         assert!(köprü.kilitli(2));
+        assert_eq!(köprü.gorunum_hedefleri(0, true), vec![1, 2]);
+        köprü.fare_senkronunu_ayarla(false);
+        assert!(köprü.gorunum_hedefleri(0, true).is_empty());
+        assert_eq!(köprü.gorunum_hedefleri(0, false), vec![1, 2]);
+        assert!(köprü.fare_birak(3).is_empty());
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("function syncCursorGörünümünüYay"));
+        assert!(web.contains("function syncCursorSeriGörünürlüğünüDeğiştir"));
+        assert!(web.contains("veriY: yAralığı[1] - mantıksal[1]"));
         assert!(sync_cursor_kart_tanim_ornegi().contains("SyncCursorGrubu"));
         assert_eq!(kart_sayisi(), 365);
     }

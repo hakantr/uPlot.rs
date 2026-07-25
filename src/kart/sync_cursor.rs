@@ -7,7 +7,9 @@ use crate::{
 pub const SYNC_CURSOR_KART_TANIM_ÖRNEĞİ: &str = r##"let mut grup = SyncCursorGrubu::yeni();
 let yüzeyler = SyncCursorÖrneği::TÜMÜ.map(sync_cursor_kartı);
 let hedefler = grup.imleç_hedefleri(SyncCursorÖrneği::Cpu);
-// Fare hareketi, seri odağı ve cursor kilidi eşlemesi çekirdektedir.
+let seçim_hedefleri = grup.görünüm_hedefleri(SyncCursorÖrneği::Cpu, true);
+// Veri-değeri bazlı cursor, etiket bazlı setSeries, X ölçeği ve yalnız ilk
+// gruptaki cursor kilidi/pub-sub kuralları çekirdekte çözülür.
 "##;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -124,6 +126,21 @@ impl SyncCursorGrubu {
             .collect()
     }
 
+    /// Görünür X aralığını paylaşacak yüzeyleri döndürür. uPlot'un `mouseup`
+    /// / `mousedown` filtresi yalnız ilk gruptaki seçim yakınlaştırmasını
+    /// sınırlar; tekerlek, taşıma ve tam görünüm port eklentileri normal
+    /// cursor aboneliğini izler.
+    pub fn görünüm_hedefleri(
+        &self,
+        kaynak: SyncCursorÖrneği,
+        fare_basma_bırakma_olayı: bool,
+    ) -> Vec<SyncCursorÖrneği> {
+        if fare_basma_bırakma_olayı && kaynak.grup() == 0 && !self.fare_basma_bırakma_senkron {
+            return Vec::new();
+        }
+        self.imleç_hedefleri(kaynak)
+    }
+
     pub fn seri_hedefi(
         &self,
         kaynak: SyncCursorÖrneği,
@@ -164,6 +181,11 @@ impl SyncCursorGrubu {
     }
 
     pub fn fare_bırak(&mut self, kaynak: SyncCursorÖrneği) -> Vec<(SyncCursorÖrneği, bool)> {
+        // İkinci kaynak grubu yalnız cursor ve setSeries paylaşır. Kaynak
+        // örnekte bu iki grafiğin cursor'unda `lock:true` yoktur.
+        if kaynak.grup() == 1 {
+            return Vec::new();
+        }
         let kaynak_indeksi = örnek_indeksi(kaynak);
         if let Some(kilitli) = self.kilitli.get_mut(kaynak_indeksi) {
             *kilitli = !*kilitli;
@@ -265,7 +287,6 @@ fn uyumsuz_kartı(
     let seçenekler = GrafikSeçenekleri::yeni(genişlik, yükseklik)?
         .başlık(örnek.başlık())
         .x_zaman(false)
-        .odak(OdakDüzeni::yeni(0.3, 16.0))
         .etkileşimler(ortak_kart_etkileşimleri())
         .seri(SeriSeçenekleri::yeni(etiketler[0]).renk(etiketler[0]))
         .seri(SeriSeçenekleri::yeni(etiketler[1]).renk(etiketler[1]));
@@ -355,6 +376,19 @@ mod testler {
         );
         assert!(grup.dikey_imleç_senkron_mu(SyncCursorÖrneği::Cpu, SyncCursorÖrneği::Ram));
         assert!(!grup.dikey_imleç_senkron_mu(SyncCursorÖrneği::Cpu, SyncCursorÖrneği::Tcp));
+        assert_eq!(
+            grup.görünüm_hedefleri(SyncCursorÖrneği::Cpu, true),
+            vec![SyncCursorÖrneği::Ram, SyncCursorÖrneği::Tcp]
+        );
+        assert!(grup.fare_basma_bırakma_senkronunu_ayarla(false));
+        assert!(
+            grup.görünüm_hedefleri(SyncCursorÖrneği::Cpu, true)
+                .is_empty()
+        );
+        assert_eq!(
+            grup.görünüm_hedefleri(SyncCursorÖrneği::Cpu, false),
+            vec![SyncCursorÖrneği::Ram, SyncCursorÖrneği::Tcp]
+        );
         assert!(grup.senkronu_ayarla(false));
         assert!(grup.imleç_hedefleri(SyncCursorÖrneği::Cpu).is_empty());
         assert_eq!(
@@ -378,6 +412,48 @@ mod testler {
         assert_eq!(değişenler, vec![(SyncCursorÖrneği::Cpu, false)]);
         assert!(grup.kilitli(SyncCursorÖrneği::Ram));
         let değişenler = grup.fare_bırak(SyncCursorÖrneği::UyumsuzKırmızıMavi);
-        assert_eq!(değişenler.len(), 2);
+        assert!(değişenler.is_empty());
+        assert!(!grup.kilitli(SyncCursorÖrneği::UyumsuzKırmızıMavi));
+        assert!(!grup.kilitli(SyncCursorÖrneği::UyumsuzYeşilKırmızı));
+    }
+
+    #[test]
+    fn kaynak_verisinin_zaman_ve_değer_aralıkları_korunur() -> Result<(), UplotHatası> {
+        let beklentiler = [
+            (SyncCursorÖrneği::Cpu, (0.05, 31.99)),
+            (SyncCursorÖrneği::Ram, (11.99, 22.44)),
+            (SyncCursorÖrneği::Tcp, (0.0, 59.93)),
+        ];
+        for (örnek, (beklenen_en_az, beklenen_en_çok)) in beklentiler {
+            let (_, veri) = sync_cursor_kartı(örnek)?;
+            assert_eq!(veri.x().first(), Some(&1_566_453_600.0));
+            assert_eq!(veri.x().last(), Some(&1_566_513_540.0));
+            let değerler = veri
+                .seriler()
+                .iter()
+                .flat_map(|seri| seri.iter().flatten().copied())
+                .collect::<Vec<_>>();
+            let en_az = değerler.iter().copied().fold(f64::INFINITY, f64::min);
+            let en_çok = değerler.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+            assert_eq!((en_az, en_çok), (beklenen_en_az, beklenen_en_çok));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn seçim_x_penceresi_hedefe_y_ölçeğini_kilitlemeden_taşınır() -> Result<(), UplotHatası> {
+        let (kaynak_seçenekleri, kaynak_verisi) = sync_cursor_kartı(SyncCursorÖrneği::Cpu)?;
+        let (hedef_seçenekleri, hedef_verisi) = sync_cursor_kartı(SyncCursorÖrneği::Ram)?;
+        let mut kaynak = Grafik::yeni(kaynak_seçenekleri, kaynak_verisi)?;
+        let mut hedef = Grafik::yeni(hedef_seçenekleri, hedef_verisi)?;
+        assert_eq!(
+            kaynak.seçimi_bitir(0.25, 0.75, false)?,
+            crate::SeçimEylemi::Yakınlaştırıldı
+        );
+        let x = kaynak.görünür_x_aralığı();
+        assert!(hedef.görünür_x_aralığını_ayarla(x, true));
+        assert_eq!(hedef.görünür_x_aralığı(), x);
+        assert!(hedef.görünür_y_aralığı().en_çok > hedef.görünür_y_aralığı().en_az);
+        Ok(())
     }
 }

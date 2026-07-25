@@ -117,6 +117,20 @@ impl EtkileşimDenetleyicisi {
         )
     }
 
+    pub(crate) fn görünür_x_aralığını_ayarla(
+        &mut self,
+        x: Aralık,
+        geçmişe_ekle: bool,
+    ) -> bool {
+        self.uygula(
+            Görünüm {
+                x: (x != self.tam_x).then_some(x),
+                y: self.görünüm.y,
+            },
+            geçmişe_ekle,
+        )
+    }
+
     pub(crate) fn yakınlaştırılmış(&self) -> bool {
         self.görünüm != Görünüm::default()
     }

@@ -146,7 +146,13 @@
                           background: #fff; }
     .sync-cursor-grafik[data-sync-index="0"] { grid-column: 1 / -1; }
     .sync-cursor-grafik svg { display: block; width: 100%; height: 220px; }
-    .sync-cursor-grafik .lejant { position: absolute; left: 8px; right: 8px; bottom: 7px; }
+    .sync-cursor-grafik .lejant {
+      position: absolute; left: 8px; right: 8px; bottom: 7px; pointer-events: auto;
+    }
+    .sync-cursor-grafik [data-sync-seri-toggle] { cursor: pointer; user-select: none; }
+    .sync-cursor-grafik [data-sync-seri-toggle]:focus-visible {
+      outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 3px;
+    }
     .sync-cursor-grafik[data-kilitli="true"] { border-color: #dc2626; }
     #chart.timeseries-discrete-yüzeyi { display: block; overflow: auto; padding: 8px; }
     .timeseries-discrete-yığın { min-width: 680px; display: grid; gap: 8px; }
@@ -1742,14 +1748,20 @@
         · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/sync.js">src/sync.js</a>
         · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/bench/data.json">bench/data.json</a>
         <br>İlk grupta CPU/RAM aynı y ölçek anahtarını, TCP yalnızca x imlecini paylaşır.
-        İkinci grup farklı seri sırasını etiket adına göre eşler; tıklama cursor kilidini değiştirir.`,
+        İkinci grup farklı seri sırasını etiket adına göre eşler ve cursor kilidi kullanmaz.`,
       tanım: () => sync_cursor_kart_tanim_ornegi(),
       tanımYolu: "src/kart/sync_cursor.rs",
       seriler: [{ etiket: "CPU 1", renk: "red" }],
-      yardım: "İmleci yüzeylerde gezdir · tıkla: kilitle · sürükle: seçip yakınlaştır · çift tıkla: tam görünüm",
+      yardım: "İmleci yüzeylerde gezdir · ilk üç yüzeyde tıkla: kilitle · sürükle: seçip yakınlaştır · çift tıkla: tam görünüm",
       değişkenNokta: false,
       syncCursor: true,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Birden çok bağımsız grafik yüzeyini ortak zaman konumu, veri-değeri bazlı Y imleci, seçim ölçeği ve seri görünürlüğüyle ilişkilendirir.",
+        api: "SyncCursorGrubu iki ayrı pub/sub grubunu korur. CPU/RAM/TCP aynı X aralığını; CPU/RAM ayrıca aynı Y veri değerini paylaşır. setSeries hedefi sıra numarasıyla değil seri etiketiyle eşlenir.",
+        izleme: "CPU, bellek, ağ, istek ve gecikme panellerini ayrı ölçeklerde tutarken aynı olay anını birlikte incelemek için uygundur. Cursor sync kapatıldığında mevcut yerel cursor/kilit durumu korunur; mousedown/up filtresi yalnız seçim ve kilit yayınına uygulanır.",
+        maliyet: "Beş grafik ayrı ana çizim yüzeyleridir; pointer hareketi requestAnimationFrame ile birleştirilip yalnız hafif cursor/legend katmanlarını günceller. Ana yollar yalnız setSeries, seçim, wheel/touch/drag veya boyut değişiminde yeniden üretilir.",
+      },
     };
     document.querySelector('[data-kart="sync-cursor"]')?.insertAdjacentHTML(
       "afterend",
@@ -2981,7 +2993,11 @@
       yüzey.innerHTML = `${oturum.svg(genişlik, 220)}
         <div class="lejant"><span>x: <b data-sync-x>--</b></span>
           ${tanım.seriler.map(([etiket, renk], seri) =>
-            `<span><i class="örnek" style="border-color:${renk}"></i>${etiket}: <b data-sync-seri="${seri}">--</b></span>`
+            `<span role="button" tabindex="0" data-sync-seri-toggle="${seri}"
+              aria-pressed="${oturum.seri_gorunur(seri)}"
+              style="opacity:${oturum.seri_gorunur(seri) ? 1 : .38}">
+              <i class="örnek" style="border-color:${renk}"></i>${etiket}:
+              <b data-sync-seri="${seri}">--</b></span>`
           ).join("")}
         </div>`;
       const svg = yüzey.querySelector("svg");
@@ -3037,7 +3053,8 @@
         const nokta = noktalar[seri];
         const yazı = yüzey.querySelector(`[data-sync-seri="${seri}"]`);
         const yOranı = oturum.seri_y_konum_orani(seri, değer);
-        if (!nokta || !Number.isFinite(değer) || !Number.isFinite(yOranı)) {
+        if (!oturum.seri_gorunur(seri)
+          || !nokta || !Number.isFinite(değer) || !Number.isFinite(yOranı)) {
           nokta?.setAttribute("visibility", "hidden");
           if (yazı) yazı.textContent = "--";
           return;
@@ -3057,9 +3074,19 @@
         if (syncCursorKöprüsü.kilitli(hedef)) continue;
         const hedefSeri = durum?.odak >= 0
           ? syncCursorKöprüsü.seri_hedefi(indeks, hedef, durum.odak) : -1;
-        const hedefY = durum && syncCursorKöprüsü.dikey_imlec_senkron_mu(indeks, hedef)
-          ? durum.y : NaN;
-        const yeni = durum ? { x: durum.x, y: hedefY, odak: hedefSeri } : null;
+        const hedefOturum = syncCursorOturumları[hedef];
+        const hedefX = durum && Number.isFinite(durum.veriX)
+          ? hedefOturum?.x_konum_orani(durum.veriX) : durum?.x;
+        const hedefY = durum && Number.isFinite(durum.veriY)
+          && syncCursorKöprüsü.dikey_imlec_senkron_mu(indeks, hedef)
+          ? 1 - hedefOturum?.seri_y_konum_orani(0, durum.veriY) : NaN;
+        const yeni = durum ? {
+          x: Number.isFinite(hedefX) ? hedefX : durum.x,
+          y: Number.isFinite(hedefY) ? hedefY : NaN,
+          veriX: durum.veriX,
+          veriY: durum.veriY,
+          odak: hedefSeri,
+        } : null;
         syncCursorDurumları[hedef] = yeni;
         const odakDeğişti = syncCursorOturumları[hedef]
           ?.imlec_odagini_seriye_ayarla(hedefSeri) ?? false;
@@ -3089,7 +3116,16 @@
       const odakDeğişti = alan.oturum.imlec_odagini_guncelle(
         oran, dikey, alan.yükseklik
       );
-      const durum = { x: oran, y: dikey, odak: alan.oturum.odak_serisi() };
+      const mantıksal = alan.oturum.fiziksel_oranlari_mantiksala(oran, dikey);
+      const xAralığı = alan.oturum.gorunur_x_araligi();
+      const yAralığı = alan.oturum.gorunur_y_araligi();
+      const durum = {
+        x: oran,
+        y: dikey,
+        veriX: xAralığı[0] + mantıksal[0] * (xAralığı[1] - xAralığı[0]),
+        veriY: yAralığı[1] - mantıksal[1] * (yAralığı[1] - yAralığı[0]),
+        odak: alan.oturum.odak_serisi(),
+      };
       syncCursorDurumları[indeks] = durum;
       if (odakDeğişti) syncCursorYüzeyiÇiz(indeks);
       syncCursorDurumunuYay(indeks, durum);
@@ -3101,6 +3137,47 @@
         seçim?.setAttribute("width", Math.abs(x - syncCursorSürükleme.baş));
         seçim?.setAttribute("height", alan.yükseklik);
         seçim?.setAttribute("visibility", "visible");
+      }
+    }
+
+    function syncCursorGörünümünüYay(indeks, fareBasmaBırakmaOlayı = false) {
+      const kaynak = syncCursorOturumları[indeks];
+      if (!kaynak || !syncCursorKöprüsü) return;
+      const x = kaynak.gorunur_x_araligi();
+      if (x.length !== 2) return;
+      const hedefler = syncCursorKöprüsü.gorunum_hedefleri(
+        indeks, fareBasmaBırakmaOlayı
+      );
+      for (const hedef of hedefler) {
+        const hedefOturum = syncCursorOturumları[hedef];
+        if (!hedefOturum) continue;
+        try {
+          if (hedefOturum.gorunur_x_araligini_ayarla(x[0], x[1], true)) {
+            syncCursorDurumları[hedef] = null;
+            syncCursorYüzeyiÇiz(hedef);
+          }
+        } catch (neden) {
+          hata.textContent = `Sync Cursor görünümü eşlenemedi: ${String(neden)}`;
+        }
+      }
+    }
+
+    function syncCursorSeriGörünürlüğünüDeğiştir(indeks, seri) {
+      const kaynak = syncCursorOturumları[indeks];
+      if (!kaynak || !Number.isInteger(seri)) return;
+      const görünür = !kaynak.seri_gorunur(seri);
+      try {
+        kaynak.seri_gorunurlugu_ayarla(seri, görünür);
+        for (const hedef of syncCursorKöprüsü?.imlec_hedefleri(indeks) ?? []) {
+          const hedefSeri = syncCursorKöprüsü.seri_hedefi(indeks, hedef, seri);
+          if (hedefSeri >= 0) {
+            syncCursorOturumları[hedef]?.seri_gorunurlugu_ayarla(hedefSeri, görünür);
+            syncCursorYüzeyiÇiz(hedef);
+          }
+        }
+        syncCursorYüzeyiÇiz(indeks);
+      } catch (neden) {
+        hata.textContent = `Sync Cursor seri görünürlüğü değiştirilemedi: ${String(neden)}`;
       }
     }
 
@@ -3129,7 +3206,10 @@
                     (merkezX - alan.sol) / alan.genişlik,
                     (merkezY - alan.üst) / alan.yükseklik,
                     uzaklık / syncCursorKıstırma.uzaklık,
-                  )) syncCursorYüzeyiÇiz(indeks);
+                  )) {
+                    syncCursorYüzeyiÇiz(indeks);
+                    syncCursorGörünümünüYay(indeks);
+                  }
                   syncCursorKıstırma.uzaklık = uzaklık;
                 } catch (neden) {
                   hata.textContent = `Sync Cursor dokunma yakınlaştırması uygulanamadı: ${String(neden)}`;
@@ -3149,7 +3229,10 @@
                 if (alan.oturum.tasi(
                   (x - syncCursorTaşıma.x) / alan.genişlik,
                   (y - syncCursorTaşıma.y) / alan.yükseklik,
-                )) syncCursorYüzeyiÇiz(indeks);
+                )) {
+                  syncCursorYüzeyiÇiz(indeks);
+                  syncCursorGörünümünüYay(indeks);
+                }
               } catch (neden) {
                 hata.textContent = `Sync Cursor görünümü taşınamadı: ${String(neden)}`;
               }
@@ -3267,6 +3350,7 @@
               if (alan.oturum.secimi_bitir(a, b, false) === 1) {
                 syncCursorDurumunuYay(indeks, null);
                 syncCursorYüzeyiÇiz(indeks);
+                syncCursorGörünümünüYay(indeks, true);
                 kontrolleriGüncelle();
               }
             } catch (neden) {
@@ -3304,8 +3388,26 @@
             if (syncCursorOturumları[indeks]?.tam_gorunum()) {
               syncCursorDurumunuYay(indeks, null);
               syncCursorYüzeyiÇiz(indeks);
+              syncCursorGörünümünüYay(indeks);
               kontrolleriGüncelle();
           }
+        });
+        yüzey.addEventListener("click", olay => {
+          const düğme = olay.target.closest("[data-sync-seri-toggle]");
+          if (!düğme || !yüzey.contains(düğme)) return;
+          olay.stopPropagation();
+          syncCursorSeriGörünürlüğünüDeğiştir(
+            indeks, Number(düğme.dataset.syncSeriToggle)
+          );
+        });
+        yüzey.addEventListener("keydown", olay => {
+          if (olay.key !== "Enter" && olay.key !== " ") return;
+          const düğme = olay.target.closest("[data-sync-seri-toggle]");
+          if (!düğme || !yüzey.contains(düğme)) return;
+          olay.preventDefault();
+          syncCursorSeriGörünürlüğünüDeğiştir(
+            indeks, Number(düğme.dataset.syncSeriToggle)
+          );
         });
         yüzey.addEventListener("wheel", olay => {
           olay.stopPropagation();
@@ -3327,6 +3429,7 @@
               tekerlekEkseni(olay),
             )) {
               syncCursorYüzeyiÇiz(indeks);
+              syncCursorGörünümünüYay(indeks);
               syncCursorİmleciniGüncelle(indeks, olay);
               kontrolleriGüncelle();
             }
@@ -6579,13 +6682,6 @@
     syncCursorEtkin.addEventListener("change", () => {
       if (aktifKart !== "sync-cursor" || !syncCursorKöprüsü) return;
       syncCursorKöprüsü.senkronu_ayarla(syncCursorEtkin.checked);
-      if (!syncCursorEtkin.checked) {
-        for (let indeks = 0; indeks < 3; indeks += 1) {
-          syncCursorDurumları[indeks] = null;
-          syncCursorOturumları[indeks]?.imlec_odagini_seriye_ayarla(-1);
-          syncCursorYüzeyiÇiz(indeks);
-        }
-      }
     });
     syncCursorFareEtkin.addEventListener("change", () => {
       if (aktifKart !== "sync-cursor" || !syncCursorKöprüsü) return;

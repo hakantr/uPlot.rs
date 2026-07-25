@@ -30,6 +30,11 @@ struct İmleçDurumu {
 #[derive(Clone, Copy, Debug)]
 pub enum GpuiGrafikOlayı {
     DurumDeğişti,
+    /// Görünür ölçek değişti. `fare_basma_bırakma` uPlot sync filtresinin
+    /// seçim yakınlaştırmasına uygulanabilmesi için olay nedenini korur.
+    GörünümDeğişti {
+        fare_basma_bırakma: bool,
+    },
     İmleçDeğişti,
     FareBırakıldı,
     /// `cursor-bind` Ctrl seçimi tamamlandı; üst uygulama metin UI'si açabilir.
@@ -432,6 +437,18 @@ impl GpuiGrafik {
         true
     }
 
+    pub fn senkron_veri_x_imleci_ayarla(
+        &mut self,
+        x: f64,
+        odak_serisi: Option<usize>,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let Some(x_oranı) = self.grafik.x_konum_oranı(x) else {
+            return false;
+        };
+        self.senkron_imleci_ayarla(x_oranı, None, odak_serisi, cx)
+    }
+
     pub fn senkron_imleci_ayarla(
         &mut self,
         yatay_oran: f64,
@@ -789,7 +806,7 @@ impl GpuiGrafik {
     pub fn önceki_görünüm(&mut self, cx: &mut Context<Self>) -> bool {
         let değişti = self.grafik.önceki_görünüm();
         if değişti {
-            self.grafik_bildir(cx);
+            self.görünüm_bildir(false, cx);
         }
         değişti
     }
@@ -797,7 +814,7 @@ impl GpuiGrafik {
     pub fn tam_görünüm(&mut self, cx: &mut Context<Self>) -> bool {
         let değişti = self.grafik.tam_görünüm();
         if değişti {
-            self.grafik_bildir(cx);
+            self.görünüm_bildir(false, cx);
         }
         değişti
     }
@@ -811,7 +828,20 @@ impl GpuiGrafik {
     ) -> bool {
         let değişti = self.grafik.görünür_aralıkları_ayarla(x, y, geçmişe_ekle);
         if değişti {
-            self.grafik_bildir(cx);
+            self.görünüm_bildir(false, cx);
+        }
+        değişti
+    }
+
+    pub fn görünür_x_aralığını_ayarla(
+        &mut self,
+        x: Aralık,
+        geçmişe_ekle: bool,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let değişti = self.grafik.görünür_x_aralığını_ayarla(x, geçmişe_ekle);
+        if değişti {
+            self.görünüm_bildir(false, cx);
         }
         değişti
     }
@@ -1342,7 +1372,7 @@ impl GpuiGrafik {
         }
     }
 
-    fn grafik_bildir(&mut self, cx: &mut Context<Self>) {
+    fn sahneyi_yenile(&mut self, cx: &mut Context<Self>) {
         self.açıklama_vuruşu = None;
         self.ana_sahne = Rc::new(self.grafik.çiz());
         let duyarlı_grafik = self.grafik.duyarlı_boyut_mu().then(|| cx.weak_entity());
@@ -1353,7 +1383,19 @@ impl GpuiGrafik {
                 cx.notify();
             });
         }
+    }
+
+    fn grafik_bildir(&mut self, cx: &mut Context<Self>) {
+        self.sahneyi_yenile(cx);
         Self::bildir(cx);
+    }
+
+    fn görünüm_bildir(&mut self, fare_basma_bırakma: bool, cx: &mut Context<Self>) {
+        self.sahneyi_yenile(cx);
+        cx.emit(GpuiGrafikOlayı::GörünümDeğişti {
+            fare_basma_bırakma
+        });
+        cx.notify();
     }
 
     fn bildir(cx: &mut Context<Self>) {
@@ -1592,6 +1634,7 @@ impl Render for GpuiGrafik {
             }))
             .on_mouse_move(cx.listener(|bu, olay: &MouseMoveEvent, window, cx| {
                 let mut ana_sahne_değişti = false;
+                let mut görünüm_değişti = false;
                 if let Some(odak) = bu.odak.as_ref()
                     && !odak.is_focused(window)
                     && bu
@@ -1610,6 +1653,7 @@ impl Render for GpuiGrafik {
                         Ok(değişti) => {
                             bu.hata = None;
                             ana_sahne_değişti = değişti;
+                            görünüm_değişti = değişti;
                         }
                         Err(hata) => {
                             bu.hata = Some(format!("Eksen ölçeği sürüklenemedi: {hata}"));
@@ -1627,6 +1671,7 @@ impl Render for GpuiGrafik {
                         Ok(değişti) => {
                             bu.hata = None;
                             ana_sahne_değişti = değişti;
+                            görünüm_değişti = değişti;
                         }
                         Err(hata) => {
                             bu.hata = Some(format!("Grafik görünümü taşınamadı: {hata}"));
@@ -1664,7 +1709,11 @@ impl Render for GpuiGrafik {
                         .is_some();
                 }
                 if ana_sahne_değişti {
-                    bu.grafik_bildir(cx);
+                    if görünüm_değişti {
+                        bu.görünüm_bildir(false, cx);
+                    } else {
+                        bu.grafik_bildir(cx);
+                    }
                 } else {
                     GpuiGrafik::imleç_bildir(cx);
                 }
@@ -1672,7 +1721,9 @@ impl Render for GpuiGrafik {
             .on_scroll_wheel(cx.listener(|bu, olay: &ScrollWheelEvent, _, cx| {
                 let datum_değişti = bu.grafik.ölçüm_datumlarını_temizle();
                 let görünüm_değişti = bu.tekerlek_yakınlaştır(olay);
-                if datum_değişti || görünüm_değişti {
+                if görünüm_değişti {
+                    bu.görünüm_bildir(false, cx);
+                } else if datum_değişti {
                     bu.grafik_bildir(cx);
                 } else {
                     GpuiGrafik::bildir(cx);
@@ -1681,7 +1732,9 @@ impl Render for GpuiGrafik {
             .on_pinch(cx.listener(|bu, olay: &PinchEvent, _, cx| {
                 let datum_değişti = bu.grafik.ölçüm_datumlarını_temizle();
                 let görünüm_değişti = bu.dokunma_yakınlaştır(olay);
-                if datum_değişti || görünüm_değişti {
+                if görünüm_değişti {
+                    bu.görünüm_bildir(false, cx);
+                } else if datum_değişti {
                     bu.grafik_bildir(cx);
                 } else {
                     GpuiGrafik::bildir(cx);
@@ -1704,6 +1757,7 @@ impl Render for GpuiGrafik {
                 MouseButton::Left,
                 cx.listener(|bu, olay: &MouseDownEvent, window, cx| {
                     let mut ana_sahne_değişti = false;
+                    let mut görünüm_değişti = false;
                     if let Some(odak) = bu.odak.as_ref() {
                         odak.focus(window, cx);
                     }
@@ -1731,8 +1785,9 @@ impl Render for GpuiGrafik {
                         bu.açıklama_vuruşu = None;
                     } else if olay.click_count >= 2 && ayarlar.çift_tıkla_tam_görünüm {
                         let datum_değişti = bu.grafik.ölçüm_datumlarını_temizle();
-                        let görünüm_değişti = bu.grafik.tam_görünüm();
-                        ana_sahne_değişti = datum_değişti || görünüm_değişti;
+                        let tam_görünüm_değişti = bu.grafik.tam_görünüm();
+                        ana_sahne_değişti = datum_değişti || tam_görünüm_değişti;
+                        görünüm_değişti = tam_görünüm_değişti;
                         bu.seçim = None;
                         bu.açıklama_seçimi = false;
                     } else if ayarlar.seçim_yakınlaştır
@@ -1743,7 +1798,11 @@ impl Render for GpuiGrafik {
                         bu.açıklama_seçimi = ayarlar.ctrl_açıklama && olay.modifiers.control;
                     }
                     if ana_sahne_değişti {
-                        bu.grafik_bildir(cx);
+                        if görünüm_değişti {
+                            bu.görünüm_bildir(false, cx);
+                        } else {
+                            bu.grafik_bildir(cx);
+                        }
                     } else {
                         GpuiGrafik::bildir(cx);
                     }
@@ -1829,7 +1888,7 @@ impl Render for GpuiGrafik {
                         }
                     }
                     if ana_sahne_değişti {
-                        bu.grafik_bildir(cx);
+                        bu.görünüm_bildir(true, cx);
                     } else {
                         GpuiGrafik::bildir(cx);
                     }

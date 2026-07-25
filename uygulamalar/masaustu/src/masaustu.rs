@@ -555,6 +555,7 @@ pub struct ChartListesi {
     stream_data_grafikleri: Vec<(StreamDataÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grubu: SyncCursorGrubu,
+    sync_cursor_senkronlanıyor: bool,
     timeseries_discrete_grafikleri: Vec<(TimeseriesDiscreteÖrneği, Entity<GpuiGrafik>)>,
     nearest_non_null_grafikleri: Vec<(NearestNonNullÖrneği, Entity<GpuiGrafik>)>,
     months_grafikleri: Vec<Entity<GpuiGrafik>>,
@@ -737,6 +738,7 @@ impl ChartListesi {
             stream_data_grafikleri: Vec::new(),
             sync_cursor_grafikleri: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
+            sync_cursor_senkronlanıyor: false,
             timeseries_discrete_grafikleri: Vec::new(),
             nearest_non_null_grafikleri: Vec::new(),
             months_grafikleri: Vec::new(),
@@ -794,7 +796,9 @@ impl ChartListesi {
                             }
                         }
                     }
-                    GpuiGrafikOlayı::FareBırakıldı | GpuiGrafikOlayı::DurumDeğişti => {}
+                    GpuiGrafikOlayı::FareBırakıldı
+                    | GpuiGrafikOlayı::DurumDeğişti
+                    | GpuiGrafikOlayı::GörünümDeğişti { .. } => {}
                 }
                 cx.notify();
             })
@@ -1064,7 +1068,8 @@ impl ChartListesi {
                         }
                         bu.scales_dir_ori_senkronlanıyor = false;
                     }
-                    GpuiGrafikOlayı::DurumDeğişti => {
+                    GpuiGrafikOlayı::DurumDeğişti | GpuiGrafikOlayı::GörünümDeğişti { .. } =>
+                    {
                         let aralıklar = bu
                             .scales_dir_ori_grafikleri
                             .iter()
@@ -1296,7 +1301,8 @@ impl ChartListesi {
                         }
                         bu.scales_dir_ori_senkronlanıyor = false;
                     }
-                    GpuiGrafikOlayı::DurumDeğişti => {
+                    GpuiGrafikOlayı::DurumDeğişti | GpuiGrafikOlayı::GörünümDeğişti { .. } =>
+                    {
                         let aralıklar = bu
                             .sparse_grafikleri
                             .iter()
@@ -1496,6 +1502,9 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, move |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if bu.sync_cursor_senkronlanıyor {
+                    return;
+                }
                 match olay {
                     GpuiGrafikOlayı::Açıklamaİstendi => {
                         bu.açıklama_istendi = true;
@@ -1505,9 +1514,10 @@ impl ChartListesi {
                             .sync_cursor_grafikleri
                             .iter()
                             .find(|(kimlik, _)| *kimlik == örnek)
-                            .and_then(|(_, grafik)| grafik.read(cx).senkron_yayını());
+                            .and_then(|(_, grafik)| grafik.read(cx).senkron_veri_yayını());
                         let hedefler = bu.sync_cursor_grubu.imleç_hedefleri(örnek);
                         let yüzeyler = bu.sync_cursor_grafikleri.clone();
+                        bu.sync_cursor_senkronlanıyor = true;
                         for hedef in hedefler {
                             let Some((_, hedef_grafik)) =
                                 yüzeyler.iter().find(|(kimlik, _)| *kimlik == hedef)
@@ -1523,7 +1533,11 @@ impl ChartListesi {
                                     .dikey_imleç_senkron_mu(örnek, hedef)
                                     .then_some(y);
                                 hedef_grafik.update(cx, |grafik, cx| {
-                                    grafik.senkron_imleci_ayarla(x, dikey, hedef_serisi, cx);
+                                    if let Some(y) = dikey {
+                                        grafik.senkron_veri_imleci_ayarla(x, y, hedef_serisi, cx);
+                                    } else {
+                                        grafik.senkron_veri_x_imleci_ayarla(x, hedef_serisi, cx);
+                                    }
                                 });
                             } else {
                                 hedef_grafik.update(cx, |grafik, cx| {
@@ -1531,6 +1545,7 @@ impl ChartListesi {
                                 });
                             }
                         }
+                        bu.sync_cursor_senkronlanıyor = false;
                     }
                     GpuiGrafikOlayı::FareBırakıldı => {
                         let değişenler = bu.sync_cursor_grubu.fare_bırak(örnek);
@@ -1543,6 +1558,33 @@ impl ChartListesi {
                                     grafik.senkron_kilidi_ayarla(kilitli, cx);
                                 });
                             }
+                        }
+                    }
+                    GpuiGrafikOlayı::GörünümDeğişti {
+                        fare_basma_bırakma
+                    } => {
+                        let x = bu
+                            .sync_cursor_grafikleri
+                            .iter()
+                            .find(|(kimlik, _)| *kimlik == örnek)
+                            .map(|(_, grafik)| grafik.read(cx).grafik().görünür_x_aralığı());
+                        let hedefler = bu
+                            .sync_cursor_grubu
+                            .görünüm_hedefleri(örnek, *fare_basma_bırakma);
+                        let yüzeyler = bu.sync_cursor_grafikleri.clone();
+                        if let Some(x) = x {
+                            bu.sync_cursor_senkronlanıyor = true;
+                            for hedef in hedefler {
+                                let Some((_, hedef_grafik)) =
+                                    yüzeyler.iter().find(|(kimlik, _)| *kimlik == hedef)
+                                else {
+                                    continue;
+                                };
+                                hedef_grafik.update(cx, |grafik, cx| {
+                                    grafik.görünür_x_aralığını_ayarla(x, true, cx);
+                                });
+                            }
+                            bu.sync_cursor_senkronlanıyor = false;
                         }
                     }
                     GpuiGrafikOlayı::DurumDeğişti => {}
@@ -1559,6 +1601,7 @@ impl ChartListesi {
         } else {
             self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
             self.sync_cursor_grafikleri = yüzeyler;
+            self.sync_cursor_senkronlanıyor = false;
             self.hata = None;
         }
         cx.notify();
@@ -1567,19 +1610,54 @@ impl ChartListesi {
     fn sync_cursor_senkronunu_değiştir(&mut self, cx: &mut Context<Self>) {
         let etkin = !self.sync_cursor_grubu.senkron();
         self.sync_cursor_grubu.senkronu_ayarla(etkin);
-        if !etkin {
-            for (örnek, grafik) in &self.sync_cursor_grafikleri {
-                if matches!(
-                    örnek,
-                    SyncCursorÖrneği::Cpu | SyncCursorÖrneği::Ram | SyncCursorÖrneği::Tcp
-                ) {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.senkron_imleci_temizle(cx);
-                        grafik.senkron_kilidi_ayarla(false, cx);
-                    });
-                }
+        cx.notify();
+    }
+
+    fn sync_cursor_serisini_değiştir(
+        &mut self,
+        örnek: SyncCursorÖrneği,
+        seri: usize,
+        cx: &mut Context<Self>,
+    ) {
+        let yüzeyler = self.sync_cursor_grafikleri.clone();
+        let Some((_, kaynak)) = yüzeyler.iter().find(|(kimlik, _)| *kimlik == örnek) else {
+            return;
+        };
+        let görünür = !kaynak
+            .read(cx)
+            .grafik()
+            .seri_seçenekleri()
+            .get(seri)
+            .is_some_and(|seçenek| seçenek.göster);
+        self.sync_cursor_senkronlanıyor = true;
+        if let Err(hata) = kaynak.update(cx, |grafik, cx| {
+            grafik.seri_görünürlüğünü_ayarla(seri, görünür, cx)
+        }) {
+            self.hata = Some(format!(
+                "Sync Cursor seri görünürlüğü değiştirilemedi: {hata}"
+            ));
+            self.sync_cursor_senkronlanıyor = false;
+            cx.notify();
+            return;
+        }
+        for hedef in self.sync_cursor_grubu.imleç_hedefleri(örnek) {
+            let Some(hedef_seri) = self.sync_cursor_grubu.seri_hedefi(örnek, hedef, seri) else {
+                continue;
+            };
+            let Some((_, hedef_grafik)) = yüzeyler.iter().find(|(kimlik, _)| *kimlik == hedef)
+            else {
+                continue;
+            };
+            if let Err(hata) = hedef_grafik.update(cx, |grafik, cx| {
+                grafik.seri_görünürlüğünü_ayarla(hedef_seri, görünür, cx)
+            }) {
+                self.hata = Some(format!(
+                    "{} Sync Cursor seri görünürlüğü değiştirilemedi: {hata}",
+                    hedef.başlık()
+                ));
             }
         }
+        self.sync_cursor_senkronlanıyor = false;
         cx.notify();
     }
 
@@ -4429,39 +4507,68 @@ impl Render for ChartListesi {
             let tcp = sync_yüzeyi(SyncCursorÖrneği::Tcp);
             let kırmızı_mavi = sync_yüzeyi(SyncCursorÖrneği::UyumsuzKırmızıMavi);
             let yeşil_kırmızı = sync_yüzeyi(SyncCursorÖrneği::UyumsuzYeşilKırmızı);
+            let sync_paneli =
+                |örnek: SyncCursorÖrneği, grafik: Option<Entity<GpuiGrafik>>| {
+                    let seriler = grafik.as_ref().map_or_else(Vec::new, |grafik| {
+                        grafik
+                            .read(cx)
+                            .grafik()
+                            .seri_seçenekleri()
+                            .iter()
+                            .enumerate()
+                            .map(|(indeks, seri)| {
+                                (indeks, seri.etiket.clone(), seri.renk.clone(), seri.göster)
+                            })
+                            .collect::<Vec<_>>()
+                    });
+                    div()
+                        .flex_1()
+                        .min_w_0()
+                        .h(px(236.0))
+                        .child(
+                            div()
+                                .w_full()
+                                .h(px(206.0))
+                                .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
+                        )
+                        .child(div().flex().items_center().gap_1().children(
+                            seriler.into_iter().map(|(indeks, etiket, _, görünür)| {
+                                let yazı = SharedString::from(format!(
+                                    "● {etiket}{}",
+                                    if görünür { "" } else { " · gizli" }
+                                ));
+                                Dugme::yeni(
+                                    SharedString::from(format!("sync-{}-{indeks}", örnek.kimlik())),
+                                    yazı,
+                                )
+                                .boyutu(DugmeBoyutu::Kucuk)
+                                .turu(if görünür {
+                                    DugmeTuru::Hayalet
+                                } else {
+                                    DugmeTuru::Ikincil
+                                })
+                                .tiklaninca(cx.listener(
+                                    move |bu, _, _, cx| {
+                                        bu.sync_cursor_serisini_değiştir(örnek, indeks, cx);
+                                    },
+                                ))
+                            }),
+                        ))
+                };
             çizim_tabanı
                 .flex_none()
-                .h(px(740.0))
+                .h(px(760.0))
                 .overflow_y_scroll()
                 .p_2()
-                .child(
-                    div()
-                        .w_full()
-                        .h(px(220.0))
-                        .when_some(cpu, |öğe, grafik| öğe.child(grafik)),
-                )
-                .child(
-                    div()
-                        .mt_2()
-                        .flex()
-                        .gap_2()
-                        .children([ram, tcp].into_iter().map(|grafik| {
-                            div()
-                                .flex_1()
-                                .min_w_0()
-                                .h(px(220.0))
-                                .when_some(grafik, |öğe, grafik| öğe.child(grafik))
-                        })),
-                )
-                .child(div().mt_2().flex().gap_2().children(
-                    [kırmızı_mavi, yeşil_kırmızı].into_iter().map(|grafik| {
-                        div()
-                            .flex_1()
-                            .min_w_0()
-                            .h(px(220.0))
-                            .when_some(grafik, |öğe, grafik| öğe.child(grafik))
-                    }),
-                ))
+                .child(sync_paneli(SyncCursorÖrneği::Cpu, cpu))
+                .child(div().mt_2().flex().gap_2().children([
+                    sync_paneli(SyncCursorÖrneği::Ram, ram),
+                    sync_paneli(SyncCursorÖrneği::Tcp, tcp),
+                ]))
+                .child(div().mt_2().flex().gap_2().children([
+                    sync_paneli(SyncCursorÖrneği::UyumsuzKırmızıMavi, kırmızı_mavi),
+                    sync_paneli(SyncCursorÖrneği::UyumsuzYeşilKırmızı, yeşil_kırmızı),
+                ]))
         } else if aktif_kart == KartKimliği::TimeseriesDiscrete {
             let üst = self
                 .timeseries_discrete_grafikleri
@@ -5537,6 +5644,19 @@ impl Render for ChartListesi {
                  içeriği tek sahne yürüyüşünde CSS/DOM bağımlılığı olmadan üretir. WASM kaynak \
                  eşliği için başlangıç SVG'sini bir kez DPR canvas'a rasterler; GPUI normal \
                  görünümünde ek string/Blob üretmez.",
+            ),
+            KartKimliği::SyncCursor => Some(
+                "Amaç: ayrı CPU, RAM ve TCP yüzeyleriyle farklı seri sıralı iki karşılaştırma \
+                 yüzeyini gerçek pub/sub ilişkileri içinde gösterir. API: SyncCursorGrubu \
+                 cursor, etiket bazlı setSeries, mouseup/down filtresi ve görünür X hedeflerini \
+                 çözer; CPU/RAM dikey cursor'ı ekran oranıyla değil aynı Y veri değerini hedef \
+                 ölçeğe yeniden projekte ederek paylaşır, TCP yalnız X'i izler. İzleme: farklı \
+                 birim ve aralıklardaki servis telemetrisinde aynı olay anını birlikte incelemek \
+                 için uygundur. Sync kapatmak yerel cursor/kilit durumunu silmez; ikinci grup \
+                 kaynak gibi cursor kilidi kullanmaz. Maliyet: beş ana canvas bağımsızdır; \
+                 pointer yalnız hafif etkileşim katmanını günceller. Ana yollar setSeries, \
+                 seçim, wheel/touch/drag veya boyut değişiminde yenilenir ve görünür X aralığı \
+                 yalnız abone yüzeylere taşınır.",
             ),
             KartKimliği::Scatter => Some(
                 "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \

@@ -2069,6 +2069,14 @@ impl Grafik {
         self.etkileşim.görünür_aralıkları_ayarla(x, y, geçmişe_ekle)
     }
 
+    /// Senkron gruplarında yalnız ortak X ölçeğini taşır. Hedefin Y görünümü
+    /// elle ayarlıysa korunur; otomatikse yeni X penceresindeki veriden tekrar
+    /// hesaplanır.
+    pub fn görünür_x_aralığını_ayarla(&mut self, x: Aralık, geçmişe_ekle: bool) -> bool {
+        self.elle_x_aralığı = None;
+        self.etkileşim.görünür_x_aralığını_ayarla(x, geçmişe_ekle)
+    }
+
     /// Seçim bırakma davranışını kart ayarlarına göre çekirdekte çözümler.
     ///
     /// `açıklama_tuşu` açıkken `ctrl_açıklama` etkin bir kart normal seçim
