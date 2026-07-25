@@ -1616,7 +1616,8 @@ impl GpuiGrafik {
         if !self.grafik_alanında(fare) {
             return false;
         }
-        if cfg!(target_os = "windows") && self.grafik.etkileşim_seçenekleri().dokunma_etkileşimi
+        if cfg!(any(target_os = "windows", target_family = "wasm"))
+            && self.grafik.etkileşim_seçenekleri().dokunma_etkileşimi
         {
             match olay.touch_phase {
                 TouchPhase::Started => {
