@@ -1552,7 +1552,7 @@
         { "yol": "demos/lib/sgg.js", "sha256": "4bfbe56ba214eedbfe7d91c40e99faa3824e401fc52487b877d46fff12889606" },
         { "yol": "demos/lib/ASAP-optimized.js", "sha256": "b01779c308e9a12bb3ea2d430038bacb84480de998874f77706fa9cf8b09933e" }
       ],
-      "fixture": "src/kart/data_smoothing.rs#data_smoothing_kartı",
+      "fixture": "src/kart/data_smoothing.rs#data_smoothing_kartları",
       "örnek": "examples/data_smoothing.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -1581,10 +1581,12 @@
       "özellikler": [
         "source-exact-3600-taxi-trips", "source-equivalent-savitzky-golay-window-101",
         "source-equivalent-asap-fft-resolution-150", "source-equivalent-moving-average-300",
-        "four-source-subcharts", "fixed-source-y-ranges", "gpui-wasm-catalog-parity",
-        "common-interaction-profile", "panic-free-typed-errors"
+        "one-card-four-independent-source-surfaces", "source-order-and-50px-spacing",
+        "fixed-source-y-ranges", "source-60px-y-axis", "full-source-and-output-digests",
+        "named-initialization-timings", "retained-pointer-overlay",
+        "gpui-wasm-catalog-parity", "common-interaction-profile", "panic-free-typed-errors"
       ],
-      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "bekliyor" }
+      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "tam_kanıtlı", "davranış": "tam_kanıtlı", "performans": "uygulandı_kanıtlı" }
     },
     {
       "sıra": 24,

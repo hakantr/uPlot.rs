@@ -1,8 +1,7 @@
-use uplot_rs::{Grafik, SmoothingÖrneği, UplotHatası, data_smoothing_kartı};
+use uplot_rs::{Grafik, UplotHatası, data_smoothing_kartları};
 
 fn main() -> Result<(), UplotHatası> {
-    for örnek in SmoothingÖrneği::TÜMÜ {
-        let (seçenekler, veri) = data_smoothing_kartı(örnek)?;
+    for (_örnek, seçenekler, veri) in data_smoothing_kartları()? {
         println!("{}", Grafik::yeni(seçenekler, veri)?.çiz().svg());
     }
     Ok(())

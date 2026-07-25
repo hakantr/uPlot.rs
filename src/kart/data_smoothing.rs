@@ -5,8 +5,11 @@ use super::ortak_kart_etkileşimleri;
 use crate::{Aralık, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
 use kaynak::TAXI_TRIPS;
 
-pub const DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = data_smoothing_kartı(SmoothingÖrneği::Asap)?;
-let grafik = Grafik::yeni(seçenekler, veri)?;"##;
+pub const DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ: &str = r##"let yüzeyler = data_smoothing_kartları()?;
+for (örnek, seçenekler, veri) in yüzeyler {
+    // Kaynaktaki dört bağımsız grafik tek sayfada, kaynak sırasıyla gösterilir.
+    let grafik = Grafik::yeni(seçenekler, veri)?;
+}"##;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SmoothingÖrneği {
@@ -494,9 +497,24 @@ pub fn data_smoothing_kartı(
         .başlık(örnek.başlık())
         .x_zaman(false)
         .y_aralığı(örnek.aralık()?)
+        .birincil_y_eksen_genişliği(60.0)
         .etkileşimler(ortak_kart_etkileşimleri())
         .seri(SeriSeçenekleri::yeni("Trips").renk("#ff0000"));
     Ok((seçenekler, veri))
+}
+
+/// Resmî `data-smoothing.html` sayfasındaki dört bağımsız yüzeyi kaynak
+/// sırasıyla üretir. Yumuşatma algoritmaları yalnız bu kurulum sırasında
+/// çalışır; pointer olayları ham veya türetilmiş veriyi yeniden hesaplamaz.
+pub fn data_smoothing_kartları()
+-> Result<Vec<(SmoothingÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    SmoothingÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| {
+            let (seçenekler, veri) = data_smoothing_kartı(örnek)?;
+            Ok((örnek, seçenekler, veri))
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -508,6 +526,47 @@ mod testler {
     fn yakın(a: f64, b: f64) -> bool {
         (a - b).abs() <= 1e-7 * a.abs().max(b.abs()).max(1.0)
     }
+
+    fn fnv1a_f64(değerler: &[f64]) -> u64 {
+        değerler.iter().fold(0xcbf2_9ce4_8422_2325, |özet, değer| {
+            değer
+                .to_bits()
+                .to_le_bytes()
+                .into_iter()
+                .fold(özet, |özet, bayt| {
+                    (özet ^ u64::from(bayt)).wrapping_mul(0x0000_0100_0000_01b3)
+                })
+        })
+    }
+
+    fn fnv1a_yüzde_bir_hassasiyet(değerler: &[f64]) -> u64 {
+        değerler.iter().fold(0xcbf2_9ce4_8422_2325, |özet, değer| {
+            ((*değer * 100.0).round() as i64)
+                .to_le_bytes()
+                .into_iter()
+                .fold(özet, |özet, bayt| {
+                    (özet ^ u64::from(bayt)).wrapping_mul(0x0000_0100_0000_01b3)
+                })
+        })
+    }
+
+    #[test]
+    fn taxi_trips_kaynağının_tamamı_ve_sınırları_resmî_json_ile_eştir() {
+        assert_eq!(TAXI_TRIPS.len(), 3_600);
+        assert_eq!(
+            &TAXI_TRIPS[..5],
+            &[12_751.0, 8_767.0, 7_005.0, 5_257.0, 4_189.0]
+        );
+        assert_eq!(
+            &TAXI_TRIPS[TAXI_TRIPS.len() - 5..],
+            &[16_344.0, 15_913.0, 14_327.0, 12_060.0, 10_952.0]
+        );
+        assert_eq!(TAXI_TRIPS.iter().sum::<f64>(), 57_012_163.0);
+        assert_eq!(TAXI_TRIPS.iter().copied().reduce(f64::min), Some(1_639.0));
+        assert_eq!(TAXI_TRIPS.iter().copied().reduce(f64::max), Some(39_197.0));
+        assert_eq!(fnv1a_f64(&TAXI_TRIPS), 0x9297_769d_2279_6a55);
+    }
+
     #[test]
     fn üç_algoritma_kaynak_js_ile_sayısal_eştir() -> Result<(), UplotHatası> {
         let s = savitzky_golay(&TAXI_TRIPS, 101, 3)?;
@@ -515,14 +574,45 @@ mod testler {
             assert!(s.get(i).is_some_and(|v| yakın(*v, e)));
         }
         assert!(yakın(s.iter().sum(), SGG_REFERENCE_SUM));
+        assert_eq!(fnv1a_yüzde_bir_hassasiyet(&s), 0x112c_1987_9ba9_4e9c);
         let m = hareketli_ortalama(&TAXI_TRIPS, 300)?;
         for (i, e) in MOVING_REFERENCE {
             assert!(m.get(i).is_some_and(|v| yakın(*v, e)));
         }
         assert!(yakın(m.iter().sum(), MOVING_REFERENCE_SUM));
+        assert_eq!(fnv1a_yüzde_bir_hassasiyet(&m), 0x4c74_d00d_6b9f_c1bf);
         let a = asap_yumuşat(&TAXI_TRIPS, 150)?;
         assert_eq!(a.len(), ASAP_REFERENCE.len());
         assert!(a.iter().zip(ASAP_REFERENCE).all(|(v, e)| yakın(*v, e)));
+        assert_eq!(fnv1a_yüzde_bir_hassasiyet(&a), 0x627e_6a1a_f7d3_936e);
+        Ok(())
+    }
+
+    #[test]
+    fn dört_kaynak_yüzeyi_tek_grupta_doğru_sıra_boyut_ve_aralıkla_üretilir()
+    -> Result<(), UplotHatası> {
+        let kartlar = data_smoothing_kartları()?;
+        assert_eq!(kartlar.len(), 4);
+        for ((örnek, seçenekler, veri), beklenen) in kartlar.into_iter().zip(SmoothingÖrneği::TÜMÜ)
+        {
+            assert_eq!(örnek, beklenen);
+            assert_eq!(seçenekler.genişlik, 1920);
+            assert_eq!(seçenekler.yükseklik, 300);
+            assert_eq!(seçenekler.birincil_y_eksen_genişliği, Some(60.0));
+            assert_eq!(seçenekler.seriler.len(), 1);
+            assert_eq!(seçenekler.seriler[0].etiket, "Trips");
+            assert_eq!(seçenekler.seriler[0].renk, "#ff0000");
+            assert_eq!(
+                veri.uzunluk(),
+                if örnek == SmoothingÖrneği::Asap {
+                    137
+                } else {
+                    3_600
+                }
+            );
+            let grafik = crate::Grafik::yeni(seçenekler, veri)?;
+            assert_eq!(grafik.görünür_y_aralığı(), örnek.aralık()?);
+        }
         Ok(())
     }
 }

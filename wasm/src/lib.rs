@@ -3747,7 +3747,24 @@ mod testler {
             assert!(svg.contains(başlık));
             assert!(svg.contains("#ff0000"));
         }
-        assert!(data_smoothing_kart_tanim_ornegi().contains("SmoothingÖrneği::Asap"));
+        assert!(data_smoothing_kart_tanim_ornegi().contains("data_smoothing_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("data-kart=\"data-smoothing\"").count(),
+            1,
+            "aynı kaynak sayfası tek katalog kartı olmalıdır"
+        );
+        for eski_kart in [
+            "data-kart=\"data-smoothing-raw\"",
+            "data-kart=\"data-smoothing-sgg\"",
+            "data-kart=\"data-smoothing-asap\"",
+            "data-kart=\"data-smoothing-moving-average\"",
+        ] {
+            assert!(!web.contains(eski_kart));
+        }
+        assert!(web.contains("dataSmoothingOturumları"));
+        assert!(web.contains("independent-data-smoothing"));
+        assert!(web.contains("dataSmoothingOlcumMs"));
     }
 
     #[test]

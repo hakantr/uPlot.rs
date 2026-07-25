@@ -308,6 +308,13 @@
       height: 800px !important; }
     .custom-scales-grafik .lejant { position: absolute; left: 82px; right: 12px;
       bottom: 8px; }
+    #chart.data-smoothing-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .data-smoothing-yığın { min-width: min-content; }
+    .data-smoothing-grafik { position: relative; width: 1920px; height: 300px;
+      margin-bottom: 50px; border: 1px solid #e5e7eb; border-radius: 8px;
+      background: #fff; overflow: hidden; }
+    .data-smoothing-grafik svg { display: block; width: 1920px !important;
+      height: 300px !important; }
     #chart.bars-grouped-stacked-yüzeyi { display: block; min-width: 0; overflow: auto;
                                          place-items: unset; padding: 8px;
                                          box-sizing: border-box; }
@@ -2678,30 +2685,29 @@
         maliyet: "İlk kurulum üç retained sahnede O(3N)'dir. Pointer hareketi requestAnimationFrame ile birleştirilir ve yalnız etkin yüzeyin hafif cursor/lejant katmanını günceller; ana band/path sabit kalır.",
       },
     };
-    for (const [kimlik, başlık, durum] of [
-      ["data-smoothing-raw", "Taxi Trips (raw)", "3600 resmî Taxi Trips örneği"],
-      ["data-smoothing-sgg", "Savitzky-Golay", "3600 nokta · pencere 101"],
-      ["data-smoothing-asap", "Taxi Trips (ASAP FFT)", "137 nokta · çözünürlük 150"],
-      ["data-smoothing-moving-average", "Taxi Trips (Moving Avg 300)", "3600 nokta · pencere 300"],
-    ]) {
-      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>data-smoothing</small>
-          <div class="durum">${durum}</div>
-        </article>`);
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data-smoothing.html">data-smoothing.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/taxi-trips.json">taxi-trips.json</a>
-          <br>Resmî veri ile kaynak SGG, ASAP FFT ve hareketli ortalama algoritmaları Rust çekirdeğinde aynı sayısal çıktıyı üretir.`,
-        tanım: () => data_smoothing_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/data_smoothing.rs",
-        seriler: [{ etiket: "Trips", renk: "#ff0000" }],
-        yardım: "Kırmızı Taxi Trips serisi · ortak yakınlaştırma ve taşıma profili",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="data-smoothing" aria-current="false" tabindex="0">
+        <strong>Data Smoothing · 4 independent surfaces</strong><small>data-smoothing</small>
+        <div class="durum">4×1920×300 · raw, SGG, ASAP FFT, Moving Avg</div>
+      </article>`);
+    kartlar["data-smoothing"] = {
+      başlık: "Data Smoothing · 4 independent surfaces",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data-smoothing.html">data-smoothing.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/taxi-trips.json">taxi-trips.json</a>
+        <br>Resmî 3600 Taxi Trips değeri ile SGG, ASAP FFT ve hareketli ortalama sonuçları dört bağımsız yüzeyde kaynak sırası ve sabit Y aralıklarıyla birlikte gösterilir.`,
+      tanım: () => data_smoothing_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/data_smoothing.rs",
+      seriler: [{ etiket: "Trips", renk: "#ff0000" }],
+      yardım: "Dört bağımsız yüzey · algoritmalar yalnız ilk kurulumda · ayrı süre ölçümü",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Ham Taxi Trips serisini Savitzky–Golay, ASAP FFT ve 300 örneklik hareketli ortalama ile aynı sayfada karşılaştırır.",
+        api: "data_smoothing_kartları() dört bağımsız Grafik üretir; savitzky_golay, asap_yumuşat ve hareketli_ortalama sabit demo parametrelerini hesaplar.",
+        izleme: "Yoğun bir zaman serisinin tepe davranışı ile genel eğiliminin farklı yumuşatma yöntemlerinde nasıl korunduğunu karşılaştırmak içindir.",
+        maliyet: "SGG, ASAP ve Moving Avg yalnız ilk kurulumda ayrı ölçülür. Pointer yalnız etkin yüzeyin cursor/lejant katmanını günceller; algoritmalar ve ana yollar yeniden çalışmaz.",
+      },
+    };
     document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
       <article class="kart" data-kart="draw-hooks" aria-current="false" tabindex="0">
         <strong>Draw Hooks</strong><small>draw-hooks</small>
@@ -2975,6 +2981,8 @@
     let alignDataEtkinİndeks = 0;
     let customScalesOturumları = [];
     let customScalesEtkinİndeks = 0;
+    let dataSmoothingOturumları = [];
+    let dataSmoothingEtkinİndeks = 0;
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
     let timeseriesDiscreteEtkinİndeks = 0;
@@ -3075,6 +3083,16 @@
       { kimlik: "custom-scales-linear", başlık: "x linear; y linear" },
       { kimlik: "custom-scales-log-log", başlık: "log(x); log(y)" },
       { kimlik: "custom-scales-weibull", başlık: "log(x); log(-log(1 - y))" },
+    ];
+    const dataSmoothingYüzeyleri = [
+      { kimlik: "data-smoothing-raw", başlık: "Taxi Trips (raw)", nokta: 3600 },
+      { kimlik: "data-smoothing-sgg", başlık: "Savitzky-Golay", nokta: 3600 },
+      { kimlik: "data-smoothing-asap", başlık: "Taxi Trips (ASAP FFT)", nokta: 137 },
+      {
+        kimlik: "data-smoothing-moving-average",
+        başlık: "Taxi Trips (Moving Avg 300)",
+        nokta: 3600,
+      },
     ];
     const nearestNonNullYüzeyleri = [
       {
@@ -3188,6 +3206,14 @@
           || !customScalesOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !customScalesOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "data-smoothing") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !dataSmoothingOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !dataSmoothingOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -5670,6 +5696,75 @@
       kontrolleriGüncelle();
     }
 
+    function dataSmoothingYüzeyiniÇiz(indeks) {
+      const tanım = dataSmoothingYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-data-smoothing-index="${indeks}"]`);
+      const yüzeyOturumu = dataSmoothingOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const şablon = document.createElement("template");
+      şablon.innerHTML = yüzeyOturumu.svg(1920, 300).trim();
+      const yeniSvg = şablon.content.querySelector("svg");
+      let svg = yüzey.querySelector("svg");
+      if (svg && yeniSvg) {
+        svgYüzeyiniYerindeGüncelle(svg, yeniSvg);
+      } else {
+        yüzey.innerHTML = `${yüzeyOturumu.svg(1920, 300)}
+          <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
+            <span><i class="örnek" style="border-color:#ff0000;background:#ff0000"></i>
+              Trips: <b id="seri-değeri-0">--</b></span>
+          </div>`;
+        svg = yüzey.querySelector("svg");
+      }
+      if (!svg) return;
+      if (!svg.querySelector(":scope > #etkileşim")) {
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)"
+              stroke="#3b82f6"/>
+            <line id="imleç-x" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            <line id="imleç-y" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            <circle id="imleç-nokta-0" visibility="hidden" r="2.5"
+              fill="#ff0000"/>
+          </g>`);
+      }
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      svg.dataset.etkileşim = "independent-data-smoothing";
+      yüzey.onpointerenter = () => {
+        dataSmoothingEtkinİndeks = indeks;
+        oturum = dataSmoothingOturumları[indeks] ?? null;
+        kontrolleriGüncelle();
+      };
+      yüzey.onpointerleave = () => {
+        svg.querySelectorAll("#imleç-x, #imleç-y, [id^='imleç-nokta-']")
+          .forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+      };
+    }
+
+    function dataSmoothingÇiz() {
+      const ilkKurulum = !chart.classList.contains("data-smoothing-yüzeyi")
+        || chart.querySelectorAll(".data-smoothing-grafik").length
+          !== dataSmoothingYüzeyleri.length;
+      if (ilkKurulum) {
+        chart.className = "data-smoothing-yüzeyi";
+        chart.innerHTML = `<div class="data-smoothing-yığın">
+          ${dataSmoothingYüzeyleri.map((_, indeks) =>
+            `<article class="data-smoothing-grafik"
+              data-data-smoothing-index="${indeks}"></article>`
+          ).join("")}
+        </div>`;
+        dataSmoothingYüzeyleri.forEach((_, indeks) => dataSmoothingYüzeyiniÇiz(indeks));
+      } else {
+        dataSmoothingYüzeyiniÇiz(dataSmoothingEtkinİndeks);
+      }
+      oturum = dataSmoothingOturumları[dataSmoothingEtkinİndeks]
+        ?? dataSmoothingOturumları[0]
+        ?? null;
+      kontrolleriGüncelle();
+    }
+
     function scatterYüzeyiniÇiz(indeks) {
       const tanım = scatterYüzeyleri[indeks];
       const yüzey = chart.querySelector(`[data-scatter-index="${indeks}"]`);
@@ -6733,6 +6828,10 @@
         customScalesÇiz();
         return;
       }
+      if (aktifKart === "data-smoothing") {
+        dataSmoothingÇiz();
+        return;
+      }
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
         return;
@@ -6845,6 +6944,7 @@
       chart.classList.remove("scatter-yüzeyi");
       chart.classList.remove("align-data-yüzeyi");
       chart.classList.remove("custom-scales-yüzeyi");
+      chart.classList.remove("data-smoothing-yüzeyi");
       chart.classList.remove("soft-minmax-yüzeyi");
       chart.classList.remove("sparklines-bars-yüzeyi");
       chart.classList.remove("sparklines-yüzeyi");
@@ -7157,6 +7257,10 @@
         ? chart.querySelector(
             `[data-custom-scales-index="${customScalesEtkinİndeks}"] svg`
           )
+        : aktifKart === "data-smoothing"
+        ? chart.querySelector(
+            `[data-data-smoothing-index="${dataSmoothingEtkinİndeks}"] svg`
+          )
         : aktifKart === "scatter"
         ? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"] svg`)
         : aktifKart === "box-whisker"
@@ -7269,6 +7373,11 @@
           ?? chart.querySelector(
             `[data-custom-scales-index="${customScalesEtkinİndeks}"]`
           )
+        : aktifKart === "data-smoothing"
+        ? olay.target?.closest?.(".data-smoothing-grafik")
+          ?? chart.querySelector(
+            `[data-data-smoothing-index="${dataSmoothingEtkinİndeks}"]`
+          )
         : aktifKart === "scatter"
         ? olay.target?.closest?.(".scatter-grafik")
           ?? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"]`)
@@ -7331,6 +7440,12 @@
         if (Number.isInteger(indeks) && customScalesOturumları[indeks]) {
           customScalesEtkinİndeks = indeks;
           oturum = customScalesOturumları[indeks];
+        }
+      } else if (aktifKart === "data-smoothing" && bağımsızYüzey) {
+        const indeks = Number(bağımsızYüzey.dataset.dataSmoothingIndex);
+        if (Number.isInteger(indeks) && dataSmoothingOturumları[indeks]) {
+          dataSmoothingEtkinİndeks = indeks;
+          oturum = dataSmoothingOturumları[indeks];
         }
       }
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
@@ -7674,6 +7789,7 @@
       const çizgiler = ["imleç-x", "imleç-y"].map(id => svg.querySelector(`#${id}`));
       const etkileşimKapsamı = svg.closest(".soft-minmax-grafik")
         ?? svg.closest(".custom-scales-grafik")
+        ?? svg.closest(".data-smoothing-grafik")
         ?? svg.closest(".sparklines-grafik")
         ?? svg.closest(".sparse-grafik")
         ?? svg.closest(".stacked-series-grafik")
@@ -8508,6 +8624,11 @@
           if (yüzey.onceki_gorunum()) customScalesYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "data-smoothing") {
+        dataSmoothingOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.onceki_gorunum()) dataSmoothingYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.onceki_gorunum()) syncCursorYüzeyiÇiz(indeks);
@@ -8588,6 +8709,11 @@
       } else if (aktifKart === "custom-scales") {
         customScalesOturumları.forEach((yüzey, indeks) => {
           if (yüzey.tam_gorunum()) customScalesYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
+      } else if (aktifKart === "data-smoothing") {
+        dataSmoothingOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.tam_gorunum()) dataSmoothingYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
       } else if (aktifKart === "sync-cursor") {
@@ -8671,6 +8797,10 @@
         );
       } else if (aktifKart === "custom-scales") {
         customScalesOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "data-smoothing") {
+        dataSmoothingOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "sync-cursor") {
@@ -8871,6 +9001,11 @@
           customScalesEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "custom-scales";
         }
+        if (kimlik !== "data-smoothing" && kimlik.startsWith("data-smoothing-")) {
+          const indeks = dataSmoothingYüzeyleri.findIndex(yüzey => yüzey.kimlik === kimlik);
+          dataSmoothingEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "data-smoothing";
+        }
         if (["months-no-leap", "months-leap", "months-russian"].includes(kimlik)) {
           kimlik = "months";
         }
@@ -8995,6 +9130,7 @@
         const gruplanmışOturum = [
           alignDataOturumları,
           customScalesOturumları,
+          dataSmoothingOturumları,
           syncCursorOturumları,
           timeseriesDiscreteOturumları,
           timezonesDstOturumları,
@@ -9027,6 +9163,9 @@
         customScalesOturumları.forEach(yüzey => yüzey.free());
         customScalesOturumları = [];
         customScalesEtkinİndeks = 0;
+        dataSmoothingOturumları.forEach(yüzey => yüzey.free());
+        dataSmoothingOturumları = [];
+        dataSmoothingEtkinİndeks = 0;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
         syncCursorOturumları = [];
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
@@ -9089,6 +9228,7 @@
         aktifKart = kimlik;
         delete chart.dataset.alignDataOlcumMs;
         delete chart.dataset.customScalesOlcumMs;
+        delete chart.dataset.dataSmoothingOlcumMs;
         chart.scrollLeft = 0;
         chart.scrollTop = 0;
         if (kimlik === "sync-y-zero") {
@@ -9186,6 +9326,33 @@
           );
           oturum = customScalesOturumları[customScalesEtkinİndeks]
             ?? customScalesOturumları[0]
+            ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "data-smoothing") {
+          const istenenİndeks = dataSmoothingYüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === oturumKimliği
+          );
+          dataSmoothingEtkinİndeks = istenenİndeks >= 0 ? istenenİndeks : 0;
+          const ölçümler = [];
+          dataSmoothingOturumları = dataSmoothingYüzeyleri.map(yüzey => {
+            const başlangıç = performance.now();
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            ölçümler.push({
+              kimlik: yüzey.kimlik,
+              ms: performance.now() - başlangıç,
+            });
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          chart.dataset.dataSmoothingOlcumMs = JSON.stringify(ölçümler);
+          console.info(
+            "[data-smoothing] retained surfaces",
+            ölçümler.map(ölçüm => `${ölçüm.kimlik}: ${ölçüm.ms.toFixed(2)} ms`).join(" · ")
+          );
+          oturum = dataSmoothingOturumları[dataSmoothingEtkinİndeks]
+            ?? dataSmoothingOturumları[0]
             ?? null;
           çiz();
           return;

@@ -116,7 +116,7 @@ enum KartKimliği {
     CursorSnap,
     CursorTooltip,
     CustomScales,
-    DataSmoothing(SmoothingÖrneği),
+    DataSmoothing,
     DrawHooks,
     FocusCursor(FocusÖrneği),
     Gradients(GradientÖrneği),
@@ -186,7 +186,7 @@ impl KartKimliği {
             Self::CursorSnap => "Cursor Snap · 10×10 grid",
             Self::CursorTooltip => "Cursor Tooltip w/placement.js",
             Self::CustomScales => "Custom Scales · 3 independent surfaces",
-            Self::DataSmoothing(örnek) => örnek.başlık(),
+            Self::DataSmoothing => "Data Smoothing · 4 independent surfaces",
             Self::DrawHooks => "Draw Hooks",
             Self::FocusCursor(örnek) => örnek.başlık(),
             Self::Gradients(örnek) => örnek.başlık(),
@@ -316,7 +316,7 @@ impl KartKimliği {
             Self::CustomScales => {
                 "custom-scales.html · aynı sayfada doğrusal, log-log ve özel Weibull ölçeği"
             }
-            Self::DataSmoothing(_) => {
+            Self::DataSmoothing => {
                 "data-smoothing.html · taxi-trips + SGG + ASAP FFT + Moving Avg 300"
             }
             Self::DrawHooks => "draw-hooks.html · drawClear/drawSeries/draw plugin hooks",
@@ -410,7 +410,7 @@ impl KartKimliği {
             Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
             Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
             Self::CustomScales => CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ,
-            Self::DataSmoothing(_) => DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
+            Self::DataSmoothing => DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
             Self::DrawHooks => DRAW_HOOKS_KART_TANIM_ÖRNEĞİ,
             Self::FocusCursor(_) => FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ,
             Self::Gradients(_) => GRADIENTS_KART_TANIM_ÖRNEĞİ,
@@ -480,7 +480,7 @@ impl KartKimliği {
             Self::CursorSnap => "src/kart/cursor_snap.rs",
             Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
             Self::CustomScales => "src/kart/custom_scales.rs",
-            Self::DataSmoothing(_) => "src/kart/data_smoothing.rs",
+            Self::DataSmoothing => "src/kart/data_smoothing.rs",
             Self::DrawHooks => "src/kart/draw_hooks.rs",
             Self::FocusCursor(_) => "src/kart/focus_cursor.rs",
             Self::Gradients(_) => "src/kart/gradients.rs",
@@ -547,6 +547,8 @@ pub struct ChartListesi {
     align_data_grafikleri: Vec<(AlignDataÖrneği, Entity<GpuiGrafik>)>,
     align_data_kurulum_ms: Option<f64>,
     custom_scales_grafikleri: Vec<(CustomScaleÖrneği, Entity<GpuiGrafik>)>,
+    data_smoothing_grafikleri: Vec<(SmoothingÖrneği, Entity<GpuiGrafik>)>,
+    data_smoothing_ölçümleri_ms: Vec<(SmoothingÖrneği, f64)>,
     pixel_align_akışı: Option<PixelAlignAkışı>,
     pixel_align_son_kare: Option<Instant>,
     sine_akışı: Option<SineAkışı>,
@@ -641,6 +643,12 @@ impl ChartListesi {
                 }
             } else if bu.aktif_kart == KartKimliği::CustomScales {
                 for (_, grafik) in &bu.custom_scales_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if bu.aktif_kart == KartKimliği::DataSmoothing {
+                for (_, grafik) in &bu.data_smoothing_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -837,6 +845,8 @@ impl ChartListesi {
             align_data_grafikleri: Vec::new(),
             align_data_kurulum_ms: None,
             custom_scales_grafikleri: Vec::new(),
+            data_smoothing_grafikleri: Vec::new(),
+            data_smoothing_ölçümleri_ms: Vec::new(),
             pixel_align_akışı: None,
             pixel_align_son_kare: None,
             sine_akışı: None,
@@ -1242,6 +1252,51 @@ impl ChartListesi {
         }
         self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
         self.custom_scales_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
+    fn data_smoothing_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let mut yüzeyler = Vec::with_capacity(SmoothingÖrneği::TÜMÜ.len());
+        let mut ölçümler = Vec::with_capacity(SmoothingÖrneği::TÜMÜ.len());
+        for örnek in SmoothingÖrneği::TÜMÜ {
+            let başlangıç = Instant::now();
+            let sonuç = data_smoothing_kartı(örnek);
+            let süre_ms = başlangıç.elapsed().as_secs_f64() * 1_000.0;
+            let (seçenekler, veri) = match sonuç {
+                Ok(kart) => kart,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.data_smoothing_grafikleri.clear();
+                    self.data_smoothing_ölçümleri_ms.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.data_smoothing_grafikleri.clear();
+                    self.data_smoothing_ölçümleri_ms.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                bu.standart_grafik_olayını_işle(olay, cx);
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+            ölçümler.push((örnek, süre_ms));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.data_smoothing_grafikleri = yüzeyler;
+        self.data_smoothing_ölçümleri_ms = ölçümler;
         self.hata = None;
         cx.notify();
     }
@@ -2465,6 +2520,8 @@ impl ChartListesi {
         self.align_data_grafikleri.clear();
         self.align_data_kurulum_ms = None;
         self.custom_scales_grafikleri.clear();
+        self.data_smoothing_grafikleri.clear();
+        self.data_smoothing_ölçümleri_ms.clear();
         self.scales_dir_ori_grafikleri.clear();
         self.scatter_grafikleri.clear();
         self.bars_grouped_stacked_grafikleri.clear();
@@ -2499,6 +2556,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.custom_scales_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::DataSmoothing {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.data_smoothing_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -3397,7 +3463,7 @@ fn grafik_oluştur(
         KartKimliği::CursorSnap => cursor_snap_kartı(),
         KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
         KartKimliği::CustomScales => custom_scales_kartı(CustomScaleÖrneği::Doğrusal),
-        KartKimliği::DataSmoothing(örnek) => data_smoothing_kartı(örnek),
+        KartKimliği::DataSmoothing => data_smoothing_kartı(SmoothingÖrneği::Ham),
         KartKimliği::DrawHooks => draw_hooks_kartı(),
         KartKimliği::FocusCursor(örnek) => focus_cursor_kartı(örnek),
         KartKimliği::Gradients(örnek) => gradients_kartı(örnek),
@@ -3580,17 +3646,20 @@ impl Render for ChartListesi {
             KartKimliği::CustomScales => {
                 "3 bağımsız 800×800 yüzey · aynı 199×3 veri + 20 draw noktası".to_string()
             }
-            KartKimliği::DataSmoothing(SmoothingÖrneği::Ham) => {
-                "3600 resmî Taxi Trips örneği".to_string()
-            }
-            KartKimliği::DataSmoothing(SmoothingÖrneği::SavitzkyGolay) => {
-                "3600 nokta · Savitzky–Golay pencere 101".to_string()
-            }
-            KartKimliği::DataSmoothing(SmoothingÖrneği::Asap) => {
-                "137 nokta · ASAP FFT çözünürlük 150".to_string()
-            }
-            KartKimliği::DataSmoothing(SmoothingÖrneği::HareketliOrtalama) => {
-                "3600 nokta · hareketli ortalama 300".to_string()
+            KartKimliği::DataSmoothing => {
+                let süre = |örnek| {
+                    self.data_smoothing_ölçümleri_ms
+                        .iter()
+                        .find_map(|(kimlik, ms)| (*kimlik == örnek).then_some(*ms))
+                        .unwrap_or(0.0)
+                };
+                format!(
+                    "4 bağımsız 1920×300 yüzey · raw 3600 · SGG 3600/{:.2} ms · \
+                     ASAP 137/{:.2} ms · Moving Avg 3600/{:.2} ms",
+                    süre(SmoothingÖrneği::SavitzkyGolay),
+                    süre(SmoothingÖrneği::Asap),
+                    süre(SmoothingÖrneği::HareketliOrtalama),
+                )
             }
             KartKimliği::DrawHooks => {
                 "9 nokta × 3 seri · gradyan + medyan + yıldız + istatistik".to_string()
@@ -3774,6 +3843,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .custom_scales_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::DataSmoothing {
+            geri_var = self
+                .data_smoothing_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .data_smoothing_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         } else if aktif_kart == KartKimliği::SyncCursor {
@@ -4952,21 +5030,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(kart, cx);
                 }))
             })
-            .children(SmoothingÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::DataSmoothing(örnek);
+            .child({
+                let kart = KartKimliği::DataSmoothing;
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
+                    "kart-data-smoothing",
+                    "Data Smoothing · 4 independent surfaces",
                     "data-smoothing",
                     aktif_kart == kart,
-                    "Resmî Taxi Trips · kaynak JS algoritması",
+                    "4×1920×300 · raw, SGG, ASAP FFT, Moving Avg",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .child(
                 katalog_kartı(
                     "kart-draw-hooks",
@@ -5361,6 +5439,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.custom_scales_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
                             }
+                        } else if bu.aktif_kart == KartKimliği::DataSmoothing {
+                            for (_, grafik) in &bu.data_smoothing_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             for (_, grafik) in &bu.sync_cursor_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5497,6 +5579,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.custom_scales_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
                             }
+                        } else if bu.aktif_kart == KartKimliği::DataSmoothing {
+                            for (_, grafik) in &bu.data_smoothing_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             for (_, grafik) in &bu.sync_cursor_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5628,6 +5714,8 @@ impl Render for ChartListesi {
                             bu.align_data_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::CustomScales {
                             bu.custom_scales_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::DataSmoothing {
+                            bu.data_smoothing_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             bu.sync_cursor_grubu = SyncCursorGrubu::yeni();
                             bu.sync_cursor_yüzeylerini_oluştur(cx);
@@ -5772,6 +5860,35 @@ impl Render for ChartListesi {
                             .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik))
                     }),
                 ))
+        } else if aktif_kart == KartKimliği::DataSmoothing {
+            let yüzey = |örnek| {
+                self.data_smoothing_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(1_450.0))
+                .overflow_y_scroll()
+                .p_2()
+                .children(SmoothingÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    div()
+                        .id(SharedString::from(format!(
+                            "data-smoothing-{}-surface",
+                            örnek.kimlik()
+                        )))
+                        .w_full()
+                        .h(px(300.0))
+                        .mb(px(50.0))
+                        .overflow_x_scroll()
+                        .child(
+                            div()
+                                .w(px(1_920.0))
+                                .h(px(300.0))
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                        )
+                }))
         } else if aktif_kart == KartKimliği::SyncCursor {
             let cpu = sync_yüzeyi(SyncCursorÖrneği::Cpu);
             let ram = sync_yüzeyi(SyncCursorÖrneği::Ram);
@@ -7381,6 +7498,20 @@ impl Render for ChartListesi {
                  kurulum üç retained sahnede O(3N)'dir; pointer yalnız hafif etkileşim katmanını \
                  günceller, ana band/path yalnız ölçek, resize veya görünürlük değişiminde \
                  yeniden üretilir.",
+            ),
+            KartKimliği::DataSmoothing => Some(
+                "Amaç: resmî Taxi Trips verisinin ham halini Savitzky–Golay, ASAP FFT ve \
+                 300 örneklik hareketli ortalama sonuçlarıyla aynı sayfada, kaynak sırasıyla \
+                 karşılaştırır. Dört 1920×300 yüzey bağımsız Grafik örnekleridir; cursor, zoom, \
+                 pan ve geçmiş durumlarını paylaşmaz. API: data_smoothing_kartları dört yüzeyi \
+                 tek grupta döndürür; savitzky_golay, asap_yumuşat ve hareketli_ortalama sabit \
+                 demo parametrelerinin hesaplama API'leridir. Y aralıkları kaynak gibi sabit, \
+                 sol eksen 60 pikseldir. İzleme: yoğun zaman serisindeki genel eğilimi korurken \
+                 gürültünün farklı yöntemlerle ne ölçüde bastırıldığını ve tepe davranışını \
+                 kıyaslamak içindir. Maliyet: algoritmalar yalnız grup kurulurken bir kez \
+                 çalıştırılır ve süreleri ayrı ölçülür; toplam 10.937 çizgi örneği retained \
+                 sahnelere alınır. Pointer en yakın X'i bulup yalnız etkin yüzeyin hafif \
+                 cursor/lejant katmanını günceller; yumuşatma ve ana yollar yeniden hesaplanmaz.",
             ),
             KartKimliği::MissingData => Some(
                 "Amaç: aynı resmî sayfadaki iki bağımsız yüzeyi birlikte karşılaştırır. İlk \

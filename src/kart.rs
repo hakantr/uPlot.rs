@@ -118,8 +118,8 @@ pub use custom_scales::{
     custom_scales_kartları, custom_scales_kartı, custom_weibull_geri, custom_weibull_ileri,
 };
 pub use data_smoothing::{
-    DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ, SmoothingÖrneği, asap_yumuşat, data_smoothing_kartı,
-    hareketli_ortalama, savitzky_golay,
+    DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ, SmoothingÖrneği, asap_yumuşat, data_smoothing_kartları,
+    data_smoothing_kartı, hareketli_ortalama, savitzky_golay,
 };
 pub use dependent_scale::{DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, dependent_scale_kartı};
 pub use draw_hooks::{DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, draw_hooks_kartı};
