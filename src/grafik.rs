@@ -4287,44 +4287,32 @@ impl Grafik {
                         .all(|nokta| (nokta.boyut / 2.0 - yarıçap).abs() <= f32::EPSILON)
                 });
                 let mut toplu_merkezler = Vec::new();
+                let mut değişken_daireler = Vec::new();
                 for nokta in &seri.noktalar {
                     let merkez = Nokta::yeni(
                         self.x_konumu(x_aralığı, nokta.x, sol, genişlik),
                         alt - self.y_konumu(&seri.ölçek, seri_y_aralığı, nokta.y, 0.0, yükseklik),
                     );
                     let yarıçap = nokta.boyut / 2.0;
-                    // Kaynak bubble renderer görünür ölçeği en büyük yarıçap
-                    // kadar genişletir ve ardından plot alanına clip eder.
-                    if merkez.x + yarıçap < sol
-                        || merkez.x - yarıçap > sağ
-                        || merkez.y + yarıçap < üst
-                        || merkez.y - yarıçap > alt
-                    {
+                    // Sabit scatter yolu kaynak gibi yalnız merkezi görünür
+                    // değerleri alır. Bubble yolu ise en büyük yarıçap payıyla
+                    // plot alanına giren daireleri tutup tek maskede kırpar.
+                    let görünür = if sabit_boyut && !düzen.vuruş_etkin {
+                        (x_aralığı.en_az..=x_aralığı.en_çok).contains(&nokta.x)
+                            && (seri_y_aralığı.en_az..=seri_y_aralığı.en_çok).contains(&nokta.y)
+                    } else {
+                        merkez.x + yarıçap >= sol
+                            && merkez.x - yarıçap <= sağ
+                            && merkez.y + yarıçap >= üst
+                            && merkez.y - yarıçap <= alt
+                    };
+                    if !görünür {
                         continue;
                     }
                     if sabit_boyut {
                         toplu_merkezler.push(merkez);
-                    } else if merkez.x - yarıçap >= sol
-                        && merkez.x + yarıçap <= sağ
-                        && merkez.y - yarıçap >= üst
-                        && merkez.y + yarıçap <= alt
-                    {
-                        sahne.ekle(Komut::Daire {
-                            merkez,
-                            yarıçap,
-                            dolgu: seri.dolgu.clone(),
-                            çizgi: seri.renk.clone(),
-                            kalınlık: 1.0,
-                        });
                     } else {
-                        let çokgen = daire_çokgeni(merkez, yarıçap, 32);
-                        let kırpılmış = çokgeni_dikdörtgene_kırp(&çokgen, sol, sağ, üst, alt);
-                        if kırpılmış.len() >= 3 {
-                            sahne.ekle(Komut::Alan {
-                                çokgenler: vec![kırpılmış],
-                                dolgu: seri.dolgu.clone(),
-                            });
-                        }
+                        değişken_daireler.push((merkez, yarıçap));
                     }
                 }
                 if let Some(yarıçap) = ortak_yarıçap
@@ -4336,6 +4324,15 @@ impl Grafik {
                         dolgu: seri.dolgu.clone(),
                         çizgi: "#00000000".to_string(),
                         kalınlık: 0.0,
+                        kesme_sınırları: Some((Nokta::yeni(sol, üst), Nokta::yeni(sağ, alt))),
+                    });
+                }
+                if !değişken_daireler.is_empty() {
+                    sahne.ekle(Komut::DeğişkenDaireler {
+                        daireler: değişken_daireler,
+                        dolgu: seri.dolgu.clone(),
+                        çizgi: seri.renk.clone(),
+                        kalınlık: 1.0,
                         kesme_sınırları: Some((Nokta::yeni(sol, üst), Nokta::yeni(sağ, alt))),
                     });
                 }
@@ -8058,19 +8055,6 @@ fn yıldız_çokgeni(merkez: Nokta, uçlar: usize, dış: f32, iç: f32) -> Vec<
         ));
     }
     noktalar
-}
-
-fn daire_çokgeni(merkez: Nokta, yarıçap: f32, parça: usize) -> Vec<Nokta> {
-    let parça = parça.max(8);
-    (0..parça)
-        .map(|indeks| {
-            let açı = std::f32::consts::TAU * indeks as f32 / parça as f32;
-            Nokta::yeni(
-                merkez.x + yarıçap * açı.cos(),
-                merkez.y + yarıçap * açı.sin(),
-            )
-        })
-        .collect()
 }
 
 fn piksele_hizala(değer: f32, adım: f32) -> f32 {

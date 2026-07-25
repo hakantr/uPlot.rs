@@ -2407,12 +2407,15 @@
         "source-mode2-two-independent-surfaces", "deterministic-proof-40000-scatter-points",
         "deterministic-proof-200-bubbles", "area-scaled-bubble-size", "facet-y2-region",
         "smallest-overlap-hit-selection", "bubble-live-values", "gpui-wasm-catalog-parity",
-        "batched-scatter-path", "cached-bubble-spatial-index", "common-interaction-profile"
+        "batched-scatter-path", "batched-variable-radius-bubble-path",
+        "clipped-bubble-fill-and-stroke", "scatter-center-only-zoom-filter",
+        "independent-mode2-view-history", "cached-bubble-spatial-index",
+        "common-interaction-profile"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
-        "performans": "uygulandı_kanıtlı"
+        "performans": "kısmi"
       }
     },
     {

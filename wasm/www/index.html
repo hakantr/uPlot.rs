@@ -1660,7 +1660,8 @@
       kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/scatter.html">scatter.html</a>
         · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/quadtree.js">quadtree.js</a>
         <br>İki grafik aynı kaynak sayfasında birlikte görünür fakat veri, cursor ve ölçek durumları bağımsızdır.
-        <br>Scatter seri başına tek toplu yol; bubble hover ölçek/boyut değişene kadar korunan bbox uzamsal dizini kullanır.`,
+        <br>Scatter ve değişken yarıçaplı bubble serileri ayrı ayrı tek toplu yola iner; plot sınırındaki bubble dolgusu ve 1 px stroke aynı maskede kırpılır. Bubble hover ölçek/boyut değişene kadar korunan bbox uzamsal dizini kullanır.
+        <br>Kaynak <code>Math.random()</code> üretiminin deterministik bir kanıt fixture'ı kullanılır; iki grafik ayrı mode:2 veri, görünüm, cursor ve geçmiş durumuna sahiptir.`,
       tanım: () => scatter_kart_tanim_ornegi(),
       tanımYolu: "src/kart/scatter.rs",
       seriler: [],
@@ -1672,7 +1673,7 @@
         amaç: "Sabit boyutlu yoğun scatter ile nüfusa göre alan ölçekli bubble yaklaşımını aynı kaynak bağlamında karşılaştırır.",
         api: "mode:2 facet verisi seri başına bağımsız X/Y sütunları taşır; bubble ayrıca size ve label facet'leri ile Region A için sağ y2 ölçeğini kullanır.",
         izleme: "Korelasyon kümeleri, kapasite/gelir karşılaştırmaları ve üçüncü büyüklüğü balon alanıyla anlatan telemetri panelleri için uygundur.",
-        maliyet: "40.000 scatter noktası dört toplu path komutuna iner. Bubble hover ana sahneyi boyamaz ve yalnız uzamsal dizinin aday hücresini sorgular.",
+        maliyet: "40.000 scatter noktası ve 200 değişken boyutlu bubble, toplam sekiz toplu path komutuna iner. Bubble hover ana sahneyi boyamaz ve yalnız uzamsal dizinin aday hücresini sorgular.",
       },
     };
     document.querySelector('[data-kart="scatter"]')?.insertAdjacentHTML(

@@ -241,6 +241,7 @@ mod testler {
                 .map(|komut| match komut {
                     Komut::Daire { .. } | Komut::Alan { .. } => 1,
                     Komut::Daireler { merkezler, .. } => merkezler.len(),
+                    Komut::DeğişkenDaireler { daireler, .. } => daireler.len(),
                     _ => 0,
                 })
                 .sum::<usize>();
@@ -270,6 +271,9 @@ mod testler {
             .find_map(|komut| match komut {
                 Komut::Daire { merkez, .. } => Some(*merkez),
                 Komut::Daireler { merkezler, .. } => merkezler.first().copied(),
+                Komut::DeğişkenDaireler { daireler, .. } => {
+                    daireler.first().map(|(merkez, _)| *merkez)
+                }
                 _ => None,
             });
         let Some(merkez) = merkez else {
@@ -280,6 +284,156 @@ mod testler {
         };
         let vuruş = grafik.dağılım_vuruşu_boyutta(1_920, 600, merkez.x, merkez.y);
         assert!(vuruş.is_some_and(|v| v.değer.is_some() && v.etiket.is_some()));
+        Ok(())
+    }
+
+    #[test]
+    fn bubble_seri_başına_tek_kırpılmış_dolgu_ve_stroke_yolu_üretir() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = scatter_kartı(ScatterÖrneği::Bubble)?;
+        let düzen =
+            seçenekler
+                .dağılım_düzeni
+                .as_ref()
+                .ok_or(UplotHatası::GeçersizKaynakVeri {
+                    varlık: "scatter bubble",
+                    açıklama: "dağılım düzeni eksik".to_string(),
+                })?;
+        let azami_boyut = düzen
+            .seriler
+            .iter()
+            .flat_map(|seri| seri.noktalar.iter().map(|nokta| nokta.boyut))
+            .fold(0.0_f32, f32::max);
+        assert!((azami_boyut - 60.0).abs() <= f32::EPSILON);
+        assert!(düzen.seriler.first().is_some_and(
+            |seri| seri.ölçek == "y2" && seri.noktalar.iter().all(|nokta| nokta.y <= 0.0)
+        ));
+
+        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+        let yollar = sahne
+            .komutlar()
+            .iter()
+            .filter_map(|komut| match komut {
+                Komut::DeğişkenDaireler {
+                    daireler,
+                    çizgi,
+                    kalınlık,
+                    kesme_sınırları,
+                    ..
+                } => Some((daireler, çizgi, kalınlık, kesme_sınırları)),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(yollar.len(), 4);
+        assert_eq!(
+            yollar
+                .iter()
+                .map(|(daireler, _, _, _)| daireler.len())
+                .sum::<usize>(),
+            200
+        );
+        assert!(
+            yollar
+                .iter()
+                .all(|(_, çizgi, kalınlık, kesme)| **kalınlık == 1.0
+                    && !çizgi.is_empty()
+                    && kesme.is_some())
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn scatter_zoomu_yalnız_merkezi_görünür_noktaları_toplu_yola_alır() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = scatter_kartı(ScatterÖrneği::Scatter)?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        let aralık = Aralık::yeni(200.0, 300.0)?;
+        assert!(grafik.görünür_aralıkları_ayarla(aralık, aralık, true));
+        let (sol, sağ, üst, alt) = grafik.çizim_alanı_boyutta(1_920, 600);
+        let sahne = grafik.çiz();
+        assert!(sahne.komutlar().iter().all(|komut| match komut {
+            Komut::Daireler { merkezler, .. } => merkezler.iter().all(|merkez| {
+                (sol..=sağ).contains(&merkez.x) && (üst..=alt).contains(&merkez.y)
+            }),
+            _ => true,
+        }));
+        Ok(())
+    }
+
+    #[test]
+    fn iki_mode2_yüzeyi_zoom_ve_geçmişi_bağımsız_tutar() -> Result<(), UplotHatası> {
+        let (scatter_seçenekleri, scatter_veri) = scatter_kartı(ScatterÖrneği::Scatter)?;
+        let (bubble_seçenekleri, bubble_veri) = scatter_kartı(ScatterÖrneği::Bubble)?;
+        let mut scatter = Grafik::yeni(scatter_seçenekleri, scatter_veri)?;
+        let bubble = Grafik::yeni(bubble_seçenekleri, bubble_veri)?;
+        let bubble_x = bubble.görünür_x_aralığı();
+        let bubble_y = bubble.görünür_y_aralığı();
+        assert!(scatter.fiziksel_seçim_yakınlaştır(0.2, 0.2, 0.8, 0.8)?);
+        assert_ne!(scatter.görünür_x_aralığı(), bubble_x);
+        assert_eq!(bubble.görünür_x_aralığı(), bubble_x);
+        assert_eq!(bubble.görünür_y_aralığı(), bubble_y);
+        assert!(!bubble.geri_var());
+        Ok(())
+    }
+
+    #[test]
+    fn bubble_hover_en_küçüğü_eşitlikte_en_yakın_son_adayı_seçer_ve_bbox_köşesini_reddeder()
+    -> Result<(), UplotHatası> {
+        let düzen = DağılımDüzeni::default().vuruş_etkin(true).seri(
+            DağılımSerisi::yeni("overlap", "red")
+                .dolgu("#ff00004d")
+                .noktalar(vec![
+                    DağılımNoktası::yeni(50.0, 50.0, 40.0).etiket("large"),
+                    DağılımNoktası::yeni(50.0, 50.0, 10.0).etiket("small-first"),
+                    DağılımNoktası::yeni(50.0, 50.0, 10.0).etiket("small-last"),
+                    DağılımNoktası::yeni(80.0, 80.0, 20.0).etiket("corner"),
+                ]),
+        );
+        let seçenekler = GrafikSeçenekleri::yeni(400, 300)?
+            .x_zaman(false)
+            .x_aralığı(Aralık::yeni(0.0, 100.0)?)
+            .y_aralığı(Aralık::yeni(0.0, 100.0)?)
+            .dağılım_düzeni(düzen)
+            .seri(SeriSeçenekleri::yeni("placeholder").göster(false));
+        let veri = HizalıVeri::yeni(vec![0.0], vec![vec![None]])?;
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        let daireler = grafik
+            .çiz()
+            .komutlar()
+            .iter()
+            .find_map(|komut| match komut {
+                Komut::DeğişkenDaireler { daireler, .. } => Some(daireler.clone()),
+                _ => None,
+            })
+            .ok_or(UplotHatası::GeçersizKaynakVeri {
+                varlık: "scatter bubble hover",
+                açıklama: "toplu bubble yolu eksik".to_string(),
+            })?;
+        let merkez = daireler
+            .first()
+            .map(|(merkez, _)| *merkez)
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        let vuruş = grafik
+            .dağılım_vuruşu_boyutta(400, 300, merkez.x, merkez.y)
+            .ok_or(UplotHatası::GeçersizKaynakVeri {
+                varlık: "scatter bubble hover",
+                açıklama: "örtüşen bubble vuruşu eksik".to_string(),
+            })?;
+        assert_eq!(vuruş.indeks, 2);
+        assert_eq!(vuruş.etiket.as_deref(), Some("small-last"));
+
+        let (köşe_merkezi, köşe_yarıçapı) =
+            daireler.get(3).copied().ok_or(UplotHatası::YetersizVeri {
+                uzunluk: daireler.len(),
+            })?;
+        assert!(
+            grafik
+                .dağılım_vuruşu_boyutta(
+                    400,
+                    300,
+                    köşe_merkezi.x + köşe_yarıçapı,
+                    köşe_merkezi.y + köşe_yarıçapı,
+                )
+                .is_none()
+        );
         Ok(())
     }
 }

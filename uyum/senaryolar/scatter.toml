@@ -6,23 +6,29 @@ device_pixel_ratio = 1
 durum = "tek_kart_iki_bağımsız_mode2_yüzeyi"
 
 [veri]
-scatter_seri_sayısı = 4
-scatter_seri_başı_nokta = 10000
-bubble_seri_sayısı = 4
-bubble_seri_başı_nokta = 50
-kanıt_tohumu = "0x5ca77e42"
-koordinat_aralığı = [0, 500]
-balon_değer_aralığı = [1, 10000]
-balon_çap_aralığı = [0, 60]
+"scatter_seri_sayısı" = 4
+"scatter_seri_başı_nokta" = 10000
+"bubble_seri_sayısı" = 4
+"bubble_seri_başı_nokta" = 50
+"kanıt_tohumu" = "0x5ca77e42"
+"kanıt_fixture_türü" = "kaynak_math_random_semantiğinin_belirlenimci_karşılığı"
+"koordinat_aralığı" = [0, 500]
+"balon_değer_aralığı" = [1, 10000]
+"balon_çap_aralığı" = [0, 60]
+"region_a_ölçeği" = "y2"
 
-[etkileşim]
-bubble_vuruşu = "en_küçük_alan_sonra_en_yakın_merkez"
-uzamsal_dizin = "bbox_hücre_dizini_yalnız_ölçek_veya_boyut_değişince_yenilenir"
-scatter_çizimi = "seri_başına_tek_toplu_daire_yolu"
-etiket_alanları = ["Country", "Population", "GDP", "Income"]
-ortak_davranış_profili = "resize-temeli-v1"
+["etkileşim"]
+"bubble_vuruşu" = "en_küçük_alan_sonra_en_yakın_merkez"
+"uzamsal_dizin" = "bbox_hücre_dizini_yalnız_ölçek_veya_boyut_değişince_yenilenir"
+"scatter_çizimi" = "seri_başına_tek_toplu_daire_yolu"
+"bubble_çizimi" = "seri_başına_tek_değişken_yarıçap_yolu"
+"bubble_kırpma" = "dolgu_ve_1px_stroke_birlikte"
+"scatter_zoom_filtresi" = "yalnız_merkezi_görünür_noktalar"
+"etiket_alanları" = ["Country", "Population", "GDP", "Income"]
+"yüzey_ilişkisi" = "aynı_kaynak_sayfasında_bağımsız_mode2_oturumları"
+"ortak_davranış_profili" = "resize-temeli-v1"
 
-[kanıt]
-svg_dizini = "target/scatter"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"svg_dizini" = "target/scatter"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"

@@ -2791,6 +2791,9 @@ mod testler {
             .iter()
             .find_map(|komut| match komut {
                 uplot_rs::Komut::Daire { merkez, .. } => Some(*merkez),
+                uplot_rs::Komut::DeğişkenDaireler { daireler, .. } => {
+                    daireler.first().map(|(merkez, _)| *merkez)
+                }
                 _ => None,
             });
         let Some(merkez) = vuruş_adayı else { return };

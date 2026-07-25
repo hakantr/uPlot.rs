@@ -318,6 +318,24 @@ fn aynı_yol_geometrisi(eski: &Komut, yeni: &Komut) -> bool {
                 && eski_kalınlık == yeni_kalınlık
                 && eski_kesme == yeni_kesme
         }
+        (
+            Komut::DeğişkenDaireler {
+                daireler: eski_daireler,
+                kalınlık: eski_kalınlık,
+                kesme_sınırları: eski_kesme,
+                ..
+            },
+            Komut::DeğişkenDaireler {
+                daireler: yeni_daireler,
+                kalınlık: yeni_kalınlık,
+                kesme_sınırları: yeni_kesme,
+                ..
+            },
+        ) => {
+            eski_daireler == yeni_daireler
+                && eski_kalınlık == yeni_kalınlık
+                && eski_kesme == yeni_kesme
+        }
         _ => false,
     }
 }
@@ -2586,6 +2604,79 @@ fn sahneyi_önbellekli_boya(
                             let yarıçaplar = point(yarıçap, yarıçap);
                             for merkez in merkezler {
                                 let merkez = dönüştür(*merkez);
+                                let sol = point(merkez.x - yarıçap, merkez.y);
+                                let sağ = point(merkez.x + yarıçap, merkez.y);
+                                yol.move_to(sol);
+                                yol.arc_to(yarıçaplar, px(0.0), false, true, sağ);
+                                yol.arc_to(yarıçaplar, px(0.0), false, true, sol);
+                                yol.close();
+                            }
+                            yol.build().ok()
+                        })
+                    })
+                    .flatten();
+                if let Some(dolgu_yolu) = dolgu_yolu {
+                    let dolgu_boyası = renk_çöz(dolgu);
+                    let çizgi_boyası = renk_çöz(çizgi);
+                    if let Some((başlangıç, bitiş)) = kesme_sınırları {
+                        let başlangıç = dönüştür(*başlangıç);
+                        let bitiş = dönüştür(*bitiş);
+                        let sol = başlangıç.x.min(bitiş.x);
+                        let üst = başlangıç.y.min(bitiş.y);
+                        let sınırlar = Bounds::new(
+                            point(sol, üst),
+                            size(
+                                başlangıç.x.max(bitiş.x) - sol,
+                                başlangıç.y.max(bitiş.y) - üst,
+                            ),
+                        );
+                        pencere.with_content_mask(
+                            Some(ContentMask { bounds: sınırlar }),
+                            |pencere| {
+                                pencere.paint_path(dolgu_yolu, dolgu_boyası);
+                                if let Some(çizgi_yolu) = çizgi_yolu {
+                                    pencere.paint_path(çizgi_yolu, çizgi_boyası);
+                                }
+                            },
+                        );
+                    } else {
+                        pencere.paint_path(dolgu_yolu, dolgu_boyası);
+                        if let Some(çizgi_yolu) = çizgi_yolu {
+                            pencere.paint_path(çizgi_yolu, çizgi_boyası);
+                        }
+                    }
+                }
+            }
+            Komut::DeğişkenDaireler {
+                daireler,
+                dolgu,
+                çizgi,
+                kalınlık,
+                kesme_sınırları,
+            } => {
+                let dolgu_yolu = yol_önbelleği.yol(komut_indeksi, || {
+                    let mut yol = PathBuilder::fill();
+                    for (merkez, yarıçap) in daireler {
+                        let merkez = dönüştür(*merkez);
+                        let yarıçap = px(*yarıçap * ölçek);
+                        let yarıçaplar = point(yarıçap, yarıçap);
+                        let sol = point(merkez.x - yarıçap, merkez.y);
+                        let sağ = point(merkez.x + yarıçap, merkez.y);
+                        yol.move_to(sol);
+                        yol.arc_to(yarıçaplar, px(0.0), false, true, sağ);
+                        yol.arc_to(yarıçaplar, px(0.0), false, true, sol);
+                        yol.close();
+                    }
+                    yol.build().ok()
+                });
+                let çizgi_yolu = (*kalınlık > 0.0)
+                    .then(|| {
+                        yol_önbelleği.ikincil_yol(komut_indeksi, || {
+                            let mut yol = PathBuilder::stroke(px(*kalınlık * ölçek));
+                            for (merkez, yarıçap) in daireler {
+                                let merkez = dönüştür(*merkez);
+                                let yarıçap = px(*yarıçap * ölçek);
+                                let yarıçaplar = point(yarıçap, yarıçap);
                                 let sol = point(merkez.x - yarıçap, merkez.y);
                                 let sağ = point(merkez.x + yarıçap, merkez.y);
                                 yol.move_to(sol);

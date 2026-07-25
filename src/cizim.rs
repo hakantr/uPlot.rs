@@ -105,6 +105,14 @@ pub enum Komut {
         kalınlık: f32,
         kesme_sınırları: Option<(Nokta, Nokta)>,
     },
+    /// Aynı stile sahip değişken yarıçaplı daireleri tek Path2D/SVG yolunda taşır.
+    DeğişkenDaireler {
+        daireler: Vec<(Nokta, f32)>,
+        dolgu: String,
+        çizgi: String,
+        kalınlık: f32,
+        kesme_sınırları: Option<(Nokta, Nokta)>,
+    },
     Dikdörtgen {
         konum: Nokta,
         genişlik: f32,
@@ -363,6 +371,55 @@ impl Sahne {
                     let r = sayı(*yarıçap);
                     let çap = sayı(*yarıçap * 2.0);
                     for merkez in merkezler {
+                        let _ = write!(
+                            d,
+                            "M{} {}a{} {} 0 1 0 {} 0a{} {} 0 1 0 -{} 0 ",
+                            sayı(merkez.x - *yarıçap),
+                            sayı(merkez.y),
+                            r,
+                            r,
+                            çap,
+                            r,
+                            r,
+                            çap,
+                        );
+                    }
+                    let _ = writeln!(
+                        çıktı,
+                        "  <path d=\"{}\" fill=\"{}\" stroke=\"{}\" stroke-width=\"{}\"{} />",
+                        d.trim_end(),
+                        kaçış(dolgu),
+                        kaçış(çizgi),
+                        sayı(*kalınlık),
+                        kırpma_kimliği.map_or_else(String::new, |kimlik| {
+                            format!(" clip-path=\"url(#{})\"", kaçış(&kimlik))
+                        })
+                    );
+                }
+                Komut::DeğişkenDaireler {
+                    daireler,
+                    dolgu,
+                    çizgi,
+                    kalınlık,
+                    kesme_sınırları,
+                } => {
+                    let kırpma_kimliği = kesme_sınırları.map(|(başlangıç, bitiş)| {
+                        let kimlik = format!("uplot-degisken-daire-kirpma-{komut_indeksi}");
+                        let _ = writeln!(
+                            çıktı,
+                            "  <defs><clipPath id=\"{}\"><rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"/></clipPath></defs>",
+                            kimlik,
+                            sayı(başlangıç.x),
+                            sayı(başlangıç.y),
+                            sayı((bitiş.x - başlangıç.x).max(0.0)),
+                            sayı((bitiş.y - başlangıç.y).max(0.0)),
+                        );
+                        kimlik
+                    });
+                    let mut d = String::new();
+                    for (merkez, yarıçap) in daireler {
+                        let r = sayı(*yarıçap);
+                        let çap = sayı(*yarıçap * 2.0);
                         let _ = write!(
                             d,
                             "M{} {}a{} {} 0 1 0 {} 0a{} {} 0 1 0 -{} 0 ",
