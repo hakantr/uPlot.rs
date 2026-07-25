@@ -13,7 +13,8 @@ const KAYNAK_JSON: &str = include_str!("veri/path_gap_clip.json");
 pub const PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in path_gap_clip_kartları()? {
     // null/undefined ayrımı, boşluk kırpması, bant ve yol geometrisi
     // platform arayüzünden bağımsız olarak çekirdekte çözülür. Kaynak
-    // sayfadaki 15 yüzey tek aile görünümünde karşılaştırılır.
+    // sayfadaki 15 yüzey tek aile görünümünde karşılaştırılır. Joined
+    // stepped çift, uPlot alignGaps: +1/-1 sınırlarını seri seçeneğinde taşır.
     let grafik = Grafik::yeni(seçenekler, veri)?;
 }"##;
 
@@ -236,7 +237,7 @@ fn temel(
 ) -> Result<GrafikSeçenekleri, UplotHatası> {
     Ok(GrafikSeçenekleri::yeni(genişlik, yükseklik)?
         .başlık(başlık)
-        .arka_plan_rengi("#e0e0e0")
+        .çizim_alanı_arka_plan_rengi("#e0e0e0")
         .x_zaman(zaman)
         .etkileşimler(ortak_kart_etkileşimleri()))
 }
@@ -379,18 +380,18 @@ fn birleşik_basamak(sonra: bool) -> Result<(GrafikSeçenekleri, HizalıVeri), U
         .dolgu("rgba(0,0,255,0.3)")
         .çizgi_kalınlığı(2.0);
     let basamak = if sonra {
-        basamak.basamak_sonra()
+        basamak.basamak_sonra().basamak_boşluk_hizası(1)
     } else {
-        basamak.basamak_önce()
+        basamak.basamak_önce().basamak_boşluk_hizası(-1)
     };
     let aralık = SeriSeçenekleri::yeni("[0..5]")
         .renk("red")
         .dolgu("rgba(255,0,0,0.3)")
         .çizgi_kalınlığı(2.0);
     let aralık = if sonra {
-        aralık.basamak_sonra()
+        aralık.basamak_sonra().basamak_boşluk_hizası(1)
     } else {
-        aralık.basamak_önce()
+        aralık.basamak_önce().basamak_boşluk_hizası(-1)
     };
     let örnek = if sonra {
         PathGapClipÖrneği::BirleşikBasamakSonra
@@ -668,7 +669,7 @@ fn seçenekli(değerler: &[f64], boşluklar: &[usize]) -> Vec<Option<f64>> {
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Grafik, Komut};
+    use crate::{Grafik, Komut, Nokta};
 
     #[test]
     fn resmi_on_bes_yuzey_kaynak_nokta_sayilarini_korur() -> Result<(), UplotHatası> {
@@ -676,7 +677,11 @@ mod testler {
         assert_eq!(kartlar.len(), 15);
         for (örnek, seçenekler, veri) in kartlar {
             assert_eq!(seçenekler.başlık, örnek.başlık());
-            assert_eq!(seçenekler.arka_plan_rengi, "#e0e0e0");
+            assert_eq!(seçenekler.arka_plan_rengi, "#ffffff");
+            assert_eq!(
+                seçenekler.çizim_alanı_arka_plan_rengi.as_deref(),
+                Some("#e0e0e0")
+            );
             assert_eq!(veri.uzunluk(), örnek.nokta_sayısı());
             assert_eq!(seçenekler.seriler.len(), veri.seriler().len());
             assert_eq!(
@@ -797,6 +802,218 @@ mod testler {
         // High/Low Bands optimizasyonu bunları tek sürekli retained çokgende birleştirir.
         assert_eq!((önce, sonra), (2, 1));
         Ok(())
+    }
+
+    #[test]
+    fn joined_stepped_align_gaps_sınırlarını_kaynak_pikseline_hizalar() -> Result<(), UplotHatası> {
+        let (sonra_seçenekler, sonra_veri) =
+            path_gap_clip_kartı(PathGapClipÖrneği::BirleşikBasamakSonra)?;
+        assert_eq!(
+            sonra_seçenekler
+                .seriler
+                .iter()
+                .take(2)
+                .map(|seri| seri.basamak_boşluk_hizası)
+                .collect::<Vec<_>>(),
+            [1, 1]
+        );
+        let sonra = Grafik::yeni(sonra_seçenekler, sonra_veri)?;
+        let (sol, sağ, _, _) = sonra.çizim_alanı_boyutta(800, 400);
+        let boşluk_x = sol + sonra.x_konum_oranı(5.0).unwrap_or_default() as f32 * (sağ - sol);
+        let sonra_parçalar = renkli_yol_parçaları(&sonra.çiz(), "red");
+        assert!(sonra_parçalar.iter().any(|parça| {
+            parça
+                .last()
+                .is_some_and(|nokta| (nokta.x - (boşluk_x + 1.0)).abs() <= 0.51)
+        }));
+
+        let (önce_seçenekler, önce_veri) =
+            path_gap_clip_kartı(PathGapClipÖrneği::BirleşikBasamakÖnce)?;
+        assert_eq!(
+            önce_seçenekler
+                .seriler
+                .iter()
+                .take(2)
+                .map(|seri| seri.basamak_boşluk_hizası)
+                .collect::<Vec<_>>(),
+            [-1, -1]
+        );
+        let önce = Grafik::yeni(önce_seçenekler, önce_veri)?;
+        let önce_parçalar = renkli_yol_parçaları(&önce.çiz(), "red");
+        assert!(önce_parçalar.iter().any(|parça| {
+            parça
+                .first()
+                .is_some_and(|nokta| (nokta.x - (boşluk_x - 1.0)).abs() <= 0.51)
+        }));
+
+        for örnek in [
+            PathGapClipÖrneği::BasamakSonra,
+            PathGapClipÖrneği::BasamakÖnce,
+        ] {
+            let (seçenekler, _) = path_gap_clip_kartı(örnek)?;
+            assert!(
+                seçenekler
+                    .seriler
+                    .iter()
+                    .all(|seri| seri.basamak_boşluk_hizası == 0)
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn dört_canlı_yüzey_aynı_span_gaps_fazına_geçer_statikler_değişmez() -> Result<(), UplotHatası>
+    {
+        let mut grafikler = path_gap_clip_kartları()?
+            .into_iter()
+            .map(|(örnek, seçenekler, veri)| {
+                Grafik::yeni(seçenekler, veri).map(|grafik| (örnek, grafik))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        for (örnek, grafik) in &mut grafikler {
+            if örnek.boşluk_animasyonunda_mı() {
+                assert!(grafik.boşlukları_birleştir_ayarla(true));
+            }
+        }
+        for (örnek, grafik) in &grafikler {
+            let durumlar = grafik
+                .seri_seçenekleri()
+                .iter()
+                .map(|seri| seri.boşlukları_birleştir)
+                .collect::<Vec<_>>();
+            if örnek.boşluk_animasyonunda_mı() {
+                assert!(durumlar.iter().all(|durum| *durum), "{}", örnek.kimlik());
+            } else {
+                assert!(durumlar.iter().all(|durum| !*durum), "{}", örnek.kimlik());
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn büyük_kaynak_verisinin_kritik_gap_indeksleri_korunur() -> Result<(), UplotHatası> {
+        let (ölçek_seçenekleri, ölçek_verisi) =
+            path_gap_clip_kartı(PathGapClipÖrneği::VeriDışınaTaşanÖlçek)?;
+        assert_eq!(ölçek_verisi.x().first().copied(), Some(1_577_454_300.0));
+        assert_eq!(ölçek_verisi.x().last().copied(), Some(1_577_999_700.0));
+        assert_eq!(ölçek_verisi.uzunluk(), 304);
+        for seri in ölçek_verisi.seriler() {
+            assert_eq!(
+                seri.iter()
+                    .enumerate()
+                    .filter(|(indeks, değer)| (35..50).contains(indeks) && değer.is_none())
+                    .count(),
+                15
+            );
+        }
+        let ölçek = Grafik::yeni(ölçek_seçenekleri, ölçek_verisi)?;
+        assert!(ölçek.çiz().komutlar().iter().any(|komut| matches!(
+            komut,
+            Komut::Dikdörtgen { dolgu, .. } if dolgu == "#e0e0e0"
+        )));
+
+        for (örnek, x_899) in [
+            (PathGapClipÖrneği::TekBoşlukÇıkışı, 1_578_812_550.0),
+            (PathGapClipÖrneği::TekBoşlukGirişi, 1_578_812_608.0),
+        ] {
+            let (_, veri) = path_gap_clip_kartı(örnek)?;
+            assert_eq!(veri.x().get(899).copied(), Some(x_899));
+            assert!(
+                veri.seriler()
+                    .first()
+                    .and_then(|seri| seri.get(899))
+                    .is_some_and(Option::is_none)
+            );
+            assert_eq!(
+                veri.seriler()
+                    .first()
+                    .and_then(|seri| seri.get(898))
+                    .copied()
+                    .flatten(),
+                Some(3.19)
+            );
+            assert_eq!(
+                veri.seriler()
+                    .first()
+                    .and_then(|seri| seri.get(900))
+                    .copied()
+                    .flatten(),
+                Some(3.24)
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn tek_piksel_gap_giriş_çıkış_uçları_kaynak_x_komşularında_kalır() -> Result<(), UplotHatası> {
+        for (örnek, önceki_x, sonraki_x) in [
+            (
+                PathGapClipÖrneği::TekBoşlukÇıkışı,
+                1_578_812_549.0,
+                1_578_812_609.0,
+            ),
+            (
+                PathGapClipÖrneği::TekBoşlukGirişi,
+                1_578_812_549.0,
+                1_578_812_609.0,
+            ),
+            (PathGapClipÖrneği::TekBoşluk3001, 3.0, 5.0),
+            (PathGapClipÖrneği::TekBoşluk4999, 3.0, 5.0),
+            (PathGapClipÖrneği::TekBoşluk5001, 3.0, 5.0),
+        ] {
+            let (seçenekler, veri) = path_gap_clip_kartı(örnek)?;
+            let (genişlik, yükseklik) = örnek.kaynak_boyutu();
+            let grafik = Grafik::yeni(seçenekler, veri)?;
+            let parçalar = renkli_yol_parçaları(&grafik.çiz(), "red");
+            assert!(parçalar.len() >= 2, "{}", örnek.kimlik());
+            let önceki_piksel = x_pikseli(&grafik, genişlik, yükseklik, önceki_x);
+            let sonraki_piksel = x_pikseli(&grafik, genişlik, yükseklik, sonraki_x);
+            assert!(
+                parçalar.iter().any(|parça| parça
+                    .last()
+                    .is_some_and(|nokta| { (nokta.x - önceki_piksel).abs() <= 0.51 })),
+                "{} önceki uç",
+                örnek.kimlik()
+            );
+            assert!(
+                parçalar.iter().any(|parça| parça
+                    .first()
+                    .is_some_and(|nokta| { (nokta.x - sonraki_piksel).abs() <= 0.51 })),
+                "{} sonraki uç",
+                örnek.kimlik()
+            );
+        }
+
+        let (seçenekler, veri) = path_gap_clip_kartı(PathGapClipÖrneği::ÇiftBoşluk)?;
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        let parçalar = renkli_yol_parçaları(&grafik.çiz(), "red");
+        let orta = x_pikseli(&grafik, 500, 250, 5.0);
+        assert!(
+            parçalar
+                .iter()
+                .flatten()
+                .any(|nokta| (nokta.x - orta).abs() <= 0.51)
+        );
+        Ok(())
+    }
+
+    fn x_pikseli(grafik: &Grafik, genişlik: u32, yükseklik: u32, x: f64) -> f32 {
+        let (sol, sağ, _, _) = grafik.çizim_alanı_boyutta(genişlik, yükseklik);
+        sol + grafik.x_konum_oranı(x).unwrap_or_default() as f32 * (sağ - sol)
+    }
+
+    fn renkli_yol_parçaları(sahne: &crate::Sahne, hedef_renk: &str) -> Vec<Vec<Nokta>> {
+        sahne
+            .komutlar()
+            .iter()
+            .filter_map(|komut| match komut {
+                Komut::Yol {
+                    parçalar, renk, ..
+                } if renk == hedef_renk => Some(parçalar.clone()),
+                _ => None,
+            })
+            .flatten()
+            .collect()
     }
 
     fn bant_çokgen_sayısı(sahne: &crate::Sahne) -> usize {

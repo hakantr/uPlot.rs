@@ -1483,7 +1483,7 @@
       etkileşimler: () => ortakEtkileşimler(),
       kullanım: {
         amaç: "Gerçek null, join sırasında oluşan undefined/hizalama eksiği, band kırpması, stepped before/after ve tek-piksel gap sınırlarını aynı kaynak ailesinde karşılaştırır.",
-        api: "HizalıDeğer::{Değer, Boş, Tanımsız}, NULL_RETAIN/NULL_EXPAND join kipleri, linear/stepped/spline yolları ve spanGaps mutasyonu çekirdektedir; bu demoda setData/setScale kullanılmaz.",
+        api: "HizalıDeğer::{Değer, Boş, Tanımsız}, NULL_RETAIN/NULL_EXPAND join kipleri, linear/stepped/spline yolları, joined stepped alignGaps ±1 ve spanGaps mutasyonu çekirdektedir; bu demoda setData/setScale kullanılmaz.",
         izleme: "Scrape eksiğini gerçek ölçüm null'u gibi göstermeyin. Bridge açıldığında çizginin yalnız görsel olarak bağlandığını kullanıcıya belirtin.",
         maliyet: "Path ve gap taraması O(N), sıralı imleç O(log N). Pointer hafif overlay'i günceller; saniyelik animasyon yalnız dört yüzeyin ana yolunu yeniden kurar.",
       },

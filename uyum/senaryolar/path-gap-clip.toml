@@ -6,50 +6,53 @@ device_pixel_ratio = 1
 durum = "15_kaynak_yüzeyi"
 
 [sunum]
-katalog_kartı = 1
-ilişkili_yüzey_sayısı = 15
-karşılaştırma_grupları = 5
-kullanım_rehberi_varsayılan_kapalı = true
+"katalog_kartı" = 1
+"ilişkili_yüzey_sayısı" = 15
+"karşılaştırma_grupları" = 5
+"kullanım_rehberi_varsayılan_kapalı" = true
 
-[canlı_davranış]
-aralık_ms = 1000
-ortak_span_gaps_yüzeyleri = [
+["canlı_davranış"]
+"aralık_ms" = 1000
+"ortak_span_gaps_yüzeyleri" = [
   "path-gap-clip-scale-range",
   "path-gap-clip-band-gaps",
   "path-gap-clip-align-expand",
   "path-gap-clip-align-numeric",
 ]
-diğer_yüzeyler_bağımsız = true
-set_data_kullanır = false
-set_scale_kullanır = false
+"diğer_yüzeyler_bağımsız" = true
+"set_data_kullanır" = false
+"set_scale_kullanır" = false
 
 [veri]
-etkin_yüzey_sayısı = 15
-data0_nokta_sayısı = 304
-data3_nokta_sayısı = 2228
-null_ve_undefined_ayrımı = true
+"etkin_yüzey_sayısı" = 15
+"data0_nokta_sayısı" = 304
+"data3_nokta_sayısı" = 2228
+"null_ve_undefined_ayrımı" = true
 join_null_kipleri = ["NULL_RETAIN", "NULL_EXPAND"]
 
 [yollar]
-doğrusal = true
+"doğrusal" = true
 basamak_sonra = true
-basamak_önce = true
+"basamak_önce" = true
+joined_basamak_align_gaps = [1, -1]
 spline = true
 bant = true
-çizim_dikdörtgeni_kırpması = true
-ters_x_yönü = true
+"çizim_dikdörtgeni_kırpması" = true
+"ters_x_yönü" = true
+plot_altligi_rengi = "#e0e0e0"
+kok_yuzey_rengi = "#ffffff"
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
-tekerlek_x_yakınlaştır = true
-shift_tekerlek_yalnız_x = true
-ctrl_tekerlek_yalnız_y = true
-seçim_yakınlaştır = true
-çift_tıkla_tam_görünüm = true
-dokunma_xy_yakınlaştır = true
-boşluk_sol_sürükleme_taşıma = true
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
+"tekerlek_x_yakınlaştır" = true
+"shift_tekerlek_yalnız_x" = true
+"ctrl_tekerlek_yalnız_y" = true
+"seçim_yakınlaştır" = true
+"çift_tıkla_tam_görünüm" = true
+"dokunma_xy_yakınlaştır" = true
+"boşluk_sol_sürükleme_taşıma" = true
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg_dizini = "target/path-gap-clip"

@@ -46,6 +46,10 @@ pub struct SeriSeçenekleri {
     pub azami_x_boşluğu: Option<f64>,
     pub boşlukları_birleştir: bool,
     pub çizim_türü: SeriÇizimTürü,
+    /// uPlot stepped `alignGaps` karşılığı. `0`, boşluğu iki komşu dolu
+    /// örnek arasında tutar; `1`, step-after yolunu ilk null X'e kadar,
+    /// `-1` ise step-before yolunu son null X'ten itibaren görünür bırakır.
+    pub basamak_boşluk_hizası: i8,
     /// Kaynak `Path2D` içinde her null koşusunu `moveTo/lineTo` ile kuran,
     /// yerleşik yol sadeleştirmesi kullanmayan özel doğrusal yol işaretidir.
     pub saf_doğrusal_yol: bool,
@@ -115,6 +119,7 @@ impl SeriSeçenekleri {
             azami_x_boşluğu: None,
             boşlukları_birleştir: false,
             çizim_türü: SeriÇizimTürü::Çizgi,
+            basamak_boşluk_hizası: 0,
             saf_doğrusal_yol: false,
             çubuk_genişlik_oranı: 0.6,
             azami_çubuk_genişliği: f32::INFINITY,
@@ -265,6 +270,11 @@ impl SeriSeçenekleri {
 
     pub fn basamak_sonra(mut self) -> Self {
         self.çizim_türü = SeriÇizimTürü::BasamakSonra;
+        self
+    }
+
+    pub fn basamak_boşluk_hizası(mut self, hizalama: i8) -> Self {
+        self.basamak_boşluk_hizası = hizalama.clamp(-1, 1);
         self
     }
 

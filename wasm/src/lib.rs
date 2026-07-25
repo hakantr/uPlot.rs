@@ -2498,8 +2498,14 @@ mod testler {
             let Ok(oturum) = oturum else {
                 continue;
             };
-            let svg = oturum.svg(1_200, 600);
+            let (genişlik, yükseklik) = örnek.kaynak_boyutu();
+            let svg = oturum.svg(genişlik, yükseklik);
             assert!(svg.starts_with("<svg"), "{}", örnek.kimlik());
+            assert!(
+                svg.contains(&format!("viewBox=\"0 0 {genişlik} {yükseklik}\"")),
+                "{}",
+                örnek.kimlik()
+            );
             if let Some(ilk_sözcük) = örnek.başlık().split_whitespace().next() {
                 assert!(svg.contains(ilk_sözcük), "{}", örnek.kimlik());
             }
@@ -2520,6 +2526,38 @@ mod testler {
         assert!(web.contains("pathGapClipYüzeyleri.forEach((yüzey, indeks) =>"));
         assert!(web.contains("if (!yüzey.canlı) return;"));
         assert!(web.contains("function pathGapClipYüzeyiniÇiz(indeks)"));
+        assert!(web.contains("joined stepped alignGaps ±1"));
+        let matris = web
+            .find("const pathGapClipYüzeyleri = [")
+            .and_then(|başlangıç| web.get(başlangıç..))
+            .and_then(|kalan| {
+                kalan
+                    .find("document.querySelector")
+                    .and_then(|bitiş| kalan.get(..bitiş))
+            });
+        assert!(
+            matris.is_some(),
+            "Path Gap Clip WASM yüzey matrisi bulunamadı"
+        );
+        if let Some(matris) = matris {
+            assert_eq!(matris.matches("{ kimlik: \"path-gap-clip-").count(), 15);
+            let mut önceki = 0;
+            for örnek in PathGapClipÖrneği::TÜMÜ {
+                let göreli = matris
+                    .get(önceki..)
+                    .and_then(|kalan| kalan.find(örnek.kimlik()));
+                assert!(
+                    göreli.is_some(),
+                    "{} WASM matrisinde kaynak sırasında değil",
+                    örnek.kimlik()
+                );
+                if let Some(göreli) = göreli {
+                    önceki = önceki
+                        .saturating_add(göreli)
+                        .saturating_add(örnek.kimlik().len());
+                }
+            }
+        }
         assert_eq!(kart_sayisi(), 365);
     }
 

@@ -4344,6 +4344,7 @@ impl Grafik {
             }
             let mut ham_parçalar = Vec::<Vec<Nokta>>::new();
             let mut parça = Vec::<Nokta>::new();
+            let mut son_gerçek_boş_x = None::<f64>;
             let mut görünür_noktalar = Vec::<(usize, Nokta, f64, f64)>::new();
             let piksel_hizası = seri.piksel_hizası.unwrap_or(self.seçenekler.piksel_hizası);
             let x_piksel_uzunluğu = if self.seçenekler.x_dikey {
@@ -4433,6 +4434,39 @@ impl Grafik {
                                 piksele_hizala(ham_y, piksel_hizası),
                             )
                         };
+                        if seri.çizim_türü == crate::SeriÇizimTürü::BasamakÖnce
+                            && seri.basamak_boşluk_hizası == -1
+                            && parça.is_empty()
+                            && let Some(boş_x) = son_gerçek_boş_x.take()
+                        {
+                            let yarım_vuruş = seri_kalınlığı.max(0.0) / 2.0;
+                            let sınır = if self.seçenekler.x_dikey {
+                                let yön = if self.seçenekler.x_ters_yön {
+                                    1.0
+                                } else {
+                                    -1.0
+                                };
+                                Nokta::yeni(
+                                    yol_noktası.x,
+                                    alt - self.x_konumu(x_aralığı, boş_x, 0.0, yükseklik)
+                                        - yön * yarım_vuruş,
+                                )
+                            } else {
+                                let yön = if self.seçenekler.x_ters_yön {
+                                    -1.0
+                                } else {
+                                    1.0
+                                };
+                                Nokta::yeni(
+                                    self.x_konumu(x_aralığı, boş_x, sol, genişlik)
+                                        - yön * yarım_vuruş,
+                                    yol_noktası.y,
+                                )
+                            };
+                            parça.push(sınır);
+                        } else {
+                            son_gerçek_boş_x = None;
+                        }
                         parça.push(yol_noktası);
                         let işaret_noktası = Nokta::yeni(
                             piksele_hizala(ham_x, piksel_hizası),
@@ -4442,12 +4476,47 @@ impl Grafik {
                             görünür_noktalar.push((indeks, işaret_noktası, *x_değeri, *y_değeri));
                         }
                     }
-                    _ if self.veri.hizalama_eksiği_mi(seri_indeksi, indeks)
-                        || seri.boşlukları_birleştir => {}
+                    _ if self.veri.hizalama_eksiği_mi(seri_indeksi, indeks) => {}
+                    _ if seri.boşlukları_birleştir => {
+                        son_gerçek_boş_x = None;
+                    }
                     _ if !parça.is_empty() => {
+                        if seri.çizim_türü == crate::SeriÇizimTürü::BasamakSonra
+                            && seri.basamak_boşluk_hizası == 1
+                            && let Some(önceki) = parça.last().copied()
+                        {
+                            let yarım_vuruş = seri_kalınlığı.max(0.0) / 2.0;
+                            let sınır = if self.seçenekler.x_dikey {
+                                let yön = if self.seçenekler.x_ters_yön {
+                                    1.0
+                                } else {
+                                    -1.0
+                                };
+                                Nokta::yeni(
+                                    önceki.x,
+                                    alt - self.x_konumu(x_aralığı, *x_değeri, 0.0, yükseklik)
+                                        + yön * yarım_vuruş,
+                                )
+                            } else {
+                                let yön = if self.seçenekler.x_ters_yön {
+                                    -1.0
+                                } else {
+                                    1.0
+                                };
+                                Nokta::yeni(
+                                    self.x_konumu(x_aralığı, *x_değeri, sol, genişlik)
+                                        + yön * yarım_vuruş,
+                                    önceki.y,
+                                )
+                            };
+                            parça.push(sınır);
+                        }
+                        son_gerçek_boş_x = Some(*x_değeri);
                         ham_parçalar.push(std::mem::take(&mut parça));
                     }
-                    _ => {}
+                    _ => {
+                        son_gerçek_boş_x = Some(*x_değeri);
+                    }
                 }
             }
             if !parça.is_empty() {

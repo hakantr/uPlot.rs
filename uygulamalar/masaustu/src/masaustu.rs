@@ -7167,7 +7167,7 @@ impl Render for ChartListesi {
             let gruplar: [(&str, &str, &[PathGapClipÖrneği]); 5] = [
                 (
                     "Band ve canlı spanGaps",
-                    "İki band yüzeyi ile join yüzeyleri aynı bir saniyelik bridge durumunu paylaşır.",
+                    "İki band yüzeyi, ayrı join grubundaki iki canlı yüzeyle aynı bir saniyelik bridge fazını paylaşır.",
                     &[
                         PathGapClipÖrneği::VeriDışınaTaşanÖlçek,
                         PathGapClipÖrneği::BantBoşlukları,
