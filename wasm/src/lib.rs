@@ -3759,13 +3759,24 @@ mod testler {
     fn axis_control_wasm_seyrek_sahne_ve_eksenleri_üretir() {
         let oturum = KartOturumu::yeni("axis-control", 100);
         assert!(oturum.is_ok());
-        let Ok(oturum) = oturum else {
+        let Ok(mut oturum) = oturum else {
             return;
         };
         let svg = oturum.svg(1048, 600);
         assert!(svg.contains("X Axis Label"));
         assert!(svg.contains("Y Axis Label"));
+        assert!(svg.contains("rotate(-90.00"));
+        assert!(svg.contains(">−50</text>") || svg.contains(">-50</text>"));
+        assert!(svg.contains(">50</text>"));
+        assert!(svg.contains("stroke=\"#ff0000\""));
         assert!(svg.len() < 500_000);
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(0, false), Ok(true)));
+        assert!(!oturum.svg(1048, 600).contains("stroke=\"#ff0000\""));
+        assert_eq!(oturum.seri_gorunur_y_araligi(0), vec![-50.0, 50.0]);
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(0, true), Ok(true)));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("aktifKart === \"axis-control\""));
+        assert!(web.contains("piksel kovasında ilk/min/maks/son"));
     }
 
     #[test]

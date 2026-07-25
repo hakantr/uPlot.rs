@@ -3573,6 +3573,7 @@ impl Render for ChartListesi {
                 | KartKimliği::YShiftedSeries
                 | KartKimliği::DependentScale
                 | KartKimliği::ArcSinhScales
+                | KartKimliği::AxisControl
         ) {
             self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
                 grafik
@@ -6602,6 +6603,17 @@ impl Render for ChartListesi {
                  decade/multiple ızgarası yalnız eşik, veri, görünüm veya boyut değişiminde \
                  O(N + tick) yenilenir; pointer ana yolu yeniden üretmez.",
             ),
+            KartKimliği::AxisControl => Some(
+                "Amaç: yarım milyon örnekte eksen yerleşimi ve sabit −50…50 Y düzlemini kaynak \
+                 sinyal ayrıntısını kaybetmeden doğrular. API: \
+                 YÖlçekSeçenekleri::eksen_en_az_etiket_boşluğu axis.space=50'yi; \
+                 birincil_y_sağda, eksen rengi/genişliği ve X/Y etiketleri resmî eksen \
+                 yapılandırmasını taşır. Lejant setSeries ile sin(x) yolunu açıp kapatır. \
+                 İzleme: yoğun ve sabit sınırla karşılaştırılması gereken telemetri içindir; \
+                 wheel/seçim görünür X dilimini daralttığında kovalar yalnız o dilimde kurulur. \
+                 Maliyet: 500.001 değer bellekte korunur; her piksel kovasında ilk/min/maks/son \
+                 adaylarıyla sahne O(plot width) noktaya iner, pointer ana yolu yeniden kurmaz.",
+            ),
             KartKimliği::TimeseriesDiscrete => Some(
                 "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
                  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
@@ -6948,6 +6960,7 @@ impl Render for ChartListesi {
                         | KartKimliği::YShiftedSeries
                         | KartKimliği::DependentScale
                         | KartKimliği::ArcSinhScales
+                        | KartKimliği::AxisControl
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )
@@ -6964,6 +6977,7 @@ impl Render for ChartListesi {
                         | KartKimliği::YShiftedSeries
                         | KartKimliği::DependentScale
                         | KartKimliği::ArcSinhScales
+                        | KartKimliği::AxisControl
                 ),
                 |öğe| {
                 öğe.child(

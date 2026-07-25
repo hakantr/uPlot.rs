@@ -2461,6 +2461,49 @@ fn sahneyi_önbellekli_boya(
                     uygulama,
                 );
             }
+            Komut::DöndürülmüşMetin {
+                konum,
+                içerik,
+                renk,
+                boyut,
+                ..
+            } => {
+                // GPUI 0.2 metin primitifinde dönüşüm yoktur. Glifleri tek tek
+                // dikey bir satırda boyamak, eksen etiketini ayrı bir DOM/öğe
+                // ağına çevirmeden aynı hafif sahne katmanında tutar.
+                let karakterler = içerik.chars().rev().collect::<Vec<_>>();
+                let adım = *boyut * 0.9;
+                let başlangıç_y =
+                    konum.y - (karakterler.len().saturating_sub(1) as f32 * adım) / 2.0;
+                for (indeks, karakter) in karakterler.into_iter().enumerate() {
+                    let paylaşımlı = SharedString::from(karakter.to_string());
+                    let koşu = TextRun {
+                        len: paylaşımlı.len(),
+                        font: pencere.text_style().font(),
+                        color: renk_çöz(renk),
+                        background_color: None,
+                        underline: None,
+                        strikethrough: None,
+                    };
+                    let çizgi = pencere.text_system().shape_line(
+                        paylaşımlı,
+                        px(*boyut * ölçek),
+                        &[koşu],
+                        None,
+                    );
+                    let x = konum.x * ölçek - f32::from(çizgi.width()) / 2.0;
+                    let y = başlangıç_y + indeks as f32 * adım;
+                    let başlangıç = point(px(köken_x + x), px(köken_y + (y - *boyut) * ölçek));
+                    let _ = çizgi.paint(
+                        başlangıç,
+                        px(*boyut * 1.25 * ölçek),
+                        TextAlign::Left,
+                        None,
+                        pencere,
+                        uygulama,
+                    );
+                }
+            }
         }
     }
 }

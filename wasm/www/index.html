@@ -1069,6 +1069,12 @@
         yardım: "Sağ Y ekseni ve iki eksen etiketi · ortak yakınlaştırma ve taşıma profili etkin",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "Yarım milyon örnekte eksen yerleşimi ve sabit −50…50 Y düzlemini, kaynak sinyal ayrıntısını kaybetmeden doğrular.",
+          api: "YÖlçekSeçenekleri::eksen_en_az_etiket_boşluğu axis.space=50'yi; birincil_y_sağda, eksen rengi/genişliği ve X/Y etiketleri resmî eksen yapılandırmasını taşır. Lejant setSeries ile sin(x) yolunu açıp kapatır.",
+          izleme: "Çok yoğun, sabit sınırla karşılaştırılması gereken sensör veya telemetri akışlarında kullanın. Wheel/seçim görünür X dilimini daralttığında piksel kovaları yalnız o dilim için yeniden kurulur.",
+          maliyet: "500.001 hizalı değer bellekte korunur; çizim her piksel kovasında ilk/min/maks/son adaylarını tutarak sahneyi O(plot width) noktaya indirir. Pointer ana yolu yeniden kurmadan hafif cursor/lejant katmanını günceller.",
+        },
       },
       "axis-autosize": {
         başlık: "Axis AutoSize",
@@ -6418,7 +6424,8 @@
         || aktifKart === "y-scale-drag"
         || aktifKart === "y-shifted-series"
         || aktifKart === "dependent-scale"
-        || aktifKart === "arcsinh-scales";
+        || aktifKart === "arcsinh-scales"
+        || aktifKart === "axis-control";
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks) || değiştirilebilirLejant
           ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>

@@ -127,6 +127,14 @@ pub enum Komut {
         boyut: f32,
         hiza: MetinHizası,
     },
+    DöndürülmüşMetin {
+        konum: Nokta,
+        içerik: String,
+        renk: String,
+        boyut: f32,
+        hiza: MetinHizası,
+        açı: f32,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -436,6 +444,33 @@ impl Sahne {
                         kaçış(renk),
                         sayı(*boyut),
                         çapa,
+                        kaçış(içerik)
+                    );
+                }
+                Komut::DöndürülmüşMetin {
+                    konum,
+                    içerik,
+                    renk,
+                    boyut,
+                    hiza,
+                    açı,
+                } => {
+                    let çapa = match hiza {
+                        MetinHizası::Başlangıç => "start",
+                        MetinHizası::Orta => "middle",
+                        MetinHizası::Bitiş => "end",
+                    };
+                    let _ = writeln!(
+                        çıktı,
+                        "  <text x=\"{}\" y=\"{}\" fill=\"{}\" font-family=\"Arial, sans-serif\" font-size=\"{}\" text-anchor=\"{}\" transform=\"rotate({} {} {})\">{}</text>",
+                        sayı(konum.x),
+                        sayı(konum.y),
+                        kaçış(renk),
+                        sayı(*boyut),
+                        çapa,
+                        sayı(*açı),
+                        sayı(konum.x),
+                        sayı(konum.y),
                         kaçış(içerik)
                     );
                 }

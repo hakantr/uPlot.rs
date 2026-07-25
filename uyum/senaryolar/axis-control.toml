@@ -5,33 +5,46 @@ viewport = [1048, 600]
 device_pixel_ratio = 1
 durum = "etkileşimli"
 
-[veri]
-nokta_sayısı = 500001
+["veri"]
+"nokta_sayısı" = 500001
 x_en_az = 0
-x_en_çok = 500000
-formül = "random()-0.5 + sin(x*0.00002)*40 + sin(x*0.001)*5 + sin(x*0.1)*2"
-kanıt_tohumu = "0xA815_C017"
+"x_en_çok" = 500000
+"formül" = "random()-0.5 + sin(x*0.00002)*40 + sin(x*0.001)*5 + sin(x*0.1)*2"
+"kanıt_tohumu" = "0xA815_C017"
 
-[eksen]
-y_aralığı = [-50.0, 50.0]
+["eksen"]
+"y_aralığı" = [-50.0, 50.0]
 y_konumu = "sağ"
 x_etiketi = "X Axis Label"
 y_etiketi = "Y Axis Label"
 y_rengi = "#ff0000"
+y_space = 50
+y_label_gap = 8
+y_label_size = 28
+y_label_rotation = -90
+y_ticks = [-50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50]
+x_label_size = 20
+y_toplam_pay = 94
 
 [performans]
-yöntem = "piksel-kovası-ilk-min-maks-son"
-azami_sahne_noktası = 5000
+"yöntem" = "piksel-kovası-giriş-min-maks-çıkış"
+"azami_sahne_noktası" = 5000
+"görünür_dilim_arama" = "O(log N)"
+"yeniden_çizim" = "O(görünür N), çıktı O(plot width)"
+"dış_komşular" = true
+"pointer_ana_yolu_yeniden_çizmez" = true
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
-tekerlek_x_yakınlaştır = true
-seçim_yakınlaştır = true
-çift_tıkla_tam_görünüm = true
-dokunma_xy_yakınlaştır = true
-boşluk_sol_sürükleme_taşıma = true
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
+"tekerlek_x_yakınlaştır" = true
+"seçim_yakınlaştır" = true
+"çift_tıkla_tam_görünüm" = true
+"dokunma_xy_yakınlaştır" = true
+"boşluk_sol_sürükleme_taşıma" = true
+set_series = true
+"sabit_y_tam_görünüm" = [-50.0, 50.0]
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["kanıt"]
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg = "target/axis-control.svg"

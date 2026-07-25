@@ -3444,32 +3444,36 @@ impl Grafik {
         }
 
         if !self.seçenekler.y_eksen_etiketi.is_empty() {
-            sahne.ekle(Komut::Metin {
-                konum: Nokta::yeni(
-                    if self.seçenekler.x_dikey {
-                        (sol + sağ) / 2.0
-                    } else if self.seçenekler.birincil_y_karşıda {
-                        sağ
-                    } else {
-                        sol
-                    },
-                    if self.seçenekler.x_dikey && self.seçenekler.birincil_y_karşıda {
-                        alt + 40.0
-                    } else {
-                        üst - 12.0
-                    },
-                ),
-                içerik: self.seçenekler.y_eksen_etiketi.clone(),
-                renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
-                boyut: 12.0,
-                hiza: if self.seçenekler.x_dikey {
-                    MetinHizası::Orta
-                } else if self.seçenekler.birincil_y_karşıda {
-                    MetinHizası::Bitiş
+            if self.seçenekler.x_dikey {
+                sahne.ekle(Komut::Metin {
+                    konum: Nokta::yeni(
+                        (sol + sağ) / 2.0,
+                        if self.seçenekler.birincil_y_karşıda {
+                            alt + 40.0
+                        } else {
+                            üst - 12.0
+                        },
+                    ),
+                    içerik: self.seçenekler.y_eksen_etiketi.clone(),
+                    renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                    boyut: 12.0,
+                    hiza: MetinHizası::Orta,
+                });
+            } else {
+                let eksen_etiketi_x = if self.seçenekler.birincil_y_karşıda {
+                    sağ + self.seçenekler.birincil_y_eksen_genişliği.unwrap_or(48.0) * 0.56
                 } else {
-                    MetinHizası::Başlangıç
-                },
-            });
+                    sol - self.seçenekler.birincil_y_eksen_genişliği.unwrap_or(48.0) * 0.56
+                };
+                sahne.ekle(Komut::DöndürülmüşMetin {
+                    konum: Nokta::yeni(eksen_etiketi_x, (üst + alt) / 2.0),
+                    içerik: self.seçenekler.y_eksen_etiketi.clone(),
+                    renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                    boyut: 12.0,
+                    hiza: MetinHizası::Orta,
+                    açı: -90.0,
+                });
+            }
         }
 
         let mut sol_ikincil = 0_usize;
@@ -6731,7 +6735,11 @@ fn çizilecek_indeksler(
     piksel_genişliği: f32,
 ) -> Vec<usize> {
     let eşik = (piksel_genişliği.max(1.0) as usize).saturating_mul(4);
-    let görünür = görünür_x_indeksleri(x, aralık);
+    let görünür_çekirdek = görünür_x_indeksleri(x, aralık);
+    // uPlot path çağrısı gibi görünüm sınırını kesen çizgi parçasını korumak
+    // için her iki taraftan bir dış komşu da çizim adayına katılır.
+    let görünür = görünür_çekirdek.start.saturating_sub(1)
+        ..görünür_çekirdek.end.saturating_add(1).min(x.len());
     let görünür_sayı = görünür.end.saturating_sub(görünür.start);
     let Some(görünür_y) = y.get(görünür.clone()) else {
         return Vec::new();
@@ -6799,9 +6807,9 @@ fn kova_indekslerini_ekle(
     en_çok: usize,
     son: usize,
 ) {
-    let mut adaylar = [ilk, en_az, en_çok, son];
-    adaylar.sort_unstable();
-    for aday in adaylar {
+    // Resmî `_drawAcc`: giriş → min → max → çıkış. Ekstremumların veri
+    // zamanına göre sıralanması aynı piksel kovasındaki dikey zarfı bozar.
+    for aday in [ilk, en_az, en_çok, son] {
         if sonuç.last().copied() != Some(aday) {
             sonuç.push(aday);
         }
@@ -7535,7 +7543,7 @@ mod eksen_testleri {
     }
 
     #[test]
-    fn çizgi_seyrekleştirme_yalnız_görünür_x_dilimini_tarar() {
+    fn çizgi_seyrekleştirme_görünür_x_dilimi_ve_dış_komşuları_tarar() {
         let x = (0..=1_000).map(f64::from).collect::<Vec<_>>();
         let y = x.iter().copied().map(Some).collect::<Vec<_>>();
         let dar = Aralık {
@@ -7543,9 +7551,9 @@ mod eksen_testleri {
             en_çok: 420.0,
         };
         let dar_indeksler = çizilecek_indeksler(&x, &y, dar, 100.0);
-        assert_eq!(dar_indeksler.first().copied(), Some(400));
-        assert_eq!(dar_indeksler.last().copied(), Some(420));
-        assert_eq!(dar_indeksler.len(), 21);
+        assert_eq!(dar_indeksler.first().copied(), Some(399));
+        assert_eq!(dar_indeksler.last().copied(), Some(421));
+        assert_eq!(dar_indeksler.len(), 23);
 
         let yoğun = çizilecek_indeksler(
             &x,

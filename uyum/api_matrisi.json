@@ -1108,6 +1108,36 @@
       "test": "src/kart/arcsinh_scales.rs + wasm/src/lib.rs"
     },
     {
+      "kaynak_yolu": "axis-control Axis.space=50 / side=1 / label layout budget",
+      "rust_karşılığı": "YÖlçekSeçenekleri::eksen_en_az_etiket_boşluğu + birincil_y_sağda + birincil_y_eksen_genişliği",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/axis_control.rs"
+    },
+    {
+      "kaynak_yolu": "axis-control axis label rotation + fixed -50..50 ticks",
+      "rust_karşılığı": "Komut::DöndürülmüşMetin + GrafikSeçenekleri::y_sabit_bölmeler",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/axis_control.rs + wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "linear path decimation _drawAcc first/min/max/out",
+      "rust_karşılığı": "çizilecek_indeksler / kova_indekslerini_ekle",
+      "durum": "tam_kanıtlı",
+      "test": "src/grafik.rs + src/kart/axis_control.rs"
+    },
+    {
+      "kaynak_yolu": "linear path zoom boundary outer indices",
+      "rust_karşılığı": "çizilecek_indeksler görünüm öncesi/sonrası komşu koruması",
+      "durum": "tam_kanıtlı",
+      "test": "src/grafik.rs"
+    },
+    {
+      "kaynak_yolu": "axis-control standard legend setSeries show with fixed scale",
+      "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla + GPUI/WASM değiştirilebilir lejant",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/axis_control.rs + wasm/src/lib.rs"
+    },
+    {
       "kaynak_yolu": "hooks.drawClear annotation visibility filter",
       "rust_karşılığı": "Grafik annotation görünürlük ve kırpma katmanı",
       "durum": "tam_kanıtlı",

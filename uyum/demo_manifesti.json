@@ -780,15 +780,25 @@
         "fixed-y-range-minus-50-to-50",
         "right-primary-y-axis",
         "x-and-y-axis-labels",
+        "rotated-y-axis-label",
+        "source-y-fixed-ticks-minus-50-to-50",
+        "source-y-axis-space-fifty",
+        "source-y-axis-label-layout-budget",
+        "standard-legend-set-series",
         "min-max-pixel-decimation",
+        "source-draw-acc-first-min-max-last-order",
+        "outer-neighbor-zoom-edge-clipping",
+        "fixed-y-reset-and-set-series-invariant",
+        "visible-slice-binary-search-decimation",
+        "collapsed-usage-cost-guide",
         "common-interaction-profile"
       ],
       "kanıt": {
-        "api": "kısmi",
+        "api": "tam_kanıtlı",
         "sayısal": "tam_kanıtlı",
-        "statik_görsel": "uygulandı_kanıtlı",
-        "davranış": "uygulandı_kanıtlı",
-        "performans": "uygulandı_kanıtlı"
+        "statik_görsel": "tam_kanıtlı",
+        "davranış": "tam_kanıtlı",
+        "performans": "tam_kanıtlı"
       }
     },
     {
