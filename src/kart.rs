@@ -140,7 +140,8 @@ pub use log_scales2::{
 pub use mass_spectrum::{MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, mass_spectrum_kartı};
 pub use measure_datums::{MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ, measure_datums_kartı};
 pub use missing_data::{
-    MISSING_DATA_KART_TANIM_ÖRNEĞİ, missing_data_null_kartı, missing_data_x_boşluğu_kartı,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MissingDataÖrneği, missing_data_kartları,
+    missing_data_null_kartı, missing_data_x_boşluğu_kartı,
 };
 pub use months::{
     MONTHS_KANIT_TOHUMU, MONTHS_KART_TANIM_ÖRNEĞİ, MONTHS_RU_KANIT_TOHUMU,

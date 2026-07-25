@@ -25,12 +25,12 @@ use uplot_rs::{
     LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği, LinePathsÖrneği, LogScales2Örneği,
     LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
     MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, MULTI_BARS_KART_TANIM_ÖRNEĞİ,
-    MultiBarsÖrneği, NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ,
-    NO_DATA_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
-    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignAkışı,
-    PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
-    SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
+    MissingDataÖrneği, MultiBarsÖrneği, NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ,
+    NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, NoDataÖrneği,
+    PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ,
+    PathGapClipÖrneği, PixelAlignAkışı, PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ,
+    SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
     STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS, STREAM_DATA_KART_TANIM_ÖRNEĞİ,
     SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
@@ -53,8 +53,8 @@ use uplot_rs::{
     dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
     grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
     log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
-    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yılsız_kartı,
-    months_kartları, multi_bars_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
+    missing_data_kartları, missing_data_null_kartı, months_artık_yılsız_kartı, months_kartları,
+    multi_bars_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
     ortak_kart_etkileşimleri, path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları,
     pixel_align_kartı, points_kartları, points_kartı, resize_kartı, scale_padding_kartı,
     scales_dir_ori_kartları, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
@@ -128,8 +128,7 @@ enum KartKimliği {
     MeasureDatums,
     MultiBars(MultiBarsÖrneği),
     NearestNonNull,
-    MissingDataNull,
-    MissingDataXGap,
+    MissingData,
     DependentScale,
     ArcSinhScales,
     AxisControl,
@@ -200,8 +199,7 @@ impl KartKimliği {
             Self::MeasureDatums => "Measure / Datums",
             Self::MultiBars(örnek) => örnek.başlık(),
             Self::NearestNonNull => "Nearest Non-Null · 5 davranış",
-            Self::MissingDataNull => "Missing Data · null values",
-            Self::MissingDataXGap => "Missing Data · adjacent X gap",
+            Self::MissingData => "Missing Data · 2 related surfaces",
             Self::DependentScale => "Derived Scale · °F / °C",
             Self::ArcSinhScales => "ArcSinh Y Scale",
             Self::AxisControl => "Axis Control",
@@ -349,9 +347,7 @@ impl KartKimliği {
             Self::NearestNonNull => {
                 "nearest-non-null.html · 5 bağımsız yüzeyde null/proximity/cursor karşılaştırması"
             }
-            Self::MissingDataNull | Self::MissingDataXGap => {
-                "missing-data.html · resmî veri ve iki kaynak alt grafiği"
-            }
+            Self::MissingData => "missing-data.html · resmî veri ve iki kaynak alt grafiği",
             Self::DependentScale => {
                 "dependent-scale.html · Fahrenheit'tan türetilen Celsius ekseni"
             }
@@ -425,7 +421,7 @@ impl KartKimliği {
             Self::MeasureDatums => MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
             Self::MultiBars(_) => MULTI_BARS_KART_TANIM_ÖRNEĞİ,
             Self::NearestNonNull => NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ,
-            Self::MissingDataNull | Self::MissingDataXGap => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
+            Self::MissingData => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
             Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::ArcSinhScales => ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
             Self::AxisControl => AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
@@ -495,7 +491,7 @@ impl KartKimliği {
             Self::MeasureDatums => "src/kart/measure_datums.rs",
             Self::MultiBars(_) => "src/kart/multi_bars.rs",
             Self::NearestNonNull => "src/kart/nearest_non_null.rs",
-            Self::MissingDataNull | Self::MissingDataXGap => "src/kart/missing_data.rs",
+            Self::MissingData => "src/kart/missing_data.rs",
             Self::DependentScale => "src/kart/dependent_scale.rs",
             Self::ArcSinhScales => "src/kart/arcsinh_scales.rs",
             Self::AxisControl => "src/kart/axis_control.rs",
@@ -567,6 +563,7 @@ pub struct ChartListesi {
     timezones_dst_grafikleri: Vec<(TimezonesDstÖrneği, Entity<GpuiGrafik>)>,
     timezones_dst_senkronlanıyor: bool,
     nearest_non_null_grafikleri: Vec<(NearestNonNullÖrneği, Entity<GpuiGrafik>)>,
+    missing_data_grafikleri: Vec<(MissingDataÖrneği, Entity<GpuiGrafik>)>,
     months_grafikleri: Vec<Entity<GpuiGrafik>>,
     path_gap_clip_grafikleri: Vec<(PathGapClipÖrneği, Entity<GpuiGrafik>)>,
     pixel_align_grafikleri: Vec<(PixelAlignÖrneği, Entity<GpuiGrafik>)>,
@@ -610,6 +607,12 @@ impl ChartListesi {
                 }
             } else if bu.aktif_kart == KartKimliği::NearestNonNull {
                 for (_, grafik) in &bu.nearest_non_null_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if bu.aktif_kart == KartKimliği::MissingData {
+                for (_, grafik) in &bu.missing_data_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -780,6 +783,7 @@ impl ChartListesi {
             timezones_dst_grafikleri: Vec::new(),
             timezones_dst_senkronlanıyor: false,
             nearest_non_null_grafikleri: Vec::new(),
+            missing_data_grafikleri: Vec::new(),
             months_grafikleri: Vec::new(),
             path_gap_clip_grafikleri: Vec::new(),
             pixel_align_grafikleri: Vec::new(),
@@ -1112,6 +1116,60 @@ impl ChartListesi {
         self.grafik = yüzeyler.first().cloned();
         self.months_grafikleri = yüzeyler;
         self.hata = None;
+        cx.notify();
+    }
+
+    fn missing_data_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = missing_data_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Missing Data ailesi oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.missing_data_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("Missing Data yüzeyi oluşturulamadı: {hata}"));
+                    self.grafik = None;
+                    self.missing_data_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            yüzeyler.push((örnek, cx.new(|_| GpuiGrafik::yeni(grafik))));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.missing_data_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
+    fn missing_data_serisini_değiştir(
+        &mut self,
+        örnek: MissingDataÖrneği,
+        seri: usize,
+        cx: &mut Context<Self>,
+    ) {
+        let Some((_, grafik)) = self
+            .missing_data_grafikleri
+            .iter()
+            .find(|(kimlik, _)| *kimlik == örnek)
+        else {
+            return;
+        };
+        let görünür = grafik.read(cx).grafik().seri_görünür_mü(seri);
+        if let Err(hata) = grafik.update(cx, |grafik, cx| {
+            grafik.seri_görünürlüğünü_ayarla(seri, !görünür, cx)
+        }) {
+            self.hata = Some(format!("Missing Data serisi değiştirilemedi: {hata}"));
+        }
         cx.notify();
     }
 
@@ -2087,6 +2145,7 @@ impl ChartListesi {
         self.time_periods_grafikleri.clear();
         self.timeline_discrete_grafikleri.clear();
         self.timezones_dst_grafikleri.clear();
+        self.missing_data_grafikleri.clear();
         if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -2122,6 +2181,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.nearest_non_null_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::MissingData {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.missing_data_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::Months {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -2895,8 +2963,7 @@ fn grafik_oluştur(
         KartKimliği::NearestNonNull => {
             nearest_non_null_kartı(NearestNonNullÖrneği::XDeğerineGöre)
         }
-        KartKimliği::MissingDataNull => missing_data_null_kartı(),
-        KartKimliği::MissingDataXGap => missing_data_x_boşluğu_kartı(),
+        KartKimliği::MissingData => missing_data_null_kartı(),
         KartKimliği::DependentScale => dependent_scale_kartı(),
         KartKimliği::ArcSinhScales => arcsinh_scales_kartı(),
         KartKimliği::AxisControl => axis_control_kartı(),
@@ -3148,8 +3215,9 @@ impl Render for ChartListesi {
             KartKimliği::NearestNonNull => {
                 "5 bağımsız yüzey · null / proximity / dataIdx / cursor.move".to_string()
             }
-            KartKimliği::MissingDataNull => "200 nokta × 3 seri · % + MB".to_string(),
-            KartKimliği::MissingDataXGap => "8 nokta × 1 seri · 2 yol parçası".to_string(),
+            KartKimliği::MissingData => {
+                "2 bağımsız yüzey · 200×3 null telemetri + 8×1 komşu X boşluğu".to_string()
+            }
             KartKimliği::DependentScale => "7 nokta × °F veri · türetilmiş °C ekseni".to_string(),
             KartKimliği::ArcSinhScales => "111 nokta · −1000…1000 ArcSinh".to_string(),
             KartKimliği::AxisControl => {
@@ -3261,6 +3329,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .nearest_non_null_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::MissingData {
+            geri_var = self
+                .missing_data_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .missing_data_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         } else if aktif_kart == KartKimliği::Months {
@@ -4407,30 +4484,16 @@ impl Render for ChartListesi {
             )
             .child(
                 katalog_kartı(
-                    "kart-missing-data-null",
-                    "Missing Data (null values)",
-                    "missing-data-null",
-                    aktif_kart == KartKimliği::MissingDataNull,
-                    "200 özgün nokta · % ve MB ölçekleri",
+                    "kart-missing-data",
+                    "Missing Data · 2 surfaces",
+                    "missing-data",
+                    aktif_kart == KartKimliği::MissingData,
+                    "Aynı kaynak sayfası · null ve komşu X gap",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::MissingDataNull, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-missing-data-x-gap",
-                    "Adjacent X gap",
-                    "missing-data-x-gap",
-                    aktif_kart == KartKimliği::MissingDataXGap,
-                    "X farkı > 1 olduğunda yolu böl",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::MissingDataXGap, cx);
+                    bu.kartı_seç(KartKimliği::MissingData, cx);
                 })),
             )
             .child(
@@ -4809,6 +4872,10 @@ impl Render for ChartListesi {
                                     grafik.önceki_görünüm(cx);
                                 });
                             }
+                        } else if bu.aktif_kart == KartKimliği::MissingData {
+                            for (_, grafik) in &bu.missing_data_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if bu.aktif_kart == KartKimliği::Months {
                             for grafik in &bu.months_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -4921,6 +4988,10 @@ impl Render for ChartListesi {
                                     grafik.tam_görünüm(cx);
                                 });
                             }
+                        } else if bu.aktif_kart == KartKimliği::MissingData {
+                            for (_, grafik) in &bu.missing_data_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
                         } else if bu.aktif_kart == KartKimliği::Months {
                             for grafik in &bu.months_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5022,6 +5093,8 @@ impl Render for ChartListesi {
                             bu.timezones_dst_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::NearestNonNull {
                             bu.nearest_non_null_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::MissingData {
+                            bu.missing_data_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::Months {
                             bu.months_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::PathGapClip {
@@ -5323,6 +5396,70 @@ impl Render for ChartListesi {
                                 )
                         })),
                 )
+        } else if aktif_kart == KartKimliği::MissingData {
+            çizim_tabanı
+                .flex_none()
+                .h(px(1280.0))
+                .overflow_y_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("Aynı missing-data.html sayfasındaki iki bağımsız yüzey birlikte gösterilir; cursor, seçim ve görünüm durumları senkronlanmaz."),
+                )
+                .children(MissingDataÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    let grafik = self
+                        .missing_data_grafikleri
+                        .iter()
+                        .find(|(kimlik, _)| *kimlik == örnek)
+                        .map(|(_, grafik)| grafik.clone());
+                    let seriler = grafik.as_ref().map_or_else(Vec::new, |grafik| {
+                        grafik
+                            .read(cx)
+                            .grafik()
+                            .seri_seçenekleri()
+                            .iter()
+                            .enumerate()
+                            .map(|(indeks, seri)| (indeks, seri.etiket.clone(), seri.göster))
+                            .collect::<Vec<_>>()
+                    });
+                    div()
+                        .mt_3()
+                        .child(
+                            div()
+                                .text_sm()
+                                .font_weight(FontWeight::BOLD)
+                                .child(örnek.başlık()),
+                        )
+                        .child(div().text_xs().text_color(soluk).child(örnek.açıklama()))
+                        .child(
+                            div()
+                                .w_full()
+                                .h(px(520.0))
+                                .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
+                        )
+                        .child(div().flex().flex_wrap().gap_1().children(
+                            seriler.into_iter().map(|(indeks, etiket, görünür)| {
+                                Dugme::yeni(
+                                    format!("missing-data-{}-{indeks}", örnek.kimlik()),
+                                    format!(
+                                        "{} {}",
+                                        if görünür { "✓" } else { "○" },
+                                        if etiket.is_empty() { "Value" } else { &etiket }
+                                    ),
+                                )
+                                .boyutu(DugmeBoyutu::Kucuk)
+                                .turu(DugmeTuru::Ikincil)
+                                .tiklaninca(cx.listener(move |bu, _, _, cx| {
+                                    bu.missing_data_serisini_değiştir(örnek, indeks, cx);
+                                }))
+                            }),
+                        ))
+                }))
         } else if aktif_kart == KartKimliği::Months {
             let yüzey = |indeks: usize| self.months_grafikleri.get(indeks).cloned();
             çizim_tabanı
@@ -6369,6 +6506,18 @@ impl Render for ChartListesi {
                  ve zoom penceresi seçmek içindir. Maliyet: snap O(1), hizalı en yakın X \
                  araması O(log N)'dir; normal pointer hareketi ana üç yolu yeniden çizmez, \
                  yalnız hafif cursor/hover/lejant katmanını günceller.",
+            ),
+            KartKimliği::MissingData => Some(
+                "Amaç: aynı resmî sayfadaki iki bağımsız yüzeyi birlikte karşılaştırır. İlk \
+                 yüzey gerçek null CPU/RAM örneklerinin yolu nasıl böldüğünü ve TCP Out'un \
+                 bağımsız MB ölçeğini; ikinci yüzey dolu değerlerde komşu X farkı 1'i aşınca \
+                 series.gaps ile oluşan boşluğu gösterir. API: missing_data_kartları iki ayrı \
+                 Grafik örneğini tek kaynak grubunda döndürür; görünüm ve cursor durumları \
+                 bilinçli olarak senkronlanmaz. Seri anahtarları setSeries görünürlüğünü ve \
+                 autoscale'ı yüzeyinde günceller. İzleme: veri gerçekten yokken oluşan null \
+                 kesintisini, örnekleme zamanındaki büyük aralıktan ayırmak içindir. Maliyet: \
+                 yollar yalnız setSeries, ölçek veya resize sırasında O(N) yeniden kurulur; \
+                 pointer yalnız hafif cursor/lejant katmanını günceller.",
             ),
             KartKimliği::UpdateCursorSelectResize => Some(
                 "Amaç: setCursor, cursor._lock ve setSelect ile kurulmuş kalıcı etkileşim \

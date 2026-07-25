@@ -6,10 +6,61 @@ use crate::{
 const VARLIK: &str = "assets/data/missing-data.csv";
 
 pub const MISSING_DATA_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = missing_data_null_kartı()?;
-let grafik = Grafik::yeni(seçenekler, veri)?;
+let null_yüzeyi = Grafik::yeni(seçenekler, veri)?;
+let (seçenekler, veri) = missing_data_x_boşluğu_kartı()?;
+let x_boşluğu_yüzeyi = Grafik::yeni(seçenekler, veri)?;
 
-// Aynı kaynak demosundaki X aralığı boşluğu alt kartı:
-let (seçenekler, veri) = missing_data_x_boşluğu_kartı()?;"##;
+// İki bağımsız Grafik aynı resmî sayfanın tek karşılaştırma grubudur.
+let yüzeyler = missing_data_kartları()?;"##;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MissingDataÖrneği {
+    NullDeğerler,
+    KomşuXBoşluğu,
+}
+
+impl MissingDataÖrneği {
+    pub const TÜMÜ: [Self; 2] = [Self::NullDeğerler, Self::KomşuXBoşluğu];
+
+    pub const fn kimlik(self) -> &'static str {
+        match self {
+            Self::NullDeğerler => "missing-data-null",
+            Self::KomşuXBoşluğu => "missing-data-x-gap",
+        }
+    }
+
+    pub const fn başlık(self) -> &'static str {
+        match self {
+            Self::NullDeğerler => "Missing Data (null values)",
+            Self::KomşuXBoşluğu => "Insert gaps when adjacent points > delta",
+        }
+    }
+
+    pub const fn açıklama(self) -> &'static str {
+        match self {
+            Self::NullDeğerler => {
+                "Gerçek null örnekler CPU/RAM yollarını böler; TCP Out bağımsız MB ölçeğindedir."
+            }
+            Self::KomşuXBoşluğu => {
+                "Değerler dolu olsa da komşu X farkı 1'i aşınca series.gaps yolu böler."
+            }
+        }
+    }
+}
+
+pub fn missing_data_kartları()
+-> Result<Vec<(MissingDataÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    MissingDataÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| {
+            let (seçenekler, veri) = match örnek {
+                MissingDataÖrneği::NullDeğerler => missing_data_null_kartı()?,
+                MissingDataÖrneği::KomşuXBoşluğu => missing_data_x_boşluğu_kartı()?,
+            };
+            Ok((örnek, seçenekler, veri))
+        })
+        .collect()
+}
 
 /// `demos/missing-data.html` içindeki null CPU/RAM noktalarını, bağımsız `%`
 /// ve `mb` ölçeklerini ve özgün veri kümesini kurar.
@@ -40,7 +91,7 @@ pub fn missing_data_null_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), U
         )
         .seri(
             SeriSeçenekleri::yeni("TCP Out")
-                .renk("#00aa00")
+                .renk("#008000")
                 .dolgu("#00ff000d")
                 .ölçek("mb"),
         );
@@ -137,7 +188,11 @@ mod testler {
                 .map(|seri| seri.iter().filter(|v| v.is_none()).count()),
             Some(6)
         );
-        let grafik = Grafik::yeni(seçenekler, veri)?;
+        assert_eq!(
+            seçenekler.seriler.get(2).map(|seri| seri.renk.as_str()),
+            Some("#008000")
+        );
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
         assert!(
             grafik
                 .seri_görünür_y_aralığı(2)
@@ -158,6 +213,15 @@ mod testler {
                 |komut| matches!(komut, Komut::Metin { içerik, .. } if içerik.ends_with("MB"))
             )
         );
+        assert!(sahne.komutlar().iter().any(
+            |komut| matches!(komut, Komut::Metin { içerik, .. } if içerik.ends_with('%') && !içerik.contains(" %"))
+        ));
+        assert!(grafik.seri_görünürlüğünü_ayarla(1, false)?);
+        assert!(
+            grafik
+                .seri_görünür_y_aralığı(0)
+                .is_some_and(|aralık| aralık.en_çok < 6.0)
+        );
         Ok(())
     }
 
@@ -171,6 +235,36 @@ mod testler {
                 .iter()
                 .any(|komut| matches!(komut, Komut::Yol { parçalar, .. } if parçalar.len() == 2))
         );
+        Ok(())
+    }
+
+    #[test]
+    fn aynı_kaynak_sayfasının_iki_yüzeyi_tek_grupta_üretilir() -> Result<(), UplotHatası> {
+        let kartlar = missing_data_kartları()?;
+        assert_eq!(kartlar.len(), 2);
+        assert_eq!(
+            kartlar
+                .iter()
+                .map(|(örnek, _, _)| örnek.kimlik())
+                .collect::<Vec<_>>(),
+            vec!["missing-data-null", "missing-data-x-gap"]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn seyrekleştirme_gerçek_olmayan_komşu_x_boşluğu_üretmez() -> Result<(), UplotHatası> {
+        let x = (0_u32..10_000).map(f64::from).collect::<Vec<_>>();
+        let y = x.iter().map(|değer| Some(değer.sin())).collect();
+        let seçenekler = GrafikSeçenekleri::yeni(320, 200)?.x_zaman(false).seri(
+            SeriSeçenekleri::yeni("Value")
+                .renk("red")
+                .azami_x_boşluğu(1.0),
+        );
+        let sahne = Grafik::yeni(seçenekler, HizalıVeri::yeni(x, vec![y])?)?.çiz();
+        assert!(sahne.komutlar().iter().any(
+            |komut| matches!(komut, Komut::Yol { parçalar, renk, .. } if renk == "red" && parçalar.len() == 1)
+        ));
         Ok(())
     }
 }

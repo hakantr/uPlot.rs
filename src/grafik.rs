@@ -3821,7 +3821,6 @@ impl Grafik {
             let mut ham_parçalar = Vec::<Vec<Nokta>>::new();
             let mut parça = Vec::<Nokta>::new();
             let mut görünür_noktalar = Vec::<(usize, Nokta, f64, f64)>::new();
-            let mut önceki_x = None::<f64>;
             let piksel_hizası = seri.piksel_hizası.unwrap_or(self.seçenekler.piksel_hizası);
             let x_piksel_uzunluğu = if self.seçenekler.x_dikey {
                 yükseklik
@@ -3866,11 +3865,17 @@ impl Grafik {
                 };
                 match değer {
                     Some(y_değeri) => {
-                        if önceki_x.is_some_and(|önceki| {
-                            seri.azami_x_boşluğu
-                                .is_some_and(|azami| *x_değeri - önceki > azami)
-                        }) && !parça.is_empty()
-                        {
+                        let komşu_x_boşluğu = seri.azami_x_boşluğu.is_some_and(|azami| {
+                            indeks.checked_sub(1).is_some_and(|önceki_indeks| {
+                                değerler.get(önceki_indeks).is_some_and(Option::is_some)
+                                    && self
+                                        .veri
+                                        .x()
+                                        .get(önceki_indeks)
+                                        .is_some_and(|önceki| *x_değeri - *önceki > azami)
+                            })
+                        });
+                        if komşu_x_boşluğu && !parça.is_empty() {
                             ham_parçalar.push(std::mem::take(&mut parça));
                         }
                         let (ham_x, ham_y) = if self.seçenekler.x_dikey {
@@ -3905,7 +3910,6 @@ impl Grafik {
                             )
                         };
                         parça.push(yol_noktası);
-                        önceki_x = Some(*x_değeri);
                         let işaret_noktası = Nokta::yeni(
                             piksele_hizala(ham_x, piksel_hizası),
                             piksele_hizala(ham_y, piksel_hizası),
@@ -3918,9 +3922,8 @@ impl Grafik {
                         || seri.boşlukları_birleştir => {}
                     _ if !parça.is_empty() => {
                         ham_parçalar.push(std::mem::take(&mut parça));
-                        önceki_x = None;
                     }
-                    _ => önceki_x = None,
+                    _ => {}
                 }
             }
             if !parça.is_empty() {
@@ -6970,6 +6973,8 @@ fn ölçek_eksen_değerini_yaz(
     };
     if birim.is_empty() {
         sayı
+    } else if birim == "%" {
+        format!("{sayı}%")
     } else {
         format!("{sayı} {birim}")
     }

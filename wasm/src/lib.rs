@@ -373,7 +373,7 @@ impl KartOturumu {
                     },
                     log_scales2_kartı,
                 ),
-            "missing-data-null" => missing_data_null_kartı(),
+            "missing-data" | "missing-data-null" => missing_data_null_kartı(),
             "missing-data-x-gap" => missing_data_x_boşluğu_kartı(),
             "dependent-scale" => dependent_scale_kartı(),
             "arcsinh-scales" => arcsinh_scales_kartı(),
@@ -3680,7 +3680,7 @@ mod testler {
 
     #[test]
     fn missing_data_wasm_iki_kaynak_alt_grafiğini_üretir() {
-        let ana = KartOturumu::yeni("missing-data-null", 100);
+        let ana = KartOturumu::yeni("missing-data", 100);
         assert!(ana.is_ok());
         let Ok(ana) = ana else {
             return;
@@ -3695,6 +3695,16 @@ mod testler {
             return;
         };
         assert!(boşluk.svg(960, 400).contains("adjacent points"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"missing-data\"")
+                .count(),
+            1
+        );
+        assert_eq!(web.matches("data-kart=\"missing-data-").count(), 0);
+        assert!(web.contains("const missingDataYüzeyleri = ["));
+        assert!(web.contains("missingDataOturumları = missingDataYüzeyleri.map"));
+        assert!(web.contains("data-missing-seri-toggle"));
     }
 
     #[test]

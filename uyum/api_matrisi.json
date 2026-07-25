@@ -1030,6 +1030,36 @@
       "test": "uygulamalar/masaustu/src/masaustu.rs + wasm/src/lib.rs"
     },
     {
+      "kaynak_yolu": "missing-data.html creates two independent uPlot instances",
+      "rust_karşılığı": "missing_data_kartları + tek katalog kartında iki bağımsız GPUI/WASM yüzeyi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/missing_data.rs + wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "series.value CPU/RAM percent and TCP MB formatting",
+      "rust_karşılığı": "bitişik % eksen etiketi + yüzey lejantında bir ondalık %/MB biçimi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/missing_data.rs + wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "standard legend setSeries show per independent plot",
+      "rust_karşılığı": "Missing Data yüzeyine ait GPUI/WASM seri anahtarları",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/missing_data.rs + wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "series.gaps scans original adjacent data indices before path building",
+      "rust_karşılığı": "azami_x_boşluğu gerçek indeks komşuluğu; seyrekleştirilmiş noktalar sahte gap üretmez",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/missing_data.rs"
+    },
+    {
+      "kaynak_yolu": "hidden series excluded from auto scale",
+      "rust_karşılığı": "seri_görünürlüğünü_ayarla + görünür seri ölçek filtresi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/missing_data.rs"
+    },
+    {
       "kaynak_yolu": "hooks.drawClear annotation visibility filter",
       "rust_karşılığı": "Grafik annotation görünürlük ve kırpma katmanı",
       "durum": "tam_kanıtlı",

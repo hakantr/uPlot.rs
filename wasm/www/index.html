@@ -211,10 +211,10 @@
                           border: 1px solid #dbe3ee; border-radius: 10px;
                           background: #f8fafc; }
     .path-gap-clip-grup > h3 { margin: 0; color: #111827; font-size: 14px; }
-    .path-gap-clip-grafik { position: relative; min-width: 0;
+    .path-gap-clip-grafik, .missing-data-grafik { position: relative; min-width: 0;
                             border: 1px solid #e5e7eb; border-radius: 8px;
                             background: #e0e0e0; overflow: auto; }
-    .path-gap-clip-grafik svg { display: block; max-width: none; }
+    .path-gap-clip-grafik svg, .missing-data-grafik svg { display: block; max-width: none; }
     .path-gap-clip-başlık { position: sticky; z-index: 4; left: 8px; width: max-content;
                             max-width: calc(100% - 16px); margin: 6px 8px 0; padding: 3px 6px;
                             border-radius: 4px; background: rgba(255,255,255,.88);
@@ -225,7 +225,8 @@
                               padding: 2px 6px; border-radius: 4px;
                               background: rgba(255,255,255,.82); color: #4b5563;
                               font-size: 10px; pointer-events: none; }
-    .path-gap-clip-grafik .lejant { position: sticky; z-index: 4; left: 8px; bottom: 6px;
+    .path-gap-clip-grafik .lejant, .missing-data-grafik .lejant {
+                                    position: sticky; z-index: 4; left: 8px; bottom: 6px;
                                     width: max-content; max-width: calc(100% - 16px);
                                     margin: -24px 8px 6px; padding: 3px 6px;
                                     border-radius: 4px; background: rgba(255,255,255,.88);
@@ -486,15 +487,10 @@
         <small>cursor-snap</small>
         <div class="durum">10×10 piksel çekirdek ızgarası</div>
       </article>
-      <article class="kart" data-kart="missing-data-null" aria-current="false" tabindex="0">
-        <strong>Missing Data (null values)</strong>
-        <small>missing-data-null</small>
-        <div class="durum">200 özgün nokta · % ve MB ölçekleri</div>
-      </article>
-      <article class="kart" data-kart="missing-data-x-gap" aria-current="false" tabindex="0">
-        <strong>Adjacent X gap</strong>
-        <small>missing-data-x-gap</small>
-        <div class="durum">X farkı &gt; 1 olduğunda yolu böl</div>
+      <article class="kart" data-kart="missing-data" aria-current="false" tabindex="0">
+        <strong>Missing Data · 2 surfaces</strong>
+        <small>missing-data</small>
+        <div class="durum">Aynı kaynak sayfası · null ve komşu X gap</div>
       </article>
       <article class="kart" data-kart="dependent-scale" aria-current="false" tabindex="0">
         <strong>Derived Scale</strong>
@@ -1012,31 +1008,22 @@
           maliyet: "Snap O(1), hizalı X araması O(log N)'dir. Pointer hareketi yalnız hafif cursor, hover ve lejant düğümlerini taşır; üç ana yol setSeries, ölçek veya resize olmadıkça yeniden üretilmez.",
         },
       },
-      "missing-data-null": {
-        başlık: "Missing Data (null values)",
+      "missing-data": {
+        başlık: "Missing Data · null and adjacent X gaps",
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/missing-data.html">missing-data.html</a>
-          <br>Kaynaktaki 200 zaman noktası, CPU/RAM null aralıkları ve bağımsız yüzde/MB ölçekleri aynen korunur.`,
+          <br>Kaynaktaki iki bağımsız grafik aynı kartta alt alta gösterilir: 200 zaman noktalı null telemetrisi ve komşu X farkı 1'i aşınca eklenen yol boşluğu.`,
         tanım: () => missing_data_kart_tanim_ornegi(),
         tanımYolu: "src/kart/missing_data.rs",
-        seriler: [
-          { etiket: "CPU", renk: "#ff0000" },
-          { etiket: "RAM", renk: "#0000ff" },
-          { etiket: "TCP Out", renk: "#00aa00" },
-        ],
-        yardım: "Null noktalar çizgiyi böler · sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı",
+        seriler: [],
+        yardım: "İki yüzey bağımsızdır · sürükle: seç · tekerlek: yakınlaştır · lejant: setSeries",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
-      },
-      "missing-data-x-gap": {
-        başlık: "Insert gaps when adjacent points > delta",
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/missing-data.html">missing-data.html</a>
-          <br>Kaynaktaki ikinci alt grafikte X farkı 1'i aşınca series.gaps yolu iki parçaya ayırır.`,
-        tanım: () => missing_data_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/missing_data.rs",
-        seriler: [{ etiket: "Value", renk: "#ff0000" }],
-        yardım: "Büyük X boşluğu görünür · sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "Gerçek null ölçüm kesintisini, bütün değerler doluyken örnekleme zamanındaki büyük komşu X farkından ayırır.",
+          api: "missing_data_kartları aynı resmî sayfanın iki bağımsız Grafik örneğini tek grupta döndürür. İlk yüzey % ve MB ölçeklerini, ikinci yüzey azami_x_boşluğu callback eşdeğerini kullanır; görünüm ve cursor durumları senkronlanmaz.",
+          izleme: "CPU/RAM/TCP telemetrisinde veri kaybı ile seyrek örnekleme boşluğunu aynı ekranda karşılaştırın. Her yüzeyin lejantı setSeries ile yalnız kendi serilerini ve autoscale kararını değiştirir.",
+          maliyet: "200×3 ve 8×1 yol yalnız veri, görünüm, resize veya setSeries değişiminde O(N) kurulur. Pointer hareketi ana yolları üretmeden hafif cursor, hover ve lejant katmanlarını günceller.",
+        },
       },
       "dependent-scale": {
         başlık: "Derived Scale",
@@ -1166,6 +1153,23 @@
         maliyet: "Kaynak sayfadaki 33 eşzamanlı yüzey yerine tek SVG ve tek etkileşim kabuğu kullanılır. Seçenek değişimi en fazla iki noktayı ve eksenleri yeniden kurar; seçici genişliği kart içinde taşmadan kalır.",
       },
     };
+
+    const missingDataYüzeyleri = [
+      {
+        kimlik: "missing-data-null",
+        başlık: "Missing Data (null values)",
+        açıklama: "Gerçek null örnekler CPU/RAM yollarını böler; TCP Out bağımsız MB ölçeğindedir.",
+        boyut: [1920, 600],
+        seriler: [["CPU", "#ff0000"], ["RAM", "#0000ff"], ["TCP Out", "#008000"]],
+      },
+      {
+        kimlik: "missing-data-x-gap",
+        başlık: "Insert gaps when adjacent points > delta",
+        açıklama: "Değerler dolu olsa da komşu X farkı 1'i aşınca series.gaps yolu böler.",
+        boyut: [1920, 600],
+        seriler: [["Value", "#ff0000"]],
+      },
+    ];
 
     const pathGapClipYüzeyleri = [
       { kimlik: "path-gap-clip-scale-range", başlık: "Scale range exceeds data range (zoom out)",
@@ -2815,6 +2819,7 @@
     let timezonesDstOturumları = [];
     let timezonesDstEtkinİndeks = 0;
     let nearestNonNullOturumları = [];
+    let missingDataOturumları = [];
     let monthsOturumları = [];
     let pathGapClipOturumları = [];
     let pixelAlignOturumları = [];
@@ -3012,6 +3017,14 @@
           || !nearestNonNullOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !nearestNonNullOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "missing-data") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !missingDataOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !missingDataOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -4570,13 +4583,16 @@
     function bağımsızAileYüzeyiniÇiz(aile, indeks) {
       const pixelMi = aile === "pixel-align";
       const pointsMi = aile === "points";
-      const sınıf = pixelMi ? "pixel-align" : pointsMi ? "points" : "path-gap-clip";
+      const missingMi = aile === "missing-data";
+      const sınıf = pixelMi
+        ? "pixel-align"
+        : pointsMi ? "points" : missingMi ? "missing-data" : "path-gap-clip";
       const yüzeyler = pixelMi
         ? pixelAlignYüzeyleri
-        : pointsMi ? pointsYüzeyleri : pathGapClipYüzeyleri;
+        : pointsMi ? pointsYüzeyleri : missingMi ? missingDataYüzeyleri : pathGapClipYüzeyleri;
       const oturumlar = pixelMi
         ? pixelAlignOturumları
-        : pointsMi ? pointsOturumları : pathGapClipOturumları;
+        : pointsMi ? pointsOturumları : missingMi ? missingDataOturumları : pathGapClipOturumları;
       const kutu = chart.querySelector(
         `.${sınıf}-grafik[data-aile-index="${indeks}"]`
       );
@@ -4584,7 +4600,9 @@
       const yüzeyOturumu = oturumlar[indeks];
       const yenidenÇiz = () => pixelMi
         ? pixelAlignYüzeyiniÇiz(indeks)
-        : pointsMi ? pointsYüzeyiniÇiz(indeks) : pathGapClipYüzeyiniÇiz(indeks);
+        : pointsMi
+          ? pointsYüzeyiniÇiz(indeks)
+          : missingMi ? missingDataYüzeyiniÇiz(indeks) : pathGapClipYüzeyiniÇiz(indeks);
       if (!kutu || !yüzey || !yüzeyOturumu) return;
       const [kaynakGenişliği, kaynakYüksekliği] = yüzey.boyut;
       const genişlik = pixelMi
@@ -4611,7 +4629,9 @@
           <div class="lejant">
             <span>X: <b data-path-x>--</b></span>
             ${yüzey.seriler.map(([etiket, renk], seriİndeksi) => `
-              <span><i class="örnek" style="border-color:${renk};background:${renk}"></i>
+              <span ${missingMi ? `data-missing-seri-toggle="${seriİndeksi}" role="button" tabindex="0"
+                style="pointer-events:auto;cursor:pointer;opacity:${yüzeyOturumu.seri_gorunur(seriİndeksi) ? 1 : .4}"` : ""}>
+                <i class="örnek" style="border-color:${renk};background:${renk}"></i>
                 ${etiket || `Series ${seriİndeksi + 1}`}: <b data-path-y="${seriİndeksi}">--</b>
               </span>`).join("")}
           </div>`;
@@ -4623,6 +4643,10 @@
       }
       svg = kutu.querySelector("svg");
       if (!svg) return;
+      kutu.querySelectorAll("[data-missing-seri-toggle]").forEach(öğe => {
+        const seriİndeksi = Number(öğe.dataset.missingSeriToggle);
+        öğe.style.opacity = yüzeyOturumu.seri_gorunur(seriİndeksi) ? "1" : ".4";
+      });
       if (pixelMi || pointsMi) {
         svg.style.width = `${genişlik}px`;
         svg.style.height = `${yükseklik}px`;
@@ -4700,7 +4724,11 @@
             * (a.alt - a.üst);
           nokta?.setAttribute("cx", pxX); nokta?.setAttribute("cy", pxY);
           nokta?.setAttribute("visibility", "visible");
-          if (yHedefi) yHedefi.textContent = String(Math.round(seriY * 1000) / 1000);
+          if (yHedefi) {
+            yHedefi.textContent = missingMi && indeks === 0
+              ? `${seriY.toFixed(1)}${seriİndeksi < 2 ? "%" : " MB"}`
+              : String(Math.round(seriY * 1000) / 1000);
+          }
           if (ilkY === null) ilkY = pxY;
         });
         const yatay = kutu.querySelector(".path-gap-imleç-y");
@@ -4717,6 +4745,23 @@
       let taşıma = null;
       let kıstırma = null;
       const temaslar = new Map();
+      kutu.querySelectorAll("[data-missing-seri-toggle]").forEach(öğe => {
+        const değiştir = () => {
+          const seriİndeksi = Number(öğe.dataset.missingSeriToggle);
+          if (!Number.isInteger(seriİndeksi)) return;
+          if (yüzeyOturumu.seri_gorunurlugu_ayarla(
+            seriİndeksi,
+            !yüzeyOturumu.seri_gorunur(seriİndeksi),
+          )) yenidenÇiz();
+        };
+        öğe.addEventListener("click", değiştir);
+        öğe.addEventListener("keydown", olay => {
+          if (olay.key === "Enter" || olay.key === " ") {
+            olay.preventDefault();
+            değiştir();
+          }
+        });
+      });
       kutu.addEventListener("pointermove", olay => {
         olay.stopPropagation();
         const a = alan(olay);
@@ -4815,7 +4860,7 @@
             kontrolleriGüncelle();
           }
         } catch (neden) {
-          hata.textContent = `${pixelMi ? "Pixel Align" : pointsMi ? "Points" : "Path & Gap"} seçimi uygulanamadı: ${String(neden)}`;
+          hata.textContent = `${pixelMi ? "Pixel Align" : pointsMi ? "Points" : missingMi ? "Missing Data" : "Path & Gap"} seçimi uygulanamadı: ${String(neden)}`;
         }
       };
       kutu.addEventListener("pointerup", bitir);
@@ -4842,7 +4887,7 @@
             kontrolleriGüncelle();
           }
         } catch (neden) {
-          hata.textContent = `${pixelMi ? "Pixel Align" : pointsMi ? "Points" : "Path & Gap"} yakınlaştırması uygulanamadı: ${String(neden)}`;
+          hata.textContent = `${pixelMi ? "Pixel Align" : pointsMi ? "Points" : missingMi ? "Missing Data" : "Path & Gap"} yakınlaştırması uygulanamadı: ${String(neden)}`;
         }
       }, { passive: false });
       kutu.addEventListener("dblclick", olay => {
@@ -4856,6 +4901,10 @@
 
     function pathGapClipYüzeyiniÇiz(indeks) {
       bağımsızAileYüzeyiniÇiz("path-gap-clip", indeks);
+    }
+
+    function missingDataYüzeyiniÇiz(indeks) {
+      bağımsızAileYüzeyiniÇiz("missing-data", indeks);
     }
 
     function pixelAlignYüzeyiniÇiz(indeks) {
@@ -4881,6 +4930,21 @@
         </div>`;
       }
       pathGapClipYüzeyleri.forEach((_, indeks) => pathGapClipYüzeyiniÇiz(indeks));
+      kontrolleriGüncelle();
+    }
+
+    function missingDataÇiz() {
+      if (!chart.classList.contains("missing-data-yüzeyi")
+        || chart.querySelectorAll(".missing-data-grafik").length !== missingDataYüzeyleri.length) {
+        chart.className = "missing-data-yüzeyi path-gap-clip-yüzeyi";
+        chart.innerHTML = `<div class="path-gap-clip-yığın">
+          <div class="path-gap-clip-açıklama">İki yüzey aynı resmî sayfaya aittir; etkileşim ve görünüm durumları bağımsızdır.</div>
+          ${missingDataYüzeyleri.map((_, indeks) =>
+            `<article class="missing-data-grafik" data-aile-index="${indeks}"></article>`
+          ).join("")}
+        </div>`;
+      }
+      missingDataYüzeyleri.forEach((_, indeks) => missingDataYüzeyiniÇiz(indeks));
       kontrolleriGüncelle();
     }
 
@@ -6098,6 +6162,10 @@
         nearestNonNullÇiz();
         return;
       }
+      if (aktifKart === "missing-data") {
+        missingDataÇiz();
+        return;
+      }
       if (aktifKart === "months") {
         monthsÇiz();
         return;
@@ -6169,6 +6237,7 @@
       chart.classList.remove("timeseries-discrete-yüzeyi");
       chart.classList.remove("timezones-dst-yüzeyi");
       chart.classList.remove("nearest-non-null-yüzeyi");
+      chart.classList.remove("missing-data-yüzeyi");
       chart.classList.remove("months-yüzeyi");
       chart.classList.remove("path-gap-clip-yüzeyi");
       chart.classList.remove("pixel-align-yüzeyi");
@@ -7681,6 +7750,11 @@
           if (yüzey.onceki_gorunum()) nearestNonNullYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "missing-data") {
+        missingDataOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.onceki_gorunum()) missingDataYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "months") {
         monthsOturumları.forEach((yüzey, indeks) => {
           if (yüzey.onceki_gorunum()) monthsYüzeyiniÇiz(indeks);
@@ -7741,6 +7815,11 @@
           if (yüzey.tam_gorunum()) nearestNonNullYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "missing-data") {
+        missingDataOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.tam_gorunum()) missingDataYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "months") {
         monthsOturumları.forEach((yüzey, indeks) => {
           if (yüzey.tam_gorunum()) monthsYüzeyiniÇiz(indeks);
@@ -7790,6 +7869,10 @@
         );
       } else if (aktifKart === "nearest-non-null") {
         nearestNonNullOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "missing-data") {
+        missingDataOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "months") {
@@ -8029,6 +8112,9 @@
             kimlik = "no-data";
           }
         }
+        if (kimlik === "missing-data-null" || kimlik === "missing-data-x-gap") {
+          kimlik = "missing-data";
+        }
         const kart = kartlar[kimlik];
         if (!kart) return;
         if (sineAnimationFrame !== null) {
@@ -8064,6 +8150,7 @@
           timeseriesDiscreteOturumları,
           timezonesDstOturumları,
           nearestNonNullOturumları,
+          missingDataOturumları,
           monthsOturumları,
           pathGapClipOturumları,
           pixelAlignOturumları,
@@ -8090,6 +8177,8 @@
         timezonesDstOturumları = [];
         nearestNonNullOturumları.forEach(yüzey => yüzey.free());
         nearestNonNullOturumları = [];
+        missingDataOturumları.forEach(yüzey => yüzey.free());
+        missingDataOturumları = [];
         monthsOturumları.forEach(yüzey => yüzey.free());
         monthsOturumları = [];
         pathGapClipOturumları.forEach(yüzey => yüzey.free());
@@ -8232,6 +8321,16 @@
             yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
             return yüzeyOturumu;
           });
+          çiz();
+          return;
+        }
+        if (kimlik === "missing-data") {
+          missingDataOturumları = missingDataYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = missingDataOturumları[0] ?? null;
           çiz();
           return;
         }

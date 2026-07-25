@@ -541,8 +541,11 @@
           "sha256": "7636973ddf67ca47993ae86a4b53b1e7a6ea5ebd90483e0c305e84d558c38e13"
         }
       ],
-      "fixture": "src/kart/missing_data.rs#missing_data_null_kartı",
-      "alt_fixtureler": ["src/kart/missing_data.rs#missing_data_x_boşluğu_kartı"],
+      "fixture": "src/kart/missing_data.rs#missing_data_kartları",
+      "alt_fixtureler": [
+        "src/kart/missing_data.rs#missing_data_null_kartı",
+        "src/kart/missing_data.rs#missing_data_x_boşluğu_kartı"
+      ],
       "örnek": "examples/missing_data.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -577,19 +580,27 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "two-source-subcharts",
+        "single-catalog-card-two-independent-surfaces",
+        "legacy-subchart-deep-link-aliases",
         "source-equivalent-200-point-dataset",
         "null-split-paths-and-fills",
         "named-independent-y-scales",
         "left-percent-and-right-mb-axes",
+        "source-green-tcp-stroke",
+        "series-value-unit-formatting",
+        "per-surface-set-series-controls",
+        "hidden-series-autoscale",
         "adjacent-x-gap-callback",
+        "pre-downsample-adjacent-index-gap-detection",
+        "lightweight-independent-cursor-layers",
         "common-interaction-profile"
       ],
       "kanıt": {
-        "api": "kısmi",
+        "api": "tam_kanıtlı",
         "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı",
         "davranış": "uygulandı_kanıtlı",
-        "performans": "bekliyor"
+        "performans": "uygulandı_kanıtlı"
       }
     },
     {
