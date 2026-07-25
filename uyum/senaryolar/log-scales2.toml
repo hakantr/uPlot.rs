@@ -1,8 +1,9 @@
 id = "log-scales2"
 kaynak = "../uPlot/demos/log-scales2.html"
-fixture = "src/kart/log_scales2.rs#log_scales2_kartı"
+fixture = "src/kart/log_scales2.rs#log_scales2_kartları"
 device_pixel_ratio = 1
 alt_grafik_sayısı = 12
+katalog_kart_sayısı = 1
 
 [veri]
 geniş_aralık_nokta_sayısı = 127
@@ -20,6 +21,14 @@ tümü_null_seri_aralık_dışı = true
 kısmi_büyüklükler = true
 bilimsel_etiket = true
 ikili_üs_etiketi = true
+ilk_üç_veri_deposu_ortak = true
+ters_çift_veri_deposu_ortak = true
+ters_çift_sync_anahtarı = "moo"
+ters_çift_x_görünümü_senkron = true
+ters_çift_dikey_imleci_senkron = true
+ters_çift_yatay_imleci = false
+ters_giriş_x_ekseni = false
+geniş_y_ekseni_boyutu = 80
 
 [kanıt]
 masaüstü = "uygulamalar/masaustu/src/masaustu.rs"

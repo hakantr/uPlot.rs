@@ -147,7 +147,8 @@ pub use log_scales::{
     LOG_SCALES_KART_TANIM_ÖRNEĞİ, LogScalesÖrneği, log_scales_kartları, log_scales_kartı,
 };
 pub use log_scales2::{
-    LOG_SCALES2_KANIT_TOHUMU, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LogScales2Örneği, log_scales2_kartı,
+    LOG_SCALES2_KANIT_TOHUMU, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LogScales2Örneği,
+    log_scales2_kartları, log_scales2_kartı,
 };
 pub use mass_spectrum::{MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, mass_spectrum_kartı};
 pub use measure_datums::{MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ, measure_datums_kartı};

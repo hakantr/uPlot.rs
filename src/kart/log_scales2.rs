@@ -1,3 +1,5 @@
+use std::sync::OnceLock;
+
 use super::{ortak_kart_etkileşimleri, veri_uretici::KanıtRastgele};
 use crate::{
     Aralık, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, YÖlçekEtiketBiçimi,
@@ -7,11 +9,14 @@ use crate::{
 const VARLIK: &str = "demos/log-scales2.html";
 const SABİT_KANIT_ZAMANI: f64 = 1_704_499_200.0;
 pub const LOG_SCALES2_KANIT_TOHUMU: u32 = 0x105C_A1E2;
+static GENİŞ_VERİ: OnceLock<Result<HizalıVeri, UplotHatası>> = OnceLock::new();
+static TERS_VERİ: OnceLock<Result<HizalıVeri, UplotHatası>> = OnceLock::new();
 
-pub const LOG_SCALES2_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) =
-    log_scales2_kartı(LogScales2Örneği::GenişLog10)?;
-// Logaritmik aralık, bölmeler, ters yön ve etiketler çekirdekte çözülür.
-let grafik = Grafik::yeni(seçenekler, veri)?;"##;
+pub const LOG_SCALES2_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in log_scales2_kartları()? {
+    // İlk üç yüzey geniş veriyi; In/Out çifti kendi verisini Arc ile paylaşır.
+    // Adaptör In/Out cursor ve X görünümünü kaynak cursor.sync.key="moo" ile eşler.
+    let grafik = Grafik::yeni(seçenekler, veri)?;
+}"##;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogScales2Örneği {
@@ -109,6 +114,20 @@ pub fn log_scales2_kartı(
     }
 }
 
+/// Resmî sayfadaki on iki yüzeyi kaynak sırasıyla döndürür. Aynı veri
+/// nesnesini kullanan ilk üç yüzey ile senkron In/Out çifti Arc-backed
+/// sütunları paylaşır.
+pub fn log_scales2_kartları()
+-> Result<Vec<(LogScales2Örneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    LogScales2Örneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| {
+            let (seçenekler, veri) = log_scales2_kartı(örnek)?;
+            Ok((örnek, seçenekler, veri))
+        })
+        .collect()
+}
+
 fn temel_seçenekler(
     örnek: LogScales2Örneği,
     genişlik: u32,
@@ -120,6 +139,10 @@ fn temel_seçenekler(
 }
 
 fn geniş_aralık_verisi() -> Result<HizalıVeri, UplotHatası> {
+    GENİŞ_VERİ.get_or_init(geniş_aralık_verisini_üret).clone()
+}
+
+fn geniş_aralık_verisini_üret() -> Result<HizalıVeri, UplotHatası> {
     let mut değerler = Vec::with_capacity(127);
     for büyüklük in -6..=7 {
         for çarpan in 1..10 {
@@ -157,6 +180,7 @@ fn geniş_aralık_kartı(
     };
     let mut seçenekler = temel_seçenekler(örnek, 1_600, 600)?
         .x_zaman(false)
+        .birincil_y_eksen_genişliği(80.0)
         .seri(SeriSeçenekleri::yeni("Value").renk(renk));
     if let Some(ölçek) = ölçek {
         seçenekler = seçenekler.y_ölçeği(ölçek);
@@ -167,11 +191,7 @@ fn geniş_aralık_kartı(
 fn ters_kart(
     örnek: LogScales2Örneği
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
-    let x = [-10_800.0, -7_200.0, -3_600.0, 0.0]
-        .into_iter()
-        .map(|fark| SABİT_KANIT_ZAMANI + fark)
-        .collect();
-    let veri = HizalıVeri::yeni(x, vec![vec![Some(0.1), Some(10.0), Some(1.0), Some(100.0)]])?;
+    let veri = TERS_VERİ.get_or_init(ters_verisini_üret).clone()?;
     let çıkış = örnek == LogScales2Örneği::TersÇıkış;
     let ölçek = YÖlçekSeçenekleri::yeni("y")
         .logaritmik(10.0)
@@ -180,10 +200,26 @@ fn ters_kart(
     let seri = SeriSeçenekleri::yeni(if çıkış { "Out" } else { "In" })
         .renk(if çıkış { "blue" } else { "orange" })
         .gösterim_değer_çarpanı(if çıkış { -1.0 } else { 1.0 });
-    let seçenekler = temel_seçenekler(örnek, 1_600, 300)?
+    let mut seçenekler = temel_seçenekler(örnek, 1_600, 300)?
+        .imleç_y_göster(false)
         .y_ölçeği(ölçek)
         .seri(seri);
+    if çıkış {
+        seçenekler = seçenekler.başlık("");
+    } else {
+        seçenekler = seçenekler
+            .başlık("Inverted Log10 Y Scale")
+            .x_ekseni_göster(false);
+    }
     Ok((seçenekler, veri))
+}
+
+fn ters_verisini_üret() -> Result<HizalıVeri, UplotHatası> {
+    let x = [-10_800.0, -7_200.0, -3_600.0, 0.0]
+        .into_iter()
+        .map(|fark| SABİT_KANIT_ZAMANI + fark)
+        .collect();
+    HizalıVeri::yeni(x, vec![vec![Some(0.1), Some(10.0), Some(1.0), Some(100.0)]])
 }
 
 fn pozitif_filtreli_kart() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
@@ -200,6 +236,7 @@ fn pozitif_filtreli_kart() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHat
     let veri = HizalıVeri::yeni(x, vec![değerler.into_iter().map(Some).collect()])?;
     let seçenekler = temel_seçenekler(LogScales2Örneği::PozitifFiltreli, 1_600, 600)?
         .x_zaman(false)
+        .birincil_y_eksen_genişliği(80.0)
         .y_ölçeği(YÖlçekSeçenekleri::yeni("y").logaritmik(10.0))
         .seri(
             SeriSeçenekleri::yeni("Value")
@@ -360,8 +397,7 @@ mod testler {
 
     #[test]
     fn on_iki_kaynak_yüzeyi_paniksiz_çizilir() -> Result<(), UplotHatası> {
-        for örnek in LogScales2Örneği::TÜMÜ {
-            let (seçenekler, veri) = log_scales2_kartı(örnek)?;
+        for (örnek, seçenekler, veri) in log_scales2_kartları()? {
             let grafik = Grafik::yeni(seçenekler, veri)?;
             assert!(grafik.çiz().komutlar().len() > 10, "{}", örnek.kimlik());
         }
@@ -446,6 +482,43 @@ mod testler {
             b.map(|aralık| (aralık.en_az, aralık.en_çok)),
             Some((90_000.0, 200_000.0))
         );
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_veri_paylaşımı_ve_ters_çift_sunumunu_korur() -> Result<(), UplotHatası> {
+        let kartlar = log_scales2_kartları()?;
+        let bul = |örnek| kartlar.iter().find(|(kimlik, _, _)| *kimlik == örnek);
+        let geniş = [
+            LogScales2Örneği::GenişDoğrusal,
+            LogScales2Örneği::GenişLog10,
+            LogScales2Örneği::GenişLog2,
+        ]
+        .map(|örnek| {
+            bul(örnek)
+                .map(|(_, seçenekler, veri)| {
+                    (seçenekler.birincil_y_eksen_genişliği, veri.x().as_ptr())
+                })
+                .ok_or_else(|| kaynak_hatası("geniş yüzey eksik"))
+        });
+        let [ilk, ikinci, üçüncü] = geniş;
+        let ilk = ilk?;
+        let ikinci = ikinci?;
+        let üçüncü = üçüncü?;
+        assert_eq!(ilk.0, Some(80.0));
+        assert_eq!(ilk.1, ikinci.1);
+        assert_eq!(ilk.1, üçüncü.1);
+
+        let giriş =
+            bul(LogScales2Örneği::TersGiriş).ok_or_else(|| kaynak_hatası("ters giriş eksik"))?;
+        let çıkış =
+            bul(LogScales2Örneği::TersÇıkış).ok_or_else(|| kaynak_hatası("ters çıkış eksik"))?;
+        assert_eq!(giriş.2.x().as_ptr(), çıkış.2.x().as_ptr());
+        assert!(!giriş.1.x_eksen_görünür);
+        assert!(!giriş.1.imleç_y_görünür);
+        assert!(!çıkış.1.imleç_y_görünür);
+        assert_eq!(giriş.1.başlık, "Inverted Log10 Y Scale");
+        assert!(çıkış.1.başlık.is_empty());
         Ok(())
     }
 }

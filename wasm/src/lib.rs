@@ -3963,13 +3963,28 @@ mod testler {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             let Ok(oturum) = oturum else { continue };
             let svg = oturum.svg(960, 400);
-            let kaçışlı_başlık = örnek.başlık().replace('>', "&gt;");
-            assert!(svg.contains(&kaçışlı_başlık), "{}", örnek.kimlik());
+            if !matches!(
+                örnek,
+                LogScales2Örneği::TersGiriş | LogScales2Örneği::TersÇıkış
+            ) {
+                let kaçışlı_başlık = örnek.başlık().replace('>', "&gt;");
+                assert!(svg.contains(&kaçışlı_başlık), "{}", örnek.kimlik());
+            }
         }
+        let Ok(kartlar) = uplot_rs::log_scales2_kartları() else {
+            return;
+        };
+        assert_eq!(kartlar.len(), 12);
         let log2 = KartOturumu::yeni("log-scales2-skip-log2", 100);
         let Ok(log2) = log2 else { return };
         assert!(log2.svg(960, 400).contains("2^20"));
-        assert!(log_scales2_kart_tanim_ornegi().contains("GenişLog10"));
+        assert!(log_scales2_kart_tanim_ornegi().contains("log_scales2_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(web.matches("data-kart=\"log-scales2\"").count(), 1);
+        assert!(!web.contains("data-kart=\"log-scales2-log10-wide\""));
+        assert!(web.contains("const logScales2Yüzeyleri"));
+        assert!(web.contains("data-log-scales2-sync-key=\"moo\""));
+        assert!(web.contains("log-scales2-sync-moo-x-cursor-no-horizontal"));
     }
 
     #[test]

@@ -387,6 +387,23 @@
       font-size: 13px; }
     .log-scales-grafik svg { display: block; width: 1600px !important;
       height: 600px !important; max-width: none; }
+    #chart.log-scales2-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .log-scales2-yığın { min-width: min-content; display: grid;
+      align-items: flex-start; gap: 20px; }
+    .log-scales2-grafik { position: relative; width: max-content;
+      border: 1px solid #e5e7eb; border-radius: 8px;
+      background: #fff; overflow: hidden; }
+    .log-scales2-grafik > h3 { margin: 7px 10px 2px; color: #111827;
+      font-size: 13px; }
+    .log-scales2-grafik > p { margin: 0 10px 5px; color: #6b7280;
+      font-size: 11px; }
+    .log-scales2-grafik svg { display: block; max-width: none; }
+    .log-scales2-ters-çift { display: grid; gap: 0; width: max-content; }
+    .log-scales2-ters-çift .log-scales2-grafik { border-radius: 0; }
+    .log-scales2-ters-çift .log-scales2-grafik:first-child {
+      border-radius: 8px 8px 0 0; border-bottom: 0; }
+    .log-scales2-ters-çift .log-scales2-grafik:last-child {
+      border-radius: 0 0 8px 8px; }
     #chart.bars-grouped-stacked-yüzeyi { display: block; min-width: 0; overflow: auto;
                                          place-items: unset; padding: 8px;
                                          box-sizing: border-box; }
@@ -2994,52 +3011,63 @@
       },
     };
 
-    const logScales2Kartları = [
+    const logScales2Yüzeyleri = [
       ["log-scales2-linear-wide", "Linear Scale (0.000001 -> 100,000,000)",
-        "127 nokta · 10⁻⁶…10⁸", [["Value", "magenta"]]],
+        "127 nokta · 10⁻⁶…10⁸", [["Value", "magenta"]], 1600, 600],
       ["log-scales2-log10-wide", "Log10 Y Scale (0.000001 -> 100,000,000)",
-        "127 nokta · log10", [["Value", "orange"]]],
+        "127 nokta · log10", [["Value", "orange"]], 1600, 600],
       ["log-scales2-log2-wide", "Log2 Y Scale (0.000001 -> 100,000,000)",
-        "127 nokta · log2", [["Value", "purple"]]],
-      ["log-scales2-inverted-in", "Inverted Log10 Y Scale — In",
-        "4 zaman noktası · normal yön", [["In", "orange"]]],
-      ["log-scales2-inverted-out", "Inverted Log10 Y Scale — Out",
-        "4 zaman noktası · ters yön", [["Out", "blue"]]],
+        "127 nokta · log2", [["Value", "purple"]], 1600, 600],
+      ["log-scales2-inverted-in", "Inverted Log10 Y Scale",
+        "sync key “moo” · üst X ekseni gizli", [["In", "orange"]], 1600, 300],
+      ["log-scales2-inverted-out", "",
+        "aynı veri/X görünümü · ters Y ve negatif etiket", [["Out", "blue"]], 1600, 300],
       ["log-scales2-positive-filter", "Log10 Y Scale (-100 -> 100)",
-        "130 nokta · pozitif log aralığı", [["Value", "blue"]]],
+        "130 nokta · yalnız pozitif log aralığı", [["Value", "blue"]], 1600, 600],
       ["log-scales2-skip-log10", "Skip ticks log10",
-        "2 nokta · 10⁻¹⁴…10¹⁴", [["Value", "red"]]],
+        "2 nokta · 10⁻¹⁴…10¹⁴", [["Value", "red"]], 800, 300],
       ["log-scales2-skip-log2", "Skip ticks log2",
-        "2 nokta · 2⁻¹⁰…2²⁰", [["Value", "blue"]]],
+        "2 nokta · 2⁻¹⁰…2²⁰", [["Value", "blue"]], 800, 300],
       ["log-scales2-all-nulls", "Proper range with a all-nulls series",
-        "3 nokta · tümü-null ikinci seri", [["Value", "red"], ["All null", "blue"]]],
+        "3 nokta · tümü-null ikinci seri", [["Value", "red"], ["All null", "blue"]], 800, 400],
       ["log-scales2-tiny-values", "Handle 3e-24 y values",
-        "2 nokta · çok küçük değerler", [["Value", "red"]]],
-      ["log-scales2-partial-large", "Partial mags (base 10) — large",
-        "3 nokta · iki kısmi log ölçeği", [["A", "#f7931a"], ["B", "#000000"]]],
-      ["log-scales2-partial-small", "Partial mags (base 10) — small",
-        "3 nokta · küçük ondalıklar", [["A", "#f7931a"], ["B", "#000000"]]],
-    ];
-    for (const [kimlik, başlık, durum, seriler] of logScales2Kartları) {
-      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>log-scales2</small>
-          <div class="durum">${durum}</div>
-        </article>`);
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/log-scales2.html">log-scales2.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/utils.js">rangeLog</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/opts.js">log axis splits</a>
-          <br>On iki resmî çizim yüzeyi; aynı veri üretimi, log2/log10 aralıkları, pozitif değer filtresi, ters eksen, tümü-null seri ve kısmi büyüklük davranışları Rust çekirdeğinde çözülür.`,
-        tanım: () => log_scales2_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/log_scales2.rs",
-        seriler: seriler.map(([etiket, renk]) => ({ etiket, renk })),
-        yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı · çift tıkla: tam görünüm",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+        "2 nokta · çok küçük değerler", [["Value", "red"]], 800, 600],
+      ["log-scales2-partial-large", "Partial mags (base 10)",
+        "3 nokta · büyük kısmi log ölçekleri", [["A", "#f7931a"], ["B", "#000000"]], 600, 300],
+      ["log-scales2-partial-small", "Partial mags (base 10)",
+        "3 nokta · küçük kısmi log ölçekleri", [["A", "#f7931a"], ["B", "#000000"]], 600, 300],
+    ].map(([kimlik, başlık, açıklama, seriler, genişlik, yükseklik]) => ({
+      kimlik,
+      başlık,
+      açıklama,
+      seriler: seriler.map(([etiket, renk]) => ({ etiket, renk })),
+      genişlik,
+      yükseklik,
+    }));
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="log-scales2" aria-current="false" tabindex="0">
+        <strong>Log Scales 2 · 12 source surfaces</strong><small>log-scales2</small>
+        <div class="durum">tek kart · ortak veri çiftleri · In/Out sync key “moo”</div>
+      </article>`);
+    kartlar["log-scales2"] = {
+      başlık: "Log Scales 2 · 12 source surfaces",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/log-scales2.html">log-scales2.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/utils.js">rangeLog</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/opts.js">log axis splits</a>
+        <br>On iki resmî yüzey kaynak sırasıyla tek karttadır. İlk üç yüzey aynı 127 noktalı veriyi; In/Out çifti aynı veriyi ve “moo” anahtarlı X/cursor eşzamanını paylaşır. Üst çiftte yatay cursor kapalı, üst X ekseni gizlidir.`,
+      tanım: () => log_scales2_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/log_scales2.rs",
+      seriler: logScales2Yüzeyleri[0].seriler,
+      yardım: "Yüzeyler bağımsızdır; yalnız In/Out çifti X görünümünü ve dikey cursoru paylaşır",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Doğrusal, log10, log2, ters yön, null ve uç büyüklük ölçek davranışlarını tek kaynak sayfası düzeninde karşılaştırır.",
+        api: "log_scales2_kartları() 12 yüzeyi tek grup olarak verir; ilk üç ve In/Out veri depoları Arc ile paylaşılır. In/Out görünümü ve cursoru aynı sync anahtarıyla bağlıdır.",
+        izleme: "Çok geniş değer aralıklarına sahip telemetride ölçek seçiminin, tick yoğunluğunun ve ters eksenin okunabilirliğe etkisini doğrulamak için uygundur.",
+        maliyet: "Kaynak veri tekrar üretilmez. Pointer ana yolları yeniden üretmeden hafif cursor katmanlarını günceller; yalnız In/Out çiftinin iki retained yüzeyi birlikte eşitlenir.",
+      },
+    };
 
     function ortakEtkileşimler() {
       return {
@@ -3071,6 +3099,9 @@
     let linePathsEtkinİndeks = 0;
     let logScalesOturumları = [];
     let logScalesEtkinİndeks = 0;
+    let logScales2Oturumları = [];
+    let logScales2Etkinİndeks = 0;
+    let logScales2Senkronlanıyor = false;
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
     let timeseriesDiscreteEtkinİndeks = 0;
@@ -6635,6 +6666,132 @@
       kontrolleriGüncelle();
     }
 
+    function logScales2YüzeyiniÇiz(indeks) {
+      const tanım = logScales2Yüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-log-scales2-index="${indeks}"]`);
+      const yüzeyOturumu = logScales2Oturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const şablon = document.createElement("template");
+      şablon.innerHTML =
+        yüzeyOturumu.svg(tanım.genişlik, tanım.yükseklik).trim();
+      const yeniSvg = şablon.content.querySelector("svg");
+      let svg = yüzey.querySelector("svg");
+      if (svg && yeniSvg) {
+        svgYüzeyiniYerindeGüncelle(svg, yeniSvg);
+      } else {
+        const birleşikLejant = indeks === 4 ? `
+          <div class="lejant" data-log-scales2-pair-legend>
+            <span>x: <b data-log-scales2-pair-x>--</b></span>
+            ${[3, 4].map(çiftİndeksi => {
+              const seri = logScales2Yüzeyleri[çiftİndeksi].seriler[0];
+              return `<span><i class="örnek"
+                style="border-color:${seri.renk};background:${seri.renk}"></i>
+                ${seri.etiket}: <b data-log-scales2-pair-value="${çiftİndeksi}">--</b>
+              </span>`;
+            }).join("")}
+          </div>` : "";
+        const normalLejant = indeks === 3 || indeks === 4 ? "" : `
+          <div class="lejant">
+            <span>x: <b id="x-değeri">--</b></span>
+            ${tanım.seriler.map((seri, seriİndeksi) =>
+              `<span><i class="örnek"
+                style="border-color:${seri.renk};background:${seri.renk}"></i>
+                ${seri.etiket}: <b id="seri-değeri-${seriİndeksi}">--</b></span>`
+            ).join("")}
+          </div>`;
+        yüzey.innerHTML = `
+          ${tanım.başlık ? `<h3>${tanım.başlık}</h3>` : ""}
+          <p>${tanım.açıklama}</p>
+          ${yüzeyOturumu.svg(tanım.genişlik, tanım.yükseklik)}
+          ${normalLejant}${birleşikLejant}`;
+        svg = yüzey.querySelector("svg");
+      }
+      if (!svg) return;
+      svg.style.width = `${tanım.genişlik}px`;
+      svg.style.height = `${tanım.yükseklik}px`;
+      if (!svg.querySelector(":scope > #etkileşim")) {
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden" fill="rgba(37,99,235,.12)"
+              stroke="#2563eb"/>
+            <line id="imleç-x" visibility="hidden" stroke="#111827"
+              stroke-width="1" opacity=".55"/>
+            <line id="imleç-y" visibility="hidden" stroke="#111827"
+              stroke-width="1" opacity=".55"/>
+            ${tanım.seriler.map((seri, seriİndeksi) =>
+              `<circle id="imleç-nokta-${seriİndeksi}" visibility="hidden" r="4"
+                fill="${seri.renk}" stroke="#ffffff" stroke-width="1.5"/>`
+            ).join("")}
+          </g>`);
+      }
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      svg.dataset.etkileşim = indeks === 3 || indeks === 4
+        ? "log-scales2-sync-moo-x-cursor-no-horizontal"
+        : "log-scales2-independent-cursor-zoom";
+      yüzey.onpointerenter = () => {
+        logScales2Etkinİndeks = indeks;
+        oturum = logScales2Oturumları[indeks] ?? null;
+        kartlar["log-scales2"].seriler = tanım.seriler;
+        kontrolleriGüncelle();
+      };
+    }
+
+    function logScales2XGörünümünüYay() {
+      if (logScales2Senkronlanıyor
+        || (logScales2Etkinİndeks !== 3 && logScales2Etkinİndeks !== 4)) return;
+      const kaynak = logScales2Oturumları[logScales2Etkinİndeks];
+      const hedefİndeks = logScales2Etkinİndeks === 3 ? 4 : 3;
+      const hedef = logScales2Oturumları[hedefİndeks];
+      const aralık = Array.from(kaynak?.gorunur_x_araligi() ?? []);
+      if (!hedef || aralık.length !== 2
+        || !Number.isFinite(aralık[0]) || !Number.isFinite(aralık[1])) return;
+      logScales2Senkronlanıyor = true;
+      try {
+        hedef.gorunur_x_araligini_ayarla(aralık[0], aralık[1], false);
+      } finally {
+        logScales2Senkronlanıyor = false;
+      }
+    }
+
+    function logScales2Çiz() {
+      const ilkKurulum = !chart.classList.contains("log-scales2-yüzeyi")
+        || chart.querySelectorAll(".log-scales2-grafik").length
+          !== logScales2Yüzeyleri.length;
+      if (ilkKurulum) {
+        chart.className = "log-scales2-yüzeyi";
+        const yüzeyHtml = indeks =>
+          `<article class="log-scales2-grafik"
+            data-log-scales2-index="${indeks}"></article>`;
+        chart.innerHTML = `<div class="log-scales2-yığın">
+          ${[0, 1, 2].map(yüzeyHtml).join("")}
+          <section class="log-scales2-ters-çift"
+            data-log-scales2-sync-key="moo">
+            ${yüzeyHtml(3)}${yüzeyHtml(4)}
+          </section>
+          ${[5, 6, 7, 8, 9, 10, 11].map(yüzeyHtml).join("")}
+        </div>`;
+        logScales2Yüzeyleri.forEach((_, indeks) =>
+          logScales2YüzeyiniÇiz(indeks)
+        );
+      } else {
+        logScales2XGörünümünüYay();
+        if (logScales2Etkinİndeks === 3 || logScales2Etkinİndeks === 4) {
+          logScales2YüzeyiniÇiz(3);
+          logScales2YüzeyiniÇiz(4);
+        } else {
+          logScales2YüzeyiniÇiz(logScales2Etkinİndeks);
+        }
+      }
+      oturum = logScales2Oturumları[logScales2Etkinİndeks]
+        ?? logScales2Oturumları[0]
+        ?? null;
+      kartlar["log-scales2"].seriler =
+        logScales2Yüzeyleri[logScales2Etkinİndeks]?.seriler
+        ?? logScales2Yüzeyleri[0].seriler;
+      kontrolleriGüncelle();
+    }
+
     function scatterYüzeyiniÇiz(indeks) {
       const tanım = scatterYüzeyleri[indeks];
       const yüzey = chart.querySelector(`[data-scatter-index="${indeks}"]`);
@@ -7726,6 +7883,10 @@
         logScalesÇiz();
         return;
       }
+      if (aktifKart === "log-scales2") {
+        logScales2Çiz();
+        return;
+      }
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
         return;
@@ -8186,6 +8347,10 @@
         ? chart.querySelector(
             `[data-log-scales-index="${logScalesEtkinİndeks}"] svg`
           )
+        : aktifKart === "log-scales2"
+        ? chart.querySelector(
+            `[data-log-scales2-index="${logScales2Etkinİndeks}"] svg`
+          )
         : aktifKart === "scatter"
         ? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"] svg`)
         : aktifKart === "box-whisker"
@@ -8333,6 +8498,11 @@
           ?? chart.querySelector(
             `[data-log-scales-index="${logScalesEtkinİndeks}"]`
           )
+        : aktifKart === "log-scales2"
+        ? olay.target?.closest?.(".log-scales2-grafik")
+          ?? chart.querySelector(
+            `[data-log-scales2-index="${logScales2Etkinİndeks}"]`
+          )
         : aktifKart === "scatter"
         ? olay.target?.closest?.(".scatter-grafik")
           ?? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"]`)
@@ -8442,6 +8612,13 @@
         if (Number.isInteger(indeks) && logScalesOturumları[indeks]) {
           logScalesEtkinİndeks = indeks;
           oturum = logScalesOturumları[indeks];
+        }
+      } else if (aktifKart === "log-scales2" && bağımsızYüzey) {
+        const indeks = Number(bağımsızYüzey.dataset.logScales2Index);
+        if (Number.isInteger(indeks) && logScales2Oturumları[indeks]) {
+          logScales2Etkinİndeks = indeks;
+          oturum = logScales2Oturumları[indeks];
+          kartlar["log-scales2"].seriler = logScales2Yüzeyleri[indeks].seriler;
         }
       }
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
@@ -8790,6 +8967,7 @@
         ?? svg.closest(".gradients-grafik")
         ?? svg.closest(".line-paths-grafik")
         ?? svg.closest(".log-scales-grafik")
+        ?? svg.closest(".log-scales2-grafik")
         ?? svg.closest(".sparklines-grafik")
         ?? svg.closest(".sparse-grafik")
         ?? svg.closest(".stacked-series-grafik")
@@ -9105,6 +9283,98 @@
       });
     }
 
+    function logScales2İmleciniSenkronla(olay) {
+      if (aktifKart !== "log-scales2"
+        || (logScales2Etkinİndeks !== 3 && logScales2Etkinİndeks !== 4)) return;
+      const kaynakİndeks = logScales2Etkinİndeks;
+      const kaynakYüzey = chart.querySelector(
+        `[data-log-scales2-index="${kaynakİndeks}"]`
+      );
+      const kaynakSvg = kaynakYüzey?.querySelector("svg");
+      const kaynakOturum = logScales2Oturumları[kaynakİndeks];
+      if (!kaynakSvg || !kaynakOturum) return;
+      const view = kaynakSvg.viewBox.baseVal;
+      let konum = kaynakOturum.istemci_konumu(
+        olay.clientX, olay.clientY, view.width, view.height
+      );
+      if (konum.length !== 2) {
+        const rect = kaynakSvg.getBoundingClientRect();
+        kaynakOturum.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+        konum = kaynakOturum.istemci_konumu(
+          olay.clientX, olay.clientY, view.width, view.height
+        );
+      }
+      const [sol, sağ, üst, alt] =
+        kaynakOturum.cizim_alani(view.width, view.height);
+      const içeride = konum.length === 2
+        && konum[0] >= sol && konum[0] <= sağ
+        && konum[1] >= üst && konum[1] <= alt;
+      if (!içeride) {
+        chart.querySelectorAll(
+          ".log-scales2-ters-çift #imleç-x, "
+          + ".log-scales2-ters-çift #imleç-y, "
+          + ".log-scales2-ters-çift [id^='imleç-nokta-']"
+        ).forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+        return;
+      }
+      const xOranı = (konum[0] - sol) / (sağ - sol);
+      const çözüm = Array.from(kaynakOturum.imlec_cozumu(xOranı, sağ - sol));
+      const gerçekX = çözüm[1];
+      if (!Number.isFinite(gerçekX)) return;
+      for (const indeks of [3, 4]) {
+        const hedef = logScales2Oturumları[indeks];
+        const kapsam = chart.querySelector(`[data-log-scales2-index="${indeks}"]`);
+        const svg = kapsam?.querySelector("svg");
+        if (!hedef || !svg) continue;
+        const hedefView = svg.viewBox.baseVal;
+        const [hSol, hSağ, hÜst, hAlt] =
+          hedef.cizim_alani(hedefView.width, hedefView.height);
+        const hedefXOranı = hedef.x_konum_orani(gerçekX);
+        const dikey = svg.querySelector("#imleç-x");
+        const yatay = svg.querySelector("#imleç-y");
+        const nokta = svg.querySelector("#imleç-nokta-0");
+        yatay?.setAttribute("visibility", "hidden");
+        if (!Number.isFinite(hedefXOranı)
+          || hedefXOranı < 0 || hedefXOranı > 1) {
+          [dikey, nokta].forEach(öğe =>
+            öğe?.setAttribute("visibility", "hidden")
+          );
+          continue;
+        }
+        const x = hSol + hedefXOranı * (hSağ - hSol);
+        dikey?.setAttribute("x1", x); dikey?.setAttribute("x2", x);
+        dikey?.setAttribute("y1", hÜst); dikey?.setAttribute("y2", hAlt);
+        dikey?.setAttribute("visibility", "visible");
+        const hedefÇözümü =
+          Array.from(hedef.imlec_cozumu(hedefXOranı, hSağ - hSol));
+        const seriX = hedefÇözümü[2];
+        const seriY = hedefÇözümü[3];
+        if (Number.isFinite(seriX) && Number.isFinite(seriY)) {
+          const seriXOranı = hedef.x_konum_orani(seriX);
+          const seriYOranı = hedef.seri_y_konum_orani(0, seriY);
+          nokta?.setAttribute("cx", hSol + seriXOranı * (hSağ - hSol));
+          nokta?.setAttribute("cy", hAlt - seriYOranı * (hAlt - hÜst));
+          nokta?.setAttribute("visibility", "visible");
+        } else {
+          nokta?.setAttribute("visibility", "hidden");
+        }
+        const değerHedefi = chart.querySelector(
+          `[data-log-scales2-pair-value="${indeks}"]`
+        );
+        if (değerHedefi) {
+          değerHedefi.textContent = Number.isFinite(seriY)
+            ? seriY.toLocaleString("tr-TR", { maximumFractionDigits: 3 })
+            : "--";
+        }
+      }
+      const xHedefi = chart.querySelector("[data-log-scales2-pair-x]");
+      if (xHedefi) {
+        xHedefi.textContent = gerçekX.toLocaleString("tr-TR", {
+          maximumFractionDigits: 3,
+        });
+      }
+    }
+
     function pointerHareketiniİşle(olay) {
       {
         const { x, y, view } = svgKonumu(olay);
@@ -9176,6 +9446,7 @@
       }
       imleciGüncelle(olay);
       linePathsİmleciniSenkronla(olay);
+      logScales2İmleciniSenkronla(olay);
       eksenİmleciniGüncelle(olay);
       if (!sürükleme) return;
       const { x, y, svg, view } = svgKonumu(olay);
@@ -9254,6 +9525,18 @@
       if (Number.isInteger(indeks) && logScalesOturumları[indeks]) {
         logScalesEtkinİndeks = indeks;
         oturum = logScalesOturumları[indeks];
+        const svg = yüzey.querySelector("svg");
+        if (svg) yüzeyiEşitle(svg);
+      }
+    }
+    function logScales2OturumunuSeç(olay) {
+      if (aktifKart !== "log-scales2") return;
+      const yüzey = olay.target?.closest?.(".log-scales2-grafik");
+      const indeks = Number(yüzey?.dataset.logScales2Index);
+      if (Number.isInteger(indeks) && logScales2Oturumları[indeks]) {
+        logScales2Etkinİndeks = indeks;
+        oturum = logScales2Oturumları[indeks];
+        kartlar["log-scales2"].seriler = logScales2Yüzeyleri[indeks].seriler;
         const svg = yüzey.querySelector("svg");
         if (svg) yüzeyiEşitle(svg);
       }
@@ -9368,6 +9651,9 @@
         capture: true, passive: true,
       });
       chart.addEventListener(olayTürü, logScalesOturumunuSeç, {
+        capture: true, passive: true,
+      });
+      chart.addEventListener(olayTürü, logScales2OturumunuSeç, {
         capture: true, passive: true,
       });
       chart.addEventListener(olayTürü, softMinMaxOturumunuSeç, { capture: true, passive: true });
@@ -9656,7 +9942,9 @@
         ".line-paths-grafik #imleç-x, .line-paths-grafik #imleç-y, "
         + ".line-paths-grafik [id^='imleç-nokta-'], "
         + ".log-scales-grafik #imleç-x, .log-scales-grafik #imleç-y, "
-        + ".log-scales-grafik [id^='imleç-nokta-']"
+        + ".log-scales-grafik [id^='imleç-nokta-'], "
+        + ".log-scales2-grafik #imleç-x, .log-scales2-grafik #imleç-y, "
+        + ".log-scales2-grafik [id^='imleç-nokta-']"
       ).forEach(öğe => öğe.setAttribute("visibility", "hidden"));
       chart.querySelector("#timeline-vurgu")?.setAttribute("visibility", "hidden");
     });
@@ -10019,6 +10307,10 @@
         logScalesOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
+      } else if (aktifKart === "log-scales2") {
+        logScales2Oturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
@@ -10262,6 +10554,13 @@
           logScalesEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "log-scales";
         }
+        if (kimlik !== "log-scales2" && kimlik.startsWith("log-scales2-")) {
+          const indeks = logScales2Yüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === kimlik
+          );
+          logScales2Etkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "log-scales2";
+        }
         if (["months-no-leap", "months-leap", "months-russian"].includes(kimlik)) {
           kimlik = "months";
         }
@@ -10393,6 +10692,7 @@
           latencyHeatmapOturumları,
           linePathsOturumları,
           logScalesOturumları,
+          logScales2Oturumları,
           syncCursorOturumları,
           timeseriesDiscreteOturumları,
           timezonesDstOturumları,
@@ -10446,6 +10746,10 @@
         logScalesOturumları.forEach(yüzey => yüzey.free());
         logScalesOturumları = [];
         logScalesEtkinİndeks = 0;
+        logScales2Oturumları.forEach(yüzey => yüzey.free());
+        logScales2Oturumları = [];
+        logScales2Etkinİndeks = 0;
+        logScales2Senkronlanıyor = false;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
         syncCursorOturumları = [];
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
@@ -10729,6 +11033,22 @@
           });
           oturum = logScalesOturumları[logScalesEtkinİndeks]
             ?? logScalesOturumları[0]
+            ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "log-scales2") {
+          const istenenİndeks = logScales2Yüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === oturumKimliği
+          );
+          logScales2Etkinİndeks = istenenİndeks >= 0 ? istenenİndeks : 0;
+          logScales2Oturumları = logScales2Yüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = logScales2Oturumları[logScales2Etkinİndeks]
+            ?? logScales2Oturumları[0]
             ?? null;
           çiz();
           return;

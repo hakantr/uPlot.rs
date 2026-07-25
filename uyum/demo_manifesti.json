@@ -1964,7 +1964,7 @@
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" },
         { "yol": "src/utils.js", "sha256": "8df33192e0ab7b4f4cf64fae9829fc0dc0300a618668699f43c5881ed8a0553c" }
       ],
-      "fixture": "src/kart/log_scales2.rs#log_scales2_kartı",
+      "fixture": "src/kart/log_scales2.rs#log_scales2_kartları",
       "örnek": "examples/log_scales2.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -1988,15 +1988,21 @@
       "sahip_faz": 2,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "twelve-source-canvases", "source-exact-wide-magnitude-data", "fixed-proof-clock",
+        "one-card-twelve-source-surfaces", "source-order-and-source-dimensions",
+        "shared-first-three-wide-magnitude-data", "shared-inverted-in-out-data",
+        "inverted-in-out-sync-key-moo", "inverted-pair-x-view-and-cursor-sync",
+        "inverted-pair-horizontal-cursor-disabled", "inverted-upper-x-axis-hidden",
+        "inverted-pair-combined-legend", "source-axis-size-80",
+        "source-exact-wide-magnitude-data", "fixed-proof-clock",
         "source-fisher-yates-fixed-proof-seed", "log10-and-log2-y-scales",
         "scientific-and-binary-superscript-labels", "positive-only-log-range",
         "non-positive-log-clipping", "inverted-log-direction", "axis-and-legend-value-transform",
         "explicit-wide-log-ranges", "all-null-series-range-exclusion",
         "tiny-value-log-range", "range-log-partial-magnitudes", "dual-independent-log-axes",
+        "pixel-density-log-tick-filter", "arc-backed-source-data",
         "gpui-wasm-catalog-parity", "common-interaction-profile", "panic-free-shuffle"
       ],
-      "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+      "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "tam_kanıtlı", "performans": "tam_kanıtlı" }
     },
     {
       "sıra": 33,
