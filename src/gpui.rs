@@ -2455,7 +2455,19 @@ fn sahneyi_önbellekli_boya(
 
     for (komut_indeksi, komut) in sahne.komutlar().iter().enumerate() {
         match komut {
-            Komut::ArkaPlan { .. } => {}
+            Komut::ArkaPlan { renk } => {
+                pencere.paint_quad(quad(
+                    Bounds::new(
+                        point(px(köken_x), px(köken_y)),
+                        size(px(kaynak_g as f32 * ölçek), px(kaynak_y as f32 * ölçek)),
+                    ),
+                    px(0.0),
+                    renk_çöz(renk),
+                    px(0.0),
+                    rgba(0x00000000),
+                    BorderStyle::default(),
+                ));
+            }
             Komut::Çizgi {
                 başlangıç,
                 bitiş,

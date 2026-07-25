@@ -182,10 +182,23 @@ fn sayı(değer: f32) -> String {
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Grafik, kart::resize_kartı};
+    use crate::{
+        Grafik,
+        kart::{
+            GradientÖrneği, MultiBarsÖrneği, ScatterÖrneği, gradients_kartı, multi_bars_kartı,
+            resize_kartı, scatter_kartı,
+        },
+    };
 
     fn resize_bileşeni() -> Result<GpuiGrafik, UplotHatası> {
         let (seçenekler, veri) = resize_kartı(100)?;
+        Ok(GpuiGrafik::yeni(Grafik::yeni(seçenekler, veri)?))
+    }
+
+    fn kart_bileşeni(
+        kart: Result<(crate::GrafikSeçenekleri, crate::HizalıVeri), UplotHatası>,
+    ) -> Result<GpuiGrafik, UplotHatası> {
+        let (seçenekler, veri) = kart?;
         Ok(GpuiGrafik::yeni(Grafik::yeni(seçenekler, veri)?))
     }
 
@@ -247,6 +260,45 @@ mod testler {
                 .içerik()
                 .contains("data-gpui-layer=\"etkilesim\"")
         );
+        Ok(())
+    }
+
+    #[test]
+    fn gradyan_tanımları_katmana_özgü_kimliklerle_kaydedilir() -> Result<(), UplotHatası> {
+        let bileşen = kart_bileşeni(gradients_kartı(GradientÖrneği::ÖlçekDolguları))?;
+        let kayıt = bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(800, 600)?);
+        let svg = kayıt.içerik();
+
+        assert!(svg.contains("<linearGradient id=\"gpui-ana-uplot-gradyan-"));
+        assert!(svg.contains("fill=\"url(#gpui-ana-uplot-gradyan-"));
+        assert!(!svg.contains("id=\"uplot-gradyan-"));
+        Ok(())
+    }
+
+    #[test]
+    fn yoğun_dağılım_tek_vektör_yolu_ve_kırpma_olarak_kaydedilir() -> Result<(), UplotHatası> {
+        let bileşen = kart_bileşeni(scatter_kartı(ScatterÖrneği::Scatter))?;
+        let kayıt = bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(800, 600)?);
+        let svg = kayıt.içerik();
+
+        assert!(svg.contains("id=\"gpui-ana-uplot-daire-kirpma-"));
+        assert!(svg.contains("clip-path=\"url(#gpui-ana-uplot-daire-kirpma-"));
+        assert!(svg.contains(" 0 1 0 "));
+        assert_eq!(svg.matches("<circle").count(), 0);
+        Ok(())
+    }
+
+    #[test]
+    fn multi_bars_şekil_metin_ve_renkleri_vektör_kalır() -> Result<(), UplotHatası> {
+        let bileşen = kart_bileşeni(multi_bars_kartı(MultiBarsÖrneği::KitaplıklarDikey))?;
+        let kayıt = bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(1_920, 1_080)?);
+        let svg = kayıt.içerik();
+
+        assert!(svg.contains("<path"));
+        assert!(svg.contains("<text"));
+        assert!(svg.contains(" Q"));
+        assert!(!svg.contains("<foreignObject"));
+        assert!(!svg.contains("<image"));
         Ok(())
     }
 
