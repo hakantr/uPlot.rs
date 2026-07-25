@@ -3207,6 +3207,43 @@
     let niceScaleResizeYüzeyi = null;
     let niceScaleBekleyenBoyut = null;
     let syncYZeroZamanlayıcıları = [];
+
+    function pointerHareketiniKaredeBirleştir(hedef, işlem, seçenekler) {
+      let kare = null;
+      let bekleyenOlay = null;
+      const bekleyeniİşle = () => {
+        if (kare !== null) cancelAnimationFrame(kare);
+        kare = null;
+        const olay = bekleyenOlay;
+        bekleyenOlay = null;
+        if (olay) işlem(olay);
+      };
+      const bekleyeniİptalEt = () => {
+        if (kare !== null) cancelAnimationFrame(kare);
+        kare = null;
+        bekleyenOlay = null;
+      };
+      hedef.addEventListener("pointermove", olay => {
+        olay.stopPropagation();
+        if (olay.pointerType === "touch" && olay.cancelable) olay.preventDefault();
+        bekleyenOlay = olay;
+        if (kare !== null) return;
+        kare = requestAnimationFrame(() => {
+          kare = null;
+          const sonOlay = bekleyenOlay;
+          bekleyenOlay = null;
+          if (sonOlay) işlem(sonOlay);
+        });
+      }, seçenekler);
+      const tamamlamaSeçenekleri = seçenekler?.signal
+        ? { capture: true, signal: seçenekler.signal }
+        : { capture: true };
+      hedef.addEventListener("pointerup", bekleyeniİşle, tamamlamaSeçenekleri);
+      hedef.addEventListener("pointercancel", bekleyeniİşle, tamamlamaSeçenekleri);
+      hedef.addEventListener("pointerleave", bekleyeniİşle, tamamlamaSeçenekleri);
+      seçenekler?.signal?.addEventListener("abort", bekleyeniİptalEt, { once: true });
+    }
+
     const syncCursorYüzeyleri = [
       { kimlik: "sync-cursor-cpu", başlık: "CPU", seriler: [["CPU 1", "red"], ["CPU 2", "green"], ["CPU 3", "blue"]] },
       { kimlik: "sync-cursor-ram", başlık: "RAM", seriler: [["RAM 1", "red"], ["RAM 2", "green"], ["RAM 3", "blue"]] },
@@ -4403,7 +4440,7 @@
         let taşıma = null;
         let kıstırma = null;
         const dokunmalar = new Map();
-        kutu.addEventListener("pointermove", olay => {
+        pointerHareketiniKaredeBirleştir(kutu, olay => {
           olay.stopPropagation();
           const konumBilgisi = konum(olay);
           if (!konumBilgisi) return;
@@ -4681,7 +4718,7 @@
         olay.stopPropagation();
         seriDeğiştir();
       }, dinleyiciSeçeneği);
-      kutu.addEventListener("pointermove", olay => {
+      pointerHareketiniKaredeBirleştir(kutu, olay => {
         olay.stopPropagation();
         const bilgi = konum(olay);
         if (!bilgi) return;
@@ -4932,7 +4969,7 @@
         });
       };
       let seçim = null;
-      kutu.addEventListener("pointermove", olay => {
+      pointerHareketiniKaredeBirleştir(kutu, olay => {
         olay.stopPropagation();
         imleciGüncelle(olay);
         if (!seçim) return;
@@ -5100,7 +5137,7 @@
       let taşıma = null;
       let kıstırma = null;
       const temaslar = new Map();
-      kutu.addEventListener("pointermove", olay => {
+      pointerHareketiniKaredeBirleştir(kutu, olay => {
         olay.stopPropagation();
         const a = alan(olay);
         if (!a) return;
@@ -5441,7 +5478,7 @@
           }
         });
       });
-      kutu.addEventListener("pointermove", olay => {
+      pointerHareketiniKaredeBirleştir(kutu, olay => {
         olay.stopPropagation();
         const a = alan(olay);
         if (!a) return;
@@ -5823,7 +5860,7 @@
         };
         scalesDirOriİmleciniUygula();
       };
-      kutu.addEventListener("pointermove", olay => {
+      pointerHareketiniKaredeBirleştir(kutu, olay => {
         olay.stopPropagation();
         const a = scalesDirOriAlanı(kutu, yüzeyOturumu, olay);
         if (!a) return;

@@ -2320,6 +2320,14 @@ mod testler {
         assert!(katalog.contains("function bekleyenPointerHareketiniİşle()"));
         assert!(katalog.contains("pointerAnimationFrame = requestAnimationFrame"));
         assert!(katalog.contains("pointerKaresi = requestAnimationFrame"));
+        assert!(katalog.contains("function pointerHareketiniKaredeBirleştir("));
+        assert_eq!(
+            katalog
+                .matches("pointerHareketiniKaredeBirleştir(kutu")
+                .count(),
+            6
+        );
+        assert!(!katalog.contains("kutu.addEventListener(\"pointermove\""));
     }
 
     #[test]
