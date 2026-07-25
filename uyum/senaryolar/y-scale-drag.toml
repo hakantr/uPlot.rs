@@ -17,12 +17,26 @@ sol_renk = "red"
 sağ_ölçek = "km/h"
 sağ_etiket = "meter"
 sağ_renk = "blue"
+sol_genişlik_hesabı = "25 + en_uzun_etiket_karakteri * 6"
 
 [etkileşim]
 normal_sürükleme = "ölçeği_kaydır"
 shift_sürükleme = "ölçeği_büyüt_daralt"
 bağımsız_y_ölçekleri = true
 çekirdek_sahipliği = true
+kesin_plot_yüksekliği_px = 504
+örnek_y_sürükleme_px = 40
+örnek_x_sürükleme_px = 100
+pointer_capture_wasm = true
+mouse_up_out_gpui = true
+cursor_katmanı_korunur = true
+lejant_set_series = true
+set_series_elle_ölçeği_otomatiğe_döndürür = true
+
+[performans]
+pointer_hareketi_raf_ile_birleşir = true
+grafik_örneği_yeniden_kurulmaz = true
+set_scale_ana_yolları_ve_eksenleri_yeniler = true
 
 [kanıt]
 örnek = "examples/y_scale_drag.rs"

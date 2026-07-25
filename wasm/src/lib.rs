@@ -3182,7 +3182,25 @@ mod testler {
         assert!(oturum.eksen_suruklemeyi_baslat(1_200, 600, 20.0, 300.0));
         assert!(matches!(oturum.eksen_surukle(20.0, 340.0, false), Ok(true)));
         oturum.eksen_suruklemeyi_bitir();
+        let meter = oturum.seri_gorunur_y_araligi(0);
+        let beklenen = 40.0 * 3.6 / 504.0;
+        assert!((meter[0] - (0.7 + beklenen)).abs() < 1e-12);
+        assert!((meter[1] - (4.3 + beklenen)).abs() < 1e-12);
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(0, false), Ok(true)));
+        assert_eq!(oturum.seri_gorunur_y_araligi(0), vec![0.0, 1.0]);
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(0, true), Ok(true)));
+        assert_eq!(oturum.seri_gorunur_y_araligi(0), vec![0.7, 4.3]);
+
+        assert!(oturum.eksen_suruklemeyi_baslat(1_200, 600, 400.0, 580.0));
+        assert!(matches!(oturum.eksen_surukle(500.0, 580.0, true), Ok(true)));
+        oturum.eksen_suruklemeyi_bitir();
+        let x = oturum.gorunur_x_araligi();
+        assert!(x[0] > 0.0 && x[1] < 4.0);
         assert!(y_scale_drag_kart_tanim_ornegi().contains("Shift"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("aktifKart === \"y-scale-drag\""));
+        assert!(web.contains("25 + en uzun etiket × 6 piksel"));
+        assert!(web.contains("setPointerCapture(olay.pointerId)"));
     }
 
     #[test]

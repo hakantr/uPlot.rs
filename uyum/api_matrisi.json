@@ -940,6 +940,24 @@
       "test": "src/kart/y_scale_drag.rs"
     },
     {
+      "kaynak_yolu": "axes[1].size = 25 + longest label length * 6",
+      "rust_karşılığı": "OtomatikEksenGenişliği + otomatik_y_eksen_genişliği_hesabı(25, 6)",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_scale_drag.rs"
+    },
+    {
+      "kaynak_yolu": "document mousemove/mouseup keeps drag alive outside axis",
+      "rust_karşılığı": "WASM pointer capture + GPUI on_mouse_up_out",
+      "durum": "tam_kanıtlı",
+      "test": "wasm/src/lib.rs + src/gpui.rs"
+    },
+    {
+      "kaynak_yolu": "setSeries invalidates auto scale after manual setScale",
+      "rust_karşılığı": "seri_görünürlüğünü_ayarla elle ölçek aralığını temizler",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_scale_drag.rs + wasm/src/lib.rs"
+    },
+    {
       "kaynak_yolu": "mode.data(data)",
       "rust_karşılığı": "YShiftedSeriesAkışı kaydırılmış seri geometrisi",
       "durum": "tam_kanıtlı",

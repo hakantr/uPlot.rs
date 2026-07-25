@@ -273,6 +273,25 @@ impl RüzgarYönüDüzeni {
     }
 }
 
+/// Bir Y ekseninin görünür etiketlerine göre ayrılacak yatay payı tanımlar.
+/// `taban + en_uzun_etiket_karakteri * karakter_başına` hesabı, DOM metin
+/// ölçümü bulunmayan yerel ve SVG yüzeylerinde kaynak callback'lerini taşır.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct OtomatikEksenGenişliği {
+    pub taban: f32,
+    pub karakter_başına: f32,
+}
+
+impl OtomatikEksenGenişliği {
+    pub fn yeni(taban: f32, karakter_başına: f32) -> Option<Self> {
+        (taban.is_finite() && taban >= 0.0 && karakter_başına.is_finite() && karakter_başına >= 0.0)
+            .then_some(Self {
+                taban,
+                karakter_başına,
+            })
+    }
+}
+
 /// uPlot çizim kancalarının sahneye eklediği, yüzeyden bağımsız katmanlar.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ÇizimKancasıDüzeni {
@@ -1036,6 +1055,7 @@ pub struct GrafikSeçenekleri {
     pub x_eksen_değer_çarpanı: f64,
     pub otomatik_x_sağ_pay: bool,
     pub otomatik_y_eksen_genişliği: bool,
+    pub otomatik_y_eksen_genişliği_hesabı: Option<OtomatikEksenGenişliği>,
     pub eksen_göstergeleri: bool,
     pub kategoriler: Vec<String>,
     pub çubuk_düzeni: Option<ÇubukDüzeni>,
@@ -1120,6 +1140,7 @@ impl GrafikSeçenekleri {
             x_eksen_değer_çarpanı: 1.0,
             otomatik_x_sağ_pay: false,
             otomatik_y_eksen_genişliği: false,
+            otomatik_y_eksen_genişliği_hesabı: None,
             eksen_göstergeleri: false,
             kategoriler: Vec::new(),
             çubuk_düzeni: None,
@@ -1471,6 +1492,18 @@ impl GrafikSeçenekleri {
 
     pub fn otomatik_y_eksen_genişliği(mut self, etkin: bool) -> Self {
         self.otomatik_y_eksen_genişliği = etkin;
+        self
+    }
+
+    pub fn otomatik_y_eksen_genişliği_hesabı(
+        mut self,
+        taban: f32,
+        karakter_başına: f32,
+    ) -> Self {
+        if let Some(hesap) = OtomatikEksenGenişliği::yeni(taban, karakter_başına) {
+            self.otomatik_y_eksen_genişliği = true;
+            self.otomatik_y_eksen_genişliği_hesabı = Some(hesap);
+        }
         self
     }
 

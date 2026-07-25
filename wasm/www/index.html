@@ -2258,6 +2258,12 @@
       yardım: "Kırmızı, mavi veya X eksenini sürükle · Shift basılıyken ölçeği büyüt/daralt",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Sayısal X ile meter ve km/h adlı iki bağımsız Y ölçeğini eksen üzerinden kaydırır; Shift iki ucu ters yönde taşıyarak aralığı büyütür veya daraltır.",
+        api: "eksen_vurusu_boyutta hedef ölçeği seçer; eksen_sürüklemeyi_baslat/surukle/bitir setScale yaşam döngüsünü taşır. Sol eksen kaynak callback'i gibi 25 + en uzun etiket × 6 piksel hesaplanır; lejant setSeries ilgili elle aralığı otomatiğe döndürür.",
+        izleme: "Farklı birimli metriklerin ayrıntı düzeyini paneli yeniden kurmadan ayrı ayrı ayarlamak için kullanılır.",
+        maliyet: "Pointer hareketleri requestAnimationFrame ile birleşir; setScale eksen, grid ve iki kısa yolu yeniden çizer, kararlı SVG kabuğu ile cursor katmanı korunur. Pointer capture yüzey dışında bırakmayı tamamlar.",
+      },
     };
     document.querySelector('[data-kart="y-scale-drag"]')?.insertAdjacentHTML(
       "afterend",
@@ -6314,7 +6320,8 @@
         || aktifKart === "tooltips"
         || aktifKart === "trendlines"
         || aktifKart === "update-cursor-select-resize"
-        || aktifKart === "wind-direction";
+        || aktifKart === "wind-direction"
+        || aktifKart === "y-scale-drag";
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks) || değiştirilebilirLejant
           ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>

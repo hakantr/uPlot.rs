@@ -1415,7 +1415,12 @@ impl Grafik {
         if seri.göster == görünür {
             return Ok(false);
         }
+        let ölçek = seri.ölçek.clone();
         seri.göster = görünür;
+        // uPlot `setSeries({show})`, otomatik serinin ölçeğini yeniden
+        // kuyruğa alır. Eksen sürüklemesinden kalan elle aralık bu değişim
+        // sonrasında eski görünür seri kümesine bağlı kalmamalıdır.
+        self.elle_y_aralıkları.remove(&ölçek);
         if !görünür && self.odak_serisi == Some(indeks) {
             self.odak_serisi = None;
         }
@@ -1637,26 +1642,6 @@ impl Grafik {
             // Kaynak timelinePlugin axes[1].size=70 ve gap=15 kullanır.
             sol_pay = sol_pay.max(85.0);
         }
-        if self.seçenekler.otomatik_y_eksen_genişliği && !self.seçenekler.birincil_y_sağda {
-            let aralık = self.görünür_y_aralığı();
-            let artım = uygun_artım(aralık, yükseklik_px, 30.0);
-            let ölçek = self.ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği);
-            let birim = ölçek.map_or("", |ölçek| ölçek.birim.as_str());
-            let dağılım = ölçek.map(|ölçek| ölçek.dağılım);
-            let biçim = ölçek.map_or(YÖlçekEtiketBiçimi::Otomatik, |ölçek| ölçek.etiket_biçimi);
-            let çarpan = ölçek.map_or(1.0, |ölçek| ölçek.eksen_değer_çarpanı);
-            let en_uzun = self
-                .y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, aralık, yükseklik_px)
-                .into_iter()
-                .map(|değer| {
-                    ölçek_eksen_değerini_yaz(değer * çarpan, artım, birim, dağılım, biçim)
-                        .chars()
-                        .count()
-                })
-                .max()
-                .unwrap_or(1);
-            sol_pay = sol_pay.max(24.0 + en_uzun as f32 * 7.0);
-        }
         let alt_pay = if !self.seçenekler.x_eksen_görünür {
             gizli_eksen_payı
         } else if self.seçenekler.x_eksen_karşıda {
@@ -1683,6 +1668,31 @@ impl Grafik {
         } else {
             48.0
         };
+        if self.seçenekler.otomatik_y_eksen_genişliği && !self.seçenekler.birincil_y_sağda {
+            let aralık = self.görünür_y_aralığı();
+            let çizim_yüksekliği = (yükseklik_px - üst_pay - alt_pay).max(1.0);
+            let artım = uygun_artım(aralık, çizim_yüksekliği, 30.0);
+            let ölçek = self.ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği);
+            let birim = ölçek.map_or("", |ölçek| ölçek.birim.as_str());
+            let dağılım = ölçek.map(|ölçek| ölçek.dağılım);
+            let biçim = ölçek.map_or(YÖlçekEtiketBiçimi::Otomatik, |ölçek| ölçek.etiket_biçimi);
+            let çarpan = ölçek.map_or(1.0, |ölçek| ölçek.eksen_değer_çarpanı);
+            let en_uzun = self
+                .y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, aralık, çizim_yüksekliği)
+                .into_iter()
+                .map(|değer| {
+                    ölçek_eksen_değerini_yaz(değer * çarpan, artım, birim, dağılım, biçim)
+                        .chars()
+                        .count()
+                })
+                .max()
+                .unwrap_or(1);
+            if let Some(hesap) = self.seçenekler.otomatik_y_eksen_genişliği_hesabı {
+                sol_pay = hesap.taban + en_uzun as f32 * hesap.karakter_başına;
+            } else {
+                sol_pay = sol_pay.max(24.0 + en_uzun as f32 * 7.0);
+            }
+        }
         (
             sol_pay,
             genişlik_px - sağ_pay,

@@ -1760,8 +1760,6 @@ impl Render for GpuiGrafik {
                             bu.hata = Some(format!("Eksen ölçeği sürüklenemedi: {hata}"));
                         }
                     }
-                    bu.imleç = None;
-                    bu.açıklama_vuruşu = None;
                 } else if let Some(başlangıç) = bu.taşıma_başlangıcı
                     && let Some(konum) = bu.sahne_konumu(olay.position)
                 {
@@ -1888,8 +1886,6 @@ impl Render for GpuiGrafik {
                         bu.seçim = None;
                         bu.taşıma_başlangıcı = None;
                         bu.açıklama_seçimi = false;
-                        bu.imleç = None;
-                        bu.açıklama_vuruşu = None;
                     } else if bu.boşluk_basılı
                         && let Some(konum) = bu.sahne_konumu(olay.position)
                         && bu.grafik_alanında(konum)
@@ -2029,6 +2025,16 @@ impl Render for GpuiGrafik {
                     }
                     if let Some(url) = tooltip_tıklaması {
                         cx.open_url(&url);
+                    }
+                }),
+            )
+            .on_mouse_up_out(
+                MouseButton::Left,
+                cx.listener(|bu, _: &MouseUpEvent, _, cx| {
+                    if bu.grafik.eksen_sürükleniyor() {
+                        bu.grafik.eksen_sürüklemeyi_bitir();
+                        bu.eksen_üzerinde = false;
+                        GpuiGrafik::bildir(cx);
                     }
                 }),
             )

@@ -3488,6 +3488,7 @@ impl Render for ChartListesi {
                 | KartKimliği::Trendlines
                 | KartKimliği::UpdateCursorSelectResize
                 | KartKimliği::WindDirection
+                | KartKimliği::YScaleDrag
         ) {
             self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
                 grafik
@@ -6379,6 +6380,20 @@ impl Render for ChartListesi {
                  dış komşular getOuterIdxs eşdeğeriyle korunur. Pointer yalnız hafif cursor \
                  katmanını taşır; ana yollar setSeries, ölçek veya resize ile yeniden hesaplanır.",
             ),
+            KartKimliği::YScaleDrag => Some(
+                "Amaç: sayısal X ile meter ve km/h adlı iki bağımsız Y ölçeğini doğrudan eksen \
+                 üzerinden kaydırır; Shift basılıyken iki uç ters yönde hareket ederek aralığı \
+                 büyütür veya daraltır. API: eksen_vuruşu_boyutta gerçek çizim payından hedef \
+                 ölçeği seçer; eksen_sürüklemeyi_başlat/sürükle/bitir kaynak setScale yaşam \
+                 döngüsünü taşır. Otomatik Y ekseni hesabı kaynak callback'indeki \
+                 25 + en_uzun_etiket × 6 piksel formülünü her aralıkta yeniden uygular; lejant \
+                 setSeries ilgili elle sürüklenmiş ölçeği otomatik aralığa döndürür. İzleme: \
+                 farklı birimli metriklerin ayrıntı düzeyini paneli yeniden kurmadan ayrı ayrı \
+                 ayarlamak için uygundur. Maliyet: hareketler ekran karesiyle birleştirilir; \
+                 setScale eksen, grid ve iki kısa yolu yeniden boyar, cursor katmanı yerinde \
+                 kalır. WASM pointer capture, GPUI dışarıda mouse-up temizliğiyle sürüklemeyi \
+                 yüzey sınırının dışında da güvenle tamamlar.",
+            ),
             KartKimliği::TimeseriesDiscrete => Some(
                 "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
                  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
@@ -6720,6 +6735,7 @@ impl Render for ChartListesi {
                         | KartKimliği::Trendlines
                         | KartKimliği::UpdateCursorSelectResize
                         | KartKimliği::WindDirection
+                        | KartKimliği::YScaleDrag
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )
@@ -6731,6 +6747,7 @@ impl Render for ChartListesi {
                         | KartKimliği::Trendlines
                         | KartKimliği::UpdateCursorSelectResize
                         | KartKimliği::WindDirection
+                        | KartKimliği::YScaleDrag
                 ),
                 |öğe| {
                 öğe.child(
