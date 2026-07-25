@@ -820,6 +820,18 @@
       "test": "src/kart/trendlines.rs"
     },
     {
+      "kaynak_yolu": "drawSeries odd series width half-pixel translation",
+      "rust_karşılığı": "Grafik trend komutu tek piksel 0.5 ofseti",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/trendlines.rs"
+    },
+    {
+      "kaynak_yolu": "default points.space=ptDia(1)*2=10 and legend setSeries visibility",
+      "rust_karşılığı": "SeriSeçenekleri varsayılan nokta boşluğu ve GPUI/WASM seri görünürlüğü",
+      "durum": "tam_kanıtlı",
+      "test": "wasm/src/lib.rs"
+    },
+    {
       "kaynak_yolu": "scales.x.range valToIdx min/max data snap",
       "rust_karşılığı": "GrafikSeçenekleri::x_aralığını_veriye_yapıştır",
       "durum": "tam_kanıtlı",

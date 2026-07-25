@@ -19,13 +19,18 @@ kanca = "drawSeries"
 görünür_ilk_son_indeks = true
 kesik = [5, 5]
 seri_rengi_ve_kalınlığı = true
+tek_piksel_ofseti = 0.5
+normal_path_dış_komşuları_trend_ucunu_değiştirmez = true
 
 [ölçek]
 x_zaman = false
 seçim_uçları_val_to_idx_ile_yapışır = true
+varsayılan_points_space = 10
 
 [etkileşim]
 ortak_davranış_profili = "resize-temeli-v1"
+lejant_set_series = true
+pointer_ana_yolu_yeniden_çizmez = true
 
 [kanıt]
 örnek = "examples/trendlines.rs"

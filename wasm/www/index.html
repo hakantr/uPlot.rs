@@ -2170,6 +2170,12 @@
       yardım: "Sürükleyerek yakınlaştır: X uçları veri değerlerine yapışır · kesik çizgiler görünür uçları bağlar",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Her görünür serinin seçili X penceresindeki ilk ve son gerçek veri indeksini 5/5 kesik bir uç çizgisiyle bağlar; normal path'in görünüm dışı kırpma komşularından ayrıdır.",
+        api: "ÇizimKancasıDüzeni::seri_uç_trendleri drawSeries kancasını, x_aralığını_veriye_yapıştır valToIdx tabanlı uç yapışmasını sağlar. Lejant setSeries ana yol, dolgu ve trendi birlikte değiştirir.",
+        izleme: "Seçili zaman penceresinin başlangıç-son yönünü ham dalgalanmanın üzerinde okumak için uygundur; çizgi bir regresyon modeli değildir.",
+        maliyet: "İki 100 noktalı yol ve seri başına tek trend O(görünür N)'dir. Pointer ana SVG'yi yeniden çizmez; uçlar yalnız ölçek, resize veya setSeries değişiminde hesaplanır. Kaynak points.space=10 ve yarım-piksel tek-stroke hizası korunur.",
+      },
     };
     document.querySelector('[data-kart="trendlines"]')?.insertAdjacentHTML(
       "afterend",
@@ -6292,7 +6298,8 @@
       const değiştirilebilirLejant = yığmaLejantı
         || aktifKart.startsWith("multi-bars-")
         || aktifKart === "tooltips-closest"
-        || aktifKart === "tooltips";
+        || aktifKart === "tooltips"
+        || aktifKart === "trendlines";
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks) || değiştirilebilirLejant
           ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>

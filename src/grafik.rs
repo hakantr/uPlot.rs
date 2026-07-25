@@ -4067,9 +4067,12 @@ impl Grafik {
                     (görünür_noktalar.first(), görünür_noktalar.last())
                 && başlangıç != bitiş
             {
+                // Kaynak drawSeries kancası tek sayılı stroke genişliğini
+                // yarım piksel öteleyerek kesik çizgiyi raster ızgarasına oturtur.
+                let ofset = (seri_kalınlığı % 2.0) / 2.0;
                 sahne.ekle(Komut::KesikliÇizgi {
-                    başlangıç: *başlangıç,
-                    bitiş: *bitiş,
+                    başlangıç: Nokta::yeni(başlangıç.x + ofset, başlangıç.y + ofset),
+                    bitiş: Nokta::yeni(bitiş.x + ofset, bitiş.y + ofset),
                     renk: seri_rengi.clone(),
                     kalınlık: seri_kalınlığı,
                     kesik: düzen.trend_kesik,

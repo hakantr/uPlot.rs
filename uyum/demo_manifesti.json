@@ -3203,14 +3203,16 @@
       "özellikler": [
         "source-exact-two-hundred-value-arrays", "numeric-zero-to-ninety-nine-x",
         "draw-series-visible-endpoints", "five-five-dashed-trend-lines",
-        "series-color-and-width-reuse", "val-to-idx-x-range-snap",
+        "series-color-and-width-reuse", "odd-width-half-pixel-offset",
+        "default-points-space-ten", "legend-set-series-visibility",
+        "pointer-does-not-redraw-main-path", "val-to-idx-x-range-snap",
         "zoom-recomputes-visible-trend", "gpui-wasm-parity",
         "common-interaction-profile", "panic-free-draw-hook"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
-        "performans": "kısmi"
+        "performans": "tam_kanıtlı"
       }
     },
     {

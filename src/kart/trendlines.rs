@@ -84,24 +84,48 @@ mod testler {
         );
         let mut grafik = crate::Grafik::yeni(seçenekler, veri)?;
         let tam_sahne = grafik.çiz();
-        assert_eq!(
-            tam_sahne
-                .komutlar()
-                .iter()
-                .filter(|komut| {
-                    matches!(
-                        komut,
-                        crate::Komut::KesikliÇizgi { kesik, .. } if (*kesik - 5.0).abs() <= f32::EPSILON
-                    )
-                })
-                .count(),
-            2
-        );
+        let trendler = tam_sahne
+            .komutlar()
+            .iter()
+            .filter(|komut| {
+                matches!(
+                    komut,
+                    crate::Komut::KesikliÇizgi { kesik, .. } if (*kesik - 5.0).abs() <= f32::EPSILON
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(trendler.len(), 2);
+        assert!(trendler.iter().all(|komut| matches!(
+            komut,
+            crate::Komut::KesikliÇizgi {
+                başlangıç,
+                kalınlık,
+                ..
+            } if (*kalınlık - 1.0).abs() <= f32::EPSILON
+                && (başlangıç.x.fract().abs() - 0.5).abs() <= f32::EPSILON
+                && (başlangıç.y.fract().abs() - 0.5).abs() <= f32::EPSILON
+        )));
 
         assert!(grafik.seçim_yakınlaştır(0.151, 0.817)?);
         let görünür = grafik.görünür_x_aralığı();
         assert_eq!(görünür.en_az, 15.0);
         assert_eq!(görünür.en_çok, 81.0);
+        assert!(grafik.çiz().svg().matches("<circle").count() > 0);
+
+        assert!(grafik.seri_görünürlüğünü_ayarla(1, false)?);
+        assert_eq!(
+            grafik
+                .çiz()
+                .komutlar()
+                .iter()
+                .filter(|komut| matches!(
+                    komut,
+                    crate::Komut::KesikliÇizgi { kesik, .. }
+                        if (*kesik - 5.0).abs() <= f32::EPSILON
+                ))
+                .count(),
+            1
+        );
 
         assert!(grafik.tam_görünüm());
         assert!(grafik.tekerlek(0.37, 0.5, 1.0, false)?);

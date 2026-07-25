@@ -3483,7 +3483,7 @@ impl Render for ChartListesi {
         );
         let tooltip_serileri = if matches!(
             aktif_kart,
-            KartKimliği::TooltipsClosest | KartKimliği::Tooltips
+            KartKimliği::TooltipsClosest | KartKimliği::Tooltips | KartKimliği::Trendlines
         ) {
             self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
                 grafik
@@ -6334,6 +6334,20 @@ impl Render for ChartListesi {
                  hareketi önbellekli ana yüzeye dokunmaz, yalnız mevcut tooltip katmanlarını \
                  ve cursor çizgilerini taşır.",
             ),
+            KartKimliği::Trendlines => Some(
+                "Amaç: her görünür serinin ekrandaki ilk ve son gerçek veri indeksini kaynak \
+                 drawSeries kancası gibi 5/5 kesik bir uç çizgisiyle bağlar; normal path'in \
+                 kırpma için görünüm dışı komşu noktaları kullanabilmesi bu i0/i1 kararını \
+                 değiştirmez. API: ÇizimKancasıDüzeni::seri_uç_trendleri kesik aralığını, \
+                 x_aralığını_veriye_yapıştır ise seçim ve wheel uçlarının valToIdx eşdeğeriyle \
+                 gerçek X değerlerine oturmasını sağlar; lejant setSeries ana yol, dolgu ve \
+                 trendi birlikte açıp kapatır. İzleme: seçili zaman penceresindeki genel \
+                 başlangıç-son eğilimini ham dalgalanmanın üzerinde okumak için uygundur; \
+                 regresyon değildir ve ara noktaları modellemez. Maliyet: iki 100 noktalı yol \
+                 ve seri başına tek ek çizgi O(görünür N)'dir. Pointer yalnız cursor/lejant \
+                 katmanını taşır; uçlar yalnız ölçek, resize veya setSeries sonrasında yeniden \
+                 hesaplanır. Kaynak points.space=10 ve tek-piksel yarım-piksel hizası korunur.",
+            ),
             KartKimliği::TimeseriesDiscrete => Some(
                 "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
                  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
@@ -6670,14 +6684,14 @@ impl Render for ChartListesi {
             .when(
                 !matches!(
                     aktif_kart,
-                    KartKimliği::TooltipsClosest | KartKimliği::Tooltips
+                    KartKimliği::TooltipsClosest | KartKimliği::Tooltips | KartKimliği::Trendlines
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )
             .when(
                 matches!(
                     aktif_kart,
-                    KartKimliği::TooltipsClosest | KartKimliği::Tooltips
+                    KartKimliği::TooltipsClosest | KartKimliği::Tooltips | KartKimliği::Trendlines
                 ),
                 |öğe| {
                 öğe.child(

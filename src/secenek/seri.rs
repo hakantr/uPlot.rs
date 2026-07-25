@@ -114,6 +114,7 @@ impl SeriSeçenekleri {
             boşta_son_değeri_göster: false,
             piksel_hizası: None,
             noktaları_göster: None,
+            // uPlot genişlik=1 için `ptDia(1) * 2` ile 10 CSS pikseli kullanır.
             nokta_boşluğu: 10.0,
             nokta_boyutu: 5.0,
             nokta_kalınlığı: 1.0,

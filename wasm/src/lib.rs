@@ -3068,8 +3068,18 @@ mod testler {
         let svg = oturum.svg(800, 600);
         assert!(svg.contains("Trendlines"));
         assert_eq!(svg.matches("stroke-dasharray=\"5.00 5.00\"").count(), 2);
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(1, false), Ok(true)));
+        assert_eq!(
+            oturum
+                .svg(800, 600)
+                .matches("stroke-dasharray=\"5.00 5.00\"")
+                .count(),
+            1
+        );
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(1, true), Ok(true)));
         assert!(matches!(oturum.secim_yakinlastir(0.151, 0.817), Ok(true)));
         assert_eq!(oturum.gorunur_x_araligi(), vec![15.0, 81.0]);
+        assert!(oturum.svg(800, 600).matches("<circle").count() > 0);
         assert!(trendlines_kart_tanim_ornegi().contains("seçim_yakınlaştır"));
         assert_eq!(kart_sayisi(), 365);
     }
