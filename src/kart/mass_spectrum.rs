@@ -1,8 +1,10 @@
 use super::ortak_kart_etkileşimleri;
 use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
+use std::sync::OnceLock;
 
 const KAYNAK_CSV: &str = include_str!("veri/ms_spectrum.csv");
 const VARLIK: &str = "demos/data/ms_spectrum.csv";
+static KAYNAK_VERİ: OnceLock<Result<HizalıVeri, UplotHatası>> = OnceLock::new();
 
 pub const MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = mass_spectrum_kartı()?;
 let grafik = Grafik::yeni(seçenekler, veri)?;"##;
@@ -21,6 +23,10 @@ pub fn mass_spectrum_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), Uplot
 }
 
 fn kaynak_veri() -> Result<HizalıVeri, UplotHatası> {
+    KAYNAK_VERİ.get_or_init(kaynak_verisini_ayrıştır).clone()
+}
+
+fn kaynak_verisini_ayrıştır() -> Result<HizalıVeri, UplotHatası> {
     let mut x = Vec::with_capacity(41_986);
     let mut y = Vec::with_capacity(41_986);
     for (indeks, satır) in KAYNAK_CSV.lines().skip(1).enumerate() {
@@ -76,6 +82,14 @@ mod testler {
             Some("Value")
         );
         assert!(seçenekler.kütle_spektrumu_y_aralığı);
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_csv_bir_kez_ayrıştırılıp_kartlar_arasında_paylaşılır() -> Result<(), UplotHatası> {
+        let (_, ilk) = mass_spectrum_kartı()?;
+        let (_, ikinci) = mass_spectrum_kartı()?;
+        assert!(ilk.aynı_depolamayı_paylaşıyor(&ikinci));
         Ok(())
     }
 
