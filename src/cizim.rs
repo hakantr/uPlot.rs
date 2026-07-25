@@ -1,4 +1,4 @@
-#[cfg(feature = "svg")]
+#[cfg(any(feature = "gpui-svg", test))]
 use std::fmt::Write as _;
 
 pub(crate) mod kirpma;
@@ -186,7 +186,7 @@ impl Sahne {
     }
 
     /// Sahneyi bağımlılıksız ve belirlenimci bir SVG belgesine dönüştürür.
-    #[cfg(feature = "svg")]
+    #[cfg(any(feature = "gpui-svg", test))]
     pub fn svg(&self) -> String {
         let mut çıktı = format!(
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}\" height=\"{}\" viewBox=\"0 0 {} {}\">\n",
@@ -201,7 +201,7 @@ impl Sahne {
     ///
     /// GPUI normal paint akışı bu yöntemi çağırmaz; yalnız açık dışa aktarım
     /// isteği retained sahneyi vektör kaydına dönüştürür.
-    #[cfg(feature = "svg")]
+    #[cfg(any(feature = "gpui-svg", test))]
     pub(crate) fn svg_içeriği(&self, kimlik_öneki: &str) -> String {
         let mut çıktı = String::new();
         for (komut_indeksi, komut) in self.komutlar.iter().enumerate() {
@@ -571,7 +571,7 @@ impl Sahne {
     }
 }
 
-#[cfg(feature = "svg")]
+#[cfg(any(feature = "gpui-svg", test))]
 fn yuvarlatılmış_dikdörtgen_yolu(
     konum: Nokta,
     genişlik: f32,
@@ -614,7 +614,7 @@ fn yuvarlatılmış_dikdörtgen_yolu(
     )
 }
 
-#[cfg(feature = "svg")]
+#[cfg(any(feature = "gpui-svg", test))]
 fn yol_verisi(parçalar: &[Vec<Nokta>], kapat: bool) -> String {
     let mut d = String::new();
     for parça in parçalar {
@@ -629,7 +629,7 @@ fn yol_verisi(parçalar: &[Vec<Nokta>], kapat: bool) -> String {
     d.trim_end().to_string()
 }
 
-#[cfg(feature = "svg")]
+#[cfg(any(feature = "gpui-svg", test))]
 fn gradyan_tanımını_yaz(çıktı: &mut String, kimlik: &str, gradyan: &DoğrusalGradyan) {
     let _ = writeln!(
         çıktı,
@@ -651,7 +651,7 @@ fn gradyan_tanımını_yaz(çıktı: &mut String, kimlik: &str, gradyan: &Doğru
     çıktı.push_str("  </linearGradient></defs>\n");
 }
 
-#[cfg(feature = "svg")]
+#[cfg(any(feature = "gpui-svg", test))]
 fn sayı(değer: f32) -> String {
     let yuvarlanmış = (değer * 100.0).round() / 100.0;
     let yuvarlanmış = if yuvarlanmış == 0.0 {
@@ -662,7 +662,7 @@ fn sayı(değer: f32) -> String {
     format!("{yuvarlanmış:.2}")
 }
 
-#[cfg(feature = "svg")]
+#[cfg(any(feature = "gpui-svg", test))]
 fn kaçış(metin: &str) -> String {
     metin
         .replace('&', "&amp;")

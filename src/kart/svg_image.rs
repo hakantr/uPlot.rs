@@ -1,5 +1,5 @@
 use super::ortak_kart_etkileşimleri;
-#[cfg(feature = "svg")]
+#[cfg(feature = "gpui-svg")]
 use crate::Grafik;
 use crate::{
     GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, YÖlçekEtiketBiçimi,
@@ -34,13 +34,13 @@ pub fn svg_image_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHata
     Ok((seçenekler, veri))
 }
 
-#[cfg(feature = "svg")]
+#[cfg(feature = "gpui-svg")]
 pub fn svg_image_belgesi() -> Result<String, UplotHatası> {
     let (seçenekler, veri) = svg_image_kartı()?;
     Ok(Grafik::yeni(seçenekler, veri)?.çiz().svg())
 }
 
-#[cfg(all(test, feature = "svg"))]
+#[cfg(all(test, feature = "gpui-svg"))]
 mod testler {
     use super::*;
 

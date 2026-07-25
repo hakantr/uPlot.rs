@@ -3,7 +3,7 @@
 [English](readme_en.md) · **Türkçe**
 
 Bu proje, [uPlot](https://github.com/leeoniya/uPlot) 1.6.32'nin küçük, hızlı ve
-bellek-verimli çizim yaklaşımını Rust'a, GPUI'ye ve WASM'e taşıyan bir porttur.
+bellek-verimli çizim yaklaşımını doğrudan GPUI'ye taşıyan bir Rust portudur.
 Bağımsız olarak ortaya çıkarılmış yeni bir grafik motoru değildir. Normatif
 kaynak, [uPlot deposundaki `0e5812c` commit'idir](https://github.com/leeoniya/uPlot/commit/0e5812c504430f5c804e0f993376d8999b26cc34);
 davranış, API ve görsel uyum kararlarında uPlot esas alınır.
@@ -16,14 +16,19 @@ izler.
 derlemede kardeş çalışma ağaçlarının mevcut durumunu, CI ise depoların güncel
 varsayılan dallarını kullanır. Yalnız normatif uPlot kaynağı commit kilitlidir.
 
-Port, ortak altyapı üzerine tamamlanan ilk iki dikey uyum kartını içerir:
+Kütüphanenin tek interaktif renderer'ı GPUI'dir. Native uygulamalar ve web
+hedefi aynı `GpuiGrafik` bileşenini kullanır; web yüzeyi `gpui_web` + WebGPU
+üzerinde çalışır. SVG ikinci bir runtime renderer değildir, yalnız istendiğinde
+retained GPUI grafik yüzeyinden üretilen vektör dışa aktarımdır.
+
+Portun ortak altyapısı şunları içerir:
 
 - doğrulanmış sütunlu/hizalı veri modeli;
 - sayısal x ve sabit/otomatik y aralığı;
-- GPUI'den bağımsız deterministik sahne komutları;
-- bağımlılıksız SVG yüzeyi;
+- GPUI paint ve isteğe bağlı SVG kaydı tarafından tüketilen retained çizim
+  komutları;
 - `../gpui_kutuphanesi` title bar/düğmelerini kullanan GPUI masaüstü chart listesi;
-- 8081 portunda çalışan etkileşimli WASM chart listesi;
+- `gpui_web` ile WebGPU canvas üzerinde çalışan GPUI Web uygulaması;
 - masaüstü ve WASM'de ortak Rust kart tanımı örneği;
 - 18 kaynak dosyası, 304 genel API üyesi, 28 veri varlığı ve 73 demonun
   hash-kilitli envanteri;
@@ -41,16 +46,12 @@ Kartın seçim, tekerlek, dokunma, taşıma, tam görünüm ve geçmiş davranı
 Kütüphane kullanıcısı yalnız veriyi, renk düzenini ve açık/kapalı özellikleri
 tanımlar; belirtilmeyen özellikler çekirdek varsayılanlarını kullanır.
 
-## Çizim yüzeyi feature'ları
+## Kullanım
 
-Cargo feature'ları toplamsaldır ve birbiriyle birlikte açılabilir:
+GPUI zorunlu ana bağımlılıktır; ayrıca bir `gpui` feature'ı açılmaz:
 
 ```toml
-uplot-rs = {
-    version = "0.1.0",
-    default-features = false,
-    features = ["gpui", "svg"]
-}
+uplot-rs = { version = "0.1.0" }
 ```
 
 Bu registry tanımı `0.1.0` sürümü crates.io'da yayımlandıktan sonra doğrudan
@@ -60,12 +61,7 @@ Cargo paket adı küçük harfli `uplot-rs`, Rust kodundaki crate adı ise tirel
 alt çizgiye çevrilmesi nedeniyle `uplot_rs` olur. Kaynak depo
 [hakantr/uPlot.rs](https://github.com/hakantr/uPlot.rs) adresindedir.
 
-- `svg`: varsayılan, bağımlılıksız SVG çıktısı;
-- `wasm`: WASM yüzeyi için `svg` desteğini açar;
-- `gpui`: hazır `uplot_rs::gpui::GpuiGrafik` bileşenini açar.
-
-`gpui` feature'ı pinsiz `../gpui/crates/gpui` çalışma ağacına bağlıdır. Feature
-yalnız modülü derlemeye açar; kullanımda açık ad alanı korunur:
+Kullanımda açık GPUI ad alanı korunur:
 
 ```rust
 use uplot_rs::gpui::GpuiGrafik;
@@ -75,9 +71,29 @@ let yüzey = cx.new(|_| GpuiGrafik::yeni(grafik));
 ```
 
 GPUI katalog uygulaması bu bileşeni kullanır fakat kütüphane paketine girmez.
-Ortak sahne modeli GPUI'nin GPU hızlandırmasını kaldırmaz; `gpui` yüzeyi
-komutları GPUI'nin GPU destekli `paint_path`/`paint_quad` hattına verir. SVG ve
-WASM aynı sahneyi kendi yüzeylerinde boyar.
+Retained sahne modeli GPUI'nin GPU hızlandırmasını kaldırmaz; komutlar
+GPUI'nin GPU destekli `paint_path`/`paint_quad` hattına verilir.
+
+### İsteğe bağlı GPUI → SVG kaydı
+
+`gpui-svg` yalnız dışa aktarım API'sini derler:
+
+```toml
+uplot-rs = { version = "0.1.0", features = ["gpui-svg"] }
+```
+
+```rust
+use uplot_rs::GpuiSvgKayıtAyarları;
+
+let ayarlar = GpuiSvgKayıtAyarları::yeni(1_200, 600)?;
+let svg = yüzey.read(cx).svg_kaydı(ayarlar);
+std::fs::write("grafik.svg", svg.byte_değeri())?;
+```
+
+Serializer normal GPUI frame/paint yolunda çalışmaz. Yalnız `svg_kaydı`
+çağrıldığında mevcut retained sahneyi okur; geometriyi yeniden hesaplamaz,
+grafik durumunu değiştirmez ve raster `<image>` yerine düzenlenebilir vektör
+öğeleri üretir.
 
 ## Kart etkileşimleri
 
@@ -140,9 +156,8 @@ ikonu gömülü `uplot-rs.exe` içerir.
 
 ```sh
 cargo test
-cargo run --example resize
-cargo run --example area_fill
 cargo run -p uplot-rs-chart-listesi
+cd uygulamalar/web && NO_COLOR=false trunk serve
 npm --prefix tools/uyum run envanter
 npm --prefix tools/uyum run denetle
 ```
@@ -155,9 +170,8 @@ npm --prefix tools/uyum run denetle
 arayüzleri hatayı kart üzerinde kullanıcıya bildirir. Bu kural
 workspace lintleri ve CI Clippy adımıyla her değişiklikte denetlenir.
 
-İlk komut testleri çalıştırır; iki örnek komutu sırasıyla
-`target/resize.svg` ve `target/area-fill.svg` çıktılarını üretir. Masaüstü
-komutu canlı GPUI listesini açar. Envanter komutu kaynak/API/demo dökümlerini
+İlk komut testleri çalıştırır. Masaüstü komutu canlı GPUI listesini, Trunk
+komutu GPUI Web/WGPU uygulamasını açar. Envanter komutu kaynak/API/demo dökümlerini
 yeniden üretir; denetim komutu [uPlot kaynak deposunun](https://github.com/leeoniya/uPlot)
 aynı üst dizine `uPlot` adıyla klonlanmış yerel kopyasında commit/sürüm/dosya
 hash kilidini doğrular. Tarayıcı listesi için
@@ -167,22 +181,23 @@ hash kilidini doğrular. Tarayıcı listesi için
 
 - `src/veri.rs`: uPlot hizalı sütun veri sözleşmesi
 - `src/olcek.rs`: ölçek ve aralık matematiği
-- `src/cizim.rs` + `src/cizim/`: sahne komutları, SVG çıktısı ve kırpma
+- `src/cizim.rs` + `src/cizim/`: retained GPUI çizim komutları ve kırpma
 - `src/grafik.rs`: ilk çizim hattı
 - `src/etkilesim.rs`: kartın etkileşim durumu, yakınlaştırma ve görünüm geçmişi
-- `src/gpui.rs`: `gpui` feature'ıyla açılan hazır GPUI grafik bileşeni
-- `src/svg.rs`: `svg`/`wasm` feature'larının SVG yüzeyi
+- `src/gpui.rs`: her normal build'de bulunan hazır GPUI grafik bileşeni
+- `src/gpui/svg_kaydi.rs`: yalnız `gpui-svg` ile derlenen vektör dışa aktarım
 - `src/kart.rs` + `src/kart/`: kaynak verisini koruyan kart fixture'ları
 - `src/secenek.rs` + `src/secenek/`: ilişkili seçenek türleri
 - `uygulamalar/masaustu/`: dağıtıma girmeyen GPUI doğrulama uygulaması
+- `uygulamalar/web/`: aynı GPUI bileşenini WebGPU üzerinde açan web girişi
 - `uyum/`: makine-okunur kaynak ve kanıt envanteri
 - `tools/uyum/`: yeniden üretim/denetim araçları
 - `RESMI_DEPO_FARKLILIKLARI.md`: resmî port ile uPlot.rs uzantılarının ayrımı
 - `ORTAK_KART_DAVRANISLARI.md`: her yeni portta zorunlu ve CI tarafından
   denetlenen ortak görsel/etkileşim sözleşmesi
 
-Ayrıntılı yol haritası için [uPlot.rs tam port faz planı](UPlot_TAM_PORT_FAZI.md)
-dosyasına bakın.
+Ayrıntılı yol haritası için
+[Tam GPUI geçiş faz planına](GPUI_GECIS_FAZ_PLANI.md) bakın.
 
 ## Atıf ve teşekkür
 

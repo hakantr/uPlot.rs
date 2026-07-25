@@ -2,8 +2,8 @@
 
 **English** · [Türkçe](README.md)
 
-This project is a port of [uPlot](https://github.com/leeoniya/uPlot) 1.6.32's
-small, fast, and memory-efficient charting approach to Rust, GPUI, and WASM.
+This project ports [uPlot](https://github.com/leeoniya/uPlot) 1.6.32's small,
+fast, and memory-efficient charting approach directly to GPUI in Rust.
 It is not an independently invented charting engine. The normative source is
 [commit `0e5812c` in the uPlot repository](https://github.com/leeoniya/uPlot/commit/0e5812c504430f5c804e0f993376d8999b26cc34);
 uPlot defines the behavioral, API, and visual compatibility target.
@@ -16,15 +16,18 @@ builds use the current sibling worktrees through path dependencies, while CI
 uses the current default branches of both repositories. Only the normative
 uPlot source is commit-locked.
 
-The port currently contains the shared foundation and its first two vertical
-compatibility cards:
+GPUI is the library's only interactive renderer. Native applications and the
+web target run the same `GpuiGrafik` component; the web surface uses
+`gpui_web` and WebGPU. SVG is not a second runtime renderer. It is an optional
+vector export generated from the retained GPUI chart surface on demand.
+
+The shared foundation contains:
 
 - validated aligned/columnar data model;
 - numeric X scales and fixed/automatic Y ranges;
-- deterministic, GPUI-independent scene commands;
-- dependency-free SVG output;
+- retained drawing commands consumed by GPUI paint and optional SVG export;
 - GPUI desktop chart list using the `../gpui_kutuphanesi` title bar and buttons;
-- interactive WASM chart list served on development port 8081;
+- a GPUI Web application drawing to a WebGPU canvas through `gpui_web`;
 - one shared Rust card-definition example shown in desktop and WASM UIs;
 - hash-locked inventories for 18 source files, 304 public API members, 28 data
   assets, and all 73 demos;
@@ -42,16 +45,12 @@ Selection, wheel zoom, touch zoom/pan, desktop pan, full-view reset, and view hi
 the core. Library users only provide data, colors, and feature switches;
 unspecified features retain their core defaults.
 
-## Rendering-surface features
+## Usage
 
-Cargo features are additive and may be enabled together:
+GPUI is a required dependency; there is no separate `gpui` feature:
 
 ```toml
-uplot-rs = {
-    version = "0.1.0",
-    default-features = false,
-    features = ["gpui", "svg"]
-}
+uplot-rs = { version = "0.1.0" }
 ```
 
 This registry declaration becomes directly usable after version `0.1.0` is
@@ -61,12 +60,7 @@ The Cargo package name is the lowercase `uplot-rs`; Rust exposes it in code as
 `uplot_rs` because hyphens become underscores. The source repository is
 [hakantr/uPlot.rs](https://github.com/hakantr/uPlot.rs).
 
-- `svg`: the default dependency-free SVG output;
-- `wasm`: enables `svg` support for the WASM surface;
-- `gpui`: enables the ready-to-use `uplot_rs::gpui::GpuiGrafik` component.
-
-The `gpui` feature follows the unpinned `../gpui/crates/gpui` worktree. A
-feature enables compilation but does not import Rust names automatically:
+The ready component remains in an explicit GPUI namespace:
 
 ```rust
 use uplot_rs::gpui::GpuiGrafik;
@@ -76,9 +70,29 @@ let surface = cx.new(|_| GpuiGrafik::yeni(chart));
 ```
 
 The GPUI catalog uses this component but is not included in the library package.
-The shared scene model does not disable GPUI GPU acceleration: the `gpui`
-surface submits commands through GPUI's GPU-backed `paint_path`/`paint_quad`
-pipeline. SVG and WASM render the same scene through their own surfaces.
+The retained scene model does not disable GPUI GPU acceleration: commands are
+submitted through GPUI's GPU-backed `paint_path`/`paint_quad` pipeline.
+
+### Optional GPUI → SVG export
+
+Enable only the export API:
+
+```toml
+uplot-rs = { version = "0.1.0", features = ["gpui-svg"] }
+```
+
+```rust
+use uplot_rs::GpuiSvgKayıtAyarları;
+
+let settings = GpuiSvgKayıtAyarları::yeni(1_200, 600)?;
+let svg = surface.read(cx).svg_kaydı(settings);
+std::fs::write("chart.svg", svg.byte_değeri())?;
+```
+
+The serializer never runs in the normal GPUI frame/paint path. It reads the
+existing retained scene only when `svg_kaydı` is called, does not rebuild
+geometry or mutate chart state, and emits editable vectors rather than a
+raster `<image>`.
 
 ## Chart interactions
 
@@ -141,9 +155,8 @@ Windows `uplot-rs.exe` with the icon embedded.
 
 ```sh
 cargo test
-cargo run --example resize
-cargo run --example area_fill
 cargo run -p uplot-rs-chart-listesi
+cd uygulamalar/web && NO_COLOR=false trunk serve
 npm --prefix tools/uyum run envanter
 npm --prefix tools/uyum run denetle
 ```
@@ -156,9 +169,9 @@ are returned to callers as typed `UplotHatası` values; the desktop and WASM
 verification UIs show errors on the chart card. Workspace
 lints and the CI Clippy step enforce this policy on every change.
 
-The first command runs the tests; the two example commands generate
-`target/resize.svg` and `target/area-fill.svg`. The desktop command opens the
-live GPUI chart list. The inventory command regenerates the source/API/demo
+The first command runs the tests. The desktop command opens the live GPUI
+chart list, and Trunk opens the GPUI Web/WGPU application. The inventory
+command regenerates the source/API/demo
 inventories, and the verification command checks the commit, version, and file
 hashes in a local checkout of the
 [uPlot source repository](https://github.com/leeoniya/uPlot), cloned as `uPlot`
@@ -169,22 +182,23 @@ beside this repository. See
 
 - `src/veri.rs`: uPlot-compatible aligned column data contract
 - `src/olcek.rs`: scale and range mathematics
-- `src/cizim.rs` + `src/cizim/`: scene commands, SVG output, and clipping
+- `src/cizim.rs` + `src/cizim/`: retained GPUI drawing commands and clipping
 - `src/grafik.rs`: initial rendering pipeline
 - `src/etkilesim.rs`: chart interaction state, zooming, and view history
-- `src/gpui.rs`: ready GPUI chart component behind the `gpui` feature
-- `src/svg.rs`: SVG surface used by the `svg` and `wasm` features
+- `src/gpui.rs`: ready GPUI chart component included in every normal build
+- `src/gpui/svg_kaydi.rs`: vector export compiled only with `gpui-svg`
 - `src/kart.rs` + `src/kart/`: card fixtures preserving upstream data
 - `src/secenek.rs` + `src/secenek/`: grouped option types
 - `uygulamalar/masaustu/`: GPUI verification app excluded from distribution
+- `uygulamalar/web/`: web entry running the same GPUI component on WebGPU
 - `uyum/`: machine-readable source and evidence inventory
 - `tools/uyum/`: reproducibility and verification tooling
 - `RESMI_DEPO_FARKLILIKLARI.md`: direct-port versus uPlot.rs-extension inventory
 - `ORTAK_KART_DAVRANISLARI.md`: shared visual/interaction contract enforced for
   every newly ported card by CI
 
-See the [uPlot.rs full-port phase plan](UPlot_TAM_PORT_FAZI.md) for the detailed
-roadmap.
+See the [complete GPUI migration phase plan](GPUI_GECIS_FAZ_PLANI.md) for the
+detailed roadmap.
 
 ## Attribution and thanks
 

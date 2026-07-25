@@ -23,7 +23,7 @@ uyarlama ve uzantıların birbirine karışmaması için tutulur.
 | Görünüm geçmişi | Adımlı geri alma geçmişi bulunmaz | Hareket başına kayıt tutan “Geri” kontrolü vardır | uPlot.rs uzantısı |
 | Örnek kataloğu | Bağımsız HTML demoları | Aynı kart tanımını kullanan masaüstü ve WASM chart listeleri | Port sunumu |
 | Örnek/çekirdek sınırı | Demolar dağıtımdan ayrı HTML girişleridir | GPUI kataloğu ayrı ve yayınlanmayan workspace uygulamasıdır; bütün davranış çekirdektedir | Rust paket uyarlaması |
-| Yüzey seçimi | Canvas tarayıcı ortamına gömülüdür | `svg`, `wasm` ve `gpui` toplamsal Cargo feature'larıyla seçilir | Rust paket uyarlaması |
+| Yüzey seçimi | Canvas tarayıcı ortamına gömülüdür | Tek interaktif renderer GPUI'dir; `gpui-svg` yalnız isteğe bağlı vektör dışa aktarımı açar | GPUI odaklı Rust paket uyarlaması |
 | Ortak kart profili | Her demo yalnız kendi kurduğu çekirdek/eklenti davranışlarını taşır | Port kartları kaynak çizimini korurken Resize ile olgunlaştırılan isteğe bağlı wheel/touch, taşıma ve geçmiş profilini kullanabilir; manifest bunu açıkça kaydeder | uPlot.rs katalog/API uyarlaması |
 
 ### Hassas tekerlek normalizasyonu
@@ -102,7 +102,7 @@ This inventory separates direct ports from uPlot.rs-specific adaptations.
 | View history | No stepwise view undo | Gesture-level Back history | uPlot.rs extension |
 | Demo catalog | Independent HTML demos | Desktop and WASM chart lists sharing one card definition | Port presentation |
 | Demo/core boundary | Demos are separate HTML entry points | The GPUI catalog is a separate unpublished workspace app; all behavior lives in core | Rust packaging adaptation |
-| Surface selection | Canvas is built into the browser runtime | Additive `svg`, `wasm`, and `gpui` Cargo features select surfaces | Rust packaging adaptation |
+| Surface selection | Canvas is built into the browser runtime | GPUI is the only interactive renderer; `gpui-svg` enables on-demand vector export only | GPUI-focused Rust packaging adaptation |
 | Shared card profile | Each demo only has the core/plugin behavior it installs | Port cards preserve source rendering while optionally enabling the wheel/touch, pan, and history profile matured with Resize; the manifest records this explicitly | uPlot.rs catalog/API adaptation |
 
 In automatic wheel mode, traditional line-based wheels keep the official

@@ -1,14 +1,13 @@
-//! uPlot'un küçük ve hızlı çizim modelini Rust'a taşıyan çekirdek.
+//! GPUI için küçük ve hızlı, retained zaman serisi grafik bileşeni.
 //!
-//! Çekirdek; GPUI'den bağımsız veri doğrulama, ölçekleme, etkileşim durumu,
-//! çizim komutları ve SVG çıktısı sağlar. GPUI ve WASM doğrulama uygulamaları
-//! yalnız platform olaylarını çekirdeğe ileten ayrı yüzey adaptörleridir.
+//! [`gpui::GpuiGrafik`] native ve GPUI Web uygulamalarında aynı veri, ölçek,
+//! etkileşim ve retained çizim katmanlarını kullanır. `gpui-svg` feature'ı
+//! grafik yüzeyini yalnız istendiğinde gerçek vektör SVG olarak kaydeder.
 
-#![cfg_attr(feature = "gpui", allow(confusable_idents))]
+#![allow(confusable_idents)]
 
 pub mod cizim;
 mod etkilesim;
-#[cfg(feature = "gpui")]
 pub mod gpui;
 pub mod grafik;
 pub mod hata;
@@ -19,7 +18,7 @@ pub mod veri;
 pub mod yuzey;
 mod zaman;
 
-#[cfg(feature = "svg")]
+#[cfg(feature = "gpui-svg")]
 pub mod svg;
 
 pub use cizim::{
@@ -33,7 +32,7 @@ pub use grafik::{
     İmleçÇözümü,
 };
 pub use hata::UplotHatası;
-#[cfg(feature = "svg")]
+#[cfg(feature = "gpui-svg")]
 pub use kart::svg_image_belgesi;
 pub use kart::{
     ADD_DEL_SERIES_KANIT_TOHUMU, ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_ISINMA_TURU,

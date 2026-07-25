@@ -218,7 +218,7 @@ pub use stream_data::{
     STREAM_DATA_ADIMI, STREAM_DATA_ARALIK_MS, STREAM_DATA_KART_TANIM_ÖRNEĞİ, STREAM_DATA_PENCERESİ,
     StreamDataAkışı, StreamDataGrubu, StreamDataÖrneği, stream_data_kartları, stream_data_kartı,
 };
-#[cfg(feature = "svg")]
+#[cfg(feature = "gpui-svg")]
 pub use svg_image::svg_image_belgesi;
 pub use svg_image::{SVG_IMAGE_KART_TANIM_ÖRNEĞİ, svg_image_kartı};
 pub use sync_cursor::{

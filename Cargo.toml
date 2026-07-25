@@ -36,269 +36,266 @@ unreachable = "deny"
 indexing_slicing = "deny"
 
 [features]
-default = ["svg"]
-svg = []
-wasm = ["svg"]
-gpui = ["dep:gpui"]
-gpui-svg = ["gpui", "svg"]
+default = []
+gpui-svg = []
 
 [dependencies]
 base64 = "0.22"
 flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
-gpui = { version = "0.2.2", path = "../gpui/crates/gpui", optional = true }
+gpui = { version = "0.2.2", path = "../gpui/crates/gpui" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 web-time = "1.1.0"
 
 [[example]]
 name = "resize"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "add_del_series"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "align_data"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "area_fill"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "scale_padding"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "zoom_wheel"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "zoom_touch"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "months"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "no_data"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "path_gap_clip"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "pixel_align"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "points"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "scales_dir_ori"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "scatter"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "scroll-sync"
 path = "examples/scroll_sync.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "sine-stream"
 path = "examples/sine_stream.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "soft-minmax"
 path = "examples/soft_minmax.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "sparklines-bars"
 path = "examples/sparklines_bars.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "sparklines"
 path = "examples/sparklines.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "sparse"
 path = "examples/sparse.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "stacked-series"
 path = "examples/stacked_series.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "stream-data"
 path = "examples/stream_data.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "svg-image"
 path = "examples/svg_image.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "sync-cursor"
 path = "examples/sync_cursor.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "sync-y-zero"
 path = "examples/sync_y_zero.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "thin-bars-stroke-fill"
 path = "examples/thin_bars_stroke_fill.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "time-periods"
 path = "examples/time_periods.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "timeline-discrete"
 path = "examples/timeline_discrete.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "timeseries-discrete"
 path = "examples/timeseries_discrete.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "timezones-dst"
 path = "examples/timezones_dst.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "tooltips-closest"
 path = "examples/tooltips_closest.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "tooltips"
 path = "examples/tooltips.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "trendlines"
 path = "examples/trendlines.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "update-cursor-select-resize"
 path = "examples/update_cursor_select_resize.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "wind-direction"
 path = "examples/wind_direction.rs"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "cursor_snap"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "cursor_bind"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "cursor_tooltip"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "custom_scales"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "data_smoothing"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "draw_hooks"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "focus_cursor"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "gradients"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "grid_over_series"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "high_low_bands"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "latency_heatmap"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "line_paths"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "log_scales"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "missing_data"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "dependent_scale"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "arcsinh_scales"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "axis_control"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "axis_autosize"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "axis_indicators"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "bars_grouped_stacked"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "bars_values_autosize"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "box_whisker"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
 
 [[example]]
 name = "candlestick_ohlc"
-required-features = ["svg"]
+required-features = ["gpui-svg"]
