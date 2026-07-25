@@ -1,7 +1,7 @@
 id = "timeseries-discrete"
 kaynak = "../uPlot/demos/timeseries-discrete.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/timeseries_discrete.rs#timeseries_discrete_kartı"
+fixture = "src/kart/timeseries_discrete.rs#timeseries_discrete_kartları"
 viewport = [1920, 800]
 durum = "iki_yüzey_ortak_x_imleci_birleşik_lejant"
 
@@ -21,7 +21,9 @@ ayrık_y_bölmeleri = [0, 2, 4]
 
 [etkileşim]
 ortak_x_imleci = true
+ortak_x_seçim_ve_zoom = true
 birleşik_lejant = true
+birleşik_lejant_set_series = true
 ortak_davranış_profili = "resize-temeli-v1"
 
 [kanıt]

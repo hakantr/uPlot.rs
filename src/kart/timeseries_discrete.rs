@@ -2,8 +2,7 @@ use super::{ortak_kart_etkileşimleri, veri_uretici::KanıtRastgele};
 use crate::{Aralık, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
 
 pub const TIMESERIES_DISCRETE_KANIT_TOHUMU: u32 = 0x5453_4449;
-pub const TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ: &str = r##"let yüzeyler = TimeseriesDiscreteÖrneği::TÜMÜ
-    .map(timeseries_discrete_kartı);
+pub const TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ: &str = r##"let yüzeyler = timeseries_discrete_kartları()?;
 let mut grup = TimeseriesDiscreteGrubu::yeni();
 // İki yüzey aynı X imlecini paylaşır; birleşik lejant değerleri çekirdektedir.
 grup.imleci_güncelle(0.5);
@@ -83,10 +82,37 @@ impl TimeseriesDiscreteGrubu {
     ) -> Option<(f64, Vec<Option<f64>>)> {
         let oran = self.yatay_oran?;
         let (x, mut değerler) = zaman_serisi.en_yakın_noktalar(oran)?;
-        let (_, ayrık_değerler) = ayrık_seriler.en_yakın_noktalar(oran)?;
+        let ayrık_oran = ayrık_seriler.x_konum_oranı(x)?;
+        let (ayrık_x, ayrık_değerler) = ayrık_seriler.en_yakın_noktalar(ayrık_oran)?;
+        if (ayrık_x - x).abs() > f64::EPSILON {
+            return None;
+        }
         değerler.extend(ayrık_değerler);
         Some((x, değerler))
     }
+
+    /// Kaynak `cursor.sync.key` grubunun mouseup sonrası ortak X ölçeğini
+    /// hedef yüzeye, hedefin Y ölçeğini bozmadan taşır.
+    pub fn x_görünümünü_senkronla(
+        &self,
+        kaynak: &crate::Grafik,
+        hedef: &mut crate::Grafik,
+        geçmişe_ekle: bool,
+    ) -> bool {
+        hedef.görünür_x_aralığını_ayarla(kaynak.görünür_x_aralığı(), geçmişe_ekle)
+    }
+}
+
+/// Resmî sayfadaki üst float ve alt discrete yüzeyi tek ilişkili grup halinde,
+/// kaynak sırasıyla döndürür.
+pub fn timeseries_discrete_kartları()
+-> Result<Vec<(TimeseriesDiscreteÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    TimeseriesDiscreteÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| {
+            timeseries_discrete_kartı(örnek).map(|(seçenekler, veri)| (örnek, seçenekler, veri))
+        })
+        .collect()
 }
 
 pub fn timeseries_discrete_kartı(
@@ -221,6 +247,60 @@ mod testler {
             .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
         assert_eq!(değerler.len(), 4);
         assert!(değerler.iter().all(Option::is_some));
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_grubu_iki_yüzeyi_tek_api_ile_sırayla_döndürür() -> Result<(), UplotHatası> {
+        let kartlar = timeseries_discrete_kartları()?;
+        assert_eq!(kartlar.len(), 2);
+        assert_eq!(
+            kartlar
+                .iter()
+                .map(|(örnek, _, _)| *örnek)
+                .collect::<Vec<_>>(),
+            TimeseriesDiscreteÖrneği::TÜMÜ
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_sync_mouseup_iki_yüzeyin_x_görünümünü_eşler() -> Result<(), UplotHatası> {
+        let mut kartlar = timeseries_discrete_kartları()?
+            .into_iter()
+            .map(|(_, seçenekler, veri)| Grafik::yeni(seçenekler, veri))
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut alt = kartlar
+            .pop()
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        let mut üst = kartlar
+            .pop()
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!(üst.seçim_yakınlaştır(0.2, 0.8)?);
+        let grup = TimeseriesDiscreteGrubu::yeni();
+        assert!(grup.x_görünümünü_senkronla(&üst, &mut alt, true));
+        assert_eq!(üst.görünür_x_aralığı(), alt.görünür_x_aralığı());
+        assert_eq!(alt.görünür_y_aralığı(), Aralık::yeni(0.0, 5.0)?);
+        Ok(())
+    }
+
+    #[test]
+    fn birleşik_lejant_set_series_yalnız_serinin_sahibini_değiştirir() -> Result<(), UplotHatası> {
+        let mut kartlar = timeseries_discrete_kartları()?
+            .into_iter()
+            .map(|(_, seçenekler, veri)| Grafik::yeni(seçenekler, veri))
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut alt = kartlar
+            .pop()
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        let üst = kartlar
+            .pop()
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!(alt.seri_görünürlüğünü_ayarla(1, false)?);
+        assert!(üst.seri_görünür_mü(0));
+        assert!(alt.seri_görünür_mü(0));
+        assert!(!alt.seri_görünür_mü(1));
+        assert!(alt.seri_görünür_mü(2));
         Ok(())
     }
 }

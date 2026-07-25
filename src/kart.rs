@@ -227,7 +227,8 @@ pub use timeline_discrete::{
 };
 pub use timeseries_discrete::{
     TIMESERIES_DISCRETE_KANIT_TOHUMU, TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
-    TimeseriesDiscreteGrubu, TimeseriesDiscreteÖrneği, timeseries_discrete_kartı,
+    TimeseriesDiscreteGrubu, TimeseriesDiscreteÖrneği, timeseries_discrete_kartları,
+    timeseries_discrete_kartı,
 };
 pub use timezones_dst::{
     TIMEZONES_DST_KART_TANIM_ÖRNEĞİ, TimezonesDstÖrneği, timezones_dst_kartı

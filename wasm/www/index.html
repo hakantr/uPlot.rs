@@ -155,10 +155,10 @@
     }
     .sync-cursor-grafik[data-kilitli="true"] { border-color: #dc2626; }
     #chart.timeseries-discrete-yüzeyi { display: block; overflow: auto; padding: 8px; }
-    .timeseries-discrete-yığın { min-width: 680px; display: grid; gap: 8px; }
-    .timeseries-discrete-yığın > section { position: relative; height: 420px; min-width: 0; }
-    .timeseries-discrete-yığın > section:nth-child(2) { height: 190px; }
-    .timeseries-discrete-yığın svg { display: block; width: 100%; height: 100%; }
+    .timeseries-discrete-yığın { width: 1920px; display: grid; gap: 8px; }
+    .timeseries-discrete-yığın > section { position: relative; width: 1920px; height: 600px; }
+    .timeseries-discrete-yığın > section:nth-child(2) { height: 200px; }
+    .timeseries-discrete-yığın svg { display: block; width: 1920px; height: 100%; }
     .timeseries-discrete-yığın .yardım,
     .timeseries-discrete-yığın .lejant { position: static; justify-content: flex-start; }
     #chart.nearest-non-null-yüzeyi { display: block; overflow: auto; padding: 8px; }
@@ -1985,6 +1985,12 @@
       yardım: "İki yüzey ortak X imlecini paylaşır · tekerlek: yakınlaştır · çift tık: tam görünüm",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır.",
+        api: "timeseries_discrete_kartları üst float ve alt stepped yüzeyi birlikte döndürür. TimeseriesDiscreteGrubu ortak X imlecini, X görünümünü ve birleşik lejantı koordine eder; seri görünürlüğü yüzey bazında kalır.",
+        izleme: "CPU/yük gibi sürekli ölçümlerle servis, alarm veya cihaz açık-kapalı durumlarını aynı zaman noktasında okumak için uygundur.",
+        maliyet: "İki ana çizim yüzeyi yalnız veri ya da ölçek değiştiğinde boyanır. Cursor hareketi çizgiler ve tek birleşik lejant üzerinde hafif güncellemedir; veri yolları yeniden kurulmaz.",
+      },
     };
 
     const zamanDilimiYüzeyleri = [];
@@ -2738,6 +2744,7 @@
     let oturum = null;
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
+    let timeseriesDiscreteEtkinİndeks = 0;
     let nearestNonNullOturumları = [];
     let monthsOturumları = [];
     let pathGapClipOturumları = [];
@@ -2912,6 +2919,14 @@
           || !syncCursorOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !syncCursorOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "timeseries-discrete") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !timeseriesDiscreteOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !timeseriesDiscreteOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -3500,28 +3515,56 @@
       kontrolleriGüncelle();
     }
 
-    function timeseriesDiscreteİmleciniGüncelle(oran) {
-      const sınırlı = Math.max(0, Math.min(1, oran));
-      const değerler = timeseriesDiscreteOturumları.flatMap((yüzey, indeks) => {
-        const enYakın = Array.from(yüzey.en_yakin_noktalar(sınırlı));
-        return indeks === 0 ? enYakın : enYakın.slice(1);
+    function timeseriesDiscreteXGörünümünüYay(kaynakİndeksi, geçmişeEkle = true) {
+      const kaynak = timeseriesDiscreteOturumları[kaynakİndeksi];
+      const [enAz, enÇok] = kaynak?.gorunur_x_araligi() ?? [];
+      if (!Number.isFinite(enAz) || !Number.isFinite(enÇok)) return;
+      timeseriesDiscreteOturumları.forEach((yüzey, indeks) => {
+        if (indeks !== kaynakİndeksi) {
+          yüzey.gorunur_x_araligini_ayarla(enAz, enÇok, geçmişeEkle);
+        }
       });
-      const [x, ...seriler] = değerler;
+    }
+
+    function timeseriesDiscreteİmleciniGüncelle(oran) {
+      const üst = timeseriesDiscreteOturumları[0];
+      const alt = timeseriesDiscreteOturumları[1];
+      const sınırlı = Math.max(0, Math.min(1, oran));
+      const üstDeğerler = Array.from(üst?.en_yakin_noktalar(sınırlı) ?? []);
+      const x = üstDeğerler[0];
+      if (!Number.isFinite(x)) return;
+      const altOran = alt?.x_konum_orani(x);
+      const altDeğerler = Number.isFinite(altOran)
+        ? Array.from(alt.en_yakin_noktalar(altOran))
+        : [];
+      const seriler = [
+        üst?.seri_gorunur(0) ? üstDeğerler[1] : Number.NaN,
+        ...[0, 1, 2].map(indeks =>
+          alt?.seri_gorunur(indeks) ? altDeğerler[indeks + 1] : Number.NaN
+        ),
+      ];
       const xHedefi = chart.querySelector("#timeseries-x-değeri");
-      if (xHedefi && Number.isFinite(x)) xHedefi.textContent = x.toFixed(0);
+      if (xHedefi) xHedefi.textContent = x.toFixed(0);
       seriler.forEach((değer, indeks) => {
         const hedef = chart.querySelector(`#timeseries-seri-${indeks}`);
-        if (hedef) hedef.textContent = Number.isFinite(değer) ? Number(değer).toFixed(3) : "--";
+        if (hedef) {
+          hedef.textContent = Number.isFinite(değer)
+            ? Number(değer).toFixed(indeks === 0 ? 3 : 0)
+            : "--";
+        }
       });
       chart.querySelectorAll("[data-timeseries-yüzey]").forEach((kutu, indeks) => {
         const svg = kutu.querySelector("svg");
         const çizgi = svg?.querySelector(".timeseries-imleç");
         if (!svg || !çizgi) return;
         const view = svg.viewBox.baseVal;
-        const alan = timeseriesDiscreteOturumları[indeks]?.cizim_alani(view.width, view.height) ?? [];
+        const alan = timeseriesDiscreteOturumları[indeks]?.cizim_alani(
+          view.width, view.height
+        ) ?? [];
         if (alan.length !== 4) return;
         const [sol, sağ, üst, alt] = alan;
-        const px = sol + sınırlı * (sağ - sol);
+        const yüzeyOranı = timeseriesDiscreteOturumları[indeks].x_konum_orani(x);
+        const px = sol + yüzeyOranı * (sağ - sol);
         çizgi.setAttribute("x1", px); çizgi.setAttribute("x2", px);
         çizgi.setAttribute("y1", üst); çizgi.setAttribute("y2", alt);
         çizgi.setAttribute("visibility", "visible");
@@ -3531,7 +3574,7 @@
     function timeseriesDiscreteÇiz() {
       chart.classList.remove("sync-cursor-yüzeyi");
       chart.classList.add("timeseries-discrete-yüzeyi");
-      const boyutlar = [[1920, 520], [1920, 220]];
+      const boyutlar = [[1920, 600], [1920, 200]];
       chart.innerHTML = `
         <div class="timeseries-discrete-yığın">
           ${timeseriesDiscreteOturumları.map((yüzey, indeks) => {
@@ -3541,48 +3584,201 @@
           <div class="yardım">${kartlar[aktifKart].yardım}</div>
           <div class="lejant"><span>x: <b id="timeseries-x-değeri">--</b></span>
             ${kartlar[aktifKart].seriler.map((seri, indeks) =>
-              `<span><i class="örnek" style="border-color:${seri.renk}"></i>${seri.etiket}: <b id="timeseries-seri-${indeks}">--</b></span>`
+              `<span data-timeseries-seri-toggle="${indeks}" role="button" tabindex="0"
+                title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer">
+                <i class="örnek" style="border-color:${seri.renk}"></i>${seri.etiket}:
+                <b id="timeseries-seri-${indeks}">--</b></span>`
             ).join("")}
           </div>
         </div>`;
+      chart.querySelectorAll("[data-timeseries-seri-toggle]").forEach(öğe => {
+        const birleşikİndeks = Number(öğe.dataset.timeseriesSeriToggle);
+        const yüzeyİndeksi = birleşikİndeks === 0 ? 0 : 1;
+        const seriİndeksi = birleşikİndeks === 0 ? 0 : birleşikİndeks - 1;
+        const yüzey = timeseriesDiscreteOturumları[yüzeyİndeksi];
+        const değiştir = () => {
+          try {
+            if (yüzey?.seri_gorunurlugu_ayarla(
+              seriİndeksi, !yüzey.seri_gorunur(seriİndeksi)
+            )) {
+              timeseriesDiscreteÇiz();
+            }
+          } catch (neden) {
+            hata.textContent = String(neden);
+          }
+        };
+        öğe.style.opacity = yüzey?.seri_gorunur(seriİndeksi) ? "1" : ".4";
+        öğe.addEventListener("click", değiştir);
+        öğe.addEventListener("keydown", olay => {
+          if (olay.key === "Enter" || olay.key === " ") {
+            olay.preventDefault();
+            değiştir();
+          }
+        });
+      });
       chart.querySelectorAll("[data-timeseries-yüzey]").forEach((kutu, indeks) => {
         const svg = kutu.querySelector("svg");
         const yüzey = timeseriesDiscreteOturumları[indeks];
         if (!svg || !yüzey) return;
-        svg.insertAdjacentHTML("beforeend",
-          `<line class="timeseries-imleç" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4" pointer-events="none"/>`
-        );
-        const konumOranı = olay => {
+        svg.insertAdjacentHTML("beforeend", `
+          <g class="timeseries-etkileşim" pointer-events="none">
+            <rect class="timeseries-seçim" visibility="hidden"
+              fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+            <line class="timeseries-imleç" visibility="hidden"
+              stroke="#6b7280" stroke-dasharray="4 4"/>
+          </g>`);
+        const konum = olay => {
           const rect = svg.getBoundingClientRect();
           const view = svg.viewBox.baseVal;
           const alan = yüzey.cizim_alani(view.width, view.height);
-          if (alan.length !== 4 || rect.width <= 0) return null;
+          if (alan.length !== 4 || rect.width <= 0 || rect.height <= 0) return null;
           const x = (olay.clientX - rect.left) / rect.width * view.width;
-          if (x < alan[0] || x > alan[1]) return null;
-          return (x - alan[0]) / (alan[1] - alan[0]);
+          const y = (olay.clientY - rect.top) / rect.height * view.height;
+          if (x < alan[0] || x > alan[1] || y < alan[2] || y > alan[3]) return null;
+          return {
+            x, y, sol: alan[0], sağ: alan[1], üst: alan[2], alt: alan[3],
+            yatay: (x - alan[0]) / (alan[1] - alan[0]),
+            dikey: (y - alan[2]) / (alan[3] - alan[2]),
+          };
         };
+        let seçim = null;
+        let taşıma = null;
+        let kıstırma = null;
+        const dokunmalar = new Map();
         kutu.addEventListener("pointermove", olay => {
           olay.stopPropagation();
-          const oran = konumOranı(olay);
-          if (oran !== null) timeseriesDiscreteİmleciniGüncelle(oran);
+          const konumBilgisi = konum(olay);
+          if (!konumBilgisi) return;
+          if (olay.pointerType === "touch" && dokunmalar.has(olay.pointerId)) {
+            dokunmalar.set(olay.pointerId, { x: olay.clientX, y: olay.clientY });
+            if (kıstırma && dokunmalar.size >= 2) {
+              const [a, b] = [...dokunmalar.values()];
+              const uzaklık = Math.hypot(b.x - a.x, b.y - a.y);
+              const çarpan = kıstırma > 0 ? uzaklık / kıstırma : 1;
+              if (yüzey.dokunma_yakinlastir(
+                konumBilgisi.yatay, konumBilgisi.dikey, çarpan
+              )) {
+                timeseriesDiscreteXGörünümünüYay(indeks, false);
+              }
+              kıstırma = uzaklık;
+            } else if (taşıma) {
+              if (yüzey.tasi(
+                konumBilgisi.yatay - taşıma.yatay,
+                konumBilgisi.dikey - taşıma.dikey
+              )) {
+                timeseriesDiscreteXGörünümünüYay(indeks, false);
+              }
+              taşıma = {
+                yatay: konumBilgisi.yatay,
+                dikey: konumBilgisi.dikey,
+              };
+            }
+            olay.preventDefault();
+            return;
+          }
+          timeseriesDiscreteİmleciniGüncelle(konumBilgisi.yatay);
+          if (seçim) {
+            seçim.son = konumBilgisi.x;
+            const dikdörtgen = svg.querySelector(".timeseries-seçim");
+            dikdörtgen?.setAttribute("x", Math.min(seçim.baş, seçim.son));
+            dikdörtgen?.setAttribute("y", konumBilgisi.üst);
+            dikdörtgen?.setAttribute("width", Math.abs(seçim.son - seçim.baş));
+            dikdörtgen?.setAttribute("height", konumBilgisi.alt - konumBilgisi.üst);
+            dikdörtgen?.setAttribute("visibility", "visible");
+          }
+        });
+        kutu.addEventListener("pointerdown", olay => {
+          olay.stopPropagation();
+          const konumBilgisi = konum(olay);
+          if (!konumBilgisi) return;
+          timeseriesDiscreteEtkinİndeks = indeks;
+          oturum = yüzey;
+          if (olay.pointerType === "touch") {
+            dokunmalar.set(olay.pointerId, { x: olay.clientX, y: olay.clientY });
+            kutu.setPointerCapture(olay.pointerId);
+            if (dokunmalar.size === 1 && yüzey.tasimayi_baslat()) {
+              taşıma = {
+                yatay: konumBilgisi.yatay,
+                dikey: konumBilgisi.dikey,
+              };
+            } else if (dokunmalar.size === 2) {
+              if (taşıma) yüzey.tasimayi_bitir();
+              taşıma = null;
+              const [a, b] = [...dokunmalar.values()];
+              kıstırma = yüzey.dokunmayi_baslat()
+                ? Math.hypot(b.x - a.x, b.y - a.y)
+                : null;
+            }
+            olay.preventDefault();
+          } else if (olay.button === 0 && etkileşimler.seçim) {
+            seçim = { baş: konumBilgisi.x, son: konumBilgisi.x };
+            kutu.setPointerCapture(olay.pointerId);
+          }
+        });
+        const sürüklemeyiBitir = olay => {
+          if (olay.pointerType === "touch") {
+            dokunmalar.delete(olay.pointerId);
+            if (kıstırma) yüzey.dokunmayi_bitir();
+            if (taşıma) yüzey.tasimayi_bitir();
+            kıstırma = null;
+            taşıma = null;
+            if (kutu.hasPointerCapture(olay.pointerId)) {
+              kutu.releasePointerCapture(olay.pointerId);
+            }
+            timeseriesDiscreteÇiz();
+            return;
+          }
+          if (!seçim) return;
+          const çizim = Array.from(yüzey.cizim_alani(1920, boyutlar[indeks][1]));
+          const sol = çizim[0];
+          const sağ = çizim[1];
+          const başlangıç = (Math.min(seçim.baş, seçim.son) - sol) / (sağ - sol);
+          const bitiş = (Math.max(seçim.baş, seçim.son) - sol) / (sağ - sol);
+          const geçerli = Math.abs(seçim.son - seçim.baş) >= 4;
+          seçim = null;
+          if (kutu.hasPointerCapture(olay.pointerId)) {
+            kutu.releasePointerCapture(olay.pointerId);
+          }
+          if (geçerli) {
+            timeseriesDiscreteOturumları.forEach(hedef =>
+              hedef.secim_yakinlastir(başlangıç, bitiş)
+            );
+            timeseriesDiscreteÇiz();
+          } else {
+            svg.querySelector(".timeseries-seçim")?.setAttribute("visibility", "hidden");
+          }
+        };
+        kutu.addEventListener("pointerup", sürüklemeyiBitir);
+        kutu.addEventListener("pointercancel", olay => {
+          if (olay.pointerType === "touch") {
+            sürüklemeyiBitir(olay);
+            return;
+          }
+          seçim = null;
+          svg.querySelector(".timeseries-seçim")?.setAttribute("visibility", "hidden");
+          if (kutu.hasPointerCapture(olay.pointerId)) {
+            kutu.releasePointerCapture(olay.pointerId);
+          }
         });
         kutu.addEventListener("wheel", olay => {
           olay.stopPropagation();
           const delta = tekerlekDeltası(olay);
           if (!etkileşimler.tekerlek || delta === 0) return;
-          const oran = konumOranı(olay);
-          if (oran === null) return;
+          const konumBilgisi = konum(olay);
+          if (!konumBilgisi) return;
           olay.preventDefault();
           try {
+            const eksen = tekerlekEkseni(olay);
             if (yüzey.tekerlek_eksende(
-              oran,
-              0.5,
+              konumBilgisi.yatay,
+              konumBilgisi.dikey,
               -delta,
               olay.deltaMode === 0,
-              tekerlekEkseni(olay),
+              eksen,
             )) {
+              if (eksen !== 2) timeseriesDiscreteXGörünümünüYay(indeks, true);
               timeseriesDiscreteÇiz();
-              timeseriesDiscreteİmleciniGüncelle(oran);
+              timeseriesDiscreteİmleciniGüncelle(konumBilgisi.yatay);
               kontrolleriGüncelle();
             }
           } catch (neden) {
@@ -3591,9 +3787,16 @@
         }, { passive: false });
         kutu.addEventListener("dblclick", olay => {
           olay.stopPropagation();
-          if (yüzey.tam_gorunum()) timeseriesDiscreteÇiz();
+          let değişti = false;
+          timeseriesDiscreteOturumları.forEach(hedef => {
+            değişti = hedef.tam_gorunum() || değişti;
+          });
+          if (değişti) timeseriesDiscreteÇiz();
         });
       });
+      oturum = timeseriesDiscreteOturumları[timeseriesDiscreteEtkinİndeks]
+        ?? timeseriesDiscreteOturumları[0]
+        ?? null;
       kontrolleriGüncelle();
     }
 
@@ -6946,6 +7149,9 @@
           if (yüzey.onceki_gorunum()) syncCursorYüzeyiÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "timeseries-discrete") {
+        timeseriesDiscreteOturumları.forEach(yüzey => yüzey.onceki_gorunum());
+        timeseriesDiscreteÇiz();
       } else if (aktifKart === "nearest-non-null") {
         nearestNonNullOturumları.forEach((yüzey, indeks) => {
           if (yüzey.onceki_gorunum()) nearestNonNullYüzeyiniÇiz(indeks);
@@ -6998,6 +7204,9 @@
           if (yüzey.tam_gorunum()) syncCursorYüzeyiÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "timeseries-discrete") {
+        timeseriesDiscreteOturumları.forEach(yüzey => yüzey.tam_gorunum());
+        timeseriesDiscreteÇiz();
       } else if (aktifKart === "nearest-non-null") {
         nearestNonNullOturumları.forEach((yüzey, indeks) => {
           if (yüzey.tam_gorunum()) nearestNonNullYüzeyiniÇiz(indeks);
@@ -7443,6 +7652,7 @@
           return;
         }
         if (kimlik === "timeseries-discrete") {
+          timeseriesDiscreteEtkinİndeks = 0;
           timeseriesDiscreteOturumları = [
             "timeseries-discrete-floats",
             "timeseries-discrete-devices",

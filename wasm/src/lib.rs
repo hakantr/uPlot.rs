@@ -2904,7 +2904,11 @@ mod testler {
             };
             assert_eq!(oturum.en_yakin_noktalar(0.5).len(), beklenen);
         }
-        assert!(timeseries_discrete_kart_tanim_ornegi().contains("TimeseriesDiscreteÖrneği"));
+        assert!(timeseries_discrete_kart_tanim_ornegi().contains("timeseries_discrete_kartları"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains(r#"data-timeseries-seri-toggle="#));
+        assert!(web.contains("timeseriesDiscreteXGörünümünüYay"));
+        assert!(web.contains("const boyutlar = [[1920, 600], [1920, 200]]"));
         assert_eq!(kart_sayisi(), 365);
     }
 

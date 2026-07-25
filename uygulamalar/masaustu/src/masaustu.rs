@@ -64,9 +64,9 @@ use uplot_rs::{
     svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı,
     thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı, time_periods_kartları,
     time_periods_kartı, timeline_discrete_kartları, timeline_discrete_kartı,
-    timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
-    trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
-    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
+    timeseries_discrete_kartları, timeseries_discrete_kartı, timezones_dst_kartı,
+    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
+    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -562,6 +562,7 @@ pub struct ChartListesi {
     sync_cursor_grubu: SyncCursorGrubu,
     sync_cursor_senkronlanıyor: bool,
     timeseries_discrete_grafikleri: Vec<(TimeseriesDiscreteÖrneği, Entity<GpuiGrafik>)>,
+    timeseries_discrete_senkronlanıyor: bool,
     nearest_non_null_grafikleri: Vec<(NearestNonNullÖrneği, Entity<GpuiGrafik>)>,
     months_grafikleri: Vec<Entity<GpuiGrafik>>,
     path_gap_clip_grafikleri: Vec<(PathGapClipÖrneği, Entity<GpuiGrafik>)>,
@@ -766,6 +767,7 @@ impl ChartListesi {
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
             sync_cursor_senkronlanıyor: false,
             timeseries_discrete_grafikleri: Vec::new(),
+            timeseries_discrete_senkronlanıyor: false,
             nearest_non_null_grafikleri: Vec::new(),
             months_grafikleri: Vec::new(),
             path_gap_clip_grafikleri: Vec::new(),
@@ -780,12 +782,22 @@ impl ChartListesi {
     }
 
     fn timeseries_discrete_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
-        let mut yüzeyler = Vec::with_capacity(TimeseriesDiscreteÖrneği::TÜMÜ.len());
+        let kartlar = match timeseries_discrete_kartları() {
+            Ok(kartlar) => kartlar,
+            Err(hata) => {
+                self.hata = Some(format!(
+                    "TimeSeries + Discrete grubu oluşturulamadı: {hata}"
+                ));
+                self.grafik = None;
+                self.timeseries_discrete_grafikleri.clear();
+                cx.notify();
+                return;
+            }
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
         let mut hata = None;
-        for örnek in TimeseriesDiscreteÖrneği::TÜMÜ {
-            let sonuç = timeseries_discrete_kartı(örnek)
-                .and_then(|(seçenekler, veri)| Grafik::yeni(seçenekler, veri));
-            let mut grafik = match sonuç {
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
                 Ok(grafik) => grafik,
                 Err(oluşturma_hatası) => {
                     hata = Some(format!(
@@ -822,9 +834,29 @@ impl ChartListesi {
                             }
                         }
                     }
-                    GpuiGrafikOlayı::FareBırakıldı
-                    | GpuiGrafikOlayı::DurumDeğişti
-                    | GpuiGrafikOlayı::GörünümDeğişti { .. } => {}
+                    GpuiGrafikOlayı::FareBırakıldı | GpuiGrafikOlayı::DurumDeğişti => {}
+                    GpuiGrafikOlayı::GörünümDeğişti { .. } => {
+                        if bu.timeseries_discrete_senkronlanıyor {
+                            return;
+                        }
+                        let x = bu
+                            .timeseries_discrete_grafikleri
+                            .iter()
+                            .find(|(kimlik, _)| *kimlik == örnek)
+                            .map(|(_, grafik)| grafik.read(cx).grafik().görünür_x_aralığı());
+                        if let Some(x) = x {
+                            bu.timeseries_discrete_senkronlanıyor = true;
+                            for (hedef, hedef_grafik) in bu.timeseries_discrete_grafikleri.clone() {
+                                if hedef == örnek {
+                                    continue;
+                                }
+                                hedef_grafik.update(cx, |grafik, cx| {
+                                    grafik.görünür_x_aralığını_ayarla(x, true, cx);
+                                });
+                            }
+                            bu.timeseries_discrete_senkronlanıyor = false;
+                        }
+                    }
                 }
                 cx.notify();
             })
@@ -839,6 +871,36 @@ impl ChartListesi {
             self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
             self.timeseries_discrete_grafikleri = yüzeyler;
             self.hata = None;
+        }
+        cx.notify();
+    }
+
+    fn timeseries_discrete_serisini_değiştir(
+        &mut self,
+        birleşik_indeks: usize,
+        cx: &mut Context<Self>,
+    ) {
+        let (örnek, seri_indeksi) = if birleşik_indeks == 0 {
+            (TimeseriesDiscreteÖrneği::ZamanSerisi, 0)
+        } else {
+            (TimeseriesDiscreteÖrneği::AyrıkDurumlar, birleşik_indeks - 1)
+        };
+        let Some((_, yüzey)) = self
+            .timeseries_discrete_grafikleri
+            .iter()
+            .find(|(kimlik, _)| *kimlik == örnek)
+            .cloned()
+        else {
+            return;
+        };
+        let görünür = yüzey.read(cx).grafik().seri_görünür_mü(seri_indeksi);
+        match yüzey.update(cx, |grafik, cx| {
+            grafik.seri_görünürlüğünü_ayarla(seri_indeksi, !görünür, cx)
+        }) {
+            Ok(_) => self.hata = None,
+            Err(hata) => {
+                self.hata = Some(format!("Birleşik lejant serisi değiştirilemedi: {hata}"));
+            }
         }
         cx.notify();
     }
@@ -3209,10 +3271,16 @@ impl Render for ChartListesi {
             let mut değerler = Vec::new();
             let mut lejant_var = false;
             for (_, grafik) in &self.timeseries_discrete_grafikleri {
-                if let Some((x, yüzey_değerleri)) = grafik.read(cx).lejant_değerleri() {
+                let grafik = grafik.read(cx);
+                if let Some((x, yüzey_değerleri)) = grafik.lejant_değerleri() {
                     lejant_var = true;
                     ortak_x = ortak_x.or(x);
-                    değerler.extend(yüzey_değerleri);
+                    değerler.extend(
+                        yüzey_değerleri
+                            .into_iter()
+                            .zip(grafik.grafik().seri_seçenekleri())
+                            .filter_map(|(değer, seri)| seri.göster.then_some(değer)),
+                    );
                 }
             }
             lejant_var.then_some((ortak_x, değerler))
@@ -3236,8 +3304,15 @@ impl Render for ChartListesi {
                         değer.map_or_else(
                             || format!("□ {ad}: --"),
                             |y| {
+                                let değer = if aktif_kart == KartKimliği::TimeseriesDiscrete
+                                    && ad.starts_with("DEV")
+                                {
+                                    format!("{y:.0}")
+                                } else {
+                                    format!("{y:.3}")
+                                };
                                 format!(
-                                    "□ {ad}: {y:.3}{}",
+                                    "□ {ad}: {değer}{}",
                                     if x.is_none() { " (last)" } else { "" }
                                 )
                             },
@@ -4867,23 +4942,69 @@ impl Render for ChartListesi {
                 .iter()
                 .find(|(örnek, _)| *örnek == TimeseriesDiscreteÖrneği::AyrıkDurumlar)
                 .map(|(_, grafik)| grafik.clone());
+            let birleşik_görünürlük = [
+                (TimeseriesDiscreteÖrneği::ZamanSerisi, 0),
+                (TimeseriesDiscreteÖrneği::AyrıkDurumlar, 0),
+                (TimeseriesDiscreteÖrneği::AyrıkDurumlar, 1),
+                (TimeseriesDiscreteÖrneği::AyrıkDurumlar, 2),
+            ]
+            .map(|(örnek, seri)| {
+                self.timeseries_discrete_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .is_some_and(|(_, grafik)| grafik.read(cx).grafik().seri_görünür_mü(seri))
+            });
             çizim_tabanı
                 .flex_none()
-                .h(px(720.0))
-                .overflow_y_scroll()
+                .h(px(760.0))
+                .overflow_scroll()
                 .p_2()
                 .child(
                     div()
-                        .w_full()
-                        .h(px(500.0))
+                        .w(px(1920.0))
+                        .h(px(600.0))
                         .when_some(üst, |öğe, grafik| öğe.child(grafik)),
                 )
                 .child(
                     div()
                         .mt_2()
-                        .w_full()
-                        .h(px(180.0))
+                        .w(px(1920.0))
+                        .h(px(200.0))
                         .when_some(alt, |öğe, grafik| öğe.child(grafik)),
+                )
+                .child(
+                    div().mt_2().flex().gap_2().children(
+                        ["Value", "DEV1", "DEV2", "DEV3"]
+                            .into_iter()
+                            .enumerate()
+                            .map(|(indeks, etiket)| {
+                                let görünür =
+                                    birleşik_görünürlük.get(indeks).copied().unwrap_or(false);
+                                div()
+                                    .id(SharedString::from(format!(
+                                        "timeseries-discrete-toggle-{indeks}"
+                                    )))
+                                    .px_2()
+                                    .py_1()
+                                    .rounded_sm()
+                                    .cursor_pointer()
+                                    .text_xs()
+                                    .bg(if görünür {
+                                        rgb(0xe2e8f0)
+                                    } else {
+                                        rgb(0xf8fafc)
+                                    })
+                                    .text_color(if görünür {
+                                        rgb(0x111827)
+                                    } else {
+                                        rgb(0x94a3b8)
+                                    })
+                                    .child(etiket)
+                                    .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
+                                        bu.timeseries_discrete_serisini_değiştir(indeks, cx);
+                                    }))
+                            }),
+                    ),
                 )
         } else if aktif_kart == KartKimliği::NearestNonNull {
             let yüzey = |örnek| {
@@ -5951,6 +6072,17 @@ impl Render for ChartListesi {
                 }))
             }));
         let kullanım_rehberi = match aktif_kart {
+            KartKimliği::TimeseriesDiscrete => Some(
+                "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
+                 iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
+                 timeseries_discrete_kartları üst float ve alt stepped yüzeyi birlikte döndürür; \
+                 TimeseriesDiscreteGrubu ortak X imlecini, seçim/zoom görünümünü ve birleşik \
+                 lejantı koordine eder, setSeries yalnız sahibi olan yüzeyi değiştirir. İzleme: \
+                 CPU/yük gibi sürekli ölçümlerle servis, alarm veya cihaz açık-kapalı durumlarını \
+                 aynı zaman noktasında okumak için uygundur. Maliyet: iki ana yüzey yalnız veri \
+                 ya da ölçek değiştiğinde boyanır; cursor çizgileri ve birleşik lejant hafif \
+                 katmanda güncellenir, veri yolları pointer hareketinde yeniden kurulmaz.",
+            ),
             KartKimliği::ScalePadding => Some(
                 "Amaç: farklı büyüklüklerdeki düz eşik ve taban çizgilerini tek Y ölçeğinde \
                  uçlara değmeden gösterir; kaynak rangeNum hesabı %10 payı dışa doğru uygun \
