@@ -114,8 +114,14 @@ fn line_paths_seçenekleri(örnek: LinePathsÖrneği) -> Result<GrafikSeçenekle
     let renk = örnek.renk();
     let mut seri = SeriSeçenekleri::yeni("Y")
         .renk(renk)
-        .dolgu(format!("{renk}1A"))
-        .imleç_nokta_stili(15.0, 3.75, "#ffffff", format!("{renk}90"));
+        .dolgu(format!("{renk}1A"));
+    let imleç_nokta_boyutu = seri.nokta_boyutu * 2.5;
+    seri = seri.imleç_nokta_stili(
+        imleç_nokta_boyutu,
+        imleç_nokta_boyutu / 4.0,
+        "#ffffff",
+        format!("{renk}90"),
+    );
     seri = match örnek {
         LinePathsÖrneği::YalnızNoktalar => seri.yalnız_noktalar(),
         LinePathsÖrneği::Doğrusal => seri,
@@ -270,8 +276,8 @@ mod testler {
             let Some(seri) = seçenekler.seriler.first() else {
                 return Err(UplotHatası::YetersizVeri { uzunluk: 0 });
             };
-            assert_eq!(seri.imleç_nokta_boyutu, Some(15.0));
-            assert_eq!(seri.imleç_nokta_kalınlığı, Some(3.75));
+            assert_eq!(seri.imleç_nokta_boyutu, Some(12.5));
+            assert_eq!(seri.imleç_nokta_kalınlığı, Some(3.125));
             assert_eq!(seri.imleç_nokta_dolgusu.as_deref(), Some("#ffffff"));
             assert_eq!(
                 seri.imleç_nokta_çizgisi.as_deref(),
