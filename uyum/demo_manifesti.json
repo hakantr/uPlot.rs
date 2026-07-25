@@ -391,8 +391,7 @@
       "fixture": "src/kart/months.rs#months_kartları",
       "alt_fixtureler": [
         "src/kart/months.rs#months_artık_yılsız_kartı",
-        "src/kart/months.rs#months_artık_yıllı_kartı",
-        "src/kart/months.rs#months_rusça_kartı"
+        "src/kart/months.rs#months_artık_yıllı_kartı"
       ],
       "örnek": "examples/months.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
@@ -428,13 +427,12 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "two-source-subcharts",
-        "single-family-card-three-independent-surfaces",
+        "one-card-two-source-page-surfaces",
         "utc-month-timestamps",
         "leap-year-calendar",
         "source-dynamic-28-day-axis-space",
         "calendar-aligned-month-splits",
         "source-random-domain-with-fixed-proof-seed",
-        "localized-russian-variant",
         "responsive-width",
         "common-interaction-profile"
       ],
@@ -2043,8 +2041,9 @@
         "calendar-aligned-month-splits", "source-russian-long-month-names",
         "source-russian-short-month-names", "source-russian-long-weekday-names",
         "source-russian-short-weekday-names", "localized-axis-labels",
-        "single-family-card-with-months", "gpui-wasm-catalog-parity", "common-interaction-profile",
-        "panic-free-calendar-conversion"
+        "single-source-surface-card", "source-auto-y-range",
+        "source-1920x600-surface", "gpui-wasm-catalog-parity",
+        "common-interaction-profile", "panic-free-calendar-conversion"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
     },

@@ -17,13 +17,13 @@ use uplot_rs::{
     LINE_PATHS_KART_TANIM_ÖRNEĞİ, LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ,
     LatencyHeatmapÖrneği, LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği,
     MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
-    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, MULTI_BARS_KART_TANIM_ÖRNEĞİ,
-    MultiBarsÖrneği, NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ,
-    NO_DATA_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
-    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignAkışı,
-    PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
-    SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, MONTHS_RU_KART_TANIM_ÖRNEĞİ,
+    MULTI_BARS_KART_TANIM_ÖRNEĞİ, MultiBarsÖrneği, NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ,
+    NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, NoDataÖrneği,
+    PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ,
+    PathGapClipÖrneği, PixelAlignAkışı, PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ,
+    SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
     STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_KART_TANIM_ÖRNEĞİ, SVG_IMAGE_KART_TANIM_ÖRNEĞİ,
     SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği,
@@ -120,7 +120,7 @@ impl KartOturumu {
             "months" => months_artık_yılsız_kartı(),
             "months-no-leap" => months_artık_yılsız_kartı(),
             "months-leap" => months_artık_yıllı_kartı(),
-            "months-russian" => months_rusça_kartı(),
+            "months-ru" | "months-russian" => months_rusça_kartı(),
             "nice-scale" => nice_scale_kartı(),
             "no-data" => no_data_kartı(NoDataÖrneği::BOŞ_ÖZEL_ARALIK),
             "path-gap-clip" => path_gap_clip_kartı(PathGapClipÖrneği::VeriDışınaTaşanÖlçek),
@@ -2054,6 +2054,11 @@ pub fn months_kart_tanim_ornegi() -> String {
 }
 
 #[wasm_bindgen]
+pub fn months_ru_kart_tanim_ornegi() -> String {
+    MONTHS_RU_KART_TANIM_ÖRNEĞİ.to_string()
+}
+
+#[wasm_bindgen]
 pub fn nice_scale_kart_tanim_ornegi() -> String {
     NICE_SCALE_KART_TANIM_ÖRNEĞİ.to_string()
 }
@@ -3579,7 +3584,7 @@ mod testler {
 
     #[test]
     fn months_wasm_kaynak_grafiklerini_üretir() {
-        for kimlik in ["months", "months-no-leap", "months-leap", "months-russian"] {
+        for kimlik in ["months", "months-no-leap", "months-leap"] {
             let oturum = KartOturumu::yeni(kimlik, 100);
             assert!(oturum.is_ok());
             let Ok(oturum) = oturum else {
@@ -3589,11 +3594,16 @@ mod testler {
             assert!(svg.contains("20"));
             assert!(svg.contains("<path"));
         }
-        let rusça = KartOturumu::yeni("months-russian", 100);
+        let rusça = KartOturumu::yeni("months-ru", 100);
         let Ok(rusça) = rusça else {
             return;
         };
         assert!(rusça.svg(960, 600).contains("Янв"));
+        assert!(months_ru_kart_tanim_ornegi().contains("months_rusça_kartı"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(web.matches("data-kart=\"months-ru\"").count(), 1);
+        assert_eq!(web.matches("data-kart=\"months\"").count(), 1);
+        assert!(!web.contains("data-kart=\"months-russian\""));
     }
 
     #[test]

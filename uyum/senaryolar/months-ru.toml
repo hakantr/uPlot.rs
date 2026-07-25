@@ -6,8 +6,8 @@ device_pixel_ratio = 1
 durum = "yerellestirilmis_etkilesimli"
 
 [katalog]
-kart_kimliği = "months"
-ilişkili_yüzey_sayısı = 3
+kart_kimliği = "months-ru"
+ilişkili_yüzey_sayısı = 1
 bu_kaynağın_yüzey_sayısı = 1
 bağımsız_görünüm = true
 
@@ -18,7 +18,7 @@ ilk_değer = 5.0
 değer_havuzu = "0..=10"
 kanıt_rastgele_üreteci = "mulberry32"
 kanıt_tohumu = 1381322063
-y_aralığı = [0.0, 11.0]
+y_aralığı = "otomatik"
 
 [zaman]
 saat_dilimi = "Etc/UTC"

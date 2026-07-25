@@ -1,24 +1,24 @@
 use super::ortak_kart_etkileşimleri;
 use super::veri_uretici::KanıtRastgele;
-use crate::{
-    Aralık, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, TarihAdları, UplotHatası
-};
+use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, TarihAdları, UplotHatası};
 
 pub const MONTHS_KANIT_TOHUMU: u32 = 0x4D4F_4E54;
 pub const MONTHS_RU_KANIT_TOHUMU: u32 = 0x5255_4D4F;
 
 pub const MONTHS_KART_TANIM_ÖRNEĞİ: &str = r##"let artık_yılsız = months_artık_yılsız_kartı()?;
 let artık_yıllı = months_artık_yıllı_kartı()?;
-let rusça = months_rusça_kartı()?;
-// Üç ilişkili yüzey aynı katalog sayfasında karşılaştırılır. İlk iki
-// yüzey months.html içindeki 28 günlük axes.space kuralını, üçüncü
-// yüzey months-ru.html içindeki yerelleştirilmiş fmtDate adlarını korur."##;
+// Aynı months.html sayfasındaki iki bağımsız yüzey, 28 günlük
+// axes.space kuralının normal ve artık yıldaki sonucunu karşılaştırır."##;
+
+pub const MONTHS_RU_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = months_rusça_kartı()?;
+// Tek months-ru.html yüzeyi; UTC ay başlangıçları ve ruNames formatter
+// sözlüğü aynı Grafik tanımında taşınır.
+let grafik = Grafik::yeni(seçenekler, veri)?;"##;
 
 pub fn months_kartları() -> Result<Vec<(GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
     Ok(vec![
         months_artık_yılsız_kartı()?,
         months_artık_yıllı_kartı()?,
-        months_rusça_kartı()?,
     ])
 }
 
@@ -91,7 +91,6 @@ fn months_kartı(
     let mut seçenekler = GrafikSeçenekleri::yeni(1920, yükseklik)?
         .başlık(başlık)
         .x_tarih_adları(tarih_adları)
-        .y_aralığı(Aralık::yeni(0.0, 11.0)?)
         .etkileşimler(ortak_kart_etkileşimleri())
         .seri(SeriSeçenekleri::yeni("Value").renk("#ff0000"));
     if kaynak_aylık_bölmeleri {
@@ -162,15 +161,15 @@ mod testler {
     }
 
     #[test]
-    fn kaynak_ailesi_tek_grupta_üç_yüzey_üretir() -> Result<(), UplotHatası> {
+    fn months_kaynağı_tek_grupta_iki_yüzey_üretir() -> Result<(), UplotHatası> {
         let kartlar = months_kartları()?;
-        assert_eq!(kartlar.len(), 3);
+        assert_eq!(kartlar.len(), 2);
         assert_eq!(
             kartlar
                 .iter()
                 .map(|(seçenekler, _)| seçenekler.başlık.as_str())
                 .collect::<Vec<_>>(),
-            ["No leap year", "2024 leap year", "Months"]
+            ["No leap year", "2024 leap year"]
         );
 
         let Some((seçenekler, veri)) = kartlar.first() else {
@@ -202,6 +201,13 @@ mod testler {
         let (seçenekler, veri) = months_rusça_kartı()?;
         assert_eq!(seçenekler.başlık, "Months");
         assert_eq!(seçenekler.yükseklik, 600);
+        assert!(
+            seçenekler
+                .y_ölçekleri
+                .first()
+                .and_then(|ölçek| ölçek.aralık)
+                .is_none()
+        );
         assert_eq!(
             seçenekler
                 .x_tarih_adları
@@ -235,6 +241,18 @@ mod testler {
             Some("Сбт")
         );
         assert_eq!(veri.uzunluk(), 36);
+        for (indeks, zaman) in veri.x().iter().copied().enumerate() {
+            let yıl = 2017 + i64::try_from(indeks / 12).unwrap_or_default();
+            let ay = u32::try_from(indeks % 12 + 1).unwrap_or_default();
+            assert_eq!(
+                crate::zaman::utc_alanları(zaman),
+                Some((yıl, ay, 1, 0, 0, 0))
+            );
+        }
+        assert!(veri.seriler().first().is_some_and(|seri| {
+            seri.iter()
+                .all(|değer| değer.is_some_and(|değer| (0.0..=10.0).contains(&değer)))
+        }));
         assert_eq!(
             veri.seriler()
                 .first()

@@ -26,7 +26,7 @@ use uplot_rs::{
     LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
     LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ,
     MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ,
-    MULTI_BARS_KART_TANIM_ÖRNEĞİ, MissingDataÖrneği, MultiBarsÖrneği,
+    MONTHS_RU_KART_TANIM_ÖRNEĞİ, MULTI_BARS_KART_TANIM_ÖRNEĞİ, MissingDataÖrneği, MultiBarsÖrneği,
     NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
     NearestNonNullÖrneği, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
     PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignAkışı,
@@ -59,15 +59,15 @@ use uplot_rs::{
     latency_heatmap_kartları, latency_heatmap_kartı, line_paths_kartları, line_paths_kartı,
     log_scales_kartları, log_scales_kartı, log_scales2_kartları, log_scales2_kartı,
     mass_spectrum_kartı, measure_datums_kartı, missing_data_kartları, missing_data_null_kartı,
-    months_artık_yılsız_kartı, months_kartları, multi_bars_kartı, nearest_non_null_kartı,
-    nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartları,
-    path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı, points_kartları, points_kartı,
-    resize_kartı, scale_padding_kartı, scales_dir_ori_kartları, scales_dir_ori_kartı,
-    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı,
-    sparklines_bars_kartları, sparklines_bars_kartı, sparklines_kartları, sparklines_kartı,
-    sparse_kartları, sparse_kartı, stacked_series_kartları, stacked_series_kartı,
-    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
-    sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
+    months_artık_yılsız_kartı, months_kartları, months_rusça_kartı, multi_bars_kartı,
+    nearest_non_null_kartı, nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri,
+    path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı,
+    points_kartları, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartları,
+    scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
+    soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları, sparklines_bars_kartı,
+    sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı, stacked_series_kartları,
+    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
+    sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
     thin_bars_stroke_fill_kartı, time_periods_kartları, time_periods_kartı,
     timeline_discrete_kartları, timeline_discrete_kartı, timeseries_discrete_kartları,
     timeseries_discrete_kartı, timezones_dst_kartları, timezones_dst_kartı, tooltips_closest_kartı,
@@ -84,6 +84,7 @@ enum KartKimliği {
     AreaFill,
     ScalePadding,
     Months,
+    MonthsRussian,
     NiceScale,
     NoData,
     PathGapClip,
@@ -153,7 +154,8 @@ impl KartKimliği {
             Self::Annotations => "Annotations",
             Self::AreaFill => "Area Fill",
             Self::ScalePadding => "Scale Padding · Flat",
-            Self::Months => "Months · takvim ve yerelleştirme",
+            Self::Months => "Months · calendar ticks",
+            Self::MonthsRussian => "Months · Russian locale",
             Self::NiceScale => "Nice Scale & Ticks",
             Self::NoData => "No Data · 33 seçenek",
             Self::PathGapClip => "Path & Gap Clipping · 15 yüzey",
@@ -232,7 +234,10 @@ impl KartKimliği {
                 "scale-padding.html · 13 düz seri · kaynakla aynı değer düzeyleri"
             }
             Self::Months => {
-                "months.html + months-ru.html · 3 ilişkili yüzey · UTC ayları, artık yıl, Rusça fmtDate · sabit kanıt tohumu"
+                "months.html · 2 kaynak yüzeyi · UTC ayları ve artık yıl · sabit kanıt tohumu"
+            }
+            Self::MonthsRussian => {
+                "months-ru.html · tek 1920×600 yüzey · UTC ayları ve Rusça fmtDate"
             }
             Self::NiceScale => {
                 "nice-scale.html · pencere/panel boyutuna bağlı niceScale/niceNum Y aralığı ve artımı"
@@ -378,6 +383,7 @@ impl KartKimliği {
             Self::AreaFill => AREA_FILL_KART_TANIM_ÖRNEĞİ,
             Self::ScalePadding => SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
             Self::Months => MONTHS_KART_TANIM_ÖRNEĞİ,
+            Self::MonthsRussian => MONTHS_RU_KART_TANIM_ÖRNEĞİ,
             Self::NiceScale => NICE_SCALE_KART_TANIM_ÖRNEĞİ,
             Self::NoData => NO_DATA_KART_TANIM_ÖRNEĞİ,
             Self::PathGapClip => PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
@@ -448,6 +454,7 @@ impl KartKimliği {
             Self::AreaFill => "src/kart/area_fill.rs",
             Self::ScalePadding => "src/kart/scale_padding.rs",
             Self::Months => "src/kart/months.rs",
+            Self::MonthsRussian => "src/kart/months.rs",
             Self::NiceScale => "src/kart/nice_scale.rs",
             Self::NoData => "src/kart/no_data.rs",
             Self::PathGapClip => "src/kart/path_gap_clip.rs",
@@ -3945,6 +3952,7 @@ fn grafik_oluştur(
         KartKimliği::AreaFill => area_fill_kartı(),
         KartKimliği::ScalePadding => scale_padding_kartı(),
         KartKimliği::Months => months_artık_yılsız_kartı(),
+        KartKimliği::MonthsRussian => months_rusça_kartı(),
         KartKimliği::NiceScale => nice_scale_kartı(),
         KartKimliği::NoData => no_data_kartı(no_data_örneği),
         KartKimliği::PathGapClip => path_gap_clip_kartı(PathGapClipÖrneği::VeriDışınaTaşanÖlçek),
@@ -4090,7 +4098,10 @@ impl Render for ChartListesi {
             KartKimliği::AreaFill => "30 sabit nokta × 3 seri".to_string(),
             KartKimliği::ScalePadding => "10 nokta × 13 düz seri".to_string(),
             KartKimliği::Months => {
-                "3 ilişkili yüzey · 108 aylık nokta · UTC/artık yıl/yerel adlar".to_string()
+                "2 kaynak yüzeyi · 72 aylık nokta · UTC ve artık yıl".to_string()
+            }
+            KartKimliği::MonthsRussian => {
+                "tek 1920×600 yüzey · 36 UTC ayı · Rusça yerel adlar".to_string()
             }
             KartKimliği::NiceScale => {
                 "6 nokta × 3 seri · boyuta duyarlı güzel Y ölçeği".to_string()
@@ -5202,12 +5213,26 @@ impl Render for ChartListesi {
                     "Months · calendar ticks",
                     "months",
                     aktif_kart == KartKimliği::Months,
-                    "3 ilişkili yüzey · normal/artık yıl + Rusça",
+                    "2 kaynak yüzeyi · normal ve artık yıl",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::Months, cx);
+                })),
+            )
+            .child(
+                katalog_kartı(
+                    "kart-months-ru",
+                    "Months · Russian locale",
+                    "months-ru",
+                    aktif_kart == KartKimliği::MonthsRussian,
+                    "tek 1920×600 yüzey · UTC ayları + ruNames",
+                    panel,
+                    vurgu,
+                )
+                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                    bu.kartı_seç(KartKimliği::MonthsRussian, cx);
                 })),
             )
             .child(
@@ -7081,7 +7106,7 @@ impl Render for ChartListesi {
             let yüzey = |indeks: usize| self.months_grafikleri.get(indeks).cloned();
             çizim_tabanı
                 .flex_none()
-                .h(px(1160.0))
+                .h(px(620.0))
                 .overflow_y_scroll()
                 .p_2()
                 .child(
@@ -7092,8 +7117,7 @@ impl Render for ChartListesi {
                         .text_xs()
                         .text_color(soluk)
                         .child("İlk iki yüzey aynı months.html sayfasının bağımsız normal/artık yıl karşılaştırmasıdır; yakınlaştırmaları birbirine bağlı değildir. ")
-                        .child("Her X UTC'de ayın ilk günüdür. Kaynak 28 günlük piksel-space kuralı gerçek takvim ayı bölmelerini korur; 2024 Şubat 29 gündür. ")
-                        .child("Üçüncü yüzey months-ru.html fmtDate adlarını gösterir; yerelleştirme timestamp'i değiştirmez."),
+                        .child("Her X UTC'de ayın ilk günüdür. Kaynak 28 günlük piksel-space kuralı gerçek takvim ayı bölmelerini korur; 2024 Şubat 29 gündür."),
                 )
                 .children(
                     [
@@ -7108,12 +7132,6 @@ impl Render for ChartListesi {
                             "2024–2026 · artık yıl var",
                             "Şubat 2024 → Mart 2024 aralığı 29 gün; yüzey bağımsızdır.",
                             200.0,
-                        ),
-                        (
-                            2,
-                            "2017–2019 · Rusça tarih adları",
-                            "Aynı UTC takvimi, ruNames ile yerelleştirilmiş ay/hafta adları.",
-                            600.0,
                         ),
                     ]
                     .into_iter()
@@ -8658,12 +8676,20 @@ impl Render for ChartListesi {
                  O(log N + S); cursor ve lejant ana yolları yeniden üretmeden güncellenir.",
             ),
             KartKimliği::Months => Some(
-                "Amaç: gerçek UTC ay sınırlarını normal ve artık yıllarda karşılaştırır; Rusça \
-                 yüzey yalnız sunum adlarını değiştirir. API: x tarih ölçeği, TarihAdları ve \
-                 kaynak 28 günlük axes.space karşılığı takvim-ay bölmelerini belirler. İzleme: \
+                "Amaç: gerçek UTC ay sınırlarını normal ve artık yıllarda karşılaştırır. API: \
+                 x tarih ölçeği ve kaynak 28 günlük axes.space karşılığı takvim-ay bölmelerini \
+                 belirler. İzleme: \
                  aylık faturalama, SLO ve kapasite raporlarında sabit 30 gün yerine gerçek ay \
-                 sınırlarını kullanın. Maliyet: üç bağımsız yüzeyde toplam 108 nokta; çizim \
+                 sınırlarını kullanın. Maliyet: iki bağımsız yüzeyde toplam 72 nokta; çizim \
                  O(N+T), imleç O(log N). Resize bölmeleri yeniden hesaplar, veriyi üretmez.",
+            ),
+            KartKimliği::MonthsRussian => Some(
+                "Amaç: 36 UTC ay başlangıcını veri saat dilimini değiştirmeden Rusça eksen \
+                 adlarıyla sunar. API: months_rusça_kartı tek 1920×600 Grafik tanımını ve \
+                 TarihAdları::rusça formatter sözlüğünü döndürür; Y aralığı gelen değerlerden \
+                 otomatik türetilir. İzleme: aylık telemetri ve kapasite panellerinde depolama \
+                 zamanını UTC tutup locale'i yalnız sunum katmanında uygulayın. Maliyet: tek \
+                 yüzey 36 nokta taşır; çizim O(N+T), imleç O(log N).",
             ),
             KartKimliği::NiceScale => Some(
                 "Amaç: panel yüksekliğine sığan okunabilir Y bölmelerini ve bu bölmelere tam \

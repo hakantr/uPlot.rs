@@ -8,7 +8,7 @@ durum = "iki_alt_grafikli_etkileşimli"
 
 [katalog]
 kart_kimliği = "months"
-ilişkili_yüzey_sayısı = 3
+ilişkili_yüzey_sayısı = 2
 bu_kaynağın_yüzey_sayısı = 2
 bağımsız_görünümler = true
 

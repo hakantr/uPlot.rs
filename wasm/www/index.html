@@ -649,8 +649,13 @@
       </article>
       <article class="kart" data-kart="months" aria-current="false" tabindex="0">
         <strong>Months · calendar ticks</strong>
-        <small>months.html + months-ru.html</small>
-        <div class="durum">3 ilişkili yüzey · normal/artık yıl + Rusça</div>
+        <small>months.html</small>
+        <div class="durum">2 kaynak yüzeyi · normal ve artık yıl</div>
+      </article>
+      <article class="kart" data-kart="months-ru" aria-current="false" tabindex="0">
+        <strong>Months · Russian locale</strong>
+        <small>months-ru.html</small>
+        <div class="durum">tek 1920×600 yüzey · UTC ayları + ruNames</div>
       </article>
       <article class="kart" data-kart="nice-scale" aria-current="false" tabindex="0">
         <strong>Nice Scale &amp; Ticks</strong>
@@ -818,6 +823,7 @@
       zoom_ranger_xy_kanit_ornegi,
       zoom_touch_kart_tanim_ornegi,
       months_kart_tanim_ornegi,
+      months_ru_kart_tanim_ornegi,
       nice_scale_kart_tanim_ornegi,
       no_data_kart_tanim_ornegi,
       path_gap_clip_kart_tanim_ornegi,
@@ -1122,10 +1128,9 @@
         }),
       },
       "months": {
-        başlık: "Months · takvim ve yerelleştirme",
-        kaynak: `Kaynaklar: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months.html">months.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months-ru.html">months-ru.html</a>
-          <br>Resmî sayfadaki normal ve artık yıl yüzeyleri birlikte; ayrı yerelleştirme sayfası aynı API ailesinin üçüncü karşılaştırma yüzeyi olarak gösterilir.
+        başlık: "Months · calendar ticks",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months.html">months.html</a>
+          <br>Yalnız bu resmî sayfadaki normal ve artık yıl yüzeyleri birlikte gösterilir.
           <br>Kaynak 0…10 rastgele Y alanı korunur; ekran görüntüsü ve testler tekrarlanabilir olsun diye Rust kanıtında sabit tohum kullanılır.`,
         tanım: () => months_kart_tanim_ornegi(),
         tanımYolu: "src/kart/months.rs",
@@ -1134,10 +1139,28 @@
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
         kullanım: {
-          amaç: "Her nokta UTC'de ayın ilk günüdür. İlk iki yüzey aynı monthly tick politikasını normal ve artık yıl dizilerinde karşılaştırır; üçüncü yüzey tarih adlarının Rusça sunumunu gösterir.",
-          api: "Takvim-ay bölmeleri sabit 30 günlük saniye adımı değildir. months.html içindeki axes[0].space = 28 günlük piksel karşılığı, çekirdekte gerçek UTC ay sınırlarına bağlanır; TarihAdları yalnız formatter sözlüğünü değiştirir.",
+          amaç: "Her nokta UTC'de ayın ilk günüdür. İki yüzey aynı monthly tick politikasını normal ve artık yıl dizilerinde karşılaştırır.",
+          api: "Takvim-ay bölmeleri sabit 30 günlük saniye adımı değildir. months.html içindeki axes[0].space = 28 günlük piksel karşılığı çekirdekte gerçek UTC ay sınırlarına bağlanır.",
           izleme: "Aylık faturalama, kapasite ve SLO raporlarında Şubat'ı 30 gün varsaymayın. Ölçüm timestamp'lerini UTC'de tutup locale'i yalnız gösterim katmanında uygulayın.",
-          maliyet: "Üç bağımsız yüzey toplam 108 nokta ve yaklaşık 108 takvim bölmesi taşır. Çizim O(N+T), imleç O(log N); resize bölmeleri yeniden hesaplar, veriyi yeniden üretmez.",
+          maliyet: "İki bağımsız yüzey toplam 72 nokta taşır. Çizim O(N+T), imleç O(log N); resize bölmeleri yeniden hesaplar, veriyi yeniden üretmez.",
+        },
+      },
+      "months-ru": {
+        başlık: "Months · Russian locale",
+        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/months-ru.html">months-ru.html</a>
+          <br>Resmî sayfa tek 1920×600 yüzeydir. 36 UTC ay başlangıcı ve ruNames uzun/kısa ay ile hafta günü sözlükleri aynı tanımda taşınır.
+          <br>Kaynak 0…10 rastgele Y alanı sabit kanıt tohumu ile tekrarlanabilir üretilir; Y aralığı otomatik ölçülür.`,
+        tanım: () => months_ru_kart_tanim_ornegi(),
+        tanımYolu: "src/kart/months.rs",
+        seriler: [{ etiket: "Value", renk: "#ff0000" }],
+        yardım: "Tek bağımsız yüzey · tekerlek: Shift X / Ctrl Y · sürükle: seç · çift tıkla: tam görünüm",
+        değişkenNokta: false,
+        etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "UTC zaman damgalarını değiştirmeden tarih ekseni adlarını Rusça yerelleştirir.",
+          api: "months_rusça_kartı() 36 ayı ve TarihAdları::rusça() formatter sözlüğünü tek Grafik tanımında verir; otomatik Y ölçeği gelen veri alanından türetilir.",
+          izleme: "Aylık telemetri, kapasite veya raporlama panellerinde veri saat dilimini UTC tutup yerel dili yalnız sunumda uygulamak için uygundur.",
+          maliyet: "Tek yüzey 36 nokta taşır; çizim O(N+T), imleç sıralı X üzerinde O(log N). Sabit kanıt tohumu yalnız doğrulanabilir demo çıktısı içindir.",
         },
       },
       "nice-scale": {
@@ -3477,12 +3500,6 @@
         açıklama: "months.html yüzeyi · Şubat 2024 → Mart 2024 aralığı 29 gün · diğer yüzeyden bağımsız.",
         boyut: [1920, 200], dil: "en-US",
       },
-      {
-        kimlik: "months-russian",
-        başlık: "Months · Русские названия",
-        açıklama: "months-ru.html yüzeyi · aynı UTC timestamp modeli, ruNames ile yerelleştirilmiş eksen.",
-        boyut: [1920, 600], dil: "ru-RU",
-      },
     ];
     let etkileşimler = {
       tekerlek: false,
@@ -3689,6 +3706,9 @@
       }
       if (aktifKart === "svg-image") {
         return { genişlik: 400, yükseklik: 200 };
+      }
+      if (aktifKart === "months-ru") {
+        return { genişlik: 1920, yükseklik: 600 };
       }
       if (aktifKart === "multi-bars-libraries-vertical") {
         const lejantPayı = chart.dataset.cokluLejant === "true" ? 64 : 0;
@@ -10561,9 +10581,10 @@
           logScales2Etkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "log-scales2";
         }
-        if (["months-no-leap", "months-leap", "months-russian"].includes(kimlik)) {
+        if (["months-no-leap", "months-leap"].includes(kimlik)) {
           kimlik = "months";
         }
+        if (kimlik === "months-russian") kimlik = "months-ru";
         if (kimlik !== "path-gap-clip" && kimlik.startsWith("path-gap-clip-")) {
           kimlik = "path-gap-clip";
         }
