@@ -6,10 +6,10 @@ use crate::{
 
 pub const STACKED_SERIES_KANIT_TOHUMU: u32 = 0x57AC_CED5;
 
-pub const STACKED_SERIES_KART_TANIM_ÖRNEĞİ: &str = r##"for örnek in StackedSeriesÖrneği::TÜMÜ {
-    let (seçenekler, veri) = stacked_series_kartı(örnek)?;
+pub const STACKED_SERIES_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in stacked_series_kartları()? {
     // Yığma, ham lejant değerleri, null/undefined, yüzde, grup ve bant
-    // geometrisi Rust çekirdeğinde çözülür.
+    // geometrisi Rust çekirdeğinde çözülür; aynı kaynak sayfasının 16
+    // ilişkili yüzeyi tek kartta birlikte gösterilir.
     let grafik = Grafik::yeni(seçenekler, veri)?;
 }"##;
 
@@ -108,6 +108,13 @@ impl StackedSeriesÖrneği {
             .into_iter()
             .find(|örnek| örnek.kimlik() == kimlik)
     }
+
+    pub const fn yeniden_yığılan_mı(self) -> bool {
+        matches!(
+            self,
+            Self::Stacked1 | Self::Stacked2 | Self::BarsStacked | Self::Interpolated
+        )
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -185,6 +192,17 @@ pub fn stacked_series_kartı(
     stacked_series_kartı_görünür(örnek, &[])
 }
 
+/// Kaynağın aynı HTML sayfasında birlikte öğrettiği 16 yüzeyi kaynak sırasıyla üretir.
+pub fn stacked_series_kartları()
+-> Result<Vec<(StackedSeriesÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    StackedSeriesÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| {
+            stacked_series_kartı(örnek).map(|(seçenekler, veri)| (örnek, seçenekler, veri))
+        })
+        .collect()
+}
+
 pub fn stacked_series_kartı_görünür(
     örnek: StackedSeriesÖrneği,
     görünür: &[bool],
@@ -215,15 +233,20 @@ fn kartı_kur(
     örnek: StackedSeriesÖrneği,
     içerik: Kartİçeriği,
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
-    let çizim_en_çoğu = içerik
+    let çizim_değerleri = içerik
         .çizim
         .iter()
+        .enumerate()
+        .filter(|(indeks, _)| içerik.görünür.get(*indeks).copied().unwrap_or(true))
+        .map(|(_, seri)| seri)
         .flat_map(|seri| seri.iter())
         .filter_map(|hücre| match hücre {
             Hücre::Değer(değer) => Some(*değer),
             Hücre::Boş | Hücre::Tanımsız => None,
         })
-        .max_by(f64::total_cmp);
+        .collect::<Vec<_>>();
+    let çizim_en_azı = çizim_değerleri.iter().copied().min_by(f64::total_cmp);
+    let çizim_en_çoğu = çizim_değerleri.iter().copied().max_by(f64::total_cmp);
     let anlamlı = içerik
         .çizim
         .iter()
@@ -235,15 +258,18 @@ fn kartı_kur(
         .başlık(örnek.başlık())
         .x_zaman(false)
         .etkileşimler(ortak_kart_etkileşimleri());
-    if matches!(
-        örnek,
-        StackedSeriesÖrneği::Stacked1
-            | StackedSeriesÖrneği::Stacked2
-            | StackedSeriesÖrneği::BarsStacked
-            | StackedSeriesÖrneği::Interpolated
-    ) && let Some(en_çok) = çizim_en_çoğu
-    {
-        seçenekler = seçenekler.y_aralığı(Aralık::uplot_sayısal(0.0, en_çok, 0.1, true)?);
+    if let Some(en_çok) = çizim_en_çoğu {
+        let en_az = if örnek.yeniden_yığılan_mı() {
+            0.0
+        } else {
+            çizim_en_azı.unwrap_or(en_çok)
+        };
+        let aralık = Aralık::uplot_sayısal(en_az, en_çok, 0.1, true)?;
+        seçenekler = seçenekler.y_aralığı(if örnek.yeniden_yığılan_mı() {
+            Aralık::yeni(0.0, aralık.en_çok)?
+        } else {
+            aralık
+        });
     }
     for (indeks, stil) in içerik.stiller.iter().copied().enumerate() {
         let mut seri = SeriSeçenekleri::yeni(stil.etiket)
@@ -867,16 +893,11 @@ fn görünürlüğü_uygula(
     içerik: &mut Kartİçeriği,
     görünür: &[bool],
 ) {
+    let ilk_kurulum = görünür.is_empty();
     içerik.görünür = (0..içerik.stiller.len())
         .map(|indeks| görünür.get(indeks).copied().unwrap_or(true))
         .collect();
-    if !matches!(
-        örnek,
-        StackedSeriesÖrneği::Stacked1
-            | StackedSeriesÖrneği::Stacked2
-            | StackedSeriesÖrneği::BarsStacked
-            | StackedSeriesÖrneği::Interpolated
-    ) {
+    if !örnek.yeniden_yığılan_mı() {
         return;
     }
     let mut birikim = vec![0.0; içerik.x.len()];
@@ -891,6 +912,17 @@ fn görünürlüğü_uygula(
             ham.iter()
                 .enumerate()
                 .map(|(indeks, değer)| {
+                    if örnek == StackedSeriesÖrneği::Interpolated
+                        && seri_indeksi == 1
+                        && indeks == 3
+                        && !ilk_kurulum
+                    {
+                        // Kaynak `setSeries` hook'u ilk `interp(data)` sonucunu
+                        // yeniden kullanmaz; doğrudan ham `stack(data)` çağırır.
+                        // JavaScript'teki `+undefined` NaN üretir ve bu örneği
+                        // sonraki `setData` için çizim boşluğuna çevirir.
+                        return Hücre::Tanımsız;
+                    }
                     let katkı = if örnek == StackedSeriesÖrneği::Interpolated
                         && seri_indeksi == 1
                         && indeks == 3
@@ -928,23 +960,19 @@ mod testler {
 
     #[test]
     fn on_altı_kaynak_yüzeyi_boyut_ve_geometriyle_çizilir() -> Result<(), UplotHatası> {
-        for örnek in StackedSeriesÖrneği::TÜMÜ {
-            let (seçenekler, veri) = stacked_series_kartı(örnek)?;
+        let kartlar = stacked_series_kartları()?;
+        assert_eq!(kartlar.len(), StackedSeriesÖrneği::TÜMÜ.len());
+        for (örnek, seçenekler, veri) in kartlar {
             assert_eq!(
                 (seçenekler.genişlik, seçenekler.yükseklik),
                 örnek.boyut(),
                 "{}",
                 örnek.kimlik()
             );
-            if matches!(
-                örnek,
-                StackedSeriesÖrneği::Stacked1
-                    | StackedSeriesÖrneği::Stacked2
-                    | StackedSeriesÖrneği::BarsStacked
-                    | StackedSeriesÖrneği::Interpolated
-            ) {
+            if örnek.yeniden_yığılan_mı() {
                 assert_eq!(seçenekler.y_aralığı.map(|aralık| aralık.en_az), Some(0.0));
             }
+            assert!(seçenekler.y_aralığı.is_some(), "{}", örnek.kimlik());
             assert!(!veri.x().is_empty(), "{}", örnek.kimlik());
             let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
             assert!(
@@ -1051,6 +1079,7 @@ mod testler {
         )?;
         assert!(ayarlar.seriler.get(1).is_some_and(|seri| !seri.göster));
         assert_eq!(ayarlar.bantlar.len(), 3);
+        assert_eq!(ayarlar.y_aralığı, Some(Aralık::yeni(0.0, 60.0)?));
         let tüm_tepe = tümü
             .seriler()
             .last()
@@ -1065,6 +1094,75 @@ mod testler {
             .flatten();
         assert_eq!(tüm_tepe, Some(50.0));
         assert_eq!(gizli_tepe, Some(40.0));
+        Ok(())
+    }
+
+    #[test]
+    fn son_on_iki_yüzey_set_series_sırasında_yalnız_görünürlüğü_değiştirir()
+    -> Result<(), UplotHatası> {
+        let (_, önce) = stacked_series_kartı(StackedSeriesÖrneği::BothNull)?;
+        let (ayarlar, sonra) = stacked_series_kartı_görünür(
+            StackedSeriesÖrneği::BothNull,
+            &[true, false, true, true],
+        )?;
+        assert_eq!(önce, sonra);
+        assert!(ayarlar.seriler.get(1).is_some_and(|seri| !seri.göster));
+        let (unstacked_ayarları, _) = stacked_series_kartı_görünür(
+            StackedSeriesÖrneği::Unstacked,
+            &[true, false, true, true],
+        )?;
+        assert_eq!(
+            unstacked_ayarları.y_aralığı,
+            Some(Aralık::yeni(-7.0, 12.0)?)
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn interpolated_set_series_kaynak_hookundaki_ham_veri_geçişini_korur() -> Result<(), UplotHatası>
+    {
+        let (_, ilk) = stacked_series_kartı(StackedSeriesÖrneği::Interpolated)?;
+        let (_, değiştirilmiş) =
+            stacked_series_kartı_görünür(StackedSeriesÖrneği::Interpolated, &[true, true])?;
+        assert_eq!(
+            ilk.seriler().get(1).and_then(|seri| seri.get(3)),
+            Some(&Some(5.0))
+        );
+        assert!(değiştirilmiş.hizalama_eksiği_mi(1, 3));
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_range_num_y_aralıkları_on_beş_deterministik_yüzeyde_eştir() -> Result<(), UplotHatası>
+    {
+        let beklentiler = [
+            (StackedSeriesÖrneği::Stacked1, (0.0, 71.0)),
+            (StackedSeriesÖrneği::Stacked2, (0.0, 71.0)),
+            (StackedSeriesÖrneği::Interpolated, (0.0, 5.5)),
+            (StackedSeriesÖrneği::Unstacked, (-12.0, 12.0)),
+            (StackedSeriesÖrneği::Stacked, (-18.0, 18.0)),
+            (StackedSeriesÖrneği::UndefBoth, (-18.0, 18.0)),
+            (StackedSeriesÖrneği::RedNull, (-18.0, 18.0)),
+            (StackedSeriesÖrneği::GreenNull, (-18.0, 18.0)),
+            (StackedSeriesÖrneği::BothNull, (-18.0, 18.0)),
+            (StackedSeriesÖrneği::BothZero, (-18.0, 18.0)),
+            (StackedSeriesÖrneği::NegYNull, (-7.0, 12.0)),
+            (StackedSeriesÖrneği::NegYZero, (-7.0, 12.0)),
+            (StackedSeriesÖrneği::NegativePercent, (-1.2, 1.2)),
+            (StackedSeriesÖrneği::Groups, (0.0, 56.0)),
+            (StackedSeriesÖrneği::JoinedMixed, (0.0, 12.0)),
+        ];
+        for (örnek, (en_az, en_çok)) in beklentiler {
+            let (ayarlar, _) = stacked_series_kartı(örnek)?;
+            let aralık = ayarlar.y_aralığı.expect("kaynak rangeNum aralığı");
+            assert!((aralık.en_az - en_az).abs() < 1e-12, "{}", örnek.kimlik());
+            assert!(
+                (aralık.en_çok - en_çok).abs() < 1e-12,
+                "{}: {:?}",
+                örnek.kimlik(),
+                aralık
+            );
+        }
         Ok(())
     }
 }

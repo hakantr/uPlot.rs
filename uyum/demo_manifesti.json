@@ -2578,7 +2578,7 @@
         { "yol": "demos/stack.js", "sha256": "8e845988dea12ea7ffdbf7321aa2e4e57d0db085cadbfb3ef95951d4c3f9090b" },
         { "yol": "src/paths/bars.js", "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56" }
       ],
-      "fixture": "src/kart/stacked_series.rs#stacked_series_kartı",
+      "fixture": "src/kart/stacked_series.rs#stacked_series_kartları",
       "örnek": "examples/stacked_series.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -2602,19 +2602,23 @@
       "sahip_faz": 1,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-exact-sixteen-surfaces", "source-stack-and-stack2-algorithms",
+        "source-exact-sixteen-surfaces-in-one-card", "source-stack-and-stack2-algorithms",
         "source-classic-reversed-identical-data", "source-seeded-stacked-bars",
         "source-interpolation-with-raw-point-filter", "raw-cursor-legend-values",
-        "set-series-visibility-restacking",
+        "first-four-set-series-in-place-restacking", "remaining-twelve-lightweight-show-hide",
+        "source-set-series-del-band-add-band-set-data-order",
+        "terminal-minus-one-band-equivalent-series-baseline-fill",
+        "source-range-num-for-all-sixteen-surfaces",
         "null-undefined-zero-distinction", "negative-y-and-percent-stacking",
         "independent-stacking-groups", "joined-line-and-stacked-bars",
-        "source-series-band-colors", "gpui-wasm-parity",
+        "source-series-band-colors", "independent-cross-surface-interactions",
+        "collapsible-usage-guide", "gpui-wasm-parity",
         "common-interaction-profile", "panic-free-stacking"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
-        "performans": "kısmi"
+        "performans": "uygulandı_kanıtlı"
       }
     },
     {

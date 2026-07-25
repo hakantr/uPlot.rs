@@ -302,6 +302,17 @@
                      border: 1px solid silver; }
     .sparse-grafik h3 { margin: 5px 8px; font-size: 12px; }
     .sparse-grafik svg { display: block; width: 800px; height: 200px; }
+    #chart.stacked-series-yüzeyi { display: block; min-width: 0; overflow: auto;
+                                   place-items: unset; padding: 8px; box-sizing: border-box; }
+    .stacked-series-yığın { width: max-content; display: grid; grid-template-columns: 1fr 1fr;
+                            gap: 16px; align-items: start; }
+    .stacked-series-grafik { position: relative; background: #fff;
+                             border: 1px solid silver; overflow: hidden; }
+    .stacked-series-grafik[data-wide="true"] { grid-column: 1 / -1; }
+    .stacked-series-grafik h3 { margin: 5px 8px; font-size: 12px; }
+    .stacked-series-grafik svg { display: block; }
+    .stacked-series-grafik .lejant { position: static; padding: 4px 8px 8px;
+                                     justify-content: flex-start; pointer-events: auto; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -1613,11 +1624,10 @@
     ];
     document.querySelector('[data-kart="sparse"]')?.insertAdjacentHTML(
       "afterend",
-      stackedSeriesYüzeyleri.map(([kimlik, başlık, durum]) => `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>stacked-series</small>
-          <div class="durum">${durum}</div>
-        </article>`).join("")
+      `<article class="kart" data-kart="stacked-series" aria-current="false" tabindex="0">
+        <strong>Stacked Series · 16 yüzey</strong><small>stacked-series</small>
+        <div class="durum">aynı kaynak · yığma, boşluk ve grup matrisi</div>
+      </article>`
     );
     const stackedSeriesStilleri = kimlik => {
       if (kimlik.endsWith("stacked-1")) return ["purple", "orange", "blue", "green", "red"];
@@ -1628,27 +1638,32 @@
       if (kimlik.endsWith("-joined-mixed")) return ["blue", "green", "orange"];
       return ["blue", "green", "orange", "red"];
     };
-    for (const [kimlik, başlık, yardım] of stackedSeriesYüzeyleri) {
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/stacked-series.html">stacked-series.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/stack.js">stack.js</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/bars.js">paths/bars.js</a>
-          <br>Resmî 16 yüzey; aynı sabit veriler, yığma algoritmaları, null/undefined/zero ayrımı, ham cursor değerleri, yüzde/grup bantları ve karma join geometrisiyle Rust çekirdeğinde uygulanır. Rastgele çubuk verisi açık kanıt tohumuna bağlanır.`,
-        tanım: () => stacked_series_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/stacked_series.rs",
-        seriler: stackedSeriesStilleri(kimlik).map((renk, indeks) => ({ etiket: `Seri ${indeks + 1}`, renk })),
-        yardım: `${yardım} · sürükle: seç · tekerlek: yakınlaştır · çift tıkla: tam görünüm`,
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    kartlar["stacked-series"] = {
+      başlık: "Stacked Series · 16 yüzey",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/stacked-series.html">stacked-series.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/stack.js">stack.js</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/bars.js">paths/bars.js</a>
+        <br>Kaynağın 16 bağımsız uPlot yüzeyi tek kartta ve kaynak DOM sırasında gösterilir. İlk dört yüzey lejant tıklamasında <code>setSeries → delBand/addBand → setData</code> ile aynı örneği yeniden yığar; kalan 12 yüzey yalnız seri görünürlüğünü değiştirir. Yüzeyler arasında kaynakta cursor veya ölçek senkronu yoktur.`,
+      tanım: () => stacked_series_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/stacked_series.rs",
+      seriler: stackedSeriesStilleri(stackedSeriesYüzeyleri[0][0])
+        .map((renk, indeks) => ({ etiket: `Seri ${indeks + 1}`, renk })),
+      yardım: "16 bağımsız yüzey · her yüzeyin lejantı ve etkileşim durumu kendine ait",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Seri sırasının algıya etkisini, normal/yüzde/gruplu yığmayı ve null/undefined/zero semantiğini tek kaynak bağlamında karşılaştırır.",
+        api: "stacked_series_kartları() 16 (örnek, seçenekler, veri) üçlüsünü kaynak sırasıyla döndürür. StackedSeriesÖrneği::yeniden_yığılan_mı yalnız ilk dört yüzeyin özel setSeries hook yaşam döngüsünü işaretler.",
+        izleme: "Toplam kapasite bileşenleri, pozitif/negatif bütçeler, kısmi telemetri ve join edilmiş çizgi/çubuk verileri için varyasyonları yan yana öğretir.",
+        maliyet: "Tüm Y aralıkları kaynak rangeNum ile belirlenir. Lejant değişimi Grafik/KartOturumu nesnesini yeniden yaratmaz; ilk dört yüzey bant+veriyi yerinde günceller, kalanlar yalnız show bayrağını değiştirir. Rastgele çubuk verisi tekrarlanabilir test için açık tohuma bağlanır.",
+      },
+    };
     const streamDataYüzeyleri = [
       ["stream-data-fixed-sliding", "Fixed length / sliding data slices", "3.000 görünür satır · kayan pencere"],
       ["stream-data-increasing", "Increasing length data", "3.000 satırdan başlayan büyüyen veri"],
       ["stream-data-increasing-static-x", "Increasing length data, static x scale", "10 satırdan başlayan sabit X/%/MB ölçeği"],
     ];
-    document.querySelector('[data-kart="stacked-series-joined-mixed"]')?.insertAdjacentHTML(
+    document.querySelector('[data-kart="stacked-series"]')?.insertAdjacentHTML(
       "afterend",
       streamDataYüzeyleri.map(([kimlik, başlık, durum]) => `
         <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
@@ -2666,6 +2681,8 @@
     let sparklinesEtkinİndeks = 0;
     let sparseOturumları = [];
     let sparseEtkinİndeks = 0;
+    let stackedSeriesOturumları = [];
+    let stackedSeriesEtkinİndeks = 0;
     let scalesDirOriİmleci = null;
     let scalesDirOriÇizimKaresi = null;
     let syncCursorKöprüsü = null;
@@ -4795,6 +4812,140 @@
       }
     }
 
+    function stackedSeriesBoyutu(indeks) {
+      if (indeks < 2) return [800, 400];
+      if (indeks < 4) return [1600, 400];
+      return [400, 300];
+    }
+
+    function stackedSeriesYüzeyiniÇiz(indeks) {
+      const tanım = stackedSeriesYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-stacked-series-index="${indeks}"]`);
+      const yüzeyOturumu = stackedSeriesOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const [kimlik] = tanım;
+      const [genişlik, yükseklik] = stackedSeriesBoyutu(indeks);
+      const renkler = stackedSeriesStilleri(kimlik);
+      const etiketler = Array.from(yüzeyOturumu.seri_etiketleri());
+      const sonDeğerler = Array.from(yüzeyOturumu.bosta_lejant_degerleri());
+      const lejant = renkler.map((renk, seriİndeksi) => {
+        const görünür = yüzeyOturumu.seri_gorunur(seriİndeksi);
+        const etiket = etiketler[seriİndeksi] || `Seri ${seriİndeksi + 1}`;
+        const değer = Number.isFinite(sonDeğerler[seriİndeksi])
+          ? `${Number(sonDeğerler[seriİndeksi]).toLocaleString("tr-TR", {maximumFractionDigits: 3})} (last)`
+          : "--";
+        return `<span data-stacked-toggle="${seriİndeksi}" role="button" tabindex="0"
+          title="Seriyi göster/gizle" style="cursor:pointer;opacity:${görünür ? 1 : .4}">
+          <i class="örnek" style="border-color:${renk};background:${renk}"></i>
+          ${etiket}: <b id="seri-değeri-${seriİndeksi}">${değer}</b></span>`;
+      }).join("");
+      yüzey.style.width = `${genişlik}px`;
+      yüzey.dataset.wide = String(genişlik > 800);
+      const svgÇıktısı = yüzeyOturumu.svg(genişlik, yükseklik);
+      const mevcutSvg = yüzey.querySelector("svg");
+      let etkileşimKatmanı = mevcutSvg?.querySelector(":scope > #etkileşim") ?? null;
+      if (!mevcutSvg) {
+        yüzey.innerHTML = `${svgÇıktısı}<div class="lejant"></div>`;
+      } else {
+        etkileşimKatmanı?.remove();
+        const şablon = document.createElement("template");
+        şablon.innerHTML = svgÇıktısı.trim();
+        svgYüzeyiniYerindeGüncelle(mevcutSvg, şablon.content.firstElementChild);
+        if (etkileşimKatmanı) mevcutSvg.appendChild(etkileşimKatmanı);
+      }
+      const lejantHedefi = yüzey.querySelector(".lejant");
+      if (lejantHedefi) {
+        lejantHedefi.innerHTML = `<span>x: <b id="x-değeri">--</b></span>${lejant}`;
+      }
+      const svg = yüzey.querySelector("svg");
+      if (!svg) return;
+      svg.style.width = `${genişlik}px`;
+      svg.style.height = `${yükseklik}px`;
+      svg.dataset.etkileşim = "independent-stacked-series";
+      if (!etkileşimKatmanı) {
+        etkileşimKatmanı = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        etkileşimKatmanı.id = "etkileşim";
+        etkileşimKatmanı.setAttribute("pointer-events", "none");
+        svg.appendChild(etkileşimKatmanı);
+      }
+      etkileşimKatmanı.innerHTML = `
+          <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+          <line id="imleç-x" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
+          <line id="imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
+          ${renkler.map((renk, seriİndeksi) => yüzeyOturumu.seri_gorunur(seriİndeksi)
+            ? `<circle id="imleç-nokta-${seriİndeksi}" visibility="hidden" r="2.5" fill="${renk}"/>`
+            : "").join("")}
+        `;
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      const xAralığı = yüzeyOturumu.gorunur_x_araligi();
+      const yAralığı = yüzeyOturumu.gorunur_y_araligi();
+      yüzey.dataset.xEnAz = String(xAralığı[0] ?? "");
+      yüzey.dataset.xEnCok = String(xAralığı[1] ?? "");
+      yüzey.dataset.yEnAz = String(yAralığı[0] ?? "");
+      yüzey.dataset.yEnCok = String(yAralığı[1] ?? "");
+      yüzey.querySelectorAll("[data-stacked-toggle]").forEach(düğme => {
+        const değiştir = () => {
+          const seriİndeksi = Number(düğme.dataset.stackedToggle);
+          if (!Number.isInteger(seriİndeksi)) return;
+          try {
+            const değişti = yüzeyOturumu.stacked_seri_gorunurlugu_ayarla(
+              seriİndeksi,
+              !yüzeyOturumu.seri_gorunur(seriİndeksi),
+            );
+            if (değişti) {
+              stackedSeriesEtkinİndeks = indeks;
+              oturum = yüzeyOturumu;
+              stackedSeriesKartSerileriniAyarla(indeks);
+              stackedSeriesYüzeyiniÇiz(indeks);
+              kontrolleriGüncelle();
+            }
+            hata.textContent = "";
+          } catch (neden) {
+            hata.textContent = `Seri görünürlüğü değiştirilemedi: ${String(neden)}`;
+          }
+        };
+        düğme.addEventListener("click", değiştir);
+        düğme.addEventListener("keydown", olay => {
+          if (olay.key === "Enter" || olay.key === " ") {
+            olay.preventDefault();
+            değiştir();
+          }
+        });
+      });
+    }
+
+    function stackedSeriesKartSerileriniAyarla(indeks) {
+      const kimlik = stackedSeriesYüzeyleri[indeks]?.[0];
+      const yüzeyOturumu = stackedSeriesOturumları[indeks];
+      if (!kimlik || !yüzeyOturumu) return;
+      const etiketler = Array.from(yüzeyOturumu.seri_etiketleri());
+      kartlar["stacked-series"].seriler = stackedSeriesStilleri(kimlik)
+        .map((renk, seriİndeksi) => ({
+          etiket: etiketler[seriİndeksi] || `Seri ${seriİndeksi + 1}`,
+          renk,
+        }));
+    }
+
+    function stackedSeriesÇiz() {
+      if (!chart.classList.contains("stacked-series-yüzeyi")
+        || chart.querySelectorAll(".stacked-series-grafik").length
+          !== stackedSeriesYüzeyleri.length) {
+        chart.className = "stacked-series-yüzeyi";
+        chart.innerHTML = `<div class="stacked-series-yığın">${
+          stackedSeriesYüzeyleri.map((_, indeks) =>
+            `<article class="stacked-series-grafik" data-stacked-series-index="${indeks}"></article>`
+          ).join("")
+        }</div>`;
+      }
+      stackedSeriesYüzeyleri.forEach((_, indeks) => stackedSeriesYüzeyiniÇiz(indeks));
+      oturum = stackedSeriesOturumları[stackedSeriesEtkinİndeks]
+        ?? stackedSeriesOturumları[0]
+        ?? null;
+      stackedSeriesKartSerileriniAyarla(stackedSeriesEtkinİndeks);
+      kontrolleriGüncelle();
+    }
+
     function çiz() {
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
@@ -4848,6 +4999,10 @@
         sparseÇiz();
         return;
       }
+      if (aktifKart === "stacked-series") {
+        stackedSeriesÇiz();
+        return;
+      }
       if (!oturum) return;
       const öncekiMultiBarsKartı = chart.dataset.cizilenKart;
       const öncekiMultiBarsKaydırma = chart.querySelector(".multi-bars-kaydırma");
@@ -4868,6 +5023,7 @@
       chart.classList.remove("sparklines-bars-yüzeyi");
       chart.classList.remove("sparklines-yüzeyi");
       chart.classList.remove("sparse-yüzeyi");
+      chart.classList.remove("stacked-series-yüzeyi");
       chart.classList.toggle("nice-scale-yüzeyi", aktifKart === "nice-scale");
       chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
       const sayı = Number(nokta.value);
@@ -5143,6 +5299,10 @@
               )
           : aktifKart === "sparse"
             ? chart.querySelector(`[data-sparse-index="${sparseEtkinİndeks}"] svg`)
+          : aktifKart === "stacked-series"
+            ? chart.querySelector(
+                `[data-stacked-series-index="${stackedSeriesEtkinİndeks}"] svg`
+              )
         : chart.querySelector("svg"));
       if (!svg || !oturum) return false;
       const rect = svg.getBoundingClientRect();
@@ -5449,6 +5609,7 @@
       const etkileşimKapsamı = svg.closest(".soft-minmax-grafik")
         ?? svg.closest(".sparklines-grafik")
         ?? svg.closest(".sparse-grafik")
+        ?? svg.closest(".stacked-series-grafik")
         ?? chart;
       const noktalar = kartlar[aktifKart].seriler.map((_, indeks) => svg.querySelector(`#imleç-nokta-${indeks}`));
       const öğeler = [...çizgiler, ...noktalar];
@@ -5747,6 +5908,18 @@
         if (svg) yüzeyiEşitle(svg);
       }
     }
+    function stackedSeriesOturumunuSeç(olay) {
+      if (aktifKart !== "stacked-series") return;
+      const yüzey = olay.target?.closest?.(".stacked-series-grafik");
+      const indeks = Number(yüzey?.dataset.stackedSeriesIndex);
+      if (Number.isInteger(indeks) && stackedSeriesOturumları[indeks]) {
+        stackedSeriesEtkinİndeks = indeks;
+        oturum = stackedSeriesOturumları[indeks];
+        stackedSeriesKartSerileriniAyarla(indeks);
+        const svg = yüzey.querySelector("svg");
+        if (svg) yüzeyiEşitle(svg);
+      }
+    }
     for (const olayTürü of ["pointerdown", "pointermove", "pointerup", "wheel", "dblclick", "scroll"]) {
       chart.addEventListener(olayTürü, scatterOturumunuSeç, { capture: true, passive: true });
       chart.addEventListener(olayTürü, softMinMaxOturumunuSeç, { capture: true, passive: true });
@@ -5757,6 +5930,9 @@
         capture: true, passive: true,
       });
       chart.addEventListener(olayTürü, sparseOturumunuSeç, {
+        capture: true, passive: true,
+      });
+      chart.addEventListener(olayTürü, stackedSeriesOturumunuSeç, {
         capture: true, passive: true,
       });
     }
@@ -6206,6 +6382,10 @@
         sparseOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
+      } else if (aktifKart === "stacked-series") {
+        stackedSeriesOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
       } else {
         oturum?.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
       }
@@ -6341,6 +6521,11 @@
           sparseEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "sparse";
         }
+        if (kimlik !== "stacked-series" && kimlik.startsWith("stacked-series-")) {
+          const indeks = stackedSeriesYüzeyleri.findIndex(yüzey => yüzey[0] === kimlik);
+          stackedSeriesEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "stacked-series";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -6392,6 +6577,7 @@
           sparklinesBarsOturumları,
           sparklinesOturumları,
           sparseOturumları,
+          stackedSeriesOturumları,
         ].some(yüzeyler => yüzeyler.includes(oturum));
         if (!gruplanmışOturum) oturum?.free();
         oturum = null;
@@ -6421,6 +6607,8 @@
         sparklinesOturumları = [];
         sparseOturumları.forEach(yüzey => yüzey.free());
         sparseOturumları = [];
+        stackedSeriesOturumları.forEach(yüzey => yüzey.free());
+        stackedSeriesOturumları = [];
         scalesDirOriİmleci = null;
         if (scalesDirOriÇizimKaresi !== null) {
           cancelAnimationFrame(scalesDirOriÇizimKaresi);
@@ -6661,6 +6849,19 @@
             return yüzeyOturumu;
           });
           oturum = sparseOturumları[sparseEtkinİndeks] ?? sparseOturumları[0] ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "stacked-series") {
+          stackedSeriesOturumları = stackedSeriesYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey[0], 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = stackedSeriesOturumları[stackedSeriesEtkinİndeks]
+            ?? stackedSeriesOturumları[0]
+            ?? null;
+          stackedSeriesKartSerileriniAyarla(stackedSeriesEtkinİndeks);
           çiz();
           return;
         }

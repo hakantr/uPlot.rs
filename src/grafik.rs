@@ -17,7 +17,8 @@ use crate::cizim::{
 use crate::etkilesim::EtkileşimDenetleyicisi;
 use crate::{
     Aralık, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri, HizalıVeri, NullİmleçDüzeni,
-    TekerlekEkseni, UplotHatası, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi, ÖlçekGradyanı,
+    SeriBandı, TekerlekEkseni, UplotHatası, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi,
+    ÖlçekGradyanı,
 };
 
 /// Bir işaretçi seçiminin çekirdekte çözümlenen sonucu.
@@ -1127,6 +1128,23 @@ impl Grafik {
         Ok(())
     }
 
+    /// `setData(data)` ile birlikte sabit birincil Y aralığını aynı grafik
+    /// örneğinde yeniler. Kaynak eklentinin veriyi yeniden yığdıktan sonra
+    /// yaptığı ölçek sıfırlamasını, seçenek ağacını yeniden kurmadan uygular.
+    pub fn veriyi_y_aralığında_ayarla(
+        &mut self,
+        veri: HizalıVeri,
+        aralık: Aralık,
+    ) -> Result<(), UplotHatası> {
+        let önceki = self.seçenekler.y_aralığı;
+        self.seçenekler.y_aralığı = Some(aralık);
+        if let Err(hata) = self.veriyi_ayarla(veri) {
+            self.seçenekler.y_aralığı = önceki;
+            return Err(hata);
+        }
+        Ok(())
+    }
+
     /// Uzak veri sağlayıcıdan gelen yeni veriyi uygular ve istenen X aralığını korur.
     ///
     /// `zoom-fetch` kaynağındaki `setData(data, false)` + `setScale("x", range)`
@@ -1165,6 +1183,14 @@ impl Grafik {
     pub fn canlı_x_aralığını_ayarla(&mut self, aralık: Aralık) -> bool {
         self.seçenekler.x_aralığı = Some(aralık);
         self.etkileşim.canlı_tam_x_ayarla(aralık)
+    }
+
+    /// Otomatik Y ölçeğinin yeni tam aralığını veri ve seri seçeneklerini
+    /// yeniden kurmadan uygular. Kullanıcı Y görünümünü elle yakınlaştırdıysa
+    /// o görünüm korunur; tam görünümdeyse yeni aralık hemen görünür olur.
+    pub fn canlı_y_aralığını_ayarla(&mut self, aralık: Aralık) -> bool {
+        self.seçenekler.y_aralığı = Some(aralık);
+        self.etkileşim.canlı_tam_y_ayarla(aralık)
     }
 
     /// Görünür X ölçeğinde iki normalize edilmiş seçim ucunu veri aralığına dönüştürür.
@@ -1244,6 +1270,19 @@ impl Grafik {
         }
         seri.göster = görünür;
         Ok(true)
+    }
+
+    /// Çalışan grafik örneğini yeniden kurmadan seri bantlarını değiştirir.
+    ///
+    /// uPlot eklentilerinin `delBand()` / `addBand()` akışına karşılık gelir;
+    /// özellikle `setSeries` sonrasında görünür serileri yeniden yığan
+    /// uygulamalar bunu `veriyi_ayarla()` öncesinde kullanabilir.
+    pub fn bantları_ayarla(&mut self, bantlar: Vec<SeriBandı>) -> bool {
+        if self.seçenekler.bantlar == bantlar {
+            return false;
+        }
+        self.seçenekler.bantlar = bantlar;
+        true
     }
 
     /// Bir çizgi veya çubuk serisinin temel çizgi/dolgu renklerini çalışma

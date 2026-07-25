@@ -14,7 +14,8 @@ use ::gpui::{
 
 use crate::{
     Aralık, AçıklamaVuruşu, DağılımVuruşu, DoğrusalGradyan, Grafik, HizalıVeri, Komut, MetinHizası,
-    Nokta, Sahne, SeriSeçenekleri, SeçimEylemi, TekerlekEkseni, UplotHatası, YüzeyDikdörtgeni,
+    Nokta, Sahne, SeriBandı, SeriSeçenekleri, SeçimEylemi, TekerlekEkseni, UplotHatası,
+    YüzeyDikdörtgeni,
 };
 
 #[derive(Clone)]
@@ -541,6 +542,22 @@ impl GpuiGrafik {
         Ok(())
     }
 
+    pub fn veriyi_y_aralığında_ayarla(
+        &mut self,
+        veri: HizalıVeri,
+        aralık: Aralık,
+        cx: &mut Context<Self>,
+    ) -> Result<(), UplotHatası> {
+        let korunacak_imleç = self.imleç.as_ref().map(|imleç| imleç.fare);
+        self.grafik.veriyi_y_aralığında_ayarla(veri, aralık)?;
+        self.açıklama_vuruşu = None;
+        if let Some(fare) = korunacak_imleç {
+            self.canlı_imleci_yenile(fare);
+        }
+        self.grafik_bildir(cx);
+        Ok(())
+    }
+
     /// uPlot `setData()` sırasında yaptığı gibi aynı hafif cursor katmanını
     /// korur ve sabit fare konumundaki canlı değerleri yeni veriden çözer.
     fn canlı_imleci_yenile(&mut self, fare: Nokta) {
@@ -613,6 +630,18 @@ impl GpuiGrafik {
         değişti
     }
 
+    pub fn canlı_y_aralığını_ayarla(
+        &mut self,
+        aralık: Aralık,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let değişti = self.grafik.canlı_y_aralığını_ayarla(aralık);
+        if değişti {
+            self.grafik_bildir(cx);
+        }
+        değişti
+    }
+
     pub fn boyutu_ayarla(
         &mut self,
         genişlik: u32,
@@ -666,6 +695,15 @@ impl GpuiGrafik {
             self.grafik_bildir(cx);
         }
         Ok(değişti)
+    }
+
+    /// uPlot `delBand()` / `addBand()` eşdeğerini aynı GPUI yüzeyinde uygular.
+    pub fn bantları_ayarla(&mut self, bantlar: Vec<SeriBandı>, cx: &mut Context<Self>) -> bool {
+        let değişti = self.grafik.bantları_ayarla(bantlar);
+        if değişti {
+            self.grafik_bildir(cx);
+        }
+        değişti
     }
 
     /// CSS bulunmayan GPUI yüzeylerinde seri çizgi/dolgu rengini çalışma

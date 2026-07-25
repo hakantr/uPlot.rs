@@ -782,13 +782,37 @@ impl KartOturumu {
         if let Some(hedef) = görünürlük.get_mut(seri_indeksi) {
             *hedef = görünür;
         }
-        let tekerlek = self.grafik.etkileşim_seçenekleri().tekerlek_etkileşimi;
+        if !örnek.yeniden_yığılan_mı() {
+            let (seçenekler, _) =
+                stacked_series_kartı_görünür(örnek, &görünürlük).map_err(js_hatası)?;
+            let mut değişti = self
+                .grafik
+                .seri_görünürlüğünü_ayarla(seri_indeksi, görünür)
+                .map_err(js_hatası)?;
+            if let Some(y_aralığı) = seçenekler.y_aralığı {
+                değişti |= self.grafik.canlı_y_aralığını_ayarla(y_aralığı);
+            }
+            return Ok(değişti);
+        }
         let (seçenekler, veri) =
             stacked_series_kartı_görünür(örnek, &görünürlük).map_err(js_hatası)?;
-        let mut grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
-        grafik.tekerlek_etkileşimi_ayarla(tekerlek);
-        self.grafik = grafik;
-        Ok(true)
+        let mut değişti = false;
+        for (indeks, seri) in seçenekler.seriler.iter().enumerate() {
+            değişti |= self
+                .grafik
+                .seri_görünürlüğünü_ayarla(indeks, seri.göster)
+                .map_err(js_hatası)?;
+        }
+        // Kaynak hook sırası: setSeries → delBand/addBand → setData.
+        değişti |= self.grafik.bantları_ayarla(seçenekler.bantlar);
+        if let Some(y_aralığı) = seçenekler.y_aralığı {
+            self.grafik
+                .veriyi_y_aralığında_ayarla(veri, y_aralığı)
+                .map_err(js_hatası)?;
+        } else {
+            self.grafik.veriyi_ayarla(veri).map_err(js_hatası)?;
+        }
+        Ok(değişti)
     }
 
     pub fn seri_etiketleri(&self) -> Vec<String> {
@@ -2552,6 +2576,10 @@ mod testler {
 
     #[test]
     fn stacked_series_wasm_on_altı_kaynak_yüzeyini_korur() {
+        assert_eq!(
+            uplot_rs::stacked_series_kartları().map(|kartlar| kartlar.len()),
+            Ok(16)
+        );
         for örnek in StackedSeriesÖrneği::TÜMÜ {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             assert!(oturum.is_ok(), "{}", örnek.kimlik());
@@ -2563,7 +2591,16 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
             assert!(svg.contains("<path") || svg.contains("<polygon"));
         }
-        assert!(stacked_series_kart_tanim_ornegi().contains("stacked_series_kartı"));
+        assert!(stacked_series_kart_tanim_ornegi().contains("stacked_series_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"stacked-series\"")
+                .count(),
+            1
+        );
+        assert!(web.contains("function stackedSeriesÇiz()"));
+        assert!(web.contains("setSeries → delBand/addBand → setData"));
+        assert!(web.contains("svgYüzeyiniYerindeGüncelle(mevcutSvg"));
         assert_eq!(kart_sayisi(), 365);
 
         let Ok(mut oturum) = KartOturumu::yeni("stacked-series-stacked-1", 100) else {
@@ -2576,7 +2613,18 @@ mod testler {
                 .is_ok_and(|değişti| değişti)
         );
         assert!(!oturum.seri_gorunur(1));
+        assert_eq!(oturum.gorunur_y_araligi(), vec![0.0, 60.0]);
         assert_ne!(oturum.svg(800, 400), önce);
+
+        let Ok(mut doğrudan) = KartOturumu::yeni("stacked-series-both-null", 100) else {
+            return;
+        };
+        assert!(
+            doğrudan
+                .stacked_seri_gorunurlugu_ayarla(1, false)
+                .is_ok_and(|değişti| değişti)
+        );
+        assert!(!doğrudan.seri_gorunur(1));
     }
 
     #[test]

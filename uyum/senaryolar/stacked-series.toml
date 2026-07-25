@@ -1,8 +1,9 @@
 id = "stacked-series"
 kaynak = "../uPlot/demos/stacked-series.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/stacked_series.rs#stacked_series_kartı"
+fixture = "src/kart/stacked_series.rs#stacked_series_kartları"
 yüzey_sayısı = 16
+kart_sayısı = 1
 yüzeyler = [
   "stacked-series-stacked-1", "stacked-series-stacked-2",
   "stacked-series-bars", "stacked-series-interpolated",
@@ -22,5 +23,17 @@ rastgele_tohum = 1470942933
 ham_lejant = true
 interpolasyon_nokta_filtresi = true
 set_series_yeniden_yığma = true
+set_series_yeniden_yığılan_yüzeyler = 4
+set_series_yalnız_görünürlük_yüzeyleri = 12
+set_series_sırası = ["setSeries", "delBand/addBand", "setData"]
+grafik_nesnesi_yeniden_kurulur = false
+terminal_eksi_bir_bandı = "SeriBandı usize modelinde taban serisinin 0'a dolgusuyla eşdeğer"
+y_aralıkları = [
+  "stacked-1=0..71", "stacked-2=0..71", "interpolated=0..5.5",
+  "unstacked=-12..12", "stacked/null/undef/zero=-18..18",
+  "negY=-7..12", "percent=-1.2..1.2", "groups=0..56", "joined=0..12",
+]
+yüzeyler_arası_senkron = false
+rehber_varsayılanı = "kapalı"
 masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
