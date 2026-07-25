@@ -147,7 +147,7 @@ pub fn sparklines_bars_kartları()
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Grafik, Komut};
+    use crate::{Grafik, Komut, TekerlekEkseni};
 
     #[test]
     fn iki_kaynak_yüzeyi_aynı_yüzen_çubuk_verisini_kullanır() -> Result<(), UplotHatası> {
@@ -213,6 +213,18 @@ mod testler {
                     .flatten()
                     .any(|nokta| (nokta.y - 8.0).abs() <= f32::EPSILON)
         }));
+        assert!(
+            yüzen_gradyan
+                .and_then(|çokgenler| çokgenler.get(7))
+                .is_some_and(|çokgen| {
+                    çokgen
+                        .iter()
+                        .map(|nokta| nokta.y)
+                        .fold(f32::INFINITY, f32::min)
+                        == 8.0
+                }),
+            "high=20 olan sekizinci yüzen çubuk kaynak gibi üst çizim sınırında kırpılmalıdır"
+        );
         assert!(matches!(
             sahne.komutlar().last(),
             Some(Komut::KesikliÇizgi { renk, kesik, .. })
@@ -232,8 +244,13 @@ mod testler {
             })
             .collect::<Vec<_>>();
         assert_eq!(dolgular.len(), 16);
-        assert_eq!(dolgular.iter().filter(|renk| **renk == "red").count(), 9);
-        assert_eq!(dolgular.iter().filter(|renk| **renk == "green").count(), 7);
+        assert_eq!(
+            dolgular,
+            [
+                "green", "red", "red", "red", "green", "green", "green", "green", "green", "red",
+                "red", "red", "red", "red", "red", "green",
+            ]
+        );
         Ok(())
     }
 
@@ -259,7 +276,57 @@ mod testler {
                     .collect::<Vec<_>>(),
                 vec!["red", "white", "green"]
             );
+            assert!(
+                (gradyan.duraklar.get(1).map_or(f32::NAN, |durak| durak.oran) - 0.625).abs()
+                    <= f32::EPSILON
+            );
         }
+        Ok(())
+    }
+
+    #[test]
+    fn y_zoomu_gradyan_sıfırını_görünür_ölçeğe_göre_yeniler() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = sparklines_bars_kartı(SparklinesBarsÖrneği::GradyanÇubuklar)?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        assert!(grafik.tekerlek_eksende(0.5, 0.35, 120.0, false, TekerlekEkseni::Y)?);
+        let aralık = grafik.görünür_y_aralığı();
+        let beklenen = ((0.0 - aralık.en_az) / (aralık.en_çok - aralık.en_az)) as f32;
+        let sıfır_oranı = grafik
+            .çiz()
+            .komutlar()
+            .iter()
+            .find_map(|komut| match komut {
+                Komut::GradyanAlan {
+                    çokgenler, gradyan
+                } if çokgenler.len() == 1 => gradyan
+                    .duraklar
+                    .iter()
+                    .find(|durak| durak.renk == "white")
+                    .map(|durak| durak.oran),
+                _ => None,
+            })
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!((sıfır_oranı - beklenen).abs() <= 1e-6);
+        assert!((sıfır_oranı - 0.625).abs() > 1e-3);
+        Ok(())
+    }
+
+    #[test]
+    fn ab_yüzeyleri_aynı_veriyi_paylaşır_ama_görünümü_bağımsız_tutar() -> Result<(), UplotHatası> {
+        let mut grafikler = sparklines_bars_kartları()?
+            .into_iter()
+            .map(|(_, seçenekler, veri)| Grafik::yeni(seçenekler, veri))
+            .collect::<Result<Vec<_>, _>>()?;
+        let ilk = grafikler
+            .first_mut()
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!(ilk.seçim_yakınlaştır(0.25, 0.75)?);
+        assert!(ilk.yakınlaştırılmış());
+        assert!(
+            grafikler
+                .get(1)
+                .is_some_and(|grafik| !grafik.yakınlaştırılmış())
+        );
         Ok(())
     }
 

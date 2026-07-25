@@ -2604,9 +2604,12 @@
         "shared-data-ab-comparison", "source-exact-sixteen-point-data",
         "source-y-range-minus25-plus15", "high-carrier-excluded-from-autoscale",
         "floating-bars-y0-y1", "dynamic-scale-min-zero-max-gradients",
+        "source-zero-gradient-stop-at-0.625", "zoom-recomputed-gradient-stop",
+        "source-exact-sixteen-bar-color-order", "source-high20-plot-top-clipping",
         "per-point-red-green-bar-fills", "hidden-axes-single-dashed-zero-grid",
         "source-cursor-select-legend-off-documented", "default-closed-usage-guide",
-        "gpui-wasm-parity", "common-interaction-profile"
+        "independent-ab-view-state", "source-static-no-setdata-setseries-timer",
+        "gpui-wasm-parity", "optional-common-interaction-profile"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",

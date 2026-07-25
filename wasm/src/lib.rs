@@ -2999,6 +2999,7 @@ mod testler {
             1
         );
         assert!(web.contains("function sparklinesBarsÇiz()"));
+        assert!(web.contains("&& kimlik !== \"sparklines-bars\""));
         assert_eq!(kart_sayisi(), 365);
     }
 

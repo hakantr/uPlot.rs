@@ -2,18 +2,41 @@ id = "sparklines-bars"
 kaynak = "../uPlot/demos/sparklines-bars.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
 fixture = "src/kart/sparklines_bars.rs#sparklines_bars_kartları"
-yüzeyler = ["sparklines-bars-gradient", "sparklines-bars-explicit-colors"]
-boyut = [800, 400]
-nokta_sayısı = 16
-y_aralığı = [-25.0, 15.0]
+"yüzeyler" = ["sparklines-bars-gradient", "sparklines-bars-explicit-colors"]
+"boyut" = [800, 400]
+"nokta_sayısı" = 16
+"y_aralığı" = [-25.0, 15.0]
 
-[kanıt]
-veri = "kaynak_veri_aynen"
-yüzen_çubuklar = "alt_seri_1_üst_seri_2"
-gradyan = "görünür_ölçek_min_sıfır_max_konumlu"
-nokta_başı_dolgu = "alt_ve_üst_negatiflik_kuralı"
-ızgara = "yalnız_y_sıfır_gri_kesik_3"
-ilişki = "tek_kart_iki_eşzamanlı_ab_yüzeyi"
-üst_taşıyıcı = "özel_bar_yolu_için_otomatik_ölçek_dışı"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+["ilişki"]
+"grup" = "tek_kart_iki_eşzamanlı_ab_yüzeyi"
+"veri" = "aynı_on_altı_noktalı_içerik"
+"görünüm" = "cursor_zoom_ve_geçmiş_yüzey_başına_bağımsız"
+"set_data_set_series" = "kaynakta_yok_statiktir"
+
+["çizim"]
+"yüzen_çubuklar" = "alt_seri_1_üst_seri_2"
+"gradyan" = "görünür_ölçek_min_sıfır_max_konumlu"
+"sıfır_durağı" = 0.625
+"nokta_başı_dolgu" = "kaynak_indeks_sıralı_alt_ve_üst_negatiflik_kuralı"
+"ızgara" = "yalnız_y_sıfır_gri_kesik_3"
+"üst_taşıyıcı" = "özel_bar_yolu_için_otomatik_ölçek_dışı"
+"high_20_kırpması" = "sekizinci_çubuk_üst_çizim_sınırında"
+
+["etkileşim"]
+"kaynak_varsayılanı" = "cursor_select_legend_off"
+"port_uzantısı" = "ortak_wheel_touch_drag_geliştirici_kontrolüyle_açılır"
+"a_b_sync" = false
+
+["performans"]
+"yaşam_döngüsü" = "iki_statik_yüzey_timer_yok"
+"gradyan_çubuklar" = "tek_toplu_GradyanAlan"
+"açık_renkli_çubuklar" = "on_altı_Dikdörtgen"
+"aktif_etkileşim" = "yalnız_hedef_yüzey_yeniden_çizilir"
+
+["kanıt"]
+"veri" = "iki_kaynak_yüzeyi_aynı_yüzen_çubuk_verisini_kullanır"
+"renk_sırası" = "gradyan_ve_nokta_başı_dolgular_kaynak_gibi_ayrılır"
+"gradyan_zoom" = "y_zoomu_gradyan_sıfırını_görünür_ölçeğe_göre_yeniler"
+"bağımsız_görünüm" = "ab_yüzeyleri_aynı_veriyi_paylaşır_ama_görünümü_bağımsız_tutar"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
+"wasm" = "wasm/www/index.html"

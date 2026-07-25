@@ -1824,7 +1824,8 @@
       kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/sparklines-bars.html">sparklines-bars.html</a>
         · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/bars.js">paths/bars.js</a>
         <br>Resmî iki 800×400 yüzey aynı veri ve geometriyi paylaşır; yalnız yüzen çubuk dolgusu ölçeğe bağlı ayrık gradyan ile nokta başına kırmızı/yeşil kuralı arasında değişir.
-        <br>Kaynak otomatik Y aralığı yalnız Value ve low serilerinden −25…15’tir; üst uç dizisi özel bar yolu için veri taşır ve en yüksek +20 uç kaynak gibi kırpılır.`,
+        <br>Kaynak otomatik Y aralığı yalnız Value ve low serilerinden −25…15’tir; üst uç dizisi özel bar yolu için veri taşır ve en yüksek +20 uç kaynak gibi kırpılır.
+        <br>Kaynakta cursor, seçim ve legend kapalı; setData/setSeries ve zamanlayıcı yoktur. İki yüzey statik ve bağımsızdır. Ortak wheel/touch/drag yalnız üst kontrollerden açılan port uzantısıdır.`,
       tanım: () => sparklines_bars_kart_tanim_ornegi(),
       tanımYolu: "src/kart/sparklines_bars.rs",
       seriler: [
@@ -10659,6 +10660,7 @@
           kimlik = "sparklines-bars";
         }
         if (kimlik !== "sparklines"
+          && kimlik !== "sparklines-bars"
           && kimlik.startsWith("sparklines-")
           && !kimlik.startsWith("sparklines-bars-")) {
           const indeks = sparklineYüzeyleri.findIndex(yüzey => yüzey.kimlik === kimlik);
