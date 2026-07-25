@@ -210,7 +210,8 @@ pub use sync_cursor::{
     SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SyncCursorGrubu, SyncCursorÖrneği, sync_cursor_kartı,
 };
 pub use sync_y_zero::{
-    SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, SyncYZeroAşaması, sync_y_zero_aralıkları, sync_y_zero_kartı,
+    SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, SyncYZeroAşaması, sync_y_zero_aralıkları,
+    sync_y_zero_aşamasını_ayarla, sync_y_zero_kartı,
 };
 pub use thin_bars_stroke_fill::{
     THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, ThinBarsYoğunluk, ThinBarsÖrneği,

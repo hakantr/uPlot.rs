@@ -1,12 +1,14 @@
 use super::ortak_kart_etkileşimleri;
 use crate::{
-    Aralık, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, YÖlçekSeçenekleri,
+    Aralık, Grafik, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, YÖlçekSeçenekleri,
 };
 
 pub const SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ: &str = r##"let aşama = SyncYZeroAşaması::SıfırHizalı;
 let (seçenekler, veri) = sync_y_zero_kartı(aşama)?;
-// Ham, simetrik ve ortak sıfır pikselli aralıklar çekirdekte hesaplanır.
-let grafik = Grafik::yeni(seçenekler, veri)?;"##;
+let mut grafik = Grafik::yeni(seçenekler, veri)?;
+sync_y_zero_aşamasını_ayarla(&mut grafik, SyncYZeroAşaması::Simetrik)?;
+// Aynı Grafik örneğinde range sonuçları atomik yenilenir.
+"##;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SyncYZeroAşaması {
@@ -112,6 +114,14 @@ pub fn sync_y_zero_kartı(
     Ok((seçenekler, veri))
 }
 
+pub fn sync_y_zero_aşamasını_ayarla(
+    grafik: &mut Grafik,
+    aşama: SyncYZeroAşaması,
+) -> Result<bool, UplotHatası> {
+    let [y, y2, y3] = sync_y_zero_aralıkları(aşama)?;
+    grafik.y_ölçek_aralıklarını_ayarla(&[("y", y), ("y2", y2), ("y3", y3)])
+}
+
 #[cfg(test)]
 mod testler {
     use super::*;
@@ -173,6 +183,39 @@ mod testler {
         assert!((sıfır_oranları[1] - sıfır_oranları[2]).abs() < 1e-12);
         assert!((hizalı[0].en_az + 10.0).abs() < 1e-12);
         assert!((hizalı[0].en_çok - 100.0).abs() < 1e-12);
+        assert!((hizalı[1].en_az + 173.2).abs() < 1e-12);
+        assert_eq!(hizalı[1].en_çok, 1_732.0);
+        assert_eq!((hizalı[2].en_az, hizalı[2].en_çok), (-1_000.0, 10_000.0));
+        Ok(())
+    }
+
+    #[test]
+    fn aşamalar_aynı_grafik_ve_veri_üzerinde_aralıkları_yeniler() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = sync_y_zero_kartı(SyncYZeroAşaması::Ham)?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        let orta_değerler = grafik.en_yakın_noktalar(0.5);
+        assert!(sync_y_zero_aşamasını_ayarla(
+            &mut grafik,
+            SyncYZeroAşaması::Simetrik
+        )?);
+        assert_eq!(grafik.en_yakın_noktalar(0.5), orta_değerler);
+        assert!(sync_y_zero_aşamasını_ayarla(
+            &mut grafik,
+            SyncYZeroAşaması::SıfırHizalı
+        )?);
+        let aralıklar = [
+            grafik.seri_görünür_y_aralığı(0),
+            grafik.seri_görünür_y_aralığı(1),
+            grafik.seri_görünür_y_aralığı(2),
+        ];
+        let [Some(y), Some(y2), Some(y3)] = aralıklar else {
+            return Err(UplotHatası::YetersizVeri { uzunluk: 0 });
+        };
+        let sıfır_oranları =
+            [y, y2, y3].map(|aralık| -aralık.en_az / (aralık.en_çok - aralık.en_az));
+        assert!((sıfır_oranları[0] - 1.0 / 11.0).abs() < 1e-12);
+        assert!((sıfır_oranları[0] - sıfır_oranları[1]).abs() < 1e-12);
+        assert!((sıfır_oranları[1] - sıfır_oranları[2]).abs() < 1e-12);
         Ok(())
     }
 }

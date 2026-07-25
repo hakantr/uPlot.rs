@@ -61,10 +61,11 @@ use uplot_rs::{
     sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları,
     sparklines_bars_kartı, sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı,
     stacked_series_kartları, stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı,
-    svg_image_kartı, sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı,
-    time_periods_kartı, timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
-    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
+    svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı,
+    thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
+    trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
+    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -2154,8 +2155,26 @@ impl ChartListesi {
                             if !matches!(bu.aktif_kart, KartKimliği::SyncYZero(_)) {
                                 return false;
                             }
+                            let aralıklar = match sync_y_zero_aralıkları(aşama) {
+                                Ok([y, y2, y3]) => [("y", y), ("y2", y2), ("y3", y3)],
+                                Err(hata) => {
+                                    bu.hata =
+                                        Some(format!("Sync Y Zero aralığı üretilemedi: {hata}"));
+                                    return false;
+                                }
+                            };
+                            let Some(grafik) = &bu.grafik else {
+                                return false;
+                            };
+                            if let Err(hata) = grafik.update(cx, |grafik, cx| {
+                                grafik.y_ölçek_aralıklarını_ayarla(&aralıklar, cx)
+                            }) {
+                                bu.hata = Some(format!("Sync Y Zero aşaması uygulanamadı: {hata}"));
+                                return false;
+                            }
                             bu.aktif_kart = KartKimliği::SyncYZero(aşama);
-                            bu.grafiği_yenile(bu.nokta_sayısı, cx);
+                            bu.hata = None;
+                            cx.notify();
                             true
                         })
                         .unwrap_or(false);
@@ -5657,6 +5676,18 @@ impl Render for ChartListesi {
                  pointer yalnız hafif etkileşim katmanını günceller. Ana yollar setSeries, \
                  seçim, wheel/touch/drag veya boyut değişiminde yenilenir ve görünür X aralığı \
                  yalnız abone yüzeylere taşınır.",
+            ),
+            KartKimliği::SyncYZero(_) => Some(
+                "Amaç: farklı büyüklüklerdeki üç Y ölçeğinin sıfırını ham değer sınırlarını \
+                 kaybetmeden aynı fiziksel piksele hizalar. API: sync_y_zero_aralıkları ham, \
+                 simetrik ve valToPos/posToVal eşdeğeri final aralıklarını üretir; \
+                 Grafik::y_ölçek_aralıklarını_ayarla üç adlandırılmış scale.range sonucunu \
+                 atomik uygular. İzleme: pozitif/negatif sapmaları farklı birimlerle tek ortak \
+                 X ekseninde karşılaştırmak için uygundur. Kaynak zaman çizelgesi seçimden \
+                 3 saniye sonra simetrik, 6 saniye sonra 1/11 ortak sıfır oranına geçer. \
+                 Maliyet: her aşama O(3) dönüşüm ve tek sahne boyamasıdır; veri, seçenek ağacı, \
+                 Grafik ve GPUI entity yeniden kurulmaz. Cursor, legend, X zoom ve ortak \
+                 wheel/touch uzantılarının görünüm durumu korunur.",
             ),
             KartKimliği::Scatter => Some(
                 "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \

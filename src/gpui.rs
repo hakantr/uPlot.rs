@@ -674,6 +674,18 @@ impl GpuiGrafik {
         değişti
     }
 
+    pub fn y_ölçek_aralıklarını_ayarla(
+        &mut self,
+        aralıklar: &[(&str, Aralık)],
+        cx: &mut Context<Self>,
+    ) -> Result<bool, UplotHatası> {
+        let değişti = self.grafik.y_ölçek_aralıklarını_ayarla(aralıklar)?;
+        if değişti {
+            self.grafik_bildir(cx);
+        }
+        Ok(değişti)
+    }
+
     pub fn boyutu_ayarla(
         &mut self,
         genişlik: u32,

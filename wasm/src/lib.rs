@@ -53,8 +53,8 @@ use uplot_rs::{
     pixel_align_kartı, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartı,
     scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
     sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
-    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_kartı,
-    thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_aşamasını_ayarla,
+    sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
     timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
     trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
     y_shifted_series_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
@@ -989,12 +989,7 @@ impl KartOturumu {
                 ));
             }
         };
-        let tekerlek = self.grafik.etkileşim_seçenekleri().tekerlek_etkileşimi;
-        let (seçenekler, veri) = sync_y_zero_kartı(aşama).map_err(js_hatası)?;
-        let mut grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
-        grafik.tekerlek_etkileşimi_ayarla(tekerlek);
-        self.grafik = grafik;
-        Ok(true)
+        sync_y_zero_aşamasını_ayarla(&mut self.grafik, aşama).map_err(js_hatası)
     }
 
     pub fn pixel_align_adimi_ayarla(&mut self, adım: usize) -> Result<bool, JsValue> {
@@ -2751,17 +2746,33 @@ mod testler {
         assert!(ham.contains("Sync Y Zero"));
         assert!(
             oturum
+                .seri_gorunurlugu_ayarla(1, false)
+                .is_ok_and(|değişti| değişti)
+        );
+        assert!(
+            oturum
+                .secimi_bitir(0.2, 0.8, false)
+                .is_ok_and(|eylem| eylem == 1)
+        );
+        let yakın_x = oturum.gorunur_x_araligi();
+        assert!(
+            oturum
                 .sync_y_zero_asamasini_ayarla("symmetric")
                 .is_ok_and(|değişti| değişti)
         );
         let simetrik = oturum.svg(800, 400);
         assert_ne!(simetrik, ham);
+        assert_eq!(oturum.gorunur_x_araligi(), yakın_x);
+        assert!(!oturum.seri_gorunur(1));
         assert!(
             oturum
                 .sync_y_zero_asamasini_ayarla("zero-aligned")
                 .is_ok_and(|değişti| değişti)
         );
         assert_ne!(oturum.svg(800, 400), simetrik);
+        assert_eq!(oturum.gorunur_x_araligi(), yakın_x);
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("veri, seçenek ağacı, Grafik/WASM oturumu"));
         assert!(sync_y_zero_kart_tanim_ornegi().contains("SyncYZeroAşaması"));
         assert_eq!(kart_sayisi(), 365);
     }

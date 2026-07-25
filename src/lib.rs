@@ -100,11 +100,12 @@ pub use kart::{
     sparklines_bars_kartları, sparklines_bars_kartı, sparklines_kartları, sparklines_kartı,
     sparse_kartları, sparse_kartı, stacked_series_kartları, stacked_series_kartı,
     stacked_series_kartı_görünür, stream_data_kartları, stream_data_kartı, svg_image_kartı,
-    sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartı,
-    time_periods_kartı, timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
-    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, zoom_ranger_xy_grafiği,
-    zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
+    sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_aşamasını_ayarla, sync_y_zero_kartı,
+    thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
+    trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
+    y_shifted_series_kartı, zoom_ranger_xy_grafiği, zoom_touch_kartı, zoom_wheel_kartı,
+    ÇubukÖrneği,
 };
 pub use olcek::{Aralık, SayısalAralıkAyarları, SayısalAralıkParçası, YumuşakSınırKipi};
 pub use secenek::{

@@ -1244,6 +1244,50 @@ impl Grafik {
         self.etkileşim.canlı_tam_y_ayarla(aralık)
     }
 
+    /// Birden çok adlandırılmış Y ölçeğinin sabit aralığını aynı Grafik
+    /// örneğinde atomik olarak değiştirir. uPlot `redraw(true)` öncesinde
+    /// dinamik `scale.range` sonuçlarının yenilenmesine karşılık gelir.
+    pub fn y_ölçek_aralıklarını_ayarla(
+        &mut self,
+        aralıklar: &[(&str, Aralık)],
+    ) -> Result<bool, UplotHatası> {
+        for (indeks, (anahtar, _)) in aralıklar.iter().enumerate() {
+            if !self
+                .seçenekler
+                .y_ölçekleri
+                .iter()
+                .any(|ölçek| ölçek.anahtar == *anahtar)
+            {
+                return Err(UplotHatası::BilinmeyenÖlçek {
+                    seri: indeks,
+                    anahtar: (*anahtar).to_string(),
+                });
+            }
+        }
+
+        let mut değişti = false;
+        let mut birincil = None;
+        for (anahtar, aralık) in aralıklar {
+            let Some(ölçek) = self
+                .seçenekler
+                .y_ölçekleri
+                .iter_mut()
+                .find(|ölçek| ölçek.anahtar == *anahtar)
+            else {
+                continue;
+            };
+            değişti |= ölçek.aralık != Some(*aralık);
+            ölçek.aralık = Some(*aralık);
+            if *anahtar == self.seçenekler.birincil_y_ölçeği {
+                birincil = Some(*aralık);
+            }
+        }
+        if let Some(aralık) = birincil {
+            değişti |= self.etkileşim.canlı_tam_y_ayarla(aralık);
+        }
+        Ok(değişti)
+    }
+
     /// Görünür X ölçeğinde iki normalize edilmiş seçim ucunu veri aralığına dönüştürür.
     pub fn x_aralığı_oranlardan(
         &self,

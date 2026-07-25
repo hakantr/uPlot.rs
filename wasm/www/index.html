@@ -1789,6 +1789,12 @@
       değişkenNokta: false,
       syncYZero: true,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Farklı büyüklüklerdeki üç Y ölçeğinin sıfır çizgisini, veri aralıklarını kaybetmeden aynı fiziksel piksele hizalar.",
+        api: "sync_y_zero_aralıkları ham, simetrik ve valToPos/posToVal eşdeğeri final aralıklarını hesaplar. sync_y_zero_aşamasını_ayarla aynı Grafik örneğinde yalnız üç adlandırılmış scale.range sonucunu atomik yeniler.",
+        izleme: "Pozitif ve negatif sapmaları farklı birimlerde karşılaştırırken sıfır tabanlarının görsel olarak aynı hizada olması gereken paneller için uygundur. Üç seri tek grafik ve ortak X imlecini paylaşır.",
+        maliyet: "Her aşama O(3) aralık dönüşümü ve tek sahne yeniden boyamasıdır; veri, seçenek ağacı, Grafik/WASM oturumu ve GPUI entity yeniden kurulmaz. Cursor, legend, X zoom ve isteğe bağlı wheel/touch görünümü korunur.",
+      },
     };
 
     const inceÇubukYüzeyleri = [
