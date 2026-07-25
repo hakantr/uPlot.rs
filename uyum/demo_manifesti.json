@@ -2422,7 +2422,7 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" },
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" }
       ],
-      "fixture": "src/kart/sparklines_bars.rs#sparklines_bars_kartı",
+      "fixture": "src/kart/sparklines_bars.rs#sparklines_bars_kartları",
       "örnek": "examples/sparklines_bars.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -2446,9 +2446,12 @@
       "sahip_faz": 3,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-two-800x400-surfaces", "source-exact-sixteen-point-data",
-        "floating-bars-y0-y1", "scale-positioned-area-and-bar-gradients",
+        "source-two-simultaneous-800x400-surfaces", "single-catalog-card-source-page",
+        "shared-data-ab-comparison", "source-exact-sixteen-point-data",
+        "source-y-range-minus25-plus15", "high-carrier-excluded-from-autoscale",
+        "floating-bars-y0-y1", "dynamic-scale-min-zero-max-gradients",
         "per-point-red-green-bar-fills", "hidden-axes-single-dashed-zero-grid",
+        "source-cursor-select-legend-off-documented", "default-closed-usage-guide",
         "gpui-wasm-parity", "common-interaction-profile"
       ],
       "kanıt": {

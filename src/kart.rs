@@ -189,7 +189,8 @@ pub use soft_minmax::{
 };
 pub use sparklines::{SPARKLINES_KART_TANIM_ÖRNEĞİ, SparklineÖrneği, sparklines_kartı};
 pub use sparklines_bars::{
-    SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SparklinesBarsÖrneği, sparklines_bars_kartı,
+    SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SparklinesBarsÖrneği, sparklines_bars_kartları,
+    sparklines_bars_kartı,
 };
 pub use sparse::{SPARSE_KART_TANIM_ÖRNEĞİ, SparseÖrneği, sparse_kartı};
 pub use stacked_series::{

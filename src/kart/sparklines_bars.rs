@@ -5,10 +5,9 @@ use crate::{
     ÇizimSırası, ÖlçekGradyanı,
 };
 
-pub const SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ: &str = r##"for örnek in SparklinesBarsÖrneği::TÜMÜ {
-    let (seçenekler, veri) = sparklines_bars_kartı(örnek)?;
+pub const SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in sparklines_bars_kartları()? {
     // Sparkline, yüzen çubuk uçları, gradyan veya nokta başına renk ve
-    // Y=0 kesikli ızgarası çekirdekte çözülür.
+    // Y=0 kesikli ızgarası iki eşzamanlı A/B yüzeyinde çözülür.
     let grafik = Grafik::yeni(seçenekler, veri)?;
 }"##;
 
@@ -62,15 +61,15 @@ pub fn sparklines_bars_kartı(
     let çizgi_dolgusu = ÖlçekGradyanı::yeni(
         GradyanEkseni::Y,
         vec![
-            GradyanDurağı::değer(-25.0, "red")?,
+            GradyanDurağı::negatif_sonsuz("red"),
             GradyanDurağı::değer(0.0, "white")?,
-            GradyanDurağı::değer(20.0, "green")?,
+            GradyanDurağı::pozitif_sonsuz("green"),
         ],
     )?;
     let ayrık_kırmızı_yeşil = ÖlçekGradyanı::yeni(
         GradyanEkseni::Y,
         vec![
-            GradyanDurağı::değer(-25.0, "red")?,
+            GradyanDurağı::negatif_sonsuz("red"),
             GradyanDurağı::değer(0.0, "green")?,
         ],
     )?
@@ -124,11 +123,25 @@ pub fn sparklines_bars_kartı(
         .seri(
             SeriSeçenekleri::yeni("Bar highs")
                 .göster(false)
+                .otomatik_ölçeğe_katıl(false)
                 .çizgi_kalınlığı(0.0)
                 .noktaları_göster(false),
         );
 
     Ok((seçenekler, veri))
+}
+
+/// Tek `sparklines-bars.html` sayfasındaki kontrollü A/B yüzeylerini kaynak
+/// sırasıyla ve aynı veri içeriğiyle birlikte üretir.
+pub fn sparklines_bars_kartları()
+-> Result<Vec<(SparklinesBarsÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    SparklinesBarsÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| {
+            let (seçenekler, veri) = sparklines_bars_kartı(örnek)?;
+            Ok((örnek, seçenekler, veri))
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -157,12 +170,23 @@ mod testler {
         {
             let grafik = Grafik::yeni(seçenekler, veri)?;
             assert_eq!(grafik.görünür_y_aralığı().en_az, -25.0);
-            assert_eq!(grafik.görünür_y_aralığı().en_çok, 20.0);
+            assert_eq!(grafik.görünür_y_aralığı().en_çok, 15.0);
             assert_eq!(
                 grafik.çizim_alanı_boyutta(800, 400),
                 (8.0, 792.0, 8.0, 392.0)
             );
         }
+        Ok(())
+    }
+
+    #[test]
+    fn iki_kaynak_yüzeyi_tek_ab_grubunda_üretilir() -> Result<(), UplotHatası> {
+        let kartlar = sparklines_bars_kartları()?;
+        assert_eq!(kartlar.len(), SparklinesBarsÖrneği::TÜMÜ.len());
+        assert_eq!(
+            kartlar.first().map(|kart| &kart.2),
+            kartlar.get(1).map(|kart| &kart.2)
+        );
         Ok(())
     }
 
@@ -179,6 +203,16 @@ mod testler {
             _ => None,
         });
         assert!(yüzen_gradyan.is_some());
+        assert!(yüzen_gradyan.is_some_and(|çokgenler| {
+            çokgenler
+                .iter()
+                .flatten()
+                .all(|nokta| nokta.y >= 8.0 - f32::EPSILON && nokta.y <= 392.0 + f32::EPSILON)
+                && çokgenler
+                    .iter()
+                    .flatten()
+                    .any(|nokta| (nokta.y - 8.0).abs() <= f32::EPSILON)
+        }));
         assert!(matches!(
             sahne.komutlar().last(),
             Some(Komut::KesikliÇizgi { renk, kesik, .. })
@@ -200,6 +234,32 @@ mod testler {
         assert_eq!(dolgular.len(), 16);
         assert_eq!(dolgular.iter().filter(|renk| **renk == "red").count(), 9);
         assert_eq!(dolgular.iter().filter(|renk| **renk == "green").count(), 7);
+        Ok(())
+    }
+
+    #[test]
+    fn gradyan_uçları_görünür_ölçek_min_ve_maxına_bağlanır() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = sparklines_bars_kartı(SparklinesBarsÖrneği::GradyanÇubuklar)?;
+        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+        let çizgi_gradyanı = sahne.komutlar().iter().find_map(|komut| match komut {
+            Komut::GradyanAlan {
+                çokgenler, gradyan
+            } if çokgenler.len() == 1 && gradyan.duraklar.len() == 3 => Some(gradyan),
+            _ => None,
+        });
+        assert!(çizgi_gradyanı.is_some());
+        if let Some(gradyan) = çizgi_gradyanı {
+            assert!((gradyan.başlangıç.y - 392.0).abs() <= f32::EPSILON);
+            assert!((gradyan.bitiş.y - 8.0).abs() <= f32::EPSILON);
+            assert_eq!(
+                gradyan
+                    .duraklar
+                    .iter()
+                    .map(|durak| durak.renk.as_str())
+                    .collect::<Vec<_>>(),
+                vec!["red", "white", "green"]
+            );
+        }
         Ok(())
     }
 

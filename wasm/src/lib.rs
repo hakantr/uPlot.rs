@@ -2471,13 +2471,20 @@ mod testler {
             let Ok(oturum) = oturum else {
                 continue;
             };
-            assert_eq!(oturum.gorunur_y_araligi(), vec![-25.0, 20.0]);
+            assert_eq!(oturum.gorunur_y_araligi(), vec![-25.0, 15.0]);
             let svg = oturum.svg(800, 400);
             assert!(svg.contains("gray"));
             assert!(svg.contains("stroke-dasharray="));
             assert!(svg.contains("<rect") || svg.contains("<polygon"));
         }
-        assert!(sparklines_bars_kart_tanim_ornegi().contains("sparklines_bars_kartı"));
+        assert!(sparklines_bars_kart_tanim_ornegi().contains("sparklines_bars_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"sparklines-bars\"")
+                .count(),
+            1
+        );
+        assert!(web.contains("function sparklinesBarsÇiz()"));
         assert_eq!(kart_sayisi(), 365);
     }
 

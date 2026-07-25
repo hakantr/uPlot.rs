@@ -58,10 +58,10 @@ use uplot_rs::{
     ortak_kart_etkileşimleri, path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları,
     pixel_align_kartı, points_kartları, points_kartı, resize_kartı, scale_padding_kartı,
     scales_dir_ori_kartları, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
-    sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartı,
-    sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
-    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_kartı,
-    thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları,
+    sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
+    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
+    sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
     timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
     trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
     y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
@@ -159,7 +159,7 @@ impl KartKimliği {
             Self::ScrollSync => "Scroll syncRect()",
             Self::SineStream => "6 series x 600 points @ 60fps",
             Self::SoftMinMax(_) => "Soft Min/Max · 5 ilişkili yüzey",
-            Self::SparklinesBars(örnek) => örnek.başlık(),
+            Self::SparklinesBars(_) => "Sparkline + Floating Bars · 2 ilişkili yüzey",
             Self::Sparklines(örnek) => örnek.başlık(),
             Self::Sparse(örnek) => örnek.başlık(),
             Self::StackedSeries(örnek) => örnek.başlık(),
@@ -548,6 +548,7 @@ pub struct ChartListesi {
     y_shifted_series_akışı: Option<YShiftedSeriesAkışı>,
     soft_minmax_çalışıyor: bool,
     soft_minmax_grafikleri: Vec<(SoftMinMaxÖrneği, Entity<GpuiGrafik>)>,
+    sparklines_bars_grafikleri: Vec<(SparklinesBarsÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grubu: SyncCursorGrubu,
     timeseries_discrete_grafikleri: Vec<(TimeseriesDiscreteÖrneği, Entity<GpuiGrafik>)>,
@@ -637,6 +638,12 @@ impl ChartListesi {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
                 }
+            } else if matches!(bu.aktif_kart, KartKimliği::SparklinesBars(_)) {
+                for (_, grafik) in &bu.sparklines_bars_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
             } else if let Some(grafik) = &bu.grafik {
                 grafik.update(cx, |grafik, cx| {
                     grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
@@ -695,6 +702,7 @@ impl ChartListesi {
             y_shifted_series_akışı: None,
             soft_minmax_çalışıyor: false,
             soft_minmax_grafikleri: Vec::new(),
+            sparklines_bars_grafikleri: Vec::new(),
             sync_cursor_grafikleri: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
             timeseries_discrete_grafikleri: Vec::new(),
@@ -1130,6 +1138,38 @@ impl ChartListesi {
         cx.notify();
     }
 
+    fn sparklines_bars_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = sparklines_bars_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Sparklines Bars ailesi oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.sparklines_bars_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.sparklines_bars_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            yüzeyler.push((örnek, cx.new(|_| GpuiGrafik::yeni(grafik))));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.sparklines_bars_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
         match grafik_oluştur(
@@ -1355,6 +1395,7 @@ impl ChartListesi {
         self.scales_dir_ori_grafikleri.clear();
         self.scatter_grafikleri.clear();
         self.soft_minmax_grafikleri.clear();
+        self.sparklines_bars_grafikleri.clear();
         if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -1439,6 +1480,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.soft_minmax_yüzeylerini_oluştur(cx);
+        } else if matches!(kart, KartKimliği::SparklinesBars(_)) {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.sparklines_bars_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -2114,7 +2164,9 @@ impl Render for ChartListesi {
             KartKimliği::SoftMinMax(_) => {
                 "5 ilişkili yüzey · 4 ortak canlı kip + düz sıfır".to_string()
             }
-            KartKimliği::SparklinesBars(_) => "16 nokta · sparkline + 16 yüzen çubuk".to_string(),
+            KartKimliği::SparklinesBars(_) => {
+                "2 ilişkili yüzey · aynı 16 nokta · dinamik gradyan / açık renk".to_string()
+            }
             KartKimliği::Sparklines(örnek) => {
                 format!("{} · {} · 22 nokta · 150×30", örnek.simge(), örnek.ölçüm())
             }
@@ -2417,6 +2469,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .soft_minmax_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if matches!(aktif_kart, KartKimliği::SparklinesBars(_)) {
+            geri_var = self
+                .sparklines_bars_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .sparklines_bars_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         }
@@ -3139,21 +3200,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(kart, cx);
                 }))
             })
-            .children(SparklinesBarsÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::SparklinesBars(örnek);
+            .child({
+                let kart = KartKimliği::SparklinesBars(SparklinesBarsÖrneği::GradyanÇubuklar);
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
                     "sparklines-bars",
-                    aktif_kart == kart,
-                    "sparkline · floating bars",
+                    "Sparkline + Floating Bars · 2 yüzey",
+                    "sparklines-bars",
+                    matches!(aktif_kart, KartKimliği::SparklinesBars(_)),
+                    "aynı veri · dinamik gradyan / açık renk A/B",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .children(SparklineÖrneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::Sparklines(örnek);
                 katalog_kartı(
@@ -3854,6 +3915,12 @@ impl Render for ChartListesi {
                                     grafik.önceki_görünüm(cx);
                                 });
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::SparklinesBars(_)) {
+                            for (_, grafik) in &bu.sparklines_bars_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.önceki_görünüm(cx);
+                                });
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
@@ -3920,6 +3987,12 @@ impl Render for ChartListesi {
                             }
                         } else if matches!(bu.aktif_kart, KartKimliği::SoftMinMax(_)) {
                             for (_, grafik) in &bu.soft_minmax_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.tam_görünüm(cx);
+                                });
+                            }
+                        } else if matches!(bu.aktif_kart, KartKimliği::SparklinesBars(_)) {
+                            for (_, grafik) in &bu.sparklines_bars_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
                                     grafik.tam_görünüm(cx);
                                 });
@@ -4576,6 +4649,53 @@ impl Render for ChartListesi {
                         }),
                     ),
                 )
+        } else if matches!(aktif_kart, KartKimliği::SparklinesBars(_)) {
+            let yüzey = |örnek| {
+                self.sparklines_bars_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(940.0))
+                .overflow_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("Resmî iki 800×400 yüzey aynı 16 değerli veri, −25…15 Y ölçeği, sparkline ve yüzen bar geometrisini paylaşır. Yalnız ilk yüzeyin ölçeğe bağlı ayrık gradyanı, ikinci yüzeyin nokta başına kırmızı/yeşil dolgularıyla değiştirilir."),
+                )
+                .children(SparklinesBarsÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    let açıklama = match örnek {
+                        SparklinesBarsÖrneği::GradyanÇubuklar => {
+                            "Çizgi alanı ve yüzen çubuklar görünür Y ölçeğinin uçlarına bağlı kırmızı/beyaz/yeşil gradyan kullanır."
+                        }
+                        SparklinesBarsÖrneği::AyrıkRenkliÇubuklar => {
+                            "Her çubuk low veya high ucu negatifse kırmızı, ikisi de negatif değilse yeşildir."
+                        }
+                    };
+                    div()
+                        .mt_2()
+                        .child(
+                            div()
+                                .text_sm()
+                                .font_weight(FontWeight::BOLD)
+                                .text_color(metin)
+                                .child(örnek.başlık()),
+                        )
+                        .child(div().text_xs().text_color(soluk).child(açıklama))
+                        .child(
+                            div()
+                                .w(px(800.0))
+                                .h(px(400.0))
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                        )
+                }))
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
             let boyut = self
                 .boyut_senkron_akışı
@@ -4782,6 +4902,17 @@ impl Render for ChartListesi {
                  Maliyet: tek dataMax adımı yalnız ikişer noktalı dört grafiğe atomik setData \
                  uygular; düz-sıfır yüzeyi değişmez. Tekrarlanan başlatmalar engellenir; bu, \
                  kaynak örnekteki üst üste interval açabilme durumuna karşı kasıtlı güvenliktir.",
+            ),
+            KartKimliği::SparklinesBars(_) => Some(
+                "Amaç: aynı sparkline ve yüzen low/high çubuklarını yalnız renk stratejisini \
+                 değiştirerek kontrollü A/B karşılaştırır. API: sparklines_bars_kartları iki \
+                 yüzeyi birlikte kurar; Floating Bars low değerlerini, \
+                 yüzen_çubuk_üst_serisi özel high veri taşıyıcısını kullanır ve bu taşıyıcı \
+                 otomatik ölçeğe katılmaz. İzleme: pozitif/negatif bölgeleri kesen sapma ve \
+                 bütçe aralıklarında gradyan; kategorik eşiklerde açık nokta renkleri uygundur. \
+                 Kaynak cursor/select/legend kapalıdır; ortak wheel/touch/drag yalnız geliştirici \
+                 etkinleştirirse adaptör uzantısıdır. Maliyet: her yüzey 16 noktayı O(N) tarar; \
+                 gradyan tek toplu alan komutudur, açık renk yolu 16 dikdörtgen üretir.",
             ),
             KartKimliği::Scatter => Some(
                 "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \
