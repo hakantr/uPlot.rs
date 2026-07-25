@@ -1,6 +1,7 @@
 use super::ortak_kart_etkileşimleri;
 use crate::{
-    Aralık, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, ÇubukDüzeni, ÇubukYönü,
+    Aralık, GrafikSeçenekleri, HizalıVeri, SayısalAralıkAyarları, SayısalAralıkParçası,
+    SeriSeçenekleri, UplotHatası, YumuşakSınırKipi, YÖlçekSeçenekleri, ÇubukDüzeni, ÇubukYönü,
 };
 
 pub const THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ: &str = r##"let yüzeyler = thin_bars_stroke_fill_kartları()?;
@@ -198,10 +199,6 @@ pub fn thin_bars_stroke_fill_kartı(
     let x = (0..uzunluk).map(|indeks| indeks as f64).collect();
     let veri = HizalıVeri::yeni(x, vec![değerler.into_iter().map(Some).collect()])?;
     let (genişlik, yükseklik) = örnek.boyut();
-    let y_aralığı = match örnek {
-        ThinBarsÖrneği::Yoğunluk(_) => Aralık::yeni(0.0, 10.0)?,
-        ThinBarsÖrneği::Geometri { .. } => Aralık::yeni(0.0, 4.0)?,
-    };
     let düzen = ÇubukDüzeni::yeni(ÇubukYönü::Dikey)
         .ters(ters)
         .genişlik_oranı(genişlik_oranı)
@@ -209,10 +206,9 @@ pub fn thin_bars_stroke_fill_kartı(
         .hizalama(hizalama)
         .x_kenar_paylı(false)
         .değer_etiketleri(false);
-    let seçenekler = GrafikSeçenekleri::yeni(genişlik, yükseklik)?
+    let mut seçenekler = GrafikSeçenekleri::yeni(genişlik, yükseklik)?
         .başlık(örnek.başlık())
         .x_zaman(false)
-        .y_aralığı(y_aralığı)
         .çubuk_düzeni(düzen)
         .etkileşimler(ortak_kart_etkileşimleri())
         .seri(
@@ -222,6 +218,16 @@ pub fn thin_bars_stroke_fill_kartı(
                 .çizgi_kalınlığı(vuruş)
                 .nokta_stili(5.0, 1.0, Some("#ffffff")),
         );
+    if matches!(örnek, ThinBarsÖrneği::Yoğunluk(_)) {
+        seçenekler = seçenekler.y_aralığı(Aralık::yeni(0.0, 10.0)?);
+    } else {
+        let sıfıra_yumuşak = SayısalAralıkAyarları::yeni(
+            SayısalAralıkParçası::yeni(0.1, Some(0.0), YumuşakSınırKipi::Koşullu),
+            SayısalAralıkParçası::yeni(0.1, Some(0.0), YumuşakSınırKipi::Koşullu),
+        );
+        seçenekler =
+            seçenekler.y_ölçeği(YÖlçekSeçenekleri::yeni("y").sayısal_aralık(sıfıra_yumuşak));
+    }
     Ok((seçenekler, veri))
 }
 
@@ -248,11 +254,10 @@ mod testler {
         assert_eq!(örnekler.len(), 55);
         for örnek in örnekler {
             let (seçenekler, veri) = thin_bars_stroke_fill_kartı(örnek)?;
-            let beklenen_y = match örnek {
-                ThinBarsÖrneği::Yoğunluk(_) => Aralık::yeni(0.0, 10.0)?,
-                ThinBarsÖrneği::Geometri { .. } => Aralık::yeni(0.0, 4.0)?,
-            };
-            assert_eq!(seçenekler.y_aralığı, Some(beklenen_y));
+            let beklenen_y = matches!(örnek, ThinBarsÖrneği::Yoğunluk(_))
+                .then(|| Aralık::yeni(0.0, 10.0))
+                .transpose()?;
+            assert_eq!(seçenekler.y_aralığı, beklenen_y);
             let beklenen = match örnek {
                 ThinBarsÖrneği::Yoğunluk(ThinBarsYoğunluk::Normal30) => 30,
                 ThinBarsÖrneği::Yoğunluk(_) => 200,
@@ -263,7 +268,13 @@ mod testler {
                 ThinBarsÖrneği::Yoğunluk(_) => 0,
                 ThinBarsÖrneği::Geometri { .. } => 5,
             };
-            let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+            let grafik = Grafik::yeni(seçenekler, veri)?;
+            if matches!(örnek, ThinBarsÖrneği::Geometri { .. }) {
+                let aralık = grafik.görünür_y_aralığı();
+                assert!(aralık.en_az.abs() <= f64::EPSILON);
+                assert!((aralık.en_çok - 4.4).abs() <= 1e-12);
+            }
+            let sahne = grafik.çiz();
             let çubuklar = sahne
                 .komutlar()
                 .iter()
