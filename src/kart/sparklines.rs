@@ -332,6 +332,20 @@ mod testler {
     }
 
     #[test]
+    fn tüm_dört_yüz_kırk_csv_değeri_resmi_snapshot_hashiyle_eşleşir() {
+        let mut hash = 0xcbf2_9ce4_8422_2325_u64;
+        for kayıt in SPARKLINE_KAYITLARI {
+            for değer in kayıt.kapanış.into_iter().chain(kayıt.hacim) {
+                for bayt in değer.to_bits().to_le_bytes() {
+                    hash ^= u64::from(bayt);
+                    hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+                }
+            }
+        }
+        assert_eq!(hash, 0x5a91_59ba_4b1d_8eaf);
+    }
+
+    #[test]
     fn on_satır_iki_sütun_tek_kaynak_grubunda_korunur() -> Result<(), UplotHatası> {
         let kartlar = sparklines_kartları()?;
         assert_eq!(kartlar.len(), 20);
@@ -366,6 +380,65 @@ mod testler {
         assert_eq!(
             (kapanış_aralığı.en_az, kapanış_aralığı.en_çok),
             (232.0, 269.0)
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn yirmi_yüzeyin_resmi_range_num_altın_matrisi_korunur() -> Result<(), UplotHatası> {
+        let beklenen = [
+            (15_000_000.0, 40_000_000.0),
+            (232.0, 269.0),
+            (21_000_000.0, 91_000_000.0),
+            (30.200_000_000_000_01, 39.400_000_000_000_006),
+            (1_100_000.0, 10_500_000.0),
+            (1732.0, 1812.0),
+            (6_000_000.0, 71_000_000.0),
+            (44.500_000_000_000_01, 49.300_000_000_000_004),
+            (4_000_000.0, 46_000_000.0),
+            (181.0, 197.0),
+            (12_000_000.0, 40_000_000.0),
+            (135.0, 152.0),
+            (1_000_000.0, 33_000_000.0),
+            (75.0, 96.0),
+            (3_400_000.0, 15_000_000.0),
+            (81.300_000_000_000_01, 86.800_000_000_000_03),
+            (2_000_000.0, 33_000_000.0),
+            (243.0, 363.0),
+            (2_000_000.0, 31_000_000.0),
+            (6.040_000_000_000_001, 6.380_000_000_000_002),
+        ];
+        for (örnek, (beklenen_en_az, beklenen_en_çok)) in
+            SparklineÖrneği::TÜMÜ.into_iter().zip(beklenen)
+        {
+            let (seçenekler, veri) = sparklines_kartı(örnek)?;
+            let aralık = Grafik::yeni(seçenekler, veri)?.görünür_y_aralığı();
+            assert_eq!(
+                (aralık.en_az, aralık.en_çok),
+                (beklenen_en_az, beklenen_en_çok),
+                "{}",
+                örnek.kimlik()
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn yirmi_kompakt_yüzey_görünüm_durumunu_bağımsız_tutar() -> Result<(), UplotHatası> {
+        let mut grafikler = sparklines_kartları()?
+            .into_iter()
+            .map(|(_, seçenekler, veri)| Grafik::yeni(seçenekler, veri))
+            .collect::<Result<Vec<_>, _>>()?;
+        let ilk = grafikler
+            .first_mut()
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!(ilk.seçim_yakınlaştır(0.25, 0.75)?);
+        assert!(ilk.yakınlaştırılmış());
+        assert!(
+            grafikler
+                .iter()
+                .skip(1)
+                .all(|grafik| !grafik.yakınlaştırılmış())
         );
         Ok(())
     }

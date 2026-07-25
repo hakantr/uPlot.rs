@@ -2665,7 +2665,10 @@
         "source-exact-twenty-two-row-csv-data", "px-align-false",
         "hidden-axes-grid-points", "pink-canvas-blue-stroke-fill",
         "compact-core-surface", "embedded-source-snapshot-no-fetch",
-        "collapsible-usage-guide", "gpui-wasm-parity", "common-interaction-profile"
+        "full-440-value-source-snapshot-hash", "source-exact-twenty-range-num-matrix",
+        "independent-per-cell-view-state", "single-active-cell-redraw",
+        "nineteen-inactive-svg-nodes-retained", "source-static-no-timer-setdata-setseries",
+        "collapsible-usage-guide", "gpui-wasm-parity", "optional-common-interaction-profile"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",

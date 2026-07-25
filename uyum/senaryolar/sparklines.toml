@@ -2,22 +2,48 @@ id = "sparklines"
 kaynak = "../uPlot/demos/sparklines.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
 fixture = "src/kart/sparklines.rs#sparklines_kartları"
-simge_sayısı = 10
-yüzey_sayısı = 20
-kayıt_sayısı = 22
-boyut = [150, 30]
-toplam_nokta_sayısı = 440
-yerleşim = "tek_tablo_10_satır_2_grafik_sütunu"
-veri_yaşam_döngüsü = "kaynak_csv_anlık_gömülü_snapshot"
+"simge_sayısı" = 10
+"yüzey_sayısı" = 20
+"kayıt_sayısı" = 22
+"boyut" = [150, 30]
+"toplam_nokta_sayısı" = 440
+"yerleşim" = "tek_tablo_10_satır_2_grafik_sütunu"
 
-[kanıt]
-veri = "on_kaynak_csv_aynen"
-ölçümler = ["Volume", "Close/Last"]
-pencere = "her_yüzey_bağımsız_rangeNum_min_max_0_1_true"
-piksel_hizası = 0
-eksenler = "gizli"
-renkler = ["pink", "#03a9f4", "#b3e5fc"]
-ilişki = "tek_kaynak_sayfasındaki_yirmi_yüzey_tek_kartta"
-etkileşim = "kaynak_cursor_select_legend_kapalı_ortak_port_uzantısı_isteğe_bağlı"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+["veri"]
+"kaynaklar" = "on_csv_dosyası"
+"snapshot" = "compile_time_gömülü"
+"tam_değer_hashi" = "fnv1a64:5a9159ba4b1d8eaf"
+"x" = "her_yüzeyde_0_ile_21"
+"satır_sırası" = "AAPL_AMD_AMZN_CSCO_FB_MSFT_QCOM_SBUX_TSLA_ZNGA"
+"sütun_sırası" = ["Volume", "Close/Last"]
+
+["çizim"]
+"y_aralığı" = "her_yüzey_bağımsız_rangeNum_min_max_0_1_true"
+"altın_aralık_sayısı" = 20
+"piksel_hizası" = 0
+"eksenler_ızgara_noktalar" = "gizli"
+"renkler" = ["pink", "#03a9f4", "#b3e5fc"]
+
+["ilişki"]
+"grup" = "tek_kaynak_sayfasındaki_yirmi_yüzey_tek_kartta"
+"veri" = "her_hücre_bağımsız_HizalıVeri"
+"görünüm" = "cursor_zoom_ve_geçmiş_hücre_başına_bağımsız"
+"sync" = false
+
+["etkileşim"]
+"kaynak_varsayılanı" = "cursor_select_legend_off"
+"port_uzantısı" = "ortak_wheel_touch_drag_geliştirici_kontrolüyle_açılır"
+
+["performans"]
+"kaynak_yaşam_döngüsü" = "Promise_all_sonrası_yirmi_statik_canvas"
+"port_yaşam_döngüsü" = "ilk_kurulum_sonrası_retained_svg"
+"etkileşim_yeniden_çizimi" = "yalnız_etkin_hücre"
+"korunan_hücre" = 19
+"timer_set_data_set_series" = false
+
+["kanıt"]
+"veri" = "tüm_dört_yüz_kırk_csv_değeri_resmi_snapshot_hashiyle_eşleşir"
+"aralıklar" = "yirmi_yüzeyin_resmi_range_num_altın_matrisi_korunur"
+"bağımsız_görünüm" = "yirmi_kompakt_yüzey_görünüm_durumunu_bağımsız_tutar"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
+"wasm" = "wasm/www/index.html"

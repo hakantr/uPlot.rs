@@ -1872,7 +1872,7 @@
         amaç: "Yoğun bir izleme tablosunda çok sayıda küçük serinin biçimini ve son dönem hareketini tek bakışta karşılaştırır; ilişkili yüzeyler ayrı katalog kartlarına bölünmez.",
         api: "sparklines_kartları() kaynak satır sırasıyla 20 (örnek, seçenekler, veri) üçlüsü döndürür. SparklineÖrneği::SATIRLAR her hissenin Hacim/Kapanış çiftini tanımlar; her yüzey bağımsız uPlot rangeNum Y aralığı kullanır.",
         izleme: "Hisse yerine servis, pod veya sensör satırı; Hacim/Kapanış yerine trafik, hata, gecikme ya da son değer sütunları yerleştirilebilir.",
-        maliyet: "Kaynak Promise.all ile 10 CSV'yi paralel yükleyip 20 statik canvas kurar. Bu port doğrulanmış 440 değeri binary içine gömer; ağ/fetch/parser yaşam döngüsünü kaldırır ve 20 yüzeyi aynı sayfada kurar. Kaynak cursor/select/legend kapalıdır; ortak wheel/touch/drag geliştirici etkinleştirirse çekirdek uzantısıdır.",
+        maliyet: "Kaynak Promise.all ile 10 CSV'yi paralel yükleyip 20 statik canvas kurar. Bu port doğrulanmış 440 değeri binary içine gömer; ağ/fetch/parser yaşam döngüsünü kaldırır ve 20 yüzeyi aynı sayfada kurar. İlk çizimden sonra wheel/touch/drag uzantısı yalnız etkin mini yüzeyi serialize edip yerinde günceller; diğer 19 SVG korunur. Kaynak cursor/select/legend kapalıdır; ortak etkileşimler geliştirici etkinleştirirse çekirdek uzantısıdır.",
       },
     };
     const sparseYüzeyleri = [
@@ -7243,6 +7243,7 @@
       const yüzey = chart.querySelector(`[data-sparklines-index="${indeks}"]`);
       const yüzeyOturumu = sparklinesOturumları[indeks];
       if (!yüzey || !yüzeyOturumu) return;
+      yüzey.dataset.renderCount = String(Number(yüzey.dataset.renderCount ?? "0") + 1);
       const svgÇıktısı = yüzeyOturumu.svg(150, 30);
       const mevcutSvg = yüzey.querySelector("svg");
       if (!mevcutSvg) {
@@ -7260,9 +7261,23 @@
       yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
     }
 
+    function sparklinesDurumunuGüncelle() {
+      oturum = sparklinesOturumları[sparklinesEtkinİndeks]
+        ?? sparklinesOturumları[0]
+        ?? null;
+      const xAralığı = oturum?.gorunur_x_araligi() ?? [];
+      const yAralığı = oturum?.gorunur_y_araligi() ?? [];
+      chart.dataset.xEnAz = String(xAralığı[0] ?? "");
+      chart.dataset.xEnCok = String(xAralığı[1] ?? "");
+      chart.dataset.yEnAz = String(yAralığı[0] ?? "");
+      chart.dataset.yEnCok = String(yAralığı[1] ?? "");
+      kontrolleriGüncelle();
+    }
+
     function sparklinesÇiz() {
-      if (!chart.classList.contains("sparklines-yüzeyi")
-        || chart.querySelectorAll(".sparklines-grafik").length !== sparklineYüzeyleri.length) {
+      const kabukYenilendi = !chart.classList.contains("sparklines-yüzeyi")
+        || chart.querySelectorAll(".sparklines-grafik").length !== sparklineYüzeyleri.length;
+      if (kabukYenilendi) {
         chart.className = "sparklines-yüzeyi";
         chart.innerHTML = `<div class="sparklines-tablo" role="table"
           aria-label="10 hisse için hacim ve kapanış sparklines tablosu">
@@ -7277,17 +7292,12 @@
               data-sparklines-index="${satır * 2 + 1}"></div>`).join("")}
         </div>`;
       }
-      sparklineYüzeyleri.forEach((_, indeks) => sparklinesYüzeyiniÇiz(indeks));
-      oturum = sparklinesOturumları[sparklinesEtkinİndeks]
-        ?? sparklinesOturumları[0]
-        ?? null;
-      const xAralığı = oturum?.gorunur_x_araligi() ?? [];
-      const yAralığı = oturum?.gorunur_y_araligi() ?? [];
-      chart.dataset.xEnAz = String(xAralığı[0] ?? "");
-      chart.dataset.xEnCok = String(xAralığı[1] ?? "");
-      chart.dataset.yEnAz = String(yAralığı[0] ?? "");
-      chart.dataset.yEnCok = String(yAralığı[1] ?? "");
-      kontrolleriGüncelle();
+      if (kabukYenilendi) {
+        sparklineYüzeyleri.forEach((_, indeks) => sparklinesYüzeyiniÇiz(indeks));
+      } else {
+        sparklinesYüzeyiniÇiz(sparklinesEtkinİndeks);
+      }
+      sparklinesDurumunuGüncelle();
     }
 
     function sparseYüzeyiniÇiz(indeks) {
@@ -10210,8 +10220,10 @@
         sparklinesBarsOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         sparklinesBarsÇiz();
       } else if (aktifKart === "sparklines") {
-        sparklinesOturumları.forEach(yüzey => yüzey.onceki_gorunum());
-        sparklinesÇiz();
+        if (sparklinesOturumları[sparklinesEtkinİndeks]?.onceki_gorunum()) {
+          sparklinesYüzeyiniÇiz(sparklinesEtkinİndeks);
+          sparklinesDurumunuGüncelle();
+        }
       } else if (aktifKart === "sparse") {
         sparseOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         sparseÇiz();
@@ -10317,8 +10329,10 @@
         sparklinesBarsOturumları.forEach(yüzey => yüzey.tam_gorunum());
         sparklinesBarsÇiz();
       } else if (aktifKart === "sparklines") {
-        sparklinesOturumları.forEach(yüzey => yüzey.tam_gorunum());
-        sparklinesÇiz();
+        if (sparklinesOturumları[sparklinesEtkinİndeks]?.tam_gorunum()) {
+          sparklinesYüzeyiniÇiz(sparklinesEtkinİndeks);
+          sparklinesDurumunuGüncelle();
+        }
       } else if (aktifKart === "sparse") {
         sparseOturumları.forEach(yüzey => yüzey.tam_gorunum());
         sparseÇiz();

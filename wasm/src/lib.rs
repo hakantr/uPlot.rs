@@ -3031,6 +3031,9 @@ mod testler {
             1
         );
         assert!(web.contains("function sparklinesÇiz()"));
+        assert!(web.contains("function sparklinesDurumunuGüncelle()"));
+        assert!(web.contains("sparklinesYüzeyiniÇiz(sparklinesEtkinİndeks)"));
+        assert!(web.contains("yüzey.dataset.renderCount"));
         assert!(web.contains("class=\"sparklines-tablo\""));
         assert_eq!(kart_sayisi(), 365);
     }
