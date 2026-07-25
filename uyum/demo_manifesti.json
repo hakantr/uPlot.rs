@@ -3265,7 +3265,9 @@
         "source-exact-eight-hundred-square", "source-exact-hundred-ms-size-loop",
         "cursor-lock-preserved-across-resize", "selection-ratios-preserved-across-resize",
         "hover-point-ratio-preserved-across-resize", "core-owned-set-size-state",
-        "gpui-wasm-parity", "common-interaction-profile", "panic-free-resize-flow"
+        "interaction-overlay-separated-from-main-scene", "stable-wasm-overlay-nodes",
+        "legend-set-series-hides-hover-point", "gpui-wasm-parity",
+        "common-interaction-profile", "panic-free-resize-flow"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",

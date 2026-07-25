@@ -13,9 +13,9 @@ use ::gpui::{
 };
 
 use crate::{
-    Aralık, AçıklamaVuruşu, DağılımVuruşu, DoğrusalGradyan, EnYakınTooltipBilgisi, Grafik,
-    HizalıVeri, Komut, MetinHizası, Nokta, Sahne, SeriBandı, SeriSeçenekleri, SeçimEylemi,
-    TekerlekEkseni, UplotHatası, YüzeyDikdörtgeni,
+    Aralık, AçıklamaVuruşu, BoyutSenkronDüzeni, DağılımVuruşu, DoğrusalGradyan,
+    EnYakınTooltipBilgisi, Grafik, HizalıVeri, Komut, MetinHizası, Nokta, Sahne, SeriBandı,
+    SeriSeçenekleri, SeçimEylemi, TekerlekEkseni, UplotHatası, YüzeyDikdörtgeni,
 };
 
 #[derive(Clone)]
@@ -59,6 +59,7 @@ pub struct GpuiGrafik {
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
     odak: Option<FocusHandle>,
     imleç_kilitli: bool,
+    boyut_senkron_katmanı: Option<BoyutSenkronDüzeni>,
     eksen_üzerinde: bool,
     açıklama_vuruşu: Option<AçıklamaVuruşu>,
     tooltip_tıklama_başlangıcı: Option<(Nokta, String)>,
@@ -303,6 +304,7 @@ impl Render for GpuiAnaYüzey {
 
 impl GpuiGrafik {
     pub fn yeni(grafik: Grafik) -> Self {
+        let boyut_senkron_katmanı = grafik.boyut_senkron_düzeni();
         let ana_sahne = Rc::new(grafik.çiz());
         Self {
             grafik,
@@ -317,7 +319,8 @@ impl GpuiGrafik {
             hata: None,
             çizim_sınırları: Rc::new(Cell::new(None)),
             odak: None,
-            imleç_kilitli: false,
+            imleç_kilitli: boyut_senkron_katmanı.is_some(),
+            boyut_senkron_katmanı,
             eksen_üzerinde: false,
             açıklama_vuruşu: None,
             tooltip_tıklama_başlangıcı: None,
@@ -551,7 +554,8 @@ impl GpuiGrafik {
         self.dokunma_kaydırma = None;
         self.boşluk_basılı = false;
         self.hata = None;
-        self.imleç_kilitli = korunmuş_kilit;
+        self.boyut_senkron_katmanı = self.grafik.boyut_senkron_düzeni();
+        self.imleç_kilitli = korunmuş_kilit || self.boyut_senkron_katmanı.is_some();
         self.açıklama_vuruşu = None;
         self.grafik_bildir(cx);
     }
@@ -878,6 +882,56 @@ impl GpuiGrafik {
         let (genişlik, yükseklik) = self.grafik.boyut();
         let mut sahne = Sahne::yeni(genişlik, yükseklik);
         let (sol, sağ, üst, alt) = self.çizim_alanı();
+        if let Some(düzen) = self.boyut_senkron_katmanı {
+            let çizim_genişliği = sağ - sol;
+            let çizim_yüksekliği = alt - üst;
+            let imleç = Nokta::yeni(
+                sol + çizim_genişliği * düzen.imleç_x_oranı,
+                üst + çizim_yüksekliği * düzen.imleç_y_oranı,
+            );
+            sahne.ekle(Komut::Dikdörtgen {
+                konum: Nokta::yeni(
+                    sol + çizim_genişliği * düzen.seçim_x_oranı,
+                    üst + çizim_yüksekliği * düzen.seçim_y_oranı,
+                ),
+                genişlik: çizim_genişliği * düzen.seçim_genişlik_oranı,
+                yükseklik: çizim_yüksekliği * düzen.seçim_yükseklik_oranı,
+                dolgu: "#00000012".to_string(),
+                çizgi: "#00000000".to_string(),
+                kalınlık: 0.0,
+            });
+            sahne.ekle(Komut::KesikliÇizgi {
+                başlangıç: Nokta::yeni(imleç.x, üst),
+                bitiş: Nokta::yeni(imleç.x, alt),
+                renk: "#607d8b".to_string(),
+                kalınlık: 1.0,
+                kesik: 4.0,
+            });
+            sahne.ekle(Komut::KesikliÇizgi {
+                başlangıç: Nokta::yeni(sol, imleç.y),
+                bitiş: Nokta::yeni(sağ, imleç.y),
+                renk: "#607d8b".to_string(),
+                kalınlık: 1.0,
+                kesik: 4.0,
+            });
+            if self
+                .grafik
+                .seri_seçenekleri()
+                .first()
+                .is_some_and(|seri| seri.göster)
+            {
+                sahne.ekle(Komut::Daire {
+                    merkez: Nokta::yeni(
+                        sol + çizim_genişliği * düzen.hover_x_oranı,
+                        üst + çizim_yüksekliği * düzen.hover_y_oranı,
+                    ),
+                    yarıçap: 2.5,
+                    dolgu: "red".to_string(),
+                    çizgi: "red".to_string(),
+                    kalınlık: 0.0,
+                });
+            }
+        }
         if let Some(imleç) = self.imleç.as_ref() {
             let timeline_sayısı = self.grafik.timeline_seri_sayısı();
             if timeline_sayısı > 0 {
@@ -2656,6 +2710,85 @@ mod testler {
 
         assert!(!bileşen.etkileşim_sahnesi().komutlar().is_empty());
         assert_eq!(bileşen.ana_sahne.komutlar().len(), ana_komut_sayısı);
+        Ok(())
+    }
+
+    #[test]
+    fn resize_kalıcı_katmanları_ana_sahneden_ayırır_ve_oranları_korur() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = crate::kart::update_cursor_select_resize_kartı(800)?;
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        let mut bileşen = GpuiGrafik::yeni(grafik);
+        assert!(bileşen.imleç_kilitli);
+        assert!(!bileşen.ana_sahne.svg().contains("#607d8b"));
+
+        let oranları_oku = |bileşen: &GpuiGrafik| {
+            let sahne = bileşen.etkileşim_sahnesi();
+            let (sol, sağ, üst, alt) = bileşen.çizim_alanı();
+            let imleç = sahne.komutlar().iter().find_map(|komut| match komut {
+                Komut::KesikliÇizgi {
+                    başlangıç,
+                    bitiş,
+                    renk,
+                    ..
+                } if renk == "#607d8b" && (başlangıç.x - bitiş.x).abs() <= f32::EPSILON => {
+                    Some((
+                        (başlangıç.x - sol) / (sağ - sol),
+                        sahne.komutlar().iter().find_map(|aday| match aday {
+                            Komut::KesikliÇizgi {
+                                başlangıç,
+                                bitiş,
+                                renk,
+                                ..
+                            } if renk == "#607d8b"
+                                && (başlangıç.y - bitiş.y).abs() <= f32::EPSILON =>
+                            {
+                                Some((başlangıç.y - üst) / (alt - üst))
+                            }
+                            _ => None,
+                        })?,
+                    ))
+                }
+                _ => None,
+            });
+            let seçim = sahne.komutlar().iter().find_map(|komut| match komut {
+                Komut::Dikdörtgen {
+                    konum,
+                    genişlik,
+                    yükseklik,
+                    dolgu,
+                    ..
+                } if dolgu == "#00000012" => Some((
+                    (konum.x - sol) / (sağ - sol),
+                    (konum.y - üst) / (alt - üst),
+                    *genişlik / (sağ - sol),
+                    *yükseklik / (alt - üst),
+                )),
+                _ => None,
+            });
+            let hover = sahne.komutlar().iter().find_map(|komut| match komut {
+                Komut::Daire { merkez, dolgu, .. } if dolgu == "red" => Some((
+                    (merkez.x - sol) / (sağ - sol),
+                    (merkez.y - üst) / (alt - üst),
+                )),
+                _ => None,
+            });
+            (imleç, seçim, hover)
+        };
+
+        let büyük = oranları_oku(&bileşen);
+        assert!(büyük.0.is_some() && büyük.1.is_some() && büyük.2.is_some());
+        assert!(bileşen.grafik.boyutu_ayarla(400, 400)?);
+        let küçük = oranları_oku(&bileşen);
+        assert_eq!(büyük, küçük);
+
+        assert!(bileşen.grafik.seri_görünürlüğünü_ayarla(0, false)?);
+        assert!(
+            !bileşen
+                .etkileşim_sahnesi()
+                .komutlar()
+                .iter()
+                .any(|komut| matches!(komut, Komut::Daire { dolgu, .. } if dolgu == "red"))
+        );
         Ok(())
     }
 

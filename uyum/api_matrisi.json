@@ -845,27 +845,33 @@
     },
     {
       "kaynak_yolu": "_setSize cursor.left/top proportional scaling",
-      "rust_karşılığı": "BoyutSenkronDüzeni imleç oranları",
+      "rust_karşılığı": "BoyutSenkronDüzeni + GPUI/WASM kalıcı imleç overlay'i",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/update_cursor_select_resize.rs"
+      "test": "src/gpui.rs + wasm/src/lib.rs"
     },
     {
       "kaynak_yolu": "_setSize select left/top/width/height proportional scaling",
-      "rust_karşılığı": "BoyutSenkronDüzeni seçim oranları",
+      "rust_karşılığı": "BoyutSenkronDüzeni + GPUI/WASM kalıcı seçim overlay'i",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/update_cursor_select_resize.rs"
+      "test": "src/gpui.rs + wasm/src/lib.rs"
     },
     {
       "kaynak_yolu": "_setSize cursorPts left/top proportional scaling",
-      "rust_karşılığı": "BoyutSenkronDüzeni hover oranları",
+      "rust_karşılığı": "BoyutSenkronDüzeni + GPUI/WASM kalıcı hover overlay'i",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/update_cursor_select_resize.rs"
+      "test": "src/gpui.rs + wasm/src/lib.rs"
     },
     {
       "kaynak_yolu": "update-cursor-select-resize 100ms 800..400 size loop",
       "rust_karşılığı": "BoyutSenkronAkışı",
       "durum": "tam_kanıtlı",
       "test": "src/kart/update_cursor_select_resize.rs"
+    },
+    {
+      "kaynak_yolu": "setSize redraws canvas while cursor/select/cursorPts DOM nodes are retained",
+      "rust_karşılığı": "GPUI ayrı etkileşim canvası + WASM kararlı #etkileşim düğümleri",
+      "durum": "tam_kanıtlı",
+      "test": "src/gpui.rs + wasm/src/lib.rs"
     },
     {
       "kaynak_yolu": "series.auto: false",

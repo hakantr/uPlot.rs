@@ -533,6 +533,23 @@ impl KartOturumu {
         self.boyut_senkron_akışı.map_or(0, BoyutSenkronAkışı::boyut)
     }
 
+    pub fn boyut_senkron_oranlari(&self) -> Vec<f64> {
+        self.grafik
+            .boyut_senkron_düzeni()
+            .map_or_else(Vec::new, |düzen| {
+                vec![
+                    f64::from(düzen.imleç_x_oranı),
+                    f64::from(düzen.imleç_y_oranı),
+                    f64::from(düzen.seçim_x_oranı),
+                    f64::from(düzen.seçim_y_oranı),
+                    f64::from(düzen.seçim_genişlik_oranı),
+                    f64::from(düzen.seçim_yükseklik_oranı),
+                    f64::from(düzen.hover_x_oranı),
+                    f64::from(düzen.hover_y_oranı),
+                ]
+            })
+    }
+
     pub fn x_dikey(&self) -> bool {
         self.grafik.x_dikey_mi()
     }
@@ -3094,11 +3111,38 @@ mod testler {
         assert_eq!(oturum.kaynak_boyutu(), 800);
         let svg = oturum.svg(800, 800);
         assert!(svg.contains("Maintain loc of cursor/select/hoverPts"));
-        assert!(svg.contains("#607d8b"));
-        assert!(svg.contains("#00000012"));
+        assert!(!svg.contains("#607d8b"));
+        assert!(!svg.contains("#00000012"));
+        let oranlar = oturum.boyut_senkron_oranlari();
+        let [
+            imleç_x,
+            imleç_y,
+            seçim_x,
+            seçim_y,
+            seçim_genişliği,
+            seçim_yüksekliği,
+            hover_x,
+            hover_y,
+        ] = oranlar.as_slice()
+        else {
+            assert_eq!(oranlar.len(), 8);
+            return;
+        };
+        assert!((*imleç_x - 200.0 / 725.0).abs() < 0.0001);
+        assert!((*imleç_y - 200.0 / 733.0).abs() < 0.0001);
+        assert!((*seçim_x - 100.0 / 725.0).abs() < 0.0001);
+        assert_eq!(*seçim_y, 0.0);
+        assert!((*seçim_genişliği - 100.0 / 725.0).abs() < 0.0001);
+        assert_eq!(*seçim_yüksekliği, 1.0);
+        assert!((*hover_x - 363.0 / 725.0).abs() < 0.0001);
+        assert!((*hover_y - 400.0 / 733.0).abs() < 0.0001);
         assert!(matches!(oturum.boyut_senkron_ilerlet(), Ok(790)));
         assert_eq!(oturum.kaynak_boyutu(), 790);
+        assert_eq!(oturum.boyut_senkron_oranlari(), oranlar);
         assert!(update_cursor_select_resize_kart_tanim_ornegi().contains("grafik.boyutu_ayarla"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("boyutSenkronKatmanınıGüncelle"));
+        assert!(web.contains("data-boyut-senkron-katmani"));
         assert_eq!(kart_sayisi(), 365);
     }
 

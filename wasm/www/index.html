@@ -2190,13 +2190,19 @@
         <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/update-cursor-select-resize.html">update-cursor-select-resize.html</a>
         · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">src/uPlot.js</a>
         <br>Resmî 100 ms boyut döngüsü ile seçim, kilitli imleç ve hover noktasının
-        çizim alanına göre oransal taşınması Rust çekirdeğinde uygulanır.`,
+        çizim alanına göre oransal taşınması çekirdek + kalıcı overlay katmanında uygulanır.`,
       tanım: () => update_cursor_select_resize_kart_tanim_ornegi(),
       tanımYolu: "src/kart/update_cursor_select_resize.rs",
       seriler: [{ etiket: "Value", renk: "red" }],
       yardım: "Grafik 800↔400 px arasında değişirken imleç, seçim ve hover noktası aynı oranda kalır",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "setCursor, cursor._lock ve setSelect ile kurulan kalıcı cursor/select/hover durumunu setSize boyunca aynı çizim alanı oranında tutar.",
+        api: "BoyutSenkronDüzeni başlangıç oranlarını, Grafik::boyutu_ayarla veri ve ölçeği koruyan setSize karşılığını sağlar. Lejant setSeries kırmızı seriyle hover noktasını birlikte gizler.",
+        izleme: "Panel veya pencere boyutu değişirken kilitlenmiş inceleme konumunun ve seçilmiş zaman aralığının kaybolmaması için kullanılır.",
+        maliyet: "setSize kaynak gibi ana yolları yeniden çizer; cursor, seçim ve hover aynı #etkileşim düğümlerinde yerinde taşınır, DOM düğümleri ve ana yol ikinci kez kurulmaz. 100 ms zamanlayıcı karttan çıkınca temizlenir.",
+      },
     };
     document.querySelector('[data-kart="update-cursor-select-resize"]')?.insertAdjacentHTML(
       "afterend",
@@ -6294,12 +6300,14 @@
           ${imleçNoktaları}
           ${eksenGöstergeleri}
         </g>`);
+      boyutSenkronKatmanınıGüncelle(svg);
       const yığmaLejantı = aktifKart.startsWith("stacked-series-");
       const değiştirilebilirLejant = yığmaLejantı
         || aktifKart.startsWith("multi-bars-")
         || aktifKart === "tooltips-closest"
         || aktifKart === "tooltips"
-        || aktifKart === "trendlines";
+        || aktifKart === "trendlines"
+        || aktifKart === "update-cursor-select-resize";
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks) || değiştirilebilirLejant
           ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>
@@ -6577,6 +6585,41 @@
       return { sol, sağ, üst, alt, genişlik: sağ - sol, yükseklik: alt - üst };
     }
 
+    function boyutSenkronKatmanınıGüncelle(svg) {
+      if (aktifKart !== "update-cursor-select-resize" || !oturum || !svg) return;
+      const oranlar = Array.from(oturum.boyut_senkron_oranlari?.() ?? []);
+      if (oranlar.length !== 8) return;
+      const [imleçX, imleçY, seçimX, seçimY, seçimG, seçimYük, hoverX, hoverY] = oranlar;
+      const alan = çizimAlanı(svg.viewBox.baseVal);
+      if (![alan.sol, alan.sağ, alan.üst, alan.alt, ...oranlar].every(Number.isFinite)) return;
+      const seçim = svg.querySelector("#seçim");
+      const dikey = svg.querySelector("#imleç-x");
+      const yatay = svg.querySelector("#imleç-y");
+      const hover = svg.querySelector("#imleç-nokta-0");
+      seçim?.setAttribute("x", alan.sol + seçimX * alan.genişlik);
+      seçim?.setAttribute("y", alan.üst + seçimY * alan.yükseklik);
+      seçim?.setAttribute("width", seçimG * alan.genişlik);
+      seçim?.setAttribute("height", seçimYük * alan.yükseklik);
+      seçim?.setAttribute("fill", "rgba(0,0,0,.071)");
+      seçim?.setAttribute("stroke", "none");
+      seçim?.setAttribute("visibility", "visible");
+      const x = alan.sol + imleçX * alan.genişlik;
+      const y = alan.üst + imleçY * alan.yükseklik;
+      dikey?.setAttribute("x1", x); dikey?.setAttribute("x2", x);
+      dikey?.setAttribute("y1", alan.üst); dikey?.setAttribute("y2", alan.alt);
+      dikey?.setAttribute("visibility", "visible");
+      yatay?.setAttribute("x1", alan.sol); yatay?.setAttribute("x2", alan.sağ);
+      yatay?.setAttribute("y1", y); yatay?.setAttribute("y2", y);
+      yatay?.setAttribute("visibility", "visible");
+      hover?.setAttribute("cx", alan.sol + hoverX * alan.genişlik);
+      hover?.setAttribute("cy", alan.üst + hoverY * alan.yükseklik);
+      hover?.setAttribute("fill", "red");
+      hover?.setAttribute("visibility", oturum.seri_gorunur(0) ? "visible" : "hidden");
+      const katman = svg.querySelector(":scope > #etkileşim");
+      katman?.setAttribute("data-boyut-senkron-katmani", "stable");
+      svg.dataset.cursorKilitli = "true";
+    }
+
     function çokluTooltipKatmanınıKur() {
       if (!kartlar[aktifKart].çokluTooltip) return;
       const seriYuvaları = [-1, ...kartlar[aktifKart].seriler.map((_, indeks) => indeks)];
@@ -6664,6 +6707,10 @@
 
     function imleciGüncelle(olay) {
       const { x: hamX, y: hamY, svg, view } = svgKonumu(olay);
+      if (aktifKart === "update-cursor-select-resize") {
+        boyutSenkronKatmanınıGüncelle(svg);
+        return;
+      }
       const { sol, sağ, üst, alt } = çizimAlanı(view);
       açıklamaVurgusunuGüncelle(svg, view, hamX, hamY);
       if (kartlar[aktifKart].çubuk) {

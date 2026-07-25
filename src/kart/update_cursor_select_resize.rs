@@ -88,7 +88,7 @@ pub fn update_cursor_select_resize_kartı(
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Grafik, Komut};
+    use crate::Grafik;
 
     #[test]
     fn kaynak_veri_boyut_akışı_ve_oransal_katmanlar_korunur() -> Result<(), UplotHatası> {
@@ -107,41 +107,22 @@ mod testler {
             Some([Some(0.0), Some(1.0), Some(2.0)].as_slice())
         );
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
-        let büyük = grafik.çiz();
-        let büyük_imleç_x = büyük.komutlar().iter().find_map(|komut| match komut {
-            Komut::KesikliÇizgi {
-                başlangıç,
-                bitiş,
-                renk,
-                ..
-            } if renk == "#607d8b" && (başlangıç.x - bitiş.x).abs() <= f32::EPSILON => {
-                Some(başlangıç.x)
-            }
-            _ => None,
-        });
+        let düzen = grafik
+            .boyut_senkron_düzeni()
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!((düzen.imleç_x_oranı - 200.0 / 725.0).abs() < 0.0001);
+        assert!((düzen.imleç_y_oranı - 200.0 / 733.0).abs() < 0.0001);
+        assert!((düzen.seçim_x_oranı - 100.0 / 725.0).abs() < 0.0001);
+        assert!((düzen.seçim_y_oranı - 0.0).abs() < 0.0001);
+        assert!((düzen.seçim_genişlik_oranı - 100.0 / 725.0).abs() < 0.0001);
+        assert!((düzen.seçim_yükseklik_oranı - 1.0).abs() < 0.0001);
+        assert!((düzen.hover_x_oranı - 363.0 / 725.0).abs() < 0.0001);
+        assert!((düzen.hover_y_oranı - 400.0 / 733.0).abs() < 0.0001);
+        let ana_sahne = grafik.çiz();
+        assert!(!ana_sahne.svg().contains("#607d8b"));
+        assert!(!ana_sahne.svg().contains("#00000012"));
         assert!(grafik.boyutu_ayarla(400, 400)?);
-        let küçük = grafik.çiz();
-        let küçük_imleç_x = küçük.komutlar().iter().find_map(|komut| match komut {
-            Komut::KesikliÇizgi {
-                başlangıç,
-                bitiş,
-                renk,
-                ..
-            } if renk == "#607d8b" && (başlangıç.x - bitiş.x).abs() <= f32::EPSILON => {
-                Some(başlangıç.x)
-            }
-            _ => None,
-        });
-        let (büyük_sol, büyük_sağ, _, _) = grafik.çizim_alanı_boyutta(800, 800);
-        let (küçük_sol, küçük_sağ, _, _) = grafik.çizim_alanı_boyutta(400, 400);
-        let büyük_oran = büyük_imleç_x
-            .map(|x| (x - büyük_sol) / (büyük_sağ - büyük_sol))
-            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
-        let küçük_oran = küçük_imleç_x
-            .map(|x| (x - küçük_sol) / (küçük_sağ - küçük_sol))
-            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
-        assert!((büyük_oran - 200.0 / 725.0).abs() < 0.0001);
-        assert!((küçük_oran - büyük_oran).abs() < 0.0001);
+        assert_eq!(grafik.boyut_senkron_düzeni(), Some(düzen));
         Ok(())
     }
 }

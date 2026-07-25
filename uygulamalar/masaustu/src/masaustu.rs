@@ -3483,7 +3483,10 @@ impl Render for ChartListesi {
         );
         let tooltip_serileri = if matches!(
             aktif_kart,
-            KartKimliği::TooltipsClosest | KartKimliği::Tooltips | KartKimliği::Trendlines
+            KartKimliği::TooltipsClosest
+                | KartKimliği::Tooltips
+                | KartKimliği::Trendlines
+                | KartKimliği::UpdateCursorSelectResize
         ) {
             self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
                 grafik
@@ -6348,6 +6351,19 @@ impl Render for ChartListesi {
                  katmanını taşır; uçlar yalnız ölçek, resize veya setSeries sonrasında yeniden \
                  hesaplanır. Kaynak points.space=10 ve tek-piksel yarım-piksel hizası korunur.",
             ),
+            KartKimliği::UpdateCursorSelectResize => Some(
+                "Amaç: setCursor, cursor._lock ve setSelect ile kurulmuş kalıcı etkileşim \
+                 durumunun setSize sırasında çizim alanı oranlarında kalmasını gösterir. API: \
+                 BoyutSenkronDüzeni yalnız başlangıç cursor/select/hover oranlarını taşır; \
+                 Grafik::boyutu_ayarla veri ve ölçeği koruyarak ana sahneyi yeniden boyar. GPUI \
+                 adaptörü ana veri sahnesinden ayrı etkileşim canvas'ında, WASM adaptörü ise aynı \
+                 SVG içinde kimliği değişmeyen overlay düğümlerinde durumu saklar. Lejant \
+                 setSeries kırmızı yolu ve hover noktasını birlikte gizler. İzleme: panel veya \
+                 pencere boyutu değişirken kullanıcının kilitli inceleme konumunu kaybetmemek \
+                 içindir. Maliyet: kaynak gibi setSize ana yolları yeniden çizer; cursor, seçim \
+                 ve hover için ikinci bir ana yol üretmez, yalnız hafif katman koordinatları \
+                 güncellenir. 100 ms zamanlayıcı karttan çıkıldığında durdurulur.",
+            ),
             KartKimliği::TimeseriesDiscrete => Some(
                 "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
                  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
@@ -6684,14 +6700,20 @@ impl Render for ChartListesi {
             .when(
                 !matches!(
                     aktif_kart,
-                    KartKimliği::TooltipsClosest | KartKimliği::Tooltips | KartKimliği::Trendlines
+                    KartKimliği::TooltipsClosest
+                        | KartKimliği::Tooltips
+                        | KartKimliği::Trendlines
+                        | KartKimliği::UpdateCursorSelectResize
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )
             .when(
                 matches!(
                     aktif_kart,
-                    KartKimliği::TooltipsClosest | KartKimliği::Tooltips | KartKimliği::Trendlines
+                    KartKimliği::TooltipsClosest
+                        | KartKimliği::Tooltips
+                        | KartKimliği::Trendlines
+                        | KartKimliği::UpdateCursorSelectResize
                 ),
                 |öğe| {
                 öğe.child(
