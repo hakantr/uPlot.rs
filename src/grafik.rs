@@ -4060,8 +4060,8 @@ impl Grafik {
                 uygun_artım(x_aralığı, x_boyutu, x_etiket_boşluğu),
             ),
         };
-        let mut önceki_x_yılı = None;
-        let mut önceki_ikincil_x_yılı = None;
+        let mut x_zaman_etiket_durumu = crate::zaman::ZamanEtiketDurumu::default();
+        let mut ikincil_x_zaman_etiket_durumu = crate::zaman::ZamanEtiketDurumu::default();
         if self.seçenekler.eksen_göstergeleri
             && self.seçenekler.x_eksen_görünür
             && !self.seçenekler.x_dikey
@@ -4164,15 +4164,9 @@ impl Grafik {
                             x_artımı / birim,
                             &self.seçenekler.x_tarih_adları,
                             self.seçenekler.x_zaman_dilimi,
-                            önceki_x_yılı,
+                            &mut x_zaman_etiket_durumu,
                         )
-                        .map_or_else(
-                            || eksen_değerini_yaz(x_değeri, x_artımı),
-                            |(etiket, yıl)| {
-                                önceki_x_yılı = Some(yıl);
-                                etiket
-                            },
-                        )
+                        .unwrap_or_else(|| eksen_değerini_yaz(x_değeri, x_artımı))
                     } else {
                         let değer = x_değeri * self.seçenekler.x_eksen_değer_çarpanı;
                         let artım = x_artımı * self.seçenekler.x_eksen_değer_çarpanı;
@@ -4207,15 +4201,9 @@ impl Grafik {
                     x_artımı / birim,
                     &self.seçenekler.x_tarih_adları,
                     self.seçenekler.x_zaman_dilimi,
-                    önceki_ikincil_x_yılı,
+                    &mut ikincil_x_zaman_etiket_durumu,
                 )
-                .map_or_else(
-                    || eksen_değerini_yaz(kaydırılmış, x_artımı / birim),
-                    |(etiket, yıl)| {
-                        önceki_ikincil_x_yılı = Some(yıl);
-                        etiket
-                    },
-                );
+                .unwrap_or_else(|| eksen_değerini_yaz(kaydırılmış, x_artımı / birim));
                 sahne.ekle(Komut::Metin {
                     konum: Nokta::yeni(x, alt + 38.0),
                     içerik: etiket,
@@ -7116,15 +7104,25 @@ fn zaman_bölmeleri(
     zaman_dilimi: crate::ZamanDilimi,
     sabit_artım: Option<f64>,
 ) -> (Vec<f64>, f64) {
-    const SANİYE_ADIMLARI: [f64; 35] = [
+    const SANİYE_ADIMLARI: &[f64] = &[
+        0.001,
+        0.002,
+        0.0025,
+        0.005,
+        0.01,
+        0.02,
+        0.025,
+        0.05,
+        0.1,
+        0.2,
+        0.25,
+        0.5,
         1.0,
-        2.0,
         5.0,
         10.0,
         15.0,
         30.0,
         60.0,
-        120.0,
         300.0,
         600.0,
         900.0,
@@ -7148,23 +7146,88 @@ fn zaman_bölmeleri(
         864_000.0,
         1_296_000.0,
         2_592_000.0,
+        5_184_000.0,
         7_776_000.0,
+        10_368_000.0,
         15_552_000.0,
         31_536_000.0,
         63_072_000.0,
+        157_680_000.0,
+        315_360_000.0,
+        788_400_000.0,
+        1_576_800_000.0,
+        3_153_600_000.0,
+    ];
+    const MİLİSANİYE_ADIMLARI: &[f64] = &[
+        1.0,
+        2.0,
+        5.0,
+        10.0,
+        20.0,
+        25.0,
+        50.0,
+        100.0,
+        200.0,
+        250.0,
+        500.0,
+        1_000.0,
+        5_000.0,
+        10_000.0,
+        15_000.0,
+        30_000.0,
+        60_000.0,
+        300_000.0,
+        600_000.0,
+        900_000.0,
+        1_800_000.0,
+        3_600_000.0,
+        7_200_000.0,
+        10_800_000.0,
+        14_400_000.0,
+        21_600_000.0,
+        28_800_000.0,
+        43_200_000.0,
+        86_400_000.0,
+        172_800_000.0,
+        259_200_000.0,
+        345_600_000.0,
+        432_000_000.0,
+        518_400_000.0,
+        604_800_000.0,
+        691_200_000.0,
+        777_600_000.0,
+        864_000_000.0,
+        1_296_000_000.0,
+        2_592_000_000.0,
+        5_184_000_000.0,
+        7_776_000_000.0,
+        10_368_000_000.0,
+        15_552_000_000.0,
+        31_536_000_000.0,
+        63_072_000_000.0,
+        157_680_000_000.0,
+        315_360_000_000.0,
+        788_400_000_000.0,
+        1_576_800_000_000.0,
+        3_153_600_000_000.0,
     ];
     let birim = if milisaniye { 1_000.0 } else { 1.0 };
+    let zaman_adımları = if milisaniye {
+        MİLİSANİYE_ADIMLARI
+    } else {
+        SANİYE_ADIMLARI
+    };
     let hedef =
         (aralık.en_çok - aralık.en_az) * f64::from(en_az_boşluk) / f64::from(boyut.max(1.0));
     let adım = sabit_artım
         .filter(|artım| artım.is_finite() && *artım > 0.0)
         .map(|artım| artım * birim)
         .unwrap_or_else(|| {
-            SANİYE_ADIMLARI
-                .into_iter()
-                .map(|adım| adım * birim)
+            zaman_adımları
+                .iter()
+                .copied()
                 .find(|adım| *adım >= hedef)
-                .unwrap_or(63_072_000.0 * birim)
+                .unwrap_or_else(|| zaman_adımları.last().copied().unwrap_or(birim))
         });
     let saniye_adımı = adım / birim;
     if saniye_adımı >= 2_592_000.0 {
@@ -8548,13 +8611,27 @@ mod eksen_testleri {
 
     #[test]
     fn zaman_bölmeleri_kaynak_dört_sekiz_saat_ve_üç_gün_adımlarını_seçer() {
-        let adımı_seç = |hedef: f64| {
+        let adımı_seç = |hedef: f64, milisaniye: bool| {
             let aralık = Aralık::yeni(0.0, hedef * 28.0).expect("geçerli zaman aralığı");
-            zaman_bölmeleri(aralık, 1_400.0, 50.0, false, crate::ZamanDilimi::Utc, None).1
+            zaman_bölmeleri(
+                aralık,
+                1_400.0,
+                50.0,
+                milisaniye,
+                crate::ZamanDilimi::Utc,
+                None,
+            )
+            .1
         };
-        assert_eq!(adımı_seç(4.0 * 3_600.0), 4.0 * 3_600.0);
-        assert_eq!(adımı_seç(8.0 * 3_600.0), 8.0 * 3_600.0);
-        assert_eq!(adımı_seç(3.0 * 86_400.0), 3.0 * 86_400.0);
+        assert_eq!(adımı_seç(0.001, false), 0.001);
+        assert_eq!(adımı_seç(1.1, false), 5.0);
+        assert_eq!(adımı_seç(4.0 * 3_600.0, false), 4.0 * 3_600.0);
+        assert_eq!(adımı_seç(8.0 * 3_600.0, false), 8.0 * 3_600.0);
+        assert_eq!(adımı_seç(3.0 * 86_400.0, false), 3.0 * 86_400.0);
+        assert_eq!(adımı_seç(60.0 * 86_400.0, false), 60.0 * 86_400.0);
+        assert_eq!(adımı_seç(100.0 * 365.0 * 86_400.0, false), 3_153_600_000.0);
+        assert_eq!(adımı_seç(2.1, true), 5.0);
+        assert_eq!(adımı_seç(25.0, true), 25.0);
     }
 
     #[test]

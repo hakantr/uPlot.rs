@@ -41,13 +41,23 @@ pub(crate) fn tooltip_tarihi(zaman: f64) -> Option<String> {
     ))
 }
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct ZamanEtiketDurumu {
+    yıl: Option<i64>,
+    ay: Option<u32>,
+    gün: Option<u32>,
+    saat: Option<u32>,
+    dakika: Option<u32>,
+    saniye: Option<u32>,
+}
+
 pub(crate) fn yerel_eksen_etiketi(
     zaman_damgası: f64,
     artım: f64,
     adlar: &crate::TarihAdları,
     zaman_dilimi: crate::ZamanDilimi,
-    önceki_yıl: Option<i64>,
-) -> Option<(String, i64)> {
+    durum: &mut ZamanEtiketDurumu,
+) -> Option<String> {
     let yerel_zaman = zaman_damgası + f64::from(zaman_dilimi_ofseti(zaman_dilimi, zaman_damgası));
     let (yıl, ay, gün, saat, dakika, saniye) = utc_alanları(yerel_zaman)?;
     let dönem = if saat < 12 { "am" } else { "pm" };
@@ -55,31 +65,70 @@ pub(crate) fn yerel_eksen_etiketi(
         0 => 12,
         değer => değer,
     };
+    let yeni_yıl = durum.yıl != Some(yıl);
+    let yeni_gün = durum.gün != Some(gün) || durum.ay != Some(ay) || yeni_yıl;
+    let yeni_dakika = durum.dakika != Some(dakika) || durum.saat != Some(saat) || yeni_gün;
+    let ay_gün = format!("{ay}/{gün}");
+    let kısa_yıl = yıl.rem_euclid(100);
+    let saat_dakika = format!("{saat12}:{dakika:02}{dönem}");
     let içerik = if artım >= 28.0 * 86_400.0 {
         let ay_adı = adlar.kısa_ay(ay)?;
-        if önceki_yıl == Some(yıl) {
-            ay_adı.to_string()
-        } else {
+        if yeni_yıl {
             format!("{ay_adı}\n{yıl:04}")
+        } else {
+            ay_adı.to_string()
         }
     } else if artım >= 86_400.0 {
-        if önceki_yıl == Some(yıl) {
-            format!("{ay}/{gün}")
+        if yeni_yıl {
+            format!("{ay_gün}\n{yıl:04}")
         } else {
-            format!("{ay}/{gün}\n{yıl:04}")
+            ay_gün
         }
-    } else if artım >= 3_600.0 && saat == 0 && dakika == 0 {
-        format!("{ay}/{gün}\n{saat12}{dönem}")
     } else if artım >= 3_600.0 {
-        format!("{saat12}{dönem}")
-    } else if artım >= 60.0 && saat == 0 && dakika == 0 {
-        format!("{ay}/{gün}\n{saat12}:{dakika:02}{dönem}")
+        let ana = format!("{saat12}{dönem}");
+        if yeni_yıl {
+            format!("{ana}\n{ay_gün}/{kısa_yıl:02}")
+        } else if yeni_gün {
+            format!("{ana}\n{ay_gün}")
+        } else {
+            ana
+        }
     } else if artım >= 60.0 {
-        format!("{saat12}:{dakika:02}{dönem}")
+        if yeni_yıl {
+            format!("{saat_dakika}\n{ay_gün}/{kısa_yıl:02}")
+        } else if yeni_gün {
+            format!("{saat_dakika}\n{ay_gün}")
+        } else {
+            saat_dakika
+        }
     } else {
-        format!("{saniye:02}")
+        let milisaniye = ((yerel_zaman - yerel_zaman.floor()) * 1_000.0)
+            .round()
+            .clamp(0.0, 999.0) as u32;
+        let ana = if artım >= 1.0 {
+            format!(":{saniye:02}")
+        } else {
+            format!(":{saniye:02}.{milisaniye:03}")
+        };
+        if yeni_yıl {
+            format!("{ana}\n{ay_gün}/{kısa_yıl:02} {saat_dakika}")
+        } else if yeni_gün {
+            format!("{ana}\n{ay_gün} {saat_dakika}")
+        } else if yeni_dakika {
+            format!("{ana}\n{saat_dakika}")
+        } else {
+            ana
+        }
     };
-    Some((içerik, yıl))
+    *durum = ZamanEtiketDurumu {
+        yıl: Some(yıl),
+        ay: Some(ay),
+        gün: Some(gün),
+        saat: Some(saat),
+        dakika: Some(dakika),
+        saniye: Some(saniye),
+    };
+    Some(içerik)
 }
 
 pub(crate) fn zaman_dilimi_ofseti(zaman_dilimi: crate::ZamanDilimi, zaman: f64) -> i32 {
@@ -178,6 +227,7 @@ mod testler {
     #[test]
     fn artik_yıl_ve_utc_etiketi_korunur() {
         let zaman = utc_zaman_damgası(2024, 2, 1);
+        let mut durum = ZamanEtiketDurumu::default();
         assert_eq!(zaman.and_then(utc_alanları), Some((2024, 2, 1, 0, 0, 0)));
         assert_eq!(
             zaman.and_then(|z| {
@@ -186,11 +236,12 @@ mod testler {
                     31.0 * 86_400.0,
                     &crate::TarihAdları::ingilizce(),
                     crate::ZamanDilimi::Utc,
-                    None,
+                    &mut durum,
                 )
             }),
-            Some(("Feb\n2024".to_string(), 2024))
+            Some("Feb\n2024".to_string())
         );
+        let mut durum = ZamanEtiketDurumu::default();
         assert_eq!(
             zaman.and_then(|z| {
                 yerel_eksen_etiketi(
@@ -198,11 +249,12 @@ mod testler {
                     3_600.0,
                     &crate::TarihAdları::ingilizce(),
                     crate::ZamanDilimi::Utc,
-                    None,
+                    &mut durum,
                 )
             }),
-            Some(("2/1\n12am".to_string(), 2024))
+            Some("12am\n2/1/24".to_string())
         );
+        let mut durum = ZamanEtiketDurumu::default();
         assert_eq!(
             zaman.and_then(|z| {
                 yerel_eksen_etiketi(
@@ -210,10 +262,39 @@ mod testler {
                     31.0 * 86_400.0,
                     &crate::TarihAdları::rusça(),
                     crate::ZamanDilimi::Utc,
-                    None,
+                    &mut durum,
                 )
             }),
-            Some(("Февр\n2024".to_string(), 2024))
+            Some("Февр\n2024".to_string())
+        );
+    }
+
+    #[test]
+    fn zaman_etiketleri_kaynak_rollover_durumunu_korur() {
+        let mut durum = ZamanEtiketDurumu::default();
+        let etiketler = [
+            (2024, 12, 31, 23, 0, "11pm\n12/31/24"),
+            (2025, 1, 1, 0, 0, "12am\n1/1/25"),
+            (2025, 1, 1, 1, 0, "1am"),
+        ]
+        .map(|(yıl, ay, gün, saat, dakika, beklenen)| {
+            let zaman = utc_zaman_damgası(yıl, ay, gün)
+                .map(|zaman| zaman + f64::from(saat * 3_600 + dakika * 60));
+            let gerçek = zaman.and_then(|zaman| {
+                yerel_eksen_etiketi(
+                    zaman,
+                    3_600.0,
+                    &crate::TarihAdları::ingilizce(),
+                    crate::ZamanDilimi::Utc,
+                    &mut durum,
+                )
+            });
+            (gerçek, beklenen)
+        });
+        assert!(
+            etiketler
+                .iter()
+                .all(|(gerçek, beklenen)| gerçek.as_deref() == Some(*beklenen))
         );
     }
 
