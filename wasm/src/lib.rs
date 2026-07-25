@@ -3896,6 +3896,12 @@ mod testler {
             assert!(svg.contains("#00ff0022"));
             assert!(svg.matches("#00000033").count() >= 12);
         }
+        let web = include_str!("../www/index.html");
+        assert_eq!(web.matches("data-kart=\"bars-values-autosize\"").count(), 1);
+        assert!(!web.contains("data-kart=\"bars-values-autosize-vertical\""));
+        assert!(!web.contains("data-kart=\"bars-values-autosize-horizontal\""));
+        assert!(web.contains("barsValuesAutosizeOturumları"));
+        assert!(web.contains("independent-bars-values-autosize"));
     }
 
     #[test]

@@ -303,6 +303,26 @@
     .bars-grouped-stacked-grafik .lejant button[aria-pressed="false"] {
       opacity: .42;
     }
+    #chart.bars-values-autosize-yüzeyi { display: block; min-width: 0; overflow: auto;
+                                         place-items: unset; padding: 8px;
+                                         box-sizing: border-box; }
+    .bars-values-autosize-yığın { width: 1295px; display: grid; gap: 14px;
+                                  align-items: start; }
+    .bars-values-autosize-grafik { position: relative; width: 1275px;
+                                   border: 1px solid #dbe3ee; border-radius: 8px;
+                                   background: #fff; overflow: hidden; }
+    .bars-values-autosize-grafik > h3 { margin: 7px 10px 2px; color: #111827;
+                                        font-size: 13px; }
+    .bars-values-autosize-grafik > p { margin: 0 10px 5px; color: #6b7280;
+                                       font-size: 11px; }
+    .bars-values-autosize-grafik svg { display: block; width: 1275px; height: 600px;
+                                       max-width: none; }
+    .bars-values-autosize-grafik .lejant { position: static; padding: 3px 10px 8px;
+                                           justify-content: flex-start; pointer-events: auto; }
+    .bars-values-autosize-grafik .lejant button { border: 1px solid #d1d5db;
+                                                  border-radius: 5px; background: #fff;
+                                                  padding: 3px 7px; cursor: pointer; }
+    .bars-values-autosize-grafik .lejant button[aria-pressed="false"] { opacity: .42; }
     #chart.soft-minmax-yüzeyi { display: block; min-width: 0; overflow: auto;
                                 place-items: unset;
                                 padding: 8px; box-sizing: border-box; }
@@ -543,8 +563,10 @@
         <small>bars-grouped-stacked</small>
         <div class="durum">10 bağımsız yüzey · setSeries</div>
       </article>
-      <article class="kart" data-kart="bars-values-autosize-vertical" aria-current="false" tabindex="0"><strong>Bars values autosize · vertical</strong><small>bars-values-autosize-vertical</small><div class="durum">12 değer · otomatik kompakt yazı</div></article>
-      <article class="kart" data-kart="bars-values-autosize-horizontal" aria-current="false" tabindex="0"><strong>Bars values autosize · horizontal</strong><small>bars-values-autosize-horizontal</small><div class="durum">12 değer · otomatik kompakt yazı</div></article>
+      <article class="kart" data-kart="bars-values-autosize" aria-current="false" tabindex="0">
+        <strong>Bars Values AutoSize</strong><small>bars-values-autosize</small>
+        <div class="durum">2 bağımsız yüzey · 10…25 px etiket</div>
+      </article>
     </aside>
     <main>
       <header>
@@ -2401,20 +2423,37 @@
       },
     };
 
-    for (const kimlik of ["bars-values-autosize-vertical", "bars-values-autosize-horizontal"]) {
-      kartlar[kimlik] = {
-        başlık: kimlik,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/bars-values-autosize.html">bars-values-autosize.html</a>
-          <br>Kaynaktaki 5…50 adet, −100.000…100.000 aralığındaki rastgele değerler sabit kanıt tohumu ile 12 değere bağlanır. Dikey ve yatay otomatik kompakt değer yazıları ayrı kartlardır.`,
-        tanım: () => bars_values_autosize_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/bars_values_autosize.rs",
-        seriler: [{ etiket: "Value", renk: "#000000" }],
-        yardım: "Yeşil alan değer yazısı için kullanılabilir boşluğu gösterir · yazı 10–25 px arasında otomatik ölçeklenir",
-        değişkenNokta: false,
-        çubuk: true,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    const barsValuesAutosizeYüzeyleri = [
+      {
+        kimlik: "bars-values-autosize-vertical",
+        başlık: "Vertical bars · width + edge-space fit",
+        açıklama: "En geniş kompakt değer, en dar bar genişliği ve pozitif/negatif kenar boşluğu bütün etiketler için tek font boyutu üretir.",
+      },
+      {
+        kimlik: "bars-values-autosize-horizontal",
+        başlık: "Horizontal bars · height fit",
+        açıklama: "En dar bar yüksekliğinin %80'i bütün etiketler için tek font boyutu üretir; metin işaretine göre bar ucunun dışına yerleşir.",
+      },
+    ];
+    kartlar["bars-values-autosize"] = {
+      başlık: "Bars Values AutoSize · 2 yüzey",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/bars-values-autosize.html">bars-values-autosize.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">src/uPlot.js</a>
+        <br>Kaynak sayfanın aynı veriyi kullanan dikey ve yatay 1275×600 yüzeyleri tek kartta, bağımsız görünüm geçmişleriyle karşılaştırılır.`,
+      tanım: () => bars_values_autosize_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/bars_values_autosize.rs",
+      seriler: [{ etiket: "Value", renk: "#00000033" }],
+      yardım: "Yeşil alan kullanılabilir etiket boşluğudur · bütün değerler için ortak 10–25 px font",
+      değişkenNokta: false,
+      çubuk: true,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Aynı pozitif/negatif değerlerin dikey ve yatay yönlerde bar dışındaki boşluğa taşmadan otomatik etiketlenmesini karşılaştırır.",
+        api: "bars_values_autosize_kartları iki Grafik döndürür. Dikey yüzey metin genişliği/yüksekliği ile bar ve kenar boşluğunu, yatay yüzey en dar bar yüksekliğini ölçerek bütün etiketler için ortak 10–25 px font seçer.",
+        izleme: "Dinamik kapasite, fark veya sapma metriklerinde değer yazılarını panel ve bar boyutuna göre okunur tutmak için kullanılır.",
+        maliyet: "Kompakt metin ölçüleri setData'da O(N) önbelleklenir; kullanılabilir alan ve etiket yerleşimi her çizimde O(N) hesaplanır. Wheel/touch/drag ortak port uzantısıdır.",
+      },
+    };
 
     const kutuBıyıkBenchmarkleri = [
       "01_run1k", "02_replace1k", "03_update10th1k_x16", "04_select1k", "05_swap1k",
@@ -2892,6 +2931,8 @@
     let scatterEtkinİndeks = 0;
     let barsGroupedStackedOturumları = [];
     let barsGroupedStackedEtkinİndeks = 0;
+    let barsValuesAutosizeOturumları = [];
+    let barsValuesAutosizeEtkinİndeks = 0;
     let softMinMaxOturumları = [];
     let softMinMaxEtkinİndeks = 0;
     let sparklinesBarsOturumları = [];
@@ -5524,6 +5565,82 @@
       kontrolleriGüncelle();
     }
 
+    function barsValuesAutosizeÇiz() {
+      const kaydırmaÜst = chart.scrollTop;
+      const kaydırmaSol = chart.scrollLeft;
+      chart.className = "bars-values-autosize-yüzeyi";
+      chart.innerHTML = `<div class="bars-values-autosize-yığın">
+        ${barsValuesAutosizeYüzeyleri.map((tanım, indeks) => {
+          const yüzeyOturumu = barsValuesAutosizeOturumları[indeks];
+          const görünür = yüzeyOturumu?.seri_gorunur(0) ?? false;
+          return `<article class="bars-values-autosize-grafik"
+              data-bars-values-autosize-index="${indeks}">
+            <h3>${tanım.başlık}</h3>
+            <p>${tanım.açıklama}</p>
+            ${yüzeyOturumu?.svg(1275, 600) ?? ""}
+            <div class="lejant" aria-label="${tanım.başlık} seri görünürlüğü">
+              <button type="button" data-bars-values-seri="0"
+                aria-pressed="${görünür}" style="color:#111111">
+                ● Value${görünür ? "" : " · gizli"}
+              </button>
+            </div>
+          </article>`;
+        }).join("")}
+      </div>`;
+      barsValuesAutosizeYüzeyleri.forEach((tanım, indeks) => {
+        const kapsam = chart.querySelector(`[data-bars-values-autosize-index="${indeks}"]`);
+        const yüzeyOturumu = barsValuesAutosizeOturumları[indeks];
+        const svg = kapsam?.querySelector("svg");
+        if (!kapsam || !yüzeyOturumu || !svg) return;
+        svg.dataset.etkileşim = "independent-bars-values-autosize";
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden"
+              fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+            <rect id="çubuk-vurgu" visibility="hidden"
+              fill="rgba(255,255,255,.42)" stroke="none"/>
+            <line id="imleç-x" visibility="hidden"
+              stroke="#6b7280" stroke-dasharray="4 4"/>
+            <line id="imleç-y" visibility="hidden"
+              stroke="#6b7280" stroke-dasharray="4 4"/>
+          </g>`);
+        oturum = yüzeyOturumu;
+        yüzeyiEşitle(svg);
+        kapsam.addEventListener("pointerenter", () => {
+          barsValuesAutosizeEtkinİndeks = indeks;
+          oturum = yüzeyOturumu;
+          yüzeyiEşitle(svg);
+          kontrolleriGüncelle();
+        });
+        kapsam.querySelectorAll("[data-bars-values-seri]").forEach(düğme => {
+          düğme.addEventListener("pointerdown", olay => olay.stopPropagation());
+          düğme.addEventListener("click", olay => {
+            olay.stopPropagation();
+            try {
+              yüzeyOturumu.seri_gorunurlugu_ayarla(0, !yüzeyOturumu.seri_gorunur(0));
+              barsValuesAutosizeEtkinİndeks = indeks;
+              oturum = yüzeyOturumu;
+              barsValuesAutosizeÇiz();
+            } catch (neden) {
+              hata.textContent = `${tanım.başlık} setSeries uygulanamadı: ${String(neden)}`;
+            }
+          });
+        });
+      });
+      oturum = barsValuesAutosizeOturumları[barsValuesAutosizeEtkinİndeks]
+        ?? barsValuesAutosizeOturumları[0]
+        ?? null;
+      const xAralığı = oturum?.gorunur_x_araligi() ?? [];
+      const yAralığı = oturum?.gorunur_y_araligi() ?? [];
+      chart.dataset.xEnAz = String(xAralığı[0] ?? "");
+      chart.dataset.xEnCok = String(xAralığı[1] ?? "");
+      chart.dataset.yEnAz = String(yAralığı[0] ?? "");
+      chart.dataset.yEnCok = String(yAralığı[1] ?? "");
+      chart.scrollTop = kaydırmaÜst;
+      chart.scrollLeft = kaydırmaSol;
+      kontrolleriGüncelle();
+    }
+
     function softMinMaxEtkileşimKatmanınıKur(svg) {
       if (!svg || svg.querySelector(":scope > #etkileşim")) return;
       svg.insertAdjacentHTML("beforeend", `
@@ -6342,6 +6459,10 @@
         barsGroupedStackedÇiz();
         return;
       }
+      if (aktifKart === "bars-values-autosize") {
+        barsValuesAutosizeÇiz();
+        return;
+      }
       if (aktifKart === "soft-minmax") {
         softMinMaxÇiz();
         return;
@@ -6789,6 +6910,11 @@
           ? olay.target?.closest?.(".bars-grouped-stacked-grafik")
             ?? chart.querySelector(
               `[data-bars-grouped-stacked-index="${barsGroupedStackedEtkinİndeks}"]`
+            )
+        : aktifKart === "bars-values-autosize"
+          ? olay.target?.closest?.(".bars-values-autosize-grafik")
+            ?? chart.querySelector(
+              `[data-bars-values-autosize-index="${barsValuesAutosizeEtkinİndeks}"]`
             )
         : aktifKart === "soft-minmax"
           ? olay.target?.closest?.(".soft-minmax-grafik")
@@ -7956,6 +8082,9 @@
       } else if (aktifKart === "bars-grouped-stacked") {
         barsGroupedStackedOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         barsGroupedStackedÇiz();
+      } else if (aktifKart === "bars-values-autosize") {
+        barsValuesAutosizeOturumları.forEach(yüzey => yüzey.onceki_gorunum());
+        barsValuesAutosizeÇiz();
       } else if (aktifKart === "soft-minmax") {
         softMinMaxOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         softMinMaxÇiz();
@@ -8024,6 +8153,9 @@
       } else if (aktifKart === "bars-grouped-stacked") {
         barsGroupedStackedOturumları.forEach(yüzey => yüzey.tam_gorunum());
         barsGroupedStackedÇiz();
+      } else if (aktifKart === "bars-values-autosize") {
+        barsValuesAutosizeOturumları.forEach(yüzey => yüzey.tam_gorunum());
+        barsValuesAutosizeÇiz();
       } else if (aktifKart === "soft-minmax") {
         softMinMaxOturumları.forEach(yüzey => yüzey.tam_gorunum());
         softMinMaxÇiz();
@@ -8078,6 +8210,10 @@
         );
       } else if (aktifKart === "bars-grouped-stacked") {
         barsGroupedStackedOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "bars-values-autosize") {
+        barsValuesAutosizeOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "timeseries-discrete") {
@@ -8339,6 +8475,7 @@
           scalesDirOriOturumları,
           scatterOturumları,
           barsGroupedStackedOturumları,
+          barsValuesAutosizeOturumları,
           softMinMaxOturumları,
           sparklinesBarsOturumları,
           sparklinesOturumları,
@@ -8375,6 +8512,8 @@
         scatterOturumları = [];
         barsGroupedStackedOturumları.forEach(yüzey => yüzey.free());
         barsGroupedStackedOturumları = [];
+        barsValuesAutosizeOturumları.forEach(yüzey => yüzey.free());
+        barsValuesAutosizeOturumları = [];
         softMinMaxOturumları.forEach(yüzey => yüzey.free());
         softMinMaxOturumları = [];
         sparklinesBarsOturumları.forEach(yüzey => yüzey.free());
@@ -8626,6 +8765,17 @@
             return yüzeyOturumu;
           });
           oturum = barsGroupedStackedOturumları[0] ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "bars-values-autosize") {
+          barsValuesAutosizeEtkinİndeks = 0;
+          barsValuesAutosizeOturumları = barsValuesAutosizeYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = barsValuesAutosizeOturumları[0] ?? null;
           çiz();
           return;
         }

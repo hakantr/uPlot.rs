@@ -513,6 +513,57 @@ pub struct Grafik {
     açıklama_stil_indeksleri: Vec<Option<usize>>,
     çubuk_vuruş_dizini: RefCell<Option<ÇubukVuruşDizini>>,
     dağılım_vuruş_dizini: RefCell<Option<DağılımVuruşDizini>>,
+    otomatik_çubuk_metinleri: Option<OtomatikÇubukMetinÖnbelleği>,
+}
+
+#[derive(Debug)]
+struct OtomatikÇubukMetinÖnbelleği {
+    gösterimler: Vec<Vec<Option<String>>>,
+    azami_10px_genişlik: f32,
+    azami_10px_yükseklik: f32,
+}
+
+fn otomatik_çubuk_metin_önbelleği(
+    seçenekler: &GrafikSeçenekleri,
+    veri: &HizalıVeri,
+) -> Option<OtomatikÇubukMetinÖnbelleği> {
+    seçenekler
+        .çubuk_düzeni
+        .is_some_and(|düzen| düzen.değer_etiketi_otomatik)
+        .then(|| {
+            let gösterimler = veri
+                .seriler()
+                .iter()
+                .map(|seri| {
+                    seri.iter()
+                        .map(|değer| değer.map(kompakt_sayı))
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+            let azami_10px_genişlik = gösterimler
+                .iter()
+                .flat_map(|seri| seri.iter().flatten())
+                .map(|metin| {
+                    metin
+                        .chars()
+                        .map(|karakter| match karakter {
+                            '-' => 3.33,
+                            '.' | ',' => 2.78,
+                            '1' => 5.0,
+                            'K' | 'M' | 'B' | 'T' => 6.67,
+                            _ => 5.56,
+                        })
+                        .sum::<f32>()
+                })
+                .fold(1.0_f32, f32::max);
+            OtomatikÇubukMetinÖnbelleği {
+                gösterimler,
+                azami_10px_genişlik,
+                // Arial 10px `actualBoundingBoxAscent - actualBoundingBoxDescent`
+                // ölçüsünün platformlar arası kararlı yaklaşık karşılığı.
+                azami_10px_yükseklik: 8.0,
+            }
+        })
 }
 
 fn oran_aralığı(
@@ -704,6 +755,7 @@ impl Grafik {
                         .map(|işaret| düzen.stiller.iter().position(|stil| stil.tür == işaret.tür))
                         .collect()
                 });
+        let otomatik_çubuk_metinleri = otomatik_çubuk_metin_önbelleği(&seçenekler, &veri);
         Ok(Self {
             seçenekler,
             veri,
@@ -716,6 +768,7 @@ impl Grafik {
             açıklama_stil_indeksleri,
             çubuk_vuruş_dizini: RefCell::new(None),
             dağılım_vuruş_dizini: RefCell::new(None),
+            otomatik_çubuk_metinleri,
         })
     }
 
@@ -1136,6 +1189,8 @@ impl Grafik {
                 tam_x = Aralık::yeni(tam_x.en_az - 0.5, tam_x.en_çok + 0.5)?;
             }
             let etkileşim_ayarları = self.etkileşim.ayarlar();
+            self.otomatik_çubuk_metinleri =
+                otomatik_çubuk_metin_önbelleği(&self.seçenekler, &veri);
             self.veri = veri;
             self.etkileşim = EtkileşimDenetleyicisi::yeni(tam_x, tam_y, etkileşim_ayarları);
             self.odak_serisi = None;
@@ -1266,6 +1321,7 @@ impl Grafik {
         {
             tam_x = Aralık::yeni(tam_x.en_az - 0.5, tam_x.en_çok + 0.5)?;
         }
+        self.otomatik_çubuk_metinleri = otomatik_çubuk_metin_önbelleği(&self.seçenekler, &veri);
         self.veri = veri;
         let tam_y = self
             .seçenekler
@@ -5159,13 +5215,12 @@ impl Grafik {
                 }
                 let grup_genişliği = (grup_adımı - tam_boşluk).max(1.0);
                 let otomatik_yazı_boyutu = düzen.değer_etiketi_otomatik.then(|| {
-                    let azami_metin_genişliği = self
-                        .veri
-                        .seriler()
-                        .iter()
-                        .flat_map(|seri| seri.iter().copied().flatten())
-                        .map(|değer| kompakt_sayı(değer).chars().count() as f32 * 6.0)
-                        .fold(1.0_f32, f32::max);
+                    let (azami_metin_genişliği, azami_metin_yüksekliği) = self
+                        .otomatik_çubuk_metinleri
+                        .as_ref()
+                        .map_or((1.0, 10.0), |önbellek| {
+                            (önbellek.azami_10px_genişlik, önbellek.azami_10px_yükseklik)
+                        });
                     let kullanılabilir_yükseklik = self
                         .veri
                         .seriler()
@@ -5181,7 +5236,7 @@ impl Grafik {
                         })
                         .fold(f32::INFINITY, f32::min);
                     let ölçek = (grup_genişliği * 0.8 / azami_metin_genişliği)
-                        .min(kullanılabilir_yükseklik / 10.0);
+                        .min(kullanılabilir_yükseklik / azami_metin_yüksekliği);
                     (ölçek * 10.0).min(25.0)
                 });
                 for indeks in 0..grup_sayısı {
@@ -5394,7 +5449,15 @@ impl Grafik {
                                 {
                                     sahne.ekle(Komut::Metin {
                                         konum: Nokta::yeni(etiket_x, etiket_y),
-                                        içerik: kompakt_sayı(değer),
+                                        içerik: self
+                                            .otomatik_çubuk_metinleri
+                                            .as_ref()
+                                            .and_then(|önbellek| {
+                                                önbellek.gösterimler.get(seri_indeksi)
+                                            })
+                                            .and_then(|seri| seri.get(indeks))
+                                            .and_then(Clone::clone)
+                                            .unwrap_or_else(|| kompakt_sayı(değer)),
                                         renk: "#111111".to_string(),
                                         boyut: yazı_boyutu,
                                         hiza: MetinHizası::Orta,
@@ -5577,7 +5640,13 @@ impl Grafik {
                                 kalınlık: 0.0,
                             });
                             if yazı_boyutu >= 10.0 {
-                                let metin = kompakt_sayı(değer);
+                                let metin = self
+                                    .otomatik_çubuk_metinleri
+                                    .as_ref()
+                                    .and_then(|önbellek| önbellek.gösterimler.get(seri_indeksi))
+                                    .and_then(|seri| seri.get(indeks))
+                                    .and_then(Clone::clone)
+                                    .unwrap_or_else(|| kompakt_sayı(değer));
                                 let yarım_metin = metin.chars().count() as f32 * yazı_boyutu * 0.3;
                                 let etiket_x = if değer < 0.0 {
                                     x1 - yarım_metin - yazı_boyutu * 0.4

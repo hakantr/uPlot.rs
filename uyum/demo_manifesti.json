@@ -1014,7 +1014,7 @@
       "ek_kaynaklar": [
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
-      "fixture": "src/kart/bars_values_autosize.rs#bars_values_autosize_kartı",
+      "fixture": "src/kart/bars_values_autosize.rs#bars_values_autosize_kartları",
       "örnek": "examples/bars_values_autosize.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -1052,16 +1052,24 @@
       "özellikler": [
         "source-equivalent-random-count-and-range",
         "deterministic-proof-seed",
+        "single-card-source-order-two-independent-surfaces",
         "vertical-and-horizontal-source-charts",
         "positive-and-negative-bar-range",
         "compact-three-significant-digit-values",
+        "set-data-premeasured-label-cache",
+        "draw-clear-bar-rectangle-cache-reset",
+        "single-font-decision-across-all-labels-per-surface",
+        "vertical-width-and-edge-space-fit",
+        "horizontal-minimum-bar-height-fit",
+        "hide-all-labels-below-ten-pixels",
+        "source-commented-set-data-and-set-size-lifecycle",
         "automatic-10-to-25-pixel-label-sizing",
         "source-available-space-overlay",
         "core-bar-clipping-and-hit-testing",
         "common-interaction-profile"
       ],
       "kanıt": {
-        "api": "kısmi",
+        "api": "tam_kanıtlı",
         "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı",
         "davranış": "uygulandı_kanıtlı",

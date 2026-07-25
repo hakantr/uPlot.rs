@@ -7,7 +7,21 @@ pub const BARS_VALUES_AUTOSIZE_KANIT_TOHUMU: u32 = 8;
 
 pub const BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = bars_values_autosize_kartı(ÇubukYönü::Dikey)?;
 // Değer üretimi, kompakt etiket ve kullanılabilir alana göre yazı boyutu çekirdektedir.
-let grafik = Grafik::yeni(seçenekler, veri)?;"##;
+let grafik = Grafik::yeni(seçenekler, veri)?;
+
+// Kaynak sayfadaki dikey ve yatay bağımsız yüzeyleri birlikte kurar.
+let yüzeyler = bars_values_autosize_kartları()?;"##;
+
+/// Resmî sayfadaki dikey ve yatay yüzeyi kaynak sırasıyla döndürür.
+pub fn bars_values_autosize_kartları()
+-> Result<Vec<(ÇubukYönü, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    [ÇubukYönü::Dikey, ÇubukYönü::Yatay]
+        .into_iter()
+        .map(|yön| {
+            bars_values_autosize_kartı(yön).map(|(seçenekler, veri)| (yön, seçenekler, veri))
+        })
+        .collect()
+}
 
 /// `demos/bars-values-autosize.html` içindeki dikey veya yatay grafiği üretir.
 pub fn bars_values_autosize_kartı(
@@ -21,16 +35,10 @@ pub fn bars_values_autosize_kartı(
     let x = (0..adet).map(|indeks| indeks as f64).collect::<Vec<_>>();
     let veri = HizalıVeri::yeni(x, vec![değerler])?;
     let yatay = yön == ÇubukYönü::Yatay;
-    let kimlik = if yatay {
-        "bars-values-autosize-horizontal"
-    } else {
-        "bars-values-autosize-vertical"
-    };
     let düzen = ÇubukDüzeni::yeni(yön)
         .ters(yatay)
         .değer_etiketi_otomatik(true);
     let seçenekler = GrafikSeçenekleri::yeni(1_275, 600)?
-        .başlık(kimlik)
         .x_zaman(false)
         .çubuk_düzeni(düzen)
         .etkileşimler(ortak_kart_etkileşimleri())
@@ -55,8 +63,29 @@ mod testler {
 
     #[test]
     fn iki_yön_aynı_kaynak_verisini_kullanır() -> Result<(), UplotHatası> {
-        let (dikey_seçenekler, dikey_veri) = bars_values_autosize_kartı(ÇubukYönü::Dikey)?;
-        let (yatay_seçenekler, yatay_veri) = bars_values_autosize_kartı(ÇubukYönü::Yatay)?;
+        let kartlar = bars_values_autosize_kartları()?;
+        assert_eq!(kartlar.len(), 2);
+        let dikey = kartlar
+            .first()
+            .ok_or_else(|| UplotHatası::GeçersizKaynakVeri {
+                varlık: "bars-values-autosize",
+                açıklama: "kaynak dikey yüzeyi eksik".to_string(),
+            })?;
+        let yatay = kartlar
+            .get(1)
+            .ok_or_else(|| UplotHatası::GeçersizKaynakVeri {
+                varlık: "bars-values-autosize",
+                açıklama: "kaynak yatay yüzeyi eksik".to_string(),
+            })?;
+        assert_eq!(dikey.0, ÇubukYönü::Dikey);
+        assert_eq!(yatay.0, ÇubukYönü::Yatay);
+        assert!(
+            kartlar
+                .iter()
+                .all(|(_, seçenekler, _)| seçenekler.başlık.is_empty())
+        );
+        let (_, dikey_seçenekler, dikey_veri) = dikey.clone();
+        let (_, yatay_seçenekler, yatay_veri) = yatay.clone();
         assert_eq!(dikey_veri, yatay_veri);
         assert_eq!(dikey_veri.uzunluk(), 12);
         let seri = dikey_veri.seriler().first();
@@ -113,6 +142,63 @@ mod testler {
             }
             _ => true,
         }));
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_set_data_önbelleği_ve_ortak_font_kararı_korunur() -> Result<(), UplotHatası> {
+        for yön in [ÇubukYönü::Dikey, ÇubukYönü::Yatay] {
+            let (seçenekler, veri) = bars_values_autosize_kartı(yön)?;
+            let mut grafik = Grafik::yeni(seçenekler, veri)?;
+            let sahne = grafik.çiz_boyutta(1_275, 600, None);
+            let yazı_boyutları = sahne
+                .komutlar()
+                .iter()
+                .filter_map(|komut| match komut {
+                    Komut::Metin {
+                        içerik,
+                        renk,
+                        boyut,
+                        ..
+                    } if renk == "#111111"
+                        && (içerik.contains('K')
+                            || içerik.contains('M')
+                            || içerik.parse::<f64>().is_ok()) =>
+                    {
+                        Some(*boyut)
+                    }
+                    _ => None,
+                })
+                .collect::<Vec<_>>();
+            // Kaynak eklenti tek bir ortak font kararı verir; uç değerlerin
+            // etiketleri çizim sınırında kalırsa ilgili metin ayrıca kırpılabilir.
+            assert!(!yazı_boyutları.is_empty());
+            let ortak_boyut = yazı_boyutları.first().copied().unwrap_or_default();
+            assert!(yazı_boyutları.iter().all(|boyut| {
+                (10.0..=25.0).contains(boyut) && (*boyut - ortak_boyut).abs() <= f32::EPSILON
+            }));
+
+            let yeni_veri = HizalıVeri::yeni(
+                vec![0.0, 1.0, 2.0],
+                vec![vec![Some(99_000.0), Some(-1_250.0), Some(42.0)]],
+            )?;
+            grafik.canlı_veriyi_ayarla(yeni_veri)?;
+            let güncel = grafik.çiz();
+            assert!(
+                güncel
+                    .komutlar()
+                    .iter()
+                    .any(|komut| matches!(komut, Komut::Metin { içerik, renk, .. }
+                    if renk == "#111111" && içerik == "42"))
+            );
+            assert!(
+                !güncel
+                    .komutlar()
+                    .iter()
+                    .any(|komut| matches!(komut, Komut::Metin { içerik, renk, .. }
+                    if renk == "#111111" && içerik == "25K"))
+            );
+        }
         Ok(())
     }
 }

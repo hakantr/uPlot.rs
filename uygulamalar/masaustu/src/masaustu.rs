@@ -49,21 +49,21 @@ use uplot_rs::{
     add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
     align_data_çizgi_çubuk_kartı, annotations_kartı, arcsinh_scales_kartı, area_fill_kartı,
     axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartları,
-    bars_grouped_stacked_kartı, bars_values_autosize_kartı, box_whisker_kartı,
-    candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı, cursor_tooltip_kartı,
-    custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı, draw_hooks_kartı,
-    focus_cursor_kartı, gradients_kartı, grid_over_series_kartı, high_low_bands_kartı,
-    latency_heatmap_kartı, line_paths_kartı, log_scales_kartı, log_scales2_kartı,
-    mass_spectrum_kartı, measure_datums_kartı, missing_data_kartları, missing_data_null_kartı,
-    months_artık_yılsız_kartı, months_kartları, multi_bars_kartı, nearest_non_null_kartı,
-    nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartları,
-    path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı, points_kartları, points_kartı,
-    resize_kartı, scale_padding_kartı, scales_dir_ori_kartları, scales_dir_ori_kartı,
-    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı,
-    sparklines_bars_kartları, sparklines_bars_kartı, sparklines_kartları, sparklines_kartı,
-    sparse_kartları, sparse_kartı, stacked_series_kartları, stacked_series_kartı,
-    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
-    sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
+    bars_grouped_stacked_kartı, bars_values_autosize_kartları, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı, missing_data_kartları,
+    missing_data_null_kartı, months_artık_yılsız_kartı, months_kartları, multi_bars_kartı,
+    nearest_non_null_kartı, nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri,
+    path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı,
+    points_kartları, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartları,
+    scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
+    soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları, sparklines_bars_kartı,
+    sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı, stacked_series_kartları,
+    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
+    sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
     thin_bars_stroke_fill_kartı, time_periods_kartları, time_periods_kartı,
     timeline_discrete_kartları, timeline_discrete_kartı, timeseries_discrete_kartları,
     timeseries_discrete_kartı, timezones_dst_kartları, timezones_dst_kartı, tooltips_closest_kartı,
@@ -207,8 +207,7 @@ impl KartKimliği {
             Self::AxisAutosize => "Axis AutoSize",
             Self::AxisIndicators => "Axis indicators",
             Self::Bars(_) => "Bars · Grouped / Stacked · 10 yüzey",
-            Self::BarsValuesAutosize(ÇubukYönü::Dikey) => "bars-values-autosize-vertical",
-            Self::BarsValuesAutosize(ÇubukYönü::Yatay) => "bars-values-autosize-horizontal",
+            Self::BarsValuesAutosize(_) => "Bars Values AutoSize · 2 yüzey",
             Self::BoxWhisker(benchmark) => benchmark,
             Self::Candlestick => "Candlestick Chart · Gold",
         }
@@ -360,7 +359,7 @@ impl KartKimliği {
                 "bars-grouped-stacked.html · 10 bağımsız grouped/stacked yüzey ve setSeries"
             }
             Self::BarsValuesAutosize(_) => {
-                "bars-values-autosize.html · otomatik kompakt değer yazısı"
+                "bars-values-autosize.html · dikey/yatay otomatik kompakt değer yazısı"
             }
             Self::BoxWhisker(_) => "box-whisker.html · results.json ve stats.js",
             Self::Candlestick => "candlestick-ohlc.html · Gold OHLC ve hacim",
@@ -575,6 +574,7 @@ pub struct ChartListesi {
     scales_dir_ori_grafikleri: Vec<(ScalesDirOriÖrneği, Entity<GpuiGrafik>)>,
     scatter_grafikleri: Vec<(ScatterÖrneği, Entity<GpuiGrafik>)>,
     bars_grouped_stacked_grafikleri: Vec<(ÇubukÖrneği, Entity<GpuiGrafik>)>,
+    bars_values_autosize_grafikleri: Vec<(ÇubukYönü, Entity<GpuiGrafik>)>,
     scales_dir_ori_senkronlanıyor: bool,
     scales_dir_ori_kilitli: bool,
     no_data_örneği: NoDataÖrneği,
@@ -662,6 +662,12 @@ impl ChartListesi {
                 }
             } else if matches!(bu.aktif_kart, KartKimliği::Bars(_)) {
                 for (_, grafik) in &bu.bars_grouped_stacked_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if matches!(bu.aktif_kart, KartKimliği::BarsValuesAutosize(_)) {
+                for (_, grafik) in &bu.bars_values_autosize_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -803,6 +809,7 @@ impl ChartListesi {
             scales_dir_ori_grafikleri: Vec::new(),
             scatter_grafikleri: Vec::new(),
             bars_grouped_stacked_grafikleri: Vec::new(),
+            bars_values_autosize_grafikleri: Vec::new(),
             scales_dir_ori_senkronlanıyor: false,
             scales_dir_ori_kilitli: false,
             no_data_örneği: NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
@@ -1500,6 +1507,70 @@ impl ChartListesi {
         });
         if let Err(hata) = sonuç {
             self.hata = Some(format!("{} setSeries uygulanamadı: {hata}", örnek.başlık()));
+        }
+        cx.notify();
+    }
+
+    fn bars_values_autosize_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = bars_values_autosize_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Bars Values AutoSize ailesi oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.bars_values_autosize_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (yön, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!(
+                        "{} Bars Values yüzeyi oluşturulamadı: {hata}",
+                        if yön == ÇubukYönü::Dikey {
+                            "Dikey"
+                        } else {
+                            "Yatay"
+                        }
+                    ));
+                    self.grafik = None;
+                    self.bars_values_autosize_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                    bu.açıklama_istendi = true;
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((yön, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.bars_values_autosize_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
+    fn bars_values_serisini_değiştir(&mut self, yön: ÇubukYönü, cx: &mut Context<Self>) {
+        let Some((_, grafik)) = self
+            .bars_values_autosize_grafikleri
+            .iter()
+            .find(|(kimlik, _)| *kimlik == yön)
+        else {
+            return;
+        };
+        let görünür = grafik.read(cx).grafik().seri_görünür_mü(0);
+        if let Err(hata) = grafik.update(cx, |grafik, cx| {
+            grafik.seri_görünürlüğünü_ayarla(0, !görünür, cx)
+        }) {
+            self.hata = Some(format!("Bars Values setSeries uygulanamadı: {hata}"));
         }
         cx.notify();
     }
@@ -2214,6 +2285,7 @@ impl ChartListesi {
         self.scales_dir_ori_grafikleri.clear();
         self.scatter_grafikleri.clear();
         self.bars_grouped_stacked_grafikleri.clear();
+        self.bars_values_autosize_grafikleri.clear();
         self.soft_minmax_grafikleri.clear();
         self.sparklines_bars_grafikleri.clear();
         self.sparklines_grafikleri.clear();
@@ -2328,6 +2400,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.bars_grouped_stacked_yüzeylerini_oluştur(cx);
+        } else if matches!(kart, KartKimliği::BarsValuesAutosize(_)) {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.bars_values_autosize_yüzeylerini_oluştur(cx);
         } else if matches!(kart, KartKimliği::SoftMinMax(_)) {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -3398,7 +3479,7 @@ impl Render for ChartListesi {
                 "10 bağımsız kaynak yüzeyi · grouped/stacked · setSeries".to_string()
             }
             KartKimliği::BarsValuesAutosize(_) => {
-                "12 kanıt değeri · −100K…100K · otomatik etiket".to_string()
+                "2 bağımsız yüzey × 12 kanıt değeri · 10…25 px etiket".to_string()
             }
             KartKimliği::BoxWhisker(_) => "İlk 30 keyed framework · medyan ve 1,5×IQR".to_string(),
             KartKimliği::Candlestick => "218 gün · Gold OHLC + kanıt hacmi".to_string(),
@@ -3568,6 +3649,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .bars_grouped_stacked_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if matches!(aktif_kart, KartKimliği::BarsValuesAutosize(_)) {
+            geri_var = self
+                .bars_values_autosize_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .bars_values_autosize_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         } else if matches!(aktif_kart, KartKimliği::SoftMinMax(_)) {
@@ -4762,21 +4852,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::Bars(örnek), cx);
                 }))
             })
-            .children([ÇubukYönü::Dikey, ÇubukYönü::Yatay].into_iter().map(|yön| {
-                let kart = KartKimliği::BarsValuesAutosize(yön);
+            .child({
+                let kart = KartKimliği::BarsValuesAutosize(ÇubukYönü::Dikey);
                 katalog_kartı(
-                    kart.başlık(),
-                    kart.başlık(),
+                    "kart-bars-values-autosize",
+                    "Bars Values AutoSize",
                     "bars-values-autosize",
-                    aktif_kart == kart,
-                    "Resmî otomatik değer yazısı alt grafiği",
+                    matches!(aktif_kart, KartKimliği::BarsValuesAutosize(_)),
+                    "2 bağımsız yüzey · 10…25 px etiket",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .children(BOX_WHISKER_BENCHMARKLERİ.into_iter().map(|benchmark| {
                 let kart = KartKimliği::BoxWhisker(benchmark);
                 katalog_kartı(
@@ -5100,6 +5190,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.bars_grouped_stacked_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::BarsValuesAutosize(_)) {
+                            for (_, grafik) in &bu.bars_values_autosize_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if matches!(bu.aktif_kart, KartKimliği::SoftMinMax(_)) {
                             for (_, grafik) in &bu.soft_minmax_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5220,6 +5314,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.bars_grouped_stacked_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::BarsValuesAutosize(_)) {
+                            for (_, grafik) in &bu.bars_values_autosize_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
                         } else if matches!(bu.aktif_kart, KartKimliği::SoftMinMax(_)) {
                             for (_, grafik) in &bu.soft_minmax_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5299,6 +5397,8 @@ impl Render for ChartListesi {
                             bu.scatter_yüzeylerini_oluştur(cx);
                         } else if matches!(bu.aktif_kart, KartKimliği::Bars(_)) {
                             bu.bars_grouped_stacked_yüzeylerini_oluştur(cx);
+                        } else if matches!(bu.aktif_kart, KartKimliği::BarsValuesAutosize(_)) {
+                            bu.bars_values_autosize_yüzeylerini_oluştur(cx);
                         } else if matches!(bu.aktif_kart, KartKimliği::StreamData(_)) {
                             bu.stream_data_yüzeylerini_oluştur(cx);
                         } else if matches!(bu.aktif_kart, KartKimliği::ThinBars(_)) {
@@ -6146,6 +6246,87 @@ impl Render for ChartListesi {
                             div()
                                 .w(px(genişlik))
                                 .h(px(yükseklik))
+                                .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
+                        )
+                }))
+        } else if matches!(aktif_kart, KartKimliği::BarsValuesAutosize(_)) {
+            let yüzey = |yön| {
+                self.bars_values_autosize_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == yön)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(760.0))
+                .overflow_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("Resmî sayfadaki dikey ve yatay 1275×600 uPlot yüzeyleri aynı veri dizisini paylaşır. Yeşil kanıt alanı etiket için kullanılabilir boşluğu, 10–25 px ortak font kararı ise en dar değer/kenar koşulunu gösterir."),
+                )
+                .children([ÇubukYönü::Dikey, ÇubukYönü::Yatay].into_iter().map(|yön| {
+                    let grafik = yüzey(yön);
+                    let görünür = grafik
+                        .as_ref()
+                        .is_some_and(|grafik| grafik.read(cx).grafik().seri_görünür_mü(0));
+                    let başlık = if yön == ÇubukYönü::Dikey {
+                        "Vertical bars · width + edge-space fit"
+                    } else {
+                        "Horizontal bars · height fit"
+                    };
+                    let açıklama = if yön == ÇubukYönü::Dikey {
+                        "Tüm kompakt değerlerin en büyük metin ölçüsü, en dar bar genişliği ve pozitif/negatif kenar boşluğuyla tek font boyutu üretir."
+                    } else {
+                        "En dar bar yüksekliğinin %80'i tek font boyutunu üretir; değer bar ucunun dışına, işaretine göre yerleşir."
+                    };
+                    div()
+                        .mt_4()
+                        .w(px(1275.0))
+                        .child(
+                            div()
+                                .text_sm()
+                                .font_weight(FontWeight::BOLD)
+                                .text_color(metin)
+                                .child(başlık),
+                        )
+                        .child(div().mb_2().text_xs().text_color(soluk).child(açıklama))
+                        .child(
+                            div().mb_2().child(
+                                Dugme::yeni(
+                                    SharedString::from(format!(
+                                        "bars-values-{}-seri",
+                                        if yön == ÇubukYönü::Dikey {
+                                            "vertical"
+                                        } else {
+                                            "horizontal"
+                                        }
+                                    )),
+                                    SharedString::from(format!(
+                                        "● Value · #00000033{}",
+                                        if görünür { "" } else { " · gizli" }
+                                    )),
+                                )
+                                .boyutu(DugmeBoyutu::Kucuk)
+                                .turu(if görünür {
+                                    DugmeTuru::Hayalet
+                                } else {
+                                    DugmeTuru::Ikincil
+                                })
+                                .tiklaninca(cx.listener(move |bu, _, _, cx| {
+                                    bu.bars_values_serisini_değiştir(yön, cx);
+                                })),
+                            ),
+                        )
+                        .child(
+                            div()
+                                .w(px(1275.0))
+                                .h(px(600.0))
                                 .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
                         )
                 }))
@@ -7194,6 +7375,21 @@ impl Render for ChartListesi {
                  ve wheel kapalıdır; ortak wheel/touch/drag profili geliştiricinin açabildiği \
                  port uzantısıdır.",
             ),
+            KartKimliği::BarsValuesAutosize(_) => Some(
+                "Amaç: aynı rastgele değer dizisini dikey ve yatay çubuk yönünde gösterirken \
+                 değer yazısının bar ucuyla grafik kenarı arasındaki kullanılabilir alana \
+                 otomatik sığmasını karşılaştırır. API: bars_values_autosize_kartları kaynak \
+                 sırasıyla iki bağımsız Grafik döndürür; değer_etiketi_otomatik tek çizim \
+                 geçişinde kompakt metinleri, bar dikdörtgenlerini ve boşlukları ölçer. Dikey \
+                 yüzey metin genişliği, yüksekliği ve bar genişliğinin %80'inden; yatay yüzey \
+                 en dar bar yüksekliğinin %80'inden bütün etiketler için ortak 10–25 px boyut \
+                 seçer. 10 px altına düşerse etiketlerin tamamı gizlenir. İzleme: dinamik \
+                 pozitif/negatif kapasite veya fark metriklerinde etiket taşmasını engellemek \
+                 için uygundur. Maliyet: kompakt metin ölçüleri setData'da O(N), kullanılabilir \
+                 alan ve çizim O(N) hesaplanır; yüzey yeniden kurulmaz. Kaynakta yorumlu \
+                 setData/setSize akışları aynı önbellek ve yeniden ölçüm yaşam döngüsünü \
+                 kanıtlar; ortak wheel/touch/drag port uzantısıdır.",
+            ),
             _ => None,
         };
         let kullanım_rehberi_açık = self.kullanım_rehberi_açık;
@@ -7280,6 +7476,7 @@ impl Render for ChartListesi {
                         | KartKimliği::AxisAutosize
                         | KartKimliği::AxisIndicators
                         | KartKimliği::Bars(_)
+                        | KartKimliği::BarsValuesAutosize(_)
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )

@@ -1,32 +1,57 @@
 id = "bars-values-autosize"
 kaynak = "../uPlot/demos/bars-values-autosize.html"
-fixture = "src/kart/bars_values_autosize.rs#bars_values_autosize_kartı"
+fixture = "src/kart/bars_values_autosize.rs#bars_values_autosize_kartları"
 viewport = [1275, 600]
 device_pixel_ratio = 1
-durum = "iki-yön"
+durum = "tek-kartta-iki-bagimsiz-yuzey"
 
 [veri]
-adet_aralığı = [5, 50]
-değer_aralığı = [-100000, 100000]
-kanıt_tohumu = 8
-kanıt_adedi = 12
-üreteç = "Mulberry32 + kaynak randInt"
+"adet_aralığı" = [5, 50]
+"değer_aralığı" = [-100000, 100000]
+"kanıt_tohumu" = 8
+"kanıt_adedi" = 12
+"üreteç" = "Mulberry32 + kaynak randInt"
+"iki_yüzey_aynı_veri" = true
 
-[düzen]
-yönler = ["dikey", "yatay"]
-grup_genişliği = 0.9
-dolgu = "#00000033"
-kullanılabilir_alan_dolgusu = "#00ff0022"
-asgari_yazı_pikseli = 10
-azami_yazı_pikseli = 25
-kompakt_anlamlı_basamak = 3
+["düzen"]
+"kaynak_sırası" = ["dikey", "yatay"]
+"yüzey_sayısı" = 2
+"yüzeyler_bağımsız" = true
+"yüzey_boyutu" = [1275, 600]
+"grup_genişliği" = 0.9
+"dolgu" = "#00000033"
+"kullanılabilir_alan_dolgusu" = "#00ff0022"
+"kompakt_anlamlı_basamak" = 3
+"asgari_yazı_pikseli" = 10
+"azami_yazı_pikseli" = 25
+"tek_font_kararı" = "her yüzeyde bütün etiketler için ortak"
+"dikey_fit" = "min(metin-genişliği/bar-genişliği-yüzde-80, metin-yüksekliği/kenar-boşluğu)"
+"yatay_fit" = "en-dar-bar-yüksekliği-yüzde-80"
+"asgari_altında" = "bütün etiketleri gizle"
+"pozitif_etiket" = "bar ucunun pozitif tarafında"
+"negatif_etiket" = "bar ucunun negatif tarafında"
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
-çekirdek_vuruş_testi = true
-çizim_alanı_kırpması = true
+["yaşam_döngüsü"]
+set_data = "kompakt gösterimleri ve 10px metin ölçülerini O(N) yeniden önbellekle"
+draw_clear = "bar dikdörtgeni kayıtlarını temizle"
+draw = "kullanılabilir alanı O(N) tara, ortak fontu seç ve etiketleri çiz"
+set_size = "yeni bbox ile draw yaşam döngüsünü yeniden çalıştır"
+"kaynak_set_data_ve_set_size_akışları" = "yorumlu performans/yeniden ölçüm kanıtı"
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["etkileşim"]
+"kaynak_cursor" = true
+"çekirdek_vuruş_testi" = true
+"çizim_alanı_kırpması" = true
+"port_ortak_etkileşim_uzantısı_opsiyonel" = true
+"port_uzantısı" = ["tekerlek", "seçim", "dokunma", "taşıma", "görünüm-geçmişi", "çift-tık-tam-görünüm"]
+
+[performans]
+"metin_ölçümü" = "setData başına O(N)"
+"alan_taraması" = "draw başına O(N)"
+"bar_ve_etiket_çizimi" = "draw başına O(N)"
+"yüzey_yeniden_kurulmaz" = true
+
+["kanıt"]
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg_dizini = "target/bars-values-autosize"

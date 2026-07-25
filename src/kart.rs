@@ -97,7 +97,7 @@ pub use bars_grouped_stacked::{
 };
 pub use bars_values_autosize::{
     BARS_VALUES_AUTOSIZE_KANIT_TOHUMU, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    bars_values_autosize_kartı,
+    bars_values_autosize_kartları, bars_values_autosize_kartı,
 };
 pub use box_whisker::{
     BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, box_whisker_kartı,
