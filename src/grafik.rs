@@ -5591,7 +5591,13 @@ impl Grafik {
                         .veri
                         .seriler()
                         .iter()
-                        .flat_map(|seri| seri.iter().copied().flatten())
+                        .flat_map(|seri| {
+                            seri.get(ilk_görünür..görünür_bitiş)
+                                .into_iter()
+                                .flatten()
+                                .copied()
+                                .flatten()
+                        })
                         .map(|değer| {
                             let uç_y = alt - aralık.konum(değer, 0.0, çizim_y);
                             if değer < 0.0 {

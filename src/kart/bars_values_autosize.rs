@@ -59,7 +59,7 @@ fn rastgele_tamsayı(rastgele: &mut KanıtRastgele, en_az: i32, en_çok: i32) ->
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Grafik, Komut};
+    use crate::{Aralık, Grafik, Komut};
 
     #[test]
     fn iki_yön_aynı_kaynak_verisini_kullanır() -> Result<(), UplotHatası> {
@@ -199,6 +199,37 @@ mod testler {
                     if renk == "#111111" && içerik == "25K"))
             );
         }
+        Ok(())
+    }
+
+    #[test]
+    fn zoom_font_kararını_yalnız_görünür_çubuklardan_hesaplar() -> Result<(), UplotHatası> {
+        let seçenekler = GrafikSeçenekleri::yeni(640, 300)?
+            .x_zaman(false)
+            .y_aralığı(Aralık::yeni(0.0, 100.0)?)
+            .çubuk_düzeni(ÇubukDüzeni::yeni(ÇubukYönü::Dikey).değer_etiketi_otomatik(true))
+            .seri(
+                SeriSeçenekleri::yeni("Value")
+                    .renk("#00000033")
+                    .dolgu("#00000033")
+                    .çizgi_kalınlığı(0.0),
+            );
+        let veri = HizalıVeri::yeni(
+            vec![0.0, 1.0, 2.0],
+            vec![vec![Some(99.0), Some(20.0), Some(20.0)]],
+        )?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        let etiket_sayısı = |sahne: &crate::Sahne| {
+            sahne
+                .komutlar()
+                .iter()
+                .filter(|komut| matches!(komut, Komut::Metin { renk, .. } if renk == "#111111"))
+                .count()
+        };
+        assert_eq!(etiket_sayısı(&grafik.çiz()), 0);
+        assert!(grafik.görünür_x_aralığını_ayarla(Aralık::yeni(0.5, 2.5)?, false));
+        let yakın = grafik.çiz();
+        assert_eq!(etiket_sayısı(&yakın), 2);
         Ok(())
     }
 }
