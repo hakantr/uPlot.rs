@@ -1656,18 +1656,12 @@ impl KartOturumu {
         let Some(örnek) = LatencyHeatmapÖrneği::kimlikten(&self.kart_kimliği) else {
             return Ok(false);
         };
-        if !matches!(
-            örnek,
-            LatencyHeatmapÖrneği::HistogramBirleşik | LatencyHeatmapÖrneği::HistogramBoşluklu
-        ) {
+        if örnek != LatencyHeatmapÖrneği::HistogramBirleşik {
             return Ok(false);
         }
-        let tekerlek = self.grafik.etkileşim_seçenekleri().tekerlek_etkileşimi;
-        let (seçenekler, veri) =
+        let (_, veri) =
             latency_heatmap_kartı(örnek, kova_boyutu, kova_ofseti).map_err(js_hatası)?;
-        let mut grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
-        grafik.tekerlek_etkileşimi_ayarla(tekerlek);
-        self.grafik = grafik;
+        self.grafik.veriyi_ayarla(veri).map_err(js_hatası)?;
         Ok(true)
     }
 }
@@ -3902,7 +3896,30 @@ mod testler {
             let Ok(oturum) = oturum else { continue };
             assert!(oturum.svg(960, 400).contains(örnek.başlık()));
         }
-        assert!(latency_heatmap_kart_tanim_ornegi().contains("Kovalanmış"));
+        let ham = KartOturumu::yeni("latency-heatmap-raw", 100);
+        let Ok(ham) = ham else { return };
+        let svg = ham.svg(1_800, 600);
+        assert!(svg.matches("<path").count() > 30);
+        assert!(svg.len() > 1_000_000);
+        let collapsed = KartOturumu::yeni("latency-histogram-collapsed", 100);
+        let Ok(mut collapsed) = collapsed else { return };
+        let gapped = KartOturumu::yeni("latency-histogram-gapped", 100);
+        let Ok(mut gapped) = gapped else { return };
+        assert!(matches!(
+            collapsed.latency_histogram_ayarla(10.0, 3.0),
+            Ok(true)
+        ));
+        assert!(matches!(
+            gapped.latency_histogram_ayarla(10.0, 3.0),
+            Ok(false)
+        ));
+        assert!(latency_heatmap_kart_tanim_ornegi().contains("latency_heatmap_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(web.matches("data-kart=\"latency-heatmap\"").count(), 1);
+        assert!(!web.contains("data-kart=\"latency-heatmap-raw\""));
+        assert!(web.contains("const latencyHeatmapYüzeyleri"));
+        assert!(web.contains("function latencyHeatmapÇiz()"));
+        assert!(web.contains("const collapsed = latencyHeatmapOturumları[3]"));
     }
 
     #[test]

@@ -138,7 +138,7 @@ pub use high_low_bands::{
 };
 pub use latency_heatmap::{
     LATENCY_HEATMAP_KANIT_TOHUMU, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
-    latency_heatmap_kartı,
+    latency_heatmap_kartları, latency_heatmap_kartı,
 };
 pub use line_paths::{LINE_PATHS_KART_TANIM_ÖRNEĞİ, LinePathsÖrneği, line_paths_kartı};
 pub use log_scales::{LOG_SCALES_KART_TANIM_ÖRNEĞİ, LogScalesÖrneği, log_scales_kartı};

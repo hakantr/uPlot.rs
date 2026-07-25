@@ -14,6 +14,8 @@ pub struct IsıHücresi {
     pub y: f64,
     pub genişlik: IsıHücresiBoyutu,
     pub yükseklik: IsıHücresiBoyutu,
+    /// Hücre merkezinin ölçeklenmiş veri noktasına göre CSS piksel ofseti.
+    pub piksel_ofseti: [f32; 2],
     pub renk: String,
 }
 
@@ -30,8 +32,16 @@ impl IsıHücresi {
             y,
             genişlik,
             yükseklik,
+            piksel_ofseti: [0.0, 0.0],
             renk: renk.into(),
         }
+    }
+
+    pub fn piksel_ofseti(mut self, x: f32, y: f32) -> Self {
+        if x.is_finite() && y.is_finite() {
+            self.piksel_ofseti = [x, y];
+        }
+        self
     }
 }
 
@@ -50,6 +60,7 @@ impl IsıHaritasıDüzeni {
         self.hücreler.iter().all(|hücre| {
             hücre.x.is_finite()
                 && hücre.y.is_finite()
+                && hücre.piksel_ofseti.iter().all(|değer| değer.is_finite())
                 && boyut_geçerli(hücre.genişlik)
                 && boyut_geçerli(hücre.yükseklik)
                 && !hücre.renk.is_empty()

@@ -5132,7 +5132,8 @@ impl Grafik {
         let çubuk_genişliği = (veri_farkı / (x_aralığı.en_çok - x_aralığı.en_az)
             * f64::from(genişlik)
             * f64::from(seri.çubuk_genişlik_oranı)) as f32;
-        let çubuk_genişliği = çubuk_genişliği.min(seri.azami_çubuk_genişliği);
+        let çubuk_genişliği =
+            (çubuk_genişliği.min(seri.azami_çubuk_genişliği) - seri.çubuk_boşluğu_piksel).max(0.0);
         let üst_değerler = seri
             .yüzen_çubuk_üst_serisi
             .and_then(|indeks| self.veri.seriler().get(indeks));

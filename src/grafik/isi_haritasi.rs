@@ -19,8 +19,10 @@ impl Grafik {
         let yükseklik = alt - üst;
         let mut renk_grupları = BTreeMap::<String, Vec<Vec<Nokta>>>::new();
         for hücre in &düzen.hücreler {
-            let merkez_x = self.x_konumu(x_aralığı, hücre.x, sol, genişlik);
-            let merkez_y = alt - self.y_konumu("y", y_aralığı, hücre.y, 0.0, yükseklik);
+            let merkez_x =
+                self.x_konumu(x_aralığı, hücre.x, sol, genişlik) + hücre.piksel_ofseti[0];
+            let merkez_y = alt - self.y_konumu("y", y_aralığı, hücre.y, 0.0, yükseklik)
+                + hücre.piksel_ofseti[1];
             let hücre_genişliği = eksen_boyutu(hücre.genişlik, hücre.x, |değer| {
                 self.x_konumu(x_aralığı, değer, sol, genişlik)
             });
@@ -52,7 +54,15 @@ impl Grafik {
                 ]);
         }
         for (dolgu, çokgenler) in renk_grupları {
-            sahne.ekle(Komut::Alan { çokgenler, dolgu });
+            // Tek bir dev SVG path tarayıcı rasterizer sınırlarına takılabilir.
+            // GPUI ve SVG aynı hücreleri işlerken komut başına makul bir segment
+            // bütçesi, 35K ham yüzeyin %100 ölçekte de görünür kalmasını sağlar.
+            for parça in çokgenler.chunks(1_024) {
+                sahne.ekle(Komut::Alan {
+                    çokgenler: parça.to_vec(),
+                    dolgu: dolgu.clone(),
+                });
+            }
         }
     }
 }

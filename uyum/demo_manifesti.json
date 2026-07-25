@@ -1824,7 +1824,7 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" },
         { "yol": "src/paths/bars.js", "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56" }
       ],
-      "fixture": "src/kart/latency_heatmap.rs#latency_heatmap_kartı",
+      "fixture": "src/kart/latency_heatmap.rs#latency_heatmap_kartları",
       "örnek": "examples/latency_heatmap.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -1848,13 +1848,15 @@
       "sahip_faz": 3,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "five-source-subcharts", "source-rand-js-skew-normal-generator", "fixed-proof-seed",
+        "one-card-five-independent-source-surfaces", "deterministic-skew-normal-sample",
+        "shared-immutable-raw-range-data", "raw-source-pixel-offset",
         "raw-pixel-heat-cells", "aggregated-density-colors", "mode2-faceted-heat-cells",
         "source-metal-palette", "histogram-aggregation", "histogram-bucket-size-offset-controls",
-        "batched-color-polygons", "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "collapsed-only-live-setdata", "histogram-align-one-fixed-pixel-gap",
+        "chunked-color-polygons-1024", "gpui-wasm-catalog-parity", "common-interaction-profile",
         "panic-free-data-generation"
       ],
-      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "uygulandı_kanıtlı" }
+      "kanıt": { "api": "kısmi", "sayısal": "kısmi", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
     },
     {
       "sıra": 30,

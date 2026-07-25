@@ -235,7 +235,8 @@ impl Grafik {
         let çubuk_genişliği = (en_küçük_fark / (x_aralığı.en_çok - x_aralığı.en_az)
             * f64::from(genişlik)
             * f64::from(seri.çubuk_genişlik_oranı)) as f32;
-        let çubuk_genişliği = çubuk_genişliği.min(seri.azami_çubuk_genişliği);
+        let çubuk_genişliği =
+            (çubuk_genişliği.min(seri.azami_çubuk_genişliği) - seri.çubuk_boşluğu_piksel).max(0.0);
         let mut çokgenler = Vec::new();
         for (indeks, x_değeri) in self.veri.x().iter().copied().enumerate() {
             if x_değeri < x_aralığı.en_az || x_değeri > x_aralığı.en_çok {

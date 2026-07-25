@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::path::PathBuf;
 
-use uplot_rs::{Grafik, LatencyHeatmapÖrneği, latency_heatmap_kartı};
+use uplot_rs::{Grafik, latency_heatmap_kartları};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let dizin = std::env::args()
@@ -9,8 +9,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("target/latency-heatmap"));
     std::fs::create_dir_all(&dizin)?;
-    for örnek in LatencyHeatmapÖrneği::TÜMÜ {
-        let (seçenekler, veri) = latency_heatmap_kartı(örnek, 5.0, 0.0)?;
+    for (örnek, seçenekler, veri) in latency_heatmap_kartları(5.0, 0.0)? {
         let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();
         std::fs::write(dizin.join(format!("{}.svg", örnek.kimlik())), svg)?;
     }

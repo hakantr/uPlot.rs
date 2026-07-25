@@ -52,6 +52,8 @@ pub struct SeriSeçenekleri {
     pub çubuk_genişlik_oranı: f32,
     pub azami_çubuk_genişliği: f32,
     pub çubuk_hizası: i8,
+    /// Barlar arasından çıkarılan sabit CSS piksel boşluğu (`paths.bars gap`).
+    pub çubuk_boşluğu_piksel: f32,
     /// uPlot bars `radius: [value, base]` değer ucunun genişliğe göre oranı.
     pub çubuk_uç_yarıçap_oranı: f32,
     /// Aynı stile sahip çubukları uPlot `Path2D` gibi tek dolgu ve tek
@@ -111,6 +113,7 @@ impl SeriSeçenekleri {
             çubuk_genişlik_oranı: 0.6,
             azami_çubuk_genişliği: f32::INFINITY,
             çubuk_hizası: 0,
+            çubuk_boşluğu_piksel: 0.0,
             çubuk_uç_yarıçap_oranı: 0.0,
             toplu_çubuk_yolu: false,
             yüzen_çubuk_üst_serisi: None,
@@ -287,6 +290,13 @@ impl SeriSeçenekleri {
 
     pub fn çubuk_hizası(mut self, hiza: i8) -> Self {
         self.çubuk_hizası = hiza.clamp(-1, 1);
+        self
+    }
+
+    pub fn çubuk_boşluğu_piksel(mut self, boşluk: f32) -> Self {
+        if boşluk.is_finite() {
+            self.çubuk_boşluğu_piksel = boşluk.max(0.0);
+        }
         self
     }
 

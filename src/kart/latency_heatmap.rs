@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::sync::OnceLock;
 
 use super::{ortak_kart_etkileşimleri, veri_uretici::KanıtRastgele};
 use crate::{
@@ -10,10 +11,10 @@ pub const LATENCY_HEATMAP_KANIT_TOHUMU: u32 = 0x1A7E_4C7A;
 const KANIT_ZAMANI_SANİYE: f64 = 1_642_711_320.0;
 const KANIT_ZAMANI_MİLİSANİYE: f64 = 1_642_711_320_000.0;
 
-pub const LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) =
-    latency_heatmap_kartı(LatencyHeatmapÖrneği::Kovalanmış, 5.0, 0.0)?;
-// Örnek üretimi, histogram kovaları ve ısı hücreleri çekirdekte çözülür.
-let grafik = Grafik::yeni(seçenekler, veri)?;"##;
+pub const LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in latency_heatmap_kartları(5.0, 0.0)? {
+    // Ham veri paylaşımı, histogram kovaları ve ısı hücreleri çekirdekte çözülür.
+    let grafik = Grafik::yeni(seçenekler, veri)?;
+}"##;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LatencyHeatmapÖrneği {
@@ -52,7 +53,7 @@ impl LatencyHeatmapÖrneği {
                 "Latency Histogram (align: 1, gap: 0, stroke: 2, border collapse)"
             }
             Self::HistogramBoşluklu => {
-                "Latency Histogram (align: 1, gap: 2, stroke: 1, disp-gap-shift)"
+                "Latency Histogram (align: 1, gap: 3, stroke: 1, disp-gap-shift)"
             }
         }
     }
@@ -62,6 +63,42 @@ impl LatencyHeatmapÖrneği {
             .into_iter()
             .find(|örnek| örnek.kimlik() == kimlik)
     }
+
+    pub const fn durum(self) -> &'static str {
+        match self {
+            Self::Ham => "100 zaman sütunu · yaklaşık 35K ham hücre",
+            Self::Kovalanmış => "aynı ham veri · 5 ms yoğunluk kovaları",
+            Self::Mode2 => "45K örnek · 15 sn × 2 ms facet hücreleri",
+            Self::HistogramBirleşik => "aynı ham veri · align 1 · gap 0 · canlı setData",
+            Self::HistogramBoşluklu => "ilk histogram snapshot · sabit 3 px gap",
+        }
+    }
+}
+
+/// Resmî sayfadaki beş ilişkili yüzeyi kaynak sırasıyla döndürür.
+///
+/// Ham ve kovalanmış ısı haritaları aynı immutable min/max veri deposunu,
+/// iki histogram ise ilk kova ayarlarında aynı histogram snapshot'ını paylaşır.
+pub fn latency_heatmap_kartları(
+    kova_boyutu: f64,
+    kova_ofseti: f64,
+) -> Result<Vec<(LatencyHeatmapÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    let mut kartlar = Vec::with_capacity(LatencyHeatmapÖrneği::TÜMÜ.len());
+    let mut histogram_snapshot = None::<HizalıVeri>;
+    for örnek in LatencyHeatmapÖrneği::TÜMÜ {
+        let (seçenekler, veri) = if örnek == LatencyHeatmapÖrneği::HistogramBoşluklu
+            && let Some(snapshot) = &histogram_snapshot
+        {
+            (histogram_seçenekleri(örnek)?, snapshot.clone())
+        } else {
+            latency_heatmap_kartı(örnek, kova_boyutu, kova_ofseti)?
+        };
+        if örnek == LatencyHeatmapÖrneği::HistogramBirleşik {
+            histogram_snapshot = Some(veri.clone());
+        }
+        kartlar.push((örnek, seçenekler, veri));
+    }
+    Ok(kartlar)
 }
 
 /// Resmî latency-heatmap.html sayfasındaki beş grafikten birini üretir.
@@ -107,10 +144,11 @@ fn ham_ısı_haritası() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatas
                     IsıHücresiBoyutu::Piksel(1.0),
                     "#ff000066",
                 )
+                .piksel_ofseti(1.0, 0.5)
             })
         })
         .collect();
-    ısı_haritası_seçenekleri(LatencyHeatmapÖrneği::Ham, x, sütunlar, hücreler, false)
+    ısı_haritası_seçenekleri(LatencyHeatmapÖrneği::Ham, hücreler, false)
 }
 
 fn kovalanmış_ısı_haritası() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
@@ -130,13 +168,7 @@ fn kovalanmış_ısı_haritası() -> Result<(GrafikSeçenekleri, HizalıVeri), U
             ));
         }
     }
-    ısı_haritası_seçenekleri(
-        LatencyHeatmapÖrneği::Kovalanmış,
-        x,
-        sütunlar,
-        hücreler,
-        false,
-    )
+    ısı_haritası_seçenekleri(LatencyHeatmapÖrneği::Kovalanmış, hücreler, false)
 }
 
 fn mode2_ısı_haritası() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
@@ -209,6 +241,13 @@ fn histogram(
     kova_boyutu: f64,
     kova_ofseti: f64,
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
+    Ok((
+        histogram_seçenekleri(örnek)?,
+        histogram_verisi(kova_boyutu, kova_ofseti)?,
+    ))
+}
+
+fn histogram_verisi(kova_boyutu: f64, kova_ofseti: f64) -> Result<HizalıVeri, UplotHatası> {
     let (_, sütunlar) = ham_veri();
     let tümü = sütunlar.iter().flatten().copied().collect::<Vec<_>>();
     let sayımlar = histogram_say(&tümü, kova_boyutu, kova_ofseti);
@@ -224,39 +263,35 @@ fn histogram(
         x.push(son + kova_boyutu);
         y.push(None);
     }
-    let veri = HizalıVeri::yeni(x, vec![y])?;
+    HizalıVeri::yeni(x, vec![y])
+}
+
+fn histogram_seçenekleri(
+    örnek: LatencyHeatmapÖrneği
+) -> Result<GrafikSeçenekleri, UplotHatası> {
     let boşluklu = örnek == LatencyHeatmapÖrneği::HistogramBoşluklu;
     let seri = SeriSeçenekleri::yeni("Latency")
         .renk("#ff0000")
         .dolgu("#ff000066")
         .çizgi_kalınlığı(if boşluklu { 1.0 } else { 2.0 })
         .çubuk(true)
-        .çubuk_boyutu(if boşluklu { 0.94 } else { 1.0 }, f32::MAX);
-    let seçenekler = GrafikSeçenekleri::yeni(1_800, 600)?
+        .çubuk_boyutu(1.0, f32::MAX)
+        .çubuk_hizası(1)
+        .çubuk_boşluğu_piksel(if boşluklu { 3.0 } else { 0.0 });
+    Ok(GrafikSeçenekleri::yeni(1_800, 600)?
         .başlık(örnek.başlık())
         .x_zaman(false)
         .ızgara_rengi(if boşluklu { "#00000000" } else { "#e5e7eb" })
         .seri(seri)
-        .etkileşimler(ortak_kart_etkileşimleri());
-    Ok((seçenekler, veri))
+        .etkileşimler(ortak_kart_etkileşimleri()))
 }
 
 fn ısı_haritası_seçenekleri(
     örnek: LatencyHeatmapÖrneği,
-    x: Vec<f64>,
-    sütunlar: Vec<Vec<f64>>,
     hücreler: Vec<IsıHücresi>,
     milisaniye: bool,
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
-    let alt = sütunlar
-        .iter()
-        .map(|değerler| değerler.first().copied())
-        .collect();
-    let üst = sütunlar
-        .iter()
-        .map(|değerler| değerler.last().copied())
-        .collect();
-    let veri = HizalıVeri::yeni(x, vec![alt, üst])?;
+    let veri = ham_ısı_haritası_verisi()?;
     let seçenekler = temel_ısı_seçenekleri(örnek, milisaniye)?
         .ısı_haritası_düzeni(IsıHaritasıDüzeni::yeni(hücreler));
     Ok((seçenekler, veri))
@@ -272,31 +307,56 @@ fn temel_ısı_seçenekleri(
         .x_zaman_milisaniye(milisaniye)
         .seri(
             SeriSeçenekleri::yeni("Minimum")
-                .göster(false)
-                .çizgi_kalınlığı(0.0),
+                .çizgi_kalınlığı(0.0)
+                .noktaları_göster(false),
         )
         .seri(
             SeriSeçenekleri::yeni("Maximum")
-                .göster(false)
-                .çizgi_kalınlığı(0.0),
+                .çizgi_kalınlığı(0.0)
+                .noktaları_göster(false),
         )
         .etkileşimler(ortak_kart_etkileşimleri()))
 }
 
-fn ham_veri() -> (Vec<f64>, Vec<Vec<f64>>) {
-    let mut rastgele = KanıtRastgele::yeni(LATENCY_HEATMAP_KANIT_TOHUMU);
-    let mut x = Vec::with_capacity(100);
-    let mut sütunlar = Vec::with_capacity(100);
-    for indeks in 0..100 {
-        x.push(KANIT_ZAMANI_SANİYE + indeks as f64);
-        let adet = (rastgele.sonraki() * 301.0).floor() as usize + 200;
-        let mut değerler = (0..adet)
-            .map(|_| çarpık_normal(&mut rastgele, 30.0, 30.0, 3.0).max(5.0))
-            .collect::<Vec<_>>();
-        değerler.sort_by(f64::total_cmp);
-        sütunlar.push(değerler);
+fn ham_veri() -> &'static (Vec<f64>, Vec<Vec<f64>>) {
+    static HAM: OnceLock<(Vec<f64>, Vec<Vec<f64>>)> = OnceLock::new();
+    HAM.get_or_init(|| {
+        let mut rastgele = KanıtRastgele::yeni(LATENCY_HEATMAP_KANIT_TOHUMU);
+        let mut x = Vec::with_capacity(100);
+        let mut sütunlar = Vec::with_capacity(100);
+        for indeks in 0..100 {
+            x.push(KANIT_ZAMANI_SANİYE + indeks as f64);
+            let adet = (rastgele.sonraki() * 301.0).floor() as usize + 200;
+            let mut değerler = (0..adet)
+                .map(|_| çarpık_normal(&mut rastgele, 30.0, 30.0, 3.0).max(5.0))
+                .collect::<Vec<_>>();
+            değerler.sort_by(f64::total_cmp);
+            sütunlar.push(değerler);
+        }
+        (x, sütunlar)
+    })
+}
+
+fn ham_ısı_haritası_verisi() -> Result<HizalıVeri, UplotHatası> {
+    static VERİ: OnceLock<Result<HizalıVeri, String>> = OnceLock::new();
+    match VERİ.get_or_init(|| {
+        let (x, sütunlar) = ham_veri();
+        let alt = sütunlar
+            .iter()
+            .map(|değerler| değerler.first().copied())
+            .collect();
+        let üst = sütunlar
+            .iter()
+            .map(|değerler| değerler.last().copied())
+            .collect();
+        HizalıVeri::yeni(x.clone(), vec![alt, üst]).map_err(|hata| hata.to_string())
+    }) {
+        Ok(veri) => Ok(veri.clone()),
+        Err(açıklama) => Err(UplotHatası::GeçersizKaynakVeri {
+            varlık: "latency-heatmap immutable raw range data",
+            açıklama: açıklama.clone(),
+        }),
     }
-    (x, sütunlar)
 }
 
 fn histogram_say(değerler: &[f64], boyut: f64, ofset: f64) -> BTreeMap<i64, u32> {
@@ -362,12 +422,27 @@ fn metal_paleti() -> [&'static str; 15] {
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Grafik, Komut};
+    use crate::{Grafik, Komut, TekerlekEkseni};
 
     #[test]
     fn beş_kaynak_grafiği_aynı_üreteç_ve_kovaları_korur() -> Result<(), UplotHatası> {
-        for örnek in LatencyHeatmapÖrneği::TÜMÜ {
-            let (seçenekler, veri) = latency_heatmap_kartı(örnek, 5.0, 0.0)?;
+        let kartlar = latency_heatmap_kartları(5.0, 0.0)?;
+        assert_eq!(kartlar.len(), 5);
+        let ham = kartlar.first().ok_or(UplotHatası::YetersizVeri {
+            uzunluk: kartlar.len(),
+        })?;
+        let aggregate = kartlar.get(1).ok_or(UplotHatası::YetersizVeri {
+            uzunluk: kartlar.len(),
+        })?;
+        let collapsed = kartlar.get(3).ok_or(UplotHatası::YetersizVeri {
+            uzunluk: kartlar.len(),
+        })?;
+        let gapped = kartlar.get(4).ok_or(UplotHatası::YetersizVeri {
+            uzunluk: kartlar.len(),
+        })?;
+        assert!(ham.2.aynı_depolamayı_paylaşıyor(&aggregate.2));
+        assert!(collapsed.2.aynı_depolamayı_paylaşıyor(&gapped.2));
+        for (_, seçenekler, veri) in kartlar {
             assert!(!veri.x().is_empty());
             let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
             assert!(
@@ -384,7 +459,7 @@ mod testler {
         let (_, sütunlar) = ham_veri();
         let adet = sütunlar.iter().map(Vec::len).sum::<usize>();
         assert_eq!(sütunlar.len(), 100);
-        assert!((20_000..=50_000).contains(&adet));
+        assert_eq!(adet, 34_110);
         assert!(sütunlar.iter().all(|sütun| {
             sütun.windows(2).all(|çift| {
                 çift
@@ -396,6 +471,83 @@ mod testler {
     }
 
     #[test]
+    fn ham_hücreler_kaynak_piksel_ofsetiyle_parçalı_yollara_bölünür() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = latency_heatmap_kartı(LatencyHeatmapÖrneği::Ham, 5.0, 0.0)?;
+        let düzen =
+            seçenekler
+                .ısı_haritası_düzeni
+                .as_ref()
+                .ok_or(UplotHatası::GeçersizKaynakVeri {
+                    varlık: "raw heatmap layout",
+                    açıklama: "ısı hücre düzeni bulunamadı".to_string(),
+                })?;
+        assert_eq!(düzen.hücreler.len(), 34_110);
+        assert_eq!(
+            düzen.hücreler.first().map(|hücre| hücre.piksel_ofseti),
+            Some([1.0, 0.5])
+        );
+        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+        let parçalar = sahne
+            .komutlar()
+            .iter()
+            .filter_map(|komut| match komut {
+                Komut::Alan { çokgenler, dolgu } if dolgu == "#ff000066" => Some(çokgenler.len()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert!(parçalar.len() > 1);
+        assert!(parçalar.iter().all(|uzunluk| *uzunluk <= 1_024));
+        assert_eq!(parçalar.iter().sum::<usize>(), 34_110);
+        Ok(())
+    }
+
+    #[test]
+    fn aggregated_hücre_x_pikseli_sabit_y_veri_boyutu_zoomla_ölçeklenir() -> Result<(), UplotHatası>
+    {
+        let (seçenekler, veri) =
+            latency_heatmap_kartı(LatencyHeatmapÖrneği::Kovalanmış, 5.0, 0.0)?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        let ilk = ilk_ısı_hücresi_boyutu(&grafik.çiz_görünür_boyutta(1_800, 600))
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        grafik.tekerlek_eksende(0.5, 0.5, 160.0, false, TekerlekEkseni::Y)?;
+        let yakın = ilk_ısı_hücresi_boyutu(&grafik.çiz_görünür_boyutta(1_800, 600))
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!((ilk.0 - 10.0).abs() < 0.01);
+        assert!((yakın.0 - 10.0).abs() < 0.01);
+        assert!(yakın.1 > ilk.1);
+        Ok(())
+    }
+
+    #[test]
+    fn histogram_bar_hizası_ve_sabit_piksel_boşluğu_zoomda_korunur() -> Result<(), UplotHatası> {
+        for (örnek, beklenen_boşluk) in [
+            (LatencyHeatmapÖrneği::HistogramBirleşik, 0.0),
+            (LatencyHeatmapÖrneği::HistogramBoşluklu, 3.0),
+        ] {
+            let (seçenekler, veri) = latency_heatmap_kartı(örnek, 5.0, 0.0)?;
+            let seri = seçenekler
+                .seriler
+                .first()
+                .ok_or(UplotHatası::YetersizVeri {
+                    uzunluk: seçenekler.seriler.len(),
+                })?;
+            assert_eq!(seri.çubuk_hizası, 1);
+            assert_eq!(seri.çubuk_boşluğu_piksel, beklenen_boşluk);
+            let mut grafik = Grafik::yeni(seçenekler, veri)?;
+            for _ in 0..2 {
+                let boşluk = ilk_çubuk_boşluğu(&grafik.çiz_görünür_boyutta(1_800, 600))
+                    .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+                assert!(
+                    (boşluk - beklenen_boşluk).abs() < 0.02,
+                    "{örnek:?}: {boşluk}"
+                );
+                grafik.tekerlek_eksende(0.5, 0.5, 100.0, false, TekerlekEkseni::X)?;
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
     fn histogram_kontrolleri_veriyi_yeniden_kovalar() -> Result<(), UplotHatası> {
         let (_, beşlik) =
             latency_heatmap_kartı(LatencyHeatmapÖrneği::HistogramBirleşik, 5.0, 0.0)?;
@@ -403,5 +555,35 @@ mod testler {
             latency_heatmap_kartı(LatencyHeatmapÖrneği::HistogramBirleşik, 10.0, 3.0)?;
         assert!(onluk.uzunluk() < beşlik.uzunluk());
         Ok(())
+    }
+
+    fn ilk_ısı_hücresi_boyutu(sahne: &crate::Sahne) -> Option<(f32, f32)> {
+        sahne.komutlar().iter().find_map(|komut| match komut {
+            Komut::Alan { çokgenler, dolgu } if dolgu.starts_with('#') && çokgenler.len() > 1 => {
+                let çokgen = çokgenler.first()?;
+                let ilk = çokgen.first()?;
+                let karşı = çokgen.get(2)?;
+                Some(((karşı.x - ilk.x).abs(), (karşı.y - ilk.y).abs()))
+            }
+            _ => None,
+        })
+    }
+
+    fn ilk_çubuk_boşluğu(sahne: &crate::Sahne) -> Option<f32> {
+        let çubuklar = sahne
+            .komutlar()
+            .iter()
+            .filter_map(|komut| match komut {
+                Komut::Dikdörtgen {
+                    konum,
+                    genişlik,
+                    dolgu,
+                    ..
+                } if dolgu == "#ff000066" => Some((konum.x, *genişlik)),
+                _ => None,
+            })
+            .take(2)
+            .collect::<Vec<_>>();
+        Some(çubuklar.get(1)?.0 - çubuklar.first()?.0 - çubuklar.first()?.1)
     }
 }

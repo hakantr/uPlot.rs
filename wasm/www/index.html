@@ -351,6 +351,18 @@
     .high-low-bands-grafik > p { margin: 0 10px 5px; color: #6b7280;
       font-size: 11px; }
     .high-low-bands-grafik svg { display: block; max-width: none; }
+    #chart.latency-heatmap-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .latency-heatmap-yığın { min-width: min-content; display: grid;
+      align-items: flex-start; gap: 16px; }
+    .latency-heatmap-grafik { position: relative; width: 1800px;
+      min-height: 660px; border: 1px solid #e5e7eb; border-radius: 8px;
+      background: #fff; overflow: hidden; }
+    .latency-heatmap-grafik > h3 { margin: 7px 10px 2px; color: #111827;
+      font-size: 13px; }
+    .latency-heatmap-grafik > p { margin: 0 10px 5px; color: #6b7280;
+      font-size: 11px; }
+    .latency-heatmap-grafik svg { display: block; width: 1800px !important;
+      height: 600px !important; max-width: none; }
     #chart.bars-grouped-stacked-yüzeyi { display: block; min-width: 0; overflow: auto;
                                          place-items: unset; padding: 8px;
                                          box-sizing: border-box; }
@@ -2874,30 +2886,30 @@
       },
     };
 
-    for (const [kimlik, başlık, durum, seriler] of [
-      ["latency-heatmap-raw", "Latency Heatmap (~35k)", "100 zaman sütunu · ham örnekler", []],
-      ["latency-heatmap-aggregated", "Latency Heatmap Aggregated 10ms (~20k)", "5 ms yoğunluk kovaları", []],
-      ["latency-heatmap-mode2", "Heatmap / Scatter (mode: 2) / ~45k", "15 sn × 2 ms mode-2 hücreleri", []],
-      ["latency-histogram-collapsed", "Latency Histogram · border collapse", "5 ms · gap 0 · stroke 2", [["Latency", "#ff0000"]]],
-      ["latency-histogram-gapped", "Latency Histogram · disp-gap-shift", "5 ms · gap 3 · stroke 1", [["Latency", "#ff0000"]]],
-    ]) {
-      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>latency-heatmap</small><div class="durum">${durum}</div>
-        </article>`);
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/latency-heatmap.html">latency-heatmap.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/rand.js">rand.js</a>
-          <br>Beş resmî grafik; skew-normal üreteci, draw kancası, mode-2 hücre yolu ve histogram kovaları Rust çekirdeğinde çözülür.`,
-        tanım: () => latency_heatmap_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/latency_heatmap.rs",
-        seriler: seriler.map(([etiket, renk]) => ({ etiket, renk })),
-        yardım: "Sürükleyerek X/Y alanı seç · tekerlekle fare odağında yakınlaştır · boşlukla taşı",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="latency-heatmap" aria-current="false" tabindex="0">
+        <strong>Latency Heatmap · 5 related surfaces</strong><small>latency-heatmap</small>
+        <div class="durum">ortak ham veri · raw/aggregate/mode2 · iki histogram</div>
+      </article>`);
+    kartlar["latency-heatmap"] = {
+      başlık: "Latency Heatmap · 5 related surfaces",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/latency-heatmap.html">latency-heatmap.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/rand.js">rand.js</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/bars.js">bars.js</a>
+        <br>Beş resmî yüzey kaynak sırasıyla tek kartta gösterilir. Raw ve aggregate aynı immutable ham aralık verisini; iki histogram ilk snapshot'ı paylaşır. Slider yalnız kaynak u3/collapsed histogramına setData uygular.`,
+      tanım: () => latency_heatmap_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/latency_heatmap.rs",
+      seriler: [],
+      yardım: "Beş yüzey bağımsız zoom/pan geçmişini korur; histogram sliderları yalnız dördüncü yüzeyi günceller",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Ham olay yoğunluğu, zaman/Y kovalanmış yoğunluk, mode-2 facet hücreleri ve aynı gecikme dağılımının iki histogram path ayarını tek kaynak sayfası düzeninde karşılaştırır.",
+        api: "latency_heatmap_kartları() beş retained Grafik döndürür. Piksel ve veri birimli hücre boyutları ayrı taşınır; histogram align=1, gap=0/3 CSS px ve kova endpoint'i çekirdek seçenekleridir. Slider yalnız collapsed yüzeyde setData yaşam döngüsünü kullanır.",
+        izleme: "İstek gecikmesi, log/trace süreleri veya olay yoğunluğunu hem zaman içindeki dağılım hem de toplu histogram olarak incelemek için uygundur.",
+        maliyet: "34.110 ham hücre tek dev SVG path yerine 1.024 hücrelik parçalara bölünür. Ham aralık verisi yüzeyler arasında Arc ile paylaşılır; pointer yalnız etkin yüzeyin hafif katmanını günceller.",
+      },
+    };
 
     for (const [kimlik, başlık, renk] of [
       ["line-paths-points-only", "null path (points only)", "#FFFFFF"],
@@ -3028,6 +3040,8 @@
     let gradientsEtkinİndeks = 0;
     let highLowBandsOturumları = [];
     let highLowBandsEtkinİndeks = 0;
+    let latencyHeatmapOturumları = [];
+    let latencyHeatmapEtkinİndeks = 0;
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
     let timeseriesDiscreteEtkinİndeks = 0;
@@ -3306,6 +3320,38 @@
       ...yüzey,
       seriler: yüzey.seriler.map(([etiket, renk]) => ({ etiket, renk })),
     }));
+    const latencyHeatmapYüzeyleri = [
+      {
+        kimlik: "latency-heatmap-raw",
+        başlık: "Latency Heatmap (~35k)",
+        açıklama: "100 zaman sütunu · 34.110 ham 10×1 px hücre · parçalı retained yollar",
+        seriler: [],
+      },
+      {
+        kimlik: "latency-heatmap-aggregated",
+        başlık: "Latency Heatmap Aggregated 10ms (~20k)",
+        açıklama: "Aynı immutable ham veri · X 10 px sabit, Y 5 veri birimi",
+        seriler: [],
+      },
+      {
+        kimlik: "latency-heatmap-mode2",
+        başlık: "Heatmap / Scatter (mode: 2) / ~45k",
+        açıklama: "45K örnek · 15 saniye × 2 ms facet hücreleri · metal paleti",
+        seriler: [],
+      },
+      {
+        kimlik: "latency-histogram-collapsed",
+        başlık: "Latency Histogram (align: 1, gap: 0, stroke: 2, border collapse)",
+        açıklama: "Slider setData hedefi · tam kova genişliği · birleşik kenarlar",
+        seriler: [{ etiket: "Latency", renk: "#ff0000" }],
+      },
+      {
+        kimlik: "latency-histogram-gapped",
+        başlık: "Latency Histogram (align: 1, gap: 3, stroke: 1, disp-gap-shift)",
+        açıklama: "İlk histogram snapshot · zoomdan bağımsız sabit 3 CSS px boşluk",
+        seriler: [{ etiket: "Latency", renk: "#ff0000" }],
+      },
+    ];
     const nearestNonNullYüzeyleri = [
       {
         kimlik: "nearest-non-null-x-value",
@@ -3450,6 +3496,14 @@
           || !highLowBandsOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !highLowBandsOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "latency-heatmap") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !latencyHeatmapOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !latencyHeatmapOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -6305,6 +6359,90 @@
       kontrolleriGüncelle();
     }
 
+    function latencyHeatmapYüzeyiniÇiz(indeks) {
+      const tanım = latencyHeatmapYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-latency-heatmap-index="${indeks}"]`);
+      const yüzeyOturumu = latencyHeatmapOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const şablon = document.createElement("template");
+      şablon.innerHTML = yüzeyOturumu.svg(1800, 600).trim();
+      const yeniSvg = şablon.content.querySelector("svg");
+      let svg = yüzey.querySelector("svg");
+      if (svg && yeniSvg) {
+        svgYüzeyiniYerindeGüncelle(svg, yeniSvg);
+      } else {
+        yüzey.innerHTML = `
+          <h3>${tanım.başlık}</h3>
+          <p>${tanım.açıklama}</p>
+          ${yüzeyOturumu.svg(1800, 600)}
+          ${tanım.seriler.length === 0 ? "" : `<div class="lejant">
+            <span>x: <b id="x-değeri">--</b></span>
+            ${tanım.seriler.map((seri, seriİndeksi) => `
+              <span><i class="örnek" style="border-color:${seri.renk};background:${seri.renk}"></i>
+                ${seri.etiket}: <b id="seri-değeri-${seriİndeksi}">--</b></span>
+            `).join("")}
+          </div>`}
+        `;
+        svg = yüzey.querySelector("svg");
+      }
+      if (!svg) return;
+      if (!svg.querySelector(":scope > #etkileşim")) {
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)"
+              stroke="#3b82f6"/>
+            <line id="imleç-x" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            <line id="imleç-y" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            ${tanım.seriler.map((seri, seriİndeksi) =>
+              `<circle id="imleç-nokta-${seriİndeksi}" visibility="hidden" r="2.5"
+                fill="${seri.renk}"/>`
+            ).join("")}
+          </g>`);
+      }
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      svg.dataset.etkileşim = "independent-latency-heatmap";
+      yüzey.onpointerenter = () => {
+        latencyHeatmapEtkinİndeks = indeks;
+        oturum = latencyHeatmapOturumları[indeks] ?? null;
+        kartlar["latency-heatmap"].seriler = tanım.seriler;
+        kontrolleriGüncelle();
+      };
+      yüzey.onpointerleave = () => {
+        svg.querySelectorAll("#imleç-x, #imleç-y, [id^='imleç-nokta-']")
+          .forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+      };
+    }
+
+    function latencyHeatmapÇiz() {
+      const ilkKurulum = !chart.classList.contains("latency-heatmap-yüzeyi")
+        || chart.querySelectorAll(".latency-heatmap-grafik").length
+          !== latencyHeatmapYüzeyleri.length;
+      if (ilkKurulum) {
+        chart.className = "latency-heatmap-yüzeyi";
+        chart.innerHTML = `<div class="latency-heatmap-yığın">
+          ${latencyHeatmapYüzeyleri.map((_, indeks) =>
+            `<article class="latency-heatmap-grafik"
+              data-latency-heatmap-index="${indeks}"></article>`
+          ).join("")}
+        </div>`;
+        latencyHeatmapYüzeyleri.forEach((_, indeks) =>
+          latencyHeatmapYüzeyiniÇiz(indeks)
+        );
+      } else {
+        latencyHeatmapYüzeyiniÇiz(latencyHeatmapEtkinİndeks);
+      }
+      oturum = latencyHeatmapOturumları[latencyHeatmapEtkinİndeks]
+        ?? latencyHeatmapOturumları[0]
+        ?? null;
+      kartlar["latency-heatmap"].seriler =
+        latencyHeatmapYüzeyleri[latencyHeatmapEtkinİndeks]?.seriler
+        ?? latencyHeatmapYüzeyleri[0].seriler;
+      kontrolleriGüncelle();
+    }
+
     function scatterYüzeyiniÇiz(indeks) {
       const tanım = scatterYüzeyleri[indeks];
       const yüzey = chart.querySelector(`[data-scatter-index="${indeks}"]`);
@@ -7384,6 +7522,10 @@
         highLowBandsÇiz();
         return;
       }
+      if (aktifKart === "latency-heatmap") {
+        latencyHeatmapÇiz();
+        return;
+      }
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
         return;
@@ -7500,6 +7642,7 @@
       chart.classList.remove("focus-cursor-yüzeyi");
       chart.classList.remove("gradients-yüzeyi");
       chart.classList.remove("high-low-bands-yüzeyi");
+      chart.classList.remove("latency-heatmap-yüzeyi");
       chart.classList.remove("soft-minmax-yüzeyi");
       chart.classList.remove("sparklines-bars-yüzeyi");
       chart.classList.remove("sparklines-yüzeyi");
@@ -7830,6 +7973,10 @@
         ? chart.querySelector(
             `[data-high-low-bands-index="${highLowBandsEtkinİndeks}"] svg`
           )
+        : aktifKart === "latency-heatmap"
+        ? chart.querySelector(
+            `[data-latency-heatmap-index="${latencyHeatmapEtkinİndeks}"] svg`
+          )
         : aktifKart === "scatter"
         ? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"] svg`)
         : aktifKart === "box-whisker"
@@ -7962,6 +8109,11 @@
           ?? chart.querySelector(
             `[data-high-low-bands-index="${highLowBandsEtkinİndeks}"]`
           )
+        : aktifKart === "latency-heatmap"
+        ? olay.target?.closest?.(".latency-heatmap-grafik")
+          ?? chart.querySelector(
+            `[data-latency-heatmap-index="${latencyHeatmapEtkinİndeks}"]`
+          )
         : aktifKart === "scatter"
         ? olay.target?.closest?.(".scatter-grafik")
           ?? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"]`)
@@ -8051,6 +8203,13 @@
           highLowBandsEtkinİndeks = indeks;
           oturum = highLowBandsOturumları[indeks];
           kartlar["high-low-bands"].seriler = highLowBandsYüzeyleri[indeks].seriler;
+        }
+      } else if (aktifKart === "latency-heatmap" && bağımsızYüzey) {
+        const indeks = Number(bağımsızYüzey.dataset.latencyHeatmapIndex);
+        if (Number.isInteger(indeks) && latencyHeatmapOturumları[indeks]) {
+          latencyHeatmapEtkinİndeks = indeks;
+          oturum = latencyHeatmapOturumları[indeks];
+          kartlar["latency-heatmap"].seriler = latencyHeatmapYüzeyleri[indeks].seriler;
         }
       }
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
@@ -9272,6 +9431,11 @@
           if (yüzey.onceki_gorunum()) highLowBandsYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "latency-heatmap") {
+        latencyHeatmapOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.onceki_gorunum()) latencyHeatmapYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.onceki_gorunum()) syncCursorYüzeyiÇiz(indeks);
@@ -9374,6 +9538,11 @@
           if (yüzey.tam_gorunum()) highLowBandsYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "latency-heatmap") {
+        latencyHeatmapOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.tam_gorunum()) latencyHeatmapYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.tam_gorunum()) syncCursorYüzeyiÇiz(indeks);
@@ -9471,6 +9640,10 @@
         );
       } else if (aktifKart === "high-low-bands") {
         highLowBandsOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "latency-heatmap") {
+        latencyHeatmapOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "sync-cursor") {
@@ -9693,6 +9866,15 @@
           highLowBandsEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "high-low-bands";
         }
+        if (kimlik !== "latency-heatmap"
+          && (kimlik.startsWith("latency-heatmap-")
+            || kimlik.startsWith("latency-histogram-"))) {
+          const indeks = latencyHeatmapYüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === kimlik
+          );
+          latencyHeatmapEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "latency-heatmap";
+        }
         if (["months-no-leap", "months-leap", "months-russian"].includes(kimlik)) {
           kimlik = "months";
         }
@@ -9821,6 +10003,7 @@
           focusCursorOturumları,
           gradientsOturumları,
           highLowBandsOturumları,
+          latencyHeatmapOturumları,
           syncCursorOturumları,
           timeseriesDiscreteOturumları,
           timezonesDstOturumları,
@@ -9865,6 +10048,9 @@
         highLowBandsOturumları.forEach(yüzey => yüzey.free());
         highLowBandsOturumları = [];
         highLowBandsEtkinİndeks = 0;
+        latencyHeatmapOturumları.forEach(yüzey => yüzey.free());
+        latencyHeatmapOturumları = [];
+        latencyHeatmapEtkinİndeks = 0;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
         syncCursorOturumları = [];
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
@@ -9953,7 +10139,7 @@
         noktaKontrolü.hidden = !kart.değişkenNokta;
         arcsinhKontrolü.hidden = kimlik !== "arcsinh-scales";
         autosizeKontrolü.hidden = kimlik !== "axis-autosize";
-        latencyHistogramKontrolü.hidden = !kimlik.startsWith("latency-histogram-");
+        latencyHistogramKontrolü.hidden = kimlik !== "latency-heatmap";
         dinamikSeriKontrolleri.hidden = kimlik !== "add-del-series";
         softMinMaxBaşlat.hidden = !kart.softMinMaxCanlı;
         svgİndir.hidden = kimlik !== "svg-image";
@@ -10100,6 +10286,22 @@
           });
           oturum = highLowBandsOturumları[highLowBandsEtkinİndeks]
             ?? highLowBandsOturumları[0]
+            ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "latency-heatmap") {
+          const istenenİndeks = latencyHeatmapYüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === oturumKimliği
+          );
+          latencyHeatmapEtkinİndeks = istenenİndeks >= 0 ? istenenİndeks : 0;
+          latencyHeatmapOturumları = latencyHeatmapYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = latencyHeatmapOturumları[latencyHeatmapEtkinİndeks]
+            ?? latencyHeatmapOturumları[0]
             ?? null;
           çiz();
           return;
@@ -10606,13 +10808,17 @@
         }
       });
       const latencyHistogramıGüncelle = () => {
-        if (!aktifKart.startsWith("latency-histogram-") || !oturum) return;
+        if (aktifKart !== "latency-heatmap") return;
+        const collapsed = latencyHeatmapOturumları[3];
+        if (!collapsed) return;
         const kova = Number(latencyKova.value);
         const ofset = Number(latencyOfset.value);
         latencyKovaDeğeri.value = String(kova);
         latencyOfsetDeğeri.value = String(ofset);
         try {
-          if (oturum.latency_histogram_ayarla(kova, ofset)) çiz();
+          if (collapsed.latency_histogram_ayarla(kova, ofset)) {
+            latencyHeatmapYüzeyiniÇiz(3);
+          }
           hata.textContent = "";
         } catch (neden) {
           hata.textContent = `Histogram güncellenemedi: ${String(neden)}`;
