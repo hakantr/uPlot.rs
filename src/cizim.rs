@@ -192,12 +192,26 @@ impl Sahne {
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}\" height=\"{}\" viewBox=\"0 0 {} {}\">\n",
             self.genişlik, self.yükseklik, self.genişlik, self.yükseklik
         );
+        çıktı.push_str(&self.svg_içeriği(""));
+        çıktı.push_str("</svg>\n");
+        çıktı
+    }
+
+    /// Bir üst SVG belgesine yerleştirilecek vektör gövdesini üretir.
+    ///
+    /// GPUI normal paint akışı bu yöntemi çağırmaz; yalnız açık dışa aktarım
+    /// isteği retained sahneyi vektör kaydına dönüştürür.
+    #[cfg(feature = "svg")]
+    pub(crate) fn svg_içeriği(&self, kimlik_öneki: &str) -> String {
+        let mut çıktı = String::new();
         for (komut_indeksi, komut) in self.komutlar.iter().enumerate() {
             match komut {
                 Komut::ArkaPlan { renk } => {
                     let _ = writeln!(
                         çıktı,
-                        "  <rect width=\"100%\" height=\"100%\" fill=\"{}\"/>",
+                        "  <rect width=\"{}\" height=\"{}\" fill=\"{}\"/>",
+                        self.genişlik,
+                        self.yükseklik,
                         kaçış(renk)
                     );
                 }
@@ -263,7 +277,7 @@ impl Sahne {
                     gradyan,
                     kalınlık,
                 } => {
-                    let kimlik = format!("uplot-gradyan-{komut_indeksi}");
+                    let kimlik = format!("{kimlik_öneki}uplot-gradyan-{komut_indeksi}");
                     gradyan_tanımını_yaz(&mut çıktı, &kimlik, gradyan);
                     let d = yol_verisi(parçalar, false);
                     let _ = writeln!(
@@ -319,7 +333,7 @@ impl Sahne {
                 Komut::GradyanAlan {
                     çokgenler, gradyan
                 } => {
-                    let kimlik = format!("uplot-gradyan-{komut_indeksi}");
+                    let kimlik = format!("{kimlik_öneki}uplot-gradyan-{komut_indeksi}");
                     gradyan_tanımını_yaz(&mut çıktı, &kimlik, gradyan);
                     let d = yol_verisi(çokgenler, true);
                     let _ = writeln!(
@@ -355,7 +369,8 @@ impl Sahne {
                     kesme_sınırları,
                 } => {
                     let kırpma_kimliği = kesme_sınırları.map(|(başlangıç, bitiş)| {
-                        let kimlik = format!("uplot-daire-kirpma-{komut_indeksi}");
+                        let kimlik =
+                            format!("{kimlik_öneki}uplot-daire-kirpma-{komut_indeksi}");
                         let _ = writeln!(
                             çıktı,
                             "  <defs><clipPath id=\"{}\"><rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"/></clipPath></defs>",
@@ -404,7 +419,9 @@ impl Sahne {
                     kesme_sınırları,
                 } => {
                     let kırpma_kimliği = kesme_sınırları.map(|(başlangıç, bitiş)| {
-                        let kimlik = format!("uplot-degisken-daire-kirpma-{komut_indeksi}");
+                        let kimlik = format!(
+                            "{kimlik_öneki}uplot-degisken-daire-kirpma-{komut_indeksi}"
+                        );
                         let _ = writeln!(
                             çıktı,
                             "  <defs><clipPath id=\"{}\"><rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"/></clipPath></defs>",
@@ -541,7 +558,6 @@ impl Sahne {
                 }
             }
         }
-        çıktı.push_str("</svg>\n");
         çıktı
     }
 

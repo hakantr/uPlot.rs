@@ -25,6 +25,8 @@ pub mod svg;
 pub use cizim::{
     DoğrusalGradyan, GradyanRenkDurağı, Komut, KöşeYarıçapları, MetinHizası, Nokta, Sahne,
 };
+#[cfg(feature = "gpui-svg")]
+pub use gpui::{GpuiSvgKaydı, GpuiSvgKayıtAyarları};
 pub use grafik::{
     AçıklamaVuruşu, DağılımVuruşu, EksenHedefi, Grafik, NullAtlamaYönü, SeriYaşamDöngüsüOlayı,
     SeçimEylemi, TimelineVuruşu, ZoomRangerDurumu, ZoomRangerSürüklemeEkseni, İmleçSeriÖrneği,

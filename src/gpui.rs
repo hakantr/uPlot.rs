@@ -1,5 +1,10 @@
 //! GPUI çizim yüzeyi ve etkileşim adaptörü.
 
+#[cfg(feature = "gpui-svg")]
+mod svg_kaydi;
+#[cfg(feature = "gpui-svg")]
+pub use svg_kaydi::{GpuiSvgKaydı, GpuiSvgKayıtAyarları};
+
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
@@ -18,6 +23,37 @@ use crate::{
     SeriSeçenekleri, SeçimEylemi, TekerlekEkseni, UplotHatası, YüzeyDikdörtgeni,
     bilgi_kutusunu_yerleştir,
 };
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct GpuiYüzeyDönüşümü {
+    ölçek: f32,
+    köken_x: f32,
+    köken_y: f32,
+}
+
+impl GpuiYüzeyDönüşümü {
+    fn hesapla(
+        kaynak_g: u32,
+        kaynak_y: u32,
+        hedef_x: f32,
+        hedef_y: f32,
+        hedef_g: f32,
+        hedef_yükseklik: f32,
+    ) -> Self {
+        let ölçek = (hedef_g / kaynak_g as f32)
+            .min(hedef_yükseklik / kaynak_y as f32)
+            .max(0.01);
+        let içerik_g = kaynak_g as f32 * ölçek;
+        let içerik_y = kaynak_y as f32 * ölçek;
+        let köken_x = hedef_x + (hedef_g - içerik_g) / 2.0;
+        let köken_y = hedef_y + (hedef_yükseklik - içerik_y) / 2.0;
+        Self {
+            ölçek,
+            köken_x,
+            köken_y,
+        }
+    }
+}
 
 #[derive(Clone)]
 struct İmleçDurumu {
@@ -2398,15 +2434,23 @@ fn sahneyi_önbellekli_boya(
 ) {
     yol_önbelleği.yüzeyi_hazırla(sahne, sınırlar);
     let (kaynak_g, kaynak_y) = sahne.boyut();
-    let ölçek = (f32::from(sınırlar.size.width) / kaynak_g as f32)
-        .min(f32::from(sınırlar.size.height) / kaynak_y as f32)
-        .max(0.01);
-    let içerik_g = kaynak_g as f32 * ölçek;
-    let içerik_y = kaynak_y as f32 * ölçek;
-    let köken_x = f32::from(sınırlar.origin.x) + (f32::from(sınırlar.size.width) - içerik_g) / 2.0;
-    let köken_y = f32::from(sınırlar.origin.y) + (f32::from(sınırlar.size.height) - içerik_y) / 2.0;
-    let dönüştür =
-        |nokta: Nokta| point(px(köken_x + nokta.x * ölçek), px(köken_y + nokta.y * ölçek));
+    let dönüşüm = GpuiYüzeyDönüşümü::hesapla(
+        kaynak_g,
+        kaynak_y,
+        f32::from(sınırlar.origin.x),
+        f32::from(sınırlar.origin.y),
+        f32::from(sınırlar.size.width),
+        f32::from(sınırlar.size.height),
+    );
+    let ölçek = dönüşüm.ölçek;
+    let köken_x = dönüşüm.köken_x;
+    let köken_y = dönüşüm.köken_y;
+    let dönüştür = |nokta: Nokta| {
+        point(
+            px(dönüşüm.köken_x + nokta.x * dönüşüm.ölçek),
+            px(dönüşüm.köken_y + nokta.y * dönüşüm.ölçek),
+        )
+    };
 
     for (komut_indeksi, komut) in sahne.komutlar().iter().enumerate() {
         match komut {

@@ -241,10 +241,10 @@ Tamamlandı. `main` başlangıç durumu
 Planlanan temel API:
 
 ```rust
-let kayıt = GpuiSvgKayıtAyarları::yeni(1_200, 600)
+let kayıt = GpuiSvgKayıtAyarları::yeni(1_200, 600)?
     .etkileşim_katmanı(false);
 
-let svg = grafik.read(cx).svg_kaydı(kayıt)?;
+let svg = grafik.read(cx).svg_kaydı(kayıt);
 
 #[cfg(not(target_family = "wasm"))]
 grafik.read(cx).svg_dosyasına_yaz("grafik.svg", kayıt)?;
