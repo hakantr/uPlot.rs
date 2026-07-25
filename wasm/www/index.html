@@ -453,7 +453,7 @@
               overflow: hidden; color: #6b7280; font-size: 10px; line-height: 1.35;
               text-align: left; text-overflow: ellipsis; white-space: nowrap;
               pointer-events: none; }
-    .imlec-bilgi-kutusu { position: absolute; z-index: 12; max-width: 190px; padding: 8px;
+    .imlec-bilgi-kutusu { position: absolute; z-index: 12; max-width: none; padding: 8px;
                           border-radius: 4px; color: #fff; background: rgba(0,0,0,.8);
                           font-size: 12px; pointer-events: none; white-space: nowrap; }
     .imlec-bilgi-kutusu.en-yakin { max-width: 280px; border: 2px solid transparent;
@@ -2635,6 +2635,12 @@
       değişkenNokta: false,
       bilgiKutusu: true,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Tek serili grafikte en yakın X/Y örneğini ve plot alanına göre yuvarlanmış cursor konumunu hafif bir overlay ile gösterir.",
+        api: "bilgi_kutusunu_yerleştir() kaynak placement.js right/start kuralını, gerçek kutu ölçüsünü, plot sınırını ve sağda yer kalmayınca sola dönüşü platformdan bağımsız hesaplar.",
+        izleme: "Yoğun bir izleme ekranında imlecin seçtiği örneği, ana çizimi değiştirmeden hızlıca okumak için kullanılır.",
+        maliyet: "Pointer olayları requestAnimationFrame ile birleştirilir. Ana SVG/path düğümleri korunur; yalnız imleç ve tooltip overlay özellikleri güncellenir. Yerleşim hesabı O(1)'dir.",
+      },
     };
     for (const [kimlik, başlık] of [
       ["custom-scales-linear", "x linear; y linear"],
@@ -7634,7 +7640,9 @@
           bilgiKutusu.dataset.karsilastirmaUrl = tooltipBilgisi[2];
           bilgiKutusu.title = "Rust performans karşılaştırmasını yeni sekmede aç";
         } else {
-          bilgiKutusu.textContent = `${gerçekX},${seriDeğerleri[0]} at ${Math.round(hamX)},${Math.round(hamY)}`;
+          bilgiKutusu.textContent = `${gerçekX},${seriDeğerleri[0]} at `
+            + `${Math.round((hamX - sol) * cssÖlçekX)},`
+            + `${Math.round((hamY - üst) * cssÖlçekY)}`;
         }
         const chartKutusu = chart.getBoundingClientRect();
         const svgKutusu = svg.getBoundingClientRect();
@@ -7648,12 +7656,35 @@
           + kaynakX / view.width * svgKutusu.width;
         const pikselY = svgKutusu.top - chartKutusu.top
           + kaynakY / view.height * svgKutusu.height;
+        const plotSol = svgKutusu.left - chartKutusu.left
+          + sol / view.width * svgKutusu.width;
+        const plotÜst = svgKutusu.top - chartKutusu.top
+          + üst / view.height * svgKutusu.height;
+        const plotGenişliği = (sağ - sol) / view.width * svgKutusu.width;
+        const plotYüksekliği = (alt - üst) / view.height * svgKutusu.height;
         bilgiKutusu.hidden = false;
         if (tooltipBilgisi.length === 4) svg.style.cursor = "pointer";
         const bilgiG = bilgiKutusu.offsetWidth;
         const bilgiY = bilgiKutusu.offsetHeight;
-        bilgiKutusu.style.left = `${Math.min(pikselX + 10, chart.clientWidth - bilgiG - 4)}px`;
-        bilgiKutusu.style.top = `${Math.min(pikselY + 10, chart.clientHeight - bilgiY - 4)}px`;
+        const yerleşim = Array.from(oturum?.bilgi_kutusu_yerlesimi(
+          pikselX,
+          pikselY,
+          bilgiG,
+          bilgiY,
+          plotSol,
+          plotÜst,
+          plotGenişliği,
+          plotYüksekliği,
+          12,
+        ) ?? []);
+        if (yerleşim.length === 5) {
+          bilgiKutusu.style.left = `${yerleşim[0]}px`;
+          bilgiKutusu.style.top = `${yerleşim[1]}px`;
+          bilgiKutusu.dataset.side = yerleşim[2] > 0 ? "right" : "left";
+          bilgiKutusu.dataset.align = "start";
+          bilgiKutusu.style.maxWidth = `${yerleşim[3]}px`;
+          bilgiKutusu.style.maxHeight = `${yerleşim[4]}px`;
+        }
       }
       const [dikey, yatay] = çizgiler;
       // Varsayılan kartlarda kesintisiz; cursor-snap kartında çekirdek ayarının

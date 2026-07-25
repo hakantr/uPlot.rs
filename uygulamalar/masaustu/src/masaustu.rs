@@ -7258,6 +7258,18 @@ impl Render for ChartListesi {
                  araması O(log N)'dir; normal pointer hareketi ana üç yolu yeniden çizmez, \
                  yalnız hafif cursor/hover/lejant katmanını günceller.",
             ),
+            KartKimliği::CursorTooltip => Some(
+                "Amaç: tek yeşil serideki en yakın X/Y örneğini ve plot alanına göre CSS \
+                 piksel cursor konumunu hafif bir bilgi kutusunda gösterir. API: \
+                 bilgi_kutusunu_yerleştir kaynak placement.js right/start kuralını gerçek \
+                 biçimlendirilmiş metin genişliği, plot sınırı ve 12 piksellik boşlukla \
+                 çekirdekte hesaplar; sağ alan yetmezse kutu imlecin soluna döner. İzleme: \
+                 bir telemetri örneğinin zaman ve değerini ana çizimi değiştirmeden hızlıca \
+                 okumak içindir. Maliyet: en yakın X araması O(log N), yerleşim O(1)'dir; \
+                 GPUI ana yol önbelleğini korur ve yalnız etkileşim canvas'ı ile overlay'i \
+                 yeniler, WASM pointer olaylarını requestAnimationFrame ile birleştirip aynı \
+                 SVG/path düğümlerini yerinde tutar.",
+            ),
             KartKimliği::MissingData => Some(
                 "Amaç: aynı resmî sayfadaki iki bağımsız yüzeyi birlikte karşılaştırır. İlk \
                  yüzey gerçek null CPU/RAM örneklerinin yolu nasıl böldüğünü ve TCP Out'un \

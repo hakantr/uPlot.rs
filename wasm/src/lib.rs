@@ -7,22 +7,23 @@ use uplot_rs::{
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, Aralık, AxisAutosizeAkışı,
     BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    BOX_WHISKER_KART_TANIM_ÖRNEĞİ, BoyutSenkronAkışı, CANDLESTICK_KART_TANIM_ÖRNEĞİ,
-    CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
-    CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
-    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, DRAW_HOOKS_KART_TANIM_ÖRNEĞİ,
-    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ,
-    GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği, Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
-    HighLowBandsÖrneği, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ,
-    LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
-    LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ,
-    MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ,
-    MULTI_BARS_KART_TANIM_ÖRNEĞİ, MultiBarsÖrneği, NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ,
-    NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, NoDataÖrneği,
-    PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ,
-    PathGapClipÖrneği, PixelAlignAkışı, PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ,
-    SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
+    BOX_WHISKER_KART_TANIM_ÖRNEĞİ, BilgiKutusuTarafı, BoyutSenkronAkışı,
+    CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
+    CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ, CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği,
+    DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
+    DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği,
+    GRADIENTS_KART_TANIM_ÖRNEĞİ, GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği, Grafik,
+    HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ, HighLowBandsÖrneği, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ,
+    LINE_PATHS_KART_TANIM_ÖRNEĞİ, LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ,
+    LatencyHeatmapÖrneği, LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği,
+    MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, MULTI_BARS_KART_TANIM_ÖRNEĞİ,
+    MultiBarsÖrneği, NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ,
+    NO_DATA_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
+    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignAkışı,
+    PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
+    SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
     STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_KART_TANIM_ÖRNEĞİ, SVG_IMAGE_KART_TANIM_ÖRNEĞİ,
     SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği,
@@ -42,23 +43,23 @@ use uplot_rs::{
     align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, annotations_kartı,
     arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
     axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
-    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
-    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
-    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
-    log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı, missing_data_null_kartı,
-    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
-    months_rusça_kartı, multi_bars_kartı, multi_bars_kitaplık_etiketleri,
-    multi_bars_kitaplık_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
-    ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı, resize_kartı,
-    scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
-    soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
-    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
-    sync_y_zero_aşamasını_ayarla, sync_y_zero_kartı, thin_bars_stroke_fill_kartı,
-    time_periods_kartı, timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
-    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, zoom_touch_kartı,
-    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    bilgi_kutusunu_yerleştir, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
+    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
+    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
+    log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
+    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
+    months_artık_yılsız_kartı, months_rusça_kartı, multi_bars_kartı,
+    multi_bars_kitaplık_etiketleri, multi_bars_kitaplık_kartı, nearest_non_null_kartı,
+    nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı,
+    pixel_align_kartı, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartı,
+    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
+    sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
+    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_aşamasını_ayarla,
+    sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
+    trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
+    y_shifted_series_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -476,6 +477,45 @@ impl KartOturumu {
             })
             .map_or_else(Vec::new, |nokta| {
                 vec![f64::from(nokta.x), f64::from(nokta.y)]
+            })
+    }
+
+    /// JavaScript sınırında placement.js'in ölçüm girdilerini düz bir ABI ile kabul eder.
+    #[allow(clippy::too_many_arguments)]
+    pub fn bilgi_kutusu_yerlesimi(
+        &self,
+        dayanak_x: f64,
+        dayanak_y: f64,
+        kutu_genisligi: f64,
+        kutu_yuksekligi: f64,
+        sinir_sol: f64,
+        sinir_ust: f64,
+        sinir_genisligi: f64,
+        sinir_yuksekligi: f64,
+        bosluk: f64,
+    ) -> Vec<f64> {
+        YüzeyDikdörtgeni::yeni(sinir_sol, sinir_ust, sinir_genisligi, sinir_yuksekligi)
+            .and_then(|sınır| {
+                bilgi_kutusunu_yerleştir(
+                    sınır,
+                    dayanak_x,
+                    dayanak_y,
+                    kutu_genisligi,
+                    kutu_yuksekligi,
+                    bosluk,
+                )
+            })
+            .map_or_else(Vec::new, |yerleşim| {
+                vec![
+                    yerleşim.sol,
+                    yerleşim.üst,
+                    match yerleşim.taraf {
+                        BilgiKutusuTarafı::Sağ => 1.0,
+                        BilgiKutusuTarafı::Sol => -1.0,
+                    },
+                    yerleşim.azami_genişlik,
+                    yerleşim.azami_yükseklik,
+                ]
             })
     }
 
@@ -3646,7 +3686,16 @@ mod testler {
         assert!(svg.contains("placement.js tooltip"));
         assert!(svg.contains("#008000"));
         assert_eq!(oturum.en_yakin_noktalar(0.5), vec![4.0, 65.0]);
+        assert_eq!(
+            oturum
+                .bilgi_kutusu_yerlesimi(540.0, 360.0, 140.0, 32.0, 50.0, 30.0, 500.0, 300.0, 12.0,),
+            vec![388.0, 298.0, -1.0, 476.0, 276.0]
+        );
         assert!(cursor_tooltip_kart_tanim_ornegi().contains("cursor_tooltip_kartı"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("bilgi_kutusu_yerlesimi("));
+        assert!(web.contains("bilgiKutusu.dataset.side"));
+        assert!(web.contains("(hamX - sol) * cssÖlçekX"));
     }
 
     #[test]

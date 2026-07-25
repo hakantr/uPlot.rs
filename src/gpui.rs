@@ -16,6 +16,7 @@ use crate::{
     Aralık, AçıklamaVuruşu, BoyutSenkronDüzeni, DağılımVuruşu, DoğrusalGradyan,
     EnYakınTooltipBilgisi, Grafik, HizalıVeri, Komut, MetinHizası, Nokta, Sahne, SeriBandı,
     SeriSeçenekleri, SeçimEylemi, TekerlekEkseni, UplotHatası, YüzeyDikdörtgeni,
+    bilgi_kutusunu_yerleştir,
 };
 
 #[derive(Clone)]
@@ -1652,7 +1653,7 @@ impl GpuiGrafik {
 impl EventEmitter<GpuiGrafikOlayı> for GpuiGrafik {}
 
 impl Render for GpuiGrafik {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let odak = self
             .odak
             .get_or_insert_with(|| cx.focus_handle().tab_stop(true))
@@ -1705,7 +1706,7 @@ impl Render for GpuiGrafik {
                     .max(0.01);
                 let yatay_pay = (f32::from(sınırlar.size.width) - kaynak_g as f32 * ölçek) / 2.0;
                 let dikey_pay = (f32::from(sınırlar.size.height) - kaynak_y as f32 * ölçek) / 2.0;
-                let (çizim_sol, çizim_sağ, _, _) = self.çizim_alanı();
+                let (çizim_sol, çizim_sağ, çizim_üst, çizim_alt) = self.çizim_alanı();
                 let yatay_oran = f64::from(
                     ((imleç.fare.x - çizim_sol) / (çizim_sağ - çizim_sol)).clamp(0.0, 1.0),
                 );
@@ -1733,42 +1734,69 @@ impl Render for GpuiGrafik {
                         ))
                     })
                     .unwrap_or((imleç.fare.x, imleç.fare.y));
-                let sol = (yatay_pay + bağlantı_sol * ölçek + 10.0)
-                    .clamp(4.0, (f32::from(sınırlar.size.width) - 190.0).max(4.0));
-                let üst = (dikey_pay + bağlantı_üst * ölçek + 10.0)
-                    .clamp(4.0, (f32::from(sınırlar.size.height) - 42.0).max(4.0));
+                let metin = en_yakın.map_or_else(
+                    || {
+                        imleç.dağılım.as_ref().map_or_else(
+                            || {
+                                format!(
+                                    "{},{y} at {},{}",
+                                    imleç.veri_x,
+                                    ((imleç.fare.x - çizim_sol) * ölçek).round(),
+                                    ((imleç.fare.y - çizim_üst) * ölçek).round()
+                                )
+                            },
+                            |vuruş| {
+                                format!(
+                                    "Country: {} · Population: {} · GDP: ${} · Income: ${}",
+                                    vuruş.etiket.as_deref().unwrap_or("--"),
+                                    vuruş.değer.map_or_else(
+                                        || "--".to_string(),
+                                        |değer| değer.to_string()
+                                    ),
+                                    vuruş.x,
+                                    vuruş.y
+                                )
+                            },
+                        )
+                    },
+                    |bilgi| bilgi.metin,
+                );
+                let ölçüm_metni = SharedString::from(metin.replace(['\r', '\n'], " "));
+                let metin_koşusu = TextRun {
+                    len: ölçüm_metni.len(),
+                    font: window.text_style().font(),
+                    color: renk_çöz("#ffffff"),
+                    background_color: None,
+                    underline: None,
+                    strikethrough: None,
+                };
+                let metin_çizgisi =
+                    window
+                        .text_system()
+                        .shape_line(ölçüm_metni, px(12.0), &[metin_koşusu], None);
+                let kutu_genişliği = f64::from(f32::from(metin_çizgisi.width()) + 18.0);
+                let kutu_yüksekliği = 26.0;
+                let plot_sınırı = YüzeyDikdörtgeni::yeni(
+                    f64::from(yatay_pay + çizim_sol * ölçek),
+                    f64::from(dikey_pay + çizim_üst * ölçek),
+                    f64::from((çizim_sağ - çizim_sol) * ölçek),
+                    f64::from((çizim_alt - çizim_üst) * ölçek),
+                )?;
+                let yerleşim = bilgi_kutusunu_yerleştir(
+                    plot_sınırı,
+                    f64::from(yatay_pay + bağlantı_sol * ölçek),
+                    f64::from(dikey_pay + bağlantı_üst * ölçek),
+                    kutu_genişliği,
+                    kutu_yüksekliği,
+                    12.0,
+                )?;
                 Some((
-                    sol,
-                    üst,
-                    en_yakın.map_or_else(
-                        || {
-                            imleç.dağılım.as_ref().map_or_else(
-                                || {
-                                    format!(
-                                        "{},{y} at {},{}",
-                                        imleç.veri_x,
-                                        imleç.fare.x.round(),
-                                        imleç.fare.y.round()
-                                    )
-                                },
-                                |vuruş| {
-                                    format!(
-                                        "Country: {} · Population: {} · GDP: ${} · Income: ${}",
-                                        vuruş.etiket.as_deref().unwrap_or("--"),
-                                        vuruş.değer.map_or_else(
-                                            || "--".to_string(),
-                                            |değer| değer.to_string()
-                                        ),
-                                        vuruş.x,
-                                        vuruş.y
-                                    )
-                                },
-                            )
-                        },
-                        |bilgi| bilgi.metin,
-                    ),
+                    yerleşim.sol as f32,
+                    yerleşim.üst as f32,
+                    metin,
                     kenarlık,
                     bağlantı,
+                    yerleşim.azami_genişlik as f32,
                 ))
             });
         let açıklama_bilgi_kutusu = self
@@ -1792,6 +1820,7 @@ impl Render for GpuiGrafik {
                     vuruş.açıklama.clone(),
                     vuruş.çizgi.clone(),
                     None,
+                    (f32::from(sınırlar.size.width) - 8.0).max(0.0),
                 ))
             });
         let bilgi_kutusu = açıklama_bilgi_kutusu.or(standart_bilgi_kutusu);
@@ -2226,12 +2255,13 @@ impl Render for GpuiGrafik {
             )
             .when_some(
                 bilgi_kutusu,
-                |yüzey, (sol, üst, metin, kenarlık, bağlantı)| {
+                |yüzey, (sol, üst, metin, kenarlık, bağlantı, azami_genişlik)| {
                     yüzey.child(
                         div()
                             .absolute()
                             .left(px(sol))
                             .top(px(üst))
+                            .max_w(px(azami_genişlik))
                             .px_2()
                             .py_1()
                             .border_1()

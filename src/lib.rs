@@ -127,4 +127,6 @@ pub use secenek::{
     ÇubukYönü, ÖlçekGradyanı, İkincilXEksen, İmleçBağSeçenekleri,
 };
 pub use veri::{BoşlukKipi, HizalıDeğer, HizalıVeri, hizalı_verileri_birleştir};
-pub use yuzey::YüzeyDikdörtgeni;
+pub use yuzey::{
+    BilgiKutusuTarafı, BilgiKutusuYerleşimi, YüzeyDikdörtgeni, bilgi_kutusunu_yerleştir,
+};

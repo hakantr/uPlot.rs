@@ -1475,7 +1475,10 @@
         "source-exact-seven-point-data",
         "cursor-nearest-index-and-value",
         "source-text-with-rounded-cursor-position",
+        "plot-local-css-pixel-cursor-position",
         "right-start-tooltip-placement",
+        "measured-tooltip-size",
+        "right-to-left-side-flip",
         "plot-bounded-overflow-prevention",
         "mouseenter-show-mouseleave-hide",
         "core-configured-ready-surface-behavior",
@@ -1483,11 +1486,11 @@
         "common-interaction-profile"
       ],
       "kanıt": {
-        "api": "kısmi",
+        "api": "uygulandı_kanıtlı",
         "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı",
         "davranış": "uygulandı_kanıtlı",
-        "performans": "bekliyor"
+        "performans": "uygulandı_kanıtlı"
       }
     },
     {

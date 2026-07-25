@@ -1,5 +1,71 @@
 use crate::Nokta;
 
+/// `placement(..., "right", "start", { bound })` ile eşdeğer yatay taraf.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BilgiKutusuTarafı {
+    Sağ,
+    Sol,
+}
+
+/// Hafif imleç bilgi kutusunun sınırlandırılmış yüzey yerleşimi.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct BilgiKutusuYerleşimi {
+    pub sol: f64,
+    pub üst: f64,
+    pub taraf: BilgiKutusuTarafı,
+    pub azami_genişlik: f64,
+    pub azami_yükseklik: f64,
+}
+
+/// Sağ/start yerleşimini dener; sağda yer yoksa daha geniş yatay tarafa
+/// çevirir ve kutuyu çizim yüzeyi sınırlarında tutar.
+pub fn bilgi_kutusunu_yerleştir(
+    sınır: YüzeyDikdörtgeni,
+    dayanak_x: f64,
+    dayanak_y: f64,
+    kutu_genişliği: f64,
+    kutu_yüksekliği: f64,
+    boşluk: f64,
+) -> Option<BilgiKutusuYerleşimi> {
+    if ![
+        dayanak_x,
+        dayanak_y,
+        kutu_genişliği,
+        kutu_yüksekliği,
+        boşluk,
+    ]
+    .into_iter()
+    .all(f64::is_finite)
+        || kutu_genişliği < 0.0
+        || kutu_yüksekliği < 0.0
+        || boşluk < 0.0
+    {
+        return None;
+    }
+    let sağ_sınır = sınır.sol + sınır.genişlik;
+    let alt_sınır = sınır.üst + sınır.yükseklik;
+    let sol_pay = dayanak_x - sınır.sol - boşluk;
+    let sağ_pay = sağ_sınır - dayanak_x - boşluk;
+    let taraf = if kutu_genişliği <= sağ_pay || sağ_pay >= sol_pay {
+        BilgiKutusuTarafı::Sağ
+    } else {
+        BilgiKutusuTarafı::Sol
+    };
+    let hedef_sol = match taraf {
+        BilgiKutusuTarafı::Sağ => dayanak_x + boşluk,
+        BilgiKutusuTarafı::Sol => dayanak_x - kutu_genişliği - boşluk,
+    };
+    let en_sağ_sol = (sağ_sınır - kutu_genişliği).max(sınır.sol);
+    let en_alt_üst = (alt_sınır - kutu_yüksekliği).max(sınır.üst);
+    Some(BilgiKutusuYerleşimi {
+        sol: hedef_sol.clamp(sınır.sol, en_sağ_sol),
+        üst: dayanak_y.clamp(sınır.üst, en_alt_üst),
+        taraf,
+        azami_genişlik: (sınır.genişlik - boşluk * 2.0).max(0.0),
+        azami_yükseklik: (sınır.yükseklik - boşluk * 2.0).max(0.0),
+    })
+}
+
 /// Grafik yüzeyinin pencere/istemci koordinatlarındaki güncel dikdörtgeni.
 ///
 /// Kaydırma, yeniden boyutlandırma veya yerleşim değişiminden sonra adaptör bu
@@ -98,6 +164,35 @@ mod testler {
         assert_eq!(
             yüzey.and_then(|değer| değer.sahne_konumu(60.0, 145.0, 400, 200)),
             Some(Nokta::yeni(40.0, 0.0))
+        );
+    }
+
+    #[test]
+    fn bilgi_kutusu_sağdan_sola_döner_ve_plotta_kalır() {
+        let Some(sınır) = YüzeyDikdörtgeni::yeni(50.0, 30.0, 500.0, 300.0) else {
+            return;
+        };
+        let sağ = bilgi_kutusunu_yerleştir(sınır, 200.0, 100.0, 120.0, 40.0, 12.0);
+        assert_eq!(
+            sağ,
+            Some(BilgiKutusuYerleşimi {
+                sol: 212.0,
+                üst: 100.0,
+                taraf: BilgiKutusuTarafı::Sağ,
+                azami_genişlik: 476.0,
+                azami_yükseklik: 276.0,
+            })
+        );
+        let sol = bilgi_kutusunu_yerleştir(sınır, 540.0, 325.0, 120.0, 40.0, 12.0);
+        assert_eq!(
+            sol,
+            Some(BilgiKutusuYerleşimi {
+                sol: 408.0,
+                üst: 290.0,
+                taraf: BilgiKutusuTarafı::Sol,
+                azami_genişlik: 476.0,
+                azami_yükseklik: 276.0,
+            })
         );
     }
 }
