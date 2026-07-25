@@ -329,8 +329,8 @@ pub struct OdakDüzeni {
 impl OdakDüzeni {
     pub fn yeni(alfa: f32, yakınlık: f32) -> Self {
         Self {
-            alfa: if alfa.is_finite() {
-                alfa.clamp(0.0, 1.0)
+            alfa: if alfa.is_finite() && alfa >= 0.0 {
+                alfa
             } else {
                 0.3
             },

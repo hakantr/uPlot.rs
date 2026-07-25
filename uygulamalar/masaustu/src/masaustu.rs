@@ -54,18 +54,18 @@ use uplot_rs::{
     bars_values_autosize_kartı, box_whisker_kartları, box_whisker_kartı, candlestick_ohlc_kartı,
     cursor_bind_kartı, cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartları,
     custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı, draw_hooks_kartı,
-    focus_cursor_kartı, gradients_kartı, grid_over_series_kartı, high_low_bands_kartı,
-    latency_heatmap_kartı, line_paths_kartı, log_scales_kartı, log_scales2_kartı,
-    mass_spectrum_kartı, measure_datums_kartı, missing_data_kartları, missing_data_null_kartı,
-    months_artık_yılsız_kartı, months_kartları, multi_bars_kartı, nearest_non_null_kartı,
-    nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartları,
-    path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı, points_kartları, points_kartı,
-    resize_kartı, scale_padding_kartı, scales_dir_ori_kartları, scales_dir_ori_kartı,
-    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı,
-    sparklines_bars_kartları, sparklines_bars_kartı, sparklines_kartları, sparklines_kartı,
-    sparse_kartları, sparse_kartı, stacked_series_kartları, stacked_series_kartı,
-    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
-    sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
+    focus_cursor_kartları, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı, missing_data_kartları,
+    missing_data_null_kartı, months_artık_yılsız_kartı, months_kartları, multi_bars_kartı,
+    nearest_non_null_kartı, nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri,
+    path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı,
+    points_kartları, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartları,
+    scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
+    soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları, sparklines_bars_kartı,
+    sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı, stacked_series_kartları,
+    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
+    sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
     thin_bars_stroke_fill_kartı, time_periods_kartları, time_periods_kartı,
     timeline_discrete_kartları, timeline_discrete_kartı, timeseries_discrete_kartları,
     timeseries_discrete_kartı, timezones_dst_kartları, timezones_dst_kartı, tooltips_closest_kartı,
@@ -118,7 +118,7 @@ enum KartKimliği {
     CustomScales,
     DataSmoothing,
     DrawHooks,
-    FocusCursor(FocusÖrneği),
+    FocusCursor,
     Gradients(GradientÖrneği),
     GridOverSeries,
     HighLowBands(HighLowBandsÖrneği),
@@ -188,7 +188,7 @@ impl KartKimliği {
             Self::CustomScales => "Custom Scales · 3 independent surfaces",
             Self::DataSmoothing => "Data Smoothing · 4 independent surfaces",
             Self::DrawHooks => "Draw Hooks",
-            Self::FocusCursor(örnek) => örnek.başlık(),
+            Self::FocusCursor => "Focus Cursor · 4 related surfaces",
             Self::Gradients(örnek) => örnek.başlık(),
             Self::GridOverSeries => "Grid Over Series",
             Self::HighLowBands(örnek) => örnek.başlık(),
@@ -320,7 +320,7 @@ impl KartKimliği {
                 "data-smoothing.html · taxi-trips + SGG + ASAP FFT + Moving Avg 300"
             }
             Self::DrawHooks => "draw-hooks.html · drawClear/drawSeries/draw plugin hooks",
-            Self::FocusCursor(_) => "focus-cursor.html · cursor.focus + setSeries",
+            Self::FocusCursor => "focus-cursor.html · cursor.focus + setSeries",
             Self::Gradients(_) => "gradients.html · scaleGradient + cursor point colors",
             Self::GridOverSeries => "grid-over-series.html · drawOrder: series, axes",
             Self::HighLowBands(_) => "high-low-bands.html · yönlü line/step/spline/bar bantları",
@@ -412,7 +412,7 @@ impl KartKimliği {
             Self::CustomScales => CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ,
             Self::DataSmoothing => DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
             Self::DrawHooks => DRAW_HOOKS_KART_TANIM_ÖRNEĞİ,
-            Self::FocusCursor(_) => FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ,
+            Self::FocusCursor => FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ,
             Self::Gradients(_) => GRADIENTS_KART_TANIM_ÖRNEĞİ,
             Self::GridOverSeries => GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ,
             Self::HighLowBands(_) => HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
@@ -482,7 +482,7 @@ impl KartKimliği {
             Self::CustomScales => "src/kart/custom_scales.rs",
             Self::DataSmoothing => "src/kart/data_smoothing.rs",
             Self::DrawHooks => "src/kart/draw_hooks.rs",
-            Self::FocusCursor(_) => "src/kart/focus_cursor.rs",
+            Self::FocusCursor => "src/kart/focus_cursor.rs",
             Self::Gradients(_) => "src/kart/gradients.rs",
             Self::GridOverSeries => "src/kart/grid_over_series.rs",
             Self::HighLowBands(_) => "src/kart/high_low_bands.rs",
@@ -549,6 +549,7 @@ pub struct ChartListesi {
     custom_scales_grafikleri: Vec<(CustomScaleÖrneği, Entity<GpuiGrafik>)>,
     data_smoothing_grafikleri: Vec<(SmoothingÖrneği, Entity<GpuiGrafik>)>,
     data_smoothing_ölçümleri_ms: Vec<(SmoothingÖrneği, f64)>,
+    focus_cursor_grafikleri: Vec<(FocusÖrneği, Entity<GpuiGrafik>)>,
     pixel_align_akışı: Option<PixelAlignAkışı>,
     pixel_align_son_kare: Option<Instant>,
     sine_akışı: Option<SineAkışı>,
@@ -649,6 +650,12 @@ impl ChartListesi {
                 }
             } else if bu.aktif_kart == KartKimliği::DataSmoothing {
                 for (_, grafik) in &bu.data_smoothing_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if bu.aktif_kart == KartKimliği::FocusCursor {
+                for (_, grafik) in &bu.focus_cursor_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -847,6 +854,7 @@ impl ChartListesi {
             custom_scales_grafikleri: Vec::new(),
             data_smoothing_grafikleri: Vec::new(),
             data_smoothing_ölçümleri_ms: Vec::new(),
+            focus_cursor_grafikleri: Vec::new(),
             pixel_align_akışı: None,
             pixel_align_son_kare: None,
             sine_akışı: None,
@@ -1297,6 +1305,43 @@ impl ChartListesi {
         self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
         self.data_smoothing_grafikleri = yüzeyler;
         self.data_smoothing_ölçümleri_ms = ölçümler;
+        self.hata = None;
+        cx.notify();
+    }
+
+    fn focus_cursor_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = focus_cursor_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Focus Cursor ailesi oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.focus_cursor_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.focus_cursor_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                bu.standart_grafik_olayını_işle(olay, cx);
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.focus_cursor_grafikleri = yüzeyler;
         self.hata = None;
         cx.notify();
     }
@@ -2522,6 +2567,7 @@ impl ChartListesi {
         self.custom_scales_grafikleri.clear();
         self.data_smoothing_grafikleri.clear();
         self.data_smoothing_ölçümleri_ms.clear();
+        self.focus_cursor_grafikleri.clear();
         self.scales_dir_ori_grafikleri.clear();
         self.scatter_grafikleri.clear();
         self.bars_grouped_stacked_grafikleri.clear();
@@ -2565,6 +2611,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.data_smoothing_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::FocusCursor {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.focus_cursor_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -3465,7 +3520,7 @@ fn grafik_oluştur(
         KartKimliği::CustomScales => custom_scales_kartı(CustomScaleÖrneği::Doğrusal),
         KartKimliği::DataSmoothing => data_smoothing_kartı(SmoothingÖrneği::Ham),
         KartKimliği::DrawHooks => draw_hooks_kartı(),
-        KartKimliği::FocusCursor(örnek) => focus_cursor_kartı(örnek),
+        KartKimliği::FocusCursor => focus_cursor_kartı(FocusÖrneği::İmleç),
         KartKimliği::Gradients(örnek) => gradients_kartı(örnek),
         KartKimliği::GridOverSeries => grid_over_series_kartı(),
         KartKimliği::HighLowBands(örnek) => high_low_bands_kartı(örnek),
@@ -3664,17 +3719,9 @@ impl Render for ChartListesi {
             KartKimliği::DrawHooks => {
                 "9 nokta × 3 seri · gradyan + medyan + yıldız + istatistik".to_string()
             }
-            KartKimliği::FocusCursor(FocusÖrneği::İmleç) => {
-                "130.000 nokta × 4 seri · alfa 0,3 · bias 1".to_string()
-            }
-            KartKimliği::FocusCursor(FocusÖrneği::Dinamik) => {
-                "130.000 nokta × 3 seri · 30 px dinamik odak".to_string()
-            }
-            KartKimliği::FocusCursor(FocusÖrneği::KalınlıkVeRenk) => {
-                "10 nokta × 2 seri · macenta odak".to_string()
-            }
-            KartKimliği::FocusCursor(FocusÖrneği::Performans300) => {
-                "10 nokta × 300 seri · alfa 0,1".to_string()
+            KartKimliği::FocusCursor => {
+                "4 bağımsız yüzey · ilk iki yüzeyde ortak 130K aligned veri · retained odak stili"
+                    .to_string()
             }
             KartKimliği::Gradients(GradientÖrneği::YatayÇizgi) => {
                 "5 nokta · X'e hizalı 3 ayrık renk".to_string()
@@ -3852,6 +3899,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .data_smoothing_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::FocusCursor {
+            geri_var = self
+                .focus_cursor_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .focus_cursor_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         } else if aktif_kart == KartKimliği::SyncCursor {
@@ -4213,7 +4269,7 @@ impl Render for ChartListesi {
                     panel,
                     vurgu,
                 )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
+                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::AddDelSeries, cx);
                 })),
             )
@@ -4349,21 +4405,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::NearestNonNull, cx);
                 })),
             )
-            .children(FocusÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::FocusCursor(örnek);
+            .child({
+                let kart = KartKimliği::FocusCursor;
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
+                    "focus-cursor",
+                    "Focus Cursor · 4 related surfaces",
                     "focus-cursor",
                     aktif_kart == kart,
-                    "Y mesafesine göre çekirdek seri odağı",
+                    "Ortak 130K veri · prox/bias · setSeries · 300 seri",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .children(GradientÖrneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::Gradients(örnek);
                 katalog_kartı(
@@ -5443,6 +5499,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.data_smoothing_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
                             }
+                        } else if bu.aktif_kart == KartKimliği::FocusCursor {
+                            for (_, grafik) in &bu.focus_cursor_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             for (_, grafik) in &bu.sync_cursor_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5583,6 +5643,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.data_smoothing_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
                             }
+                        } else if bu.aktif_kart == KartKimliği::FocusCursor {
+                            for (_, grafik) in &bu.focus_cursor_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             for (_, grafik) in &bu.sync_cursor_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5716,6 +5780,8 @@ impl Render for ChartListesi {
                             bu.custom_scales_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::DataSmoothing {
                             bu.data_smoothing_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::FocusCursor {
+                            bu.focus_cursor_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             bu.sync_cursor_grubu = SyncCursorGrubu::yeni();
                             bu.sync_cursor_yüzeylerini_oluştur(cx);
@@ -5886,6 +5952,35 @@ impl Render for ChartListesi {
                             div()
                                 .w(px(1_920.0))
                                 .h(px(300.0))
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                        )
+                }))
+        } else if aktif_kart == KartKimliği::FocusCursor {
+            let yüzey = |örnek| {
+                self.focus_cursor_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(2_700.0))
+                .overflow_y_scroll()
+                .p_2()
+                .children(FocusÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    div()
+                        .id(SharedString::from(format!(
+                            "focus-cursor-{}-surface",
+                            örnek.kimlik()
+                        )))
+                        .w_full()
+                        .h(px(600.0))
+                        .mb(px(50.0))
+                        .overflow_x_scroll()
+                        .child(
+                            div()
+                                .w(px(1_920.0))
+                                .h(px(600.0))
                                 .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
                         )
                 }))
@@ -7512,6 +7607,18 @@ impl Render for ChartListesi {
                  çalıştırılır ve süreleri ayrı ölçülür; toplam 10.937 çizgi örneği retained \
                  sahnelere alınır. Pointer en yakın X'i bulup yalnız etkin yüzeyin hafif \
                  cursor/lejant katmanını günceller; yumuşatma ve ana yollar yeniden hesaplanmaz.",
+            ),
+            KartKimliği::FocusCursor => Some(
+                "Amaç: resmî focus-cursor.html sayfasındaki bias, 30 px proximity, dinamik \
+                 setSeries stili ve 300 seri performans yüzeylerini aynı sayfada kaynak sırasıyla \
+                 karşılaştırır. API: focus_cursor_kartları dört bağımsız Grafik döndürür; ilk iki \
+                 yüzey aynı immutable HizalıVeri Arc deposunu paylaşır. seri_odak_sunumu, \
+                 odak değiştiğinde yalnız stroke/fill/width boya sonucunu verir. İzleme: yoğun \
+                 CPU/RAM zaman serilerinde imlece en yakın seriyi ayrıntılandırıp diğerlerini \
+                 soluklaştırmak için uygundur. Maliyet: 130K veri ikinci kez tahsis edilmez; GPUI \
+                 retained ana yolları korur, pointer yalnız etkileşim katmanı ile seri boya \
+                 durumunu günceller. Ana geometri ancak veri, ölçek, resize veya zoom değişince \
+                 yeniden kurulur.",
             ),
             KartKimliği::DrawHooks => Some(
                 "Amaç: uPlot yaşam döngüsünün drawClear, drawSeries, özel points.show ve draw \

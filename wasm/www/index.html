@@ -315,6 +315,19 @@
       background: #fff; overflow: hidden; }
     .data-smoothing-grafik svg { display: block; width: 1920px !important;
       height: 300px !important; }
+    #chart.focus-cursor-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .focus-cursor-yığın { min-width: min-content; }
+    .focus-cursor-grafik { position: relative; width: 1920px; min-height: 670px;
+      margin-bottom: 50px; border: 1px solid #e5e7eb; border-radius: 8px;
+      background: #fff; overflow: hidden; }
+    .focus-cursor-grafik > h3 { margin: 7px 10px 2px; color: #111827;
+      font-size: 13px; }
+    .focus-cursor-grafik > p { margin: 0 10px 5px; color: #6b7280;
+      font-size: 11px; }
+    .focus-cursor-grafik svg { display: block; width: 1920px !important;
+      height: 600px !important; }
+    .focus-cursor-grafik .lejant { max-height: 42px; overflow: auto; }
+    .focus-cursor-grafik [data-focus-legend] { transition: opacity 70ms linear; }
     #chart.bars-grouped-stacked-yüzeyi { display: block; min-width: 0; overflow: auto;
                                          place-items: unset; padding: 8px;
                                          box-sizing: border-box; }
@@ -2734,37 +2747,33 @@
         maliyet: "Medyan sıralaması yalnız ilk kurulumda ve setData çağrısında O(S·N logN) çalışır. Pointer retained ana yolları, yıldızları, gradyanı veya medyanları yeniden üretmez; yalnız cursor/lejant katmanı taşınır.",
       },
     };
-    for (const [kimlik, başlık, durum, seriTürü] of [
-      ["focus-cursor", "Cursor Focus", "130.000 nokta · 4 seri · bias 1", "dalga4"],
-      ["focus-cursor-dynamic", "Dynamic Focus", "130.000 nokta · 30 px odak", "dalga3"],
-      ["focus-cursor-width-stroke", "Width and stroke color change on focus", "2 düz seri · macenta odak", "iki"],
-      ["focus-cursor-performance-300", "Performance test (300 series)", "10 nokta · 300 seri", "ucyuz"],
-    ]) {
-      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>focus-cursor</small><div class="durum">${durum}</div>
-        </article>`);
-      const dalgaSerileri = [
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="focus-cursor" aria-current="false" tabindex="0">
+        <strong>Focus Cursor · 4 related surfaces</strong><small>focus-cursor</small>
+        <div class="durum">130K ortak veri · dinamik setSeries · 300 seri</div>
+      </article>`);
+    kartlar["focus-cursor"] = {
+      başlık: "Focus Cursor · 4 related surfaces",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/focus-cursor.html">focus-cursor.html</a>
+        <br>Resmî sayfadaki dört yüzey kaynak sırasıyla birlikte gösterilir. İlk iki grafik aynı immutable aligned veri deposunu paylaşır; prox/bias seçimi Rust çekirdeğinde, setSeries renk/opaklık/kalınlık sonucu ise mevcut SVG yollarında geometriyi yeniden üretmeden uygulanır.`,
+      tanım: () => focus_cursor_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/focus_cursor.rs",
+      seriler: [
         { etiket: "sin(x)", renk: "#ff0000" },
         { etiket: "cos(x)", renk: "#0000ff" },
         { etiket: "log(x)", renk: "#008000" },
-      ];
-      const seriler = seriTürü === "dalga4" ? [...dalgaSerileri, { etiket: "flat_one", renk: "#800080" }]
-        : seriTürü === "dalga3" ? dalgaSerileri
-        : seriTürü === "iki" ? [{ etiket: "A", renk: "#0000ff" }, { etiket: "B", renk: "#008000" }]
-        : Array.from({length: 300}, () => ({ etiket: "0", renk: "#000000" }));
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/focus-cursor.html">focus-cursor.html</a>
-          <br>En yakın X örneğindeki Y piksel mesafesi, prox/bias, alfa, dinamik renk ve setSeries kalınlığı Rust çekirdeğinde çözülür.`,
-        tanım: () => focus_cursor_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/focus_cursor.rs",
-        seriler,
-        yardım: "Fareyi serilere yaklaştır: odak, renk/opaklık ve kalınlık canlı değişir",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+        { etiket: "flat_one", renk: "#800080" },
+      ],
+      yardım: "Dört yüzeyde seriye yaklaş: bias/prox, dinamik renk ve kalınlık değişimini karşılaştır",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Aynı sayfadaki dört resmî focus davranışını birlikte karşılaştırır: bias, yakınlık eşiği, dinamik setSeries stili ve 300 seri maliyeti.",
+        api: "focus_cursor_kartları() dört Grafik tanımını kaynak sırasıyla verir. İlk iki tanım aynı HizalıVeri Arc deposunu paylaşır; seri_odak_sunumu() yalnız görünüm stilini döndürür.",
+        izleme: "Yoğun CPU/RAM zaman serilerinde imlece en yakın seriyi vurgularken tüm yolları yeniden çizmeden ayrıntı seçmek için uygundur.",
+        maliyet: "130K örnek iki yüzey arasında kopyalanmaz. Pointer hareketinde yalnız cursor/legend ve mevcut seri path nitelikleri güncellenir; path d geometrisi sabit kalır.",
+      },
+    };
     for (const [kimlik, başlık, durum, seriler] of [
       ["gradients-horizontal-stroke", "Scale-aligned gradient strokes (hz)", "5 nokta · X'e hizalı ayrık duraklar", [{ etiket: "Trends", renk: "#ff0000" }]],
       ["gradients-vertical-stroke", "Scale-aligned gradient strokes (vt)", "5 nokta · Y'ye hizalı mavi/kırmızı", [{ etiket: "Over/Under", renk: "#ff0000" }]],
@@ -2989,6 +2998,8 @@
     let customScalesEtkinİndeks = 0;
     let dataSmoothingOturumları = [];
     let dataSmoothingEtkinİndeks = 0;
+    let focusCursorOturumları = [];
+    let focusCursorEtkinİndeks = 0;
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
     let timeseriesDiscreteEtkinİndeks = 0;
@@ -3098,6 +3109,49 @@
         kimlik: "data-smoothing-moving-average",
         başlık: "Taxi Trips (Moving Avg 300)",
         nokta: 3600,
+      },
+    ];
+    const focusCursorDalgaSerileri = [
+      { etiket: "sin(x)", renk: "#ff0000" },
+      { etiket: "cos(x)", renk: "#0000ff" },
+      { etiket: "log(x)", renk: "#008000" },
+      { etiket: "flat_one", renk: "#800080" },
+    ];
+    const focusCursorYüzeyleri = [
+      {
+        kimlik: "focus-cursor",
+        başlık: "Cursor Focus",
+        açıklama: "130.000 nokta · 4 seri · alpha 0.3 · bias 1",
+        seriler: focusCursorDalgaSerileri,
+        alfa: 0.3,
+      },
+      {
+        kimlik: "focus-cursor-dynamic",
+        başlık: "Dynamic Focus",
+        açıklama: "Aynı immutable 130.000×4 veri · 3 görünür seri · prox 30 · alpha 1.1",
+        seriler: focusCursorDalgaSerileri.slice(0, 3),
+        alfa: 1,
+      },
+      {
+        kimlik: "focus-cursor-width-stroke",
+        başlık: "Width and stroke color change on focus",
+        açıklama: "10 nokta · 2 seri · odaklanan seri macenta ve 2 px",
+        seriler: [
+          { etiket: "A", renk: "#0000ff" },
+          { etiket: "B", renk: "#008000" },
+        ],
+        alfa: 1,
+      },
+      {
+        kimlik: "focus-cursor-performance-300",
+        başlık: "Performance test (300 series)",
+        açıklama: "10 nokta · 300 seri · retained path stili; pointer geometriyi yeniden kurmaz",
+        seriler: Array.from({ length: 300 }, (_, indeks) => ({
+          etiket: String(indeks),
+          renk: "#000000",
+        })),
+        alfa: 0.1,
+        lejant: false,
       },
     ];
     const nearestNonNullYüzeyleri = [
@@ -3220,6 +3274,14 @@
           || !dataSmoothingOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !dataSmoothingOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "focus-cursor") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !focusCursorOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !focusCursorOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -5771,6 +5833,143 @@
       kontrolleriGüncelle();
     }
 
+    function focusCursorYollarınıİşaretle(svg, tanım) {
+      const çizgiler = Array.from(
+        svg.querySelectorAll('path[fill="none"][stroke]:not([stroke="none"])')
+      );
+      çizgiler.slice(-tanım.seriler.length).forEach((yol, indeks) => {
+        yol.dataset.focusSeriesPath = String(indeks);
+      });
+      const dolgular = Array.from(
+        svg.querySelectorAll('path[stroke="none"][fill]:not([fill="none"])')
+      );
+      dolgular.slice(-Math.min(dolgular.length, tanım.seriler.length))
+        .forEach((yol, indeks) => {
+          yol.dataset.focusSeriesFill = String(indeks);
+        });
+    }
+
+    function focusCursorStilleriniGüncelle(svg, yüzeyOturumu, tanım) {
+      if (!svg || !yüzeyOturumu || !tanım) return;
+      tanım.seriler.forEach((_, seriİndeksi) => {
+        const çizgi = svg.querySelector(
+          `[data-focus-series-path="${seriİndeksi}"]`
+        );
+        if (çizgi) {
+          çizgi.setAttribute(
+            "stroke",
+            yüzeyOturumu.seri_odak_cizgi_rengi(seriİndeksi)
+          );
+          çizgi.setAttribute(
+            "stroke-width",
+            String(yüzeyOturumu.seri_odak_kalinligi(seriİndeksi))
+          );
+        }
+        const dolgu = svg.querySelector(
+          `[data-focus-series-fill="${seriİndeksi}"]`
+        );
+        const dolguRengi = yüzeyOturumu.seri_odak_dolgu_rengi(seriİndeksi);
+        if (dolgu && dolguRengi) dolgu.setAttribute("fill", dolguRengi);
+      });
+      const odak = yüzeyOturumu.odak_serisi();
+      svg.closest(".focus-cursor-grafik")
+        ?.querySelectorAll("[data-focus-legend]")
+        .forEach((öğe, indeks) => {
+          öğe.style.opacity = odak < 0 || odak === indeks
+            ? "1"
+            : String(tanım.alfa);
+        });
+      svg.dataset.focusStyleUpdate = "retained";
+    }
+
+    function focusCursorYüzeyiniÇiz(indeks) {
+      const tanım = focusCursorYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-focus-cursor-index="${indeks}"]`);
+      const yüzeyOturumu = focusCursorOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const şablon = document.createElement("template");
+      şablon.innerHTML = yüzeyOturumu.svg(1920, 600).trim();
+      const yeniSvg = şablon.content.querySelector("svg");
+      let svg = yüzey.querySelector("svg");
+      if (svg && yeniSvg) {
+        svgYüzeyiniYerindeGüncelle(svg, yeniSvg);
+      } else {
+        yüzey.innerHTML = `
+          <h3>${tanım.başlık}</h3>
+          <p>${tanım.açıklama}</p>
+          ${yüzeyOturumu.svg(1920, 600)}
+          ${tanım.lejant === false ? "" : `<div class="lejant">
+            <span>x: <b id="x-değeri">--</b></span>
+            ${tanım.seriler.map((seri, seriİndeksi) => `
+              <span data-focus-legend="${seriİndeksi}">
+                <i class="örnek" style="border-color:${seri.renk};background:${seri.renk}"></i>
+                ${seri.etiket}: <b id="seri-değeri-${seriİndeksi}">--</b>
+              </span>`).join("")}
+          </div>`}
+        `;
+        svg = yüzey.querySelector("svg");
+      }
+      if (!svg) return;
+      focusCursorYollarınıİşaretle(svg, tanım);
+      if (!svg.querySelector(":scope > #etkileşim")) {
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)"
+              stroke="#3b82f6"/>
+            <line id="imleç-x" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            <line id="imleç-y" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            ${tanım.seriler.map((seri, seriİndeksi) =>
+              `<circle id="imleç-nokta-${seriİndeksi}" visibility="hidden" r="2.5"
+                fill="${seri.renk}"/>`
+            ).join("")}
+          </g>`);
+      }
+      focusCursorStilleriniGüncelle(svg, yüzeyOturumu, tanım);
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      svg.dataset.etkileşim = "independent-focus-cursor";
+      yüzey.onpointerenter = () => {
+        focusCursorEtkinİndeks = indeks;
+        oturum = focusCursorOturumları[indeks] ?? null;
+        kartlar["focus-cursor"].seriler = tanım.seriler;
+        kontrolleriGüncelle();
+      };
+      yüzey.onpointerleave = () => {
+        if (yüzeyOturumu.imlec_odagini_temizle()) {
+          focusCursorStilleriniGüncelle(svg, yüzeyOturumu, tanım);
+        }
+        svg.querySelectorAll("#imleç-x, #imleç-y, [id^='imleç-nokta-']")
+          .forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+      };
+    }
+
+    function focusCursorÇiz() {
+      const ilkKurulum = !chart.classList.contains("focus-cursor-yüzeyi")
+        || chart.querySelectorAll(".focus-cursor-grafik").length
+          !== focusCursorYüzeyleri.length;
+      if (ilkKurulum) {
+        chart.className = "focus-cursor-yüzeyi";
+        chart.innerHTML = `<div class="focus-cursor-yığın">
+          ${focusCursorYüzeyleri.map((_, indeks) =>
+            `<article class="focus-cursor-grafik"
+              data-focus-cursor-index="${indeks}"></article>`
+          ).join("")}
+        </div>`;
+        focusCursorYüzeyleri.forEach((_, indeks) => focusCursorYüzeyiniÇiz(indeks));
+      } else {
+        focusCursorYüzeyiniÇiz(focusCursorEtkinİndeks);
+      }
+      oturum = focusCursorOturumları[focusCursorEtkinİndeks]
+        ?? focusCursorOturumları[0]
+        ?? null;
+      kartlar["focus-cursor"].seriler =
+        focusCursorYüzeyleri[focusCursorEtkinİndeks]?.seriler
+        ?? focusCursorYüzeyleri[0].seriler;
+      kontrolleriGüncelle();
+    }
+
     function scatterYüzeyiniÇiz(indeks) {
       const tanım = scatterYüzeyleri[indeks];
       const yüzey = chart.querySelector(`[data-scatter-index="${indeks}"]`);
@@ -6838,6 +7037,10 @@
         dataSmoothingÇiz();
         return;
       }
+      if (aktifKart === "focus-cursor") {
+        focusCursorÇiz();
+        return;
+      }
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
         return;
@@ -6951,6 +7154,7 @@
       chart.classList.remove("align-data-yüzeyi");
       chart.classList.remove("custom-scales-yüzeyi");
       chart.classList.remove("data-smoothing-yüzeyi");
+      chart.classList.remove("focus-cursor-yüzeyi");
       chart.classList.remove("soft-minmax-yüzeyi");
       chart.classList.remove("sparklines-bars-yüzeyi");
       chart.classList.remove("sparklines-yüzeyi");
@@ -7269,6 +7473,10 @@
         ? chart.querySelector(
             `[data-data-smoothing-index="${dataSmoothingEtkinİndeks}"] svg`
           )
+        : aktifKart === "focus-cursor"
+        ? chart.querySelector(
+            `[data-focus-cursor-index="${focusCursorEtkinİndeks}"] svg`
+          )
         : aktifKart === "scatter"
         ? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"] svg`)
         : aktifKart === "box-whisker"
@@ -7386,6 +7594,11 @@
           ?? chart.querySelector(
             `[data-data-smoothing-index="${dataSmoothingEtkinİndeks}"]`
           )
+        : aktifKart === "focus-cursor"
+        ? olay.target?.closest?.(".focus-cursor-grafik")
+          ?? chart.querySelector(
+            `[data-focus-cursor-index="${focusCursorEtkinİndeks}"]`
+          )
         : aktifKart === "scatter"
         ? olay.target?.closest?.(".scatter-grafik")
           ?? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"]`)
@@ -7454,6 +7667,13 @@
         if (Number.isInteger(indeks) && dataSmoothingOturumları[indeks]) {
           dataSmoothingEtkinİndeks = indeks;
           oturum = dataSmoothingOturumları[indeks];
+        }
+      } else if (aktifKart === "focus-cursor" && bağımsızYüzey) {
+        const indeks = Number(bağımsızYüzey.dataset.focusCursorIndex);
+        if (Number.isInteger(indeks) && focusCursorOturumları[indeks]) {
+          focusCursorEtkinİndeks = indeks;
+          oturum = focusCursorOturumları[indeks];
+          kartlar["focus-cursor"].seriler = focusCursorYüzeyleri[indeks].seriler;
         }
       }
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
@@ -7798,6 +8018,7 @@
       const etkileşimKapsamı = svg.closest(".soft-minmax-grafik")
         ?? svg.closest(".custom-scales-grafik")
         ?? svg.closest(".data-smoothing-grafik")
+        ?? svg.closest(".focus-cursor-grafik")
         ?? svg.closest(".sparklines-grafik")
         ?? svg.closest(".sparse-grafik")
         ?? svg.closest(".stacked-series-grafik")
@@ -7828,7 +8049,15 @@
       if (oturum?.imlec_odagini_guncelle(
         hamOranX, hamOranY, xDikey ? sağ - sol : alt - üst
       )) {
-        çiz();
+        if (aktifKart === "focus-cursor") {
+          focusCursorStilleriniGüncelle(
+            svg,
+            oturum,
+            focusCursorYüzeyleri[focusCursorEtkinİndeks]
+          );
+        } else {
+          çiz();
+        }
         imleciGüncelle(olay);
         return;
       }
@@ -8500,7 +8729,20 @@
       sonDatumOranı = null;
       eksenİmleciniGüncelle();
       sonTooltipİmleci = null;
-      if (oturum?.imlec_odagini_temizle()) çiz();
+      if (oturum?.imlec_odagini_temizle()) {
+        if (aktifKart === "focus-cursor") {
+          const svg = chart.querySelector(
+            `[data-focus-cursor-index="${focusCursorEtkinİndeks}"] svg`
+          );
+          focusCursorStilleriniGüncelle(
+            svg,
+            oturum,
+            focusCursorYüzeyleri[focusCursorEtkinİndeks]
+          );
+        } else {
+          çiz();
+        }
+      }
       const bilgiKutusu = chart.querySelector("#imlec-bilgi-kutusu");
       if (bilgiKutusu) {
         bilgiKutusu.hidden = true;
@@ -8637,6 +8879,11 @@
           if (yüzey.onceki_gorunum()) dataSmoothingYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "focus-cursor") {
+        focusCursorOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.onceki_gorunum()) focusCursorYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.onceki_gorunum()) syncCursorYüzeyiÇiz(indeks);
@@ -8724,6 +8971,11 @@
           if (yüzey.tam_gorunum()) dataSmoothingYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "focus-cursor") {
+        focusCursorOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.tam_gorunum()) focusCursorYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.tam_gorunum()) syncCursorYüzeyiÇiz(indeks);
@@ -8809,6 +9061,10 @@
         );
       } else if (aktifKart === "data-smoothing") {
         dataSmoothingOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "focus-cursor") {
+        focusCursorOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "sync-cursor") {
@@ -9014,6 +9270,11 @@
           dataSmoothingEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "data-smoothing";
         }
+        if (kimlik !== "focus-cursor" && kimlik.startsWith("focus-cursor-")) {
+          const indeks = focusCursorYüzeyleri.findIndex(yüzey => yüzey.kimlik === kimlik);
+          focusCursorEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "focus-cursor";
+        }
         if (["months-no-leap", "months-leap", "months-russian"].includes(kimlik)) {
           kimlik = "months";
         }
@@ -9139,6 +9400,7 @@
           alignDataOturumları,
           customScalesOturumları,
           dataSmoothingOturumları,
+          focusCursorOturumları,
           syncCursorOturumları,
           timeseriesDiscreteOturumları,
           timezonesDstOturumları,
@@ -9174,6 +9436,9 @@
         dataSmoothingOturumları.forEach(yüzey => yüzey.free());
         dataSmoothingOturumları = [];
         dataSmoothingEtkinİndeks = 0;
+        focusCursorOturumları.forEach(yüzey => yüzey.free());
+        focusCursorOturumları = [];
+        focusCursorEtkinİndeks = 0;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
         syncCursorOturumları = [];
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
@@ -9361,6 +9626,22 @@
           );
           oturum = dataSmoothingOturumları[dataSmoothingEtkinİndeks]
             ?? dataSmoothingOturumları[0]
+            ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "focus-cursor") {
+          const istenenİndeks = focusCursorYüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === oturumKimliği
+          );
+          focusCursorEtkinİndeks = istenenİndeks >= 0 ? istenenİndeks : 0;
+          focusCursorOturumları = focusCursorYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = focusCursorOturumları[focusCursorEtkinİndeks]
+            ?? focusCursorOturumları[0]
             ?? null;
           çiz();
           return;

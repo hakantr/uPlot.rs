@@ -1644,7 +1644,7 @@
         { "yol": "dist/uPlot.d.ts", "sha256": "c9fb5d1fe8f2084b44690c841e84ab63402549d9420535a6081b389a461fefe5" },
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
-      "fixture": "src/kart/focus_cursor.rs#focus_cursor_kartı",
+      "fixture": "src/kart/focus_cursor.rs#focus_cursor_kartları",
       "örnek": "examples/focus_cursor.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -1669,12 +1669,15 @@
       "sahip_faz": 4,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-exact-130000-wave-data", "cursor-y-distance-focus", "prox-and-bias",
+        "source-shaped-130000-wave-data-with-log0-finite-normalization",
+        "shared-immutable-aligned-data-for-first-two-surfaces",
+        "one-card-four-independent-source-surfaces", "cursor-y-distance-focus", "prox-and-bias",
         "defocused-alpha", "dynamic-unfocused-black", "focused-magenta-and-width",
-        "source-300-series-performance-card", "gpui-wasm-catalog-parity",
+        "source-300-series-performance-surface", "retained-focus-style-with-stable-path-geometry",
+        "gpui-wasm-catalog-parity",
         "common-interaction-profile", "panic-free-core-focus"
       ],
-      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+      "kanıt": { "api": "kısmi", "sayısal": "uygulandı_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "uygulandı_kanıtlı" }
     },
     {
       "sıra": 26,

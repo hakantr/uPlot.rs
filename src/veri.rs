@@ -1,10 +1,15 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::hata::UplotHatası;
 
 /// uPlot'un sütunlu, ortak x eksenine hizalı veri biçimi.
 #[derive(Debug, Clone, PartialEq)]
 pub struct HizalıVeri {
+    iç: Arc<HizalıVeriİç>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct HizalıVeriİç {
     x: Vec<f64>,
     seriler: Vec<Vec<Option<f64>>>,
     hizalama_eksikleri: Vec<Vec<bool>>,
@@ -67,9 +72,11 @@ impl HizalıVeri {
 
         let hizalama_eksikleri = seriler.iter().map(|seri| vec![false; seri.len()]).collect();
         Ok(Self {
-            x,
-            seriler,
-            hizalama_eksikleri,
+            iç: Arc::new(HizalıVeriİç {
+                x,
+                seriler,
+                hizalama_eksikleri,
+            }),
         })
     }
 
@@ -98,21 +105,28 @@ impl HizalıVeri {
     }
 
     pub fn x(&self) -> &[f64] {
-        &self.x
+        &self.iç.x
     }
 
     pub fn seriler(&self) -> &[Vec<Option<f64>>] {
-        &self.seriler
+        &self.iç.seriler
     }
 
     pub fn uzunluk(&self) -> usize {
-        self.x.len()
+        self.iç.x.len()
+    }
+
+    /// İki hizalı verinin aynı doğrulanmış immutable sütun deposunu paylaşıp
+    /// paylaşmadığını bildirir. `clone()` O(1) ve kopyala-yaz yaklaşımındadır.
+    pub fn aynı_depolamayı_paylaşıyor(&self, diğer: &Self) -> bool {
+        Arc::ptr_eq(&self.iç, &diğer.iç)
     }
 
     /// `None` değerinin kaynak `null` yerine `join()` hizalama artefaktı
     /// (`undefined`) olup olmadığını bildirir.
     pub fn hizalama_eksiği_mi(&self, seri: usize, indeks: usize) -> bool {
-        self.hizalama_eksikleri
+        self.iç
+            .hizalama_eksikleri
             .get(seri)
             .and_then(|maske| maske.get(indeks))
             .copied()
@@ -124,19 +138,19 @@ impl HizalıVeri {
         indeks: usize,
         değerler: Vec<Option<f64>>,
     ) -> Result<Self, UplotHatası> {
-        let mut seriler = self.seriler.clone();
+        let mut seriler = self.iç.seriler.clone();
         seriler.insert(indeks, değerler);
-        let mut maskeler = self.hizalama_eksikleri.clone();
-        maskeler.insert(indeks, vec![false; self.x.len()]);
-        Self::hizalama_maskeli(self.x.clone(), seriler, maskeler)
+        let mut maskeler = self.iç.hizalama_eksikleri.clone();
+        maskeler.insert(indeks, vec![false; self.iç.x.len()]);
+        Self::hizalama_maskeli(self.iç.x.clone(), seriler, maskeler)
     }
 
     pub(crate) fn seri_sil(&self, indeks: usize) -> Result<Self, UplotHatası> {
-        let mut seriler = self.seriler.clone();
+        let mut seriler = self.iç.seriler.clone();
         seriler.remove(indeks);
-        let mut maskeler = self.hizalama_eksikleri.clone();
+        let mut maskeler = self.iç.hizalama_eksikleri.clone();
         maskeler.remove(indeks);
-        Self::hizalama_maskeli(self.x.clone(), seriler, maskeler)
+        Self::hizalama_maskeli(self.iç.x.clone(), seriler, maskeler)
     }
 
     fn hizalama_maskeli(
@@ -145,10 +159,10 @@ impl HizalıVeri {
         hizalama_eksikleri: Vec<Vec<bool>>,
     ) -> Result<Self, UplotHatası> {
         let mut veri = Self::yeni(x, seriler)?;
-        let geçerli = hizalama_eksikleri.len() == veri.seriler.len()
+        let geçerli = hizalama_eksikleri.len() == veri.iç.seriler.len()
             && hizalama_eksikleri
                 .iter()
-                .zip(veri.seriler.iter())
+                .zip(veri.iç.seriler.iter())
                 .all(|(maske, seri)| maske.len() == seri.len());
         if !geçerli {
             return Err(UplotHatası::GeçersizKaynakVeri {
@@ -156,7 +170,7 @@ impl HizalıVeri {
                 açıklama: "hizalama maskesi veri boyutlarıyla eşleşmiyor".to_string(),
             });
         }
-        veri.hizalama_eksikleri = hizalama_eksikleri;
+        Arc::make_mut(&mut veri.iç).hizalama_eksikleri = hizalama_eksikleri;
         Ok(veri)
     }
 }
@@ -174,8 +188,8 @@ pub fn hizalı_verileri_birleştir(
         let mut seriler = Vec::new();
         let mut maskeler = Vec::new();
         for tablo in tablolar {
-            seriler.extend(tablo.seriler.iter().cloned());
-            maskeler.extend(tablo.hizalama_eksikleri.iter().cloned());
+            seriler.extend(tablo.iç.seriler.iter().cloned());
+            maskeler.extend(tablo.iç.hizalama_eksikleri.iter().cloned());
         }
         return HizalıVeri::hizalama_maskeli(ilk.x().to_vec(), seriler, maskeler);
     }

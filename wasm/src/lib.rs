@@ -1332,6 +1332,32 @@ impl KartOturumu {
         self.grafik.imleç_noktaları_görünür()
     }
 
+    pub fn odak_serisi(&self) -> i32 {
+        self.grafik
+            .odak_serisi()
+            .and_then(|indeks| i32::try_from(indeks).ok())
+            .unwrap_or(-1)
+    }
+
+    pub fn seri_odak_cizgi_rengi(&self, seri: usize) -> String {
+        self.grafik
+            .seri_odak_sunumu(seri)
+            .map_or_else(String::new, |(renk, _, _)| renk)
+    }
+
+    pub fn seri_odak_dolgu_rengi(&self, seri: usize) -> String {
+        self.grafik
+            .seri_odak_sunumu(seri)
+            .and_then(|(_, dolgu, _)| dolgu)
+            .unwrap_or_default()
+    }
+
+    pub fn seri_odak_kalinligi(&self, seri: usize) -> f32 {
+        self.grafik
+            .seri_odak_sunumu(seri)
+            .map_or(0.0, |(_, _, kalınlık)| kalınlık)
+    }
+
     pub fn secim_xy_yakinlastir(&self) -> bool {
         self.grafik.etkileşim_seçenekleri().seçim_xy_yakınlaştır
     }
@@ -1441,13 +1467,6 @@ impl KartOturumu {
     pub fn imlec_odagini_seriye_ayarla(&mut self, seri_indeksi: i32) -> bool {
         let seri = usize::try_from(seri_indeksi).ok();
         self.grafik.imleç_odağını_seriye_ayarla(seri)
-    }
-
-    pub fn odak_serisi(&self) -> i32 {
-        self.grafik
-            .odak_serisi()
-            .and_then(|indeks| i32::try_from(indeks).ok())
-            .unwrap_or(-1)
     }
 
     pub fn en_yakin_tooltip(&self, yatay_oran: f64, seri_indeksi: i32) -> Vec<String> {
@@ -3799,9 +3818,18 @@ mod testler {
         let oturum = KartOturumu::yeni("focus-cursor-width-stroke", 100);
         let Ok(mut oturum) = oturum else { return };
         assert!(oturum.imlec_odagini_guncelle(0.5, 2.0 / 3.0, 500.0));
+        assert_eq!(oturum.odak_serisi(), 0);
+        assert_eq!(oturum.seri_odak_cizgi_rengi(0), "#ff00ff");
+        assert_eq!(oturum.seri_odak_kalinligi(0), 2.0);
         let svg = oturum.svg(960, 400);
         assert!(svg.contains("#ff00ff"));
-        assert!(focus_cursor_kart_tanim_ornegi().contains("FocusÖrneği::Dinamik"));
+        assert!(focus_cursor_kart_tanim_ornegi().contains("focus_cursor_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(web.matches("data-kart=\"focus-cursor\"").count(), 1);
+        assert!(!web.contains("data-kart=\"focus-cursor-dynamic\""));
+        assert!(web.contains("const focusCursorYüzeyleri"));
+        assert!(web.contains("focusCursorStilleriniGüncelle"));
+        assert!(web.contains("svg.dataset.focusStyleUpdate = \"retained\""));
     }
 
     #[test]

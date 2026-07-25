@@ -3438,6 +3438,19 @@ impl Grafik {
         self.odak_serisi
     }
 
+    /// Güncel `cursor.focus` durumundan sonra serinin yalnız boya sunumunu
+    /// döndürür. Yüzey adaptörleri retained geometriyi yeniden kurmadan
+    /// stroke/fill/width özelliklerini yerinde güncelleyebilir.
+    pub fn seri_odak_sunumu(&self, seri_indeksi: usize) -> Option<(String, Option<String>, f32)> {
+        let seri = self.seçenekler.seriler.get(seri_indeksi)?;
+        Some(odaklı_seri_stili(
+            seri,
+            self.seçenekler.odak,
+            self.odak_serisi,
+            seri_indeksi,
+        ))
+    }
+
     fn odağı_ayarla(&mut self, seri: Option<usize>) -> bool {
         if self.odak_serisi == seri {
             return false;
