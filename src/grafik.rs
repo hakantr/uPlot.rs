@@ -733,15 +733,17 @@ impl Grafik {
             let mut değerler = veri
                 .seriler()
                 .iter()
-                .flat_map(|seri| seri.iter().copied())
+                .flat_map(|seri| seri.iter().copied().flatten())
                 .collect::<Vec<_>>();
             değerler.extend(
                 düzen
                     .ayrık_değerler
                     .iter()
-                    .flat_map(|ayrıklar| ayrıklar.iter().copied().map(Some)),
+                    .flat_map(|ayrıklar| ayrıklar.iter().copied()),
             );
-            tam_y = Aralık::otomatik(değerler.iter());
+            if let Some(ham) = sonlu_aralık(değerler.into_iter()) {
+                tam_y = Aralık::uplot_sayısal(ham.en_az, ham.en_çok, 0.1, true)?;
+            }
         }
         let etkileşim = EtkileşimDenetleyicisi::yeni(tam, tam_y, seçenekler.etkileşimler);
         let açıklama_stil_indeksleri =
@@ -1925,6 +1927,14 @@ impl Grafik {
         self.seçenekler.kutu_bıyık_düzeni.is_some()
     }
 
+    /// Kutu-bıyık hover bilgisindeki kaynak framework/kategori etiketini döndürür.
+    pub fn kutu_bıyık_kategorisi(&self, indeks: usize) -> Option<&str> {
+        self.kutu_bıyık_grafiği()
+            .then(|| self.seçenekler.kategoriler.get(indeks))
+            .flatten()
+            .map(String::as_str)
+    }
+
     pub fn mum_grafiği(&self) -> bool {
         self.seçenekler.mum_düzeni.is_some()
     }
@@ -1967,7 +1977,13 @@ impl Grafik {
                 .copied()
                 .flatten()
         };
-        let değerler = [değer(0)?, değer(1)?, değer(2)?, değer(3)?, değer(4)?];
+        let değerler = [
+            değer(0)?,
+            değer(1)?,
+            değer(2)?,
+            değer(3).unwrap_or(f64::NAN),
+            değer(4).unwrap_or(f64::NAN),
+        ];
         let merkez = sol + ((x_değeri - aralık.en_az) / açıklık) as f32 * (sağ - sol);
         let sütun_sol = (merkez - sütun_genişliği / 2.0).clamp(sol, sağ);
         let sütun_sağ = (merkez + sütun_genişliği / 2.0).clamp(sol, sağ);
@@ -5802,17 +5818,22 @@ impl Grafik {
             .veri
             .seriler()
             .iter()
-            .flat_map(|seri| seri.iter().copied())
+            .flat_map(|seri| seri.iter().copied().flatten())
             .collect::<Vec<_>>();
         if let Some(düzen) = &self.seçenekler.kutu_bıyık_düzeni {
             değerler.extend(
                 düzen
                     .ayrık_değerler
                     .iter()
-                    .flat_map(|ayrıklar| ayrıklar.iter().copied().map(Some)),
+                    .flat_map(|ayrıklar| ayrıklar.iter().copied()),
             );
         }
-        Aralık::otomatik(değerler.iter())
+        sonlu_aralık(değerler.into_iter())
+            .and_then(|ham| Aralık::uplot_sayısal(ham.en_az, ham.en_çok, 0.1, true).ok())
+            .unwrap_or(Aralık {
+                en_az: 0.0,
+                en_çok: 1.0,
+            })
     }
 
     fn kutu_bıyıkları_çiz(
@@ -5884,29 +5905,39 @@ impl Grafik {
                     .copied()
                     .flatten()
             };
-            let (Some(medyan), Some(q1), Some(q3), Some(en_az), Some(en_çok)) =
-                (değer(0), değer(1), değer(2), değer(3), değer(4))
-            else {
+            let (Some(medyan), Some(q1), Some(q3)) = (değer(0), değer(1), değer(2)) else {
                 continue;
             };
+            let en_az = değer(3);
+            let en_çok = değer(4);
             let y_konumu = |değer| alt - y_aralığı.konum(değer, 0.0, çizim_y);
             let medyan_y = y_konumu(medyan).clamp(üst, alt);
             let q1_y = y_konumu(q1).clamp(üst, alt);
             let q3_y = y_konumu(q3).clamp(üst, alt);
-            let min_y = y_konumu(en_az).clamp(üst, alt);
-            let max_y = y_konumu(en_çok).clamp(üst, alt);
             let gövde_sol = (merkez - gövde_genişliği / 2.0).clamp(sol, sağ);
             let gövde_sağ = (merkez + gövde_genişliği / 2.0).clamp(sol, sağ);
             let gövde_üst = q1_y.min(q3_y);
             let gövde_alt = q1_y.max(q3_y);
 
-            sahne.ekle(Komut::KesikliÇizgi {
-                başlangıç: Nokta::yeni(merkez.clamp(sol, sağ), max_y.min(min_y)),
-                bitiş: Nokta::yeni(merkez.clamp(sol, sağ), max_y.max(min_y)),
-                renk: "#000000".to_string(),
-                kalınlık: 2.0,
-                kesik: 4.0,
-            });
+            if let (Some(en_az), Some(en_çok)) = (en_az, en_çok) {
+                let min_y = y_konumu(en_az).clamp(üst, alt);
+                let max_y = y_konumu(en_çok).clamp(üst, alt);
+                sahne.ekle(Komut::KesikliÇizgi {
+                    başlangıç: Nokta::yeni(merkez.clamp(sol, sağ), max_y.min(min_y)),
+                    bitiş: Nokta::yeni(merkez.clamp(sol, sağ), max_y.max(min_y)),
+                    renk: "#000000".to_string(),
+                    kalınlık: 2.0,
+                    kesik: 4.0,
+                });
+                for y in [min_y, max_y] {
+                    sahne.ekle(Komut::Çizgi {
+                        başlangıç: Nokta::yeni(gövde_sol, y),
+                        bitiş: Nokta::yeni(gövde_sağ, y),
+                        renk: "#000000".to_string(),
+                        kalınlık: 2.0,
+                    });
+                }
+            }
             sahne.ekle(Komut::Dikdörtgen {
                 konum: Nokta::yeni(gövde_sol, gövde_üst),
                 genişlik: (gövde_sağ - gövde_sol).max(0.0),
@@ -5923,14 +5954,6 @@ impl Grafik {
                 çizgi: "#000000".to_string(),
                 kalınlık: 0.0,
             });
-            for y in [min_y, max_y] {
-                sahne.ekle(Komut::Çizgi {
-                    başlangıç: Nokta::yeni(gövde_sol, y),
-                    bitiş: Nokta::yeni(gövde_sağ, y),
-                    renk: "#000000".to_string(),
-                    kalınlık: 2.0,
-                });
-            }
             if let Some(ayrıklar) = düzen.ayrık_değerler.get(indeks) {
                 for ayrık in ayrıklar {
                     let y = y_konumu(*ayrık);
@@ -5950,13 +5973,15 @@ impl Grafik {
                 .seçenekler
                 .kategoriler
                 .get(indeks)
-                .map_or_else(String::new, |değer| kısalt(değer, 18));
-            sahne.ekle(Komut::Metin {
-                konum: Nokta::yeni(merkez, alt + 18.0 + (indeks % 3) as f32 * 12.0),
+                .cloned()
+                .unwrap_or_default();
+            sahne.ekle(Komut::DöndürülmüşMetin {
+                konum: Nokta::yeni(merkez, alt + 8.0),
                 içerik: etiket,
                 renk: "#4b5563".to_string(),
-                boyut: 8.0,
-                hiza: MetinHizası::Orta,
+                boyut: 10.0,
+                hiza: MetinHizası::Bitiş,
+                açı: -90.0,
             });
         }
     }
@@ -7325,19 +7350,6 @@ fn kompakt_sayı(değer: f64) -> String {
         }
     }
     format!("{sayı}{sonek}")
-}
-
-fn kısalt(metin: &str, azami_karakter: usize) -> String {
-    let mut karakterler = metin.chars();
-    let kısa = karakterler
-        .by_ref()
-        .take(azami_karakter)
-        .collect::<String>();
-    if karakterler.next().is_some() {
-        format!("{kısa}…")
-    } else {
-        kısa
-    }
 }
 
 fn ölçek_eksen_değerini_yaz(

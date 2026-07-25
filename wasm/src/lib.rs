@@ -1129,6 +1129,14 @@ impl KartOturumu {
             })
     }
 
+    pub fn kutu_biyik_etiketi(&self, indeks: u32) -> String {
+        usize::try_from(indeks)
+            .ok()
+            .and_then(|indeks| self.grafik.kutu_bıyık_kategorisi(indeks))
+            .unwrap_or_default()
+            .to_string()
+    }
+
     pub fn dagilim_vurusu(&self, genişlik: u32, yükseklik: u32, x: f32, y: f32) -> Vec<f64> {
         self.grafik
             .dağılım_vuruşu_boyutta(genişlik, yükseklik, x, y)
@@ -3913,8 +3921,19 @@ mod testler {
         };
         let svg = oturum.svg(800, 400);
         assert!(svg.contains("stroke-dasharray=\"4.00 4.00\""));
+        assert!(svg.contains("rotate(-90.00"));
         let vuruş = oturum.kutu_biyik_vurusu(800, 400, 76.0, 120.0);
-        assert!(vuruş.is_empty() || vuruş.len() == 10);
+        assert_eq!(vuruş.len(), 10);
+        assert_eq!(oturum.kutu_biyik_etiketi(0), "stage0-v0.0.2-keyed");
+        let aralık = oturum.gorunur_y_araligi();
+        assert_eq!(aralık.as_slice(), [105.0, 185.0]);
+        let web = include_str!("../www/index.html");
+        assert_eq!(web.matches("data-kart=\"box-whisker\"").count(), 1);
+        assert!(!web.contains("data-kart=\"box-whisker-01_run1k\""));
+        assert!(web.contains("boxWhiskerOturumları"));
+        assert!(web.contains("independent-box-whisker"));
+        assert!(web.contains("kutu-biyik-tooltip"));
+        assert!(web.contains("function boxWhiskerÇiz(yalnızEtkin = false)"));
     }
 
     #[test]

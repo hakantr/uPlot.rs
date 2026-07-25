@@ -100,7 +100,8 @@ pub use bars_values_autosize::{
     bars_values_autosize_kartları, bars_values_autosize_kartı,
 };
 pub use box_whisker::{
-    BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, box_whisker_kartı,
+    BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, box_whisker_kartları,
+    box_whisker_kartı,
 };
 pub use candlestick_ohlc::{
     CANDLESTICK_KANIT_TOHUMU, CANDLESTICK_KART_TANIM_ÖRNEĞİ, candlestick_ohlc_kartı,

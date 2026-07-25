@@ -1,32 +1,52 @@
 id = "box-whisker"
 kaynak = "../uPlot/demos/box-whisker.html"
-fixture = "src/kart/box_whisker.rs#box_whisker_kartı"
+fixture = "src/kart/box_whisker.rs#box_whisker_kartları"
 viewport = [800, 400]
 device_pixel_ratio = 1
-durum = "on-yedi-benchmark"
+durum = "tek-kartta-on-yedi-bagimsiz-yuzey"
 
-[veri]
-kaynak = "src/kart/veri/box_whisker_results.json"
-kaynak_sha256 = "424daf68791f929a2136e4388b279b54f6dfc4aa098593f233aa45fa5d4ba931"
-benchmark_sayısı = 17
-azami_framework = 30
-non_keyed_haric = true
-yüzdelik_algoritması = "demos/lib/stats.js"
-ayrık_değer_eşiği = "1.5 * IQR"
+["veri"]
+"kaynak" = "src/kart/veri/box_whisker_results.json"
+"kaynak_sha256" = "424daf68791f929a2136e4388b279b54f6dfc4aa098593f233aa45fa5d4ba931"
+"benchmark_sayısı" = 17
+"benchmark_başına_keyed_framework" = 98
+"gösterilen_framework" = 30
+"non_keyed_hariç" = true
+"yüzdelik_algoritması" = "demos/lib/stats.js"
+"yüzdelik_yuvarlama" = "IQR hesabından önce iki ondalık"
+"ayrık_değer_eşiği" = "1.5 * rounded IQR"
+"özet_önbelleği" = "results.json süreç başına bir ayrıştırma ve özetleme"
 
-[düzen]
-gövde_genişlik_oranı = 0.7
-gövde_dolgusu = "#eeeeee"
-bıyık_rengi = "#000000"
-bıyık_kesik = 4
-ayrık_değer_boyutu = 8
+["düzen"]
+"kaynak_sırasında_yüzeyler" = 17
+"yüzeyler_bağımsız" = true
+"yüzey_boyutu" = [800, 400]
+"gövde_genişlik_oranı" = 0.7
+"gövde_dolgusu" = "#eeeeee"
+"bıyık_rengi" = "#000000"
+"bıyık_kesik" = 4
+"medyan_kalınlığı" = 2
+"ayrık_değer_boyutu" = 8
+"kategori_ekseni" = "tam framework adı, -90 derece, 100px pay"
+"y_aralığı" = "uPlot.rangeNum(global min/max including outliers, 0.1, true)"
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
-sütun_vurgusu = "rgba(51,204,255,0.3)"
-çekirdek_vuruş_testi = true
+["etkileşim"]
+"kaynak_cursor_çizgileri" = false
+"sütun_vurgusu" = "rgba(51,204,255,0.3)"
+"hareketli_tooltip" = ["Lib", "Median", "q1", "q3", "min", "max"]
+"tooltip_dolgusu" = "rgba(255,249,196,0.92)"
+"ana_sahne_hoverda_yeniden_çizilmez" = true
+"çekirdek_vuruş_testi" = true
+"port_ortak_etkileşim_uzantısı_opsiyonel" = true
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
-svg_dizini = "target/box-whisker"
+[performans]
+"ilk_yükleme" = "JSON parse + stats O(toplam ölçüm), bir kez"
+"yüzey_çizimi" = "O(görünür framework + ayrık değer)"
+"hover" = "yalnız hafif etkileşim katmanı"
+"yüzey_yeniden_kurulmaz" = true
+
+["kanıt"]
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
+"wasm" = "wasm/www/index.html"
+"svg_dizini" = "target/box-whisker"
+"sayısal_fixture" = ["01_run1k", "34_startup-totalbytes"]

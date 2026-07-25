@@ -323,6 +323,18 @@
                                                   border-radius: 5px; background: #fff;
                                                   padding: 3px 7px; cursor: pointer; }
     .bars-values-autosize-grafik .lejant button[aria-pressed="false"] { opacity: .42; }
+    #chart.box-whisker-yüzeyi { display: block; min-width: 0; overflow: auto;
+                                place-items: unset; padding: 10px;
+                                box-sizing: border-box; }
+    .box-whisker-yığın { min-width: 820px; max-width: none; }
+    .box-whisker-grafik { position: relative; display: inline-block; vertical-align: top;
+                          width: 800px; margin: 10px; padding: 10px;
+                          border-radius: 5px; background: #fff;
+                          box-shadow: 0 2px 9px rgba(0,0,0,.28); }
+    .box-whisker-grafik > h3 { margin: 0 0 6px; color: #111827; font-size: 14px; }
+    .box-whisker-grafik svg { display: block; width: 800px; height: 400px;
+                              max-width: none; }
+    .box-whisker-tooltip text { fill: #111111; font: 11px Arial, sans-serif; }
     #chart.soft-minmax-yüzeyi { display: block; min-width: 0; overflow: auto;
                                 place-items: unset;
                                 padding: 8px; box-sizing: border-box; }
@@ -566,6 +578,10 @@
       <article class="kart" data-kart="bars-values-autosize" aria-current="false" tabindex="0">
         <strong>Bars Values AutoSize</strong><small>bars-values-autosize</small>
         <div class="durum">2 bağımsız yüzey · 10…25 px etiket</div>
+      </article>
+      <article class="kart" data-kart="box-whisker" aria-current="false" tabindex="0">
+        <strong>Box &amp; Whisker</strong><small>box-whisker</small>
+        <div class="durum">17 bağımsız yüzey · hareketli tooltip</div>
       </article>
     </aside>
     <main>
@@ -2461,28 +2477,26 @@
       "21_ready-memory", "22_run-memory", "23_update5-memory", "24_run5-memory",
       "25_run-clear-memory", "31_startup-ci", "32_startup-bt", "34_startup-totalbytes",
     ];
-    for (const benchmark of kutuBıyıkBenchmarkleri) {
-      const kimlik = `box-whisker-${benchmark}`;
-      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>Box &amp; Whisker · ${benchmark}</strong><small>${kimlik}</small>
-          <div class="durum">İlk 30 keyed framework · 1,5×IQR</div>
-        </article>`);
-      kartlar[kimlik] = {
-        başlık: benchmark,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/box-whisker.html">box-whisker.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/results.json">results.json</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/stats.js">stats.js</a>
-          <br>Keyed framework sonuçları kaynak yüzdelik algoritmasıyla sıralanır; ilk 30 medyan, çeyrek, bıyık ve ayrık değer olarak çizilir.`,
-        tanım: () => box_whisker_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/box_whisker.rs",
-        seriler: ["Median", "q1", "q3", "min", "max"].map(etiket => ({ etiket, renk: "#000000" })),
-        yardım: "İmleci hareket ettir: kaynak columnHighlightPlugin eşdeğeri sütunu vurgular",
-        değişkenNokta: false,
-        kutuBıyık: true,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    kartlar["box-whisker"] = {
+      başlık: "Box & Whisker · 17 yüzey",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/box-whisker.html">box-whisker.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/results.json">results.json</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/stats.js">stats.js</a>
+        <br>Kaynak sayfanın 17 bağımsız 800×400 yüzeyi aynı alanda ve kaynak sırasındadır. Her yüzey medyana göre sıralanmış ilk 30 keyed framework'ü gösterir.`,
+      tanım: () => box_whisker_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/box_whisker.rs",
+      seriler: ["Median", "q1", "q3", "min", "max"].map(etiket => ({ etiket, renk: "#000000" })),
+      yardım: "Sütunun üzerine gel: mavi columnHighlight + Lib/Median/q1/q3/min/max tooltip",
+      değişkenNokta: false,
+      kutuBıyık: true,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "17 benchmarkta framework dağılımlarını, çeyrekleri, bıyıkları ve ayrık ölçümleri aynı kaynak sayfası düzeninde karşılaştırır.",
+        api: "box_whisker_kartları kaynak sırasıyla 17 bağımsız Grafik döndürür. stats.js yüzdelikleri iki ondalığa yuvarlandıktan sonra 1,5×IQR sınıflandırılır; rangeNum bütün ayrık değerleri kapsar.",
+        izleme: "Gecikme, bellek ve başlangıç ölçümlerinde medyanın yanında dağılımı ve kararsız koşuları framework bazında incelemek için uygundur.",
+        maliyet: "results.json bir kez ayrıştırılıp özetlenir ve süreç boyunca önbelleklenir. Her yüzey çizimi görünür 30 kutu ve ayrık değer sayısıyla O(N); hover yalnız hafif etkileşim katmanını günceller.",
+      },
+    };
     document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
       <article class="kart" data-kart="candlestick-ohlc" aria-current="false" tabindex="0">
         <strong>Candlestick Chart · Gold</strong><small>candlestick-ohlc</small>
@@ -2933,6 +2947,8 @@
     let barsGroupedStackedEtkinİndeks = 0;
     let barsValuesAutosizeOturumları = [];
     let barsValuesAutosizeEtkinİndeks = 0;
+    let boxWhiskerOturumları = [];
+    let boxWhiskerEtkinİndeks = 0;
     let softMinMaxOturumları = [];
     let softMinMaxEtkinİndeks = 0;
     let sparklinesBarsOturumları = [];
@@ -5641,6 +5657,79 @@
       kontrolleriGüncelle();
     }
 
+    function boxWhiskerÇiz(yalnızEtkin = false) {
+      const kaydırmaÜst = chart.scrollTop;
+      const kaydırmaSol = chart.scrollLeft;
+      const mevcutYüzeyler = chart.querySelectorAll(".box-whisker-grafik");
+      if (yalnızEtkin && mevcutYüzeyler.length === kutuBıyıkBenchmarkleri.length) {
+        const kapsam = chart.querySelector(
+          `[data-box-whisker-index="${boxWhiskerEtkinİndeks}"]`
+        );
+        const mevcutSvg = kapsam?.querySelector("svg");
+        const yüzeyOturumu = boxWhiskerOturumları[boxWhiskerEtkinİndeks];
+        if (mevcutSvg && yüzeyOturumu) {
+          const şablon = document.createElement("template");
+          şablon.innerHTML = yüzeyOturumu.svg(800, 400).trim();
+          svgYüzeyiniYerindeGüncelle(mevcutSvg, şablon.content.firstElementChild);
+          oturum = yüzeyOturumu;
+          yüzeyiEşitle(mevcutSvg);
+          chart.scrollTop = kaydırmaÜst;
+          chart.scrollLeft = kaydırmaSol;
+          kontrolleriGüncelle();
+          return;
+        }
+      }
+      chart.className = "box-whisker-yüzeyi";
+      chart.innerHTML = `<div class="box-whisker-yığın">
+        ${kutuBıyıkBenchmarkleri.map((benchmark, indeks) => `
+          <article class="box-whisker-grafik" data-box-whisker-index="${indeks}">
+            <h3>${benchmark}</h3>
+            ${boxWhiskerOturumları[indeks]?.svg(800, 400) ?? ""}
+          </article>`).join("")}
+      </div>`;
+      kutuBıyıkBenchmarkleri.forEach((benchmark, indeks) => {
+        const kapsam = chart.querySelector(`[data-box-whisker-index="${indeks}"]`);
+        const yüzeyOturumu = boxWhiskerOturumları[indeks];
+        const svg = kapsam?.querySelector("svg");
+        if (!kapsam || !yüzeyOturumu || !svg) return;
+        svg.dataset.etkileşim = "independent-box-whisker";
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden"
+              fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+            <rect id="kutu-biyik-vurgu" visibility="hidden"
+              fill="rgba(51,204,255,.3)" stroke="none"/>
+            <line id="imleç-x" visibility="hidden"
+              stroke="#6b7280" stroke-dasharray="4 4"/>
+            <line id="imleç-y" visibility="hidden"
+              stroke="#6b7280" stroke-dasharray="4 4"/>
+            <g id="kutu-biyik-tooltip" class="box-whisker-tooltip" visibility="hidden">
+              <rect width="224" height="108" rx="3"
+                fill="rgba(255,249,196,.92)" stroke="rgba(0,0,0,.22)"/>
+              ${["lib", "median", "q1", "q3", "min", "max"].map((alan, satır) =>
+                `<text data-box-tooltip="${alan}" x="8" y="${17 + satır * 16}"></text>`
+              ).join("")}
+            </g>
+          </g>`);
+        kapsam.addEventListener("pointerenter", () => {
+          boxWhiskerEtkinİndeks = indeks;
+          oturum = yüzeyOturumu;
+          yüzeyiEşitle(svg);
+          kontrolleriGüncelle();
+        });
+      });
+      oturum = boxWhiskerOturumları[boxWhiskerEtkinİndeks]
+        ?? boxWhiskerOturumları[0]
+        ?? null;
+      const etkinSvg = chart.querySelector(
+        `[data-box-whisker-index="${boxWhiskerEtkinİndeks}"] svg`
+      );
+      if (etkinSvg) yüzeyiEşitle(etkinSvg);
+      chart.scrollTop = kaydırmaÜst;
+      chart.scrollLeft = kaydırmaSol;
+      kontrolleriGüncelle();
+    }
+
     function softMinMaxEtkileşimKatmanınıKur(svg) {
       if (!svg || svg.querySelector(":scope > #etkileşim")) return;
       svg.insertAdjacentHTML("beforeend", `
@@ -6463,6 +6552,10 @@
         barsValuesAutosizeÇiz();
         return;
       }
+      if (aktifKart === "box-whisker") {
+        boxWhiskerÇiz(true);
+        return;
+      }
       if (aktifKart === "soft-minmax") {
         softMinMaxÇiz();
         return;
@@ -6803,6 +6896,8 @@
         && hedefSvg instanceof SVGSVGElement ? hedefSvg : null;
       const svg = doğrudanSvg ?? (aktifKart === "scatter"
         ? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"] svg`)
+        : aktifKart === "box-whisker"
+          ? chart.querySelector(`[data-box-whisker-index="${boxWhiskerEtkinİndeks}"] svg`)
         : aktifKart === "soft-minmax"
           ? chart.querySelector(`[data-soft-minmax-index="${softMinMaxEtkinİndeks}"] svg`)
           : aktifKart === "sparklines-bars"
@@ -6915,6 +7010,11 @@
           ? olay.target?.closest?.(".bars-values-autosize-grafik")
             ?? chart.querySelector(
               `[data-bars-values-autosize-index="${barsValuesAutosizeEtkinİndeks}"]`
+            )
+        : aktifKart === "box-whisker"
+          ? olay.target?.closest?.(".box-whisker-grafik")
+            ?? chart.querySelector(
+              `[data-box-whisker-index="${boxWhiskerEtkinİndeks}"]`
             )
         : aktifKart === "soft-minmax"
           ? olay.target?.closest?.(".soft-minmax-grafik")
@@ -7119,20 +7219,46 @@
       }
       if (kartlar[aktifKart].kutuBıyık) {
         const vurgu = svg.querySelector("#kutu-biyik-vurgu");
+        const tooltip = svg.querySelector("#kutu-biyik-tooltip");
         const vuruş = oturum?.kutu_biyik_vurusu(view.width, view.height, hamX, hamY) ?? [];
         if (vuruş.length !== 10) {
           vurgu?.setAttribute("visibility", "hidden");
+          tooltip?.setAttribute("visibility", "hidden");
           return;
         }
         const [indeks, x, y, genişlik, yükseklik, ...değerler] = vuruş;
         vurgu?.setAttribute("x", x); vurgu?.setAttribute("y", y);
         vurgu?.setAttribute("width", genişlik); vurgu?.setAttribute("height", yükseklik);
         vurgu?.setAttribute("visibility", "visible");
+        const framework = oturum?.kutu_biyik_etiketi(indeks) ?? "";
+        const alanlar = {
+          lib: `Lib: ${framework}`,
+          median: `Median: ${Number(değerler[0]).toFixed(2)}`,
+          q1: `q1: ${Number(değerler[1]).toFixed(2)}`,
+          q3: `q3: ${Number(değerler[2]).toFixed(2)}`,
+          min: `min: ${Number.isFinite(değerler[3]) ? Number(değerler[3]).toFixed(2) : "—"}`,
+          max: `max: ${Number.isFinite(değerler[4]) ? Number(değerler[4]).toFixed(2) : "—"}`,
+        };
+        for (const [alan, içerik] of Object.entries(alanlar)) {
+          const hedef = tooltip?.querySelector(`[data-box-tooltip="${alan}"]`);
+          if (hedef) hedef.textContent = içerik;
+        }
+        const tooltipWidth = Math.min(
+          sağ - sol,
+          Math.max(224, Array.from(framework).length * 6.5 + 16),
+        );
+        tooltip?.querySelector("rect")?.setAttribute("width", tooltipWidth);
+        const tooltipX = Math.max(sol, Math.min(sağ - tooltipWidth, hamX + 14));
+        const tooltipY = Math.max(üst, Math.min(alt - 108, hamY + 14));
+        tooltip?.setAttribute("transform", `translate(${tooltipX} ${tooltipY})`);
+        tooltip?.setAttribute("visibility", "visible");
         const xHedefi = chart.querySelector("#x-değeri");
-        if (xHedefi) xHedefi.textContent = String(indeks + 1);
+        if (xHedefi) xHedefi.textContent = framework || String(indeks + 1);
         değerler.forEach((değer, seriİndeksi) => {
           const hedef = chart.querySelector(`#seri-değeri-${seriİndeksi}`);
-          if (hedef) hedef.textContent = Number(değer).toFixed(2);
+          if (hedef) {
+            hedef.textContent = Number.isFinite(değer) ? Number(değer).toFixed(2) : "—";
+          }
         });
         return;
       }
@@ -7918,7 +8044,9 @@
       chart.querySelectorAll("#çubuk-vurgu").forEach(vurgu =>
         vurgu.setAttribute("visibility", "hidden")
       );
-      chart.querySelector("#kutu-biyik-vurgu")?.setAttribute("visibility", "hidden");
+      chart.querySelectorAll("#kutu-biyik-vurgu, #kutu-biyik-tooltip").forEach(öğe =>
+        öğe.setAttribute("visibility", "hidden")
+      );
       chart.querySelector("#timeline-vurgu")?.setAttribute("visibility", "hidden");
     });
     document.addEventListener("keydown", olay => {
@@ -8085,6 +8213,9 @@
       } else if (aktifKart === "bars-values-autosize") {
         barsValuesAutosizeOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         barsValuesAutosizeÇiz();
+      } else if (aktifKart === "box-whisker") {
+        boxWhiskerOturumları.forEach(yüzey => yüzey.onceki_gorunum());
+        boxWhiskerÇiz();
       } else if (aktifKart === "soft-minmax") {
         softMinMaxOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         softMinMaxÇiz();
@@ -8156,6 +8287,9 @@
       } else if (aktifKart === "bars-values-autosize") {
         barsValuesAutosizeOturumları.forEach(yüzey => yüzey.tam_gorunum());
         barsValuesAutosizeÇiz();
+      } else if (aktifKart === "box-whisker") {
+        boxWhiskerOturumları.forEach(yüzey => yüzey.tam_gorunum());
+        boxWhiskerÇiz();
       } else if (aktifKart === "soft-minmax") {
         softMinMaxOturumları.forEach(yüzey => yüzey.tam_gorunum());
         softMinMaxÇiz();
@@ -8214,6 +8348,10 @@
         );
       } else if (aktifKart === "bars-values-autosize") {
         barsValuesAutosizeOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "box-whisker") {
+        boxWhiskerOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "timeseries-discrete") {
@@ -8366,6 +8504,12 @@
           scatterEtkinİndeks = kimlik === "scatter-bubble" ? 1 : 0;
           kimlik = "scatter";
         }
+        if (kimlik !== "box-whisker" && kimlik.startsWith("box-whisker-")) {
+          const benchmark = kimlik.slice("box-whisker-".length);
+          const indeks = kutuBıyıkBenchmarkleri.indexOf(benchmark);
+          boxWhiskerEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "box-whisker";
+        }
         if (kimlik !== "soft-minmax" && kimlik.startsWith("soft-minmax-")) {
           const indeks = softMinMaxYüzeyleri.findIndex(yüzey => yüzey.kimlik === kimlik);
           softMinMaxEtkinİndeks = indeks >= 0 ? indeks : 0;
@@ -8476,6 +8620,7 @@
           scatterOturumları,
           barsGroupedStackedOturumları,
           barsValuesAutosizeOturumları,
+          boxWhiskerOturumları,
           softMinMaxOturumları,
           sparklinesBarsOturumları,
           sparklinesOturumları,
@@ -8514,6 +8659,8 @@
         barsGroupedStackedOturumları = [];
         barsValuesAutosizeOturumları.forEach(yüzey => yüzey.free());
         barsValuesAutosizeOturumları = [];
+        boxWhiskerOturumları.forEach(yüzey => yüzey.free());
+        boxWhiskerOturumları = [];
         softMinMaxOturumları.forEach(yüzey => yüzey.free());
         softMinMaxOturumları = [];
         sparklinesBarsOturumları.forEach(yüzey => yüzey.free());
@@ -8777,6 +8924,23 @@
           });
           oturum = barsValuesAutosizeOturumları[0] ?? null;
           çiz();
+          return;
+        }
+        if (kimlik === "box-whisker") {
+          boxWhiskerOturumları = kutuBıyıkBenchmarkleri.map(benchmark => {
+            const yüzeyOturumu = new KartOturumu(`box-whisker-${benchmark}`, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = boxWhiskerOturumları[boxWhiskerEtkinİndeks]
+            ?? boxWhiskerOturumları[0]
+            ?? null;
+          çiz();
+          requestAnimationFrame(() => {
+            chart.querySelector(`[data-box-whisker-index="${boxWhiskerEtkinİndeks}"]`)
+              ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+            if (boxWhiskerEtkinİndeks === 0) chart.scrollLeft = 0;
+          });
           return;
         }
         if (kimlik === "soft-minmax") {

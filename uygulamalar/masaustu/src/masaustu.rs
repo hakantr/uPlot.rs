@@ -14,24 +14,23 @@ use uplot_rs::{
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_ARALIK_MS,
     AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ, AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
     AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, AxisAutosizeAkışı, BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ,
-    BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ, BOX_WHISKER_BENCHMARKLERİ,
-    BOX_WHISKER_KART_TANIM_ÖRNEĞİ, BoyutSenkronAkışı, CANDLESTICK_KART_TANIM_ÖRNEĞİ,
-    CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
-    CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
-    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri,
-    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ,
-    GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği, Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
-    HighLowBandsÖrneği, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ,
-    LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
-    LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ,
-    MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ,
-    MULTI_BARS_KART_TANIM_ÖRNEĞİ, MissingDataÖrneği, MultiBarsÖrneği,
-    NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
-    NearestNonNullÖrneği, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
-    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignAkışı,
-    PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
-    SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
+    BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, BoyutSenkronAkışı,
+    CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
+    CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ, CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği,
+    DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
+    DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ,
+    FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ, GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği,
+    Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ, HighLowBandsÖrneği,
+    LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ, LOG_SCALES_KART_TANIM_ÖRNEĞİ,
+    LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği, LinePathsÖrneği, LogScales2Örneği,
+    LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, MULTI_BARS_KART_TANIM_ÖRNEĞİ,
+    MissingDataÖrneği, MultiBarsÖrneği, NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ,
+    NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, NoDataÖrneği,
+    PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ,
+    PathGapClipÖrneği, PixelAlignAkışı, PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ,
+    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ,
+    SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
     STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS, STREAM_DATA_KART_TANIM_ÖRNEĞİ,
     SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
@@ -50,25 +49,26 @@ use uplot_rs::{
     align_data_çizgi_çubuk_kartı, annotations_kartı, arcsinh_scales_kartı, area_fill_kartı,
     axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartları,
     bars_grouped_stacked_kartı, bars_values_autosize_kartları, bars_values_autosize_kartı,
-    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
-    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
-    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
-    log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı, missing_data_kartları,
-    missing_data_null_kartı, months_artık_yılsız_kartı, months_kartları, multi_bars_kartı,
-    nearest_non_null_kartı, nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri,
-    path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı,
-    points_kartları, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartları,
-    scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
-    soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları, sparklines_bars_kartı,
-    sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı, stacked_series_kartları,
-    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
-    sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
-    thin_bars_stroke_fill_kartı, time_periods_kartları, time_periods_kartı,
-    timeline_discrete_kartları, timeline_discrete_kartı, timeseries_discrete_kartları,
-    timeseries_discrete_kartı, timezones_dst_kartları, timezones_dst_kartı, tooltips_closest_kartı,
-    tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı,
-    y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
+    box_whisker_kartları, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
+    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
+    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
+    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
+    log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
+    missing_data_kartları, missing_data_null_kartı, months_artık_yılsız_kartı, months_kartları,
+    multi_bars_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
+    ortak_kart_etkileşimleri, path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları,
+    pixel_align_kartı, points_kartları, points_kartı, resize_kartı, scale_padding_kartı,
+    scales_dir_ori_kartları, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
+    sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları,
+    sparklines_bars_kartı, sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı,
+    stacked_series_kartları, stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı,
+    svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı,
+    thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı, time_periods_kartları,
+    time_periods_kartı, timeline_discrete_kartları, timeline_discrete_kartı,
+    timeseries_discrete_kartları, timeseries_discrete_kartı, timezones_dst_kartları,
+    timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı, trendlines_kartı,
+    update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
+    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -208,7 +208,7 @@ impl KartKimliği {
             Self::AxisIndicators => "Axis indicators",
             Self::Bars(_) => "Bars · Grouped / Stacked · 10 yüzey",
             Self::BarsValuesAutosize(_) => "Bars Values AutoSize · 2 yüzey",
-            Self::BoxWhisker(benchmark) => benchmark,
+            Self::BoxWhisker(_) => "Box & Whisker · 17 yüzey",
             Self::Candlestick => "Candlestick Chart · Gold",
         }
     }
@@ -361,7 +361,9 @@ impl KartKimliği {
             Self::BarsValuesAutosize(_) => {
                 "bars-values-autosize.html · dikey/yatay otomatik kompakt değer yazısı"
             }
-            Self::BoxWhisker(_) => "box-whisker.html · results.json ve stats.js",
+            Self::BoxWhisker(_) => {
+                "box-whisker.html · 17 bağımsız yüzey · results.json ve stats.js"
+            }
             Self::Candlestick => "candlestick-ohlc.html · Gold OHLC ve hacim",
         }
     }
@@ -575,6 +577,7 @@ pub struct ChartListesi {
     scatter_grafikleri: Vec<(ScatterÖrneği, Entity<GpuiGrafik>)>,
     bars_grouped_stacked_grafikleri: Vec<(ÇubukÖrneği, Entity<GpuiGrafik>)>,
     bars_values_autosize_grafikleri: Vec<(ÇubukYönü, Entity<GpuiGrafik>)>,
+    box_whisker_grafikleri: Vec<(&'static str, Entity<GpuiGrafik>)>,
     scales_dir_ori_senkronlanıyor: bool,
     scales_dir_ori_kilitli: bool,
     no_data_örneği: NoDataÖrneği,
@@ -668,6 +671,12 @@ impl ChartListesi {
                 }
             } else if matches!(bu.aktif_kart, KartKimliği::BarsValuesAutosize(_)) {
                 for (_, grafik) in &bu.bars_values_autosize_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if matches!(bu.aktif_kart, KartKimliği::BoxWhisker(_)) {
+                for (_, grafik) in &bu.box_whisker_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -810,6 +819,7 @@ impl ChartListesi {
             scatter_grafikleri: Vec::new(),
             bars_grouped_stacked_grafikleri: Vec::new(),
             bars_values_autosize_grafikleri: Vec::new(),
+            box_whisker_grafikleri: Vec::new(),
             scales_dir_ori_senkronlanıyor: false,
             scales_dir_ori_kilitli: false,
             no_data_örneği: NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
@@ -1575,6 +1585,46 @@ impl ChartListesi {
         cx.notify();
     }
 
+    fn box_whisker_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = box_whisker_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Box & Whisker ailesi oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.box_whisker_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (benchmark, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{benchmark} oluşturulamadı: {hata}"));
+                    self.grafik = None;
+                    self.box_whisker_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                    bu.açıklama_istendi = true;
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((benchmark, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.box_whisker_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
     fn soft_minmax_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
         let sonuç = soft_minmax_kartları(12.0);
         let Ok(kartlar) = sonuç else {
@@ -2286,6 +2336,7 @@ impl ChartListesi {
         self.scatter_grafikleri.clear();
         self.bars_grouped_stacked_grafikleri.clear();
         self.bars_values_autosize_grafikleri.clear();
+        self.box_whisker_grafikleri.clear();
         self.soft_minmax_grafikleri.clear();
         self.sparklines_bars_grafikleri.clear();
         self.sparklines_grafikleri.clear();
@@ -2409,6 +2460,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.bars_values_autosize_yüzeylerini_oluştur(cx);
+        } else if matches!(kart, KartKimliği::BoxWhisker(_)) {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.box_whisker_yüzeylerini_oluştur(cx);
         } else if matches!(kart, KartKimliği::SoftMinMax(_)) {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -3481,7 +3541,9 @@ impl Render for ChartListesi {
             KartKimliği::BarsValuesAutosize(_) => {
                 "2 bağımsız yüzey × 12 kanıt değeri · 10…25 px etiket".to_string()
             }
-            KartKimliği::BoxWhisker(_) => "İlk 30 keyed framework · medyan ve 1,5×IQR".to_string(),
+            KartKimliği::BoxWhisker(_) => {
+                "17 bağımsız yüzey × ilk 30 keyed framework · stats.js + rangeNum".to_string()
+            }
             KartKimliği::Candlestick => "218 gün · Gold OHLC + kanıt hacmi".to_string(),
             KartKimliği::SyncYZero(aşama) => {
                 format!("3 nokta × 3 Y ölçeği · {}", aşama.açıklama())
@@ -3658,6 +3720,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .bars_values_autosize_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if matches!(aktif_kart, KartKimliği::BoxWhisker(_)) {
+            geri_var = self
+                .box_whisker_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .box_whisker_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         } else if matches!(aktif_kart, KartKimliği::SoftMinMax(_)) {
@@ -4867,21 +4938,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(kart, cx);
                 }))
             })
-            .children(BOX_WHISKER_BENCHMARKLERİ.into_iter().map(|benchmark| {
-                let kart = KartKimliği::BoxWhisker(benchmark);
+            .child({
+                let kart = KartKimliği::BoxWhisker("01_run1k");
                 katalog_kartı(
-                    benchmark,
-                    benchmark,
+                    "kart-box-whisker",
+                    "Box & Whisker",
                     "box-whisker",
-                    aktif_kart == kart,
-                    "İlk 30 keyed framework · ayrık değerler",
+                    matches!(aktif_kart, KartKimliği::BoxWhisker(_)),
+                    "17 bağımsız yüzey · hareketli tooltip",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .child(
                 katalog_kartı(
                     "candlestick-ohlc",
@@ -5194,6 +5265,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.bars_values_autosize_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::BoxWhisker(_)) {
+                            for (_, grafik) in &bu.box_whisker_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if matches!(bu.aktif_kart, KartKimliği::SoftMinMax(_)) {
                             for (_, grafik) in &bu.soft_minmax_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5318,6 +5393,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.bars_values_autosize_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::BoxWhisker(_)) {
+                            for (_, grafik) in &bu.box_whisker_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
                         } else if matches!(bu.aktif_kart, KartKimliği::SoftMinMax(_)) {
                             for (_, grafik) in &bu.soft_minmax_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5399,6 +5478,8 @@ impl Render for ChartListesi {
                             bu.bars_grouped_stacked_yüzeylerini_oluştur(cx);
                         } else if matches!(bu.aktif_kart, KartKimliği::BarsValuesAutosize(_)) {
                             bu.bars_values_autosize_yüzeylerini_oluştur(cx);
+                        } else if matches!(bu.aktif_kart, KartKimliği::BoxWhisker(_)) {
+                            bu.box_whisker_yüzeylerini_oluştur(cx);
                         } else if matches!(bu.aktif_kart, KartKimliği::StreamData(_)) {
                             bu.stream_data_yüzeylerini_oluştur(cx);
                         } else if matches!(bu.aktif_kart, KartKimliği::ThinBars(_)) {
@@ -6330,6 +6411,50 @@ impl Render for ChartListesi {
                                 .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
                         )
                 }))
+        } else if matches!(aktif_kart, KartKimliği::BoxWhisker(_)) {
+            çizim_tabanı
+                .flex_none()
+                .h(px(980.0))
+                .overflow_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("Resmî sayfanın 17 bağımsız 800×400 benchmark yüzeyi aynı alandadır. Sütun hover'ı ana geometriyi yeniden çizmeden mavi vurgu ve Lib/Median/q1/q3/min/max bilgi kutusunu hafif etkileşim katmanında günceller."),
+                )
+                .child(
+                    div()
+                        .w(px(1680.0))
+                        .flex()
+                        .flex_wrap()
+                        .gap_3()
+                        .items_start()
+                        .children(self.box_whisker_grafikleri.iter().map(
+                            |(benchmark, grafik)| {
+                                div()
+                                    .flex_none()
+                                    .w(px(820.0))
+                                    .p_2()
+                                    .rounded_md()
+                                    .bg(rgb(0xffffff))
+                                    .border_1()
+                                    .border_color(rgb(0xd1d5db))
+                                    .child(
+                                        div()
+                                            .mb_2()
+                                            .text_sm()
+                                            .font_weight(FontWeight::BOLD)
+                                            .text_color(metin)
+                                            .child(*benchmark),
+                                    )
+                                    .child(div().w(px(800.0)).h(px(400.0)).child(grafik.clone()))
+                            },
+                        )),
+                )
         } else if matches!(aktif_kart, KartKimliği::SoftMinMax(_)) {
             let yüzey = |örnek| {
                 self.soft_minmax_grafikleri
@@ -7390,6 +7515,20 @@ impl Render for ChartListesi {
                  setData/setSize akışları aynı önbellek ve yeniden ölçüm yaşam döngüsünü \
                  kanıtlar; ortak wheel/touch/drag port uzantısıdır.",
             ),
+            KartKimliği::BoxWhisker(_) => Some(
+                "Amaç: 17 benchmarkın framework dağılımlarını kaynak sayfadaki aynı bağlamda \
+                 karşılaştırır. API: box_whisker_kartları kaynak sırasıyla 17 bağımsız Grafik \
+                 döndürür; results.json yalnız bir kez ayrıştırılıp özetlenir. stats.js \
+                 medyan/q1/q3 değerlerini iki ondalığa yuvarladıktan sonra 1,5×IQR ile bıyık ve \
+                 ayrık değer sınıflaması yapılır; rangeNum bütün ayrık değerlerin global \
+                 sınırını kapsar. Tam framework adları -90° eksende korunur. Hover ana sahneyi \
+                 yeniden çizmeden mavi sütun vurgusunu ve sarı Lib/Median/q1/q3/min/max bilgi \
+                 kutusunu hafif katmanda taşır. İzleme: gecikme, bellek ve başlangıç \
+                 ölçümlerinde merkezi eğilim kadar varyansı ve kararsız koşuları görmek için \
+                 uygundur. Maliyet: ilk özetleme toplam ölçüm sayısıyla O(N), her yüzey çizimi \
+                 en çok 30 kutu ve ayrık değer sayısıyla O(N)'dir; ortak wheel/touch/drag ürün \
+                 uzantısıdır.",
+            ),
             _ => None,
         };
         let kullanım_rehberi_açık = self.kullanım_rehberi_açık;
@@ -7477,6 +7616,7 @@ impl Render for ChartListesi {
                         | KartKimliği::AxisIndicators
                         | KartKimliği::Bars(_)
                         | KartKimliği::BarsValuesAutosize(_)
+                        | KartKimliği::BoxWhisker(_)
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )

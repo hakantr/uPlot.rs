@@ -1087,7 +1087,7 @@
         { "yol": "demos/lib/stats.js", "sha256": "c592c5bf8d50cad0da371151d447aed1f000485b05c7fc486c0c8e0433751d46" },
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
-      "fixture": "src/kart/box_whisker.rs#box_whisker_kartı",
+      "fixture": "src/kart/box_whisker.rs#box_whisker_kartları",
       "örnek": "examples/box_whisker.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -1103,7 +1103,7 @@
           "cizim-alani-kirpmasi": "devralındı",
           "dinamik-eksen-izgara": "devralındı",
           "surekli-imlec-izleme": "devralındı",
-          "canli-coklu-seri-lejanti": "devralındı",
+          "canli-coklu-seri-lejanti": "uygulanamaz",
           "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
           "secim-yakinlastirma": "kartta_etkin",
           "cift-tik-tam-gorunum": "kartta_etkin",
@@ -1117,7 +1117,8 @@
           "paniksiz-hata-bildirimi": "devralındı"
         },
         "gerekçeler": {
-          "kosullu-bos-ve-dolu-noktalar": "Kutu-bıyık eklentisi normal seri noktaları yerine ayrık değer kareleri çizer."
+          "kosullu-bos-ve-dolu-noktalar": "Kutu-bıyık eklentisi normal seri noktaları yerine ayrık değer kareleri çizer.",
+          "canli-coklu-seri-lejanti": "Beş sayısal seri çizilebilir veri değil, özel kutu eklentisinin istatistik taşıyıcılarıdır; kaynak legend tooltip'i pointer-events:none olduğundan setSeries denetimi değildir."
         }
       },
       "sahip_faz": 3,
@@ -1125,17 +1126,24 @@
       "özellikler": [
         "source-exact-results-json",
         "source-stats-js-percentiles",
+        "stats-js-two-decimal-pre-iqr-rounding",
+        "single-card-source-order-seventeen-independent-surfaces",
+        "process-lifetime-parsed-summary-cache",
         "all-seventeen-benchmark-charts",
         "keyed-framework-filter",
         "median-sorted-top-thirty",
         "quartile-body-and-whiskers",
         "one-point-five-iqr-outliers",
+        "global-outlier-aware-range-num",
+        "full-minus-ninety-degree-framework-axis",
         "column-highlight-hit-testing",
+        "moving-lib-statistics-tooltip",
+        "interaction-overlay-without-main-scene-redraw",
         "gpui-wasm-catalog-parity",
         "common-interaction-profile"
       ],
       "kanıt": {
-        "api": "kısmi",
+        "api": "tam_kanıtlı",
         "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı",
         "davranış": "uygulandı_kanıtlı",
