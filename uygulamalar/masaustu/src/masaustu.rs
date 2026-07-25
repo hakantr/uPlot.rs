@@ -3577,7 +3577,9 @@ impl ChartListesi {
                                 bu.hata = Some("Boyut senkron akışı bulunamadı".to_string());
                                 return false;
                             };
-                            let boyut = akış.ilerlet();
+                            let Some(boyut) = akış.ilerlet() else {
+                                return true;
+                            };
                             let Some(grafik) = &bu.grafik else {
                                 return false;
                             };

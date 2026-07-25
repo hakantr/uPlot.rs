@@ -9,8 +9,9 @@ let (seçenekler, veri) = update_cursor_select_resize_kartı(akış.boyut())?;
 let mut grafik = Grafik::yeni(seçenekler, veri)?;
 
 // Zamanlayıcı yalnız çekirdeğin ürettiği yeni boyutu yüzeye uygular.
-let yeni_boyut = akış.ilerlet();
-grafik.boyutu_ayarla(yeni_boyut, yeni_boyut)?;"#;
+if let Some(yeni_boyut) = akış.ilerlet() {
+    grafik.boyutu_ayarla(yeni_boyut, yeni_boyut)?;
+}"#;
 
 /// Resmî demodaki 800 → 390 → 400 → 810 → 800 boyut döngüsü.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -31,23 +32,23 @@ impl BoyutSenkronAkışı {
         self.boyut
     }
 
-    pub fn ilerlet(&mut self) -> u32 {
+    pub fn ilerlet(&mut self) -> Option<u32> {
         if self.küçülüyor && self.boyut < 400 {
             self.küçülüyor = false;
             self.boyut = 400;
-            return self.boyut;
+            return None;
         }
         if !self.küçülüyor && self.boyut > 800 {
             self.küçülüyor = true;
             self.boyut = 800;
-            return self.boyut;
+            return None;
         }
         self.boyut = if self.küçülüyor {
             self.boyut.saturating_sub(10)
         } else {
             self.boyut.saturating_add(10)
         };
-        self.boyut
+        Some(self.boyut)
     }
 }
 
@@ -94,11 +95,23 @@ mod testler {
     fn kaynak_veri_boyut_akışı_ve_oransal_katmanlar_korunur() -> Result<(), UplotHatası> {
         let mut akış = BoyutSenkronAkışı::yeni();
         assert_eq!(akış.boyut(), 800);
+        let mut uygulanan = Vec::new();
         for _ in 0..41 {
-            akış.ilerlet();
+            uygulanan.extend(akış.ilerlet());
         }
         assert_eq!(akış.boyut(), 390);
-        assert_eq!(akış.ilerlet(), 400);
+        assert_eq!(akış.ilerlet(), None);
+        assert_eq!(akış.boyut(), 400);
+        for _ in 0..41 {
+            uygulanan.extend(akış.ilerlet());
+        }
+        assert_eq!(akış.boyut(), 810);
+        assert_eq!(akış.ilerlet(), None);
+        assert_eq!(akış.boyut(), 800);
+        assert_eq!(uygulanan.first().copied(), Some(790));
+        assert_eq!(uygulanan.get(40).copied(), Some(390));
+        assert_eq!(uygulanan.get(41).copied(), Some(410));
+        assert_eq!(uygulanan.last().copied(), Some(810));
 
         let (seçenekler, veri) = update_cursor_select_resize_kartı(800)?;
         assert_eq!(veri.x(), &[0.0, 1.0, 2.0]);

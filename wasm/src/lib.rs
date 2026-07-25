@@ -628,7 +628,9 @@ impl KartOturumu {
         let Some(akış) = self.boyut_senkron_akışı.as_mut() else {
             return Ok(0);
         };
-        let boyut = akış.ilerlet();
+        let Some(boyut) = akış.ilerlet() else {
+            return Ok(0);
+        };
         self.grafik.boyutu_ayarla(boyut, boyut).map_err(js_hatası)?;
         Ok(boyut)
     }
