@@ -3659,6 +3659,7 @@ impl Render for ChartListesi {
                 | KartKimliği::ArcSinhScales
                 | KartKimliği::AxisControl
                 | KartKimliği::AxisAutosize
+                | KartKimliği::AxisIndicators
         ) {
             self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
                 grafik
@@ -6713,6 +6714,19 @@ impl Render for ChartListesi {
                  X split'inde en fazla üç çevrimde yakınsar; görev 10⁹'da veya karttan çıkışta \
                  bırakılır.",
             ),
+            KartKimliği::AxisIndicators => Some(
+                "Amaç: aynı X örneğindeki üç bağımsız Y ölçeğini, ana grafik yollarını yeniden \
+                 çizmeden renkli eksen rozetleri ve kılavuzlarla birlikte okumayı sağlar. API: \
+                 her YÖlçekSeçenekleri kendi 50 px eksen dilimini, rengini ve aralığını taşır; \
+                 axisIndicsPlugin karşılığı genel yatay cursor çizgisini kapatır ve yalnız \
+                 görünür/dolu serilerin rozetlerini günceller. Lejant setSeries ile seri yolunu, \
+                 noktasını ve rozetini birlikte açıp kapatır. İzleme: aynı zaman noktasındaki \
+                 farklı birim veya büyüklüklerdeki CPU, bellek ve ağ metriklerini bağımsız \
+                 ölçeklerde karşılaştırın; kırmızı serinin null aralığında yalnız kırmızı \
+                 gösterge gizlenir. Maliyet: 30×3 ana yol yalnız veri, görünüm, boyut veya \
+                 setSeries değişiminde üretilir; pointer dört hafif rozeti ve üç kılavuzu \
+                 O(seri) konumlandırır, karta özel zamanlayıcı bırakılmaz.",
+            ),
             KartKimliği::TimeseriesDiscrete => Some(
                 "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
                  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
@@ -7061,6 +7075,7 @@ impl Render for ChartListesi {
                         | KartKimliği::ArcSinhScales
                         | KartKimliği::AxisControl
                         | KartKimliği::AxisAutosize
+                        | KartKimliği::AxisIndicators
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )
@@ -7079,6 +7094,7 @@ impl Render for ChartListesi {
                         | KartKimliği::ArcSinhScales
                         | KartKimliği::AxisControl
                         | KartKimliği::AxisAutosize
+                        | KartKimliği::AxisIndicators
                 ),
                 |öğe| {
                 öğe.child(

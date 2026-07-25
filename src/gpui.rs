@@ -1117,9 +1117,11 @@ impl GpuiGrafik {
                     }
                 });
             } else {
+                let x_metni = format!("{}", imleç.veri_x);
+                let x_rozet_genişliği = (x_metni.chars().count() as f32 * 7.0 + 16.0).max(24.0);
                 sahne.ekle(Komut::Dikdörtgen {
-                    konum: Nokta::yeni(x_konumu - 24.0, alt + 6.0),
-                    genişlik: 48.0,
+                    konum: Nokta::yeni(x_konumu - x_rozet_genişliği / 2.0, alt + 6.0),
+                    genişlik: x_rozet_genişliği,
                     yükseklik: 22.0,
                     dolgu: "#111111".to_string(),
                     çizgi: "#111111".to_string(),
@@ -1127,7 +1129,7 @@ impl GpuiGrafik {
                 });
                 sahne.ekle(Komut::Metin {
                     konum: Nokta::yeni(x_konumu, alt + 21.0),
-                    içerik: format!("{:.2}", imleç.veri_x),
+                    içerik: x_metni,
                     renk: "#ffffff".to_string(),
                     boyut: 11.0,
                     hiza: MetinHizası::Orta,
@@ -1178,18 +1180,22 @@ impl GpuiGrafik {
                         kalınlık: 1.0,
                         kesik: 4.0,
                     });
-                    let rozet_x = sol - 50.0 - seri_indeksi as f32 * 56.0;
+                    let değer_metni = format!("{değer}");
+                    let rozet_genişliği =
+                        (değer_metni.chars().count() as f32 * 7.0 + 16.0).max(24.0);
+                    let eksen_sağı = sol - seri_indeksi as f32 * 50.0;
+                    let rozet_x = eksen_sağı - rozet_genişliği;
                     sahne.ekle(Komut::Dikdörtgen {
                         konum: Nokta::yeni(rozet_x, y_konumu - 11.0),
-                        genişlik: 44.0,
+                        genişlik: rozet_genişliği,
                         yükseklik: 22.0,
                         dolgu: seri_rengi.clone(),
                         çizgi: seri_rengi.clone(),
                         kalınlık: 0.0,
                     });
                     sahne.ekle(Komut::Metin {
-                        konum: Nokta::yeni(rozet_x + 22.0, y_konumu + 4.0),
-                        içerik: format!("{değer:.2}"),
+                        konum: Nokta::yeni(rozet_x + rozet_genişliği / 2.0, y_konumu + 4.0),
+                        içerik: değer_metni,
                         renk: "#ffffff".to_string(),
                         boyut: 11.0,
                         hiza: MetinHizası::Orta,

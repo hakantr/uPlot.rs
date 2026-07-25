@@ -17,10 +17,17 @@ kanıt_tohumu = "0xA815_1D1C"
 renkler = ["#ff0000", "#008000", "#0000ff"]
 ızgara = false
 göstergeler = true
+genişlikler = [50, 50, 50]
+sınırlar = true
+bölme_çizgileri = true
+x_sınır_rengi = "#d3d3d3"
 
 [etkileşim]
 ortak_davranış_profili = "resize-temeli-v1"
 eksen_göstergeleri = true
+genel_y_imleci = false
+null_indeksinde_görünür_y_göstergesi_sayısı = 2
+set_series_göstergeyi_de_gizler = true
 tekerlek_x_yakınlaştır = true
 seçim_yakınlaştır = true
 çift_tıkla_tam_görünüm = true

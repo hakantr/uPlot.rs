@@ -914,12 +914,14 @@
         "source-equivalent-three-series-data",
         "source-null-gap-indices-13-through-15",
         "three-independent-colored-y-axes",
+        "exact-50px-axis-slices-with-colored-border-ticks",
         "axis-indicator-plugin-port",
+        "set-series-hides-path-point-and-indicator",
         "gpui-wasm-live-axis-badges",
         "common-interaction-profile"
       ],
       "kanıt": {
-        "api": "kısmi",
+        "api": "tam_kanıtlı",
         "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı",
         "davranış": "uygulandı_kanıtlı",

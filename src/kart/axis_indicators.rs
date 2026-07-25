@@ -32,19 +32,24 @@ pub fn axis_indicators_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), Upl
     let seçenekler = GrafikSeçenekleri::yeni(1920, 600)?
         .başlık("Axis indicators")
         .x_zaman(false)
+        .x_eksen_rengi("#d3d3d3")
         .birincil_y_eksen_rengi("#ff0000")
+        .y_ızgarası_göster(false)
+        .birincil_y_eksen_genişliği(50.0)
         .eksen_göstergeleri(true)
         .etkileşimler(ortak_kart_etkileşimleri())
         .y_ölçeği(
             YÖlçekSeçenekleri::yeni("y2")
                 .ızgara(false)
                 .eksen(true)
+                .eksen_genişliği(50.0)
                 .eksen_rengi("#008000"),
         )
         .y_ölçeği(
             YÖlçekSeçenekleri::yeni("y3")
                 .ızgara(false)
                 .eksen(true)
+                .eksen_genişliği(50.0)
                 .eksen_rengi("#0000ff"),
         )
         .seri(
@@ -82,7 +87,17 @@ mod testler {
                 .and_then(|seri| seri.get(13..=15))
                 .is_some_and(|boşluk| boşluk.iter().all(Option::is_none))
         );
-        let grafik = Grafik::yeni(seçenekler, veri)?;
+        assert!(!seçenekler.birincil_y_ızgara_görünür);
+        assert_eq!(seçenekler.birincil_y_eksen_genişliği, Some(50.0));
+        assert_eq!(seçenekler.x_eksen_rengi, "#d3d3d3");
+        assert!(
+            seçenekler
+                .y_ölçekleri
+                .iter()
+                .filter(|ölçek| matches!(ölçek.anahtar.as_str(), "y2" | "y3"))
+                .all(|ölçek| !ölçek.ızgara && ölçek.eksen_görünür && ölçek.eksen_genişliği == 50.0)
+        );
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
         assert!(grafik.eksen_göstergeleri_etkin());
         assert_eq!(
             grafik
@@ -98,7 +113,25 @@ mod testler {
                 .map(|seri| seri.ölçek.as_str()),
             Some("y3")
         );
-        assert!(grafik.çizim_alanı_boyutta(1920, 600).0 > 150.0);
+        assert_eq!(grafik.çizim_alanı_boyutta(1920, 600).0, 150.0);
+        let null_çözümü = grafik.imleç_çözümü(13.0 / 29.0, 1770.0);
+        assert!(null_çözümü.as_ref().is_some_and(|çözüm| {
+            çözüm.seriler.first().is_some_and(Option::is_none)
+                && çözüm.seriler.get(1).is_some_and(Option::is_some)
+                && çözüm.seriler.get(2).is_some_and(Option::is_some)
+        }));
+        assert!(grafik.seri_görünürlüğünü_ayarla(1, false)?);
+        let gizli_çözüm = grafik.imleç_çözümü(0.0, 1770.0);
+        assert!(gizli_çözüm.as_ref().is_some_and(|çözüm| {
+            çözüm.seriler.first().is_some_and(Option::is_some)
+                && çözüm.seriler.get(1).is_some_and(Option::is_none)
+                && çözüm.seriler.get(2).is_some_and(Option::is_some)
+        }));
+        assert!(
+            grafik
+                .en_yakın_noktalar(0.0)
+                .is_some_and(|(_, lejant)| lejant.get(1).is_some_and(Option::is_none))
+        );
         Ok(())
     }
 }

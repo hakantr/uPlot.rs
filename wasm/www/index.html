@@ -1108,6 +1108,12 @@
         değişkenNokta: false,
         eksenGöstergeleri: true,
         etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "Aynı X örneğindeki üç bağımsız Y ölçeğini, ana grafik yollarını yeniden çizmeden renkli eksen rozetleri ve kılavuzlarla birlikte okumayı sağlar.",
+          api: "Her YÖlçekSeçenekleri kendi 50 px eksen dilimini, rengini ve aralığını taşır. axisIndicsPlugin karşılığı cursor.y çizgisini kapatır; X rozeti ile yalnız görünür ve dolu serilerin Y rozetlerini günceller. Lejant setSeries ile seri yolunu, noktasını ve rozetini birlikte açıp kapatır.",
+          izleme: "Aynı zaman noktasındaki farklı birim veya büyüklüklerdeki CPU, bellek ve ağ metriklerini bağımsız ölçeklerde karşılaştırın. Kırmızı serinin null aralığında yalnız kırmızı gösterge gizlenir; diğer ölçeklerin değerleri görünmeye devam eder.",
+          maliyet: "30×3 ana yol yalnız veri, görünüm, boyut veya setSeries değişiminde üretilir. Pointer hareketi ana SVG/GPUI sahnesini yeniden kurmadan dört hafif rozeti ve üç kılavuzu O(seri) konumlandırır; karttan çıkışta özel zamanlayıcı veya dinleyici bırakmaz.",
+        },
       },
     };
 
@@ -6432,7 +6438,8 @@
         || aktifKart === "dependent-scale"
         || aktifKart === "arcsinh-scales"
         || aktifKart === "axis-control"
-        || aktifKart === "axis-autosize";
+        || aktifKart === "axis-autosize"
+        || aktifKart === "axis-indicators";
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks) || değiştirilebilirLejant
           ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>
@@ -7104,11 +7111,14 @@
         const xGösterge = svg.querySelector("#eksen-gosterge-x");
         const xDikdörtgen = xGösterge?.querySelector("rect");
         const xMetin = xGösterge?.querySelector("text");
-        xDikdörtgen?.setAttribute("x", noktaX - 24);
+        const xGöstergeMetni = gerçekX.toLocaleString("tr-TR", {maximumFractionDigits: 3});
+        const xGöstergeGenişliği = Math.max(24, xGöstergeMetni.length * 7 + 16);
+        xDikdörtgen?.setAttribute("x", noktaX - xGöstergeGenişliği / 2);
         xDikdörtgen?.setAttribute("y", alt + 5);
+        xDikdörtgen?.setAttribute("width", xGöstergeGenişliği);
         xMetin?.setAttribute("x", noktaX);
         xMetin?.setAttribute("y", alt + 20);
-        if (xMetin) xMetin.textContent = gerçekX.toLocaleString("tr-TR", {maximumFractionDigits: 3});
+        if (xMetin) xMetin.textContent = xGöstergeMetni;
         xGösterge?.setAttribute("visibility", "visible");
       }
       noktalar.forEach((nokta, indeks) => {
@@ -7134,15 +7144,19 @@
         nokta.setAttribute("fill", imleçRenkleri[indeks] ?? kartlar[aktifKart].seriler[indeks]?.renk ?? "#000000");
         nokta.setAttribute("visibility", "visible");
         if (yGösterge) {
-          const rozetX = sol - 50 - indeks * 56;
+          const göstergeMetni = seriDeğeri.toLocaleString("tr-TR", {maximumFractionDigits: 3});
+          const rozetGenişliği = Math.max(24, göstergeMetni.length * 7 + 16);
+          const eksenSağı = sol - indeks * 50;
+          const rozetX = eksenSağı - rozetGenişliği;
           const çizgi = yGösterge.querySelector("line");
           const dikdörtgen = yGösterge.querySelector("rect");
           const metin = yGösterge.querySelector("text");
-          çizgi?.setAttribute("x1", rozetX + 44); çizgi?.setAttribute("x2", sağ);
+          çizgi?.setAttribute("x1", eksenSağı); çizgi?.setAttribute("x2", sağ);
           çizgi?.setAttribute("y1", noktaY); çizgi?.setAttribute("y2", noktaY);
           dikdörtgen?.setAttribute("x", rozetX); dikdörtgen?.setAttribute("y", noktaY - 11);
-          metin?.setAttribute("x", rozetX + 22); metin?.setAttribute("y", noktaY + 4);
-          if (metin) metin.textContent = seriDeğeri.toLocaleString("tr-TR", {maximumFractionDigits: 3});
+          dikdörtgen?.setAttribute("width", rozetGenişliği);
+          metin?.setAttribute("x", rozetX + rozetGenişliği / 2); metin?.setAttribute("y", noktaY + 4);
+          if (metin) metin.textContent = göstergeMetni;
           yGösterge.setAttribute("visibility", "visible");
         }
       });

@@ -1662,13 +1662,18 @@ impl Grafik {
                 yükseklik_px - alt_pay,
             );
         }
-        let sağ_eksen_sayısı = self
+        let sağ_eksen_genişliği = self
             .seçenekler
             .y_ölçekleri
             .iter()
-            .filter(|ölçek| ölçek.anahtar != self.seçenekler.birincil_y_ölçeği && ölçek.sağda)
-            .count();
-        let sol_eksen_sayısı = self
+            .filter(|ölçek| {
+                ölçek.anahtar != self.seçenekler.birincil_y_ölçeği
+                    && ölçek.eksen_görünür
+                    && ölçek.sağda
+            })
+            .map(|ölçek| ölçek.eksen_genişliği)
+            .sum::<f32>();
+        let sol_eksen_genişliği = self
             .seçenekler
             .y_ölçekleri
             .iter()
@@ -1677,30 +1682,33 @@ impl Grafik {
                     && ölçek.eksen_görünür
                     && !ölçek.sağda
             })
-            .count();
-        let mut sağ_pay: f32 = if !self.seçenekler.birincil_y_eksen_görünür && sağ_eksen_sayısı == 0
+            .map(|ölçek| ölçek.eksen_genişliği)
+            .sum::<f32>();
+        let mut sağ_pay: f32 = if !self.seçenekler.birincil_y_eksen_görünür
+            && sağ_eksen_genişliği <= f32::EPSILON
         {
             gizli_eksen_payı
         } else if self.seçenekler.birincil_y_sağda {
-            72.0 + sağ_eksen_sayısı as f32 * 56.0
-        } else if sağ_eksen_sayısı > 0 {
-            24.0 + sağ_eksen_sayısı as f32 * 56.0
+            72.0 + sağ_eksen_genişliği
+        } else if sağ_eksen_genişliği > 0.0 {
+            24.0 + sağ_eksen_genişliği
         } else {
             24.0
         };
-        let mut sol_pay: f32 = if !self.seçenekler.birincil_y_eksen_görünür && sol_eksen_sayısı == 0
+        let mut sol_pay: f32 = if !self.seçenekler.birincil_y_eksen_görünür
+            && sol_eksen_genişliği <= f32::EPSILON
         {
             gizli_eksen_payı
         } else if self.seçenekler.birincil_y_sağda {
-            24.0 + sol_eksen_sayısı as f32 * 56.0
+            24.0 + sol_eksen_genişliği
         } else {
-            64.0 + sol_eksen_sayısı as f32 * 56.0
+            64.0 + sol_eksen_genişliği
         };
         if let Some(genişlik) = self.seçenekler.birincil_y_eksen_genişliği {
             if self.seçenekler.birincil_y_sağda {
-                sağ_pay = genişlik + sağ_eksen_sayısı as f32 * 56.0;
+                sağ_pay = genişlik + sağ_eksen_genişliği;
             } else {
-                sol_pay = genişlik + sol_eksen_sayısı as f32 * 56.0;
+                sol_pay = genişlik + sol_eksen_genişliği;
             }
         }
         if self.seçenekler.timeline_düzeni.is_some() {
@@ -2055,12 +2063,15 @@ impl Grafik {
         } else {
             return None;
         };
-        let mut anahtarlar = Vec::new();
+        let mut eksenler = Vec::new();
         if self.seçenekler.birincil_y_eksen_görünür && self.seçenekler.birincil_y_sağda == sağda
         {
-            anahtarlar.push(self.seçenekler.birincil_y_ölçeği.clone());
+            eksenler.push((
+                self.seçenekler.birincil_y_ölçeği.clone(),
+                self.seçenekler.birincil_y_eksen_genişliği.unwrap_or(56.0),
+            ));
         }
-        anahtarlar.extend(
+        eksenler.extend(
             self.seçenekler
                 .y_ölçekleri
                 .iter()
@@ -2069,14 +2080,21 @@ impl Grafik {
                         && ölçek.eksen_görünür
                         && ölçek.sağda == sağda
                 })
-                .map(|ölçek| ölçek.anahtar.clone()),
+                .map(|ölçek| (ölçek.anahtar.clone(), ölçek.eksen_genişliği)),
         );
-        if anahtarlar.is_empty() {
+        if eksenler.is_empty() {
             return None;
         }
-        let indeks = (((uzaklık.max(1.0) - 1.0) / 56.0).floor() as usize)
-            .min(anahtarlar.len().saturating_sub(1));
-        anahtarlar.get(indeks).cloned().map(EksenHedefi::Y)
+        let mut sınır = 0.0;
+        for (anahtar, genişlik) in &eksenler {
+            sınır += genişlik.max(0.0);
+            if uzaklık <= sınır {
+                return Some(EksenHedefi::Y(anahtar.clone()));
+            }
+        }
+        eksenler
+            .last()
+            .map(|(anahtar, _)| EksenHedefi::Y(anahtar.clone()))
     }
 
     /// Resmî `y-scale-drag` kancasındaki eksen sürüklemesini çekirdekte başlatır.
@@ -2745,6 +2763,9 @@ impl Grafik {
             .iter()
             .zip(self.seçenekler.seriler.iter())
             .map(|(seri, seçenek)| {
+                if !seçenek.göster {
+                    return None;
+                }
                 seçenek
                     .lejant_değerleri
                     .as_ref()
@@ -2788,6 +2809,14 @@ impl Grafik {
             .iter()
             .enumerate()
             .map(|(seri_indeksi, seri)| {
+                if !self
+                    .seçenekler
+                    .seriler
+                    .get(seri_indeksi)
+                    .is_some_and(|seçenek| seçenek.göster)
+                {
+                    return None;
+                }
                 let ortak_dolu = seri.get(ortak_indeks).copied().flatten().is_some();
                 let hizalama_eksiği = self.veri.hizalama_eksiği_mi(seri_indeksi, ortak_indeks);
                 let aday = match düzen {
@@ -3404,6 +3433,22 @@ impl Grafik {
             .into_iter()
             .filter(|değer| *değer >= y_aralığı.en_az && *değer <= y_aralığı.en_çok)
             .collect::<Vec<_>>();
+        if self.seçenekler.eksen_göstergeleri
+            && self.seçenekler.birincil_y_eksen_görünür
+            && !self.seçenekler.x_dikey
+        {
+            let x = if self.seçenekler.birincil_y_karşıda {
+                sağ
+            } else {
+                sol
+            };
+            sahne.ekle(Komut::Çizgi {
+                başlangıç: Nokta::yeni(x, üst),
+                bitiş: Nokta::yeni(x, alt),
+                renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                kalınlık: 1.0,
+            });
+        }
         for y_değeri in y_bölmeleri {
             if self.seçenekler.x_dikey {
                 let x = piksele_hizala(
@@ -3473,6 +3518,20 @@ impl Grafik {
                     Nokta::yeni(sol, y),
                     Nokta::yeni(sağ, y),
                 );
+            }
+            if self.seçenekler.eksen_göstergeleri && self.seçenekler.birincil_y_eksen_görünür
+            {
+                let (başlangıç_x, bitiş_x) = if self.seçenekler.birincil_y_karşıda {
+                    (sağ, sağ + 5.0)
+                } else {
+                    (sol - 5.0, sol)
+                };
+                sahne.ekle(Komut::Çizgi {
+                    başlangıç: Nokta::yeni(başlangıç_x, y),
+                    bitiş: Nokta::yeni(bitiş_x, y),
+                    renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                    kalınlık: 1.0,
+                });
             }
             if self.seçenekler.birincil_y_eksen_görünür
                 && log_etiketi_göster(
@@ -3544,27 +3603,45 @@ impl Grafik {
             }
         }
 
-        let mut sol_ikincil = 0_usize;
-        let mut sağ_ikincil = 0_usize;
+        let birincil_eksen_dilimi = self.seçenekler.birincil_y_eksen_genişliği.unwrap_or(56.0);
+        let mut sol_ikincil_ofset =
+            if self.seçenekler.birincil_y_eksen_görünür && !self.seçenekler.birincil_y_sağda {
+                birincil_eksen_dilimi
+            } else {
+                0.0
+            };
+        let mut sağ_ikincil_ofset =
+            if self.seçenekler.birincil_y_eksen_görünür && self.seçenekler.birincil_y_sağda {
+                birincil_eksen_dilimi
+            } else {
+                0.0
+            };
         for ölçek in self.seçenekler.y_ölçekleri.iter().filter(|ölçek| {
             ölçek.anahtar != self.seçenekler.birincil_y_ölçeği
                 && (ölçek.sağda || ölçek.eksen_görünür)
         }) {
             let eksen_x = if ölçek.sağda {
-                let birincil_ofset = usize::from(
-                    self.seçenekler.birincil_y_eksen_görünür && self.seçenekler.birincil_y_sağda,
-                );
-                let x = sağ + 8.0 + (sağ_ikincil + birincil_ofset) as f32 * 56.0;
-                sağ_ikincil += 1;
+                let x = sağ + 8.0 + sağ_ikincil_ofset;
+                sağ_ikincil_ofset += ölçek.eksen_genişliği;
                 x
             } else {
-                let birincil_ofset = usize::from(
-                    self.seçenekler.birincil_y_eksen_görünür && !self.seçenekler.birincil_y_sağda,
-                );
-                let x = sol - 8.0 - (sol_ikincil + birincil_ofset) as f32 * 56.0;
-                sol_ikincil += 1;
+                let x = sol - 8.0 - sol_ikincil_ofset;
+                sol_ikincil_ofset += ölçek.eksen_genişliği;
                 x
             };
+            let eksen_sınırı_x = if ölçek.sağda {
+                eksen_x - 8.0
+            } else {
+                eksen_x + 8.0
+            };
+            if self.seçenekler.eksen_göstergeleri && ölçek.eksen_görünür {
+                sahne.ekle(Komut::Çizgi {
+                    başlangıç: Nokta::yeni(eksen_sınırı_x, üst),
+                    bitiş: Nokta::yeni(eksen_sınırı_x, alt),
+                    renk: ölçek.eksen_rengi.clone(),
+                    kalınlık: 1.0,
+                });
+            }
             let aralık = self.görünür_ölçek_aralığı(&ölçek.anahtar, x_aralığı, görünür_y);
             let artım = uygun_artım(aralık, yükseklik, 30.0);
             for değer in self.y_eksen_bölmeleri(&ölçek.anahtar, aralık, yükseklik) {
@@ -3577,6 +3654,19 @@ impl Grafik {
                         başlangıç: Nokta::yeni(sol, y),
                         bitiş: Nokta::yeni(sağ, y),
                         renk: self.seçenekler.ızgara_rengi.clone(),
+                        kalınlık: 1.0,
+                    });
+                }
+                if self.seçenekler.eksen_göstergeleri && ölçek.eksen_görünür {
+                    let (başlangıç_x, bitiş_x) = if ölçek.sağda {
+                        (eksen_sınırı_x, eksen_sınırı_x + 5.0)
+                    } else {
+                        (eksen_sınırı_x - 5.0, eksen_sınırı_x)
+                    };
+                    sahne.ekle(Komut::Çizgi {
+                        başlangıç: Nokta::yeni(başlangıç_x, y),
+                        bitiş: Nokta::yeni(bitiş_x, y),
+                        renk: ölçek.eksen_rengi.clone(),
                         kalınlık: 1.0,
                     });
                 }
@@ -3647,6 +3737,22 @@ impl Grafik {
         };
         let mut önceki_x_yılı = None;
         let mut önceki_ikincil_x_yılı = None;
+        if self.seçenekler.eksen_göstergeleri
+            && self.seçenekler.x_eksen_görünür
+            && !self.seçenekler.x_dikey
+        {
+            let y = if self.seçenekler.x_eksen_karşıda {
+                üst
+            } else {
+                alt
+            };
+            sahne.ekle(Komut::Çizgi {
+                başlangıç: Nokta::yeni(sol, y),
+                bitiş: Nokta::yeni(sağ, y),
+                renk: self.seçenekler.x_eksen_rengi.clone(),
+                kalınlık: 1.0,
+            });
+        }
         for x_değeri in x_bölmeleri {
             let (etiket_konumu, etiket_hizası) = if self.seçenekler.x_dikey {
                 let y = piksele_hizala(
@@ -3686,6 +3792,19 @@ impl Grafik {
                         başlangıç: Nokta::yeni(x, üst),
                         bitiş: Nokta::yeni(x, alt),
                         renk: self.seçenekler.ızgara_rengi.clone(),
+                        kalınlık: 1.0,
+                    });
+                }
+                if self.seçenekler.eksen_göstergeleri && self.seçenekler.x_eksen_görünür {
+                    let (başlangıç_y, bitiş_y) = if self.seçenekler.x_eksen_karşıda {
+                        (üst - 5.0, üst)
+                    } else {
+                        (alt, alt + 5.0)
+                    };
+                    sahne.ekle(Komut::Çizgi {
+                        başlangıç: Nokta::yeni(x, başlangıç_y),
+                        bitiş: Nokta::yeni(x, bitiş_y),
+                        renk: self.seçenekler.x_eksen_rengi.clone(),
                         kalınlık: 1.0,
                     });
                 }

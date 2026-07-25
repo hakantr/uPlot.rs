@@ -3841,12 +3841,23 @@ mod testler {
     fn axis_indicators_wasm_üç_ölçeği_ve_göstergeyi_üretir() {
         let oturum = KartOturumu::yeni("axis-indicators", 100);
         assert!(oturum.is_ok());
-        let Ok(oturum) = oturum else {
+        let Ok(mut oturum) = oturum else {
             return;
         };
         assert!(oturum.eksen_gostergeleri_etkin());
-        assert_eq!(oturum.svg(1200, 600).matches("fill=\"none\"").count(), 3);
+        let svg = oturum.svg(1200, 600);
+        assert_eq!(svg.matches("fill=\"none\"").count(), 3);
+        for renk in ["#ff0000", "#008000", "#0000ff", "#d3d3d3"] {
+            assert!(svg.contains(&format!("stroke=\"{renk}\"")));
+        }
         assert_eq!(oturum.seri_gorunur_y_araligi(2).len(), 2);
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(1, false), Ok(true)));
+        let çözüm = oturum.imlec_cozumu(0.0, 1050.0);
+        assert!(çözüm.get(6).is_some_and(|değer| değer.is_nan()));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("aktifKart === \"axis-indicators\""));
+        assert!(web.contains("null aralığında yalnız kırmızı gösterge gizlenir"));
+        assert!(web.contains("const eksenSağı = sol - indeks * 50"));
     }
 
     #[test]

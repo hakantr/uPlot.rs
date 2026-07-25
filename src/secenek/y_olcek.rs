@@ -58,6 +58,8 @@ pub struct YÖlçekSeçenekleri {
     pub ızgara: bool,
     pub eksen_görünür: bool,
     pub eksen_rengi: String,
+    /// uPlot `axis.size` karşılığı, CSS piksel cinsinden eksen dilimi.
+    pub eksen_genişliği: f32,
     pub eksen_etiketi: String,
     pub birim: String,
     pub kaynak: Option<String>,
@@ -86,6 +88,7 @@ impl YÖlçekSeçenekleri {
             ızgara: true,
             eksen_görünür: false,
             eksen_rengi: "#4b5563".to_string(),
+            eksen_genişliği: 56.0,
             eksen_etiketi: String::new(),
             birim: String::new(),
             kaynak: None,
@@ -124,6 +127,13 @@ impl YÖlçekSeçenekleri {
 
     pub fn eksen_rengi(mut self, renk: impl Into<String>) -> Self {
         self.eksen_rengi = renk.into();
+        self
+    }
+
+    pub fn eksen_genişliği(mut self, genişlik: f32) -> Self {
+        if genişlik.is_finite() && genişlik >= 0.0 {
+            self.eksen_genişliği = genişlik;
+        }
         self
     }
 
