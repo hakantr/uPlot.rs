@@ -1295,13 +1295,15 @@ impl GpuiGrafik {
                         hiza: MetinHizası::Orta,
                     });
                 }
-                sahne.ekle(Komut::Daire {
-                    merkez: seri_noktası,
-                    yarıçap: 2.5,
-                    dolgu: seri_rengi.clone(),
-                    çizgi: seri_rengi,
-                    kalınlık: 0.0,
-                });
+                if self.grafik.imleç_noktaları_görünür() {
+                    sahne.ekle(Komut::Daire {
+                        merkez: seri_noktası,
+                        yarıçap: 2.5,
+                        dolgu: seri_rengi.clone(),
+                        çizgi: seri_rengi,
+                        kalınlık: 0.0,
+                    });
+                }
             }
         }
         if let Some((başlangıç, bitiş)) = self.seçim {

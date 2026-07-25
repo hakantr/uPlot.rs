@@ -1625,11 +1625,14 @@
       "sahip_faz": 3,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-exact-nine-by-three-data", "draw-clear-gradient", "draw-series-medians",
-        "six-spike-custom-points", "draw-render-stats", "source-draw-order",
+        "source-exact-nine-by-three-data", "continuous-draw-clear-gradient",
+        "set-data-cached-series-medians", "six-spike-custom-points",
+        "real-draw-render-stats", "source-draw-order", "source-black-ten-pixel-axis-ticks",
+        "source-cursor-points-hidden", "source-commented-grid-blur-remains-disabled",
+        "retained-pointer-overlay",
         "gpui-wasm-catalog-parity", "common-interaction-profile", "panic-free-scene-layers"
       ],
-      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+      "kanıt": { "api": "uygulandı_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "tam_kanıtlı", "davranış": "tam_kanıtlı", "performans": "uygulandı_kanıtlı" }
     },
     {
       "sıra": 25,

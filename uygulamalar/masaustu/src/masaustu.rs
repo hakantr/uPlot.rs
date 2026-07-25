@@ -7513,6 +7513,19 @@ impl Render for ChartListesi {
                  sahnelere alınır. Pointer en yakın X'i bulup yalnız etkin yüzeyin hafif \
                  cursor/lejant katmanını günceller; yumuşatma ve ana yollar yeniden hesaplanmaz.",
             ),
+            KartKimliği::DrawHooks => Some(
+                "Amaç: uPlot yaşam döngüsünün drawClear, drawSeries, özel points.show ve draw \
+                 aşamalarının tek yüzeyde hangi sırayla birleştiğini gösterir. API: \
+                 ÇizimKancasıDüzeni çok duraklı sürekli arka plan gradyanı, setData sırasında \
+                 önbelleklenen seri medyanları, altı uçlu yıldız geometrisi ve gerçek sahne \
+                 kurulum süresi stilini tanımlar. Siyah 10px eksen çentikleri ve kaynak veri \
+                 birebir korunur; yorum satırındaki grid blur eklentisi bilinçli olarak etkin \
+                 değildir. İzleme: Grafana benzeri zaman serilerinde eşik/medyan vurgusu, özel \
+                 veri işareti ve çizim maliyeti telemetrisi eklemek için uygundur. Maliyet: \
+                 medyan sıralaması yalnız ilk kurulum ve setData sırasında O(S·N logN) çalışır; \
+                 drawSeries önbelleği O(S) tüketir. Pointer ana yolları, yıldızları, gradyanı \
+                 veya medyanları yeniden üretmeden yalnız cursor/lejant katmanını taşır.",
+            ),
             KartKimliği::MissingData => Some(
                 "Amaç: aynı resmî sayfadaki iki bağımsız yüzeyi birlikte karşılaştırır. İlk \
                  yüzey gerçek null CPU/RAM örneklerinin yolu nasıl böldüğünü ve TCP Out'un \

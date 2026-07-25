@@ -2727,6 +2727,12 @@
       yardım: "Koyu gradyan · kaynak medyan şeritleri · 6 uçlu yıldız noktalar",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "uPlot yaşam döngüsünün drawClear, drawSeries, özel points.show ve draw aşamalarının aynı yüzeyde hangi katman sırasıyla çalıştığını gösterir.",
+        api: "ÇizimKancasıDüzeni; çok duraklı sürekli arka plan gradyanı, setData sırasında önbelleklenen seri medyanları, özel yıldız geometrisi ve gerçek sahne-kurulum süresi stilini tanımlar.",
+        izleme: "Grafana benzeri zaman serilerinde eşik/medyan vurgusu, özel veri işareti ve hafif çizim maliyeti telemetrisi eklemek için uygundur.",
+        maliyet: "Medyan sıralaması yalnız ilk kurulumda ve setData çağrısında O(S·N logN) çalışır. Pointer retained ana yolları, yıldızları, gradyanı veya medyanları yeniden üretmez; yalnız cursor/lejant katmanı taşınır.",
+      },
     };
     for (const [kimlik, başlık, durum, seriTürü] of [
       ["focus-cursor", "Cursor Focus", "130.000 nokta · 4 seri · bias 1", "dalga4"],
@@ -7071,7 +7077,9 @@
       if (tamKurulum || aktifKart !== "sine-stream") yüzeyiEşitle();
       svg.dataset.etkileşim = "hover-x-zoom";
       const imleçNoktaları = kart.seriler.map((seri, indeks) =>
-        !kart.çubuk && !kart.kutuBıyık && oturum.seri_gorunur(indeks)
+        !kart.çubuk && !kart.kutuBıyık
+          && oturum.imlec_noktalari_gorunur()
+          && oturum.seri_gorunur(indeks)
           ? `<circle id="imleç-nokta-${indeks}" visibility="hidden" r="2.5" fill="${seri.renk}"/>`
           : ""
       ).join("");

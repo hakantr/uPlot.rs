@@ -296,7 +296,7 @@ impl OtomatikEksenGenişliği {
 /// uPlot çizim kancalarının sahneye eklediği, yüzeyden bağımsız katmanlar.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ÇizimKancasıDüzeni {
-    pub gradyan_durakları: Option<(String, String)>,
+    pub gradyan_durakları: Option<Vec<String>>,
     pub seri_medyanları: bool,
     pub medyan_kalınlığı: f32,
     pub medyan_bulanıklığı: f32,
@@ -304,6 +304,8 @@ pub struct ÇizimKancasıDüzeni {
     pub yıldız_dış_yarıçapı: f32,
     pub yıldız_iç_yarıçapı: f32,
     pub çizim_süresi_metni: bool,
+    pub çizim_süresi_metni_rengi: String,
+    pub çizim_süresi_yazı_boyutu: f32,
     pub seri_uç_trendleri: bool,
     pub trend_kesik: f32,
 }
@@ -515,6 +517,8 @@ impl Default for ÇizimKancasıDüzeni {
             yıldız_dış_yarıçapı: 8.0,
             yıldız_iç_yarıçapı: 4.0,
             çizim_süresi_metni: false,
+            çizim_süresi_metni_rengi: "#ff0000".to_string(),
+            çizim_süresi_yazı_boyutu: 12.0,
             seri_uç_trendleri: false,
             trend_kesik: 5.0,
         }
@@ -523,7 +527,20 @@ impl Default for ÇizimKancasıDüzeni {
 
 impl ÇizimKancasıDüzeni {
     pub fn gradyan(mut self, üst: impl Into<String>, alt: impl Into<String>) -> Self {
-        self.gradyan_durakları = Some((üst.into(), alt.into()));
+        self.gradyan_durakları = Some(vec![üst.into(), alt.into()]);
+        self
+    }
+
+    /// `CanvasGradient.addColorStop()` karşılığı olarak iki veya daha fazla
+    /// eşit aralıklı renk durağı tanımlar.
+    pub fn gradyan_renkleri(
+        mut self,
+        duraklar: impl IntoIterator<Item = impl Into<String>>,
+    ) -> Self {
+        let duraklar = duraklar.into_iter().map(Into::into).collect::<Vec<_>>();
+        if duraklar.len() >= 2 && duraklar.iter().all(|renk| !renk.is_empty()) {
+            self.gradyan_durakları = Some(duraklar);
+        }
         self
     }
 
@@ -555,6 +572,17 @@ impl ÇizimKancasıDüzeni {
 
     pub fn çizim_süresi_metni(mut self, etkin: bool) -> Self {
         self.çizim_süresi_metni = etkin;
+        self
+    }
+
+    pub fn çizim_süresi_stili(mut self, renk: impl Into<String>, yazı_boyutu: f32) -> Self {
+        let renk = renk.into();
+        if !renk.is_empty() {
+            self.çizim_süresi_metni_rengi = renk;
+        }
+        if yazı_boyutu.is_finite() && yazı_boyutu > 0.0 {
+            self.çizim_süresi_yazı_boyutu = yazı_boyutu;
+        }
         self
     }
 
@@ -1081,6 +1109,8 @@ pub struct GrafikSeçenekleri {
     pub birincil_y_ölçeği: String,
     pub x_eksen_etiketi: String,
     pub x_eksen_rengi: String,
+    /// uPlot `axes[0].ticks.size` karşılığı X çentik uzunluğu.
+    pub x_eksen_çentik_uzunluğu: f32,
     pub x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi,
     pub ikincil_x_eksen: Option<İkincilXEksen>,
     /// uPlot `axes[0].space` karşılığı asgari X etiketi piksel boşluğu.
@@ -1099,6 +1129,8 @@ pub struct GrafikSeçenekleri {
     pub birincil_y_özel_etiketler: Vec<(f64, String)>,
     pub birincil_y_ızgara_kesik: Option<f32>,
     pub birincil_y_eksen_rengi: String,
+    /// uPlot `axes[1].ticks.size` karşılığı birincil Y çentik uzunluğu.
+    pub birincil_y_eksen_çentik_uzunluğu: f32,
     /// uPlot `axes[1].size` karşılığı sabit Y ekseni payı.
     pub birincil_y_eksen_genişliği: Option<f32>,
     pub x_eksen_değer_çarpanı: f64,
@@ -1137,6 +1169,8 @@ pub struct GrafikSeçenekleri {
     pub imleç_ızgara_adımı: Option<f32>,
     pub null_imleç_düzeni: NullİmleçDüzeni,
     pub imleç_y_görünür: bool,
+    /// uPlot `cursor.points.show` karşılığıdır.
+    pub imleç_noktaları_görünür: bool,
     pub etkileşimler: EtkileşimSeçenekleri,
     pub seriler: Vec<SeriSeçenekleri>,
 }
@@ -1176,6 +1210,7 @@ impl GrafikSeçenekleri {
             birincil_y_ölçeği: "y".to_string(),
             x_eksen_etiketi: String::new(),
             x_eksen_rengi: "#4b5563".to_string(),
+            x_eksen_çentik_uzunluğu: 5.0,
             x_eksen_etiket_biçimi: YÖlçekEtiketBiçimi::Otomatik,
             ikincil_x_eksen: None,
             x_eksen_asgari_etiket_boşluğu: 50.0,
@@ -1189,6 +1224,7 @@ impl GrafikSeçenekleri {
             birincil_y_özel_etiketler: Vec::new(),
             birincil_y_ızgara_kesik: None,
             birincil_y_eksen_rengi: "#4b5563".to_string(),
+            birincil_y_eksen_çentik_uzunluğu: 5.0,
             birincil_y_eksen_genişliği: None,
             x_eksen_değer_çarpanı: 1.0,
             otomatik_x_sağ_pay: false,
@@ -1220,6 +1256,7 @@ impl GrafikSeçenekleri {
             imleç_ızgara_adımı: None,
             null_imleç_düzeni: NullİmleçDüzeni::Ortak,
             imleç_y_görünür: true,
+            imleç_noktaları_görünür: true,
             etkileşimler: EtkileşimSeçenekleri::default(),
             seriler: Vec::new(),
         })
@@ -1267,6 +1304,13 @@ impl GrafikSeçenekleri {
 
     pub fn x_eksen_rengi(mut self, renk: impl Into<String>) -> Self {
         self.x_eksen_rengi = renk.into();
+        self
+    }
+
+    pub fn x_eksen_çentik_uzunluğu(mut self, uzunluk: f32) -> Self {
+        if uzunluk.is_finite() && uzunluk >= 0.0 {
+            self.x_eksen_çentik_uzunluğu = uzunluk;
+        }
         self
     }
 
@@ -1535,6 +1579,13 @@ impl GrafikSeçenekleri {
         self
     }
 
+    pub fn birincil_y_eksen_çentik_uzunluğu(mut self, uzunluk: f32) -> Self {
+        if uzunluk.is_finite() && uzunluk >= 0.0 {
+            self.birincil_y_eksen_çentik_uzunluğu = uzunluk;
+        }
+        self
+    }
+
     pub fn birincil_y_eksen_genişliği(mut self, genişlik: f32) -> Self {
         if genişlik.is_finite() && genişlik >= 0.0 {
             self.birincil_y_eksen_genişliği = Some(genişlik);
@@ -1624,6 +1675,11 @@ impl GrafikSeçenekleri {
 
     pub fn imleç_y_göster(mut self, görünür: bool) -> Self {
         self.imleç_y_görünür = görünür;
+        self
+    }
+
+    pub fn imleç_noktalarını_göster(mut self, görünür: bool) -> Self {
+        self.imleç_noktaları_görünür = görünür;
         self
     }
 

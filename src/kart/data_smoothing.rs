@@ -554,12 +554,12 @@ mod testler {
     fn taxi_trips_kaynağının_tamamı_ve_sınırları_resmî_json_ile_eştir() {
         assert_eq!(TAXI_TRIPS.len(), 3_600);
         assert_eq!(
-            &TAXI_TRIPS[..5],
-            &[12_751.0, 8_767.0, 7_005.0, 5_257.0, 4_189.0]
+            TAXI_TRIPS.get(..5),
+            Some(&[12_751.0, 8_767.0, 7_005.0, 5_257.0, 4_189.0][..])
         );
         assert_eq!(
-            &TAXI_TRIPS[TAXI_TRIPS.len() - 5..],
-            &[16_344.0, 15_913.0, 14_327.0, 12_060.0, 10_952.0]
+            TAXI_TRIPS.get(TAXI_TRIPS.len().saturating_sub(5)..),
+            Some(&[16_344.0, 15_913.0, 14_327.0, 12_060.0, 10_952.0][..])
         );
         assert_eq!(TAXI_TRIPS.iter().sum::<f64>(), 57_012_163.0);
         assert_eq!(TAXI_TRIPS.iter().copied().reduce(f64::min), Some(1_639.0));
@@ -600,8 +600,12 @@ mod testler {
             assert_eq!(seçenekler.yükseklik, 300);
             assert_eq!(seçenekler.birincil_y_eksen_genişliği, Some(60.0));
             assert_eq!(seçenekler.seriler.len(), 1);
-            assert_eq!(seçenekler.seriler[0].etiket, "Trips");
-            assert_eq!(seçenekler.seriler[0].renk, "#ff0000");
+            assert!(
+                seçenekler
+                    .seriler
+                    .first()
+                    .is_some_and(|seri| seri.etiket == "Trips" && seri.renk == "#ff0000")
+            );
             assert_eq!(
                 veri.uzunluk(),
                 if örnek == SmoothingÖrneği::Asap {

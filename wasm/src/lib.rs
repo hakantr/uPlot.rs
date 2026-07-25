@@ -1328,6 +1328,10 @@ impl KartOturumu {
         self.grafik.imleç_y_görünür()
     }
 
+    pub fn imlec_noktalari_gorunur(&self) -> bool {
+        self.grafik.imleç_noktaları_görünür()
+    }
+
     pub fn secim_xy_yakinlastir(&self) -> bool {
         self.grafik.etkileşim_seçenekleri().seçim_xy_yakınlaştır
     }
@@ -3774,7 +3778,9 @@ mod testler {
         let Ok(oturum) = oturum else { return };
         let svg = oturum.svg(600, 400);
         assert!(svg.contains("Draw Hooks"));
-        assert!(svg.contains("Time to Draw: 0ms"));
+        assert!(svg.contains("Time to Draw: "));
+        assert!(svg.contains("ms</text>"));
+        assert_eq!(svg.matches("<linearGradient").count(), 1);
         assert!(svg.contains("#ff333333"));
         assert_eq!(svg.matches("fill=\"#ff3333\"").count(), 9);
         assert!(draw_hooks_kart_tanim_ornegi().contains("draw_hooks_kartı"));

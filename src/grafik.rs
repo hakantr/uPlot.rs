@@ -8,6 +8,7 @@ use std::{
     collections::BTreeMap,
     sync::atomic::{AtomicU64, Ordering},
 };
+use web_time::Instant;
 
 use seri_geometrisi::seri_yol_noktaları;
 
@@ -537,6 +538,9 @@ pub struct Grafik {
     çubuk_vuruş_dizini: RefCell<Option<ÇubukVuruşDizini>>,
     dağılım_vuruş_dizini: RefCell<Option<DağılımVuruşDizini>>,
     otomatik_çubuk_metinleri: Option<OtomatikÇubukMetinÖnbelleği>,
+    /// `seriesMediansPlugin.setData` karşılığı; medyanlar veri değişirken
+    /// hesaplanır, her `drawSeries` çağrısında yeniden sıralanmaz.
+    çizim_kancası_medyanları: Vec<Option<f64>>,
     seri_yaşam_döngüsü_olayları: Vec<SeriYaşamDöngüsüOlayı>,
 }
 
@@ -588,6 +592,27 @@ fn otomatik_çubuk_metin_önbelleği(
                 azami_10px_yükseklik: 8.0,
             }
         })
+}
+
+fn çizim_kancası_medyanları(
+    seçenekler: &GrafikSeçenekleri,
+    veri: &HizalıVeri,
+) -> Vec<Option<f64>> {
+    if !seçenekler
+        .çizim_kancaları
+        .as_ref()
+        .is_some_and(|düzen| düzen.seri_medyanları)
+    {
+        return Vec::new();
+    }
+    veri.seriler()
+        .iter()
+        .map(|değerler| {
+            let mut sıralı = değerler.iter().copied().flatten().collect::<Vec<_>>();
+            sıralı.sort_by(f64::total_cmp);
+            medyan(&sıralı)
+        })
+        .collect()
 }
 
 fn oran_aralığı(
@@ -789,6 +814,7 @@ impl Grafik {
                         .collect()
                 });
         let otomatik_çubuk_metinleri = otomatik_çubuk_metin_önbelleği(&seçenekler, &veri);
+        let çizim_kancası_medyanları = çizim_kancası_medyanları(&seçenekler, &veri);
         let seri_yaşam_döngüsü_olayları = if seçenekler.seri_yaşam_döngüsünü_izle {
             (0..=seçenekler.seriler.len())
                 .map(|seri_indeksi| SeriYaşamDöngüsüOlayı::Eklendi {
@@ -813,6 +839,7 @@ impl Grafik {
             çubuk_vuruş_dizini: RefCell::new(None),
             dağılım_vuruş_dizini: RefCell::new(None),
             otomatik_çubuk_metinleri,
+            çizim_kancası_medyanları,
             seri_yaşam_döngüsü_olayları,
         })
     }
@@ -848,6 +875,7 @@ impl Grafik {
         self.çubuk_vuruş_dizini = RefCell::new(None);
         self.dağılım_vuruş_dizini = RefCell::new(None);
         self.otomatik_çubuk_metinleri = yeni.otomatik_çubuk_metinleri;
+        self.çizim_kancası_medyanları = yeni.çizim_kancası_medyanları;
     }
 
     pub fn ölçüm_datumunu_ayarla(
@@ -1252,6 +1280,7 @@ impl Grafik {
             let etkileşim_ayarları = self.etkileşim.ayarlar();
             self.otomatik_çubuk_metinleri =
                 otomatik_çubuk_metin_önbelleği(&self.seçenekler, &veri);
+            self.çizim_kancası_medyanları = çizim_kancası_medyanları(&self.seçenekler, &veri);
             self.veri = veri;
             self.etkileşim = EtkileşimDenetleyicisi::yeni(tam_x, tam_y, etkileşim_ayarları);
             self.odak_serisi = None;
@@ -1382,6 +1411,7 @@ impl Grafik {
             tam_x = Aralık::yeni(tam_x.en_az - 0.5, tam_x.en_çok + 0.5)?;
         }
         self.otomatik_çubuk_metinleri = otomatik_çubuk_metin_önbelleği(&self.seçenekler, &veri);
+        self.çizim_kancası_medyanları = çizim_kancası_medyanları(&self.seçenekler, &veri);
         self.veri = veri;
         let tam_y = self
             .seçenekler
@@ -1449,6 +1479,7 @@ impl Grafik {
         seçenekler.etkileşimler = self.etkileşim.ayarlar();
         let doğrulanmış = Self::yeni(seçenekler, veri)?;
         self.veri = doğrulanmış.veri;
+        self.çizim_kancası_medyanları = doğrulanmış.çizim_kancası_medyanları;
         self.çubuk_vuruş_dizini = RefCell::new(None);
         self.dağılım_vuruş_dizini = RefCell::new(None);
         self.seçenekler.x_aralığı = Some(aralık);
@@ -3088,6 +3119,10 @@ impl Grafik {
         self.seçenekler.imleç_y_görünür
     }
 
+    pub fn imleç_noktaları_görünür(&self) -> bool {
+        self.seçenekler.imleç_noktaları_görünür
+    }
+
     pub fn ham_seri_değeri(&self, seri: usize, indeks: usize) -> Option<f64> {
         self.veri
             .seriler()
@@ -3453,6 +3488,12 @@ impl Grafik {
         görünür_x: Option<Aralık>,
         görünür_y: Option<Aralık>,
     ) -> Sahne {
+        let çizim_başlangıcı = self
+            .seçenekler
+            .çizim_kancaları
+            .as_ref()
+            .is_some_and(|düzen| düzen.çizim_süresi_metni)
+            .then(Instant::now);
         let genişlik_px = if self.seçenekler.kompakt_yüzey {
             genişlik_px.max(2)
         } else {
@@ -3482,25 +3523,35 @@ impl Grafik {
             });
         }
 
-        if let Some((üst_renk, alt_renk)) = self
+        if let Some(duraklar) = self
             .seçenekler
             .çizim_kancaları
             .as_ref()
             .and_then(|düzen| düzen.gradyan_durakları.as_ref())
         {
-            const ŞERİT_SAYISI: usize = 32;
-            let şerit_yüksekliği = yükseklik / ŞERİT_SAYISI as f32;
-            for şerit in 0..ŞERİT_SAYISI {
-                let oran = şerit as f32 / ŞERİT_SAYISI.saturating_sub(1) as f32;
-                sahne.ekle(Komut::Dikdörtgen {
-                    konum: Nokta::yeni(sol, üst + şerit as f32 * şerit_yüksekliği),
-                    genişlik,
-                    yükseklik: şerit_yüksekliği + 1.0,
-                    dolgu: renkler_arası(üst_renk, alt_renk, oran),
-                    çizgi: "#00000000".to_string(),
-                    kalınlık: 0.0,
-                });
-            }
+            let payda = duraklar.len().saturating_sub(1).max(1) as f32;
+            sahne.ekle(Komut::GradyanAlan {
+                çokgenler: vec![vec![
+                    Nokta::yeni(sol, üst),
+                    Nokta::yeni(sağ, üst),
+                    Nokta::yeni(sağ, alt),
+                    Nokta::yeni(sol, alt),
+                ]],
+                // Resmî eklenti gradyanı `bbox.top` yerine global y=0'dan
+                // `bbox.height` değerine kurup yalnız bbox dikdörtgenini doldurur.
+                gradyan: DoğrusalGradyan {
+                    başlangıç: Nokta::yeni(0.0, 0.0),
+                    bitiş: Nokta::yeni(0.0, yükseklik),
+                    duraklar: duraklar
+                        .iter()
+                        .enumerate()
+                        .map(|(indeks, renk)| GradyanRenkDurağı {
+                            oran: indeks as f32 / payda,
+                            renk: renk.clone(),
+                        })
+                        .collect(),
+                },
+            });
         }
 
         if !self.seçenekler.başlık.is_empty() {
@@ -3712,10 +3763,11 @@ impl Grafik {
             }
             if self.seçenekler.eksen_göstergeleri && self.seçenekler.birincil_y_eksen_görünür
             {
+                let çentik = self.seçenekler.birincil_y_eksen_çentik_uzunluğu;
                 let (başlangıç_x, bitiş_x) = if self.seçenekler.birincil_y_karşıda {
-                    (sağ, sağ + 5.0)
+                    (sağ, sağ + çentik)
                 } else {
-                    (sol - 5.0, sol)
+                    (sol - çentik, sol)
                 };
                 sahne.ekle(Komut::Çizgi {
                     başlangıç: Nokta::yeni(başlangıç_x, y),
@@ -3987,10 +4039,11 @@ impl Grafik {
                     });
                 }
                 if self.seçenekler.eksen_göstergeleri && self.seçenekler.x_eksen_görünür {
+                    let çentik = self.seçenekler.x_eksen_çentik_uzunluğu;
                     let (başlangıç_y, bitiş_y) = if self.seçenekler.x_eksen_karşıda {
-                        (üst - 5.0, üst)
+                        (üst - çentik, üst)
                     } else {
-                        (alt, alt + 5.0)
+                        (alt, alt + çentik)
                     };
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(x, başlangıç_y),
@@ -4577,29 +4630,29 @@ impl Grafik {
                 });
             }
 
-            if let Some(düzen) = kanca.filter(|düzen| düzen.seri_medyanları) {
-                let mut sıralı = değerler.iter().copied().flatten().collect::<Vec<_>>();
-                sıralı.sort_by(f64::total_cmp);
-                if let Some(medyan) = medyan(&sıralı) {
-                    let y =
-                        alt - self.y_konumu(&seri.ölçek, seri_y_aralığı, medyan, 0.0, yükseklik);
-                    let dış_kalınlık =
-                        düzen.medyan_kalınlığı + düzen.medyan_bulanıklığı.max(0.0) * 2.0;
-                    if düzen.medyan_bulanıklığı > 0.0 {
-                        sahne.ekle(Komut::Çizgi {
-                            başlangıç: Nokta::yeni(sol, y),
-                            bitiş: Nokta::yeni(sağ, y),
-                            renk: renk_alfa(&seri_rengi, 0x14),
-                            kalınlık: dış_kalınlık,
-                        });
-                    }
+            if let Some(düzen) = kanca.filter(|düzen| düzen.seri_medyanları)
+                && let Some(medyan) = self
+                    .çizim_kancası_medyanları
+                    .get(seri_indeksi)
+                    .copied()
+                    .flatten()
+            {
+                let y = alt - self.y_konumu(&seri.ölçek, seri_y_aralığı, medyan, 0.0, yükseklik);
+                let dış_kalınlık = düzen.medyan_kalınlığı + düzen.medyan_bulanıklığı.max(0.0) * 2.0;
+                if düzen.medyan_bulanıklığı > 0.0 {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(sol, y),
                         bitiş: Nokta::yeni(sağ, y),
-                        renk: renk_alfa(&seri_rengi, 0x33),
-                        kalınlık: düzen.medyan_kalınlığı,
+                        renk: renk_alfa(&seri_rengi, 0x14),
+                        kalınlık: dış_kalınlık,
                     });
                 }
+                sahne.ekle(Komut::Çizgi {
+                    başlangıç: Nokta::yeni(sol, y),
+                    bitiş: Nokta::yeni(sağ, y),
+                    renk: renk_alfa(&seri_rengi, 0x33),
+                    kalınlık: düzen.medyan_kalınlığı,
+                });
             }
         }
 
@@ -4852,17 +4905,22 @@ impl Grafik {
             }
         }
 
-        if self
+        if let Some(düzen) = self
             .seçenekler
             .çizim_kancaları
             .as_ref()
-            .is_some_and(|düzen| düzen.çizim_süresi_metni)
+            .filter(|düzen| düzen.çizim_süresi_metni)
         {
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(sol + 10.0, üst + 22.0),
-                içerik: "Time to Draw: 0ms".to_string(),
-                renk: "#ffffff".to_string(),
-                boyut: 12.0,
+                içerik: format!(
+                    "Time to Draw: {}ms",
+                    çizim_başlangıcı
+                        .map(|başlangıç| başlangıç.elapsed().as_millis())
+                        .unwrap_or_default()
+                ),
+                renk: düzen.çizim_süresi_metni_rengi.clone(),
+                boyut: düzen.çizim_süresi_yazı_boyutu,
                 hiza: MetinHizası::Başlangıç,
             });
         }
@@ -7685,27 +7743,6 @@ fn renk_rgb(renk: &str) -> Option<(u8, u8, u8)> {
     let yeşil = u8::from_str_radix(ham.get(2..4)?, 16).ok()?;
     let mavi = u8::from_str_radix(ham.get(4..6)?, 16).ok()?;
     Some((kırmızı, yeşil, mavi))
-}
-
-fn renkler_arası(üst: &str, alt: &str, oran: f32) -> String {
-    let Some((üst_r, üst_g, üst_b)) = renk_rgb(üst) else {
-        return üst.to_string();
-    };
-    let Some((alt_r, alt_g, alt_b)) = renk_rgb(alt) else {
-        return üst.to_string();
-    };
-    let oran = oran.clamp(0.0, 1.0);
-    let karıştır = |başlangıç: u8, bitiş: u8| {
-        (f32::from(başlangıç) + (f32::from(bitiş) - f32::from(başlangıç)) * oran)
-            .round()
-            .clamp(0.0, 255.0) as u8
-    };
-    format!(
-        "#{:02x}{:02x}{:02x}",
-        karıştır(üst_r, alt_r),
-        karıştır(üst_g, alt_g),
-        karıştır(üst_b, alt_b)
-    )
 }
 
 fn renk_alfa(renk: &str, alfa: u8) -> String {

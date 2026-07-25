@@ -6,17 +6,20 @@ device_pixel_ratio = 1
 durum = "dört-kaynak-çizim-kancası"
 
 [veri]
-x_noktası = 9
-seri_sayısı = 3
-seri_medyanları = [43, 30, 15]
+x_nokta_sayisi = 9
+seri_sayisi = 3
+seri_medyanlari = [43, 30, 15]
 
 [kancalar]
 draw_clear = "#666666 -> #000000"
-draw_series = "50px medyan + 6px blur"
+draw_series = "setData önbelleği -> seri yolu -> 50px medyan + 6px yumuşak vurgu"
 points_show = "6 uç · dış 8 · iç 4"
-draw = "Time to Draw: Nms"
+draw = "gerçek sahne kurulumu · Time to Draw: Nms · son katman"
+axis_ticks = "x/y siyah · 10px"
+grid_blur = "kaynakta yorumlu · uygulanmaz"
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+[kanit]
+masaustu = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg = "target/draw-hooks.svg"
+set_data_cache = "src/kart/draw_hooks.rs#set_data_medyan_önbelleğini_yeniler"
