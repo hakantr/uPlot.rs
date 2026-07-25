@@ -2718,9 +2718,11 @@
         "fixed-y-range-100-350", "native-linear-path-builder",
         "native-pixel-bucket-decimation-with-null-gaps",
         "custom-2x2-square-single-batched-path-builder",
-        "panic-free-full-scan-naive-moveto-line-builder",
+        "source-exact-4608-command-naive-moveto-line-builder",
+        "full-decoded-source-snapshot-hash", "source-622-null-runs",
+        "single-arc-backed-data-store", "source-three-surface-cursor-sync-key-zero",
         "source-three-surface-group", "collapsible-usage-guide",
-        "gpui-wasm-parity", "common-interaction-profile"
+        "gpui-wasm-parity", "optional-common-interaction-profile"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",

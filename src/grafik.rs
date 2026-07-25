@@ -4568,7 +4568,13 @@ impl Grafik {
             let dolgu_üretilecek = !bant_dolgusu
                 && seri.çizim_türü != crate::SeriÇizimTürü::Noktalar
                 && (seri_dolgusu.is_some() || seri.dolgu_gradyanı.is_some());
-            let parçalar = if dolgu_üretilecek {
+            let parçalar = if seri.saf_doğrusal_yol && !dolgu_üretilecek {
+                // Resmî sparse naive pathBuilder görünür X dilimindeki tüm
+                // non-null değerleri Path2D'ye ekler ve Y kırpmasını çizim
+                // yüzeyine bırakır. Bu kasıtlı maliyet karşılaştırmasını
+                // geometriyi önceden optimize ederek değiştirmeyiz.
+                std::mem::take(&mut ham_parçalar)
+            } else if dolgu_üretilecek {
                 yolu_dikdörtgene_kırp(&ham_parçalar, sol, sağ, üst, alt)
             } else {
                 sahipli_yolu_dikdörtgene_kırp(

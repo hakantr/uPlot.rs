@@ -126,6 +126,53 @@ mod testler {
     }
 
     #[test]
+    fn üçlü_tek_immutable_veri_deposunu_paylaşır() -> Result<(), UplotHatası> {
+        let kartlar = sparse_kartları()?;
+        let ilk = kartlar
+            .first()
+            .map(|kart| &kart.2)
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!(
+            kartlar
+                .iter()
+                .all(|kart| ilk.aynı_depolamayı_paylaşıyor(&kart.2))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn çözülen_sparse_snapshot_resmi_json_hashini_ve_koşuları_korur() -> Result<(), UplotHatası> {
+        let (x, y) = kaynak_veri::sparse_verisi()?;
+        let mut hash = 0xcbf2_9ce4_8422_2325_u64;
+        for değer in x {
+            for bayt in değer.to_bits().to_le_bytes() {
+                hash ^= u64::from(bayt);
+                hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+            }
+        }
+        let mut koşu_sayısı = 0;
+        let mut önceki_dolu = false;
+        for değer in y {
+            let dolu = değer.is_some();
+            if dolu && !önceki_dolu {
+                koşu_sayısı += 1;
+            }
+            önceki_dolu = dolu;
+            hash ^= u64::from(dolu);
+            hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+            if let Some(değer) = değer {
+                for bayt in değer.to_bits().to_le_bytes() {
+                    hash ^= u64::from(bayt);
+                    hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+                }
+            }
+        }
+        assert_eq!(hash, 0xeb3d_485b_59fb_a5dc);
+        assert_eq!(koşu_sayısı, 622);
+        Ok(())
+    }
+
+    #[test]
     fn özel_nokta_ve_saf_yol_çekirdekte_ayrılır() -> Result<(), UplotHatası> {
         let (nokta_seçenekleri, nokta_verisi) = sparse_kartı(SparseÖrneği::ÖzelNoktalar)?;
         let nokta_serisi = nokta_seçenekleri.seriler.first();
@@ -148,6 +195,7 @@ mod testler {
             })
             .unwrap_or_default();
         let sahne = Grafik::yeni(nokta_seçenekleri, nokta_verisi)?.çiz();
+        assert_eq!(beklenen_kare_sayısı, 4_430);
         assert!(sahne.komutlar().iter().any(|komut| match komut {
             Komut::Alan { çokgenler, dolgu } if dolgu == "red" => {
                 çokgenler.len() == beklenen_kare_sayısı
@@ -208,7 +256,7 @@ mod testler {
         let native = yol_noktaları(SparseÖrneği::YerleşikDoğrusal)?;
         let saf = yol_noktaları(SparseÖrneği::ÖzelSafDoğrusal)?;
         assert!(native < saf, "native={native}, saf={saf}");
-        assert_eq!(saf, 4_471);
+        assert_eq!(saf, 4_608);
         Ok(())
     }
 

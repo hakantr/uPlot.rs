@@ -2,21 +2,39 @@ id = "sparse"
 kaynak = "../uPlot/demos/sparse.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
 fixture = "src/kart/sparse.rs#sparse_kartları"
-yüzeyler = ["sparse-native-linear", "sparse-custom-points", "sparse-custom-naive-linear"]
-yüzey_sayısı = 3
-boyut = [800, 200]
-y_aralığı = [100, 350]
-yerleşim = "tek_kartta_üç_eşzamanlı_yüzey"
+"yüzeyler" = ["sparse-native-linear", "sparse-custom-points", "sparse-custom-naive-linear"]
+"yüzey_sayısı" = 3
+"boyut" = [800, 200]
+"y_aralığı" = [100, 350]
 
-[kanıt]
-veri = "demos/data/sparse.json_aynen"
-x_sayısı = 13608
-dolu_y_sayısı = 4608
-kesintisiz_parça_sayısı = 622
-yollar = ["yerleşik_doğrusal", "özel_2x2_kare_noktalar", "paniksiz_moveTo_lineTo"]
-native_seyrekleştirme = "piksel_kovası_başlangıç_min_max_bitiş_ve_null_kırılması"
-özel_noktalar = "4430_görünür_kare_tek_toplu_path"
-naive = "13608_girdi_taraması_4430_dolu_nokta_ve_kırpma_kesişimleri"
-ilişki = "aynı_veri_ve_ölçek_üçlü_pathBuilder_karşılaştırması"
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+["veri"]
+"kaynak" = "demos/data/sparse.json"
+"çözülen_hash" = "fnv1a64:eb3d485b59fba5dc"
+"x_sayısı" = 13608
+"dolu_y_sayısı" = 4608
+"kesintisiz_parça_sayısı" = 622
+"paylaşım" = "üç_yüzey_tek_Arc_backed_immutable_depo"
+
+["ilişki"]
+"grup" = "tek_kartta_üç_eşzamanlı_pathBuilder_karşılaştırması"
+"cursor_sync" = "resmi_key_0"
+"seçim_wheel_görünümü" = "üç_yüzeye_yayılır"
+"y_ölçeği" = "üçünde_sabit_100_350"
+
+["algoritmalar"]
+"native" = "piksel_kovası_başlangıç_min_max_bitiş_ve_null_kırılması"
+"özel_noktalar" = "4430_görünür_2x2_kare_tek_toplu_path"
+"naive" = "13608_girdi_taraması_4608_dolu_değer_moveTo_lineTo_yüzey_kırpması"
+
+["performans"]
+"native" = "görünür_piksel_kovalarıyla_seyrekleştirilir"
+"points" = "tek_Alan_komutunda_batch"
+"naive" = "kasıtlı_tam_tarama_kıyas_yüzeyi"
+"cursor" = "ana_sahneyi_yenilemeden_üç_hafif_katmana_yayılır"
+
+["kanıt"]
+"snapshot" = "çözülen_sparse_snapshot_resmi_json_hashini_ve_koşuları_korur"
+"depo" = "üçlü_tek_immutable_veri_deposunu_paylaşır"
+"yollar" = "native_yol_seyrekleşir_saf_yol_tüm_dolu_noktaları_korur"
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
+"wasm" = "wasm/www/index.html"
