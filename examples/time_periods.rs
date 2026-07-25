@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::path::PathBuf;
-use uplot_rs::{Grafik, TimePeriodsÖrneği, time_periods_kartı};
+use uplot_rs::{Grafik, time_periods_kartları};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let çıktı = std::env::args()
@@ -9,8 +9,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .unwrap_or_else(|| PathBuf::from("target/time-periods"));
     std::fs::create_dir_all(&çıktı)?;
 
-    for örnek in TimePeriodsÖrneği::TÜMÜ {
-        let (seçenekler, veri) = time_periods_kartı(örnek)?;
+    for (örnek, seçenekler, veri) in time_periods_kartları()? {
         let grafik = Grafik::yeni(seçenekler, veri)?;
         let yol = çıktı.join(format!("{}.svg", örnek.kimlik()));
         std::fs::write(&yol, grafik.çiz().svg())?;

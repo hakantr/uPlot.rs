@@ -62,8 +62,8 @@ use uplot_rs::{
     sparklines_bars_kartı, sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı,
     stacked_series_kartları, stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı,
     svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı,
-    thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı, time_periods_kartı,
-    timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
+    thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı, time_periods_kartları,
+    time_periods_kartı, timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
     tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
     wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
 };
@@ -555,6 +555,7 @@ pub struct ChartListesi {
     stacked_series_grafikleri: Vec<(StackedSeriesÖrneği, Entity<GpuiGrafik>)>,
     stream_data_grafikleri: Vec<(StreamDataÖrneği, Entity<GpuiGrafik>)>,
     thin_bars_grafikleri: Vec<(ThinBarsÖrneği, Entity<GpuiGrafik>)>,
+    time_periods_grafikleri: Vec<(TimePeriodsÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grubu: SyncCursorGrubu,
     sync_cursor_senkronlanıyor: bool,
@@ -681,6 +682,12 @@ impl ChartListesi {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
                 }
+            } else if matches!(bu.aktif_kart, KartKimliği::TimePeriods(_)) {
+                for (_, grafik) in &bu.time_periods_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
             } else if let Some(grafik) = &bu.grafik {
                 grafik.update(cx, |grafik, cx| {
                     grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
@@ -745,6 +752,7 @@ impl ChartListesi {
             stacked_series_grafikleri: Vec::new(),
             stream_data_grafikleri: Vec::new(),
             thin_bars_grafikleri: Vec::new(),
+            time_periods_grafikleri: Vec::new(),
             sync_cursor_grafikleri: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
             sync_cursor_senkronlanıyor: false,
@@ -1487,6 +1495,49 @@ impl ChartListesi {
         cx.notify();
     }
 
+    fn time_periods_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let kartlar = match time_periods_kartları() {
+            Ok(kartlar) => kartlar,
+            Err(hata) => {
+                self.grafik = None;
+                self.time_periods_grafikleri.clear();
+                self.hata = Some(format!("Time Periods grubu oluşturulamadı: {hata}"));
+                cx.notify();
+                return;
+            }
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.grafik = None;
+                    self.time_periods_grafikleri.clear();
+                    self.hata = Some(format!(
+                        "{} Time Periods yüzeyi oluşturulamadı: {hata}",
+                        örnek.başlık()
+                    ));
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                    bu.açıklama_istendi = true;
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.time_periods_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
         match grafik_oluştur(
@@ -1780,6 +1831,7 @@ impl ChartListesi {
         self.stacked_series_grafikleri.clear();
         self.stream_data_grafikleri.clear();
         self.thin_bars_grafikleri.clear();
+        self.time_periods_grafikleri.clear();
         if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -1918,6 +1970,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.thin_bars_yüzeylerini_oluştur(cx);
+        } else if matches!(kart, KartKimliği::TimePeriods(_)) {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.time_periods_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -2802,8 +2863,8 @@ impl Render for ChartListesi {
             KartKimliği::ThinBars(_) => {
                 "55 bağımsız yüzey · 1.422 çubuk · 270 otomatik nokta".to_string()
             }
-            KartKimliği::TimePeriods(örnek) => {
-                format!("1920×200 · {}", örnek.başlık())
+            KartKimliği::TimePeriods(_) => {
+                "3 bağımsız 1920×200 yüzey · tek traffic.json kaynağı".to_string()
             }
             KartKimliği::TimelineDiscrete(örnek) => {
                 format!("1920×300 · {}", örnek.başlık())
@@ -3006,6 +3067,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .thin_bars_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if matches!(aktif_kart, KartKimliği::TimePeriods(_)) {
+            geri_var = self
+                .time_periods_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .time_periods_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         }
@@ -3861,21 +3931,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(kart, cx);
                 }))
             })
-            .children(TimePeriodsÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::TimePeriods(örnek);
+            .child({
+                let kart = KartKimliği::TimePeriods(TimePeriodsÖrneği::SaatlikKullanıcılar);
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
                     "time-periods",
-                    aktif_kart == kart,
-                    "1920×200 · traffic.json kaynak verisi",
+                    "Time Periods",
+                    "time-periods",
+                    matches!(aktif_kart, KartKimliği::TimePeriods(_)),
+                    "3 bağımsız yüzey · tek traffic.json kaynağı",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .children(TimelineDiscreteÖrneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::TimelineDiscrete(örnek);
                 katalog_kartı(
@@ -4447,6 +4517,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.thin_bars_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::TimePeriods(_)) {
+                            for (_, grafik) in &bu.time_periods_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
@@ -4545,6 +4619,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.thin_bars_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::TimePeriods(_)) {
+                            for (_, grafik) in &bu.time_periods_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.tam_görünüm(cx);
@@ -4579,6 +4657,8 @@ impl Render for ChartListesi {
                             bu.stream_data_yüzeylerini_oluştur(cx);
                         } else if matches!(bu.aktif_kart, KartKimliği::ThinBars(_)) {
                             bu.thin_bars_yüzeylerini_oluştur(cx);
+                        } else if matches!(bu.aktif_kart, KartKimliği::TimePeriods(_)) {
+                            bu.time_periods_yüzeylerini_oluştur(cx);
                         } else {
                             bu.grafiği_yenile(100, cx);
                         }
@@ -5527,6 +5607,48 @@ impl Render for ChartListesi {
                                 .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik))
                         }))
                 }))
+        } else if matches!(aktif_kart, KartKimliği::TimePeriods(_)) {
+            çizim_tabanı
+                .flex_none()
+                .h(px(760.0))
+                .overflow_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .w(px(1920.0))
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("Resmî time-periods.html sayfasındaki üç Grafik aynı traffic.json verisinden türetilir fakat cursor, seçim, zoom ve görünüm geçmişi paylaşmaz. Hourly seri bazlı geçmiş-yıl lejant tarihleri, Feb vs Jan türetilmiş ikinci X ekseni, Daily ortak UTC günü kullanır."),
+                )
+                .children(TimePeriodsÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    let grafik = self
+                        .time_periods_grafikleri
+                        .iter()
+                        .find(|(kimlik, _)| *kimlik == örnek)
+                        .map(|(_, grafik)| grafik.clone());
+                    div()
+                        .mb_4()
+                        .w(px(1920.0))
+                        .child(
+                            div()
+                                .px_2()
+                                .py_1()
+                                .text_xs()
+                                .font_weight(FontWeight::SEMIBOLD)
+                                .child(örnek.başlık()),
+                        )
+                        .child(
+                            div()
+                                .w(px(1920.0))
+                                .h(px(200.0))
+                                .border_1()
+                                .border_color(rgb(0xe5e7eb))
+                                .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
+                        )
+                }))
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
             let boyut = self
                 .boyut_senkron_akışı
@@ -5843,6 +5965,16 @@ impl Render for ChartListesi {
                  Pointer yalnız ilgili GpuiGrafik etkileşim katmanını, zoom yalnız ilgili \
                  sahneyi günceller. Noktalar görünür X piksel açıklığı yeterli olduğunda \
                  otomatik açılır; wheel/touch/drag isteğe bağlı çekirdek uzantısıdır.",
+            ),
+            KartKimliği::TimePeriods(_) => Some(
+                "Amaç: aynı trafik kaynağını saatlik yıllar, iki ay ve günlük toplamlar \
+                 biçiminde yan yana karşılaştırır. API: time_periods_kartları üç bağımsız \
+                 Grafik döndürür; Hourly seri bazlı geçmiş-yıl lejant tarihleri, Feb–Jan \
+                 görünür birincil ölçekten türetilen ikinci X ekseni ve Daily ortak UTC \
+                 tarihini kullanır. İzleme: aynı ölçümün dönem ve çözünürlük farklarını \
+                 Grafana benzeri panellerde karşılaştırmak için uygundur. Maliyet: traffic.json \
+                 bir kez ayrıştırılır; her yüzey kendi cursor, seçim, wheel/touch/drag ve \
+                 görünüm geçmişini tutar; etkileşim yalnız ilgili GpuiGrafik sahnesini yeniler.",
             ),
             KartKimliği::Scatter => Some(
                 "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \

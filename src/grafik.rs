@@ -772,6 +772,15 @@ impl Grafik {
             .unwrap_or_else(|| self.etkileşim.görünür_x())
     }
 
+    /// Birincil görünür X aralığından türetilen ikinci zaman eksenini döndürür.
+    /// İkinci eksen bağımsız görünüm durumu taşımaz; zoom/pan sonrasında da
+    /// kaynak ölçeği aynı sabit farkla izler.
+    pub fn ikincil_x_aralığı(&self) -> Option<Aralık> {
+        let kaydırma = self.seçenekler.ikincil_x_eksen.as_ref()?.zaman_kaydırması;
+        let görünür = self.görünür_x_aralığı();
+        Aralık::yeni(görünür.en_az + kaydırma, görünür.en_çok + kaydırma).ok()
+    }
+
     pub fn zoom_ranger_durumu(&self) -> Result<ZoomRangerDurumu, UplotHatası> {
         ZoomRangerDurumu::xy(
             self.etkileşim.tam_x(),

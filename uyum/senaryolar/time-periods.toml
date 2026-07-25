@@ -1,9 +1,9 @@
 id = "time-periods"
 kaynak = "../uPlot/demos/time-periods.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/time_periods.rs#time_periods_kartı"
+fixture = "src/kart/time_periods.rs#time_periods_kartları"
 viewport = [1920, 200]
-durum = "üç_kaynak_zaman_yüzeyi"
+durum = "tek_kartta_üç_bağımsız_kaynak_zaman_yüzeyi"
 
 [veri]
 kaynak = "../uPlot/demos/data/traffic.json"
@@ -15,6 +15,9 @@ gunluk_baslangic_utc = 1546300800
 
 [yuzeyler]
 basliklar = ["Hourly Users", "Feb vs Jan 2019", "Daily Users"]
+tek_katalog_karti = true
+ortak_veri_kaynagi = true
+bagimsiz_cursor_zoom_gecmis = true
 seri_renkleri = [
   "rgba(5, 141, 199, 1)",
   "rgba(237, 126, 23, 1)",
@@ -32,6 +35,11 @@ ikincil_x_eksen_izgara = false
 [gunluk_toplama]
 saat_per_gun = 24
 utc_normalizasyonu = true
+ortak_x_lejant_tarihi = true
+
+[saatlik_lejant]
+seri_bazli_gecmis_yil_tarihleri = true
+yerel_tarih_bicimlendirme_yuzey_adaptorunde = true
 
 [etkileşim]
 ortak_davranış_profili = "resize-temeli-v1"

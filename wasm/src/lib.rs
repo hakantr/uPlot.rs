@@ -1207,6 +1207,12 @@ impl KartOturumu {
         self.grafik.lejant_canlı()
     }
 
+    /// Kaynak `series.values` tarih eşlemesini yüzeyin yerel tarih
+    /// biçimlendiricisine taşır.
+    pub fn seri_zamani(&self, seri_indeksi: usize, x: f64) -> f64 {
+        self.grafik.seri_zamanı(seri_indeksi, x).unwrap_or(f64::NAN)
+    }
+
     pub fn imlec_seri_renkleri(&self, yatay_oran: f64) -> Vec<String> {
         self.grafik
             .en_yakın_noktalar(yatay_oran)
@@ -2822,11 +2828,25 @@ mod testler {
             let Ok(oturum) = oturum else {
                 continue;
             };
-            let svg = oturum.svg(1_920, 400);
+            let svg = oturum.svg(1_920, 200);
             assert!(svg.contains(örnek.başlık()));
             assert!(svg.contains("rgba(5, 141, 199, 1)"));
         }
-        assert!(time_periods_kart_tanim_ornegi().contains("TimePeriodsÖrneği"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains(r#"data-kart="time-periods""#));
+        assert!(!web.contains(r#"data-kart="time-periods-hourly-users""#));
+        assert!(web.contains("timePeriodsOturumları = zamanDönemiYüzeyleri.map"));
+        assert!(time_periods_kart_tanim_ornegi().contains("time_periods_kartları"));
+        let saatlik = KartOturumu::yeni("time-periods-hourly-users", 100);
+        assert!(saatlik.is_ok());
+        if let Ok(saatlik) = saatlik {
+            assert_eq!(saatlik.seri_zamani(1, 1_546_322_400.0), 1_514_764_800.0);
+        }
+        let günlük = KartOturumu::yeni("time-periods-daily-users", 100);
+        assert!(günlük.is_ok());
+        if let Ok(günlük) = günlük {
+            assert_eq!(günlük.seri_zamani(1, 1_546_300_800.0), 1_546_300_800.0);
+        }
         assert_eq!(kart_sayisi(), 365);
     }
 

@@ -218,7 +218,7 @@ pub use thin_bars_stroke_fill::{
     thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı,
 };
 pub use time_periods::{
-    TIME_PERIODS_KART_TANIM_ÖRNEĞİ, TimePeriodsÖrneği, time_periods_kartı
+    TIME_PERIODS_KART_TANIM_ÖRNEĞİ, TimePeriodsÖrneği, time_periods_kartları, time_periods_kartı,
 };
 pub use timeline_discrete::{
     TIMELINE_DISCRETE_KANIT_TOHUMU, TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,

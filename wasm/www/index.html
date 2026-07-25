@@ -343,6 +343,15 @@
     .thin-bars-grafik svg { display: block; max-width: none; }
     .thin-bars-grafik .lejant { position: static; min-height: 20px;
                                 padding: 3px 8px 7px; border-top: 1px solid #f3f4f6; }
+    #chart.time-periods-yüzeyi { display: block; min-width: 0; overflow: auto;
+                                 place-items: unset; padding: 8px; box-sizing: border-box; }
+    .time-periods-yığın { width: 1920px; display: grid; gap: 16px; align-items: start; }
+    .time-periods-grafik { position: relative; width: 1920px; background: #fff;
+                           border: 1px solid #e5e7eb; overflow: hidden; }
+    .time-periods-grafik svg { display: block; width: 1920px; height: 200px; }
+    .time-periods-grafik .lejant { position: static; min-height: 24px;
+                                   padding: 4px 8px 8px; border-top: 1px solid #f3f4f6;
+                                   justify-content: flex-start; pointer-events: auto; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -1867,45 +1876,41 @@
     };
 
     const zamanDönemiYüzeyleri = [
-      ["time-periods-hourly-users", "Hourly Users", "8712 saat · 2019/2018/2017"],
-      ["time-periods-feb-vs-jan-2019", "Feb vs Jan 2019", "743 saat · çift X zaman ekseni"],
-      ["time-periods-daily-users", "Daily Users", "363 UTC gün · saatlik toplam"],
+      ["time-periods-hourly-users", "Hourly Users", "8712 saat · 2019/2018/2017",
+        [["2019", "rgba(5, 141, 199, 1)"], ["2018", "rgba(237, 126, 23, 1)"], ["2017", "rgba(255, 0, 0, 1)"]]],
+      ["time-periods-feb-vs-jan-2019", "Feb vs Jan 2019", "743 saat · çift X zaman ekseni",
+        [["Feb 2019", "rgba(5, 141, 199, 1)"], ["Jan 2019", "rgba(237, 126, 23, 1)"]]],
+      ["time-periods-daily-users", "Daily Users", "363 UTC gün · saatlik toplam",
+        [["2019", "rgba(5, 141, 199, 1)"], ["2018", "rgba(237, 126, 23, 1)"], ["2017", "rgba(255, 0, 0, 1)"]]],
     ];
-    let zamanDönemiEklemeNoktası =
-      document.querySelector('[data-kart="thin-bars-stroke-fill"]');
-    for (const [kimlik, başlık, durum] of zamanDönemiYüzeyleri) {
-      zamanDönemiEklemeNoktası?.insertAdjacentHTML(
-        "afterend",
-        `<article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>${kimlik}</small><div class="durum">${durum}</div>
-        </article>`
-      );
-      zamanDönemiEklemeNoktası = document.querySelector(`[data-kart="${kimlik}"]`);
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak:
-          <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/time-periods.html">time-periods.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/traffic.json">data/traffic.json</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/opts.js">src/opts.js</a>
-          <br>Resmî trafik verisinin saatlik üç yıl karşılaştırması, Şubat–Ocak çift
-          zaman ekseni ve UTC günlük toplamı Rust çekirdeğinde aynı dilimlerle üretilir.`,
-        tanım: () => time_periods_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/time_periods.rs",
-        seriler: kimlik.includes("feb-vs-jan")
-          ? [
-              { etiket: "Feb 2019", renk: "rgba(5, 141, 199, 1)" },
-              { etiket: "Jan 2019", renk: "rgba(237, 126, 23, 1)" },
-            ]
-          : [
-              { etiket: "2019", renk: "rgba(5, 141, 199, 1)" },
-              { etiket: "2018", renk: "rgba(237, 126, 23, 1)" },
-              { etiket: "2017", renk: "rgba(255, 0, 0, 1)" },
-            ],
-        yardım: "Kaynak trafik dönemi · sürükle: seç · tekerlek: yakınlaştır · boşluk+sürükle: taşı",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    document.querySelector('[data-kart="thin-bars-stroke-fill"]')?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="time-periods" aria-current="false" tabindex="0">
+        <strong>Time Periods</strong><small>time-periods</small>
+        <div class="durum">3 bağımsız yüzey · tek trafik kaynağı</div>
+      </article>`
+    );
+    kartlar["time-periods"] = {
+      başlık: "Time Periods · 3 bağımsız yüzey",
+      kaynak: `Kaynak:
+        <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/time-periods.html">time-periods.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/traffic.json">data/traffic.json</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/opts.js">src/opts.js</a>
+        <br>Resmî sayfadaki Hourly, Feb vs Jan ve Daily grafikleri tek kartta,
+        ortak veri kaynağı fakat bağımsız cursor/zoom durumlarıyla gösterilir.`,
+      tanım: () => time_periods_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/time_periods.rs",
+      seriler: zamanDönemiYüzeyleri[0][3].map(([etiket, renk]) => ({ etiket, renk })),
+      yardım: "Her yüzey bağımsızdır · sürükle: seç · tekerlek: yakınlaştır · boşluk+sürükle: taşı",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Aynı trafik kaynağını saatlik yıllar, iki ay ve günlük toplamlar olarak yan yana değerlendirir; dönem dönüşümlerinin ve zaman eksenlerinin farkını görünür kılar.",
+        api: "time_periods_kartları üç bağımsız Grafik tanımı döndürür. Hourly seri bazlı geçmiş-yıl lejant tarihleri, Feb–Jan türetilmiş ikinci X ekseni, Daily ise ortak UTC tarihini kullanır.",
+        izleme: "Grafana benzeri izleme panellerinde aynı ölçümün farklı dönem çözünürlüklerini karşılaştırmak ve aylık eşdeğer zaman konumlarını tek bakışta okumak için kullanılır.",
+        maliyet: "traffic.json bir kez ayrıştırılır; üç yüzey kendi görünüm ve cursor durumunu taşır. Pointer yalnız etkin yüzeyin hafif katmanını, zoom yalnız o yüzeyin geometrisini günceller.",
+      },
+    };
 
     const timelineYüzeyleri = [
       ["timeline-discrete-state-timeline", "State timeline, duty cycles & transitions (semantic x width)", "3 şerit · semantic süre"],
@@ -1914,7 +1919,7 @@
       ["timeline-discrete-merged-states", "Merged same consecutive states", "ardışık durum birleştirme"],
     ];
     let timelineEklemeNoktası =
-      document.querySelector('[data-kart="time-periods-daily-users"]');
+      document.querySelector('[data-kart="time-periods"]');
     for (const [kimlik, başlık, durum] of timelineYüzeyleri) {
       timelineEklemeNoktası?.insertAdjacentHTML(
         "afterend",
@@ -2744,6 +2749,8 @@
     let streamDataEtkinİndeks = 0;
     let thinBarsOturumları = [];
     let thinBarsEtkinİndeks = 0;
+    let timePeriodsOturumları = [];
+    let timePeriodsEtkinİndeks = 0;
     let scalesDirOriİmleci = null;
     let scalesDirOriÇizimKaresi = null;
     let syncCursorKöprüsü = null;
@@ -5258,6 +5265,111 @@
       kontrolleriGüncelle();
     }
 
+    function zamanDönemiTarihiniBiçimlendir(saniye, günlük = false) {
+      if (!Number.isFinite(saniye)) return "--";
+      return new Date(saniye * 1000).toLocaleString("en-US", günlük ? {
+        timeZone: "UTC", year: "numeric", month: "short", day: "numeric",
+      } : {
+        year: "numeric", month: "short", day: "numeric",
+        hour: "numeric", minute: "2-digit",
+      });
+    }
+
+    function timePeriodsLejantınıGüncelle(kapsam, gerçekX, yatayOran) {
+      if (aktifKart !== "time-periods" || !kapsam || !oturum) return;
+      const tanım = zamanDönemiYüzeyleri[timePeriodsEtkinİndeks];
+      const değerler = Array.from(oturum.en_yakin_noktalar(yatayOran) ?? []);
+      const ortakX = değerler[0] ?? gerçekX;
+      const günlük = tanım?.[0] === "time-periods-daily-users";
+      const saatlik = tanım?.[0] === "time-periods-hourly-users";
+      const xHedefi = kapsam.querySelector("#x-değeri");
+      if (xHedefi) xHedefi.textContent = zamanDönemiTarihiniBiçimlendir(ortakX, günlük);
+      (tanım?.[3] ?? []).forEach((_, indeks) => {
+        let zaman = oturum.seri_zamani(indeks, ortakX);
+        if (saatlik && indeks > 0) {
+          const saatİndeksi = Math.round((ortakX - 1546322400) / 3600);
+          const yerelYılBaşı = new Date(indeks === 1 ? 2018 : 2017, 0, 1);
+          zaman = yerelYılBaşı.getTime() / 1000 + saatİndeksi * 3600;
+        }
+        const tarihHedefi = kapsam.querySelector(`[data-time-periods-time="${indeks}"]`);
+        const değerHedefi = kapsam.querySelector(`#seri-değeri-${indeks}`);
+        if (tarihHedefi) {
+          tarihHedefi.textContent = zamanDönemiTarihiniBiçimlendir(zaman, günlük);
+        }
+        const değer = değerler[indeks + 1];
+        if (değerHedefi) {
+          değerHedefi.textContent = Number.isFinite(değer)
+            ? değer.toLocaleString("en-US", { maximumFractionDigits: 3 }) : "--";
+        }
+      });
+    }
+
+    function timePeriodsYüzeyiniÇiz(indeks) {
+      const tanım = zamanDönemiYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-time-periods-index="${indeks}"]`);
+      const yüzeyOturumu = timePeriodsOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const [kimlik, başlık, durum, seriler] = tanım;
+      const svgÇıktısı = yüzeyOturumu.svg(1920, 200);
+      const mevcutSvg = yüzey.querySelector("svg");
+      if (!mevcutSvg) {
+        yüzey.innerHTML = `
+          ${svgÇıktısı}
+          <div class="lejant" aria-label="${başlık} · ${durum}">
+            <span>Time: <b id="x-değeri">--</b></span>
+            ${seriler.map(([etiket, renk], seriİndeksi) =>
+              `<span><i class="örnek" style="border-color:${renk};background:${renk}"></i>
+                ${etiket}: <b data-time-periods-time="${seriİndeksi}">--</b>
+                · Users: <b id="seri-değeri-${seriİndeksi}">--</b></span>`
+            ).join("")}
+          </div>`;
+      } else {
+        const şablon = document.createElement("template");
+        şablon.innerHTML = svgÇıktısı.trim();
+        svgYüzeyiniYerindeGüncelle(mevcutSvg, şablon.content.firstElementChild);
+      }
+      const svg = yüzey.querySelector("svg");
+      if (!svg) return;
+      softMinMaxEtkileşimKatmanınıKur(svg);
+      svg.dataset.etkileşim = "independent-time-periods";
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      const xAralığı = yüzeyOturumu.gorunur_x_araligi();
+      const yAralığı = yüzeyOturumu.gorunur_y_araligi();
+      yüzey.dataset.xEnAz = String(xAralığı[0] ?? "");
+      yüzey.dataset.xEnCok = String(xAralığı[1] ?? "");
+      yüzey.dataset.yEnAz = String(yAralığı[0] ?? "");
+      yüzey.dataset.yEnCok = String(yAralığı[1] ?? "");
+    }
+
+    function timePeriodsÇiz() {
+      const ilkKurulum = !chart.classList.contains("time-periods-yüzeyi")
+        || chart.querySelectorAll(".time-periods-grafik").length
+          !== zamanDönemiYüzeyleri.length;
+      if (ilkKurulum) {
+        chart.className = "time-periods-yüzeyi";
+        chart.innerHTML = `<div class="time-periods-yığın">${
+          zamanDönemiYüzeyleri.map((_, indeks) =>
+            `<article class="time-periods-grafik"
+              data-time-periods-index="${indeks}"></article>`
+          ).join("")
+        }</div>`;
+        zamanDönemiYüzeyleri.forEach((_, indeks) => timePeriodsYüzeyiniÇiz(indeks));
+        const etkinYüzey = chart.querySelector(
+          `[data-time-periods-index="${timePeriodsEtkinİndeks}"]`
+        );
+        if (etkinYüzey && timePeriodsEtkinİndeks > 0) {
+          chart.scrollTop = Math.max(0, etkinYüzey.offsetTop - 8);
+        }
+      } else {
+        timePeriodsYüzeyiniÇiz(timePeriodsEtkinİndeks);
+      }
+      oturum = timePeriodsOturumları[timePeriodsEtkinİndeks]
+        ?? timePeriodsOturumları[0]
+        ?? null;
+      kontrolleriGüncelle();
+    }
+
     function svgImageCanvasınıÇiz(canvas, svgMetni) {
       if (!canvas) return;
       const cssGenişliği = 400;
@@ -5365,6 +5477,10 @@
       }
       if (aktifKart === "thin-bars-stroke-fill") {
         thinBarsÇiz();
+        return;
+      }
+      if (aktifKart === "time-periods") {
+        timePeriodsÇiz();
         return;
       }
       if (!oturum) return;
@@ -5681,6 +5797,10 @@
             ? chart.querySelector(
                 `[data-thin-bars-index="${thinBarsEtkinİndeks}"] svg`
               )
+          : aktifKart === "time-periods"
+            ? chart.querySelector(
+                `[data-time-periods-index="${timePeriodsEtkinİndeks}"] svg`
+              )
         : chart.querySelector("svg"));
       if (!svg || !oturum) return false;
       const rect = svg.getBoundingClientRect();
@@ -5774,6 +5894,11 @@
           : aktifKart === "thin-bars-stroke-fill"
             ? olay.target?.closest?.(".thin-bars-grafik")
               ?? chart.querySelector(`[data-thin-bars-index="${thinBarsEtkinİndeks}"]`)
+          : aktifKart === "time-periods"
+            ? olay.target?.closest?.(".time-periods-grafik")
+              ?? chart.querySelector(
+                `[data-time-periods-index="${timePeriodsEtkinİndeks}"]`
+              )
           : null;
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
       if (!svg) return { x: NaN, y: NaN, svg: null, view: { width: 0, height: 0 } };
@@ -5996,6 +6121,7 @@
         ?? svg.closest(".stacked-series-grafik")
         ?? svg.closest(".stream-data-grafik")
         ?? svg.closest(".thin-bars-grafik")
+        ?? svg.closest(".time-periods-grafik")
         ?? chart;
       const noktalar = kartlar[aktifKart].seriler.map((_, indeks) => svg.querySelector(`#imleç-nokta-${indeks}`));
       const öğeler = [...çizgiler, ...noktalar];
@@ -6137,6 +6263,7 @@
           if (hedef) hedef.textContent = Number.isFinite(seriDeğeri)
             ? seriDeğeri.toLocaleString("tr-TR", {maximumFractionDigits: 3}) : "--";
         });
+        timePeriodsLejantınıGüncelle(etkileşimKapsamı, gerçekX, xEksenOranı);
       }
       sparseİmleciSenkronla(svg);
     }
@@ -6330,6 +6457,19 @@
         if (svg) yüzeyiEşitle(svg);
       }
     }
+    function timePeriodsOturumunuSeç(olay) {
+      if (aktifKart !== "time-periods") return;
+      const yüzey = olay.target?.closest?.(".time-periods-grafik");
+      const indeks = Number(yüzey?.dataset.timePeriodsIndex);
+      if (Number.isInteger(indeks) && timePeriodsOturumları[indeks]) {
+        timePeriodsEtkinİndeks = indeks;
+        oturum = timePeriodsOturumları[indeks];
+        kartlar["time-periods"].seriler = zamanDönemiYüzeyleri[indeks][3]
+          .map(([etiket, renk]) => ({ etiket, renk }));
+        const svg = yüzey.querySelector("svg");
+        if (svg) yüzeyiEşitle(svg);
+      }
+    }
     for (const olayTürü of ["pointerdown", "pointermove", "pointerup", "wheel", "dblclick", "scroll"]) {
       chart.addEventListener(olayTürü, scatterOturumunuSeç, { capture: true, passive: true });
       chart.addEventListener(olayTürü, softMinMaxOturumunuSeç, { capture: true, passive: true });
@@ -6349,6 +6489,9 @@
         capture: true, passive: true,
       });
       chart.addEventListener(olayTürü, thinBarsOturumunuSeç, {
+        capture: true, passive: true,
+      });
+      chart.addEventListener(olayTürü, timePeriodsOturumunuSeç, {
         capture: true, passive: true,
       });
     }
@@ -6810,6 +6953,10 @@
         thinBarsOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
+      } else if (aktifKart === "time-periods") {
+        timePeriodsOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
       } else {
         oturum?.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
       }
@@ -6953,6 +7100,11 @@
           thinBarsEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "thin-bars-stroke-fill";
         }
+        if (kimlik !== "time-periods" && kimlik.startsWith("time-periods-")) {
+          const indeks = zamanDönemiYüzeyleri.findIndex(yüzey => yüzey[0] === kimlik);
+          timePeriodsEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "time-periods";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -7007,6 +7159,7 @@
           stackedSeriesOturumları,
           streamDataOturumları,
           thinBarsOturumları,
+          timePeriodsOturumları,
         ].some(yüzeyler => yüzeyler.includes(oturum));
         if (!gruplanmışOturum) oturum?.free();
         oturum = null;
@@ -7042,6 +7195,8 @@
         streamDataOturumları = [];
         thinBarsOturumları.forEach(yüzey => yüzey.free());
         thinBarsOturumları = [];
+        timePeriodsOturumları.forEach(yüzey => yüzey.free());
+        timePeriodsOturumları = [];
         scalesDirOriİmleci = null;
         if (scalesDirOriÇizimKaresi !== null) {
           cancelAnimationFrame(scalesDirOriÇizimKaresi);
@@ -7344,6 +7499,21 @@
           oturum = thinBarsOturumları[thinBarsEtkinİndeks]
             ?? thinBarsOturumları[0]
             ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "time-periods") {
+          timePeriodsOturumları = zamanDönemiYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey[0], 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = timePeriodsOturumları[timePeriodsEtkinİndeks]
+            ?? timePeriodsOturumları[0]
+            ?? null;
+          kartlar["time-periods"].seriler = zamanDönemiYüzeyleri[
+            timePeriodsEtkinİndeks
+          ][3].map(([etiket, renk]) => ({ etiket, renk }));
           çiz();
           return;
         }

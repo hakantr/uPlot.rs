@@ -7,8 +7,8 @@ const TRAFİK_JSON: &str = include_str!("veri/time_periods_traffic.json");
 const GÜN_SANIYESİ: f64 = 86_400.0;
 const OCAK_2019_UTC: f64 = 1_546_300_800.0;
 
-pub const TIME_PERIODS_KART_TANIM_ÖRNEĞİ: &str = r##"for örnek in TimePeriodsÖrneği::TÜMÜ {
-    let (seçenekler, veri) = time_periods_kartı(örnek)?;
+pub const TIME_PERIODS_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in time_periods_kartları()? {
+    // Üç bağımsız Grafik aynı kaynak sayfasında birlikte gösterilir.
     // Dönem toplama, ikinci X ekseni ve seri tarih eşlemeleri çekirdektedir.
     let grafik = Grafik::yeni(seçenekler, veri)?;
 }"##;
@@ -200,7 +200,7 @@ pub fn time_periods_kartı(
                         .x_zaman_kaydırması(-31.0 * GÜN_SANIYESİ),
                 );
         }
-        TimePeriodsÖrneği::SaatlikKullanıcılar | TimePeriodsÖrneği::GünlükKullanıcılar => {
+        TimePeriodsÖrneği::SaatlikKullanıcılar => {
             let kaynak_ilk_x = veri.x().first().copied().unwrap_or(OCAK_2019_UTC);
             seçenekler = seçenekler
                 .seri(
@@ -219,8 +219,28 @@ pub fn time_periods_kartı(
                         .x_zaman_kaydırması(1_483_228_800.0 - kaynak_ilk_x),
                 );
         }
+        TimePeriodsÖrneği::GünlükKullanıcılar => {
+            seçenekler = seçenekler
+                .seri(
+                    SeriSeçenekleri::yeni("2019")
+                        .renk("rgba(5, 141, 199, 1)")
+                        .dolgu("rgba(5, 141, 199, 0.1)"),
+                )
+                .seri(SeriSeçenekleri::yeni("2018").renk("rgba(237, 126, 23, 1)"))
+                .seri(SeriSeçenekleri::yeni("2017").renk("rgba(255, 0, 0, 1)"));
+        }
     }
     Ok((seçenekler, veri))
+}
+
+/// Resmî `time-periods.html` sayfasındaki üç bağımsız çizim yüzeyini kaynak
+/// sırasıyla ve tek veri yükleme/ayrıştırma önbelleği üzerinden döndürür.
+pub fn time_periods_kartları()
+-> Result<Vec<(TimePeriodsÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    TimePeriodsÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| time_periods_kartı(örnek).map(|(seçenekler, veri)| (örnek, seçenekler, veri)))
+        .collect()
 }
 
 #[cfg(test)]
@@ -310,6 +330,72 @@ mod testler {
         assert_eq!(grafik.seri_zamanı(2, x), Some(1_483_228_800.0));
         assert_eq!(grafik.seri_zamanı(99, x), Some(x));
         assert_eq!(grafik.seri_zamanı(0, f64::NAN), None);
+
+        let (seçenekler, veri) = time_periods_kartı(TimePeriodsÖrneği::GünlükKullanıcılar)?;
+        let günlük = Grafik::yeni(seçenekler, veri)?;
+        for seri in 0..3 {
+            assert_eq!(günlük.seri_zamanı(seri, OCAK_2019_UTC), Some(OCAK_2019_UTC));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn grup_kaynak_sırasını_ve_bağımsız_görünümleri_korur() -> Result<(), UplotHatası> {
+        let kartlar = time_periods_kartları()?;
+        assert_eq!(kartlar.len(), TimePeriodsÖrneği::TÜMÜ.len());
+        assert_eq!(
+            kartlar
+                .iter()
+                .map(|(örnek, _, _)| *örnek)
+                .collect::<Vec<_>>(),
+            TimePeriodsÖrneği::TÜMÜ
+        );
+
+        let mut grafikler = kartlar
+            .into_iter()
+            .map(|(_, seçenekler, veri)| Grafik::yeni(seçenekler, veri))
+            .collect::<Result<Vec<_>, _>>()?;
+        let Some((ilk, diğerleri)) = grafikler.split_first_mut() else {
+            return Err(UplotHatası::GeçersizKaynakVeri {
+                varlık: "demos/time-periods.html",
+                açıklama: "Time Periods grubu boş döndü".to_string(),
+            });
+        };
+        let diğer_aralıklar = diğerleri
+            .iter()
+            .map(Grafik::görünür_x_aralığı)
+            .collect::<Vec<_>>();
+        ilk.seçim_yakınlaştır(0.25, 0.75)?;
+        assert_eq!(
+            diğerleri
+                .iter()
+                .map(Grafik::görünür_x_aralığı)
+                .collect::<Vec<_>>(),
+            diğer_aralıklar
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn aylık_ikincil_x_ekseni_görünür_aralıktan_türetilir() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = time_periods_kartı(TimePeriodsÖrneği::ŞubatOcak2019)?;
+        let kaydırma = seçenekler
+            .ikincil_x_eksen
+            .as_ref()
+            .map(|eksen| eksen.zaman_kaydırması)
+            .unwrap_or_default();
+        assert_eq!(kaydırma, -2_678_400.0);
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        grafik.seçim_yakınlaştır(0.2, 0.8)?;
+        let birincil = grafik.görünür_x_aralığı();
+        let Some(ikincil) = grafik.ikincil_x_aralığı() else {
+            return Err(UplotHatası::GeçersizKaynakVeri {
+                varlık: "demos/time-periods.html",
+                açıklama: "ikinci X ekseni tanımlanmadı".to_string(),
+            });
+        };
+        assert_eq!(ikincil.en_az, birincil.en_az + kaydırma);
+        assert_eq!(ikincil.en_çok, birincil.en_çok + kaydırma);
         Ok(())
     }
 }
