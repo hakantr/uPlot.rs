@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use web_time::{SystemTime, UNIX_EPOCH};
 
 use super::ortak_kart_etkileşimleri;
 use super::veri_uretici::KanıtRastgele;
@@ -57,29 +58,54 @@ pub struct PixelAlignAkışı {
 
 impl PixelAlignAkışı {
     pub fn yeni(başlangıç_adımı: usize) -> Result<Self, UplotHatası> {
+        Self::başlangıçta(başlangıç_adımı, KANIT_BAŞLANGICI_MS)
+    }
+
+    /// Canlı adaptörler için kaynak `Date.now()` başlangıcını kullanır.
+    pub fn canlı(başlangıç_adımı: usize) -> Result<Self, UplotHatası> {
+        let şimdi = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|hata| UplotHatası::GeçersizKaynakVeri {
+                varlık: "PixelAlignAkışı",
+                açıklama: format!("sistem saati Unix epoch öncesinde: {hata}"),
+            })?;
+        let başlangıç_ms = şimdi.as_secs_f64() * 1_000.0;
+        Self::başlangıçta(başlangıç_adımı, başlangıç_ms)
+    }
+
+    /// Aynı frame saatini paylaşan platform yüzeylerinin tek epoch ile
+    /// başlatılabilmesi için açık saatli kurucu.
+    pub fn başlangıçta(
+        başlangıç_adımı: usize, başlangıç_ms: f64
+    ) -> Result<Self, UplotHatası> {
+        if !başlangıç_ms.is_finite() {
+            return Err(UplotHatası::GeçersizKaynakVeri {
+                varlık: "PixelAlignAkışı",
+                açıklama: "başlangıç saati sonlu olmalıdır".to_string(),
+            });
+        }
         let mut akış = Self {
             rastgele: KanıtRastgele::yeni(PIXEL_ALIGN_KANIT_TOHUMU),
             sonraki_indeks: 0,
-            şimdi_ms: KANIT_BAŞLANGICI_MS,
+            şimdi_ms: başlangıç_ms,
             örnek_birikimi_ms: 0.0,
             x: VecDeque::with_capacity(PIXEL_ALIGN_HALKA_UZUNLUĞU),
             seriler: std::array::from_fn(|_| VecDeque::with_capacity(PIXEL_ALIGN_HALKA_UZUNLUĞU)),
         };
-        for _ in 0..başlangıç_adımı.clamp(1, 10_000) {
-            akış.örnek_ekle();
+        for _ in 0..başlangıç_adımı.min(10_000) {
+            akış.şimdi_ms += PIXEL_ALIGN_ARALIK_MS;
+            akış.örnek_ekle(akış.şimdi_ms);
         }
-        akış.şimdi_ms = akış.x.back().copied().unwrap_or(KANIT_BAŞLANGICI_MS);
         Ok(akış)
     }
 
-    fn örnek_ekle(&mut self) {
+    fn örnek_ekle(&mut self, x: f64) {
         if self.x.len() == PIXEL_ALIGN_HALKA_UZUNLUĞU {
             self.x.pop_front();
             for seri in &mut self.seriler {
                 seri.pop_front();
             }
         }
-        let x = KANIT_BAŞLANGICI_MS + self.sonraki_indeks as f64 * PIXEL_ALIGN_ARALIK_MS;
         self.sonraki_indeks = self.sonraki_indeks.saturating_add(1);
         self.x.push_back(x);
         for (seri, değer) in self.seriler.iter_mut().zip([
@@ -99,13 +125,16 @@ impl PixelAlignAkışı {
         }
         self.şimdi_ms += geçen_ms;
         self.örnek_birikimi_ms += geçen_ms;
-        let mut veri_değişti = false;
-        while self.örnek_birikimi_ms >= PIXEL_ALIGN_ARALIK_MS {
-            self.örnek_birikimi_ms -= PIXEL_ALIGN_ARALIK_MS;
-            self.örnek_ekle();
-            veri_değişti = true;
+        if self.örnek_birikimi_ms >= PIXEL_ALIGN_ARALIK_MS {
+            self.örnek_birikimi_ms %= PIXEL_ALIGN_ARALIK_MS;
+            // Kaynak `setInterval(addData, 1000)` gecikmiş sekmede binlerce
+            // sentetik nokta doldurmaz; çalışan tek callback gerçek Date.now
+            // konumunda bir örnek bırakır ve aradaki zaman görünür gap olur.
+            self.örnek_ekle(self.şimdi_ms);
+            true
+        } else {
+            false
         }
-        veri_değişti
     }
 
     pub fn veri(&self) -> Result<HizalıVeri, UplotHatası> {
@@ -213,6 +242,34 @@ mod testler {
             .collect()
     }
 
+    fn renkli_yol_noktaları(grafik: &Grafik, hedef_renk: &str) -> Vec<crate::Nokta> {
+        grafik
+            .çiz()
+            .komutlar()
+            .iter()
+            .filter_map(|komut| match komut {
+                Komut::Yol {
+                    parçalar, renk, ..
+                } if renk == hedef_renk => Some(parçalar),
+                _ => None,
+            })
+            .flat_map(|parçalar| parçalar.iter().flatten().copied())
+            .collect()
+    }
+
+    fn işaret_noktaları(grafik: &Grafik) -> Vec<crate::Nokta> {
+        grafik
+            .çiz()
+            .komutlar()
+            .iter()
+            .flat_map(|komut| match komut {
+                Komut::Daire { merkez, .. } => vec![*merkez],
+                Komut::Daireler { merkezler, .. } => merkezler.clone(),
+                _ => Vec::new(),
+            })
+            .collect()
+    }
+
     #[test]
     fn kaynak_penceresi_ve_üç_yol_türü_korunur() -> Result<(), UplotHatası> {
         let kartlar = pixel_align_kartları(140)?;
@@ -230,6 +287,44 @@ mod testler {
                     .all(|seri| seri.noktaları_göster == Some(true))
             );
         }
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_boş_başlar_ve_ilk_örneği_bir_saniyede_ekler() -> Result<(), UplotHatası> {
+        let mut akış = PixelAlignAkışı::yeni(0)?;
+        assert_eq!(akış.örnek_sayısı(), 0);
+        assert_eq!(akış.veri()?.uzunluk(), 0);
+        assert!(!akış.kareyi_ilerlet(999.0));
+        assert_eq!(akış.örnek_sayısı(), 0);
+        assert!(akış.kareyi_ilerlet(1.0));
+        let veri = akış.veri()?;
+        assert_eq!(veri.uzunluk(), 1);
+        assert_eq!(
+            veri.x().first().copied(),
+            Some(KANIT_BAŞLANGICI_MS + 1_000.0)
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn geciken_timer_tek_gerçek_zaman_örneği_ve_görünür_gap_bırakır() -> Result<(), UplotHatası> {
+        let mut akış = PixelAlignAkışı::yeni(0)?;
+        assert!(akış.kareyi_ilerlet(1_000.0));
+        assert!(akış.kareyi_ilerlet(10_000.0));
+        let veri = akış.veri()?;
+        assert_eq!(veri.uzunluk(), 2);
+        assert_eq!(
+            veri.x()
+                .get(1)
+                .zip(veri.x().first())
+                .map(|(son, ilk)| son - ilk),
+            Some(10_000.0)
+        );
+        assert_eq!(
+            akış.görünür_x_aralığı()?.en_çok,
+            KANIT_BAŞLANGICI_MS + 11_000.0
+        );
         Ok(())
     }
 
@@ -258,10 +353,77 @@ mod testler {
     }
 
     #[test]
+    fn linear_spline_stepped_ve_noktalar_aynı_piksel_kuralını_kullanır() -> Result<(), UplotHatası>
+    {
+        let (hizalı_seçenekler, hizalı_veri) =
+            pixel_align_kartı(PixelAlignÖrneği::Varsayılan, 121)?;
+        let hizalı = Grafik::yeni(hizalı_seçenekler, hizalı_veri)?;
+        let (serbest_seçenekler, serbest_veri) = pixel_align_kartı(PixelAlignÖrneği::Kapalı, 121)?;
+        let serbest = Grafik::yeni(serbest_seçenekler, serbest_veri)?;
+
+        for renk in ["red", "blue", "purple"] {
+            let tam = renkli_yol_noktaları(&hizalı, renk);
+            let alt = renkli_yol_noktaları(&serbest, renk);
+            assert!(!tam.is_empty(), "{renk}");
+            assert!(!alt.is_empty(), "{renk}");
+            if renk == "blue" {
+                // Spline'ın ara Bézier örnekleri doğal olarak alt-pikseldir;
+                // pxAlign veri düğümlerini yuvarlar (her segmentin 8. örneği).
+                assert!(
+                    tam.iter()
+                        .step_by(8)
+                        .all(|nokta| nokta.x.fract() == 0.0 && nokta.y.fract() == 0.0),
+                    "{renk}"
+                );
+            } else {
+                assert!(
+                    tam.iter()
+                        .all(|nokta| nokta.x.fract() == 0.0 && nokta.y.fract() == 0.0),
+                    "{renk}"
+                );
+            }
+            assert!(
+                alt.iter()
+                    .any(|nokta| nokta.x.fract() != 0.0 || nokta.y.fract() != 0.0),
+                "{renk}"
+            );
+        }
+
+        let tam_işaretler = işaret_noktaları(&hizalı);
+        let alt_işaretler = işaret_noktaları(&serbest);
+        assert!(!tam_işaretler.is_empty());
+        assert!(!alt_işaretler.is_empty());
+        assert!(
+            tam_işaretler
+                .iter()
+                .all(|nokta| nokta.x.fract() == 0.0 && nokta.y.fract() == 0.0)
+        );
+        assert!(
+            alt_işaretler
+                .iter()
+                .any(|nokta| nokta.x.fract() != 0.0 || nokta.y.fract() != 0.0)
+        );
+        Ok(())
+    }
+
+    #[test]
     fn aynı_adım_sayısı_aynı_kanıt_verisini_üretir() -> Result<(), UplotHatası> {
-        let (_, sol) = pixel_align_kartı(PixelAlignÖrneği::Varsayılan, 257)?;
-        let (_, sağ) = pixel_align_kartı(PixelAlignÖrneği::Kapalı, 257)?;
+        let kartlar = pixel_align_kartları(257)?;
+        let mut kartlar = kartlar.into_iter();
+        let sol = kartlar.next().map(|(_, _, veri)| veri).ok_or_else(|| {
+            UplotHatası::GeçersizKaynakVeri {
+                varlık: "pixel-align",
+                açıklama: "varsayılan yüzey bulunamadı".to_string(),
+            }
+        })?;
+        let sağ = kartlar.next().map(|(_, _, veri)| veri).ok_or_else(|| {
+            UplotHatası::GeçersizKaynakVeri {
+                varlık: "pixel-align",
+                açıklama: "pxAlign=0 yüzeyi bulunamadı".to_string(),
+            }
+        })?;
         assert_eq!(sol, sağ);
+        assert!(sol.aynı_depolamayı_paylaşıyor(&sağ));
         Ok(())
     }
 

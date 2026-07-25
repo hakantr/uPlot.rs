@@ -2233,7 +2233,9 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "single-catalog-family-two-live-surfaces", "shared-data-and-animation-clock",
+        "source-empty-start-first-sample-at-1000ms", "single-wasm-flow-shared-arc-buffer",
         "animation-frame-x-window-progress", "stateful-no-rebuild-stream-update",
+        "delayed-frame-wall-clock-gap-preserved", "zoom-pauses-live-follow-extension",
         "source-window-120000ms", "source-interval-1000ms",
         "unbounded-lifecycle-1000-point-ring", "deterministic-random-proof-seed",
         "graph-and-series-px-align", "linear-spline-stepped-paths",

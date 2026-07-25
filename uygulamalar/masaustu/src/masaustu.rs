@@ -249,7 +249,7 @@ impl KartKimliği {
                 "path-gap-clip.html · 15 null/undefined, band, stepped ve piksel yüzeyi"
             }
             Self::PixelAlign => {
-                "pixel-align.html · 2 eşzamanlı yüzey · ortak 1 Hz halka veri + animation-frame X saati"
+                "pixel-align.html · boş başlayan 2 yüzey · tek 1 Hz halka veri + animation-frame X saati"
             }
             Self::Points => {
                 "points.html · 4 eşzamanlı yüzey · randomWalk.js · points.space, paths:null ve points.filter"
@@ -1859,7 +1859,27 @@ impl ChartListesi {
     }
 
     fn pixel_align_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
-        let sonuç = pixel_align_kartları(140);
+        let canlı_akış = PixelAlignAkışı::canlı(0);
+        let Ok(canlı_akış) = canlı_akış else {
+            self.hata = canlı_akış
+                .err()
+                .map(|hata| format!("Pixel Align canlı saati kurulamadı: {hata}"));
+            self.grafik = None;
+            self.pixel_align_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let canlı_aralık = canlı_akış.görünür_x_aralığı();
+        let Ok(canlı_aralık) = canlı_aralık else {
+            self.hata = canlı_aralık
+                .err()
+                .map(|hata| format!("Pixel Align canlı aralığı kurulamadı: {hata}"));
+            self.grafik = None;
+            self.pixel_align_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let sonuç = pixel_align_kartları(0);
         let Ok(kartlar) = sonuç else {
             self.hata = sonuç
                 .err()
@@ -1881,6 +1901,7 @@ impl ChartListesi {
                     return;
                 }
             };
+            grafik.canlı_x_aralığını_ayarla(canlı_aralık);
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
@@ -1892,7 +1913,7 @@ impl ChartListesi {
             .detach();
             yüzeyler.push((örnek, grafik));
         }
-        self.pixel_align_akışı = PixelAlignAkışı::yeni(140).ok();
+        self.pixel_align_akışı = Some(canlı_akış);
         self.pixel_align_son_kare = Some(Instant::now());
         self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
         self.pixel_align_grafikleri = yüzeyler;
@@ -3404,7 +3425,7 @@ impl ChartListesi {
                             let Some(akış) = bu.pixel_align_akışı.as_mut() else {
                                 return false;
                             };
-                            let veri_değişti = akış.kareyi_ilerlet(geçen_ms.min(1_000.0));
+                            let veri_değişti = akış.kareyi_ilerlet(geçen_ms);
                             let Ok(aralık) = akış.görünür_x_aralığı() else {
                                 return false;
                             };
@@ -5283,7 +5304,7 @@ impl Render for ChartListesi {
                     "Pixel Align · canlı A/B",
                     "pixel-align",
                     aktif_kart == KartKimliği::PixelAlign,
-                    "2 ortak veri yüzeyi · 60 FPS kayan pencere",
+                    "Boş başlayan 2 ortak veri yüzeyi · frame düzeyinde kayan pencere",
                     panel,
                     vurgu,
                 )
@@ -7295,7 +7316,7 @@ impl Render for ChartListesi {
                         .bg(rgb(0xf8fafc))
                         .text_xs()
                         .text_color(soluk)
-                        .child("İki panel aynı halka verisini ve aynı animation-frame saatini paylaşır. Üst panel koordinatları tam piksele yuvarlayarak keskin fakat basamaklı “tırtıl” hareketi; alt panel alt-piksel konumlarını koruyarak daha yumuşak hareket üretir."),
+                        .child("Kaynak gibi boş başlayan iki panel aynı halka verisini ve animation-frame saatini paylaşır; ilk örnek 1 saniyede gelir. Üst panel tam pikselde keskin fakat basamaklı “tırtıl”, alt panel alt-pikselde yumuşak hareket üretir. Zoom canlı takibi duraklatır; Tam görünüm takibi sürdürür."),
                 )
                 .children([
                     (

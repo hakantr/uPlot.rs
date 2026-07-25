@@ -124,7 +124,7 @@ impl KartOturumu {
             "nice-scale" => nice_scale_kartı(),
             "no-data" => no_data_kartı(NoDataÖrneği::BOŞ_ÖZEL_ARALIK),
             "path-gap-clip" => path_gap_clip_kartı(PathGapClipÖrneği::VeriDışınaTaşanÖlçek),
-            "pixel-align" => pixel_align_kartı(PixelAlignÖrneği::Varsayılan, 140),
+            "pixel-align" => pixel_align_kartı(PixelAlignÖrneği::Varsayılan, 0),
             "points" => points_kartı(PointsÖrneği::Karma),
             kimlik if kimlik.starts_with("no-data-") => NoDataÖrneği::kimlikten(kimlik)
                 .map_or_else(
@@ -152,7 +152,7 @@ impl KartOturumu {
                             kimlik: kimlik.to_string(),
                         })
                     },
-                    |örnek| pixel_align_kartı(örnek, 140),
+                    |örnek| pixel_align_kartı(örnek, 0),
                 ),
             kimlik if kimlik.starts_with("points-") => PointsÖrneği::kimlikten(kimlik).map_or_else(
                 || {
@@ -420,7 +420,7 @@ impl KartOturumu {
         };
         let axis_autosize_akışı = (kart_kimliği == "axis-autosize").then(AxisAutosizeAkışı::yeni);
         let pixel_align_akışı = PixelAlignÖrneği::kimlikten(kart_kimliği)
-            .map(|_| PixelAlignAkışı::yeni(140))
+            .map(|_| PixelAlignAkışı::yeni(0))
             .transpose()
             .map_err(js_hatası)?;
         let multi_bars_kategorileri = MultiBarsÖrneği::kimlikten(kart_kimliği)
@@ -1169,11 +1169,56 @@ impl KartOturumu {
         Ok(değişti)
     }
 
+    /// İki A/B yüzeyinin kaynak `Date.now()` epoch'una atomik olarak
+    /// başlatılması için boş canlı akışı açık duvar saatiyle kurar.
+    pub fn pixel_align_baslangicini_ayarla(
+        &mut self, başlangıç_ms: f64
+    ) -> Result<bool, JsValue> {
+        if PixelAlignÖrneği::kimlikten(&self.kart_kimliği).is_none() {
+            return Ok(false);
+        }
+        let akış = PixelAlignAkışı::başlangıçta(0, başlangıç_ms).map_err(js_hatası)?;
+        let veri = akış.veri().map_err(js_hatası)?;
+        let aralık = akış.görünür_x_aralığı().map_err(js_hatası)?;
+        let değişti = self
+            .grafik
+            .canlı_veriyi_x_aralığında_ayarla(veri, aralık)
+            .map_err(js_hatası)?;
+        self.pixel_align_akışı = Some(akış);
+        Ok(değişti)
+    }
+
+    /// Kaynak A/B demosundaki tek mutable `data` nesnesinin WASM karşılığı:
+    /// ikinci yüzey ilk yüzeyin immutable Arc deposunu ve X frame'ini paylaşır.
+    pub fn pixel_align_kaynaktan_esitle(&mut self, kaynak: &KartOturumu) -> Result<bool, JsValue> {
+        if PixelAlignÖrneği::kimlikten(&self.kart_kimliği).is_none()
+            || PixelAlignÖrneği::kimlikten(&kaynak.kart_kimliği).is_none()
+        {
+            return Ok(false);
+        }
+        let akış = kaynak
+            .pixel_align_akışı
+            .as_ref()
+            .ok_or_else(|| JsValue::from_str("Kaynak Pixel Align akışı bulunamadı"))?;
+        let aralık = akış.görünür_x_aralığı().map_err(js_hatası)?;
+        if self
+            .grafik
+            .veri()
+            .aynı_depolamayı_paylaşıyor(kaynak.grafik.veri())
+        {
+            Ok(self.grafik.canlı_x_aralığını_ayarla(aralık))
+        } else {
+            self.grafik
+                .canlı_veriyi_x_aralığında_ayarla(kaynak.grafik.veri().clone(), aralık)
+                .map_err(js_hatası)
+        }
+    }
+
     pub fn pixel_align_kareyi_ilerlet(&mut self, geçen_ms: f64) -> Result<bool, JsValue> {
         let Some(akış) = self.pixel_align_akışı.as_mut() else {
             return Ok(false);
         };
-        let veri_değişti = akış.kareyi_ilerlet(geçen_ms.min(1_000.0));
+        let veri_değişti = akış.kareyi_ilerlet(geçen_ms);
         let aralık = akış.görünür_x_aralığı().map_err(js_hatası)?;
         if veri_değişti {
             self.grafik
@@ -2564,17 +2609,56 @@ mod testler {
     #[test]
     fn pixel_align_wasm_iki_canlı_yüzeyi_yeniler() {
         assert!(KartOturumu::yeni("pixel-align", 100).is_ok());
-        for örnek in PixelAlignÖrneği::TÜMÜ {
-            let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
-            assert!(oturum.is_ok(), "{}", örnek.kimlik());
-            let Ok(mut oturum) = oturum else {
-                continue;
-            };
-            assert_eq!(oturum.pixel_align_kareyi_ilerlet(16.0), Ok(true));
-            assert!(oturum.pixel_align_adimi_ayarla(141).is_ok());
-            let svg = oturum.svg(1_200, 400);
-            assert!(svg.contains(örnek.başlık()));
-        }
+        let kaynak = KartOturumu::yeni(PixelAlignÖrneği::Varsayılan.kimlik(), 0);
+        let karşılaştırma = KartOturumu::yeni(PixelAlignÖrneği::Kapalı.kimlik(), 0);
+        assert!(kaynak.is_ok());
+        assert!(karşılaştırma.is_ok());
+        let (Ok(mut kaynak), Ok(mut karşılaştırma)) = (kaynak, karşılaştırma) else {
+            return;
+        };
+        assert_eq!(
+            kaynak.pixel_align_baslangicini_ayarla(1_800_000_000_000.0),
+            Ok(true)
+        );
+        assert_eq!(
+            karşılaştırma.pixel_align_kaynaktan_esitle(&kaynak),
+            Ok(true)
+        );
+        assert!(
+            kaynak
+                .grafik
+                .veri()
+                .aynı_depolamayı_paylaşıyor(karşılaştırma.grafik.veri())
+        );
+        assert_eq!(kaynak.grafik.veri().uzunluk(), 0);
+        assert_eq!(kaynak.pixel_align_kareyi_ilerlet(999.0), Ok(true));
+        assert_eq!(
+            karşılaştırma.pixel_align_kaynaktan_esitle(&kaynak),
+            Ok(true)
+        );
+        assert_eq!(kaynak.grafik.veri().uzunluk(), 0);
+        assert_eq!(kaynak.pixel_align_kareyi_ilerlet(1.0), Ok(true));
+        assert_eq!(
+            karşılaştırma.pixel_align_kaynaktan_esitle(&kaynak),
+            Ok(true)
+        );
+        assert_eq!(kaynak.grafik.veri().uzunluk(), 1);
+        assert!(
+            kaynak
+                .grafik
+                .veri()
+                .aynı_depolamayı_paylaşıyor(karşılaştırma.grafik.veri())
+        );
+        assert!(
+            kaynak
+                .svg(1_200, 400)
+                .contains(PixelAlignÖrneği::Varsayılan.başlık())
+        );
+        assert!(
+            karşılaştırma
+                .svg(1_200, 400)
+                .contains(PixelAlignÖrneği::Kapalı.başlık())
+        );
         assert!(pixel_align_kart_tanim_ornegi().contains("pixel_align_kartları"));
         let web = include_str!("../www/index.html");
         assert_eq!(
@@ -2586,6 +2670,8 @@ mod testler {
         assert!(web.contains("let pixelAlignOturumları = [];"));
         assert!(web.contains("pixelAlignAnimationFrame = requestAnimationFrame"));
         assert!(web.contains("pixel_align_kareyi_ilerlet(geçen)"));
+        assert!(web.contains("pixel_align_kaynaktan_esitle(kaynak)"));
+        assert!(web.contains("pixel_align_baslangicini_ayarla(başlangıçMs)"));
         assert_eq!(kart_sayisi(), 365);
     }
 

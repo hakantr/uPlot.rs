@@ -940,6 +940,14 @@ impl Grafik {
             .unwrap_or_else(|| self.etkileşim.görünür_x())
     }
 
+    /// Grafiğin doğrulanmış, immutable sütun deposunu döndürür.
+    ///
+    /// `HizalıVeri::clone()` O(1) olduğu için aynı frame'de güncellenen
+    /// ilişkili yüzeyler bu depoyu kopyalamadan paylaşabilir.
+    pub const fn veri(&self) -> &HizalıVeri {
+        &self.veri
+    }
+
     /// Birincil görünür X aralığından türetilen ikinci zaman eksenini döndürür.
     /// İkinci eksen bağımsız görünüm durumu taşımaz; zoom/pan sonrasında da
     /// kaynak ölçeği aynı sabit farkla izler.
