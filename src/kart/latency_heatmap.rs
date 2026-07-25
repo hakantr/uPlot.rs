@@ -161,11 +161,12 @@ fn kovalanmış_ısı_haritası() -> Result<(GrafikSeçenekleri, HizalıVeri), U
             let oran = f64::from(sayı) / f64::from(azami);
             hücreler.push(IsıHücresi::yeni(
                 x,
-                kova as f64 * 5.0,
+                kova as f64 * 5.0 + 2.5,
                 IsıHücresiBoyutu::Piksel(10.0),
                 IsıHücresiBoyutu::Veri(5.0),
                 hsl_renk(180.0 + oran * 180.0, 0.8, 0.5),
-            ));
+            )
+            .piksel_ofseti(1.0, 0.0));
         }
     }
     ısı_haritası_seçenekleri(LatencyHeatmapÖrneği::Kovalanmış, hücreler, false)
@@ -315,7 +316,7 @@ fn temel_ısı_seçenekleri(
                 .çizgi_kalınlığı(0.0)
                 .noktaları_göster(false),
         )
-        .etkileşimler(ortak_kart_etkileşimleri()))
+        .etkileşimler(ortak_kart_etkileşimleri().seçim_xy_yakınlaştır(true)))
 }
 
 fn ham_veri() -> &'static (Vec<f64>, Vec<Vec<f64>>) {
@@ -506,6 +507,19 @@ mod testler {
     {
         let (seçenekler, veri) =
             latency_heatmap_kartı(LatencyHeatmapÖrneği::Kovalanmış, 5.0, 0.0)?;
+        assert!(seçenekler.etkileşimler.seçim_xy_yakınlaştır);
+        let düzen =
+            seçenekler
+                .ısı_haritası_düzeni
+                .as_ref()
+                .ok_or(UplotHatası::GeçersizKaynakVeri {
+                    varlık: "aggregated heatmap layout",
+                    açıklama: "ısı hücre düzeni bulunamadı".to_string(),
+                })?;
+        assert!(düzen.hücreler.iter().all(|hücre| {
+            (hücre.y.rem_euclid(5.0) - 2.5).abs() <= f64::EPSILON
+                && hücre.piksel_ofseti == [1.0, 0.0]
+        }));
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
         let ilk = ilk_ısı_hücresi_boyutu(&grafik.çiz_görünür_boyutta(1_800, 600))
             .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
