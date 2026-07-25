@@ -2289,6 +2289,12 @@
       yardım: "Çizgi, çizgi ve çubuk · kip değişirken lejant ham 0…10 değerlerini korur",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Aynı 30×3 ham ölçümü iki saniyede bir normal 0…10 düzlemi ile Core #1/#2/#3 için 0/+10/+20 kaydırılmış şerit düzlemi arasında değiştirir.",
+        api: "YShiftedSeriesAkışı::ilerlet_güncellemesi yeni data/range/axis values/fillTo tabanlarını; Grafik::veriyi_y_sunumunda_ayarla aynı örnekte atomik setData'yı sağlar. Lejant setSeries görünürlüğü kipler arasında korunur.",
+        izleme: "Aynı ölçekli çekirdek, pod veya kuyruk metriklerini üst üste binmeden şeritlerde izleyip ham 0…10 değerlerini karşılaştırmak için kullanılır.",
+        maliyet: "Grafik, SVG kabuğu ve etkileşim bağları yeniden kurulmaz. Mavi 30 bar tek fill ve tek stroke path'te toplanır; cursor noktası kaydırılmış geometride, legend series.value gibi ham değerde kalır. Timer karttan çıkınca temizlenir.",
+      },
     };
 
     const çubukAltGrafikleri = [
@@ -6321,7 +6327,8 @@
         || aktifKart === "trendlines"
         || aktifKart === "update-cursor-select-resize"
         || aktifKart === "wind-direction"
-        || aktifKart === "y-scale-drag";
+        || aktifKart === "y-scale-drag"
+        || aktifKart === "y-shifted-series";
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks) || değiştirilebilirLejant
           ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>
@@ -6918,6 +6925,10 @@
       const seriDeğerleri = kartlar[aktifKart].seriler.map((_, indeks) =>
         seriÖrnekleri[indeks * 3 + 1]
       );
+      const lejantÇözümü = Array.from(oturum?.en_yakin_noktalar(xEksenOranı) ?? []);
+      const seriLejantDeğerleri = kartlar[aktifKart].seriler.map((_, indeks) =>
+        lejantÇözümü[indeks + 1]
+      );
       const seriXDeğerleri = kartlar[aktifKart].seriler.map((_, indeks) =>
         seriÖrnekleri[indeks * 3]
       );
@@ -7033,7 +7044,7 @@
         if (xHedefi) {
           xHedefi.textContent = gerçekX.toLocaleString("tr-TR", {maximumFractionDigits: 3});
         }
-        seriDeğerleri.forEach((seriDeğeri, indeks) => {
+        seriLejantDeğerleri.forEach((seriDeğeri, indeks) => {
           const hedef = etkileşimKapsamı.querySelector(`#seri-değeri-${indeks}`);
           if (hedef) hedef.textContent = Number.isFinite(seriDeğeri)
             ? seriDeğeri.toLocaleString("tr-TR", {maximumFractionDigits: 3}) : "--";

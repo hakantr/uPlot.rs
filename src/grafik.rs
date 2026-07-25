@@ -1183,6 +1183,51 @@ impl Grafik {
         Ok(())
     }
 
+    /// `setData()` ile birlikte dinamik Y range/values/fillTo sunumunu aynı
+    /// grafik örneğinde atomik olarak değiştirir. Kaynak callback'leri kip
+    /// durumundan okuyan grafiklerde seçenek ve etkileşim ağacı korunur.
+    pub fn veriyi_y_sunumunda_ayarla(
+        &mut self,
+        veri: HizalıVeri,
+        aralık: Aralık,
+        özel_etiketler: Vec<(f64, String)>,
+        dolgu_tabanları: Vec<f64>,
+    ) -> Result<(), UplotHatası> {
+        if dolgu_tabanları.len() != self.seçenekler.seriler.len()
+            || dolgu_tabanları.iter().any(|taban| !taban.is_finite())
+            || özel_etiketler.iter().any(|(değer, _)| !değer.is_finite())
+        {
+            return Err(UplotHatası::GeçersizKaynakVeri {
+                varlık: "Y sunumu",
+                açıklama: "seri tabanları veya özel etiketler geçersiz".to_string(),
+            });
+        }
+        let önceki_aralık = self.seçenekler.y_aralığı;
+        let önceki_etiketler = std::mem::replace(
+            &mut self.seçenekler.birincil_y_özel_etiketler,
+            özel_etiketler,
+        );
+        let önceki_tabanlar = self
+            .seçenekler
+            .seriler
+            .iter()
+            .map(|seri| seri.dolgu_tabanı)
+            .collect::<Vec<_>>();
+        self.seçenekler.y_aralığı = Some(aralık);
+        for (seri, taban) in self.seçenekler.seriler.iter_mut().zip(dolgu_tabanları) {
+            seri.dolgu_tabanı = taban;
+        }
+        if let Err(hata) = self.veriyi_ayarla(veri) {
+            self.seçenekler.y_aralığı = önceki_aralık;
+            self.seçenekler.birincil_y_özel_etiketler = önceki_etiketler;
+            for (seri, taban) in self.seçenekler.seriler.iter_mut().zip(önceki_tabanlar) {
+                seri.dolgu_tabanı = taban;
+            }
+            return Err(hata);
+        }
+        Ok(())
+    }
+
     /// uPlot `setData(data)` için seçenek/stil ağacını yeniden kurmayan canlı yol.
     ///
     /// Seri sayısı değişmeyen akışlarda yalnız veri, tam ölçekler ve veriye
@@ -4474,7 +4519,9 @@ impl Grafik {
         let genişlik = sağ - sol;
         let yükseklik = alt - üst;
         let y_aralığı = self.görünür_ölçek_aralığı(&düzen.ölçek, x_aralığı, görünür_y);
-        let xs = &self.veri.x()[..uzunluk];
+        let Some(xs) = self.veri.x().get(..uzunluk) else {
+            return;
+        };
         let görünür_başlangıç = xs.partition_point(|x| *x < x_aralığı.en_az);
         let görünür_bitiş = xs.partition_point(|x| *x <= x_aralığı.en_çok);
         if görünür_başlangıç >= görünür_bitiş {
@@ -4486,25 +4533,28 @@ impl Grafik {
         // geçer. Böylece yakınlaştırma sınırındaki vektörler kopmaz.
         let mut başlangıç = görünür_başlangıç.saturating_sub(1);
         let mut bitiş = görünür_bitiş.min(uzunluk.saturating_sub(1));
-        while başlangıç > 0 && yönler[başlangıç].is_none() {
+        while başlangıç > 0 && yönler.get(başlangıç).is_some_and(Option::is_none) {
             başlangıç -= 1;
         }
-        while bitiş < uzunluk.saturating_sub(1) && yönler[bitiş].is_none() {
+        while bitiş < uzunluk.saturating_sub(1) && yönler.get(bitiş).is_some_and(Option::is_none)
+        {
             bitiş += 1;
         }
 
         let mut parçalar = Vec::with_capacity(bitiş.saturating_sub(başlangıç) + 1);
         for indeks in başlangıç..=bitiş {
-            let Some(hız) = hızlar[indeks] else {
+            let Some(hız) = hızlar.get(indeks).copied().flatten() else {
                 continue;
             };
             // JavaScript'te `null - 90` sayısal olarak çalışır. Kaynak
             // demoda null yön ve hızlar hizalıdır; bu dönüşüm uyumu korur.
-            let yön = yönler[indeks].unwrap_or(0.0);
+            let yön = yönler.get(indeks).copied().flatten().unwrap_or(0.0);
             if !hız.is_finite() || !yön.is_finite() {
                 continue;
             }
-            let x_değeri = xs[indeks];
+            let Some(x_değeri) = xs.get(indeks).copied() else {
+                continue;
+            };
             let (x, y) = if self.seçenekler.x_dikey {
                 (
                     sol + self.y_konumu(&düzen.ölçek, y_aralığı, hız, 0.0, genişlik),
@@ -4577,6 +4627,7 @@ impl Grafik {
             .and_then(|indeks| self.veri.seriler().get(indeks));
         let varsayılan_dolgu = seri.dolgu.as_ref().unwrap_or(&seri.renk);
         let mut gradyan_çokgenleri = Vec::new();
+        let mut toplu_çokgenler = Vec::new();
         for (indeks, (x_değeri, değer)) in self.veri.x().iter().zip(değerler.iter()).enumerate()
         {
             let Some(alt_değer) = değer else {
@@ -4593,7 +4644,7 @@ impl Grafik {
             let taban_değer = if üst_değerler.is_some() {
                 *alt_değer
             } else {
-                0.0
+                seri.dolgu_tabanı
             };
             if *x_değeri < x_aralığı.en_az || *x_değeri > x_aralığı.en_çok {
                 continue;
@@ -4625,6 +4676,16 @@ impl Grafik {
                     Nokta::yeni(x1, çubuk_alt),
                     Nokta::yeni(x0, çubuk_alt),
                 ]);
+            } else if seri.toplu_çubuk_yolu
+                && seri.çubuk_dolguları.is_empty()
+                && seri.çubuk_çizgileri.is_empty()
+            {
+                toplu_çokgenler.push(vec![
+                    Nokta::yeni(x0, çubuk_üst),
+                    Nokta::yeni(x1, çubuk_üst),
+                    Nokta::yeni(x1, çubuk_alt),
+                    Nokta::yeni(x0, çubuk_alt),
+                ]);
             } else {
                 let dolgu = seri.çubuk_dolguları.get(indeks).unwrap_or(varsayılan_dolgu);
                 let çizgi = seri.çubuk_çizgileri.get(indeks).unwrap_or(&seri.renk);
@@ -4634,6 +4695,28 @@ impl Grafik {
                     yükseklik: çubuk_alt - çubuk_üst,
                     dolgu: dolgu.clone(),
                     çizgi: çizgi.clone(),
+                    kalınlık: seri.çizgi_kalınlığı,
+                });
+            }
+        }
+        if !toplu_çokgenler.is_empty() {
+            sahne.ekle(Komut::Alan {
+                çokgenler: toplu_çokgenler.clone(),
+                dolgu: varsayılan_dolgu.clone(),
+            });
+            if seri.çizgi_kalınlığı > 0.0 {
+                let parçalar = toplu_çokgenler
+                    .into_iter()
+                    .map(|mut çokgen| {
+                        if let Some(ilk) = çokgen.first().copied() {
+                            çokgen.push(ilk);
+                        }
+                        çokgen
+                    })
+                    .collect();
+                sahne.ekle(Komut::Yol {
+                    parçalar,
+                    renk: seri.renk.clone(),
                     kalınlık: seri.çizgi_kalınlığı,
                 });
             }

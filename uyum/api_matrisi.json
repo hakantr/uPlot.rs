@@ -983,9 +983,27 @@
     },
     {
       "kaynak_yolu": "setInterval setData(mode.data(data), 2000)",
-      "rust_karşılığı": "YShiftedSeriesAkışı::ilerlet",
+      "rust_karşılığı": "YShiftedSeriesAkışı::ilerlet_güncellemesi + Grafik::veriyi_y_sunumunda_ayarla",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs"
+      "test": "src/kart/y_shifted_series.rs + wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "uPlot.paths.bars() fillTo baseline and single Path2D",
+      "rust_karşılığı": "dolgu_tabanı + toplu_çubuk_yolu tek Alan/tek Yol",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_shifted_series.rs + wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "series.value changes legend only; cursor point uses shifted data",
+      "rust_karşılığı": "ham lejant kanalı ile İmleçÇözümü geometri kanalının ayrılması",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_shifted_series.rs + src/gpui.rs + wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "setData preserves series.show and re-resolves cursor on same instance",
+      "rust_karşılığı": "atomik Y sunumu güncellemesi + GPUI canlı cursor yenileme",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/y_shifted_series.rs + wasm/src/lib.rs"
     },
     {
       "kaynak_yolu": "hooks.drawClear annotation visibility filter",

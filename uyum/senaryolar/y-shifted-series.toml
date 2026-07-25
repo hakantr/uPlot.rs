@@ -25,6 +25,23 @@ birinci = "kırmızı_çizgi"
 ikinci = "yeşil_çizgi"
 üçüncü = "mavi_çubuk"
 lejant = "ham_değerleri_korur"
+hover_noktası = "kaydırılmış_geometriyi_korur"
+mavi_çubuk_tabanı_kaydırılmış = 20
+mavi_çubuk_tabanı_normal = 0
+mavi_çubuk_tek_fill_path = true
+mavi_çubuk_tek_stroke_path = true
+
+[yaşam_döngüsü]
+aynı_grafik_örneği = true
+güncelleme_api = "Grafik::veriyi_y_sunumunda_ayarla"
+set_data_seçenek_ağacını_yeniden_kurmaz = true
+seri_görünürlüğü_kipte_korunur = true
+cursor_konumu_kipte_yeniden_çözülür = true
+timer_karttan_çıkınca_temizlenir = true
+
+[etkileşim]
+lejant_set_series = true
+ortak_davranış_profili = "resize-temeli-v1"
 
 [kanıt]
 örnek = "examples/y_shifted_series.rs"

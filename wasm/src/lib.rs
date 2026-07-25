@@ -515,8 +515,15 @@ impl KartOturumu {
         let Some(akış) = self.y_shifted_series_akışı.as_mut() else {
             return Ok(false);
         };
-        let (seçenekler, veri) = akış.ilerlet().map_err(js_hatası)?;
-        self.grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
+        let güncelleme = akış.ilerlet_güncellemesi().map_err(js_hatası)?;
+        self.grafik
+            .veriyi_y_sunumunda_ayarla(
+                güncelleme.veri,
+                güncelleme.y_aralığı,
+                güncelleme.y_özel_etiketler,
+                güncelleme.dolgu_tabanları,
+            )
+            .map_err(js_hatası)?;
         Ok(true)
     }
 
@@ -3184,8 +3191,16 @@ mod testler {
         oturum.eksen_suruklemeyi_bitir();
         let meter = oturum.seri_gorunur_y_araligi(0);
         let beklenen = 40.0 * 3.6 / 504.0;
-        assert!((meter[0] - (0.7 + beklenen)).abs() < 1e-12);
-        assert!((meter[1] - (4.3 + beklenen)).abs() < 1e-12);
+        assert!(
+            meter
+                .first()
+                .is_some_and(|değer| (*değer - (0.7 + beklenen)).abs() < 1e-12)
+        );
+        assert!(
+            meter
+                .get(1)
+                .is_some_and(|değer| (*değer - (4.3 + beklenen)).abs() < 1e-12)
+        );
         assert!(matches!(oturum.seri_gorunurlugu_ayarla(0, false), Ok(true)));
         assert_eq!(oturum.seri_gorunur_y_araligi(0), vec![0.0, 1.0]);
         assert!(matches!(oturum.seri_gorunurlugu_ayarla(0, true), Ok(true)));
@@ -3195,7 +3210,8 @@ mod testler {
         assert!(matches!(oturum.eksen_surukle(500.0, 580.0, true), Ok(true)));
         oturum.eksen_suruklemeyi_bitir();
         let x = oturum.gorunur_x_araligi();
-        assert!(x[0] > 0.0 && x[1] < 4.0);
+        assert!(x.first().is_some_and(|değer| *değer > 0.0));
+        assert!(x.get(1).is_some_and(|değer| *değer < 4.0));
         assert!(y_scale_drag_kart_tanim_ornegi().contains("Shift"));
         let web = include_str!("../www/index.html");
         assert!(web.contains("aktifKart === \"y-scale-drag\""));
@@ -3213,12 +3229,33 @@ mod testler {
         let kaydırılmış = oturum.svg(960, 400);
         assert!(kaydırılmış.contains("Y-shifted Series"));
         assert!(kaydırılmış.contains("Core #4"));
+        assert_eq!(kaydırılmış.matches("fill=\"rgba(0,0,255,0.1)\"").count(), 1);
+        assert_eq!(
+            kaydırılmış
+                .matches("fill=\"rgba(0,0,255,0.1)\" stroke=\"blue\"")
+                .count(),
+            0
+        );
         assert_eq!(oturum.gorunur_y_araligi(), vec![0.0, 30.0]);
+        let lejant = oturum.en_yakin_noktalar(0.0);
+        let geometri = oturum.imlec_cozumu(0.0, 1_000.0);
+        let geometri_değeri = geometri.get(9).copied();
+        let lejant_değeri = lejant.get(3).copied();
+        assert_eq!(geometri_değeri, lejant_değeri.map(|değer| değer + 20.0));
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(1, false), Ok(true)));
         assert!(matches!(oturum.y_shifted_series_ilerlet(), Ok(true)));
         let normal = oturum.svg(960, 400);
         assert!(!normal.contains("Core #4"));
         assert_eq!(oturum.gorunur_y_araligi(), vec![0.0, 10.0]);
-        assert!(y_shifted_series_kart_tanim_ornegi().contains("her 2 saniyede"));
+        assert!(!oturum.seri_gorunur(1));
+        assert_eq!(normal.matches("stroke=\"green\"").count(), 0);
+        assert!(
+            y_shifted_series_kart_tanim_ornegi().contains("aynı grafik örneğinde yalnız setData")
+        );
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("aktifKart === \"y-shifted-series\""));
+        assert!(web.contains("Mavi 30 bar tek fill ve tek stroke path"));
+        assert!(web.contains("seriLejantDeğerleri"));
     }
 
     #[test]

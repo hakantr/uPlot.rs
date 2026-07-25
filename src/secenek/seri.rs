@@ -52,6 +52,9 @@ pub struct SeriSeçenekleri {
     pub çubuk_genişlik_oranı: f32,
     pub azami_çubuk_genişliği: f32,
     pub çubuk_hizası: i8,
+    /// Aynı stile sahip çubukları uPlot `Path2D` gibi tek dolgu ve tek
+    /// vuruş yolunda toplar.
+    pub toplu_çubuk_yolu: bool,
     /// `uPlot.paths.bars({disp: {y1}})` karşılığı olarak, bu serideki
     /// değerleri çubuk alt ucu; belirtilen veri serisini üst uç yapar.
     pub yüzen_çubuk_üst_serisi: Option<usize>,
@@ -106,6 +109,7 @@ impl SeriSeçenekleri {
             çubuk_genişlik_oranı: 0.6,
             azami_çubuk_genişliği: f32::INFINITY,
             çubuk_hizası: 0,
+            toplu_çubuk_yolu: false,
             yüzen_çubuk_üst_serisi: None,
             çubuk_dolguları: Vec::new(),
             çubuk_çizgileri: Vec::new(),
@@ -280,6 +284,11 @@ impl SeriSeçenekleri {
 
     pub fn çubuk_hizası(mut self, hiza: i8) -> Self {
         self.çubuk_hizası = hiza.clamp(-1, 1);
+        self
+    }
+
+    pub fn toplu_çubuk_yolu(mut self, etkin: bool) -> Self {
+        self.toplu_çubuk_yolu = etkin;
         self
     }
 

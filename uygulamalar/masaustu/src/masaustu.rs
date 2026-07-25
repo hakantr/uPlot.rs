@@ -2511,28 +2511,31 @@ impl ChartListesi {
                                         açıklama: "masaüstü akış durumu bulunamadı".to_string(),
                                     })
                                 },
-                                YShiftedSeriesAkışı::ilerlet,
+                                YShiftedSeriesAkışı::ilerlet_güncellemesi,
                             );
-                            let (seçenekler, veri) = match sonuç {
-                                Ok(kart) => kart,
+                            let güncelleme = match sonuç {
+                                Ok(güncelleme) => güncelleme,
                                 Err(hata) => {
                                     bu.hata = Some(format!("Y-shifted Series üretilemedi: {hata}"));
-                                    return false;
-                                }
-                            };
-                            let yeni_grafik = match Grafik::yeni(seçenekler, veri) {
-                                Ok(grafik) => grafik,
-                                Err(hata) => {
-                                    bu.hata = Some(format!("Y-shifted Series kurulamadı: {hata}"));
                                     return false;
                                 }
                             };
                             let Some(grafik) = &bu.grafik else {
                                 return false;
                             };
-                            grafik.update(cx, |grafik, cx| {
-                                grafik.grafiği_ayarla(yeni_grafik, cx);
+                            let sonuç = grafik.update(cx, |grafik, cx| {
+                                grafik.veriyi_y_sunumunda_ayarla(
+                                    güncelleme.veri,
+                                    güncelleme.y_aralığı,
+                                    güncelleme.y_özel_etiketler,
+                                    güncelleme.dolgu_tabanları,
+                                    cx,
+                                )
                             });
+                            if let Err(hata) = sonuç {
+                                bu.hata = Some(format!("Y-shifted Series güncellenemedi: {hata}"));
+                                return false;
+                            }
                             bu.hata = None;
                             true
                         })
@@ -3489,6 +3492,7 @@ impl Render for ChartListesi {
                 | KartKimliği::UpdateCursorSelectResize
                 | KartKimliği::WindDirection
                 | KartKimliği::YScaleDrag
+                | KartKimliği::YShiftedSeries
         ) {
             self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
                 grafik
@@ -6394,6 +6398,21 @@ impl Render for ChartListesi {
                  kalır. WASM pointer capture, GPUI dışarıda mouse-up temizliğiyle sürüklemeyi \
                  yüzey sınırının dışında da güvenle tamamlar.",
             ),
+            KartKimliği::YShiftedSeries => Some(
+                "Amaç: aynı 30×3 ham ölçümü iki saniyede bir normal 0…10 düzlemi ile \
+                 Core #1/#2/#3 için 0/+10/+20 kaydırılmış şerit düzlemi arasında değiştirir. \
+                 Kırmızı ve yeşil alanların fillTo tabanları 0/10, mavi bars Path2D tabanı \
+                 20'dir; lejant series.value gibi her zaman ham 0…10 değerini gösterirken \
+                 hover noktası gerçek kaydırılmış geometride kalır. API: \
+                 YShiftedSeriesAkışı::ilerlet_güncellemesi yalnız yeni veri, range, axis values \
+                 ve fillTo tabanlarını üretir; Grafik::veriyi_y_sunumunda_ayarla aynı Grafik \
+                 örneğinde atomik setData uygular. Lejant setSeries görünürlüğü kip geçişinde \
+                 korunur. İzleme: aynı ölçekli çekirdek, pod veya kuyruk metriklerini üst üste \
+                 binmeden ayrı şeritlerde izleyip ham değerlerini karşılaştırmak içindir. \
+                 Maliyet: seçenek ağacı, GPUI entity'si, SVG kabuğu ve etkileşim bağları yeniden \
+                 kurulmaz; 30 mavi çubuk tek dolgu ve tek stroke yolunda toplanır. Timer karttan \
+                 çıkıldığında iptal edilir, cursor hafif katmanda aynı konumdan yeniden çözülür.",
+            ),
             KartKimliği::TimeseriesDiscrete => Some(
                 "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
                  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
@@ -6736,6 +6755,7 @@ impl Render for ChartListesi {
                         | KartKimliği::UpdateCursorSelectResize
                         | KartKimliği::WindDirection
                         | KartKimliği::YScaleDrag
+                        | KartKimliği::YShiftedSeries
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )
@@ -6748,6 +6768,7 @@ impl Render for ChartListesi {
                         | KartKimliği::UpdateCursorSelectResize
                         | KartKimliği::WindDirection
                         | KartKimliği::YScaleDrag
+                        | KartKimliği::YShiftedSeries
                 ),
                 |öğe| {
                 öğe.child(

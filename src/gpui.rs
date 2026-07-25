@@ -353,7 +353,15 @@ impl GpuiGrafik {
         }
         self.imleç
             .as_ref()
-            .map(|imleç| (Some(imleç.veri_x), imleç.seri_değerleri.clone()))
+            .map(|imleç| {
+                let gösterim_değerleri = self
+                    .grafik
+                    .x_konum_oranı(imleç.veri_x)
+                    .and_then(|oran| self.grafik.en_yakın_noktalar(oran))
+                    .map(|(_, değerler)| değerler)
+                    .unwrap_or_else(|| imleç.seri_değerleri.clone());
+                (Some(imleç.veri_x), gösterim_değerleri)
+            })
             .or_else(|| {
                 self.grafik
                     .boşta_lejant_değerleri()
@@ -583,6 +591,25 @@ impl GpuiGrafik {
     ) -> Result<(), UplotHatası> {
         let korunacak_imleç = self.imleç.as_ref().map(|imleç| imleç.fare);
         self.grafik.veriyi_y_aralığında_ayarla(veri, aralık)?;
+        self.açıklama_vuruşu = None;
+        if let Some(fare) = korunacak_imleç {
+            self.canlı_imleci_yenile(fare);
+        }
+        self.grafik_bildir(cx);
+        Ok(())
+    }
+
+    pub fn veriyi_y_sunumunda_ayarla(
+        &mut self,
+        veri: HizalıVeri,
+        aralık: crate::Aralık,
+        özel_etiketler: Vec<(f64, String)>,
+        dolgu_tabanları: Vec<f64>,
+        cx: &mut Context<Self>,
+    ) -> Result<(), UplotHatası> {
+        let korunacak_imleç = self.imleç.as_ref().map(|imleç| imleç.fare);
+        self.grafik
+            .veriyi_y_sunumunda_ayarla(veri, aralık, özel_etiketler, dolgu_tabanları)?;
         self.açıklama_vuruşu = None;
         if let Some(fare) = korunacak_imleç {
             self.canlı_imleci_yenile(fare);
@@ -2716,6 +2743,47 @@ mod testler {
 
         assert!(!bileşen.etkileşim_sahnesi().komutlar().is_empty());
         assert_eq!(bileşen.ana_sahne.komutlar().len(), ana_komut_sayısı);
+        Ok(())
+    }
+
+    #[test]
+    fn y_kaydırılmış_hover_geometrisi_ile_ham_lejant_değeri_ayrılır() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = crate::kart::y_shifted_series_kartı()?;
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        let çözüm = grafik
+            .imleç_çözümü(0.0, 1_000.0)
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        let seri_değerleri = çözüm
+            .seriler
+            .iter()
+            .map(|örnek| örnek.map(|örnek| örnek.değer))
+            .collect::<Vec<_>>();
+        let üçüncü_geometri = seri_değerleri
+            .get(2)
+            .copied()
+            .flatten()
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        let mut bileşen = GpuiGrafik::yeni(grafik);
+        bileşen.imleç = Some(İmleçDurumu {
+            fare: Nokta::yeni(64.0, 100.0),
+            veri_x: çözüm.ortak_x,
+            seri_x_değerleri: çözüm
+                .seriler
+                .iter()
+                .map(|örnek| örnek.map(|örnek| örnek.x))
+                .collect(),
+            seri_değerleri,
+            dağılım: None,
+        });
+        let (_, lejant) = bileşen
+            .lejant_değerleri()
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        let üçüncü_lejant = lejant
+            .get(2)
+            .copied()
+            .flatten()
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert_eq!(üçüncü_geometri, üçüncü_lejant + 20.0);
         Ok(())
     }
 

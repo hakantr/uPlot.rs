@@ -61,8 +61,12 @@ mod testler {
         assert_eq!(veri.uzunluk(), 143);
         assert_eq!(veri.seriler().len(), 3);
         assert!(seçenekler.başlık.is_empty());
-        assert!(!seçenekler.seriler[2].otomatik_ölçeğe_katıl);
-        assert_eq!(seçenekler.seriler[2].noktaları_göster, Some(false));
+        let yön_serisi = seçenekler
+            .seriler
+            .get(2)
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!(!yön_serisi.otomatik_ölçeğe_katıl);
+        assert_eq!(yön_serisi.noktaları_göster, Some(false));
         assert!(
             veri.seriler()
                 .iter()
@@ -84,8 +88,11 @@ mod testler {
             })
             .collect::<Vec<_>>();
         assert_eq!(yön_yolları.len(), 1);
-        assert_eq!(yön_yolları[0].len(), 139);
-        assert!(yön_yolları[0].iter().all(|parça| {
+        let yön_yolu = yön_yolları
+            .first()
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert_eq!(yön_yolu.len(), 139);
+        assert!(yön_yolu.iter().all(|parça| {
             let [başlangıç, bitiş] = parça.as_slice() else {
                 return false;
             };
@@ -121,8 +128,16 @@ mod testler {
                 _ => None,
             })
             .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
-        assert!(yakın_parçalar.iter().any(|parça| parça[0].x < sol));
-        assert!(yakın_parçalar.iter().any(|parça| parça[0].x > sağ));
+        assert!(
+            yakın_parçalar
+                .iter()
+                .any(|parça| parça.first().is_some_and(|nokta| nokta.x < sol))
+        );
+        assert!(
+            yakın_parçalar
+                .iter()
+                .any(|parça| parça.first().is_some_and(|nokta| nokta.x > sağ))
+        );
         Ok(())
     }
 }
