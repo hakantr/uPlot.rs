@@ -14,24 +14,25 @@ use uplot_rs::{
     ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_ARALIK_MS,
     AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ, AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
-    AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, AxisAutosizeAkışı, BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ,
-    BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, BoyutSenkronAkışı,
-    CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
-    CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ, CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği,
-    DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
-    DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ,
-    FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ, GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği,
-    Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ, HighLowBandsÖrneği,
-    LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ, LOG_SCALES_KART_TANIM_ÖRNEĞİ,
-    LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği, LinePathsÖrneği, LogScales2Örneği,
-    LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
-    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, MULTI_BARS_KART_TANIM_ÖRNEĞİ,
-    MissingDataÖrneği, MultiBarsÖrneği, NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ,
-    NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, NoDataÖrneği,
-    PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ,
-    PathGapClipÖrneği, PixelAlignAkışı, PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ,
-    SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
+    AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, AlignDataÖrneği, AxisAutosizeAkışı,
+    BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
+    BOX_WHISKER_KART_TANIM_ÖRNEĞİ, BoyutSenkronAkışı, CANDLESTICK_KART_TANIM_ÖRNEĞİ,
+    CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
+    CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri,
+    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ,
+    GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği, Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
+    HighLowBandsÖrneği, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ,
+    LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
+    LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ,
+    MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ,
+    MULTI_BARS_KART_TANIM_ÖRNEĞİ, MissingDataÖrneği, MultiBarsÖrneği,
+    NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
+    NearestNonNullÖrneği, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
+    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignAkışı,
+    PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
+    SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
     STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS, STREAM_DATA_KART_TANIM_ÖRNEĞİ,
     SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
@@ -47,24 +48,24 @@ use uplot_rs::{
     UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ, Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ,
     Y_SHIFTED_SERIES_ARALIK_MS, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ, YShiftedSeriesAkışı,
     add_del_series_ek_seçeneği, add_del_series_ek_verisi, add_del_series_kartı,
-    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, annotations_kartı,
-    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
-    axis_indicators_kartı, bars_grouped_stacked_kartları, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartları, bars_values_autosize_kartı, box_whisker_kartları,
-    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
-    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
-    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
-    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
-    log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı, missing_data_kartları,
-    missing_data_null_kartı, months_artık_yılsız_kartı, months_kartları, multi_bars_kartı,
-    nearest_non_null_kartı, nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri,
-    path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı,
-    points_kartları, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartları,
-    scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
-    soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları, sparklines_bars_kartı,
-    sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı, stacked_series_kartları,
-    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
-    sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
+    align_data_kartları, align_data_maliyet_kartı, annotations_kartı, arcsinh_scales_kartı,
+    area_fill_kartı, axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı,
+    bars_grouped_stacked_kartları, bars_grouped_stacked_kartı, bars_values_autosize_kartları,
+    bars_values_autosize_kartı, box_whisker_kartları, box_whisker_kartı, candlestick_ohlc_kartı,
+    cursor_bind_kartı, cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı,
+    data_smoothing_kartı, dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı,
+    gradients_kartı, grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı,
+    line_paths_kartı, log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı,
+    measure_datums_kartı, missing_data_kartları, missing_data_null_kartı,
+    months_artık_yılsız_kartı, months_kartları, multi_bars_kartı, nearest_non_null_kartı,
+    nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartları,
+    path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı, points_kartları, points_kartı,
+    resize_kartı, scale_padding_kartı, scales_dir_ori_kartları, scales_dir_ori_kartı,
+    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı,
+    sparklines_bars_kartları, sparklines_bars_kartı, sparklines_kartları, sparklines_kartı,
+    sparse_kartları, sparse_kartı, stacked_series_kartları, stacked_series_kartı,
+    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
+    sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
     thin_bars_stroke_fill_kartı, time_periods_kartları, time_periods_kartı,
     timeline_discrete_kartları, timeline_discrete_kartı, timeseries_discrete_kartları,
     timeseries_discrete_kartı, timezones_dst_kartları, timezones_dst_kartı, tooltips_closest_kartı,
@@ -76,7 +77,6 @@ use uplot_rs::{
 enum KartKimliği {
     AddDelSeries,
     AlignDataCost,
-    AlignDataLineBars,
     Resize,
     Annotations,
     AreaFill,
@@ -146,8 +146,7 @@ impl KartKimliği {
     fn başlık(self) -> &'static str {
         match self {
             Self::AddDelSeries => "Add/Delete Series",
-            Self::AlignDataCost => "Align Data · join cost",
-            Self::AlignDataLineBars => "Align Data · line + bars",
+            Self::AlignDataCost => "Align Data · 2 related surfaces",
             Self::Resize => "Resize · sayısal x ölçeği",
             Self::Annotations => "Annotations",
             Self::AreaFill => "Area Fill",
@@ -219,8 +218,7 @@ impl KartKimliği {
             Self::AddDelSeries => {
                 "add-del-series.html · addSeries/delSeries/setData · kaynak Y indeksi 1"
             }
-            Self::AlignDataCost => "align-data.html · 5×5×1000 tablo · NULL_EXPAND join",
-            Self::AlignDataLineBars => "align-data.html · farklı X dizilerinde çizgi + çubuk",
+            Self::AlignDataCost => "align-data.html · NULL_EXPAND maliyeti + aligned line/bars",
             Self::Resize => "resize.html + zoom-wheel.html + zoom-touch.html",
             Self::Annotations => {
                 "annotations.html · X çizgisi/aralığı · üst/alt etiket · görünürlük kırpması"
@@ -372,7 +370,7 @@ impl KartKimliği {
     fn tanım(self) -> &'static str {
         match self {
             Self::AddDelSeries => ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ,
-            Self::AlignDataCost | Self::AlignDataLineBars => ALIGN_DATA_KART_TANIM_ÖRNEĞİ,
+            Self::AlignDataCost => ALIGN_DATA_KART_TANIM_ÖRNEĞİ,
             Self::Resize => RESIZE_KART_TANIM_ÖRNEĞİ,
             Self::Annotations => ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
             Self::AreaFill => AREA_FILL_KART_TANIM_ÖRNEĞİ,
@@ -442,7 +440,7 @@ impl KartKimliği {
     fn tanım_yolu(self) -> &'static str {
         match self {
             Self::AddDelSeries => "src/kart/add_del_series.rs",
-            Self::AlignDataCost | Self::AlignDataLineBars => "src/kart/align_data.rs",
+            Self::AlignDataCost => "src/kart/align_data.rs",
             Self::Resize => "src/kart/resize.rs",
             Self::Annotations => "src/kart/annotations.rs",
             Self::AreaFill => "src/kart/area_fill.rs",
@@ -546,6 +544,8 @@ pub struct ChartListesi {
     cursor_bind_tıklama_sayısı: u32,
     dinamik_seri_sayacı: u32,
     align_data_zamanlayıcısı: Option<Task<()>>,
+    align_data_grafikleri: Vec<(AlignDataÖrneği, Entity<GpuiGrafik>)>,
+    align_data_kurulum_ms: Option<f64>,
     pixel_align_akışı: Option<PixelAlignAkışı>,
     pixel_align_son_kare: Option<Instant>,
     sine_akışı: Option<SineAkışı>,
@@ -632,7 +632,13 @@ impl ChartListesi {
         });
         cx.subscribe(&tekerlek_anahtarı, |bu, _, olay: &AnahtarOlayi, cx| {
             let AnahtarOlayi::Degisti(etkin) = *olay;
-            if bu.aktif_kart == KartKimliği::SyncCursor {
+            if bu.aktif_kart == KartKimliği::AlignDataCost {
+                for (_, grafik) in &bu.align_data_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if bu.aktif_kart == KartKimliği::SyncCursor {
                 for (_, grafik) in &bu.sync_cursor_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
@@ -821,6 +827,8 @@ impl ChartListesi {
             cursor_bind_tıklama_sayısı: 0,
             dinamik_seri_sayacı: 0,
             align_data_zamanlayıcısı: None,
+            align_data_grafikleri: Vec::new(),
+            align_data_kurulum_ms: None,
             pixel_align_akışı: None,
             pixel_align_son_kare: None,
             sine_akışı: None,
@@ -1151,6 +1159,45 @@ impl ChartListesi {
             self.nearest_non_null_grafikleri = yüzeyler;
             self.hata = None;
         }
+        cx.notify();
+    }
+
+    fn align_data_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let başlangıç = Instant::now();
+        let sonuç = align_data_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Align Data yüzeyleri oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.align_data_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.align_data_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                bu.standart_grafik_olayını_işle(olay, cx);
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.align_data_grafikleri = yüzeyler;
+        self.align_data_kurulum_ms = Some(başlangıç.elapsed().as_secs_f64() * 1_000.0);
+        self.hata = None;
         cx.notify();
     }
 
@@ -2370,6 +2417,8 @@ impl ChartListesi {
             anahtar.ayarla(etkileşimler.tekerlek_etkileşimi, cx);
             anahtar.devre_disi_ayarla(false, cx);
         });
+        self.align_data_grafikleri.clear();
+        self.align_data_kurulum_ms = None;
         self.scales_dir_ori_grafikleri.clear();
         self.scatter_grafikleri.clear();
         self.bars_grouped_stacked_grafikleri.clear();
@@ -2386,7 +2435,16 @@ impl ChartListesi {
         self.timeline_discrete_grafikleri.clear();
         self.timezones_dst_grafikleri.clear();
         self.missing_data_grafikleri.clear();
-        if kart == KartKimliği::SyncCursor {
+        if kart == KartKimliği::AlignDataCost {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.align_data_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
             self.nearest_non_null_grafikleri.clear();
@@ -2662,7 +2720,9 @@ impl ChartListesi {
                             if bu.aktif_kart != kart {
                                 return false;
                             }
-                            if let Some(grafik) = &bu.grafik {
+                            if let Some((AlignDataÖrneği::HizalamaMaliyeti, grafik)) =
+                                bu.align_data_grafikleri.first()
+                            {
                                 grafik.update(cx, |grafik, cx| {
                                     grafik.boşlukları_birleştir_ayarla(etkin, cx);
                                 });
@@ -3235,7 +3295,6 @@ fn grafik_oluştur(
     let (seçenekler, veri) = match kart {
         KartKimliği::AddDelSeries => add_del_series_kartı(),
         KartKimliği::AlignDataCost => align_data_maliyet_kartı(),
-        KartKimliği::AlignDataLineBars => align_data_çizgi_çubuk_kartı(),
         KartKimliği::Resize => resize_kartı(nokta_sayısı),
         KartKimliği::Annotations => annotations_kartı(),
         KartKimliği::AreaFill => area_fill_kartı(),
@@ -3374,9 +3433,11 @@ impl Render for ChartListesi {
                 format!("30 nokta × {mevcut_seri_sayısı} dinamik seri")
             }
             KartKimliği::AlignDataCost => {
-                "5 tablo × 5 seri × 1000 X · birleşik sıralı X".to_string()
+                format!(
+                    "2 bağımsız yüzey · 6 warmup + 1 join · {:.2} ms oturum",
+                    self.align_data_kurulum_ms.unwrap_or_default()
+                )
             }
-            KartKimliği::AlignDataLineBars => "38 noktalı çizgi + 4 çubuk".to_string(),
             KartKimliği::Resize => format!("{} nokta", self.nokta_sayısı),
             KartKimliği::Annotations => "30 nokta × 2 seri · 2 X annotation".to_string(),
             KartKimliği::AreaFill => "30 sabit nokta × 3 seri".to_string(),
@@ -3642,7 +3703,16 @@ impl Render for ChartListesi {
                     )
                 },
             );
-        if aktif_kart == KartKimliği::SyncCursor {
+        if aktif_kart == KartKimliği::AlignDataCost {
+            geri_var = self
+                .align_data_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .align_data_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::SyncCursor {
             geri_var = self
                 .sync_cursor_grafikleri
                 .iter()
@@ -4297,29 +4367,15 @@ impl Render for ChartListesi {
             .child(
                 katalog_kartı(
                     "align-data-cost",
-                    "Align Data · join cost",
+                    "Align Data · 2 related surfaces",
                     "align-data",
                     aktif_kart == KartKimliği::AlignDataCost,
-                    "5×5×1000 tablo · NULL_EXPAND",
+                    "6 warmup + join · line + bars",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(KartKimliği::AlignDataCost, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "align-data-line-bars",
-                    "Align Data · line + bars",
-                    "align-data",
-                    aktif_kart == KartKimliği::AlignDataLineBars,
-                    "Farklı X dizilerinde çizgi + çubuk",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::AlignDataLineBars, cx);
                 })),
             )
             .child(
@@ -5233,7 +5289,11 @@ impl Render for ChartListesi {
                     .turu(DugmeTuru::Hayalet)
                     .devre_disi(!geri_var || !etkileşimler.görünüm_geçmişi)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        if bu.aktif_kart == KartKimliği::SyncCursor {
+                        if bu.aktif_kart == KartKimliği::AlignDataCost {
+                            for (_, grafik) in &bu.align_data_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
+                        } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             for (_, grafik) in &bu.sync_cursor_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
                                     grafik.önceki_görünüm(cx);
@@ -5361,7 +5421,11 @@ impl Render for ChartListesi {
                     .turu(DugmeTuru::Hayalet)
                     .devre_disi(!yakınlaştırılmış || !etkileşimler.çift_tıkla_tam_görünüm)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        if bu.aktif_kart == KartKimliği::SyncCursor {
+                        if bu.aktif_kart == KartKimliği::AlignDataCost {
+                            for (_, grafik) in &bu.align_data_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
+                        } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             for (_, grafik) in &bu.sync_cursor_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
                                     grafik.tam_görünüm(cx);
@@ -5488,7 +5552,9 @@ impl Render for ChartListesi {
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Hayalet)
                     .tiklaninca(cx.listener(|bu, _, _, cx| {
-                        if bu.aktif_kart == KartKimliği::SyncCursor {
+                        if bu.aktif_kart == KartKimliği::AlignDataCost {
+                            bu.align_data_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             bu.sync_cursor_grubu = SyncCursorGrubu::yeni();
                             bu.sync_cursor_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::TimezonesDst {
@@ -5544,7 +5610,70 @@ impl Render for ChartListesi {
                 .find(|(kimlik, _)| *kimlik == örnek)
                 .map(|(_, grafik)| grafik.clone())
         };
-        let çizim = if aktif_kart == KartKimliği::SyncCursor {
+        let çizim = if aktif_kart == KartKimliği::AlignDataCost {
+            let yüzey = |örnek| {
+                self.align_data_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(1380.0))
+                .overflow_y_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("Resmî align-data.html aynı sayfada iki bağımsız uPlot örneği kurar. İlk panel 5×5×1000 tabloyu altı ısınma turundan sonra NULL_EXPAND ile birleştirir ve yalnız onun spanGaps değeri saniyede bir değişir. İkinci panel farklı X dizilerindeki yoğun çizgi ile dört seyrek barı gösterir; zoom ve imleç durumları paylaşılmaz."),
+                )
+                .children(AlignDataÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    let (genişlik, yükseklik, açıklama) = match örnek {
+                        AlignDataÖrneği::HizalamaMaliyeti => (
+                            2_560.0,
+                            600.0,
+                            "25 birleşik seri; yalnız kırmızı, yeşil ve mavi çizilir · 6 warmup + 1 sonuç join",
+                        ),
+                        AlignDataÖrneği::ÇizgiVeÇubuk => (
+                            1_920.0,
+                            600.0,
+                            "38 noktalı kırmızı çizgi + dört mavi bar · bağımsız görünür aralık",
+                        ),
+                    };
+                    div()
+                        .mt_3()
+                        .child(
+                            div()
+                                .text_sm()
+                                .font_weight(FontWeight::BOLD)
+                                .text_color(metin)
+                                .child(örnek.başlık()),
+                        )
+                        .child(div().text_xs().text_color(soluk).child(açıklama))
+                        .child(
+                            div()
+                                .id(SharedString::from(format!(
+                                    "align-data-{}-kaydirma",
+                                    örnek.kimlik()
+                                )))
+                                .w_full()
+                                .h(px(yükseklik))
+                                .overflow_x_scroll()
+                                .child(
+                                    div()
+                                        .w(px(genişlik))
+                                        .h(px(yükseklik))
+                                        .when_some(yüzey(örnek), |öğe, grafik| {
+                                            öğe.child(grafik)
+                                        }),
+                                ),
+                        )
+                }))
+        } else if aktif_kart == KartKimliği::SyncCursor {
             let cpu = sync_yüzeyi(SyncCursorÖrneği::Cpu);
             let ram = sync_yüzeyi(SyncCursorÖrneği::Ram);
             let tcp = sync_yüzeyi(SyncCursorÖrneği::Tcp);

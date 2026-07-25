@@ -73,8 +73,8 @@ pub use add_del_series::{
     add_del_series_ek_verisi, add_del_series_kartı,
 };
 pub use align_data::{
-    ALIGN_DATA_KANIT_TOHUMU, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı,
+    ALIGN_DATA_ISINMA_TURU, ALIGN_DATA_KANIT_TOHUMU, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, AlignDataÖrneği,
+    align_data_kartları, align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı,
 };
 pub use annotations::{
     ANNOTATIONS_KANIT_TOHUMU, ANNOTATIONS_KART_TANIM_ÖRNEĞİ, annotations_kartı

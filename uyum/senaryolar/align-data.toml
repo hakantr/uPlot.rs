@@ -6,21 +6,30 @@ device_pixel_ratio = 1
 durum = "join-ve-karma-cizim"
 
 [veri]
-tablo_sayısı = 5
-tablo_başına_seri = 5
-tablo_başına_x = 1000
-x_aralığı = "0..=100000"
-y_aralığı = "0..=100"
+tablo_sayisi = 5
+tablo_basina_seri = 5
+tablo_basina_x = 1000
+x_araligi = "0..=100000"
+y_araligi = "0..=100"
 null_kipi = "NULL_EXPAND"
-kanıt_tohumu = "0xA119_DA7A"
+kanit_tohumu = "0xA119_DA7A"
 
-[davranış]
+[davranis]
 join_api = "hizalı_verileri_birleştir"
-explicit_null_ve_undefined_ayrımı = true
-span_gaps_değişim_ms = 1000
+explicit_null_ve_undefined_ayrimi = true
+span_gaps_degisim_ms = 1000
 karma_cizgi_cubuk = true
+tek_kartta_yuzey_sayisi = 2
+yuzeyler_bagimsiz = true
+zamanlayici_yalniz_ilk_yuzeyde = true
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+[performans]
+isinma_turu = 6
+sonuc_join_turu = 1
+union_indeksleme = "tek HashMap; kaynak hücre yerleştirme ortalama O(1)"
+null_expand = "seri başına boşluk koşularında doğrusal tek geçiş"
+
+[kanit]
+masaustu = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg = "target/align-data.svg"

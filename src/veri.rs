@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::hata::UplotHatası;
 
 /// uPlot'un sütunlu, ortak x eksenine hizalı veri biçimi.
@@ -184,6 +186,21 @@ pub fn hizalı_verileri_birleştir(
         .collect::<Vec<_>>();
     x.sort_by(f64::total_cmp);
     x.dedup_by(|sol, sağ| *sol == *sağ);
+    // uPlot bir kez `Map<X, index>` kurup bütün kaynak hücrelerini O(1)
+    // ortalama maliyetle yerleştirir. Sonlu f64 değerlerini bit anahtarıyla
+    // taşırken `-0.0 == 0.0` eşitliğini de koruyoruz.
+    let x_indeksleri = x
+        .iter()
+        .enumerate()
+        .map(|(indeks, değer)| {
+            let anahtar = if *değer == 0.0 {
+                0_u64
+            } else {
+                değer.to_bits()
+            };
+            (anahtar, indeks)
+        })
+        .collect::<HashMap<_, _>>();
     let mut birleşik_seriler = Vec::new();
     let mut birleşik_maskeler = Vec::new();
 
@@ -196,9 +213,13 @@ pub fn hizalı_verileri_birleştir(
                 .unwrap_or(BoşlukKipi::Koru);
             let mut değerler = vec![None; x.len()];
             let mut hizalama_maskesi = vec![true; x.len()];
-            let mut açık_boşluklar = Vec::new();
             for (kaynak_indeksi, x_değeri) in tablo.x().iter().enumerate() {
-                let Ok(hedef_indeksi) = x.binary_search_by(|aday| aday.total_cmp(x_değeri)) else {
+                let anahtar = if *x_değeri == 0.0 {
+                    0_u64
+                } else {
+                    x_değeri.to_bits()
+                };
+                let Some(&hedef_indeksi) = x_indeksleri.get(&anahtar) else {
                     continue;
                 };
                 let değer = seri.get(kaynak_indeksi).copied().flatten();
@@ -209,34 +230,38 @@ pub fn hizalı_verileri_birleştir(
                     if let Some(maske) = hizalama_maskesi.get_mut(hedef_indeksi) {
                         *maske = false;
                     }
-                } else if kip != BoşlukKipi::Kaldır {
-                    if let Some(maske) = hizalama_maskesi.get_mut(hedef_indeksi) {
-                        *maske = false;
-                    }
-                    if kip == BoşlukKipi::Genişlet {
-                        açık_boşluklar.push(hedef_indeksi);
-                    }
+                } else if kip != BoşlukKipi::Kaldır
+                    && let Some(maske) = hizalama_maskesi.get_mut(hedef_indeksi)
+                {
+                    *maske = false;
                 }
             }
             if kip == BoşlukKipi::Genişlet {
-                for boşluk in açık_boşluklar {
-                    let mut sol = boşluk;
-                    while let Some(önceki) = sol.checked_sub(1) {
-                        if değerler.get(önceki).is_some_and(Option::is_some) {
-                            break;
-                        }
-                        if let Some(maske) = hizalama_maskesi.get_mut(önceki) {
-                            *maske = false;
-                        }
-                        sol = önceki;
+                // Her None koşusunu yalnız bir kez tara. Koşuda en az bir açık
+                // `null` varsa komşu hizalama `undefined` hücreleri de null'a
+                // genişler. Böylece uzun null koşularında tekrarlı sol/sağ
+                // yürüyüşün karesel kötü durumu ortadan kalkar.
+                let mut başlangıç = 0;
+                while başlangıç < değerler.len() {
+                    if değerler.get(başlangıç).is_some_and(Option::is_some) {
+                        başlangıç += 1;
+                        continue;
                     }
-                    let mut sağ = boşluk.saturating_add(1);
-                    while değerler.get(sağ).is_some_and(Option::is_none) {
-                        if let Some(maske) = hizalama_maskesi.get_mut(sağ) {
-                            *maske = false;
-                        }
-                        sağ = sağ.saturating_add(1);
+                    let mut bitiş = başlangıç + 1;
+                    let mut açık_null_var = hizalama_maskesi
+                        .get(başlangıç)
+                        .is_some_and(|hizalama_eksiği| !hizalama_eksiği);
+                    while değerler.get(bitiş).is_some_and(Option::is_none) {
+                        açık_null_var |= hizalama_maskesi
+                            .get(bitiş)
+                            .is_some_and(|hizalama_eksiği| !hizalama_eksiği);
+                        bitiş += 1;
                     }
+                    if açık_null_var && let Some(koşu) = hizalama_maskesi.get_mut(başlangıç..bitiş)
+                    {
+                        koşu.fill(false);
+                    }
+                    başlangıç = bitiş;
                 }
             }
             birleşik_seriler.push(değerler);
@@ -291,6 +316,35 @@ mod birleştirme_testleri {
         assert!(!birleşik.hizalama_eksiği_mi(0, 4));
         assert!(!birleşik.hizalama_eksiği_mi(0, 5));
         assert!(birleşik.hizalama_eksiği_mi(1, 5));
+        Ok(())
+    }
+
+    #[test]
+    fn join_null_kipleri_ve_sıfır_anahtarı_korunur() -> Result<(), UplotHatası> {
+        let kaynak =
+            HizalıVeri::yeni(vec![-0.0, 2.0, 4.0], vec![vec![Some(1.0), None, Some(3.0)]])?;
+        let referans = HizalıVeri::yeni(vec![0.0, 1.0, 3.0, 4.0], vec![])?;
+
+        let kaldır = hizalı_verileri_birleştir(
+            &[kaynak.clone(), referans.clone()],
+            Some(&[vec![BoşlukKipi::Kaldır], vec![]]),
+        )?;
+        let koru = hizalı_verileri_birleştir(
+            &[kaynak.clone(), referans.clone()],
+            Some(&[vec![BoşlukKipi::Koru], vec![]]),
+        )?;
+        let genişlet = hizalı_verileri_birleştir(
+            &[kaynak, referans],
+            Some(&[vec![BoşlukKipi::Genişlet], vec![]]),
+        )?;
+
+        assert_eq!(genişlet.x(), &[-0.0, 1.0, 2.0, 3.0, 4.0]);
+        assert!(kaldır.hizalama_eksiği_mi(0, 2));
+        assert!(!koru.hizalama_eksiği_mi(0, 2));
+        assert!(koru.hizalama_eksiği_mi(0, 1));
+        assert!(!genişlet.hizalama_eksiği_mi(0, 1));
+        assert!(!genişlet.hizalama_eksiği_mi(0, 2));
+        assert!(!genişlet.hizalama_eksiği_mi(0, 3));
         Ok(())
     }
 }

@@ -3416,7 +3416,14 @@ mod testler {
         let svg = karma.svg(960, 400);
         assert!(svg.contains("#ff0000"));
         assert_eq!(svg.matches("fill=\"#0000ff1a\"").count(), 4);
-        assert!(align_data_kart_tanim_ornegi().contains("align_data_maliyet_kartı"));
+        assert!(align_data_kart_tanim_ornegi().contains("align_data_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(web.matches("data-kart=\"align-data-cost\"").count(), 1);
+        assert!(!web.contains("data-kart=\"align-data-line-bars\""));
+        assert!(web.contains("let alignDataOturumları = []"));
+        assert!(web.contains("alignDataOturumları[0].bosluklari_birlestir_ayarla"));
+        assert!(web.contains("if (yalnızİlk) alignDataYüzeyiniÇiz(0)"));
+        assert!(web.contains("const alignOturumMs = performance.now() - alignBaşlangıcı"));
     }
 
     #[test]

@@ -7,13 +7,46 @@ use crate::{
 };
 
 pub const ALIGN_DATA_KANIT_TOHUMU: u32 = 0xA119_DA7A;
+pub const ALIGN_DATA_ISINMA_TURU: usize = 6;
 
-pub const ALIGN_DATA_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = align_data_maliyet_kartı()?;
-let mut grafik = Grafik::yeni(seçenekler, veri)?;
-grafik.boşlukları_birleştir_ayarla(true);
+pub const ALIGN_DATA_KART_TANIM_ÖRNEĞİ: &str = r##"let paneller = align_data_kartları()?;
+let mut grafikler = paneller
+    .into_iter()
+    .map(|(örnek, seçenekler, veri)| Ok((örnek, Grafik::yeni(seçenekler, veri)?)))
+    .collect::<Result<Vec<_>, UplotHatası>>()?;
 
-let (karma_seçenekler, karma_veri) = align_data_çizgi_çubuk_kartı()?;
-let karma_grafik = Grafik::yeni(karma_seçenekler, karma_veri)?;"##;
+// Kaynakta yalnız ilk panelin spanGaps değeri saniyede bir değişir.
+if let Some((_, maliyet)) = grafikler.first_mut() {
+    maliyet.boşlukları_birleştir_ayarla(true);
+}"##;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AlignDataÖrneği {
+    HizalamaMaliyeti,
+    ÇizgiVeÇubuk,
+}
+
+impl AlignDataÖrneği {
+    pub const TÜMÜ: [Self; 2] = [Self::HizalamaMaliyeti, Self::ÇizgiVeÇubuk];
+
+    pub const fn kimlik(self) -> &'static str {
+        match self {
+            Self::HizalamaMaliyeti => "alignment-cost",
+            Self::ÇizgiVeÇubuk => "aligned-line-bars",
+        }
+    }
+
+    pub const fn başlık(self) -> &'static str {
+        match self {
+            Self::HizalamaMaliyeti => "Alignment Cost · NULL_EXPAND",
+            Self::ÇizgiVeÇubuk => "Aligned Line + Bars",
+        }
+    }
+
+    pub const fn canlı_mı(self) -> bool {
+        matches!(self, Self::HizalamaMaliyeti)
+    }
+}
 
 fn rastgele_tamsayı(rastgele: &mut KanıtRastgele, en_az: u32, en_çok: u32) -> u32 {
     let uzunluk = en_çok.saturating_sub(en_az).saturating_add(1);
@@ -48,6 +81,9 @@ fn kaynak_tabloları() -> Result<Vec<HizalıVeri>, UplotHatası> {
 pub fn align_data_maliyet_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
     let tablolar = kaynak_tabloları()?;
     let kipler = vec![vec![BoşlukKipi::Genişlet; 5]; 5];
+    for _ in 0..ALIGN_DATA_ISINMA_TURU {
+        drop(hizalı_verileri_birleştir(&tablolar, Some(&kipler))?);
+    }
     let veri = hizalı_verileri_birleştir(&tablolar, Some(&kipler))?;
     let renkler = [
         ("Red", "#ff0000", "#ff00001a"),
@@ -88,7 +124,6 @@ pub fn align_data_çizgi_çubuk_kartı() -> Result<(GrafikSeçenekleri, HizalıV
     ];
     let veri = hizalı_verileri_birleştir(&tablolar, None)?;
     let seçenekler = GrafikSeçenekleri::yeni(1_920, 600)?
-        .başlık("Aligned Line + Bars")
         .x_zaman(false)
         .y_aralığı(Aralık::yeni(0.0, 20.0)?)
         .etkileşimler(ortak_kart_etkileşimleri())
@@ -100,6 +135,22 @@ pub fn align_data_çizgi_çubuk_kartı() -> Result<(GrafikSeçenekleri, HizalıV
                 .çubuk(true),
         );
     Ok((seçenekler, veri))
+}
+
+/// Resmî `align-data.html` sayfasındaki iki bağımsız yüzeyi tek kart
+/// sahipliğinde ve kaynak sırasıyla üretir.
+pub fn align_data_kartları()
+-> Result<Vec<(AlignDataÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    let (maliyet_seçenekleri, maliyet_verisi) = align_data_maliyet_kartı()?;
+    let (karma_seçenekler, karma_veri) = align_data_çizgi_çubuk_kartı()?;
+    Ok(vec![
+        (
+            AlignDataÖrneği::HizalamaMaliyeti,
+            maliyet_seçenekleri,
+            maliyet_verisi,
+        ),
+        (AlignDataÖrneği::ÇizgiVeÇubuk, karma_seçenekler, karma_veri),
+    ])
 }
 
 #[cfg(test)]
@@ -115,6 +166,22 @@ mod testler {
         assert!(veri.seriler().iter().flatten().any(Option::is_none));
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
         let ayrı = grafik.çiz();
+        assert_eq!(
+            grafik
+                .seri_seçenekleri()
+                .iter()
+                .filter(|seri| seri.göster)
+                .count(),
+            3
+        );
+        assert_eq!(
+            ayrı
+                .komutlar()
+                .iter()
+                .filter(|komut| matches!(komut, Komut::Yol { .. }))
+                .count(),
+            3
+        );
         assert!(grafik.boşlukları_birleştir_ayarla(true));
         assert_ne!(grafik.çiz(), ayrı);
         Ok(())
@@ -140,6 +207,33 @@ mod testler {
                 .count(),
             4
         );
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_iki_bağımsız_paneli_tek_kartta_ve_sırayla_tutar() -> Result<(), UplotHatası> {
+        let paneller = align_data_kartları()?;
+        assert_eq!(paneller.len(), 2);
+        assert_eq!(
+            paneller
+                .iter()
+                .map(|(örnek, _, _)| *örnek)
+                .collect::<Vec<_>>(),
+            AlignDataÖrneği::TÜMÜ
+        );
+        let Some((ilk, kalan)) = paneller.split_first() else {
+            return Err(UplotHatası::YetersizVeri { uzunluk: 0 });
+        };
+        let Some((ikinci, _)) = kalan.split_first() else {
+            return Err(UplotHatası::YetersizVeri { uzunluk: 1 });
+        };
+        assert_eq!(ilk.1.genişlik, 2_560);
+        assert_eq!(ilk.1.yükseklik, 600);
+        assert_eq!(ikinci.1.genişlik, 1_920);
+        assert_eq!(ikinci.1.yükseklik, 600);
+        assert_eq!(ALIGN_DATA_ISINMA_TURU, 6);
+        assert!(ilk.0.canlı_mı());
+        assert!(!ikinci.0.canlı_mı());
         Ok(())
     }
 }

@@ -1363,14 +1363,14 @@
     {
       "sıra": 20,
       "id": "align-data",
-      "başlık": { "en": "Alignment Cost", "tr": "Veri Hizalama Maliyeti" },
+      "başlık": { "en": "Align Data · Related Surfaces", "tr": "Veri Hizalama · İlişkili Yüzeyler" },
       "kaynak": "demos/align-data.html",
       "kaynak_sha256": "f16bc0405d64f219082a0b9a17645f05667e54952bb1a10cda898a3ad1920338",
       "ek_kaynaklar": [
         { "yol": "src/utils.js", "sha256": "8df33192e0ab7b4f4cf64fae9829fc0dc0300a618668699f43c5881ed8a0553c" },
         { "yol": "src/paths/bars.js", "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56" }
       ],
-      "fixture": "src/kart/align_data.rs#align_data_maliyet_kartı",
+      "fixture": "src/kart/align_data.rs#align_data_kartları",
       "örnek": "examples/align_data.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -1407,8 +1407,13 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "source-equivalent-five-by-five-by-thousand-tables",
+        "single-card-two-independent-source-surfaces",
+        "source-order-2560x600-and-1920x600-panels",
+        "six-warmup-one-result-join-protocol",
         "seeded-reference-random-stream",
         "sorted-union-x-join",
+        "single-union-index-map-average-constant-placement",
+        "linear-null-expand-run-scan",
         "null-remove-retain-expand-modes",
         "explicit-null-versus-alignment-artifact",
         "source-one-second-span-gaps-toggle",
@@ -1421,7 +1426,7 @@
         "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı",
         "davranış": "uygulandı_kanıtlı",
-        "performans": "kısmi"
+        "performans": "uygulandı_kanıtlı"
       }
     },
     {

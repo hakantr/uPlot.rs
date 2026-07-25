@@ -282,6 +282,22 @@
     .scatter-grafik .imlec-bilgi-kutusu { position: sticky; z-index: 5; left: 8px;
                                           bottom: 32px; width: max-content;
                                           margin: -26px 8px 4px; }
+    #chart.align-data-yüzeyi { display: block; min-width: 0; overflow-y: auto;
+                                overflow-x: hidden; padding: 8px; box-sizing: border-box; }
+    .align-data-yığın { width: 100%; min-width: 0; display: grid; gap: 14px; }
+    .align-data-grafik { position: relative; width: 100%; min-width: 0;
+                         overflow-x: auto; overflow-y: hidden;
+                         border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+    .align-data-grafik > h3, .align-data-grafik > p {
+      position: sticky; z-index: 4; left: 8px; width: max-content;
+      max-width: calc(100% - 16px); margin: 6px 8px 2px; padding: 2px 6px;
+      border-radius: 4px; background: rgba(255,255,255,.9); color: #111827;
+    }
+    .align-data-grafik > h3 { font-size: 13px; }
+    .align-data-grafik > p { color: #6b7280; font-size: 10px; }
+    .align-data-grafik svg { display: block; height: 600px !important; max-width: none; }
+    .align-data-grafik[data-align-data-index="0"] svg { width: 2560px !important; }
+    .align-data-grafik[data-align-data-index="1"] svg { width: 1920px !important; }
     #chart.bars-grouped-stacked-yüzeyi { display: block; min-width: 0; overflow: auto;
                                          place-items: unset; padding: 8px;
                                          box-sizing: border-box; }
@@ -2576,40 +2592,31 @@
         maliyet: "Yeni sütun üretimi O(N), hizalı veri yapısı O(N×S) doğrulanır ve görünür yollar O(N×S) yeniden çizilir. WASM dış kabuğu, SVG kökü ve kontrol odağı yerinde kalır.",
       },
     };
-    for (const [kimlik, başlık, durum] of [
-      ["align-data-cost", "Align Data · join cost", "5×5×1000 tablo · NULL_EXPAND"],
-      ["align-data-line-bars", "Align Data · line + bars", "Farklı X dizilerinde çizgi + çubuk"],
-    ]) {
-      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>align-data</small><div class="durum">${durum}</div>
-        </article>`);
-    }
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="align-data-cost" aria-current="false" tabindex="0">
+        <strong>Align Data · 2 related surfaces</strong><small>align-data</small>
+        <div class="durum">6 warmup + join · line + bars</div>
+      </article>`);
     kartlar["align-data-cost"] = {
-      başlık: "Align Data · join cost",
+      başlık: "Align Data · 2 related surfaces",
       kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/align-data.html">align-data.html</a>
         · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/utils.js">uPlot.join</a>
-        <br>Kaynaktaki 5×5×1000 rastgele tablo sabit kanıt tohumu ile üretilir; sıralı X birleşimi ve NULL_EXPAND semantiği çekirdektedir. spanGaps kaynak gibi her saniye değişir.`,
+        <br>Kaynağın iki bağımsız yüzeyi tek kartta ve aynı sırada tutulur. İlk yüzey 5×5×1000 tabloyu altı ısınma turundan sonra NULL_EXPAND ile birleştirir; yalnız onun spanGaps değeri saniyede bir değişir. İkinci yüzey 38 noktalı kırmızı çizgi ile dört mavi barı farklı X dizilerinden hizalar.`,
       tanım: () => align_data_kart_tanim_ornegi(),
       tanımYolu: "src/kart/align_data.rs",
       seriler: [
         { etiket: "Red", renk: "#ff0000" }, { etiket: "Green", renk: "#008000" },
         { etiket: "Blue", renk: "#0000ff" },
       ],
-      yardım: "uPlot.join · explicit null ile hizalama eksiği ayrı korunur · spanGaps her saniye değişir",
+      yardım: "İki bağımsız yüzey · yalnız ilk panel canlı · Shift+wheel X / Ctrl+wheel Y",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
-    };
-    kartlar["align-data-line-bars"] = {
-      başlık: "Align Data · line + bars",
-      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/align-data.html">align-data.html</a>
-        <br>38 noktalı kırmızı çizgi ve dört noktalı mavi çubuk serisi farklı X dizilerinden uPlot.join eşdeğeriyle hizalanır.`,
-      tanım: () => align_data_kart_tanim_ornegi(),
-      tanımYolu: "src/kart/align_data.rs",
-      seriler: [{ etiket: "Line", renk: "#ff0000" }, { etiket: "Bars", renk: "#0000ff" }],
-      yardım: "Aynı sahnede seri başına çizgi ve çubuk yolu · ortak yakınlaştırma profili",
-      değişkenNokta: false,
-      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Farklı X dizilerini null ile undefined ayrımını kaybetmeden hizalamayı ve aynı kaynak sayfasındaki maliyet/karma çizim sonuçlarını birlikte karşılaştırmayı gösterir.",
+        api: "align_data_kartları() iki bağımsız Grafik tanımını kaynak sırasıyla döndürür. uPlot.join NULL_EXPAND eşdeğeri explicit null hücrelerini hizalama eksiklerinden ayrı tutar.",
+        izleme: "Farklı zaman damgalarında gelen CPU, RAM ve ağ telemetrisini ortak zaman eksenine alırken boş ölçüm ile hiç gelmemiş ölçümü ayırmak için kullanılır.",
+        maliyet: "Union X için tek O(M) indeks haritası kurulur; kaynak hücreleri ortalama O(1) yerleştirilir ve NULL_EXPAND her seri boşluk koşusunu yalnız bir kez tarar. Kaynak protokolü 6 ısınma + 1 sonuç join olarak korunur.",
+      },
     };
     document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
       <article class="kart" data-kart="cursor-tooltip" aria-current="false" tabindex="0">
@@ -2948,6 +2955,8 @@
     }
 
     let oturum = null;
+    let alignDataOturumları = [];
+    let alignDataEtkinİndeks = 0;
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
     let timeseriesDiscreteEtkinİndeks = 0;
@@ -3029,6 +3038,20 @@
       { kimlik: "sync-cursor-tcp", başlık: "TCP", seriler: [["TCP 1", "red"], ["TCP 2", "green"], ["TCP 3", "blue"]] },
       { kimlik: "sync-cursor-mismatch-red-blue", başlık: "Mis-matched series order", seriler: [["red", "red"], ["blue", "blue"]] },
       { kimlik: "sync-cursor-mismatch-green-red", başlık: "Mis-matched series order", seriler: [["green", "green"], ["red", "red"]] },
+    ];
+    const alignDataYüzeyleri = [
+      {
+        kimlik: "align-data-cost",
+        başlık: "Alignment Cost · NULL_EXPAND",
+        açıklama: "25 birleşik seri; yalnız kırmızı, yeşil ve mavi çizilir · 6 warmup + 1 sonuç join",
+        boyut: [2560, 600],
+      },
+      {
+        kimlik: "align-data-line-bars",
+        başlık: "Aligned Line + Bars",
+        açıklama: "38 noktalı kırmızı çizgi + dört mavi bar · bağımsız görünür aralık",
+        boyut: [1920, 600],
+      },
     ];
     const nearestNonNullYüzeyleri = [
       {
@@ -3129,6 +3152,14 @@
     }
 
     function kontrolleriGüncelle() {
+      if (aktifKart === "align-data-cost") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !alignDataOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !alignDataOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
       if (aktifKart === "sync-cursor") {
         görünümGeri.disabled = !etkileşimler.geçmiş
           || !syncCursorOturumları.some(yüzey => yüzey.geri_var());
@@ -5464,6 +5495,77 @@
       kontrolleriGüncelle();
     }
 
+    function alignDataYüzeyiniÇiz(indeks) {
+      const tanım = alignDataYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-align-data-index="${indeks}"]`);
+      const yüzeyOturumu = alignDataOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const öncekiKaydırma = yüzey.scrollLeft;
+      let svg = yüzey.querySelector("svg");
+      const şablon = document.createElement("template");
+      şablon.innerHTML = yüzeyOturumu.svg(tanım.boyut[0], tanım.boyut[1]).trim();
+      const yeniSvg = şablon.content.querySelector("svg");
+      if (svg && yeniSvg) {
+        svgYüzeyiniYerindeGüncelle(svg, yeniSvg);
+      } else {
+        const ölçüm = indeks === 0 && chart.dataset.alignDataOlcumMs
+          ? ` · 6+1 join oturumu ${chart.dataset.alignDataOlcumMs} ms`
+          : "";
+        yüzey.innerHTML = `
+          <h3>${tanım.başlık}</h3>
+          <p>${tanım.açıklama}${ölçüm}</p>
+          ${yüzeyOturumu.svg(tanım.boyut[0], tanım.boyut[1])}`;
+        svg = yüzey.querySelector("svg");
+      }
+      yüzey.scrollLeft = öncekiKaydırma;
+      if (!svg) return;
+      if (!svg.querySelector(":scope > #etkileşim")) {
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)"
+              stroke="#3b82f6"/>
+            <line id="imleç-x" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            <line id="imleç-y" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            <circle id="imleç-nokta-0" visibility="hidden" r="4"
+              fill="#ff0000" stroke="#ffffff"/>
+            <circle id="imleç-nokta-1" visibility="hidden" r="4"
+              fill="${indeks === 0 ? "#008000" : "#0000ff"}" stroke="#ffffff"/>
+            ${indeks === 0
+              ? `<circle id="imleç-nokta-2" visibility="hidden" r="4"
+                   fill="#0000ff" stroke="#ffffff"/>`
+              : ""}
+          </g>`);
+      }
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      svg.dataset.etkileşim = "independent-align-data";
+      yüzey.onpointerenter = () => {
+        alignDataEtkinİndeks = indeks;
+        oturum = alignDataOturumları[indeks] ?? null;
+        kontrolleriGüncelle();
+      };
+    }
+
+    function alignDataÇiz(yalnızİlk = false) {
+      if (!chart.classList.contains("align-data-yüzeyi")
+        || chart.querySelectorAll(".align-data-grafik").length !== alignDataYüzeyleri.length) {
+        chart.className = "align-data-yüzeyi";
+        chart.innerHTML = `<div class="align-data-yığın">
+          ${alignDataYüzeyleri.map((_, indeks) =>
+            `<article class="align-data-grafik" data-align-data-index="${indeks}"></article>`
+          ).join("")}
+        </div>`;
+      }
+      if (yalnızİlk) alignDataYüzeyiniÇiz(0);
+      else alignDataYüzeyleri.forEach((_, indeks) => alignDataYüzeyiniÇiz(indeks));
+      oturum = alignDataOturumları[alignDataEtkinİndeks]
+        ?? alignDataOturumları[0]
+        ?? null;
+      kontrolleriGüncelle();
+    }
+
     function scatterYüzeyiniÇiz(indeks) {
       const tanım = scatterYüzeyleri[indeks];
       const yüzey = chart.querySelector(`[data-scatter-index="${indeks}"]`);
@@ -6519,6 +6621,10 @@
     }
 
     function çiz() {
+      if (aktifKart === "align-data-cost") {
+        alignDataÇiz();
+        return;
+      }
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
         return;
@@ -6629,6 +6735,7 @@
       chart.classList.remove("points-yüzeyi");
       chart.classList.remove("scales-dir-ori-yüzeyi");
       chart.classList.remove("scatter-yüzeyi");
+      chart.classList.remove("align-data-yüzeyi");
       chart.classList.remove("soft-minmax-yüzeyi");
       chart.classList.remove("sparklines-bars-yüzeyi");
       chart.classList.remove("sparklines-yüzeyi");
@@ -6935,7 +7042,9 @@
     function yüzeyiEşitle(hedefSvg = null) {
       const doğrudanSvg = typeof SVGSVGElement !== "undefined"
         && hedefSvg instanceof SVGSVGElement ? hedefSvg : null;
-      const svg = doğrudanSvg ?? (aktifKart === "scatter"
+      const svg = doğrudanSvg ?? (aktifKart === "align-data-cost"
+        ? chart.querySelector(`[data-align-data-index="${alignDataEtkinİndeks}"] svg`)
+        : aktifKart === "scatter"
         ? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"] svg`)
         : aktifKart === "box-whisker"
           ? chart.querySelector(`[data-box-whisker-index="${boxWhiskerEtkinİndeks}"] svg`)
@@ -7039,7 +7148,10 @@
     }
 
     function svgKonumu(olay) {
-      const bağımsızYüzey = aktifKart === "scatter"
+      const bağımsızYüzey = aktifKart === "align-data-cost"
+        ? olay.target?.closest?.(".align-data-grafik")
+          ?? chart.querySelector(`[data-align-data-index="${alignDataEtkinİndeks}"]`)
+        : aktifKart === "scatter"
         ? olay.target?.closest?.(".scatter-grafik")
           ?? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"]`)
         : aktifKart === "bars-grouped-stacked"
@@ -7090,6 +7202,13 @@
                 `[data-timeline-discrete-index="${timelineDiscreteEtkinİndeks}"]`
               )
           : null;
+      if (aktifKart === "align-data-cost" && bağımsızYüzey) {
+        const indeks = Number(bağımsızYüzey.dataset.alignDataIndex);
+        if (Number.isInteger(indeks) && alignDataOturumları[indeks]) {
+          alignDataEtkinİndeks = indeks;
+          oturum = alignDataOturumları[indeks];
+        }
+      }
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
       if (!svg) return { x: NaN, y: NaN, svg: null, view: { width: 0, height: 0 } };
       const view = svg.viewBox.baseVal;
@@ -8231,7 +8350,10 @@
     }, { passive: false });
 
     görünümGeri.addEventListener("click", () => {
-      if (aktifKart === "sync-cursor") {
+      if (aktifKart === "align-data-cost") {
+        alignDataOturumları.forEach(yüzey => yüzey.onceki_gorunum());
+        alignDataÇiz();
+      } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.onceki_gorunum()) syncCursorYüzeyiÇiz(indeks);
         });
@@ -8305,7 +8427,10 @@
       } else if (oturum?.onceki_gorunum()) çiz();
     });
     tamGörünüm.addEventListener("click", () => {
-      if (aktifKart === "sync-cursor") {
+      if (aktifKart === "align-data-cost") {
+        alignDataOturumları.forEach(yüzey => yüzey.tam_gorunum());
+        alignDataÇiz();
+      } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.tam_gorunum()) syncCursorYüzeyiÇiz(indeks);
         });
@@ -8380,7 +8505,11 @@
     });
     tekerlekEtkileşimi.addEventListener("change", () => {
       etkileşimler.tekerlek = tekerlekEtkileşimi.checked;
-      if (aktifKart === "sync-cursor") {
+      if (aktifKart === "align-data-cost") {
+        alignDataOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
@@ -8695,6 +8824,7 @@
         syncYZeroZamanlayıcıları.forEach(clearTimeout);
         syncYZeroZamanlayıcıları = [];
         const gruplanmışOturum = [
+          alignDataOturumları,
           syncCursorOturumları,
           timeseriesDiscreteOturumları,
           timezonesDstOturumları,
@@ -8721,6 +8851,9 @@
         ].some(yüzeyler => yüzeyler.includes(oturum));
         if (!gruplanmışOturum) oturum?.free();
         oturum = null;
+        alignDataOturumları.forEach(yüzey => yüzey.free());
+        alignDataOturumları = [];
+        alignDataEtkinİndeks = 0;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
         syncCursorOturumları = [];
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
@@ -8781,6 +8914,7 @@
         syncCursorDokunmalar.clear();
         sonDatumOranı = null;
         aktifKart = kimlik;
+        delete chart.dataset.alignDataOlcumMs;
         chart.scrollLeft = 0;
         chart.scrollTop = 0;
         if (kimlik === "sync-y-zero") {
@@ -8831,6 +8965,35 @@
         etkileşimler = kart.etkileşimler();
         tekerlekEtkileşimi.checked = etkileşimler.tekerlek;
         tekerlekEtkileşimi.closest("label").hidden = false;
+        if (kimlik === "align-data-cost") {
+          alignDataEtkinİndeks = 0;
+          const alignBaşlangıcı = performance.now();
+          const maliyetOturumu = new KartOturumu(alignDataYüzeyleri[0].kimlik, 100);
+          const alignOturumMs = performance.now() - alignBaşlangıcı;
+          const karmaOturum = new KartOturumu(alignDataYüzeyleri[1].kimlik, 100);
+          alignDataOturumları = [maliyetOturumu, karmaOturum];
+          alignDataOturumları.forEach(yüzey =>
+            yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+          );
+          chart.dataset.alignDataOlcumMs = alignOturumMs.toFixed(2);
+          console.info(
+            `[align-data] 6 warmup + 1 result join session: ${alignOturumMs.toFixed(2)} ms`
+          );
+          oturum = alignDataOturumları[0] ?? null;
+          çiz();
+          let boşluklarıBirleştir = false;
+          alignDataZamanlayıcı = setInterval(() => {
+            if (aktifKart !== kimlik || alignDataOturumları.length !== 2) {
+              clearInterval(alignDataZamanlayıcı);
+              alignDataZamanlayıcı = null;
+              return;
+            }
+            boşluklarıBirleştir = !boşluklarıBirleştir;
+            alignDataOturumları[0].bosluklari_birlestir_ayarla(boşluklarıBirleştir);
+            alignDataÇiz(true);
+          }, 1000);
+          return;
+        }
         if (kimlik === "sync-cursor") {
           syncCursorKöprüsü = new SyncCursorKoprusu();
           syncCursorEtkin.checked = syncCursorKöprüsü.senkron();
@@ -9253,19 +9416,7 @@
             }
           }, 500);
         }
-        if (kimlik === "align-data-cost") {
-          let boşluklarıBirleştir = false;
-          alignDataZamanlayıcı = setInterval(() => {
-            if (aktifKart !== kimlik || !oturum) {
-              clearInterval(alignDataZamanlayıcı);
-              alignDataZamanlayıcı = null;
-              return;
-            }
-            boşluklarıBirleştir = !boşluklarıBirleştir;
-            oturum.bosluklari_birlestir_ayarla(boşluklarıBirleştir);
-            çiz();
-          }, 1000);
-        } else if (kimlik === "y-shifted-series") {
+        if (kimlik === "y-shifted-series") {
           alignDataZamanlayıcı = setInterval(() => {
             if (aktifKart !== kimlik || !oturum) {
               clearInterval(alignDataZamanlayıcı);
