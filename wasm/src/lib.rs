@@ -3209,6 +3209,10 @@ mod testler {
         let web = include_str!("../www/index.html");
         assert!(web.contains("function syncCursorGörünümünüYay"));
         assert!(web.contains("function syncCursorSeriGörünürlüğünüDeğiştir"));
+        assert!(web.contains("function syncCursorOdakStilleriniGüncelle"));
+        assert!(web.contains("dataset.syncSeriesPath"));
+        assert!(web.contains("function syncCursorEtkinGrupİndeksleri"));
+        assert!(web.contains("dataset.syncRenderCount"));
         assert!(web.contains("veriY: yAralığı[1] - mantıksal[1]"));
         assert!(sync_cursor_kart_tanim_ornegi().contains("SyncCursorGrubu"));
         assert_eq!(kart_sayisi(), 365);

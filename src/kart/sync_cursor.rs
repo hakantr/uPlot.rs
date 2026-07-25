@@ -181,8 +181,9 @@ impl SyncCursorGrubu {
     }
 
     pub fn fare_bırak(&mut self, kaynak: SyncCursorÖrneği) -> Vec<(SyncCursorÖrneği, bool)> {
-        // İkinci kaynak grubu yalnız cursor ve setSeries paylaşır. Kaynak
-        // örnekte bu iki grafiğin cursor'unda `lock:true` yoktur.
+        // İkinci kaynak grubu cursor, setSeries ve senkron giriş olaylarından
+        // doğan X seçimini paylaşır; kaynakta bu iki cursor `lock:true`
+        // kullanmadığı için mouseup kilit durumu üretmez.
         if kaynak.grup() == 1 {
             return Vec::new();
         }
@@ -444,16 +445,49 @@ mod testler {
     fn seçim_x_penceresi_hedefe_y_ölçeğini_kilitlemeden_taşınır() -> Result<(), UplotHatası> {
         let (kaynak_seçenekleri, kaynak_verisi) = sync_cursor_kartı(SyncCursorÖrneği::Cpu)?;
         let (hedef_seçenekleri, hedef_verisi) = sync_cursor_kartı(SyncCursorÖrneği::Ram)?;
+        let (tcp_seçenekleri, tcp_verisi) = sync_cursor_kartı(SyncCursorÖrneği::Tcp)?;
         let mut kaynak = Grafik::yeni(kaynak_seçenekleri, kaynak_verisi)?;
         let mut hedef = Grafik::yeni(hedef_seçenekleri, hedef_verisi)?;
+        let mut tcp = Grafik::yeni(tcp_seçenekleri, tcp_verisi)?;
+        let tcp_y = tcp.görünür_y_aralığı();
         assert_eq!(
             kaynak.seçimi_bitir(0.25, 0.75, false)?,
             crate::SeçimEylemi::Yakınlaştırıldı
         );
         let x = kaynak.görünür_x_aralığı();
         assert!(hedef.görünür_x_aralığını_ayarla(x, true));
+        assert!(tcp.görünür_x_aralığını_ayarla(x, true));
         assert_eq!(hedef.görünür_x_aralığı(), x);
+        assert_eq!(tcp.görünür_x_aralığı(), x);
+        assert_eq!(tcp.görünür_y_aralığı(), tcp_y);
         assert!(hedef.görünür_y_aralığı().en_çok > hedef.görünür_y_aralığı().en_az);
+        Ok(())
+    }
+
+    #[test]
+    fn ikinci_grup_x_seçimini_paylaşır_ama_ilk_grup_kapatılınca_bile_bağımsız_kalır()
+    -> Result<(), UplotHatası> {
+        let mut grup = SyncCursorGrubu::yeni();
+        assert!(grup.senkronu_ayarla(false));
+        assert!(
+            grup.görünüm_hedefleri(SyncCursorÖrneği::Cpu, false)
+                .is_empty()
+        );
+        assert_eq!(
+            grup.görünüm_hedefleri(SyncCursorÖrneği::UyumsuzKırmızıMavi, true),
+            vec![SyncCursorÖrneği::UyumsuzYeşilKırmızı]
+        );
+
+        let (a_seçenekleri, a_verisi) = sync_cursor_kartı(SyncCursorÖrneği::UyumsuzKırmızıMavi)?;
+        let (b_seçenekleri, b_verisi) = sync_cursor_kartı(SyncCursorÖrneği::UyumsuzYeşilKırmızı)?;
+        let mut a = Grafik::yeni(a_seçenekleri, a_verisi)?;
+        let mut b = Grafik::yeni(b_seçenekleri, b_verisi)?;
+        assert_eq!(
+            a.seçimi_bitir(0.2, 0.8, false)?,
+            crate::SeçimEylemi::Yakınlaştırıldı
+        );
+        assert!(b.görünür_x_aralığını_ayarla(a.görünür_x_aralığı(), true));
+        assert_eq!(a.görünür_x_aralığı(), b.görünür_x_aralığı());
         Ok(())
     }
 }

@@ -2935,7 +2935,9 @@
         "source-mousedown-mouseup-publication-filter", "cursor-lock-propagation",
         "scale-key-aware-vertical-cursor", "x-only-cpu-ram-to-tcp-sync",
         "series-label-focus-mapping", "mismatched-series-order",
-        "gpui-wasm-parity", "common-interaction-profile", "panic-free-pub-sub"
+        "retained-focus-style-patch", "single-animation-frame-pointer-backpressure",
+        "active-sync-group-view-history", "gpui-wasm-parity",
+        "common-interaction-profile", "panic-free-pub-sub"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
