@@ -134,6 +134,22 @@ impl SoftMinMaxAkışı {
         self.veri_en_çok
     }
 
+    /// Grup adaptörünün tek ortak kaynak değerini dört canlı yüzeye aynı
+    /// tikte uygulaması için çalışma anındaki `data[1][1]` değerini ayarlar.
+    pub fn veri_en_çoğu_ayarla(&mut self, değer: f64) -> Result<bool, UplotHatası> {
+        if !değer.is_finite() {
+            return Err(UplotHatası::GeçersizKaynakVeri {
+                varlık: "SoftMinMaxAkışı",
+                açıklama: "dataMax sonlu olmalıdır".to_string(),
+            });
+        }
+        if self.veri_en_çok == değer {
+            return Ok(false);
+        }
+        self.veri_en_çok = değer;
+        Ok(true)
+    }
+
     /// Kaynak sayfadaki ortak `data[1][1] += .1` mutasyonunu bir kez uygular.
     pub fn ortak_ilerlet(&mut self) -> f64 {
         self.veri_en_çok += 0.1;
@@ -300,6 +316,87 @@ mod testler {
                 veri.seriler().first().and_then(|seri| seri.get(1)).copied(),
                 Some(Some(beklenen))
             );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn dört_canlı_yüzey_veriyi_paylaşır_ama_görünümler_bağımsızdır() -> Result<(), UplotHatası> {
+        let mut grafikler = soft_minmax_kartları(12.0)?
+            .into_iter()
+            .map(|(örnek, seçenekler, veri)| Ok((örnek, Grafik::yeni(seçenekler, veri)?)))
+            .collect::<Result<Vec<_>, UplotHatası>>()?;
+        let ilk = grafikler
+            .first_mut()
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!(ilk.1.seçim_yakınlaştır(0.25, 0.75)?);
+        assert!(ilk.1.yakınlaştırılmış());
+        assert!(
+            grafikler
+                .iter()
+                .skip(1)
+                .all(|(_, grafik)| !grafik.yakınlaştırılmış())
+        );
+
+        let mut akış = SoftMinMaxAkışı::yeni();
+        assert!(akış.veri_en_çoğu_ayarla(12.1)?);
+        assert!(!akış.veri_en_çoğu_ayarla(12.1)?);
+        assert!(akış.veri_en_çoğu_ayarla(f64::NAN).is_err());
+        for (örnek, grafik) in &mut grafikler {
+            if örnek.canlı_mı() {
+                grafik.veriyi_ayarla(akış.veri(*örnek)?)?;
+                assert_eq!(
+                    grafik
+                        .veri()
+                        .seriler()
+                        .first()
+                        .and_then(|seri| seri.last())
+                        .copied()
+                        .flatten(),
+                    Some(12.1)
+                );
+            }
+        }
+        assert!(
+            grafikler
+                .iter()
+                .find(|(örnek, _)| *örnek == SoftMinMaxÖrneği::DüzSıfır)
+                .is_some_and(|(_, grafik)| {
+                    grafik
+                        .veri()
+                        .seriler()
+                        .first()
+                        .is_some_and(|seri| seri.as_slice() == [Some(0.0), Some(0.0)])
+                })
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn canlı_data_max_eşikleri_resmi_range_num_altın_matrisiyle_eşleşir() -> Result<(), UplotHatası>
+    {
+        let resmi = [
+            (12.0, [(3.6, 13.4), (0.0, 13.4), (0.0, 13.4), (3.6, 13.4)]),
+            (20.0, [(2.0, 23.0), (0.0, 23.0), (0.0, 23.0), (2.0, 23.0)]),
+            (50.0, [(-4.0, 59.0), (0.0, 59.0), (-4.0, 59.0), (0.0, 59.0)]),
+            (
+                100.0,
+                [(-14.0, 119.0), (0.0, 119.0), (-14.0, 119.0), (0.0, 119.0)],
+            ),
+        ];
+        let canlılar = [
+            SoftMinMaxÖrneği::MinKip0,
+            SoftMinMaxÖrneği::MinKip1,
+            SoftMinMaxÖrneği::MinKip2,
+            SoftMinMaxÖrneği::MinKip3,
+        ];
+        for (veri_en_çok, beklenenler) in resmi {
+            for (örnek, (beklenen_alt, beklenen_üst)) in canlılar.into_iter().zip(beklenenler) {
+                let (seçenekler, veri) = soft_minmax_kartı(örnek, veri_en_çok)?;
+                let aralık = Grafik::yeni(seçenekler, veri)?.görünür_y_aralığı();
+                assert!((aralık.en_az - beklenen_alt).abs() <= 1e-12);
+                assert!((aralık.en_çok - beklenen_üst).abs() <= 1e-12);
+            }
         }
         Ok(())
     }

@@ -3149,6 +3149,7 @@
     let boxWhiskerEtkinİndeks = 0;
     let softMinMaxOturumları = [];
     let softMinMaxEtkinİndeks = 0;
+    let softMinMaxVeriEnÇok = 12;
     let sparklinesBarsOturumları = [];
     let sparklinesBarsEtkinİndeks = 0;
     let sparklinesOturumları = [];
@@ -7156,6 +7157,19 @@
       }
     }
 
+    function softMinMaxDurumunuGüncelle() {
+      oturum = softMinMaxOturumları[softMinMaxEtkinİndeks]
+        ?? softMinMaxOturumları[0]
+        ?? null;
+      const xAralığı = oturum?.gorunur_x_araligi() ?? [];
+      const yAralığı = oturum?.gorunur_y_araligi() ?? [];
+      chart.dataset.xEnAz = String(xAralığı[0] ?? "");
+      chart.dataset.xEnCok = String(xAralığı[1] ?? "");
+      chart.dataset.yEnAz = String(yAralığı[0] ?? "");
+      chart.dataset.yEnCok = String(yAralığı[1] ?? "");
+      kontrolleriGüncelle();
+    }
+
     function softMinMaxÇiz() {
       if (!chart.classList.contains("soft-minmax-yüzeyi")
         || chart.querySelectorAll(".soft-minmax-grafik").length !== softMinMaxYüzeyleri.length) {
@@ -7167,16 +7181,7 @@
         </div>`;
       }
       softMinMaxYüzeyleri.forEach((_, indeks) => softMinMaxYüzeyiniÇiz(indeks));
-      oturum = softMinMaxOturumları[softMinMaxEtkinİndeks]
-        ?? softMinMaxOturumları[0]
-        ?? null;
-      const xAralığı = oturum?.gorunur_x_araligi() ?? [];
-      const yAralığı = oturum?.gorunur_y_araligi() ?? [];
-      chart.dataset.xEnAz = String(xAralığı[0] ?? "");
-      chart.dataset.xEnCok = String(xAralığı[1] ?? "");
-      chart.dataset.yEnAz = String(yAralığı[0] ?? "");
-      chart.dataset.yEnCok = String(yAralığı[1] ?? "");
-      kontrolleriGüncelle();
+      softMinMaxDurumunuGüncelle();
     }
 
     function sparklinesBarsYüzeyiniÇiz(indeks) {
@@ -10509,13 +10514,20 @@
           return;
         }
         try {
+          softMinMaxVeriEnÇok += 0.1;
           let değişti = false;
           softMinMaxOturumları.forEach((yüzey, indeks) => {
             if (softMinMaxYüzeyleri[indeks]?.canlı) {
-              değişti = yüzey.soft_minmax_ilerlet() || değişti;
+              değişti =
+                yüzey.soft_minmax_veri_en_cok_ayarla(softMinMaxVeriEnÇok) || değişti;
             }
           });
-          if (değişti) softMinMaxÇiz();
+          if (değişti) {
+            softMinMaxYüzeyleri.forEach((yüzey, indeks) => {
+              if (yüzey.canlı) softMinMaxYüzeyiniÇiz(indeks);
+            });
+            softMinMaxDurumunuGüncelle();
+          }
           hata.textContent = "";
         } catch (neden) {
           hata.textContent = `Soft Min/Max güncellenemedi: ${String(neden)}`;
@@ -11311,6 +11323,7 @@
           return;
         }
         if (kimlik === "soft-minmax") {
+          softMinMaxVeriEnÇok = 12;
           softMinMaxOturumları = softMinMaxYüzeyleri.map(yüzey => {
             const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 2);
             yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);

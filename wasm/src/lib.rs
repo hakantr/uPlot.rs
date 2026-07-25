@@ -586,6 +586,28 @@ impl KartOturumu {
         Ok(true)
     }
 
+    /// Resmî sayfadaki tek paylaşılan `data[1][1]` değerini bu canlı
+    /// yüzeye uygular. Grup adaptörü değeri bir kez artırıp dört yüzeye aynı
+    /// sayı olarak yollar; düz-sıfır karşılaştırması değişmeden kalır.
+    pub fn soft_minmax_veri_en_cok_ayarla(&mut self, değer: f64) -> Result<bool, JsValue> {
+        let Some(örnek) = SoftMinMaxÖrneği::kimlikten(&self.kart_kimliği) else {
+            return Ok(false);
+        };
+        if !örnek.canlı_mı() {
+            return Ok(false);
+        }
+        let Some(akış) = self.soft_minmax_akışı.as_mut() else {
+            return Ok(false);
+        };
+        if !akış.veri_en_çoğu_ayarla(değer).map_err(js_hatası)? {
+            return Ok(false);
+        }
+        self.grafik
+            .veriyi_ayarla(akış.veri(örnek).map_err(js_hatası)?)
+            .map_err(js_hatası)?;
+        Ok(true)
+    }
+
     pub fn y_shifted_series_ilerlet(&mut self) -> Result<bool, JsValue> {
         let Some(akış) = self.y_shifted_series_akışı.as_mut() else {
             return Ok(false);
@@ -2911,21 +2933,33 @@ mod testler {
             uplot_rs::soft_minmax_kartları(12.0).map(|kartlar| kartlar.len()),
             Ok(SoftMinMaxÖrneği::TÜMÜ.len())
         );
-        for örnek in SoftMinMaxÖrneği::TÜMÜ {
-            let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
-            assert!(oturum.is_ok(), "{}", örnek.kimlik());
-            let Ok(mut oturum) = oturum else {
-                continue;
-            };
+        let mut oturumlar = SoftMinMaxÖrneği::TÜMÜ
+            .into_iter()
+            .map(|örnek| KartOturumu::yeni(örnek.kimlik(), 100).map(|oturum| (örnek, oturum)))
+            .collect::<Result<Vec<_>, _>>();
+        assert!(oturumlar.is_ok());
+        let Ok(ref mut oturumlar) = oturumlar else {
+            return;
+        };
+        for (örnek, oturum) in oturumlar.iter_mut() {
             let aralık = oturum.gorunur_y_araligi();
             assert_eq!(aralık.len(), 2);
             if örnek.canlı_mı() {
                 let önce = oturum.svg(400, 400);
-                assert!(oturum.soft_minmax_ilerlet().is_ok_and(|değişti| değişti));
+                assert!(
+                    oturum
+                        .soft_minmax_veri_en_cok_ayarla(12.1)
+                        .is_ok_and(|değişti| değişti)
+                );
                 assert_ne!(oturum.svg(400, 400), önce);
+                assert_eq!(oturum.son_degerler(), vec![10.0, 12.1]);
             } else {
                 assert_eq!(aralık, vec![-1.0, 1.0]);
-                assert!(matches!(oturum.soft_minmax_ilerlet(), Ok(false)));
+                assert!(matches!(
+                    oturum.soft_minmax_veri_en_cok_ayarla(12.1),
+                    Ok(false)
+                ));
+                assert_eq!(oturum.son_degerler(), vec![2.0, 0.0]);
             }
         }
         assert!(soft_minmax_kart_tanim_ornegi().contains("SoftMinMaxAkışı"));
@@ -2936,7 +2970,10 @@ mod testler {
             1
         );
         assert!(web.contains("function softMinMaxÇiz()"));
-        assert!(web.contains("softMinMaxOturumları.forEach((yüzey, indeks)"));
+        assert!(web.contains("function softMinMaxDurumunuGüncelle()"));
+        assert!(web.contains("softMinMaxVeriEnÇok += 0.1"));
+        assert!(web.contains("soft_minmax_veri_en_cok_ayarla(softMinMaxVeriEnÇok)"));
+        assert!(web.contains("if (yüzey.canlı) softMinMaxYüzeyiniÇiz(indeks);"));
         assert_eq!(kart_sayisi(), 365);
     }
 

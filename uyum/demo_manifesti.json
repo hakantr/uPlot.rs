@@ -2553,8 +2553,9 @@
         "shared-live-data-max-single-timer", "source-exact-two-point-data",
         "range-num-pad-soft-mode-0-1-2-3", "flat-zero-minus1-plus1-soft-range",
         "source-button-50ms-data-max-increment", "core-owned-live-set-data",
-        "in-place-surface-update", "guarded-single-run-timer",
-        "gpui-wasm-live-parity", "common-interaction-profile",
+        "single-shared-data-max-for-four-live-surfaces",
+        "independent-per-surface-view-state", "in-place-surface-update", "guarded-single-run-timer",
+        "flat-zero-skips-live-tick-redraw", "gpui-wasm-live-parity", "common-interaction-profile",
         "default-closed-usage-guide"
       ],
       "kanıt": {
