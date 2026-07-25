@@ -363,6 +363,20 @@
       font-size: 11px; }
     .latency-heatmap-grafik svg { display: block; width: 1800px !important;
       height: 600px !important; max-width: none; }
+    #chart.line-paths-yüzeyi { display: block; overflow: auto; padding: 8px;
+      background: #141619; }
+    .line-paths-yığın { min-width: min-content; display: grid;
+      align-items: flex-start; gap: 30px; }
+    .line-paths-grafik { position: relative; width: 2400px;
+      min-height: 640px; color: #c7d0d9; background: #141619; overflow: hidden; }
+    .line-paths-grafik > h3 { margin: 7px 10px 2px; color: #c7d0d9;
+      font-size: 13px; }
+    .line-paths-grafik > p { margin: 0 10px 5px; color: #8b98a5;
+      font-size: 11px; }
+    .line-paths-grafik svg { display: block; width: 2400px !important;
+      height: 600px !important; max-width: none; }
+    .line-paths-grafik .lejant { color: #c7d0d9;
+      background: rgba(20,22,25,.9); }
     #chart.bars-grouped-stacked-yüzeyi { display: block; min-width: 0; overflow: auto;
                                          place-items: unset; padding: 8px;
                                          box-sizing: border-box; }
@@ -2911,33 +2925,32 @@
       },
     };
 
-    for (const [kimlik, başlık, renk] of [
-      ["line-paths-points-only", "null path (points only)", "#FFFFFF"],
-      ["line-paths-linear", "linear", "#7EB26D"],
-      ["line-paths-monotone-cubic", "spline (Monotone Cubic)", "#1F78C1"],
-      ["line-paths-step-after", "stepped {align: 1}", "#6ED0E0"],
-      ["line-paths-step-before", "stepped {align: -1}", "#EF843C"],
-      ["line-paths-bars-center", "bars {align: 0}", "#E24D42"],
-      ["line-paths-bars-left", "bars {align: 1}", "#008080"],
-      ["line-paths-bars-right", "bars {align: -1}", "#DA70D6"],
-    ]) {
-      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>line-paths</small>
-          <div class="durum">101 nokta · 4 null boşluğu</div>
-        </article>`);
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/line-paths.html">line-paths.html</a>
-          <br>Sekiz etkin resmî yol aynı veriyle çizilir. HTML'de yorumlu spline2 yeteneği kaynak catmullRomCentrip.js üzerinden çekirdekte ayrıca korunur.`,
-        tanım: () => line_paths_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/line_paths.rs",
-        seriler: [{ etiket: "Y", renk }],
-        yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="line-paths" aria-current="false" tabindex="0">
+        <strong>Line Paths · 8 synced surfaces</strong><small>line-paths</small>
+        <div class="durum">ortak 101 nokta · cursor sync · bağımsız zoom</div>
+      </article>`);
+    kartlar["line-paths"] = {
+      başlık: "Line Paths · 8 synced surfaces",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/line-paths.html">line-paths.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/linear.js">linear.js</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/stepped.js">stepped.js</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/spline.js">spline.js</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/bars.js">bars.js</a>
+        <br>Sekiz resmî yüzey kaynak sırasıyla tek kartta gösterilir. Aynı immutable veri deposunu ve cursor.sync.key=0 imlecini paylaşır; seçim/zoom geçmişleri bağımsızdır. Yorumlu spline2, Catmull-Rom çekirdek yeteneği olarak korunur.`,
+      tanım: () => line_paths_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/line_paths.rs",
+      seriler: [{ etiket: "Y", renk: "#FFFFFF" }],
+      yardım: "Bir yüzeydeki cursor sekizine yayılır · seçim, wheel ve geçmiş etkin yüzeyde kalır",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Points-only, linear, monotone cubic, step-before/after ve üç bar align yolunu aynı 101 noktalı/null girdide tek sayfada karşılaştırır.",
+        api: "line_paths_kartları() sekiz Grafik tanımını kaynak sırasıyla ve tek Arc-backed HizalıVeri ile döndürür. Masaüstü ve WASM grup katmanı cursor.sync.key=0 ilişkisini korurken zoom durumunu yüzey başına bağımsız tutar.",
+        izleme: "Aynı telemetri veya zaman serisinin boşluk, eğri, basamak ve bar gösterimlerinin operasyonel farklarını yan yana değerlendirmek için uygundur.",
+        maliyet: "Veri sekiz kez ayrılmaz. Pointer ana yolları yeniden üretmeden sekiz hafif cursor katmanını günceller; ana geometri yalnız veri/ölçek/boyut değişiminde çizilir.",
+      },
+    };
 
     const logScalesSerileri = [
       ["Hypixel", "#d0b283"], ["HiveMC", "#ffcb03"],
@@ -3042,6 +3055,8 @@
     let highLowBandsEtkinİndeks = 0;
     let latencyHeatmapOturumları = [];
     let latencyHeatmapEtkinİndeks = 0;
+    let linePathsOturumları = [];
+    let linePathsEtkinİndeks = 0;
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
     let timeseriesDiscreteEtkinİndeks = 0;
@@ -3352,6 +3367,21 @@
         seriler: [{ etiket: "Latency", renk: "#ff0000" }],
       },
     ];
+    const linePathsYüzeyleri = [
+      ["line-paths-points-only", "null path (points only)", "#FFFFFF"],
+      ["line-paths-linear", "linear", "#7EB26D"],
+      ["line-paths-monotone-cubic", "spline (Monotone Cubic)", "#1F78C1"],
+      ["line-paths-step-after", "stepped {align: 1}", "#6ED0E0"],
+      ["line-paths-step-before", "stepped {align: -1}", "#EF843C"],
+      ["line-paths-bars-center", "bars {align: 0}", "#E24D42"],
+      ["line-paths-bars-left", "bars {align: 1}", "#008080"],
+      ["line-paths-bars-right", "bars {align: -1}", "#DA70D6"],
+    ].map(([kimlik, başlık, renk]) => ({
+      kimlik,
+      başlık,
+      renk,
+      seriler: [{ etiket: "Y", renk }],
+    }));
     const nearestNonNullYüzeyleri = [
       {
         kimlik: "nearest-non-null-x-value",
@@ -6443,6 +6473,78 @@
       kontrolleriGüncelle();
     }
 
+    function linePathsYüzeyiniÇiz(indeks) {
+      const tanım = linePathsYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-line-paths-index="${indeks}"]`);
+      const yüzeyOturumu = linePathsOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const şablon = document.createElement("template");
+      şablon.innerHTML = yüzeyOturumu.svg(2400, 600).trim();
+      const yeniSvg = şablon.content.querySelector("svg");
+      let svg = yüzey.querySelector("svg");
+      if (svg && yeniSvg) {
+        svgYüzeyiniYerindeGüncelle(svg, yeniSvg);
+      } else {
+        yüzey.innerHTML = `
+          <h3>${tanım.başlık}</h3>
+          ${yüzeyOturumu.svg(2400, 600)}
+          <div class="lejant">
+            <span>x: <b id="x-değeri">--</b></span>
+            <span><i class="örnek" style="border-color:${tanım.renk};background:${tanım.renk}"></i>
+              Y: <b id="seri-değeri-0">--</b></span>
+          </div>`;
+        svg = yüzey.querySelector("svg");
+      }
+      if (!svg) return;
+      if (!svg.querySelector(":scope > #etkileşim")) {
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden" fill="rgba(255,255,255,.07)"
+              stroke="rgba(255,255,255,.35)"/>
+            <line id="imleç-x" visibility="hidden" stroke="#c7d0d9"
+              stroke-width="1" opacity=".65"/>
+            <line id="imleç-y" visibility="hidden" stroke="#c7d0d9"
+              stroke-width="1" opacity=".65"/>
+            <circle id="imleç-nokta-0" visibility="hidden" r="7.5"
+              fill="#ffffff" stroke="${tanım.renk}90" stroke-width="3.75"/>
+          </g>`);
+      }
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      svg.dataset.etkileşim = "line-paths-cursor-sync-independent-zoom";
+      yüzey.onpointerenter = () => {
+        linePathsEtkinİndeks = indeks;
+        oturum = linePathsOturumları[indeks] ?? null;
+        kartlar["line-paths"].seriler = tanım.seriler;
+        kontrolleriGüncelle();
+      };
+    }
+
+    function linePathsÇiz() {
+      const ilkKurulum = !chart.classList.contains("line-paths-yüzeyi")
+        || chart.querySelectorAll(".line-paths-grafik").length
+          !== linePathsYüzeyleri.length;
+      if (ilkKurulum) {
+        chart.className = "line-paths-yüzeyi";
+        chart.innerHTML = `<div class="line-paths-yığın">
+          ${linePathsYüzeyleri.map((_, indeks) =>
+            `<article class="line-paths-grafik"
+              data-line-paths-index="${indeks}"></article>`
+          ).join("")}
+        </div>`;
+        linePathsYüzeyleri.forEach((_, indeks) => linePathsYüzeyiniÇiz(indeks));
+      } else {
+        linePathsYüzeyiniÇiz(linePathsEtkinİndeks);
+      }
+      oturum = linePathsOturumları[linePathsEtkinİndeks]
+        ?? linePathsOturumları[0]
+        ?? null;
+      kartlar["line-paths"].seriler =
+        linePathsYüzeyleri[linePathsEtkinİndeks]?.seriler
+        ?? linePathsYüzeyleri[0].seriler;
+      kontrolleriGüncelle();
+    }
+
     function scatterYüzeyiniÇiz(indeks) {
       const tanım = scatterYüzeyleri[indeks];
       const yüzey = chart.querySelector(`[data-scatter-index="${indeks}"]`);
@@ -7526,6 +7628,10 @@
         latencyHeatmapÇiz();
         return;
       }
+      if (aktifKart === "line-paths") {
+        linePathsÇiz();
+        return;
+      }
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
         return;
@@ -7643,6 +7749,7 @@
       chart.classList.remove("gradients-yüzeyi");
       chart.classList.remove("high-low-bands-yüzeyi");
       chart.classList.remove("latency-heatmap-yüzeyi");
+      chart.classList.remove("line-paths-yüzeyi");
       chart.classList.remove("soft-minmax-yüzeyi");
       chart.classList.remove("sparklines-bars-yüzeyi");
       chart.classList.remove("sparklines-yüzeyi");
@@ -7977,6 +8084,10 @@
         ? chart.querySelector(
             `[data-latency-heatmap-index="${latencyHeatmapEtkinİndeks}"] svg`
           )
+        : aktifKart === "line-paths"
+        ? chart.querySelector(
+            `[data-line-paths-index="${linePathsEtkinİndeks}"] svg`
+          )
         : aktifKart === "scatter"
         ? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"] svg`)
         : aktifKart === "box-whisker"
@@ -8114,6 +8225,11 @@
           ?? chart.querySelector(
             `[data-latency-heatmap-index="${latencyHeatmapEtkinİndeks}"]`
           )
+        : aktifKart === "line-paths"
+        ? olay.target?.closest?.(".line-paths-grafik")
+          ?? chart.querySelector(
+            `[data-line-paths-index="${linePathsEtkinİndeks}"]`
+          )
         : aktifKart === "scatter"
         ? olay.target?.closest?.(".scatter-grafik")
           ?? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"]`)
@@ -8210,6 +8326,13 @@
           latencyHeatmapEtkinİndeks = indeks;
           oturum = latencyHeatmapOturumları[indeks];
           kartlar["latency-heatmap"].seriler = latencyHeatmapYüzeyleri[indeks].seriler;
+        }
+      } else if (aktifKart === "line-paths" && bağımsızYüzey) {
+        const indeks = Number(bağımsızYüzey.dataset.linePathsIndex);
+        if (Number.isInteger(indeks) && linePathsOturumları[indeks]) {
+          linePathsEtkinİndeks = indeks;
+          oturum = linePathsOturumları[indeks];
+          kartlar["line-paths"].seriler = linePathsYüzeyleri[indeks].seriler;
         }
       }
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
@@ -8556,6 +8679,7 @@
         ?? svg.closest(".data-smoothing-grafik")
         ?? svg.closest(".focus-cursor-grafik")
         ?? svg.closest(".gradients-grafik")
+        ?? svg.closest(".line-paths-grafik")
         ?? svg.closest(".sparklines-grafik")
         ?? svg.closest(".sparse-grafik")
         ?? svg.closest(".stacked-series-grafik")
@@ -8776,6 +8900,101 @@
       sparseİmleciSenkronla(svg);
     }
 
+    function linePathsİmleciniSenkronla(olay) {
+      if (aktifKart !== "line-paths") return;
+      const kaynakYüzey = chart.querySelector(
+        `[data-line-paths-index="${linePathsEtkinİndeks}"]`
+      );
+      const kaynakSvg = kaynakYüzey?.querySelector("svg");
+      const kaynakOturum = linePathsOturumları[linePathsEtkinİndeks];
+      if (!kaynakSvg || !kaynakOturum) return;
+      const view = kaynakSvg.viewBox.baseVal;
+      let konum = kaynakOturum.istemci_konumu(
+        olay.clientX, olay.clientY, view.width, view.height
+      );
+      if (konum.length !== 2) {
+        const rect = kaynakSvg.getBoundingClientRect();
+        kaynakOturum.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+        konum = kaynakOturum.istemci_konumu(
+          olay.clientX, olay.clientY, view.width, view.height
+        );
+      }
+      const [sol, sağ, üst, alt] = kaynakOturum.cizim_alani(view.width, view.height);
+      const içeride = konum.length === 2
+        && konum[0] >= sol && konum[0] <= sağ
+        && konum[1] >= üst && konum[1] <= alt;
+      if (!içeride) {
+        chart.querySelectorAll(
+          ".line-paths-grafik #imleç-x, .line-paths-grafik #imleç-y, "
+          + ".line-paths-grafik [id^='imleç-nokta-']"
+        ).forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+        return;
+      }
+      const kaynakXOranı = (konum[0] - sol) / (sağ - sol);
+      const kaynakYOranı = (konum[1] - üst) / (alt - üst);
+      const kaynakÇözümü = Array.from(
+        kaynakOturum.imlec_cozumu(kaynakXOranı, sağ - sol)
+      );
+      const gerçekX = kaynakÇözümü[1];
+      if (!Number.isFinite(gerçekX)) return;
+      linePathsOturumları.forEach((hedefOturum, indeks) => {
+        const tanım = linePathsYüzeyleri[indeks];
+        const kapsam = chart.querySelector(`[data-line-paths-index="${indeks}"]`);
+        const svg = kapsam?.querySelector("svg");
+        if (!svg || !hedefOturum) return;
+        const hedefView = svg.viewBox.baseVal;
+        const [hSol, hSağ, hÜst, hAlt] =
+          hedefOturum.cizim_alani(hedefView.width, hedefView.height);
+        const xOranı = hedefOturum.x_konum_orani(gerçekX);
+        const dikey = svg.querySelector("#imleç-x");
+        const yatay = svg.querySelector("#imleç-y");
+        const nokta = svg.querySelector("#imleç-nokta-0");
+        const görünür = Number.isFinite(xOranı) && xOranı >= 0 && xOranı <= 1;
+        if (!görünür) {
+          [dikey, yatay, nokta].forEach(öğe =>
+            öğe?.setAttribute("visibility", "hidden")
+          );
+          return;
+        }
+        const x = hSol + xOranı * (hSağ - hSol);
+        const y = hÜst + kaynakYOranı * (hAlt - hÜst);
+        dikey?.setAttribute("x1", x); dikey?.setAttribute("x2", x);
+        dikey?.setAttribute("y1", hÜst); dikey?.setAttribute("y2", hAlt);
+        dikey?.setAttribute("visibility", "visible");
+        yatay?.setAttribute("x1", hSol); yatay?.setAttribute("x2", hSağ);
+        yatay?.setAttribute("y1", y); yatay?.setAttribute("y2", y);
+        yatay?.setAttribute("visibility", "visible");
+        const çözüm = Array.from(hedefOturum.imlec_cozumu(xOranı, hSağ - hSol));
+        const seriX = çözüm[2];
+        const seriY = çözüm[3];
+        if (Number.isFinite(seriX) && Number.isFinite(seriY)) {
+          const seriXOranı = hedefOturum.x_konum_orani(seriX);
+          const seriYOranı = hedefOturum.seri_y_konum_orani(0, seriY);
+          nokta?.setAttribute("cx", hSol + seriXOranı * (hSağ - hSol));
+          nokta?.setAttribute("cy", hAlt - seriYOranı * (hAlt - hÜst));
+          nokta?.setAttribute("r", "7.5");
+          nokta?.setAttribute("fill", "#ffffff");
+          nokta?.setAttribute("stroke", `${tanım.renk}90`);
+          nokta?.setAttribute("stroke-width", "3.75");
+          nokta?.setAttribute("visibility", "visible");
+        } else {
+          nokta?.setAttribute("visibility", "hidden");
+        }
+        const xHedefi = kapsam?.querySelector("#x-değeri");
+        const yHedefi = kapsam?.querySelector("#seri-değeri-0");
+        if (xHedefi) {
+          xHedefi.textContent = gerçekX.toLocaleString("tr-TR", {
+            maximumFractionDigits: 3,
+          });
+        }
+        if (yHedefi) {
+          yHedefi.textContent = Number.isFinite(seriY)
+            ? seriY.toLocaleString("tr-TR", { maximumFractionDigits: 3 })
+            : "--";
+        }
+      });
+    }
+
     function pointerHareketiniİşle(olay) {
       {
         const { x, y, view } = svgKonumu(olay);
@@ -8846,6 +9065,7 @@
         };
       }
       imleciGüncelle(olay);
+      linePathsİmleciniSenkronla(olay);
       eksenİmleciniGüncelle(olay);
       if (!sürükleme) return;
       const { x, y, svg, view } = svgKonumu(olay);
@@ -8901,6 +9121,18 @@
       if (Number.isInteger(indeks) && scatterOturumları[indeks]) {
         scatterEtkinİndeks = indeks;
         oturum = scatterOturumları[indeks];
+        const svg = yüzey.querySelector("svg");
+        if (svg) yüzeyiEşitle(svg);
+      }
+    }
+    function linePathsOturumunuSeç(olay) {
+      if (aktifKart !== "line-paths") return;
+      const yüzey = olay.target?.closest?.(".line-paths-grafik");
+      const indeks = Number(yüzey?.dataset.linePathsIndex);
+      if (Number.isInteger(indeks) && linePathsOturumları[indeks]) {
+        linePathsEtkinİndeks = indeks;
+        oturum = linePathsOturumları[indeks];
+        kartlar["line-paths"].seriler = linePathsYüzeyleri[indeks].seriler;
         const svg = yüzey.querySelector("svg");
         if (svg) yüzeyiEşitle(svg);
       }
@@ -9011,6 +9243,9 @@
     }
     for (const olayTürü of ["pointerdown", "pointermove", "pointerup", "wheel", "dblclick", "scroll"]) {
       chart.addEventListener(olayTürü, scatterOturumunuSeç, { capture: true, passive: true });
+      chart.addEventListener(olayTürü, linePathsOturumunuSeç, {
+        capture: true, passive: true,
+      });
       chart.addEventListener(olayTürü, softMinMaxOturumunuSeç, { capture: true, passive: true });
       chart.addEventListener(olayTürü, sparklinesBarsOturumunuSeç, {
         capture: true, passive: true,
@@ -9293,6 +9528,10 @@
       chart.querySelectorAll("#kutu-biyik-vurgu, #kutu-biyik-tooltip").forEach(öğe =>
         öğe.setAttribute("visibility", "hidden")
       );
+      chart.querySelectorAll(
+        ".line-paths-grafik #imleç-x, .line-paths-grafik #imleç-y, "
+        + ".line-paths-grafik [id^='imleç-nokta-']"
+      ).forEach(öğe => öğe.setAttribute("visibility", "hidden"));
       chart.querySelector("#timeline-vurgu")?.setAttribute("visibility", "hidden");
     });
     document.addEventListener("keydown", olay => {
@@ -9646,6 +9885,10 @@
         latencyHeatmapOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
+      } else if (aktifKart === "line-paths") {
+        linePathsOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
@@ -9875,6 +10118,13 @@
           latencyHeatmapEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "latency-heatmap";
         }
+        if (kimlik !== "line-paths" && kimlik.startsWith("line-paths-")) {
+          const indeks = linePathsYüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === kimlik
+          );
+          linePathsEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "line-paths";
+        }
         if (["months-no-leap", "months-leap", "months-russian"].includes(kimlik)) {
           kimlik = "months";
         }
@@ -10004,6 +10254,7 @@
           gradientsOturumları,
           highLowBandsOturumları,
           latencyHeatmapOturumları,
+          linePathsOturumları,
           syncCursorOturumları,
           timeseriesDiscreteOturumları,
           timezonesDstOturumları,
@@ -10051,6 +10302,9 @@
         latencyHeatmapOturumları.forEach(yüzey => yüzey.free());
         latencyHeatmapOturumları = [];
         latencyHeatmapEtkinİndeks = 0;
+        linePathsOturumları.forEach(yüzey => yüzey.free());
+        linePathsOturumları = [];
+        linePathsEtkinİndeks = 0;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
         syncCursorOturumları = [];
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
@@ -10302,6 +10556,22 @@
           });
           oturum = latencyHeatmapOturumları[latencyHeatmapEtkinİndeks]
             ?? latencyHeatmapOturumları[0]
+            ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "line-paths") {
+          const istenenİndeks = linePathsYüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === oturumKimliği
+          );
+          linePathsEtkinİndeks = istenenİndeks >= 0 ? istenenİndeks : 0;
+          linePathsOturumları = linePathsYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = linePathsOturumları[linePathsEtkinİndeks]
+            ?? linePathsOturumları[0]
             ?? null;
           çiz();
           return;

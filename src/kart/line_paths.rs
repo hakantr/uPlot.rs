@@ -1,10 +1,15 @@
+use std::sync::OnceLock;
+
 use super::ortak_kart_etkileşimleri;
 use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
 
-pub const LINE_PATHS_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) =
-    line_paths_kartı(LinePathsÖrneği::MonotonKübik)?;
-// Yol seçimi, null boşluğu, dolgu ve çubuk hizası çekirdekte çözülür.
-let grafik = Grafik::yeni(seçenekler, veri)?;"##;
+pub const LINE_PATHS_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in line_paths_kartları()? {
+    // Sekiz yüzey aynı Arc-backed veriyi paylaşır; cursor grup içinde senkronlanır.
+    // Seçim/zoom geçmişi ise resmî sayfadaki gibi her Grafik için bağımsızdır.
+    let grafik = Grafik::yeni(seçenekler, veri)?;
+}"##;
+
+static PAYLAŞILAN_VERİ: OnceLock<Result<HizalıVeri, UplotHatası>> = OnceLock::new();
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LinePathsÖrneği {
@@ -80,13 +85,37 @@ impl LinePathsÖrneği {
 pub fn line_paths_kartı(
     örnek: LinePathsÖrneği,
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
-    let x = (0..=100).map(f64::from).collect::<Vec<_>>();
-    let y = kaynak_y();
-    let veri = HizalıVeri::yeni(x, vec![y])?;
+    let veri = paylaşılan_veri()?;
+    Ok((line_paths_seçenekleri(örnek)?, veri))
+}
+
+/// Resmî sayfadaki sekiz yüzeyi kaynak sırasıyla ve tek immutable veri deposuyla üretir.
+pub fn line_paths_kartları()
+-> Result<Vec<(LinePathsÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    let veri = paylaşılan_veri()?;
+    LinePathsÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| Ok((örnek, line_paths_seçenekleri(örnek)?, veri.clone())))
+        .collect()
+}
+
+fn paylaşılan_veri() -> Result<HizalıVeri, UplotHatası> {
+    PAYLAŞILAN_VERİ
+        .get_or_init(|| {
+            HizalıVeri::yeni(
+                (0..=100).map(f64::from).collect::<Vec<_>>(),
+                vec![kaynak_y()],
+            )
+        })
+        .clone()
+}
+
+fn line_paths_seçenekleri(örnek: LinePathsÖrneği) -> Result<GrafikSeçenekleri, UplotHatası> {
     let renk = örnek.renk();
     let mut seri = SeriSeçenekleri::yeni("Y")
         .renk(renk)
-        .dolgu(format!("{renk}1A"));
+        .dolgu(format!("{renk}1A"))
+        .imleç_nokta_stili(15.0, 3.75, "#ffffff", format!("{renk}90"));
     seri = match örnek {
         LinePathsÖrneği::YalnızNoktalar => seri.yalnız_noktalar(),
         LinePathsÖrneği::Doğrusal => seri,
@@ -114,7 +143,7 @@ pub fn line_paths_kartı(
         .x_zaman(false)
         .seri(seri)
         .etkileşimler(ortak_kart_etkileşimleri());
-    Ok((seçenekler, veri))
+    Ok(seçenekler)
 }
 
 fn kaynak_y() -> Vec<Option<f64>> {
@@ -148,8 +177,11 @@ mod testler {
 
     #[test]
     fn sekiz_etkin_yol_aynı_101_noktalı_veriyi_kullanır() -> Result<(), UplotHatası> {
-        for örnek in LinePathsÖrneği::TÜMÜ {
-            let (seçenekler, veri) = line_paths_kartı(örnek)?;
+        let kartlar = line_paths_kartları()?;
+        assert_eq!(kartlar.len(), 8);
+        for ((örnek, seçenekler, veri), beklenen) in kartlar.into_iter().zip(LinePathsÖrneği::TÜMÜ)
+        {
+            assert_eq!(örnek, beklenen);
             assert_eq!(veri.uzunluk(), 101);
             assert_eq!(
                 veri.seriler()
@@ -165,6 +197,21 @@ mod testler {
                 )
             }));
         }
+        Ok(())
+    }
+
+    #[test]
+    fn sekiz_yüzey_tek_arc_backed_veriyi_paylaşır() -> Result<(), UplotHatası> {
+        let kartlar = line_paths_kartları()?;
+        let Some((_, _, ilk)) = kartlar.first() else {
+            return Err(UplotHatası::YetersizVeri { uzunluk: 0 });
+        };
+        assert!(
+            kartlar
+                .iter()
+                .skip(1)
+                .all(|(_, _, veri)| ilk.aynı_depolamayı_paylaşıyor(veri))
+        );
         Ok(())
     }
 
@@ -204,6 +251,24 @@ mod testler {
             assert_eq!(
                 seçenekler.seriler.first().map(|seri| seri.çubuk_hizası),
                 Some(beklenen)
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn cursor_noktası_kaynak_callback_sunumunu_korur() -> Result<(), UplotHatası> {
+        for örnek in LinePathsÖrneği::TÜMÜ {
+            let (seçenekler, _) = line_paths_kartı(örnek)?;
+            let Some(seri) = seçenekler.seriler.first() else {
+                return Err(UplotHatası::YetersizVeri { uzunluk: 0 });
+            };
+            assert_eq!(seri.imleç_nokta_boyutu, Some(15.0));
+            assert_eq!(seri.imleç_nokta_kalınlığı, Some(3.75));
+            assert_eq!(seri.imleç_nokta_dolgusu.as_deref(), Some("#ffffff"));
+            assert_eq!(
+                seri.imleç_nokta_çizgisi.as_deref(),
+                Some(format!("{}90", örnek.renk()).as_str())
             );
         }
         Ok(())

@@ -140,7 +140,9 @@ pub use latency_heatmap::{
     LATENCY_HEATMAP_KANIT_TOHUMU, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
     latency_heatmap_kartları, latency_heatmap_kartı,
 };
-pub use line_paths::{LINE_PATHS_KART_TANIM_ÖRNEĞİ, LinePathsÖrneği, line_paths_kartı};
+pub use line_paths::{
+    LINE_PATHS_KART_TANIM_ÖRNEĞİ, LinePathsÖrneği, line_paths_kartları, line_paths_kartı,
+};
 pub use log_scales::{LOG_SCALES_KART_TANIM_ÖRNEĞİ, LogScalesÖrneği, log_scales_kartı};
 pub use log_scales2::{
     LOG_SCALES2_KANIT_TOHUMU, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LogScales2Örneği, log_scales2_kartı,

@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::path::PathBuf;
 
-use uplot_rs::{Grafik, LinePathsÖrneği, line_paths_kartı};
+use uplot_rs::{Grafik, line_paths_kartları};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let dizin = std::env::args()
@@ -9,8 +9,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("target/line-paths"));
     std::fs::create_dir_all(&dizin)?;
-    for örnek in LinePathsÖrneği::TÜMÜ {
-        let (seçenekler, veri) = line_paths_kartı(örnek)?;
+    for (örnek, seçenekler, veri) in line_paths_kartları()? {
         let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();
         std::fs::write(dizin.join(format!("{}.svg", örnek.kimlik())), svg)?;
     }

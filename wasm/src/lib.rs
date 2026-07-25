@@ -2245,7 +2245,9 @@ mod testler {
         };
         let grup = &katalog[başlangıç..bitiş];
         assert!(grup.contains("çubuk: kimlik !== \"multi-bars-non-justified\""));
-        assert!(katalog.contains("!kart.çubuk && !kart.kutuBıyık && oturum.seri_gorunur(indeks)"));
+        assert!(katalog.contains("!kart.çubuk && !kart.kutuBıyık"));
+        assert!(katalog.contains("&& oturum.imlec_noktalari_gorunur()"));
+        assert!(katalog.contains("&& oturum.seri_gorunur(indeks)"));
         assert!(katalog.contains("oturum?.cubuk_vurusu"));
         assert!(katalog.contains("fill=\"rgba(255,255,255,.3)\""));
         assert!(katalog.contains("öncekiMultiBarsKaydırma.scrollLeft"));
@@ -3929,7 +3931,13 @@ mod testler {
             let Ok(oturum) = oturum else { continue };
             assert!(oturum.svg(960, 240).contains(örnek.başlık()));
         }
-        assert!(line_paths_kart_tanim_ornegi().contains("MonotonKübik"));
+        assert!(line_paths_kart_tanim_ornegi().contains("line_paths_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(web.matches("data-kart=\"line-paths\"").count(), 1);
+        assert!(!web.contains("data-kart=\"line-paths-linear\""));
+        assert!(web.contains("const linePathsYüzeyleri"));
+        assert!(web.contains("function linePathsİmleciniSenkronla"));
+        assert!(web.contains("cursor.sync.key=0"));
     }
 
     #[test]

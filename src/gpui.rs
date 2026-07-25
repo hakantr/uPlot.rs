@@ -1296,12 +1296,21 @@ impl GpuiGrafik {
                     });
                 }
                 if self.grafik.imleç_noktaları_görünür() {
+                    let boyut = seri.imleç_nokta_boyutu.unwrap_or(5.0);
+                    let dolgu = seri
+                        .imleç_nokta_dolgusu
+                        .clone()
+                        .unwrap_or_else(|| seri_rengi.clone());
+                    let çizgi = seri
+                        .imleç_nokta_çizgisi
+                        .clone()
+                        .unwrap_or_else(|| seri_rengi.clone());
                     sahne.ekle(Komut::Daire {
                         merkez: seri_noktası,
-                        yarıçap: 2.5,
-                        dolgu: seri_rengi.clone(),
-                        çizgi: seri_rengi,
-                        kalınlık: 0.0,
+                        yarıçap: boyut / 2.0,
+                        dolgu,
+                        çizgi,
+                        kalınlık: seri.imleç_nokta_kalınlığı.unwrap_or(0.0),
                     });
                 }
             }

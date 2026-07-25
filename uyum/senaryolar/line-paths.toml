@@ -1,6 +1,6 @@
 id = "line-paths"
 kaynak = "../uPlot/demos/line-paths.html"
-fixture = "src/kart/line_paths.rs#line_paths_kartı"
+fixture = "src/kart/line_paths.rs#line_paths_kartları"
 device_pixel_ratio = 1
 alt_grafik_sayısı = 8
 
@@ -13,6 +13,9 @@ etkin_yollar = ["points-only", "linear", "monotone-cubic", "step-after", "step-b
 yorumlu_kaynak_yeteneği = "catmull-rom-centripetal"
 arka_plan = "#141619"
 ızgara = "#2c3235"
+cursor_sync_key = 0
+selection_zoom = "surface-local"
+shared_immutable_data = true
 
 [kanıt]
 masaüstü = "uygulamalar/masaustu/src/masaustu.rs"

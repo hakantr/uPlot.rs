@@ -793,7 +793,9 @@ mod testler {
         let önce = bant_çokgen_sayısı(&grafik.çiz());
         assert!(grafik.boşlukları_birleştir_ayarla(true));
         let sonra = bant_çokgen_sayısı(&grafik.çiz());
-        assert!(sonra > önce);
+        // Ayrık iki null koşusu iki ayrı bant çokgenidir; spanGaps etkinleşince
+        // High/Low Bands optimizasyonu bunları tek sürekli retained çokgende birleştirir.
+        assert_eq!((önce, sonra), (2, 1));
         Ok(())
     }
 

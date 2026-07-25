@@ -84,6 +84,12 @@ pub struct SeriSeçenekleri {
     pub nokta_boyutu: f32,
     pub nokta_kalınlığı: f32,
     pub nokta_dolgusu: Option<String>,
+    /// Cursor hover noktası için seri points callback'inden bağımsız çap.
+    /// `None`, çekirdeğin 5 CSS piksel varsayılanını kullanır.
+    pub imleç_nokta_boyutu: Option<f32>,
+    pub imleç_nokta_kalınlığı: Option<f32>,
+    pub imleç_nokta_dolgusu: Option<String>,
+    pub imleç_nokta_çizgisi: Option<String>,
     pub nokta_şekli: NoktaŞekli,
     pub nokta_filtresi: NoktaFiltreKipi,
     /// Özel `points.filter` oluşturucularının göstereceği kaynak indeksleri.
@@ -129,6 +135,10 @@ impl SeriSeçenekleri {
             nokta_boyutu: 5.0,
             nokta_kalınlığı: 1.0,
             nokta_dolgusu: None,
+            imleç_nokta_boyutu: None,
+            imleç_nokta_kalınlığı: None,
+            imleç_nokta_dolgusu: None,
+            imleç_nokta_çizgisi: None,
             nokta_şekli: NoktaŞekli::Daire,
             nokta_filtresi: NoktaFiltreKipi::Yok,
             nokta_indeksleri: None,
@@ -365,6 +375,32 @@ impl SeriSeçenekleri {
             self.nokta_kalınlığı = kalınlık.min(self.nokta_boyutu);
         }
         self.nokta_dolgusu = dolgu.map(Into::into);
+        self
+    }
+
+    /// uPlot `cursor.points.{size,width,fill,stroke}` callback'lerinin
+    /// platformlar arası, CSS gerektirmeyen karşılığıdır.
+    pub fn imleç_nokta_stili(
+        mut self,
+        boyut: f32,
+        kalınlık: f32,
+        dolgu: impl Into<String>,
+        çizgi: impl Into<String>,
+    ) -> Self {
+        if boyut.is_finite() && boyut > 0.0 {
+            self.imleç_nokta_boyutu = Some(boyut);
+        }
+        if kalınlık.is_finite() && kalınlık >= 0.0 {
+            self.imleç_nokta_kalınlığı = Some(kalınlık.min(boyut));
+        }
+        let dolgu = dolgu.into();
+        if !dolgu.is_empty() {
+            self.imleç_nokta_dolgusu = Some(dolgu);
+        }
+        let çizgi = çizgi.into();
+        if !çizgi.is_empty() {
+            self.imleç_nokta_çizgisi = Some(çizgi);
+        }
         self
     }
 
