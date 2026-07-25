@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr" data-gpui-uplot="booting">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, height=device-height, initial-scale=1"
+    />
+    <meta name="color-scheme" content="dark light" />
+    <title>uPlot.rs · GPUI Web</title>
+    <link data-trunk rel="rust" data-bin="uplot-rs-gpui-web" data-bindgen-target="web" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #fff;
+      }
+      canvas {
+        position: fixed;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        outline: none;
+      }
+      #boot-status {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: #334155;
+        font: 14px system-ui, sans-serif;
+      }
+    </style>
+    <script>
+      (() => {
+        const root = document.documentElement;
+        const fail = (reason) => {
+          root.dataset.gpuiUplot = "failed";
+          const status = document.getElementById("boot-status");
+          if (status) status.textContent = `GPUI Web başlatılamadı: ${String(reason)}`;
+        };
+        addEventListener("error", (event) => fail(event.error?.message || event.message));
+        addEventListener("unhandledrejection", (event) => fail(event.reason));
+        addEventListener("TrunkApplicationStarted", () => {
+          root.dataset.gpuiUplot = "started";
+          const status = document.getElementById("boot-status");
+          if (status) status.remove();
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="boot-status" role="status">GPUI Web hazırlanıyor…</div>
+  </body>
+</html>

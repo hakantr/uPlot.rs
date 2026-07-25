@@ -5749,6 +5749,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "uplot-rs-gpui-web"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "gpui",
+ "gpui_web",
+ "log",
+ "uplot-rs",
+]
+
+[[package]]
 name = "uplot-rs-wasm"
 version = "0.1.0"
 dependencies = [

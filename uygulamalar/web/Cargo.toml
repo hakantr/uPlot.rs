@@ -1,0 +1,23 @@
+[package]
+name = "uplot-rs-gpui-web"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+description = "uPlot.rs GPUI Web katalog uygulaması"
+
+[[bin]]
+name = "uplot-rs-gpui-web"
+path = "src/main.rs"
+
+[dependencies]
+gpui = { path = "../../../gpui/crates/gpui" }
+uplot-rs = { path = "../..", default-features = false, features = ["gpui"] }
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+console_error_panic_hook = "0.1.7"
+gpui_web = { path = "../../../gpui/crates/gpui_web", default-features = false }
+log = "0.4"
+
+[lints]
+workspace = true
