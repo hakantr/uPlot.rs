@@ -3229,6 +3229,7 @@
         "local-midnight-tick-alignment", "source-hour-day-month-ranges",
         "eleven-source-sections", "four-cursor-view-setseries-sync-groups",
         "thirty-nine-independent-surfaces", "single-catalog-card",
+        "abortable-single-generation-surface-listeners",
         "gpui-wasm-parity", "common-interaction-profile",
         "panic-free-timezone-axis"
       ],
@@ -3378,7 +3379,7 @@
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
-        "performans": "tam_kanıtlı"
+        "performans": "kısmi"
       }
     },
     {
@@ -3438,7 +3439,7 @@
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
-        "performans": "tam_kanıtlı"
+        "performans": "kısmi"
       }
     },
     {

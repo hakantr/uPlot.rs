@@ -4615,6 +4615,10 @@
       const kutu = chart.querySelector(`[data-timezones-index="${indeks}"]`);
       const yüzey = timezonesDstOturumları[indeks];
       if (!kutu || !yüzey) return;
+      const çizimSayısı = Number(kutu.dataset.timezonesRenderCount || 0) + 1;
+      kutu.dataset.timezonesRenderCount = String(çizimSayısı);
+      kutu.dataset.timezonesListenerGeneration = String(çizimSayısı);
+      kutu.dataset.timezonesWheelEvents ||= "0";
       const görünür = yüzey.seri_gorunur(0);
       kutu.innerHTML = `${yüzey.svg(600, 200)}
         <span class="timezones-lejant" data-timezones-seri-toggle="${indeks}"
@@ -4624,6 +4628,10 @@
         </span>`;
       const svg = kutu.querySelector("svg");
       if (!svg) return;
+      kutu.timezonesDinleyiciDenetimi?.abort();
+      const dinleyiciDenetimi = new AbortController();
+      kutu.timezonesDinleyiciDenetimi = dinleyiciDenetimi;
+      const dinleyiciSeçeneği = { signal: dinleyiciDenetimi.signal };
       svg.insertAdjacentHTML("beforeend", `
         <g pointer-events="none">
           <rect class="timezones-seçim" visibility="hidden"
@@ -4666,13 +4674,13 @@
       lejant?.addEventListener("click", olay => {
         olay.stopPropagation();
         seriDeğiştir();
-      });
+      }, dinleyiciSeçeneği);
       lejant?.addEventListener("keydown", olay => {
         if (olay.key !== "Enter" && olay.key !== " ") return;
         olay.preventDefault();
         olay.stopPropagation();
         seriDeğiştir();
-      });
+      }, dinleyiciSeçeneği);
       kutu.addEventListener("pointermove", olay => {
         olay.stopPropagation();
         const bilgi = konum(olay);
@@ -4705,13 +4713,13 @@
           alan?.setAttribute("height", bilgi.alt - bilgi.üst);
           alan?.setAttribute("visibility", "visible");
         }
-      });
+      }, dinleyiciSeçeneği);
       kutu.addEventListener("pointerleave", () => {
         timezonesDstGrupİndeksleri(indeks).forEach(hedefİndeksi => {
           chart.querySelector(`[data-timezones-index="${hedefİndeksi}"] .timezones-imleç`)
             ?.setAttribute("visibility", "hidden");
         });
-      });
+      }, dinleyiciSeçeneği);
       kutu.addEventListener("pointerdown", olay => {
         olay.stopPropagation();
         const bilgi = konum(olay);
@@ -4736,7 +4744,7 @@
           seçim = { baş: bilgi.x, son: bilgi.x };
           kutu.setPointerCapture(olay.pointerId);
         }
-      });
+      }, dinleyiciSeçeneği);
       const bitir = olay => {
         if (olay.pointerType === "touch") {
           dokunmalar.delete(olay.pointerId);
@@ -4761,10 +4769,13 @@
           svg.querySelector(".timezones-seçim")?.setAttribute("visibility", "hidden");
         }
       };
-      kutu.addEventListener("pointerup", bitir);
-      kutu.addEventListener("pointercancel", bitir);
+      kutu.addEventListener("pointerup", bitir, dinleyiciSeçeneği);
+      kutu.addEventListener("pointercancel", bitir, dinleyiciSeçeneği);
       kutu.addEventListener("wheel", olay => {
         olay.stopPropagation();
+        kutu.dataset.timezonesWheelEvents = String(
+          Number(kutu.dataset.timezonesWheelEvents || 0) + 1
+        );
         const delta = tekerlekDeltası(olay);
         const bilgi = konum(olay);
         if (!etkileşimler.tekerlek || delta === 0 || !bilgi) return;
@@ -4781,20 +4792,20 @@
         } catch (neden) {
           hata.textContent = `Timezones & DST yakınlaştırması uygulanamadı: ${String(neden)}`;
         }
-      }, { passive: false });
+      }, { passive: false, signal: dinleyiciDenetimi.signal });
       kutu.addEventListener("dblclick", olay => {
         olay.stopPropagation();
         if (yüzey.tam_gorunum()) {
           timezonesDstXGörünümünüYay(indeks, false);
           timezonesDstGrubunuÇiz(indeks);
         }
-      });
+      }, dinleyiciSeçeneği);
       // Seçim hesabı yeniden çizim boyutundan bağımsız olarak çizim alanında kalır.
       kutu.addEventListener("pointerdown", olay => {
         if (!seçim) return;
         const bilgi = konum(olay);
         if (bilgi) Object.assign(seçim, { sol: bilgi.sol, sağ: bilgi.sağ });
-      });
+      }, dinleyiciSeçeneği);
     }
 
     function timezonesDstGrubunuÇiz(kaynakİndeksi) {

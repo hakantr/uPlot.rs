@@ -3396,6 +3396,11 @@ mod testler {
         }
         assert!(timezones_dst_kart_tanim_ornegi().contains("timezones_dst_kartları"));
         assert!(timezones_dst_kart_tanim_ornegi().contains("TimezonesDstGrubu"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("timezonesDinleyiciDenetimi?.abort()"));
+        assert!(web.contains("signal: dinleyiciDenetimi.signal"));
+        assert!(web.contains("dataset.timezonesWheelEvents"));
+        assert!(web.contains("dataset.timezonesRenderCount"));
         assert_eq!(kart_sayisi(), 365);
     }
 
