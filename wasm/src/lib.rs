@@ -2430,6 +2430,10 @@ mod testler {
 
     #[test]
     fn soft_minmax_wasm_beş_yüzeyi_ve_canlı_artışı_korur() {
+        assert_eq!(
+            uplot_rs::soft_minmax_kartları(12.0).map(|kartlar| kartlar.len()),
+            Ok(SoftMinMaxÖrneği::TÜMÜ.len())
+        );
         for örnek in SoftMinMaxÖrneği::TÜMÜ {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             assert!(oturum.is_ok(), "{}", örnek.kimlik());
@@ -2448,6 +2452,14 @@ mod testler {
             }
         }
         assert!(soft_minmax_kart_tanim_ornegi().contains("SoftMinMaxAkışı"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"soft-minmax\"")
+                .count(),
+            1
+        );
+        assert!(web.contains("function softMinMaxÇiz()"));
+        assert!(web.contains("softMinMaxOturumları.forEach((yüzey, indeks)"));
         assert_eq!(kart_sayisi(), 365);
     }
 

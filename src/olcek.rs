@@ -121,7 +121,6 @@ impl Aralık {
         let sıfır_olmayan_delta = if delta != 0.0 { delta } else { mutlak_en_çok };
         let taban = 10_f64.powf(sıfır_olmayan_delta.log10().floor());
         let alt_pay_oranı = if delta == 1e-24
-            && en_az == 0.0
             && ayarlar.en_az.kip == YumuşakSınırKipi::PayAşarsa
             && ayarlar.en_az.yumuşak.is_some()
         {
@@ -130,7 +129,6 @@ impl Aralık {
             ayarlar.en_az.pay
         };
         let üst_pay_oranı = if delta == 1e-24
-            && en_çok == 0.0
             && ayarlar.en_çok.kip == YumuşakSınırKipi::PayAşarsa
             && ayarlar.en_çok.yumuşak.is_some()
         {
@@ -455,6 +453,19 @@ mod testler {
         assert_eq!(
             Aralık::uplot_yapılandırılmış(0.0, 0.0, sıfır_ayarları)?,
             Aralık::yeni(-1.0, 1.0)?
+        );
+
+        // uPlot `rangeNum()` sıfıra komşu, aşırı küçük bir aralıkta delta'yı
+        // 1e-24'e sabitler. Bu özel durumda mode: 2 ve sonlu soft sınırı olan
+        // iki tarafın da payı, yalnız o tarafın veri ucu sıfır olmasa bile
+        // kapatılır.
+        let küçük_ayarlar = SayısalAralıkAyarları::yeni(
+            SayısalAralıkParçası::yeni(0.2, Some(-1e-25), YumuşakSınırKipi::PayAşarsa),
+            SayısalAralıkParçası::yeni(0.2, Some(6e-25), YumuşakSınırKipi::PayAşarsa),
+        );
+        assert_eq!(
+            Aralık::uplot_yapılandırılmış(0.0, 5e-25, küçük_ayarlar)?,
+            Aralık::yeni(-1e-25, 6e-25)?
         );
         Ok(())
     }

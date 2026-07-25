@@ -5,13 +5,18 @@ use crate::{
 };
 
 pub const SOFT_MINMAX_KART_TANIM_ÖRNEĞİ: &str = r##"let mut akış = SoftMinMaxAkışı::yeni();
-for örnek in SoftMinMaxÖrneği::TÜMÜ {
-    let (seçenekler, veri) = soft_minmax_kartı(örnek, akış.veri_en_çok())?;
-    let mut grafik = Grafik::yeni(seçenekler, veri)?;
+let mut grafikler = soft_minmax_kartları(akış.veri_en_çok())?
+    .into_iter()
+    .map(|(örnek, seçenekler, veri)| {
+        Ok((örnek, Grafik::yeni(seçenekler, veri)?))
+    })
+    .collect::<Result<Vec<_>, UplotHatası>>()?;
 
-    // Resmî demodaki `dataMax++` düğmesinin her 50 ms adımı:
+// Resmî demodaki tek `dataMax++` adımı dört canlı yüzeye atomik uygulanır.
+akış.ortak_ilerlet();
+for (örnek, grafik) in &mut grafikler {
     if örnek.canlı_mı() {
-        grafik.veriyi_ayarla(akış.ilerlet(örnek)?)?;
+        grafik.veriyi_ayarla(akış.veri(*örnek)?)?;
     }
 }"##;
 
@@ -129,12 +134,23 @@ impl SoftMinMaxAkışı {
         self.veri_en_çok
     }
 
+    /// Kaynak sayfadaki ortak `data[1][1] += .1` mutasyonunu bir kez uygular.
+    pub fn ortak_ilerlet(&mut self) -> f64 {
+        self.veri_en_çok += 0.1;
+        self.veri_en_çok
+    }
+
+    /// Güncel ortak değerle seçilen yüzeyin hizalı verisini üretir.
+    pub fn veri(self, örnek: SoftMinMaxÖrneği) -> Result<HizalıVeri, UplotHatası> {
+        soft_minmax_verisi(örnek, self.veri_en_çok)
+    }
+
     pub fn ilerlet(&mut self, örnek: SoftMinMaxÖrneği) -> Result<HizalıVeri, UplotHatası> {
         if !örnek.canlı_mı() {
-            return soft_minmax_verisi(örnek, self.veri_en_çok);
+            return self.veri(örnek);
         }
-        self.veri_en_çok += 0.1;
-        soft_minmax_verisi(örnek, self.veri_en_çok)
+        self.ortak_ilerlet();
+        self.veri(örnek)
     }
 }
 
@@ -159,12 +175,26 @@ pub fn soft_minmax_kartı(
         .x_zaman(false)
         .etkileşimler(ortak_kart_etkileşimleri())
         .seri(
-            SeriSeçenekleri::yeni("Data")
+            SeriSeçenekleri::yeni("Value")
                 .renk("blue")
-                .dolgu("#0000ff1a"),
+                .dolgu("rgba(0,0,255,0.1)"),
         )
         .y_ölçeği(YÖlçekSeçenekleri::yeni("y").sayısal_aralık(örnek.aralık_ayarları()));
     Ok((seçenekler, soft_minmax_verisi(örnek, veri_en_çok)?))
+}
+
+/// Tek `soft-minmax.html` sayfasındaki beş ilişkili yüzeyi kaynak sırasıyla
+/// ve aynı canlı `dataMax` değeriyle birlikte üretir.
+pub fn soft_minmax_kartları(
+    veri_en_çok: f64,
+) -> Result<Vec<(SoftMinMaxÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    SoftMinMaxÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| {
+            let (seçenekler, veri) = soft_minmax_kartı(örnek, veri_en_çok)?;
+            Ok((örnek, seçenekler, veri))
+        })
+        .collect()
 }
 
 fn soft_minmax_verisi(
@@ -196,6 +226,17 @@ mod testler {
             let (seçenekler, veri) = soft_minmax_kartı(örnek, 12.0)?;
             assert_eq!((seçenekler.genişlik, seçenekler.yükseklik), (400, 400));
             assert_eq!(seçenekler.başlık, örnek.başlık());
+            assert_eq!(
+                seçenekler.seriler.first().map(|seri| seri.etiket.as_str()),
+                Some("Value")
+            );
+            assert_eq!(
+                seçenekler
+                    .seriler
+                    .first()
+                    .and_then(|seri| seri.dolgu.as_deref()),
+                Some("rgba(0,0,255,0.1)")
+            );
             let grafik = Grafik::yeni(seçenekler, veri)?;
             let aralık = grafik.görünür_y_aralığı();
             assert!(
@@ -222,6 +263,19 @@ mod testler {
     }
 
     #[test]
+    fn aynı_kaynak_sayfasının_beş_yüzeyi_tek_grupta_üretilir() -> Result<(), UplotHatası> {
+        let kartlar = soft_minmax_kartları(12.0)?;
+        assert_eq!(kartlar.len(), SoftMinMaxÖrneği::TÜMÜ.len());
+        assert!(
+            kartlar
+                .iter()
+                .zip(SoftMinMaxÖrneği::TÜMÜ)
+                .all(|((örnek, _, veri), beklenen)| *örnek == beklenen && veri.uzunluk() == 2)
+        );
+        Ok(())
+    }
+
+    #[test]
     fn data_max_artışı_çekirdekten_set_data_verisi_üretir() -> Result<(), UplotHatası> {
         let örnek = SoftMinMaxÖrneği::MinKip2;
         let mut akış = SoftMinMaxAkışı::yeni();
@@ -232,6 +286,21 @@ mod testler {
         let aralık = grafik.görünür_y_aralığı();
         assert_eq!(aralık.en_az, 0.0);
         assert!(aralık.en_çok > 13.4);
+        Ok(())
+    }
+
+    #[test]
+    fn ortak_adım_dört_canlı_yüzeye_aynı_değeri_uygular() -> Result<(), UplotHatası> {
+        let mut akış = SoftMinMaxAkışı::yeni();
+        assert!((akış.ortak_ilerlet() - 12.1).abs() <= 1e-12);
+        for örnek in SoftMinMaxÖrneği::TÜMÜ {
+            let veri = akış.veri(örnek)?;
+            let beklenen = if örnek.canlı_mı() { 12.1 } else { 0.0 };
+            assert_eq!(
+                veri.seriler().first().and_then(|seri| seri.get(1)).copied(),
+                Some(Some(beklenen))
+            );
+        }
         Ok(())
     }
 }

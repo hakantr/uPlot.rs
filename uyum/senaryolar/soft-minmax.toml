@@ -1,6 +1,6 @@
 id = "soft-minmax"
 kaynak = "../uPlot/demos/soft-minmax.html"
-fixture = "src/kart/soft_minmax.rs#soft_minmax_kartı"
+fixture = "src/kart/soft_minmax.rs#soft_minmax_kartları"
 viewport = [1600, 900]
 device_pixel_ratio = 1
 durum = "beş_soft_minmax_yüzeyi"
@@ -16,8 +16,10 @@ düz_y = [0, 0]
 [etkileşim]
 düğme = "dataMax++"
 aralık_milisaniye = 50
-güncelleme = "SoftMinMaxAkışı::ilerlet_to_Grafik::veriyi_ayarla"
+güncelleme = "SoftMinMaxAkışı::ortak_ilerlet_to_four_Grafik::veriyi_ayarla"
 ortak_davranış_profili = "resize-temeli-v1"
+ilişki = "tek_kart_beş_eşzamanlı_yüzey_dört_ortak_canlı_bir_sabit"
+zamanlayıcı_güvenliği = "tek_çalışan_timer_koruması_kasıtlı"
 
 [kanıt]
 svg_dizini = "target/soft-minmax"

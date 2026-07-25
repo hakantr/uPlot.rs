@@ -184,7 +184,8 @@ pub use sine_stream::{
     sine_stream_kartı,
 };
 pub use soft_minmax::{
-    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SoftMinMaxAkışı, SoftMinMaxÖrneği, soft_minmax_kartı,
+    SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SoftMinMaxAkışı, SoftMinMaxÖrneği, soft_minmax_kartları,
+    soft_minmax_kartı,
 };
 pub use sparklines::{SPARKLINES_KART_TANIM_ÖRNEĞİ, SparklineÖrneği, sparklines_kartı};
 pub use sparklines_bars::{

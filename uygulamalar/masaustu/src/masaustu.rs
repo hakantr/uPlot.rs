@@ -58,12 +58,13 @@ use uplot_rs::{
     ortak_kart_etkileşimleri, path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları,
     pixel_align_kartı, points_kartları, points_kartı, resize_kartı, scale_padding_kartı,
     scales_dir_ori_kartları, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
-    sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı,
-    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
-    sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
-    timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
-    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
+    sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartı,
+    sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
+    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_kartı,
+    thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
+    trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
+    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -157,7 +158,7 @@ impl KartKimliği {
             Self::Scatter => "Scatter & Bubble · 2 bağımsız yüzey",
             Self::ScrollSync => "Scroll syncRect()",
             Self::SineStream => "6 series x 600 points @ 60fps",
-            Self::SoftMinMax(örnek) => örnek.başlık(),
+            Self::SoftMinMax(_) => "Soft Min/Max · 5 ilişkili yüzey",
             Self::SparklinesBars(örnek) => örnek.başlık(),
             Self::Sparklines(örnek) => örnek.başlık(),
             Self::Sparse(örnek) => örnek.başlık(),
@@ -546,6 +547,7 @@ pub struct ChartListesi {
     boyut_senkron_akışı: Option<BoyutSenkronAkışı>,
     y_shifted_series_akışı: Option<YShiftedSeriesAkışı>,
     soft_minmax_çalışıyor: bool,
+    soft_minmax_grafikleri: Vec<(SoftMinMaxÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grubu: SyncCursorGrubu,
     timeseries_discrete_grafikleri: Vec<(TimeseriesDiscreteÖrneği, Entity<GpuiGrafik>)>,
@@ -629,6 +631,12 @@ impl ChartListesi {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
                 }
+            } else if matches!(bu.aktif_kart, KartKimliği::SoftMinMax(_)) {
+                for (_, grafik) in &bu.soft_minmax_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
             } else if let Some(grafik) = &bu.grafik {
                 grafik.update(cx, |grafik, cx| {
                     grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
@@ -686,6 +694,7 @@ impl ChartListesi {
             boyut_senkron_akışı: None,
             y_shifted_series_akışı: None,
             soft_minmax_çalışıyor: false,
+            soft_minmax_grafikleri: Vec::new(),
             sync_cursor_grafikleri: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
             timeseries_discrete_grafikleri: Vec::new(),
@@ -1081,6 +1090,46 @@ impl ChartListesi {
         cx.notify();
     }
 
+    fn soft_minmax_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = soft_minmax_kartları(12.0);
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Soft Min/Max ailesi oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.soft_minmax_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.soft_minmax_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                    bu.açıklama_istendi = true;
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.soft_minmax_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
         match grafik_oluştur(
@@ -1305,6 +1354,7 @@ impl ChartListesi {
         });
         self.scales_dir_ori_grafikleri.clear();
         self.scatter_grafikleri.clear();
+        self.soft_minmax_grafikleri.clear();
         if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -1380,6 +1430,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.scatter_yüzeylerini_oluştur(cx);
+        } else if matches!(kart, KartKimliği::SoftMinMax(_)) {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.soft_minmax_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -1678,10 +1737,10 @@ impl ChartListesi {
     }
 
     fn soft_minmax_başlat(&mut self, cx: &mut Context<Self>) {
-        let KartKimliği::SoftMinMax(örnek) = self.aktif_kart else {
+        let KartKimliği::SoftMinMax(_) = self.aktif_kart else {
             return;
         };
-        if !örnek.canlı_mı() || self.soft_minmax_çalışıyor {
+        if self.soft_minmax_çalışıyor {
             return;
         }
         self.soft_minmax_çalışıyor = true;
@@ -1703,14 +1762,28 @@ impl ChartListesi {
                                     açıklama: "masaüstü akış durumu bulunamadı".to_string(),
                                 })
                             },
-                            |akış| akış.ilerlet(örnek),
+                            |akış| {
+                                akış.ortak_ilerlet();
+                                SoftMinMaxÖrneği::TÜMÜ
+                                    .into_iter()
+                                    .filter(|örnek| örnek.canlı_mı())
+                                    .map(|örnek| Ok((örnek, akış.veri(örnek)?)))
+                                    .collect::<Result<Vec<_>, UplotHatası>>()
+                            },
                         );
                         match sonuç {
-                            Ok(veri) => {
-                                if let Some(grafik) = &bu.grafik {
-                                    let güncellendi = grafik
-                                        .update(cx, |grafik, cx| grafik.veriyi_ayarla(veri, cx));
-                                    if let Err(hata) = güncellendi {
+                            Ok(veriler) => {
+                                for (örnek, veri) in veriler {
+                                    let Some((_, grafik)) = bu
+                                        .soft_minmax_grafikleri
+                                        .iter()
+                                        .find(|(kimlik, _)| *kimlik == örnek)
+                                    else {
+                                        return false;
+                                    };
+                                    if let Err(hata) = grafik
+                                        .update(cx, |grafik, cx| grafik.veriyi_ayarla(veri, cx))
+                                    {
                                         bu.hata =
                                             Some(format!("Soft Min/Max güncellenemedi: {hata}"));
                                         return false;
@@ -1962,10 +2035,7 @@ impl Render for ChartListesi {
         let soluk = rgb(0x6b7280);
         let vurgu = rgb(0xdc2626);
         let aktif_kart = self.aktif_kart;
-        let soft_minmax_canlı = matches!(
-            aktif_kart,
-            KartKimliği::SoftMinMax(örnek) if örnek.canlı_mı()
-        );
+        let soft_minmax_canlı = matches!(aktif_kart, KartKimliği::SoftMinMax(_));
         let soft_minmax_çalışıyor = self.soft_minmax_çalışıyor;
         let sync_cursor_etkin = self.sync_cursor_grubu.senkron();
         let sync_cursor_fare_etkin = self.sync_cursor_grubu.fare_basma_bırakma_senkron();
@@ -2041,15 +2111,8 @@ impl Render for ChartListesi {
             }
             KartKimliği::ScrollSync => "30 nokta × 3 seri · kaydırmada syncRect".to_string(),
             KartKimliği::SineStream => "600 nokta × 6 seri · 60 FPS setData".to_string(),
-            KartKimliği::SoftMinMax(örnek) => {
-                let davranış = match örnek {
-                    SoftMinMaxÖrneği::MinKip0 => "sabit % alt pay",
-                    SoftMinMaxÖrneği::MinKip1 => "veri aşarsa softMin",
-                    SoftMinMaxÖrneği::MinKip2 => "pay aşarsa softMin",
-                    SoftMinMaxÖrneği::MinKip3 => "koşullu softMin",
-                    SoftMinMaxÖrneği::DüzSıfır => "soft aralık −1…1",
-                };
-                format!("2 kaynak noktası · {davranış}")
+            KartKimliği::SoftMinMax(_) => {
+                "5 ilişkili yüzey · 4 ortak canlı kip + düz sıfır".to_string()
             }
             KartKimliği::SparklinesBars(_) => "16 nokta · sparkline + 16 yüzen çubuk".to_string(),
             KartKimliği::Sparklines(örnek) => {
@@ -2345,6 +2408,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .scatter_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if matches!(aktif_kart, KartKimliği::SoftMinMax(_)) {
+            geri_var = self
+                .soft_minmax_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .soft_minmax_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         }
@@ -3052,21 +3124,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::SineStream, cx);
                 })),
             )
-            .children(SoftMinMaxÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::SoftMinMax(örnek);
+            .child({
+                let kart = KartKimliği::SoftMinMax(SoftMinMaxÖrneği::MinKip0);
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
                     "soft-minmax",
-                    aktif_kart == kart,
-                    "rangeNum · soft/pad/mode",
+                    "Soft Min/Max · 5 yüzey",
+                    "soft-minmax",
+                    matches!(aktif_kart, KartKimliği::SoftMinMax(_)),
+                    "4 ortak canlı kip + düz sıfır",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .children(SparklinesBarsÖrneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::SparklinesBars(örnek);
                 katalog_kartı(
@@ -3776,6 +3848,12 @@ impl Render for ChartListesi {
                                     grafik.önceki_görünüm(cx);
                                 });
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::SoftMinMax(_)) {
+                            for (_, grafik) in &bu.soft_minmax_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.önceki_görünüm(cx);
+                                });
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
@@ -3836,6 +3914,12 @@ impl Render for ChartListesi {
                             bu.scales_dir_ori_senkronlanıyor = false;
                         } else if bu.aktif_kart == KartKimliği::Scatter {
                             for (_, grafik) in &bu.scatter_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.tam_görünüm(cx);
+                                });
+                            }
+                        } else if matches!(bu.aktif_kart, KartKimliği::SoftMinMax(_)) {
+                            for (_, grafik) in &bu.soft_minmax_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
                                     grafik.tam_görünüm(cx);
                                 });
@@ -4442,6 +4526,56 @@ impl Render for ChartListesi {
                                 ),
                         )
                 }))
+        } else if matches!(aktif_kart, KartKimliği::SoftMinMax(_)) {
+            let yüzey = |örnek| {
+                self.soft_minmax_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(1160.0))
+                .overflow_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .p_2()
+                        .rounded_md()
+                        .bg(rgb(0xf8fafc))
+                        .text_xs()
+                        .text_color(soluk)
+                        .child("Resmî soft-minmax.html tek veri nesnesini paylaşan dört canlı rangeNum karşılaştırmasını ve bağımsız düz-sıfır yüzeyini birlikte gösterir. ▶ dataMax++ tek ortak değeri her 50 ms’de dört canlı yüzeye aynı adımda uygular."),
+                )
+                .child(
+                    div().flex().flex_wrap().gap_3().items_start().children(
+                        SoftMinMaxÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                            div()
+                                .flex_none()
+                                .w(px(400.0))
+                                .child(
+                                    div()
+                                        .text_sm()
+                                        .font_weight(FontWeight::BOLD)
+                                        .text_color(metin)
+                                        .child(örnek.başlık()),
+                                )
+                                .child(
+                                    div()
+                                        .h(px(58.0))
+                                        .text_xs()
+                                        .text_color(soluk)
+                                        .child(örnek.açıklama()),
+                                )
+                                .child(
+                                    div()
+                                        .w(px(400.0))
+                                        .h(px(400.0))
+                                        .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                )
+                        }),
+                    ),
+                )
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
             let boyut = self
                 .boyut_senkron_akışı
@@ -4637,6 +4771,17 @@ impl Render for ChartListesi {
                  VecDeque pencere kaydırması O(1), veri aktarımı ve altı yolun çizimi \
                  O(seri×600); sabit eksen/grid yolları önbellekte, cursor/seçim katmanı \
                  güncellemeler arasında korunur.",
+            ),
+            KartKimliği::SoftMinMax(_) => Some(
+                "Amaç: aynı iki noktalı verinin soft min mode 0/1/2/3 kararlarını yan yana \
+                 karşılaştırır; beşinci yüzey düz sıfır veride iki taraflı −1…1 soft sınırını \
+                 gösterir. API: soft_minmax_kartları tek kaynak sayfasının beş yüzeyini kaynak \
+                 sırasıyla kurar; SayısalAralıkParçası pad, soft ve mode alanlarını tipli \
+                 tanımlar. İzleme: sıfır tabanını sabit tutan oranlar ile küçük değişimlerde \
+                 dikey çözünürlüğü koruyan telemetri politikalarını seçmek için uygundur. \
+                 Maliyet: tek dataMax adımı yalnız ikişer noktalı dört grafiğe atomik setData \
+                 uygular; düz-sıfır yüzeyi değişmez. Tekrarlanan başlatmalar engellenir; bu, \
+                 kaynak örnekteki üst üste interval açabilme durumuna karşı kasıtlı güvenliktir.",
             ),
             KartKimliği::Scatter => Some(
                 "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \

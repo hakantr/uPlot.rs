@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::path::PathBuf;
-use uplot_rs::{Grafik, SoftMinMaxÖrneği, soft_minmax_kartı};
+use uplot_rs::{Grafik, soft_minmax_kartları};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let çıktı = std::env::args()
@@ -8,8 +8,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("target/soft-minmax"));
     std::fs::create_dir_all(&çıktı)?;
-    for örnek in SoftMinMaxÖrneği::TÜMÜ {
-        let (seçenekler, veri) = soft_minmax_kartı(örnek, 12.0)?;
+    for (örnek, seçenekler, veri) in soft_minmax_kartları(12.0)? {
         let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();
         std::fs::write(çıktı.join(format!("{}.svg", örnek.kimlik())), svg)?;
     }

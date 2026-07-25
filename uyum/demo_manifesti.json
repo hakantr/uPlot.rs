@@ -2372,7 +2372,7 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" },
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" }
       ],
-      "fixture": "src/kart/soft_minmax.rs#soft_minmax_kartı",
+      "fixture": "src/kart/soft_minmax.rs#soft_minmax_kartları",
       "örnek": "examples/soft_minmax.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -2396,10 +2396,13 @@
       "sahip_faz": 1,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "source-five-400x400-surfaces", "source-exact-two-point-data",
+        "source-five-simultaneous-400x400-surfaces", "single-catalog-card-source-page",
+        "shared-live-data-max-single-timer", "source-exact-two-point-data",
         "range-num-pad-soft-mode-0-1-2-3", "flat-zero-minus1-plus1-soft-range",
         "source-button-50ms-data-max-increment", "core-owned-live-set-data",
-        "gpui-wasm-live-parity", "common-interaction-profile"
+        "in-place-surface-update", "guarded-single-run-timer",
+        "gpui-wasm-live-parity", "common-interaction-profile",
+        "default-closed-usage-guide"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
