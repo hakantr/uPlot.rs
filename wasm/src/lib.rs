@@ -2924,7 +2924,8 @@ mod testler {
             assert!(svg.contains("<svg"));
             assert!(svg.contains("red"));
         }
-        assert!(timezones_dst_kart_tanim_ornegi().contains("TimezonesDstÖrneği"));
+        assert!(timezones_dst_kart_tanim_ornegi().contains("timezones_dst_kartları"));
+        assert!(timezones_dst_kart_tanim_ornegi().contains("TimezonesDstGrubu"));
         assert_eq!(kart_sayisi(), 365);
     }
 

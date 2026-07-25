@@ -3031,7 +3031,7 @@
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" },
         { "yol": "src/fmtDate.js", "sha256": "e7867482a11abe4cd9e015d3610b7e8b6ab1d55409e06acd7550dd57348f9d3b" }
       ],
-      "fixture": "src/kart/timezones_dst.rs#timezones_dst_kartı",
+      "fixture": "src/kart/timezones_dst.rs#timezones_dst_kartları",
       "örnek": "examples/timezones_dst.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -3061,7 +3061,9 @@
         "source-exact-fifty-one-surfaces", "platform-independent-timezones",
         "london-2024-dst-skip-repeat", "chicago-2024-dst-skip-repeat",
         "local-midnight-tick-alignment", "source-hour-day-month-ranges",
-        "four-cursor-sync-groups", "gpui-wasm-parity", "common-interaction-profile",
+        "eleven-source-sections", "four-cursor-view-setseries-sync-groups",
+        "thirty-nine-independent-surfaces", "single-catalog-card",
+        "gpui-wasm-parity", "common-interaction-profile",
         "panic-free-timezone-axis"
       ],
       "kanıt": {

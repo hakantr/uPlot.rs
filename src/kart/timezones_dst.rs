@@ -3,9 +3,11 @@ use crate::{
     ZamanDilimi, ortak_kart_etkileşimleri,
 };
 
-pub const TIMEZONES_DST_KART_TANIM_ÖRNEĞİ: &str = r#"let örnek = TimezonesDstÖrneği::yeni(0)?;
-let (seçenekler, veri) = timezones_dst_kartı(örnek)?;
-let grafik = Grafik::yeni(seçenekler, veri)?;"#;
+pub const TIMEZONES_DST_KART_TANIM_ÖRNEĞİ: &str = r#"let yüzeyler = timezones_dst_kartları()?;
+let grup = TimezonesDstGrubu;
+// 51 yüzey kaynak sayfadaki 11 bölüm sırasıyla döner.
+// Yalnız ilk dört üçlü kendi cursor/X görünümü/setSeries grubunu paylaşır.
+let aynı_grup = grup.senkron_mu(yüzeyler[0].0, yüzeyler[1].0);"#;
 
 const YIL_BAŞI: i64 = 1_704_067_200;
 const SAAT: i64 = 3_600;
@@ -113,6 +115,28 @@ impl TimezonesDstÖrneği {
         }
     }
 
+    pub fn bölüm_indeksi(self) -> usize {
+        let indeks = usize::from(self.0);
+        match indeks {
+            0..=11 => indeks / 3,
+            12..=39 => 4 + (indeks - 12) / 7,
+            40..=43 => 8,
+            44..=48 => 9,
+            _ => 10,
+        }
+    }
+
+    pub fn bölümdeki_sıra(self) -> usize {
+        let indeks = usize::from(self.0);
+        match indeks {
+            0..=11 => indeks % 3,
+            12..=39 => (indeks - 12) % 7,
+            40..=43 => indeks - 40,
+            44..=48 => indeks - 44,
+            _ => indeks - 49,
+        }
+    }
+
     pub fn zaman_dilimi(self) -> ZamanDilimi {
         let indeks = usize::from(self.0);
         if indeks < 12 {
@@ -157,6 +181,57 @@ impl TimezonesDstÖrneği {
             _ => None,
         }
     }
+}
+
+/// Kaynak sayfadaki `cursor.sync.key` ilişkisini uygulama katmanlarına taşır.
+///
+/// İlk dört bölümdeki üçer yüzey kendi grubu içinde cursor, X görünümü ve
+/// `setSeries` durumunu paylaşır. Diğer 39 yüzey aynı bölümde bulunsa dahi
+/// bağımsızdır.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct TimezonesDstGrubu;
+
+impl TimezonesDstGrubu {
+    pub fn senkron_mu(self, kaynak: TimezonesDstÖrneği, hedef: TimezonesDstÖrneği) -> bool {
+        kaynak
+            .senkron_grubu()
+            .zip(hedef.senkron_grubu())
+            .is_some_and(|(kaynak, hedef)| kaynak == hedef)
+    }
+
+    pub fn x_görünümünü_senkronla(
+        self,
+        kaynak_örnek: TimezonesDstÖrneği,
+        kaynak: &crate::Grafik,
+        hedef_örnek: TimezonesDstÖrneği,
+        hedef: &mut crate::Grafik,
+        geçmişe_ekle: bool,
+    ) -> bool {
+        self.senkron_mu(kaynak_örnek, hedef_örnek)
+            && hedef.görünür_x_aralığını_ayarla(kaynak.görünür_x_aralığı(), geçmişe_ekle)
+    }
+
+    pub fn seriyi_senkronla(
+        self,
+        kaynak: TimezonesDstÖrneği,
+        hedef_örnek: TimezonesDstÖrneği,
+        hedef: &mut crate::Grafik,
+        görünür: bool,
+    ) -> Result<bool, UplotHatası> {
+        if !self.senkron_mu(kaynak, hedef_örnek) {
+            return Ok(false);
+        }
+        hedef.seri_görünürlüğünü_ayarla(0, görünür)
+    }
+}
+
+/// Resmî sayfadaki 51 yüzeyi, 11 bölümün kaynak sırası korunarak tek API ile
+/// döndürür.
+pub fn timezones_dst_kartları()
+-> Result<Vec<(TimezonesDstÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    TimezonesDstÖrneği::tümü()
+        .map(|örnek| timezones_dst_kartı(örnek).map(|(seçenekler, veri)| (örnek, seçenekler, veri)))
+        .collect()
 }
 
 pub fn timezones_dst_kartı(
@@ -279,6 +354,75 @@ mod testler {
             .map(|örnek| örnek.kimlik())
             .collect::<std::collections::BTreeSet<_>>();
         assert_eq!(kimlikler.len(), 51);
+        assert_eq!(
+            örnekler
+                .iter()
+                .fold(vec![0_usize; 11], |mut sayılar, örnek| {
+                    if let Some(sayı) = sayılar.get_mut(örnek.bölüm_indeksi()) {
+                        *sayı += 1;
+                    }
+                    sayılar
+                }),
+            vec![3, 3, 3, 3, 7, 7, 7, 7, 4, 5, 2]
+        );
+    }
+
+    #[test]
+    fn kaynak_sırası_on_bir_bölümü_tek_api_ile_döndürür() -> Result<(), UplotHatası> {
+        let kartlar = timezones_dst_kartları()?;
+        assert_eq!(kartlar.len(), 51);
+        assert_eq!(
+            kartlar
+                .iter()
+                .map(|(örnek, _, _)| örnek.bölüm_indeksi())
+                .collect::<std::collections::BTreeSet<_>>(),
+            (0..11).collect()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn yalnız_ilk_dört_üçlü_kendi_içinde_senkronlanır() -> Result<(), UplotHatası> {
+        let örnek = |indeks| {
+            TimezonesDstÖrneği::yeni(indeks).ok_or(UplotHatası::BilinmeyenKart {
+                kimlik: format!("timezones-dst-{}", indeks + 1),
+            })
+        };
+        let grup = TimezonesDstGrubu;
+        assert!(grup.senkron_mu(örnek(0)?, örnek(2)?));
+        assert!(!grup.senkron_mu(örnek(0)?, örnek(3)?));
+        assert!(!grup.senkron_mu(örnek(12)?, örnek(13)?));
+
+        let kaynak_örnek = örnek(0)?;
+        let hedef_örnek = örnek(1)?;
+        let bağımsız_örnek = örnek(3)?;
+        let (kaynak_seçenekleri, kaynak_veri) = timezones_dst_kartı(kaynak_örnek)?;
+        let (hedef_seçenekleri, hedef_veri) = timezones_dst_kartı(hedef_örnek)?;
+        let (bağımsız_seçenekleri, bağımsız_veri) = timezones_dst_kartı(bağımsız_örnek)?;
+        let mut kaynak = Grafik::yeni(kaynak_seçenekleri, kaynak_veri)?;
+        let mut hedef = Grafik::yeni(hedef_seçenekleri, hedef_veri)?;
+        let mut bağımsız = Grafik::yeni(bağımsız_seçenekleri, bağımsız_veri)?;
+        assert!(kaynak.seçim_yakınlaştır(0.2, 0.8)?);
+        assert!(grup.x_görünümünü_senkronla(
+            kaynak_örnek,
+            &kaynak,
+            hedef_örnek,
+            &mut hedef,
+            true
+        ));
+        assert_eq!(kaynak.görünür_x_aralığı(), hedef.görünür_x_aralığı());
+        assert!(!grup.x_görünümünü_senkronla(
+            kaynak_örnek,
+            &kaynak,
+            bağımsız_örnek,
+            &mut bağımsız,
+            true
+        ));
+        assert!(grup.seriyi_senkronla(kaynak_örnek, hedef_örnek, &mut hedef, false)?);
+        assert!(!hedef.seri_görünür_mü(0));
+        assert!(!grup.seriyi_senkronla(kaynak_örnek, bağımsız_örnek, &mut bağımsız, false)?);
+        assert!(bağımsız.seri_görünür_mü(0));
+        Ok(())
     }
 
     #[test]

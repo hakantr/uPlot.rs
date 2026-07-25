@@ -161,6 +161,20 @@
     .timeseries-discrete-yığın svg { display: block; width: 1920px; height: 100%; }
     .timeseries-discrete-yığın .yardım,
     .timeseries-discrete-yığın .lejant { position: static; justify-content: flex-start; }
+    #chart.timezones-dst-yüzeyi { display: block; min-width: 0; overflow: auto; padding: 8px; }
+    .timezones-dst-ızgara { display: grid; grid-template-columns: repeat(auto-fit, 600px);
+      gap: 18px; align-items: start; justify-content: start; width: 100%; min-width: 600px; }
+    .timezones-dst-bölüm { width: 600px; display: grid; gap: 8px; align-content: start; }
+    .timezones-dst-bölüm > h3 { margin: 0; min-height: 34px; font-size: 14px;
+      line-height: 1.25; color: var(--ink); text-align: left; overflow-wrap: anywhere; }
+    .timezones-dst-grafik { position: relative; width: 600px; height: 200px; }
+    .timezones-dst-grafik svg { display: block; width: 600px; height: 200px; }
+    .timezones-dst-grafik .timezones-lejant { position: absolute; z-index: 3; top: 3px;
+      left: 56px; display: flex; gap: 8px; align-items: center; padding: 2px 6px;
+      border-radius: 4px; background: color-mix(in srgb, var(--panel) 88%, transparent);
+      font-size: 11px; pointer-events: auto; cursor: pointer; user-select: none; }
+    .timezones-dst-grafik .timezones-lejant i { width: 12px; border-top: 2px solid red; }
+    .timezones-dst-grafik .timezones-seçim { pointer-events: none; }
     #chart.nearest-non-null-yüzeyi { display: block; overflow: auto; padding: 8px; }
     .nearest-non-null-yığın { min-width: 680px; display: grid; grid-template-columns: 1fr 1fr;
                               gap: 10px; align-items: start; }
@@ -2038,31 +2052,36 @@
       zamanDilimiYüzeyleri.push([başlık, "With start offset", "Etc/UTC"])
     );
     let zamanDilimiEklemeNoktası = document.querySelector('[data-kart="timeseries-discrete"]');
-    zamanDilimiYüzeyleri.forEach(([başlık, bölüm, dilim], indeks) => {
-      const kimlik = `timezones-dst-${String(indeks + 1).padStart(2, "0")}`;
-      zamanDilimiEklemeNoktası?.insertAdjacentHTML(
-        "afterend",
-        `<article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>${kimlik}</small>
-          <div class="durum">${bölüm} · ${dilim}</div>
-        </article>`
-      );
-      zamanDilimiEklemeNoktası = document.querySelector(`[data-kart="${kimlik}"]`);
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak:
-          <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/timezones-dst.html">timezones-dst.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/opts.js">src/opts.js</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/fmtDate.js">src/fmtDate.js</a>
-          <br>${bölüm}; ${dilim} yerel saat bölmeleri Rust çekirdeğinde platformdan bağımsız üretilir.`,
-        tanım: () => timezones_dst_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/timezones_dst.rs",
-        seriler: [{ etiket: "2024", renk: "red" }],
-        yardım: `${dilim} · DST saat atlama/tekrarlama · ortak kart etkileşimleri`,
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    });
+    zamanDilimiEklemeNoktası?.insertAdjacentHTML(
+      "afterend",
+      `<article class="kart" data-kart="timezones-dst" aria-current="false" tabindex="0">
+        <strong>Timezones & DST</strong><small>timezones-dst</small>
+        <div class="durum">51 yüzey · 11 bölüm · ilk 4 üçlü senkron</div>
+      </article>`
+    );
+    zamanDilimiEklemeNoktası = document.querySelector('[data-kart="timezones-dst"]');
+    kartlar["timezones-dst"] = {
+      başlık: "Timezones & DST · 51 kaynak yüzeyi",
+      kaynak: `Kaynak:
+        <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/timezones-dst.html">timezones-dst.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/opts.js">src/opts.js</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/fmtDate.js">src/fmtDate.js</a>
+        <br>Resmî sayfanın 51 etkin yüzeyi 11 bölümde birlikte gösterilir.
+        İlk dört DST karşılaştırma üçlüsü cursor, X görünümü ve seri görünürlüğünü
+        yalnız kendi içinde paylaşır; kalan 39 yüzey bağımsızdır.`,
+      tanım: () => timezones_dst_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/timezones_dst.rs",
+      seriler: [{ etiket: "2024", renk: "red" }],
+      yardım: "İlk dört üçlü senkron · diğer yüzeyler bağımsız · Shift: X · Ctrl: Y",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "UTC, London ve Chicago yerel saat eksenlerini DST atlama/tekrarlama anlarında; farklı saat, gün ve ay tick artımlarıyla aynı kaynak sayfa düzeninde karşılaştırır.",
+        api: "timezones_dst_kartları 51 Grafik tanımını 11 bölüm sırasıyla döndürür. TimezonesDstGrubu yalnız ilk dört üçlüde cursor, seçim/zoom X görünümü ve setSeries görünürlüğünü koordine eder.",
+        izleme: "Farklı bölgelerde çalışan servislerin log ve metrik zaman çizelgelerinde yerel saat etiketlerinin DST sınırlarında yanlış hizalanmadığını doğrulamak için kullanılır.",
+        maliyet: "Kaynak gibi 51 yüzey aynı sayfada bulunur; pointer hareketi ana yolları yeniden çizmeden yalnız cursor ve legend katmanlarını günceller. Zoom yalnız etkin senkron üçlüyü veya bağımsız yüzeyi yeniden boyar.",
+      },
+    };
 
     zamanDilimiEklemeNoktası?.insertAdjacentHTML(
       "afterend",
@@ -2745,6 +2764,8 @@
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
     let timeseriesDiscreteEtkinİndeks = 0;
+    let timezonesDstOturumları = [];
+    let timezonesDstEtkinİndeks = 0;
     let nearestNonNullOturumları = [];
     let monthsOturumları = [];
     let pathGapClipOturumları = [];
@@ -2927,6 +2948,14 @@
           || !timeseriesDiscreteOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !timeseriesDiscreteOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "timezones-dst") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !timezonesDstOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !timezonesDstOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -3796,6 +3825,284 @@
       });
       oturum = timeseriesDiscreteOturumları[timeseriesDiscreteEtkinİndeks]
         ?? timeseriesDiscreteOturumları[0]
+        ?? null;
+      kontrolleriGüncelle();
+    }
+
+    function timezonesDstGrupİndeksleri(kaynakİndeksi) {
+      if (kaynakİndeksi >= 0 && kaynakİndeksi < 12) {
+        const başlangıç = Math.floor(kaynakİndeksi / 3) * 3;
+        return [başlangıç, başlangıç + 1, başlangıç + 2];
+      }
+      return [kaynakİndeksi];
+    }
+
+    function timezonesDstXGörünümünüYay(kaynakİndeksi, geçmişeEkle = true) {
+      const kaynak = timezonesDstOturumları[kaynakİndeksi];
+      const [enAz, enÇok] = kaynak?.gorunur_x_araligi() ?? [];
+      if (!Number.isFinite(enAz) || !Number.isFinite(enÇok)) return;
+      timezonesDstGrupİndeksleri(kaynakİndeksi).forEach(indeks => {
+        if (indeks !== kaynakİndeksi) {
+          timezonesDstOturumları[indeks]?.gorunur_x_araligini_ayarla(
+            enAz, enÇok, geçmişeEkle
+          );
+        }
+      });
+    }
+
+    function timezonesDstİmleciniGüncelle(kaynakİndeksi, yatayOran) {
+      const kaynak = timezonesDstOturumları[kaynakİndeksi];
+      const değerler = Array.from(kaynak?.en_yakin_noktalar(yatayOran) ?? []);
+      const x = değerler[0];
+      if (!Number.isFinite(x)) return;
+      timezonesDstGrupİndeksleri(kaynakİndeksi).forEach(indeks => {
+        const kutu = chart.querySelector(`[data-timezones-index="${indeks}"]`);
+        const svg = kutu?.querySelector("svg");
+        const yüzey = timezonesDstOturumları[indeks];
+        const çizgi = svg?.querySelector(".timezones-imleç");
+        const değerHedefi = kutu?.querySelector("[data-timezones-değer]");
+        if (!svg || !yüzey || !çizgi) return;
+        const view = svg.viewBox.baseVal;
+        const alan = Array.from(yüzey.cizim_alani(view.width, view.height));
+        const oran = yüzey.x_konum_orani(x);
+        if (alan.length !== 4 || !Number.isFinite(oran)) return;
+        const px = alan[0] + oran * (alan[1] - alan[0]);
+        çizgi.setAttribute("x1", px);
+        çizgi.setAttribute("x2", px);
+        çizgi.setAttribute("y1", alan[2]);
+        çizgi.setAttribute("y2", alan[3]);
+        çizgi.setAttribute("visibility", "visible");
+        const hedefDeğerler = Array.from(yüzey.en_yakin_noktalar(oran));
+        if (değerHedefi) {
+          değerHedefi.textContent = yüzey.seri_gorunur(0)
+            && Number.isFinite(hedefDeğerler[1])
+              ? Number(hedefDeğerler[1]).toFixed(1)
+              : "--";
+        }
+      });
+    }
+
+    function timezonesDstYüzeyiniÇiz(indeks) {
+      const kutu = chart.querySelector(`[data-timezones-index="${indeks}"]`);
+      const yüzey = timezonesDstOturumları[indeks];
+      if (!kutu || !yüzey) return;
+      const görünür = yüzey.seri_gorunur(0);
+      kutu.innerHTML = `${yüzey.svg(600, 200)}
+        <span class="timezones-lejant" data-timezones-seri-toggle="${indeks}"
+          role="button" tabindex="0" title="2024 serisini göster/gizle"
+          style="opacity:${görünür ? 1 : .4}">
+          <i></i>2024: <b data-timezones-değer>--</b>
+        </span>`;
+      const svg = kutu.querySelector("svg");
+      if (!svg) return;
+      svg.insertAdjacentHTML("beforeend", `
+        <g pointer-events="none">
+          <rect class="timezones-seçim" visibility="hidden"
+            fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
+          <line class="timezones-imleç" visibility="hidden"
+            stroke="#6b7280" stroke-dasharray="4 4"/>
+        </g>`);
+      const konum = olay => {
+        const rect = svg.getBoundingClientRect();
+        const view = svg.viewBox.baseVal;
+        const alan = Array.from(yüzey.cizim_alani(view.width, view.height));
+        if (alan.length !== 4 || rect.width <= 0 || rect.height <= 0) return null;
+        const x = (olay.clientX - rect.left) / rect.width * view.width;
+        const y = (olay.clientY - rect.top) / rect.height * view.height;
+        if (x < alan[0] || x > alan[1] || y < alan[2] || y > alan[3]) return null;
+        return {
+          x, y, sol: alan[0], sağ: alan[1], üst: alan[2], alt: alan[3],
+          yatay: (x - alan[0]) / (alan[1] - alan[0]),
+          dikey: (y - alan[2]) / (alan[3] - alan[2]),
+        };
+      };
+      let seçim = null;
+      let taşıma = null;
+      let kıstırma = null;
+      const dokunmalar = new Map();
+      const seriDeğiştir = () => {
+        try {
+          const yeni = !yüzey.seri_gorunur(0);
+          let değişti = false;
+          timezonesDstGrupİndeksleri(indeks).forEach(hedefİndeksi => {
+            değişti = timezonesDstOturumları[hedefİndeksi]
+              ?.seri_gorunurlugu_ayarla(0, yeni) || değişti;
+          });
+          if (değişti) timezonesDstGrubunuÇiz(indeks);
+        } catch (neden) {
+          hata.textContent = `Timezones & DST seri görünürlüğü değiştirilemedi: ${String(neden)}`;
+        }
+      };
+      const lejant = kutu.querySelector("[data-timezones-seri-toggle]");
+      lejant?.addEventListener("click", olay => {
+        olay.stopPropagation();
+        seriDeğiştir();
+      });
+      lejant?.addEventListener("keydown", olay => {
+        if (olay.key !== "Enter" && olay.key !== " ") return;
+        olay.preventDefault();
+        olay.stopPropagation();
+        seriDeğiştir();
+      });
+      kutu.addEventListener("pointermove", olay => {
+        olay.stopPropagation();
+        const bilgi = konum(olay);
+        if (!bilgi) return;
+        if (olay.pointerType === "touch" && dokunmalar.has(olay.pointerId)) {
+          dokunmalar.set(olay.pointerId, { x: olay.clientX, y: olay.clientY });
+          if (kıstırma && dokunmalar.size >= 2) {
+            const [a, b] = [...dokunmalar.values()];
+            const uzaklık = Math.hypot(b.x - a.x, b.y - a.y);
+            if (yüzey.dokunma_yakinlastir(
+              bilgi.yatay, bilgi.dikey, kıstırma > 0 ? uzaklık / kıstırma : 1
+            )) timezonesDstXGörünümünüYay(indeks, false);
+            kıstırma = uzaklık;
+          } else if (taşıma && yüzey.tasi(
+            bilgi.yatay - taşıma.yatay, bilgi.dikey - taşıma.dikey
+          )) {
+            timezonesDstXGörünümünüYay(indeks, false);
+            taşıma = { yatay: bilgi.yatay, dikey: bilgi.dikey };
+          }
+          olay.preventDefault();
+          return;
+        }
+        timezonesDstİmleciniGüncelle(indeks, bilgi.yatay);
+        if (seçim) {
+          seçim.son = bilgi.x;
+          const alan = svg.querySelector(".timezones-seçim");
+          alan?.setAttribute("x", Math.min(seçim.baş, seçim.son));
+          alan?.setAttribute("y", bilgi.üst);
+          alan?.setAttribute("width", Math.abs(seçim.son - seçim.baş));
+          alan?.setAttribute("height", bilgi.alt - bilgi.üst);
+          alan?.setAttribute("visibility", "visible");
+        }
+      });
+      kutu.addEventListener("pointerleave", () => {
+        timezonesDstGrupİndeksleri(indeks).forEach(hedefİndeksi => {
+          chart.querySelector(`[data-timezones-index="${hedefİndeksi}"] .timezones-imleç`)
+            ?.setAttribute("visibility", "hidden");
+        });
+      });
+      kutu.addEventListener("pointerdown", olay => {
+        olay.stopPropagation();
+        const bilgi = konum(olay);
+        if (!bilgi) return;
+        timezonesDstEtkinİndeks = indeks;
+        oturum = yüzey;
+        if (olay.pointerType === "touch") {
+          dokunmalar.set(olay.pointerId, { x: olay.clientX, y: olay.clientY });
+          kutu.setPointerCapture(olay.pointerId);
+          if (dokunmalar.size === 1 && yüzey.tasimayi_baslat()) {
+            taşıma = { yatay: bilgi.yatay, dikey: bilgi.dikey };
+          } else if (dokunmalar.size === 2) {
+            if (taşıma) yüzey.tasimayi_bitir();
+            taşıma = null;
+            const [a, b] = [...dokunmalar.values()];
+            kıstırma = yüzey.dokunmayi_baslat()
+              ? Math.hypot(b.x - a.x, b.y - a.y)
+              : null;
+          }
+          olay.preventDefault();
+        } else if (olay.button === 0 && etkileşimler.seçim) {
+          seçim = { baş: bilgi.x, son: bilgi.x };
+          kutu.setPointerCapture(olay.pointerId);
+        }
+      });
+      const bitir = olay => {
+        if (olay.pointerType === "touch") {
+          dokunmalar.delete(olay.pointerId);
+          if (kıstırma) yüzey.dokunmayi_bitir();
+          if (taşıma) yüzey.tasimayi_bitir();
+          kıstırma = null;
+          taşıma = null;
+          timezonesDstGrubunuÇiz(indeks);
+          return;
+        }
+        if (!seçim) return;
+        const başlangıç = (Math.min(seçim.baş, seçim.son) - seçim.sol) /
+          (seçim.sağ - seçim.sol);
+        const bitiş = (Math.max(seçim.baş, seçim.son) - seçim.sol) /
+          (seçim.sağ - seçim.sol);
+        const geçerli = Math.abs(seçim.son - seçim.baş) >= 4;
+        seçim = null;
+        if (geçerli && yüzey.secim_yakinlastir(başlangıç, bitiş)) {
+          timezonesDstXGörünümünüYay(indeks, true);
+          timezonesDstGrubunuÇiz(indeks);
+        } else {
+          svg.querySelector(".timezones-seçim")?.setAttribute("visibility", "hidden");
+        }
+      };
+      kutu.addEventListener("pointerup", bitir);
+      kutu.addEventListener("pointercancel", bitir);
+      kutu.addEventListener("wheel", olay => {
+        olay.stopPropagation();
+        const delta = tekerlekDeltası(olay);
+        const bilgi = konum(olay);
+        if (!etkileşimler.tekerlek || delta === 0 || !bilgi) return;
+        olay.preventDefault();
+        try {
+          const eksen = tekerlekEkseni(olay);
+          if (yüzey.tekerlek_eksende(
+            bilgi.yatay, bilgi.dikey, -delta, olay.deltaMode === 0, eksen
+          )) {
+            if (eksen !== 2) timezonesDstXGörünümünüYay(indeks, true);
+            timezonesDstGrubunuÇiz(indeks);
+            kontrolleriGüncelle();
+          }
+        } catch (neden) {
+          hata.textContent = `Timezones & DST yakınlaştırması uygulanamadı: ${String(neden)}`;
+        }
+      }, { passive: false });
+      kutu.addEventListener("dblclick", olay => {
+        olay.stopPropagation();
+        if (yüzey.tam_gorunum()) {
+          timezonesDstXGörünümünüYay(indeks, false);
+          timezonesDstGrubunuÇiz(indeks);
+        }
+      });
+      // Seçim hesabı yeniden çizim boyutundan bağımsız olarak çizim alanında kalır.
+      kutu.addEventListener("pointerdown", olay => {
+        if (!seçim) return;
+        const bilgi = konum(olay);
+        if (bilgi) Object.assign(seçim, { sol: bilgi.sol, sağ: bilgi.sağ });
+      });
+    }
+
+    function timezonesDstGrubunuÇiz(kaynakİndeksi) {
+      timezonesDstGrupİndeksleri(kaynakİndeksi)
+        .forEach(timezonesDstYüzeyiniÇiz);
+      oturum = timezonesDstOturumları[timezonesDstEtkinİndeks]
+        ?? timezonesDstOturumları[0]
+        ?? null;
+      kontrolleriGüncelle();
+    }
+
+    function timezonesDstÇiz() {
+      chart.className = "timezones-dst-yüzeyi";
+      const bölümler = [];
+      zamanDilimiYüzeyleri.forEach((yüzey, indeks) => {
+        const bölüm = yüzey[1];
+        let hedef = bölümler[bölümler.length - 1];
+        if (!hedef || hedef.bölüm !== bölüm) {
+          hedef = { bölüm, indeksler: [] };
+          bölümler.push(hedef);
+        }
+        hedef.indeksler.push(indeks);
+      });
+      chart.innerHTML = `<div class="timezones-dst-ızgara">
+        ${bölümler.map(({ bölüm, indeksler }) => `
+          <section class="timezones-dst-bölüm">
+            <h3>${bölüm}</h3>
+            ${indeksler.map(indeks => `
+              <article class="timezones-dst-grafik" data-timezones-index="${indeks}"
+                aria-label="${zamanDilimiYüzeyleri[indeks][0]}"></article>
+            `).join("")}
+          </section>
+        `).join("")}
+      </div>`;
+      timezonesDstOturumları.forEach((_, indeks) => timezonesDstYüzeyiniÇiz(indeks));
+      oturum = timezonesDstOturumları[timezonesDstEtkinİndeks]
+        ?? timezonesDstOturumları[0]
         ?? null;
       kontrolleriGüncelle();
     }
@@ -5735,6 +6042,10 @@
         timeseriesDiscreteÇiz();
         return;
       }
+      if (aktifKart === "timezones-dst") {
+        timezonesDstÇiz();
+        return;
+      }
       if (aktifKart === "nearest-non-null") {
         nearestNonNullÇiz();
         return;
@@ -5808,6 +6119,7 @@
       } : null;
       chart.classList.remove("sync-cursor-yüzeyi");
       chart.classList.remove("timeseries-discrete-yüzeyi");
+      chart.classList.remove("timezones-dst-yüzeyi");
       chart.classList.remove("nearest-non-null-yüzeyi");
       chart.classList.remove("months-yüzeyi");
       chart.classList.remove("path-gap-clip-yüzeyi");
@@ -7152,6 +7464,11 @@
       } else if (aktifKart === "timeseries-discrete") {
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         timeseriesDiscreteÇiz();
+      } else if (aktifKart === "timezones-dst") {
+        if (timezonesDstOturumları[timezonesDstEtkinİndeks]?.onceki_gorunum()) {
+          timezonesDstXGörünümünüYay(timezonesDstEtkinİndeks, false);
+          timezonesDstGrubunuÇiz(timezonesDstEtkinİndeks);
+        }
       } else if (aktifKart === "nearest-non-null") {
         nearestNonNullOturumları.forEach((yüzey, indeks) => {
           if (yüzey.onceki_gorunum()) nearestNonNullYüzeyiniÇiz(indeks);
@@ -7207,6 +7524,11 @@
       } else if (aktifKart === "timeseries-discrete") {
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.tam_gorunum());
         timeseriesDiscreteÇiz();
+      } else if (aktifKart === "timezones-dst") {
+        if (timezonesDstOturumları[timezonesDstEtkinİndeks]?.tam_gorunum()) {
+          timezonesDstXGörünümünüYay(timezonesDstEtkinİndeks, false);
+          timezonesDstGrubunuÇiz(timezonesDstEtkinİndeks);
+        }
       } else if (aktifKart === "nearest-non-null") {
         nearestNonNullOturumları.forEach((yüzey, indeks) => {
           if (yüzey.tam_gorunum()) nearestNonNullYüzeyiniÇiz(indeks);
@@ -7289,6 +7611,10 @@
         );
       } else if (aktifKart === "timeseries-discrete") {
         timeseriesDiscreteOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "timezones-dst") {
+        timezonesDstOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "soft-minmax") {
@@ -7480,6 +7806,15 @@
           timelineDiscreteEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "timeline-discrete";
         }
+        if (kimlik !== "timezones-dst" && kimlik.startsWith("timezones-dst-")) {
+          const eşleşme = kimlik.match(/^timezones-dst-(\d{2})$/);
+          const indeks = eşleşme ? Number(eşleşme[1]) - 1 : 0;
+          timezonesDstEtkinİndeks = Number.isInteger(indeks)
+            && indeks >= 0 && indeks < zamanDilimiYüzeyleri.length
+              ? indeks
+              : 0;
+          kimlik = "timezones-dst";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -7520,6 +7855,7 @@
         const gruplanmışOturum = [
           syncCursorOturumları,
           timeseriesDiscreteOturumları,
+          timezonesDstOturumları,
           nearestNonNullOturumları,
           monthsOturumları,
           pathGapClipOturumları,
@@ -7543,6 +7879,8 @@
         syncCursorOturumları = [];
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
         timeseriesDiscreteOturumları = [];
+        timezonesDstOturumları.forEach(yüzey => yüzey.free());
+        timezonesDstOturumları = [];
         nearestNonNullOturumları.forEach(yüzey => yüzey.free());
         nearestNonNullOturumları = [];
         monthsOturumları.forEach(yüzey => yüzey.free());
@@ -7662,6 +8000,23 @@
             return yüzey;
           });
           çiz();
+          return;
+        }
+        if (kimlik === "timezones-dst") {
+          timezonesDstOturumları = zamanDilimiYüzeyleri.map((_, indeks) => {
+            const yüzey = new KartOturumu(
+              `timezones-dst-${String(indeks + 1).padStart(2, "0")}`,
+              100,
+            );
+            yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzey;
+          });
+          çiz();
+          requestAnimationFrame(() => {
+            chart.querySelector(`[data-timezones-index="${timezonesDstEtkinİndeks}"]`)
+              ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+            if (timezonesDstEtkinİndeks === 0) chart.scrollLeft = 0;
+          });
           return;
         }
         if (kimlik === "nearest-non-null") {

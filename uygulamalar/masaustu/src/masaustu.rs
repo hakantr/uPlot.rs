@@ -64,9 +64,10 @@ use uplot_rs::{
     svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı,
     thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı, time_periods_kartları,
     time_periods_kartı, timeline_discrete_kartları, timeline_discrete_kartı,
-    timeseries_discrete_kartları, timeseries_discrete_kartı, timezones_dst_kartı,
-    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
+    timeseries_discrete_kartları, timeseries_discrete_kartı, timezones_dst_kartları,
+    timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı, trendlines_kartı,
+    update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
+    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -101,7 +102,7 @@ enum KartKimliği {
     TimePeriods(TimePeriodsÖrneği),
     TimelineDiscrete(TimelineDiscreteÖrneği),
     TimeseriesDiscrete,
-    TimezonesDst(TimezonesDstÖrneği),
+    TimezonesDst,
     TooltipsClosest,
     Tooltips,
     Trendlines,
@@ -173,7 +174,7 @@ impl KartKimliği {
             Self::TimePeriods(_) => "Time Periods",
             Self::TimelineDiscrete(_) => "Timeline / Discrete",
             Self::TimeseriesDiscrete => "TimeSeries + Discrete",
-            Self::TimezonesDst(_) => "Timezones & DST",
+            Self::TimezonesDst => "Timezones & DST",
             Self::TooltipsClosest => "Summary-opt",
             Self::Tooltips => "Tooltips",
             Self::Trendlines => "Trendlines",
@@ -286,7 +287,7 @@ impl KartKimliği {
             Self::TimeseriesDiscrete => {
                 "timeseries-discrete.html · iki yüzey · ortak X imleci · birleşik lejant"
             }
-            Self::TimezonesDst(_) => {
+            Self::TimezonesDst => {
                 "timezones-dst.html · tzDate · 51 etkin UTC/London/Chicago yüzeyi"
             }
             Self::TooltipsClosest => {
@@ -398,7 +399,7 @@ impl KartKimliği {
             Self::TimePeriods(_) => TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
             Self::TimelineDiscrete(_) => TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,
             Self::TimeseriesDiscrete => TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
-            Self::TimezonesDst(_) => TIMEZONES_DST_KART_TANIM_ÖRNEĞİ,
+            Self::TimezonesDst => TIMEZONES_DST_KART_TANIM_ÖRNEĞİ,
             Self::TooltipsClosest => TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ,
             Self::Tooltips => TOOLTIPS_KART_TANIM_ÖRNEĞİ,
             Self::Trendlines => TRENDLINES_KART_TANIM_ÖRNEĞİ,
@@ -468,7 +469,7 @@ impl KartKimliği {
             Self::TimePeriods(_) => "src/kart/time_periods.rs",
             Self::TimelineDiscrete(_) => "src/kart/timeline_discrete.rs",
             Self::TimeseriesDiscrete => "src/kart/timeseries_discrete.rs",
-            Self::TimezonesDst(_) => "src/kart/timezones_dst.rs",
+            Self::TimezonesDst => "src/kart/timezones_dst.rs",
             Self::TooltipsClosest => "src/kart/tooltips_closest.rs",
             Self::Tooltips => "src/kart/tooltips.rs",
             Self::Trendlines => "src/kart/trendlines.rs",
@@ -563,6 +564,8 @@ pub struct ChartListesi {
     sync_cursor_senkronlanıyor: bool,
     timeseries_discrete_grafikleri: Vec<(TimeseriesDiscreteÖrneği, Entity<GpuiGrafik>)>,
     timeseries_discrete_senkronlanıyor: bool,
+    timezones_dst_grafikleri: Vec<(TimezonesDstÖrneği, Entity<GpuiGrafik>)>,
+    timezones_dst_senkronlanıyor: bool,
     nearest_non_null_grafikleri: Vec<(NearestNonNullÖrneği, Entity<GpuiGrafik>)>,
     months_grafikleri: Vec<Entity<GpuiGrafik>>,
     path_gap_clip_grafikleri: Vec<(PathGapClipÖrneği, Entity<GpuiGrafik>)>,
@@ -595,6 +598,12 @@ impl ChartListesi {
                 }
             } else if bu.aktif_kart == KartKimliği::TimeseriesDiscrete {
                 for (_, grafik) in &bu.timeseries_discrete_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if bu.aktif_kart == KartKimliği::TimezonesDst {
+                for (_, grafik) in &bu.timezones_dst_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -768,6 +777,8 @@ impl ChartListesi {
             sync_cursor_senkronlanıyor: false,
             timeseries_discrete_grafikleri: Vec::new(),
             timeseries_discrete_senkronlanıyor: false,
+            timezones_dst_grafikleri: Vec::new(),
+            timezones_dst_senkronlanıyor: false,
             nearest_non_null_grafikleri: Vec::new(),
             months_grafikleri: Vec::new(),
             path_gap_clip_grafikleri: Vec::new(),
@@ -901,6 +912,120 @@ impl ChartListesi {
             Err(hata) => {
                 self.hata = Some(format!("Birleşik lejant serisi değiştirilemedi: {hata}"));
             }
+        }
+        cx.notify();
+    }
+
+    fn timezones_dst_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let kartlar = match timezones_dst_kartları() {
+            Ok(kartlar) => kartlar,
+            Err(hata) => {
+                self.hata = Some(format!("Timezones & DST grubu oluşturulamadı: {hata}"));
+                self.grafik = None;
+                self.timezones_dst_grafikleri.clear();
+                cx.notify();
+                return;
+            }
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        let mut hata = None;
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(oluşturma_hatası) => {
+                    hata = Some(format!(
+                        "{} yüzeyi oluşturulamadı: {oluşturma_hatası}",
+                        örnek.başlık()
+                    ));
+                    break;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, move |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                let Some(grup) = örnek.senkron_grubu() else {
+                    if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                        bu.açıklama_istendi = true;
+                    }
+                    cx.notify();
+                    return;
+                };
+                if bu.timezones_dst_senkronlanıyor {
+                    return;
+                }
+                let yüzeyler = bu.timezones_dst_grafikleri.clone();
+                let kaynak = yüzeyler
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone());
+                match olay {
+                    GpuiGrafikOlayı::Açıklamaİstendi => bu.açıklama_istendi = true,
+                    GpuiGrafikOlayı::İmleçDeğişti => {
+                        let yayın = kaynak
+                            .as_ref()
+                            .and_then(|grafik| grafik.read(cx).senkron_yayını());
+                        bu.timezones_dst_senkronlanıyor = true;
+                        for (hedef, hedef_grafik) in yüzeyler {
+                            if hedef == örnek || hedef.senkron_grubu() != Some(grup) {
+                                continue;
+                            }
+                            hedef_grafik.update(cx, |grafik, cx| {
+                                if let Some((x, y, seri)) = yayın {
+                                    grafik.senkron_imleci_ayarla(x, Some(y), seri, cx);
+                                } else {
+                                    grafik.senkron_imleci_temizle(cx);
+                                }
+                            });
+                        }
+                        bu.timezones_dst_senkronlanıyor = false;
+                    }
+                    GpuiGrafikOlayı::GörünümDeğişti { .. } => {
+                        let x = kaynak
+                            .as_ref()
+                            .map(|grafik| grafik.read(cx).grafik().görünür_x_aralığı());
+                        if let Some(x) = x {
+                            bu.timezones_dst_senkronlanıyor = true;
+                            for (hedef, hedef_grafik) in yüzeyler {
+                                if hedef == örnek || hedef.senkron_grubu() != Some(grup) {
+                                    continue;
+                                }
+                                hedef_grafik.update(cx, |grafik, cx| {
+                                    grafik.görünür_x_aralığını_ayarla(x, true, cx);
+                                });
+                            }
+                            bu.timezones_dst_senkronlanıyor = false;
+                        }
+                    }
+                    GpuiGrafikOlayı::DurumDeğişti => {
+                        let görünür = kaynak
+                            .as_ref()
+                            .is_some_and(|grafik| grafik.read(cx).grafik().seri_görünür_mü(0));
+                        bu.timezones_dst_senkronlanıyor = true;
+                        for (hedef, hedef_grafik) in yüzeyler {
+                            if hedef == örnek || hedef.senkron_grubu() != Some(grup) {
+                                continue;
+                            }
+                            let _ = hedef_grafik.update(cx, |grafik, cx| {
+                                grafik.seri_görünürlüğünü_ayarla(0, görünür, cx)
+                            });
+                        }
+                        bu.timezones_dst_senkronlanıyor = false;
+                    }
+                    GpuiGrafikOlayı::FareBırakıldı => {}
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        if let Some(hata) = hata {
+            self.hata = Some(hata);
+            self.grafik = None;
+            self.timezones_dst_grafikleri.clear();
+        } else {
+            self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+            self.timezones_dst_grafikleri = yüzeyler;
+            self.hata = None;
         }
         cx.notify();
     }
@@ -1947,6 +2072,7 @@ impl ChartListesi {
         self.thin_bars_grafikleri.clear();
         self.time_periods_grafikleri.clear();
         self.timeline_discrete_grafikleri.clear();
+        self.timezones_dst_grafikleri.clear();
         if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -1964,6 +2090,16 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.timeseries_discrete_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::TimezonesDst {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.timezones_dst_senkronlanıyor = false;
+            self.timezones_dst_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::NearestNonNull {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -2708,7 +2844,11 @@ fn grafik_oluştur(
         KartKimliği::TimeseriesDiscrete => {
             timeseries_discrete_kartı(TimeseriesDiscreteÖrneği::ZamanSerisi)
         }
-        KartKimliği::TimezonesDst(örnek) => timezones_dst_kartı(örnek),
+        KartKimliği::TimezonesDst => {
+            let örnek =
+                TimezonesDstÖrneği::yeni(0).ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+            timezones_dst_kartı(örnek)
+        }
         KartKimliği::TooltipsClosest => tooltips_closest_kartı(),
         KartKimliği::Tooltips => tooltips_kartı(),
         KartKimliği::Trendlines => trendlines_kartı(),
@@ -3023,13 +3163,7 @@ impl Render for ChartListesi {
             KartKimliği::TimeseriesDiscrete => {
                 "50 ortak zaman noktası · 1 float + 3 ayrık seri".to_string()
             }
-            KartKimliği::TimezonesDst(örnek) => {
-                format!(
-                    "600×200 · {} · {}",
-                    örnek.bölüm(),
-                    örnek.zaman_dilimi().iana()
-                )
-            }
+            KartKimliği::TimezonesDst => "11 bölüm · 51 yüzey · ilk dört üçlü senkron".to_string(),
             KartKimliği::TooltipsClosest => {
                 "234 commit × 4 Opt serisi · 100 interpolasyon işareti".to_string()
             }
@@ -3092,6 +3226,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .timeseries_discrete_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::TimezonesDst {
+            geri_var = self
+                .timezones_dst_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .timezones_dst_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         } else if aktif_kart == KartKimliği::NearestNonNull {
@@ -3541,21 +3684,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::GridOverSeries, cx);
                 })),
             )
-            .children(TimezonesDstÖrneği::tümü().map(|örnek| {
-                let kart = KartKimliği::TimezonesDst(örnek);
+            .child({
+                let kart = KartKimliği::TimezonesDst;
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
+                    "timezones-dst",
+                    "Timezones & DST",
                     "timezones-dst",
                     aktif_kart == kart,
-                    format!("{} · {}", örnek.bölüm(), örnek.zaman_dilimi().iana()),
+                    "11 bölüm · 51 adet 600×200 yüzey",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .child(
                 katalog_kartı(
                     "tooltips-closest",
@@ -4613,6 +4756,12 @@ impl Render for ChartListesi {
                                     grafik.önceki_görünüm(cx);
                                 });
                             }
+                        } else if bu.aktif_kart == KartKimliği::TimezonesDst {
+                            for (_, grafik) in &bu.timezones_dst_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.önceki_görünüm(cx);
+                                });
+                            }
                         } else if bu.aktif_kart == KartKimliği::NearestNonNull {
                             for (_, grafik) in &bu.nearest_non_null_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -4719,6 +4868,12 @@ impl Render for ChartListesi {
                                     grafik.tam_görünüm(cx);
                                 });
                             }
+                        } else if bu.aktif_kart == KartKimliği::TimezonesDst {
+                            for (_, grafik) in &bu.timezones_dst_grafikleri {
+                                grafik.update(cx, |grafik, cx| {
+                                    grafik.tam_görünüm(cx);
+                                });
+                            }
                         } else if bu.aktif_kart == KartKimliği::NearestNonNull {
                             for (_, grafik) in &bu.nearest_non_null_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -4821,6 +4976,9 @@ impl Render for ChartListesi {
                         if bu.aktif_kart == KartKimliği::SyncCursor {
                             bu.sync_cursor_grubu = SyncCursorGrubu::yeni();
                             bu.sync_cursor_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::TimezonesDst {
+                            bu.timezones_dst_senkronlanıyor = false;
+                            bu.timezones_dst_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::NearestNonNull {
                             bu.nearest_non_null_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::Months {
@@ -5005,6 +5163,51 @@ impl Render for ChartListesi {
                                     }))
                             }),
                     ),
+                )
+        } else if aktif_kart == KartKimliği::TimezonesDst {
+            çizim_tabanı
+                .flex_none()
+                .h(px(900.0))
+                .overflow_scroll()
+                .p_2()
+                .child(
+                    div()
+                        .flex()
+                        .flex_wrap()
+                        .items_start()
+                        .gap_4()
+                        .children((0..11).map(|bölüm| {
+                            let yüzeyler = self
+                                .timezones_dst_grafikleri
+                                .iter()
+                                .filter(|(örnek, _)| örnek.bölüm_indeksi() == bölüm)
+                                .map(|(örnek, grafik)| (*örnek, grafik.clone()))
+                                .collect::<Vec<_>>();
+                            let başlık = yüzeyler
+                                .first()
+                                .map_or("Timezones & DST", |(örnek, _)| örnek.bölüm());
+                            div()
+                                .w(px(600.0))
+                                .flex_none()
+                                .overflow_hidden()
+                                .rounded_md()
+                                .border_1()
+                                .border_color(rgb(0xd1d5db))
+                                .bg(rgb(0xffffff))
+                                .child(
+                                    div()
+                                        .w_full()
+                                        .px_3()
+                                        .py_2()
+                                        .text_center()
+                                        .text_sm()
+                                        .bg(rgb(0xe1f5fe))
+                                        .child(başlık),
+                                )
+                                .children(yüzeyler.into_iter().map(|(_, grafik)| {
+                                    div().w(px(600.0)).h(px(200.0)).child(grafik)
+                                }))
+                        })),
                 )
         } else if aktif_kart == KartKimliği::NearestNonNull {
             let yüzey = |örnek| {

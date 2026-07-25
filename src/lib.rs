@@ -75,7 +75,7 @@ pub use kart::{
     TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ, TIMEZONES_DST_KART_TANIM_ÖRNEĞİ,
     TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ, TOOLTIPS_KART_TANIM_ÖRNEĞİ, TRENDLINES_KART_TANIM_ÖRNEĞİ,
     ThinBarsYoğunluk, ThinBarsÖrneği, TimePeriodsÖrneği, TimelineDiscreteÖrneği,
-    TimeseriesDiscreteGrubu, TimeseriesDiscreteÖrneği, TimezonesDstÖrneği,
+    TimeseriesDiscreteGrubu, TimeseriesDiscreteÖrneği, TimezonesDstGrubu, TimezonesDstÖrneği,
     UPDATE_CURSOR_SELECT_RESIZE_ARALIK_MS, UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
     WIND_DIRECTION_KART_TANIM_ÖRNEĞİ, Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ, Y_SHIFTED_SERIES_ARALIK_MS,
     Y_SHIFTED_SERIES_KANIT_TOHUMU, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ, YShiftedSeriesAkışı,
@@ -103,10 +103,11 @@ pub use kart::{
     sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_aşamasını_ayarla, sync_y_zero_kartı,
     thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı, time_periods_kartları,
     time_periods_kartı, timeline_discrete_kartları, timeline_discrete_kartı,
-    timeseries_discrete_kartları, timeseries_discrete_kartı, timezones_dst_kartı,
-    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
-    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, zoom_ranger_xy_grafiği,
-    zoom_touch_kartı, zoom_wheel_kartı, ÇubukÖrneği,
+    timeseries_discrete_kartları, timeseries_discrete_kartı, timezones_dst_kartları,
+    timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı, trendlines_kartı,
+    update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
+    y_shifted_series_kartı, zoom_ranger_xy_grafiği, zoom_touch_kartı, zoom_wheel_kartı,
+    ÇubukÖrneği,
 };
 pub use olcek::{Aralık, SayısalAralıkAyarları, SayısalAralıkParçası, YumuşakSınırKipi};
 pub use secenek::{

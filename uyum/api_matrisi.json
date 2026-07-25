@@ -707,7 +707,13 @@
     },
     {
       "kaynak_yolu": "51 active genOpts/sliceRange surfaces",
-      "rust_karşılığı": "TimezonesDstÖrneği::tümü / kaynak_veri",
+      "rust_karşılığı": "timezones_dst_kartları / TimezonesDstÖrneği::bölüm_indeksi / kaynak_veri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/timezones_dst.rs"
+    },
+    {
+      "kaynak_yolu": "cursor.sync key + setSeries for first four triples",
+      "rust_karşılığı": "TimezonesDstGrubu / TimezonesDstÖrneği::senkron_grubu",
       "durum": "tam_kanıtlı",
       "test": "src/kart/timezones_dst.rs"
     },
