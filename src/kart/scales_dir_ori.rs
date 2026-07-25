@@ -253,8 +253,22 @@ mod testler {
     fn on_altı_kaynak_yüzeyi_aynı_veriyi_korur() -> Result<(), UplotHatası> {
         let kartlar = scales_dir_ori_kartları()?;
         assert_eq!(kartlar.len(), 16);
+        let ortak_veri = kartlar
+            .first()
+            .map(|(_, _, veri)| veri)
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        assert!(
+            kartlar
+                .iter()
+                .skip(1)
+                .all(|(_, _, veri)| ortak_veri.aynı_depolamayı_paylaşıyor(veri))
+        );
         for (örnek, seçenekler, veri) in kartlar {
             assert_eq!((seçenekler.genişlik, seçenekler.yükseklik), örnek.boyut());
+            assert_eq!(seçenekler.x_dikey, örnek.x_dikey());
+            assert_eq!(seçenekler.x_ters_yön, örnek.x_ters());
+            assert_eq!(seçenekler.x_eksen_karşıda, örnek.x_eksen_karşıda());
+            assert_eq!(seçenekler.birincil_y_karşıda, örnek.y_eksen_karşıda());
             assert_eq!(
                 örnek.grup(),
                 if örnek.x_dikey() {
@@ -271,6 +285,67 @@ mod testler {
                     .and_then(|seri| seri.get(7))
                     .is_some_and(Option::is_none)
             );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn on_altı_yüzeyin_dört_köşesi_yön_ve_yönelim_matrisiyle_eşleşir() -> Result<(), UplotHatası> {
+        for örnek in ScalesDirOriÖrneği::TÜMÜ {
+            let (seçenekler, veri) = scales_dir_ori_kartı(örnek)?;
+            let grafik = Grafik::yeni(seçenekler, veri)?;
+            for (yatay, dikey) in [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (1.0, 1.0)] {
+                let (x, y) = grafik.fiziksel_oranları_mantıksala(yatay, dikey);
+                let beklenen_x = if örnek.x_dikey() {
+                    if örnek.x_ters() { dikey } else { 1.0 - dikey }
+                } else if örnek.x_ters() {
+                    1.0 - yatay
+                } else {
+                    yatay
+                };
+                let beklenen_y = if örnek.x_dikey() {
+                    if örnek.y_ters() { yatay } else { 1.0 - yatay }
+                } else if örnek.y_ters() {
+                    1.0 - dikey
+                } else {
+                    dikey
+                };
+                assert_eq!((x, y), (beklenen_x, beklenen_y), "{örnek:?}");
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn omni_xy_sürükleme_bir_eksen_eşiği_geçince_ikisini_de_seçer() -> Result<(), UplotHatası> {
+        for örnek in ScalesDirOriÖrneği::TÜMÜ {
+            let (seçenekler, veri) = scales_dir_ori_kartı(örnek)?;
+            let mut grafik = Grafik::yeni(seçenekler, veri)?;
+            assert_eq!(
+                grafik.fiziksel_seçim_eksenleri(3.0, 3.0, 4.0),
+                (false, false),
+                "{örnek:?}"
+            );
+            assert_eq!(
+                grafik.fiziksel_seçim_eksenleri(40.0, 1.0, 4.0),
+                (true, true),
+                "{örnek:?}"
+            );
+            assert_eq!(
+                grafik.fiziksel_seçim_eksenleri(1.0, 40.0, 4.0),
+                (true, true),
+                "{örnek:?}"
+            );
+            let önceki_x = grafik.görünür_x_aralığı();
+            let önceki_y = grafik.görünür_y_aralığı();
+            let (yatay, dikey) = grafik.fiziksel_seçim_eksenleri(40.0, 1.0, 4.0);
+            assert!(
+                grafik.fiziksel_seçim_yakınlaştır_eksenlerde(
+                    0.2, 0.499, 0.8, 0.501, yatay, dikey,
+                )?
+            );
+            assert_ne!(grafik.görünür_x_aralığı(), önceki_x, "{örnek:?}");
+            assert_ne!(grafik.görünür_y_aralığı(), önceki_y, "{örnek:?}");
         }
         Ok(())
     }

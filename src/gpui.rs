@@ -2216,23 +2216,17 @@ impl Render for GpuiGrafik {
                         let y_farkı = (bitiş.y - başlangıç.y).abs();
                         let kaynak_sıfır_eşik = ayarlar.imleç_bağları.ctrl_seçim_ölçeğini_durdur
                             || ayarlar.imleç_bağları.tıklamayı_ilet;
-                        let x_yeterli = if kaynak_sıfır_eşik {
-                            x_farkı > f32::EPSILON
+                        let eşik = if kaynak_sıfır_eşik {
+                            f64::from(f32::EPSILON)
                         } else {
-                            x_farkı >= 4.0
+                            4.0
                         };
-                        let y_yeterli = if kaynak_sıfır_eşik {
-                            y_farkı > f32::EPSILON
-                        } else {
-                            y_farkı >= 4.0
-                        };
-                        let yeterli = if ayarlar.seçim_xy_yakınlaştır {
-                            x_yeterli || y_yeterli
-                        } else if bu.grafik.x_dikey_mi() {
-                            y_yeterli
-                        } else {
-                            x_yeterli
-                        };
+                        let (yatay_etkin, dikey_etkin) = bu.grafik.fiziksel_seçim_eksenleri(
+                            f64::from(x_farkı),
+                            f64::from(y_farkı),
+                            eşik,
+                        );
+                        let yeterli = yatay_etkin || dikey_etkin;
                         if yeterli {
                             let (sol, sağ, üst, alt) = bu.çizim_alanı();
                             if ayarlar.seçim_xy_yakınlaştır {
@@ -2241,8 +2235,8 @@ impl Render for GpuiGrafik {
                                     f64::from((başlangıç.y - üst) / (alt - üst)),
                                     f64::from((bitiş.x - sol) / (sağ - sol)),
                                     f64::from((bitiş.y - üst) / (alt - üst)),
-                                    x_yeterli,
-                                    y_yeterli,
+                                    yatay_etkin,
+                                    dikey_etkin,
                                 ) {
                                     Ok(değişti) => {
                                         bu.hata = None;

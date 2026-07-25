@@ -1613,7 +1613,8 @@
         kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/scales-dir-ori.html">scales-dir-ori.html</a>
           · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/uPlot.js">src/uPlot.js</a>
           <br>Resmî demodaki 16 grafik tek kaynak sayfasıdır: aynı veri anlık görüntüsünü, kilitlenebilir cursor'u ve iki eksendeki ölçek değişimlerini paylaşır.
-          <br><code>scale.dir</code>, <code>scale.ori</code>, eksen tarafı, ızgara, dolgu ve fiziksel/mantıksal koordinat dönüşümü Rust çekirdeğinde birlikte çözülür.`,
+          <br><code>scale.dir</code>, <code>scale.ori</code>, eksen tarafı, ızgara, dolgu ve fiziksel/mantıksal koordinat dönüşümü Rust çekirdeğinde birlikte çözülür.
+          <br>Kaynak <code>drag.x + drag.y</code> davranışı korunur: yatay veya dikey farktan biri 4 px eşiğini geçince seçim iki mantıksal ölçeği birlikte yakınlaştırır.`,
         tanım: () => scales_dir_ori_kart_tanim_ornegi(),
         tanımYolu: "src/kart/scales_dir_ori.rs",
         seriler: [
@@ -1625,7 +1626,7 @@
         etkileşimler: () => ortakEtkileşimler(),
         kullanım: {
           amaç: "Aynı verinin ölçek yönü, yönelimi ve eksen tarafı birleşimlerinde nasıl davrandığını tek senkron yüzey grubunda doğrular.",
-          api: "scale.dir ve scale.ori koordinat dönüşümünü, axis.side eksen tarafını; sync grubu cursor.lock ile X/Y ölçeklerini yüzeyler arasında paylaşır.",
+          api: "scale.dir ve scale.ori koordinat dönüşümünü, axis.side eksen tarafını; sync grubu cursor.lock ile X/Y ölçeklerini yüzeyler arasında paylaşır. Omni XY seçiminde tek fiziksel eksenin eşiği geçmesi iki ölçeği de etkinleştirir.",
           izleme: "Yatay veya dikey zaman akışını kullanan izleme panellerinde aynı zaman ve değer penceresini farklı yönelimlerde karşılaştırın.",
           maliyet: "Veri statik ve ortaktır. Cursor yalnız hafif SVG katmanlarını taşır; ana yollar yalnız ölçek değiştiğinde, tek animation-frame içinde yeniden çizilir.",
         },
@@ -5863,11 +5864,14 @@
         const tamamlanan = seçim;
         seçim = null;
         kutu.querySelector(".scales-seçim")?.setAttribute("visibility", "hidden");
-        const hareket = Math.hypot(
-          tamamlanan.sonX - tamamlanan.başX,
-          tamamlanan.sonY - tamamlanan.başY,
+        const yatayFark = Math.abs(tamamlanan.sonX - tamamlanan.başX);
+        const dikeyFark = Math.abs(tamamlanan.sonY - tamamlanan.başY);
+        const eksenMaskesi = yüzeyOturumu.fiziksel_secim_eksen_maskesi(
+          yatayFark,
+          dikeyFark,
+          4,
         );
-        if (!a || hareket < 4) {
+        if (!a || eksenMaskesi === 0) {
           imleciGüncelle(olay);
           if (scalesDirOriİmleci) {
             scalesDirOriİmleci.kilitli = !scalesDirOriİmleci.kilitli;
@@ -5875,13 +5879,13 @@
           }
           return;
         }
-        if (Math.abs(tamamlanan.sonX - tamamlanan.başX) < 4
-          || Math.abs(tamamlanan.sonY - tamamlanan.başY) < 4) return;
-        if (yüzeyOturumu.fiziksel_secim_yakinlastir(
+        if (yüzeyOturumu.fiziksel_secim_yakinlastir_eksenlerde(
           (tamamlanan.başX - a.sol) / (a.sağ - a.sol),
           (tamamlanan.başY - a.üst) / (a.alt - a.üst),
           (tamamlanan.sonX - a.sol) / (a.sağ - a.sol),
           (tamamlanan.sonY - a.üst) / (a.alt - a.üst),
+          (eksenMaskesi & 1) !== 0,
+          (eksenMaskesi & 2) !== 0,
         )) {
           scalesDirOriAralıklarınıSenkronla(indeks, true);
           scalesDirOriÇiziminiPlanla();

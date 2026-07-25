@@ -2541,6 +2541,38 @@ impl Grafik {
         )
     }
 
+    /// Fiziksel sürükleme farklarını uPlot'un `cursor.drag` eşiğine göre
+    /// uygulanacak ekran eksenlerine dönüştürür.
+    ///
+    /// `drag.x` ve `drag.y` birlikte açık, `drag.uni` ise `null` olduğunda
+    /// uPlot eksenlerden yalnız biri eşiği geçse bile iki ekseni birlikte
+    /// seçer. Bu yöntem GPUI ve WASM yüzeylerinin aynı kararı vermesini sağlar.
+    pub fn fiziksel_seçim_eksenleri(
+        &self,
+        yatay_fark: f64,
+        dikey_fark: f64,
+        eşik: f64,
+    ) -> (bool, bool) {
+        if ![yatay_fark, dikey_fark, eşik]
+            .into_iter()
+            .all(f64::is_finite)
+            || eşik < 0.0
+            || !self.etkileşim.ayarlar().seçim_yakınlaştır
+        {
+            return (false, false);
+        }
+        let yatay = yatay_fark.abs() >= eşik;
+        let dikey = dikey_fark.abs() >= eşik;
+        if self.etkileşim.ayarlar().seçim_xy_yakınlaştır {
+            let ikisi = yatay || dikey;
+            (ikisi, ikisi)
+        } else if self.x_dikey_mi() {
+            (false, dikey)
+        } else {
+            (yatay, false)
+        }
+    }
+
     /// Fiziksel seçimin yalnız hareket eden ekran eksenlerini uygular.
     /// Böylece uPlot'un `drag.x`/`drag.y` davranışındaki gibi yatay veya dikey
     /// tek eksenli bir sürükleme, öteki ölçeği sıfır genişliğe indirmez.

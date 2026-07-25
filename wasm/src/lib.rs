@@ -692,6 +692,13 @@ impl KartOturumu {
             .map_err(js_hatası)
     }
 
+    pub fn fiziksel_secim_eksen_maskesi(&self, yatay_fark: f64, dikey_fark: f64, eşik: f64) -> u8 {
+        let (yatay, dikey) = self
+            .grafik
+            .fiziksel_seçim_eksenleri(yatay_fark, dikey_fark, eşik);
+        u8::from(yatay) | (u8::from(dikey) << 1)
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn fiziksel_secim_yakinlastir_eksenlerde(
         &mut self,
@@ -2728,6 +2735,9 @@ mod testler {
         else {
             return;
         };
+        assert_eq!(kaynak.fiziksel_secim_eksen_maskesi(3.0, 3.0, 4.0), 0);
+        assert_eq!(kaynak.fiziksel_secim_eksen_maskesi(40.0, 1.0, 4.0), 3);
+        assert_eq!(kaynak.fiziksel_secim_eksen_maskesi(1.0, 40.0, 4.0), 3);
         assert_eq!(
             kaynak.fiziksel_secim_yakinlastir(0.2, 0.2, 0.8, 0.8),
             Ok(true)
@@ -2757,6 +2767,8 @@ mod testler {
         assert!(web.contains("let scalesDirOriOturumları = [];"));
         assert!(web.contains("function scalesDirOriÇiz()"));
         assert!(web.contains("scalesDirOriİmleciniUygula"));
+        assert!(web.contains("fiziksel_secim_eksen_maskesi"));
+        assert!(web.contains("(eksenMaskesi & 1) !== 0"));
         assert_eq!(kart_sayisi(), 365);
     }
 

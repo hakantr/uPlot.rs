@@ -2315,7 +2315,7 @@
           "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba"
         }
       ],
-      "fixture": "src/kart/scales_dir_ori.rs#scales_dir_ori_kartı",
+      "fixture": "src/kart/scales_dir_ori.rs#scales_dir_ori_kartları",
       "örnek": "examples/scales_dir_ori.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -2353,6 +2353,9 @@
         "scale-x-y-direction",
         "scale-x-y-orientation",
         "axis-side-placement",
+        "source-omni-drag-threshold",
+        "sixteen-surface-corner-matrix",
+        "shared-arc-data-snapshot",
         "orientation-aware-grid-fill-points",
         "orientation-aware-wheel-touch-pan",
         "gpui-wasm-catalog-parity",
