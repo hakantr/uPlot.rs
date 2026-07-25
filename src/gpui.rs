@@ -1063,13 +1063,69 @@ impl GpuiGrafik {
                     çizgi: "#33ccff00".to_string(),
                     kalınlık: 0.0,
                 });
-                if let Some(framework) = self.grafik.kutu_bıyık_kategorisi(indeks) {
-                    let kutu_genişliği = (framework.chars().count() as f32 * 6.5 + 16.0)
+                let (satırlar, imleç_ofseti, kaynak_mum_konumu) =
+                    if let Some(tarih) = self.grafik.mum_tarih_etiketi(indeks) {
+                        let [açılış, yüksek, düşük, kapanış, hacim] = değerler;
+                        (
+                            Some([
+                                format!("Date: {tarih}"),
+                                format!("Open: {}", crate::grafik::usd_biçimle(açılış, 2)),
+                                format!("High: {}", crate::grafik::usd_biçimle(yüksek, 2)),
+                                format!("Low: {}", crate::grafik::usd_biçimle(düşük, 2)),
+                                format!("Close: {}", crate::grafik::usd_biçimle(kapanış, 2)),
+                                format!("Volume: {hacim:.0}"),
+                            ]),
+                            0.0,
+                            true,
+                        )
+                    } else if let Some(framework) = self.grafik.kutu_bıyık_kategorisi(indeks) {
+                        let değer_yaz = |değer: f64| {
+                            if değer.is_finite() {
+                                format!("{değer:.2}")
+                            } else {
+                                "—".to_string()
+                            }
+                        };
+                        let [medyan, q1, q3, en_az, en_çok] = değerler;
+                        (
+                            Some([
+                                format!("Lib: {framework}"),
+                                format!("Median: {}", değer_yaz(medyan)),
+                                format!("q1: {}", değer_yaz(q1)),
+                                format!("q3: {}", değer_yaz(q3)),
+                                format!("min: {}", değer_yaz(en_az)),
+                                format!("max: {}", değer_yaz(en_çok)),
+                            ]),
+                            14.0,
+                            false,
+                        )
+                    } else {
+                        (None, 0.0, false)
+                    };
+                if let Some(satırlar) = satırlar {
+                    let en_uzun = satırlar
+                        .iter()
+                        .map(|satır| satır.chars().count())
+                        .max()
+                        .unwrap_or(0);
+                    let kutu_genişliği = (en_uzun as f32 * 6.5 + 16.0)
                         .max(220.0)
                         .min((sağ - sol).max(1.0));
                     let kutu_yüksekliği = 106.0;
-                    let kutu_x = (imleç.fare.x + 14.0).min(sağ - kutu_genişliği).max(sol);
-                    let kutu_y = (imleç.fare.y + 14.0).min(alt - kutu_yüksekliği).max(üst);
+                    let kutu_x = if kaynak_mum_konumu {
+                        imleç.fare.x
+                    } else {
+                        (imleç.fare.x + imleç_ofseti)
+                            .min(sağ - kutu_genişliği)
+                            .max(sol)
+                    };
+                    let kutu_y = if kaynak_mum_konumu {
+                        imleç.fare.y
+                    } else {
+                        (imleç.fare.y + imleç_ofseti)
+                            .min(alt - kutu_yüksekliği)
+                            .max(üst)
+                    };
                     sahne.ekle(Komut::Dikdörtgen {
                         konum: Nokta::yeni(kutu_x, kutu_y),
                         genişlik: kutu_genişliği,
@@ -1078,22 +1134,6 @@ impl GpuiGrafik {
                         çizgi: "#00000033".to_string(),
                         kalınlık: 1.0,
                     });
-                    let değer_yaz = |değer: f64| {
-                        if değer.is_finite() {
-                            format!("{değer:.2}")
-                        } else {
-                            "—".to_string()
-                        }
-                    };
-                    let [medyan, q1, q3, en_az, en_çok] = değerler;
-                    let satırlar = [
-                        format!("Lib: {framework}"),
-                        format!("Median: {}", değer_yaz(medyan)),
-                        format!("q1: {}", değer_yaz(q1)),
-                        format!("q3: {}", değer_yaz(q3)),
-                        format!("min: {}", değer_yaz(en_az)),
-                        format!("max: {}", değer_yaz(en_çok)),
-                    ];
                     for (satır, içerik) in satırlar.into_iter().enumerate() {
                         sahne.ekle(Komut::Metin {
                             konum: Nokta::yeni(kutu_x + 8.0, kutu_y + 16.0 + satır as f32 * 16.0),

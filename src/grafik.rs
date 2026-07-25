@@ -662,8 +662,7 @@ impl Grafik {
         if (seçenekler
             .çubuk_düzeni
             .is_some_and(|düzen| düzen.x_kenar_paylı)
-            || seçenekler.kutu_bıyık_düzeni.is_some()
-            || seçenekler.mum_düzeni.is_some())
+            || seçenekler.kutu_bıyık_düzeni.is_some())
             && veri.uzunluk() > 1
         {
             tam = Aralık::yeni(tam.en_az - 0.5, tam.en_çok + 0.5)?;
@@ -1184,8 +1183,7 @@ impl Grafik {
                 .seçenekler
                 .çubuk_düzeni
                 .is_some_and(|düzen| düzen.x_kenar_paylı)
-                || self.seçenekler.kutu_bıyık_düzeni.is_some()
-                || self.seçenekler.mum_düzeni.is_some())
+                || self.seçenekler.kutu_bıyık_düzeni.is_some())
                 && veri.uzunluk() > 1
             {
                 tam_x = Aralık::yeni(tam_x.en_az - 0.5, tam_x.en_çok + 0.5)?;
@@ -1317,8 +1315,7 @@ impl Grafik {
             .seçenekler
             .çubuk_düzeni
             .is_some_and(|düzen| düzen.x_kenar_paylı)
-            || self.seçenekler.kutu_bıyık_düzeni.is_some()
-            || self.seçenekler.mum_düzeni.is_some())
+            || self.seçenekler.kutu_bıyık_düzeni.is_some())
             && veri.uzunluk() > 1
         {
             tam_x = Aralık::yeni(tam_x.en_az - 0.5, tam_x.en_çok + 0.5)?;
@@ -1939,6 +1936,19 @@ impl Grafik {
         self.seçenekler.mum_düzeni.is_some()
     }
 
+    /// Mum hover tooltip'indeki kaynak UTC tarih etiketini döndürür.
+    pub fn mum_tarih_etiketi(&self, indeks: usize) -> Option<String> {
+        let zaman = self
+            .seçenekler
+            .mum_düzeni
+            .as_ref()?
+            .zamanlar
+            .get(indeks)
+            .copied()?;
+        let (yıl, ay, gün, ..) = crate::zaman::utc_alanları(zaman)?;
+        Some(format!("{yıl:04}-{ay:02}-{gün:02}"))
+    }
+
     pub fn kutu_bıyık_vuruşu(
         &self,
         genişlik_px: u32,
@@ -1961,12 +1971,17 @@ impl Grafik {
         }
         let sütun_genişliği = (sağ - sol) / açıklık as f32;
         let hedef = aralık.en_az + f64::from((x - sol) / (sağ - sol)) * açıklık;
-        let (indeks, x_değeri) = self
-            .veri
-            .x()
-            .iter()
-            .copied()
-            .enumerate()
+        let x_değerleri = self.veri.x();
+        let sağ_indeks = x_değerleri.partition_point(|değer| *değer < hedef);
+        let (indeks, x_değeri) = [sağ_indeks.checked_sub(1), Some(sağ_indeks)]
+            .into_iter()
+            .flatten()
+            .filter_map(|indeks| {
+                x_değerleri
+                    .get(indeks)
+                    .copied()
+                    .map(|değer| (indeks, değer))
+            })
             .filter(|(_, değer)| (*değer - hedef).abs() <= 0.5)
             .min_by(|(_, sol), (_, sağ)| (*sol - hedef).abs().total_cmp(&(*sağ - hedef).abs()))?;
         let değer = |seri: usize| {
@@ -5870,8 +5885,8 @@ impl Grafik {
         let x_açıklığı = (x_aralığı.en_çok - x_aralığı.en_az).max(f64::EPSILON);
         let sütun_genişliği = çizim_g / x_açıklığı as f32;
         let gövde_genişliği = (düzen.gövde_genişlik_oranı * (sütun_genişliği - 2.0)).max(1.0);
-
         let artım = uygun_artım(y_aralığı, çizim_y, 30.0);
+
         for değer in eksen_bölmeleri(y_aralığı, çizim_y, 30.0) {
             let y = alt - y_aralığı.konum(değer, 0.0, çizim_y);
             sahne.ekle(Komut::Çizgi {
@@ -5998,21 +6013,19 @@ impl Grafik {
         let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
         let çizim_g = sağ - sol;
         let çizim_y = alt - üst;
-        let tam_x = tam_x_aralığı(&self.veri)
-            .ok()
-            .and_then(|aralık| Aralık::yeni(aralık.en_az - 0.5, aralık.en_çok + 0.5).ok())
-            .unwrap_or(Aralık {
-                en_az: -0.5,
-                en_çok: 0.5,
-            });
+        // Kaynak `distr: 2` çizicisi ilk ve son ordinal indeksi doğrudan
+        // çizim alanının iki kenarına eşler; ekstra yarım sütun payı eklemez.
+        let tam_x = tam_x_aralığı(&self.veri).unwrap_or(Aralık {
+            en_az: -0.5,
+            en_çok: 0.5,
+        });
         let x_aralığı = görünür_x.unwrap_or(tam_x);
         let y_aralığı = görünür_y.unwrap_or_else(|| self.y_aralığı(x_aralığı));
         let x_açıklığı = (x_aralığı.en_çok - x_aralığı.en_az).max(f64::EPSILON);
         let sütun_genişliği = çizim_g / x_açıklığı as f32;
         let gövde_genişliği = düzen
             .azami_gövde_genişliği
-            .min((sütun_genişliği - 2.0).max(1.0));
-        let artım = uygun_artım(y_aralığı, çizim_y, 30.0);
+            .min((sütun_genişliği - 2.0).max(0.0));
         for değer in eksen_bölmeleri(y_aralığı, çizim_y, 30.0) {
             let y = alt - y_aralığı.konum(değer, 0.0, çizim_y);
             sahne.ekle(Komut::Çizgi {
@@ -6023,7 +6036,7 @@ impl Grafik {
             });
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(sol - 8.0, y + 4.0),
-                içerik: format!("${}", eksen_değerini_yaz(değer, artım)),
+                içerik: usd_biçimle(değer, 0),
                 renk: "#4b5563".to_string(),
                 boyut: 11.0,
                 hiza: MetinHizası::Bitiş,
@@ -6038,7 +6051,15 @@ impl Grafik {
                 .flatten()
         };
         let etiket_adımı = ((60.0 / sütun_genişliği.max(1.0)).ceil() as usize).max(1);
-        for indeks in 0..self.veri.uzunluk() {
+        let ilk_görünür = self
+            .veri
+            .x()
+            .partition_point(|değer| *değer < x_aralığı.en_az - 1.0);
+        let görünür_bitiş = self
+            .veri
+            .x()
+            .partition_point(|değer| *değer <= x_aralığı.en_çok + 1.0);
+        for indeks in ilk_görünür..görünür_bitiş {
             let Some(x_değeri) = self.veri.x().get(indeks).copied() else {
                 continue;
             };
@@ -6056,36 +6077,57 @@ impl Grafik {
                 continue;
             };
             let y_konumu = |değer| alt - y_aralığı.konum(değer, 0.0, çizim_y);
-            let yüksek_y = y_konumu(yüksek).clamp(üst, alt);
-            let düşük_y = y_konumu(düşük).clamp(üst, alt);
-            let açılış_y = y_konumu(açılış).clamp(üst, alt);
-            let kapanış_y = y_konumu(kapanış).clamp(üst, alt);
+            let piksel = self.seçenekler.piksel_hizası;
+            let yüksek_y = piksele_hizala(y_konumu(yüksek).clamp(üst, alt), piksel);
+            let düşük_y = piksele_hizala(y_konumu(düşük).clamp(üst, alt), piksel);
+            let açılış_y = piksele_hizala(y_konumu(açılış).clamp(üst, alt), piksel);
+            let kapanış_y = piksele_hizala(y_konumu(kapanış).clamp(üst, alt), piksel);
+            let merkez = piksele_hizala(merkez, piksel);
+            let gövde_genişliği = piksele_hizala(gövde_genişliği, piksel).max(0.0);
             let renk = if açılış > kapanış {
                 &düzen.düşüş_rengi
             } else {
                 &düzen.yükseliş_rengi
             };
+            let fitil_y = yüksek_y.min(düşük_y);
+            let fitil_yüksekliği = piksele_hizala((düşük_y - yüksek_y).abs(), piksel).max(0.0);
             sahne.ekle(Komut::Dikdörtgen {
-                konum: Nokta::yeni(merkez - 1.0, yüksek_y.min(düşük_y)),
+                konum: Nokta::yeni(piksele_hizala(merkez - 1.0, piksel), fitil_y),
                 genişlik: 2.0,
-                yükseklik: (düşük_y - yüksek_y).abs(),
+                yükseklik: fitil_yüksekliği,
                 dolgu: "#000000".to_string(),
                 çizgi: "#000000".to_string(),
                 kalınlık: 0.0,
             });
+            let gövde_x = piksele_hizala(merkez - gövde_genişliği / 2.0, piksel);
+            let gövde_y = açılış_y.min(kapanış_y);
+            let gövde_yüksekliği = piksele_hizala((kapanış_y - açılış_y).abs(), piksel).max(0.0);
             sahne.ekle(Komut::Dikdörtgen {
-                konum: Nokta::yeni(merkez - gövde_genişliği / 2.0, açılış_y.min(kapanış_y)),
+                konum: Nokta::yeni(gövde_x, gövde_y),
                 genişlik: gövde_genişliği,
-                yükseklik: (kapanış_y - açılış_y).abs().max(1.0),
-                dolgu: renk.clone(),
-                çizgi: "#000000".to_string(),
-                kalınlık: 1.0,
+                yükseklik: gövde_yüksekliği,
+                dolgu: "#000000".to_string(),
+                çizgi: "none".to_string(),
+                kalınlık: 0.0,
             });
-            let hacim_y = alt - (hacim / 2_000.0).clamp(0.0, 1.0) as f32 * çizim_y;
+            if gövde_genişliği > 2.0 && gövde_yüksekliği > 2.0 {
+                sahne.ekle(Komut::Dikdörtgen {
+                    konum: Nokta::yeni(gövde_x + 1.0, gövde_y + 1.0),
+                    genişlik: gövde_genişliği - 2.0,
+                    yükseklik: gövde_yüksekliği - 2.0,
+                    dolgu: renk.clone(),
+                    çizgi: "none".to_string(),
+                    kalınlık: 0.0,
+                });
+            }
+            let hacim_y = piksele_hizala(
+                alt - (hacim / 2_000.0).clamp(0.0, 1.0) as f32 * çizim_y,
+                piksel,
+            );
             sahne.ekle(Komut::Dikdörtgen {
-                konum: Nokta::yeni(merkez - gövde_genişliği / 2.0, hacim_y),
+                konum: Nokta::yeni(gövde_x, hacim_y),
                 genişlik: gövde_genişliği,
-                yükseklik: alt - hacim_y,
+                yükseklik: piksele_hizala(alt - hacim_y, piksel).max(0.0),
                 dolgu: renk.clone(),
                 çizgi: "none".to_string(),
                 kalınlık: 0.0,
@@ -6940,6 +6982,33 @@ fn tooltip_sayısını_biçimlendir(değer: f64) -> String {
         .trim_end_matches('0')
         .trim_end_matches('.')
         .to_string()
+}
+
+/// Kaynak candlestick demosundaki `fmtUSD()` biçimini yerel ayardan
+/// bağımsız üretir. Para imi, işaretten önce gelir (`$-1.00`).
+pub(crate) fn usd_biçimle(değer: f64, ondalık: usize) -> String {
+    if !değer.is_finite() {
+        return "—".to_string();
+    }
+
+    let işaret = if değer.is_sign_negative() { "-" } else { "" };
+    let ham = format!("{:.*}", ondalık, değer.abs());
+    let (tam, kesir) = ham
+        .split_once('.')
+        .map_or((ham.as_str(), None), |(tam, kesir)| (tam, Some(kesir)));
+    let mut ters_gruplu = String::with_capacity(tam.len() + tam.len() / 3);
+    for (indeks, karakter) in tam.chars().rev().enumerate() {
+        if indeks > 0 && indeks.is_multiple_of(3) {
+            ters_gruplu.push(',');
+        }
+        ters_gruplu.push(karakter);
+    }
+    let gruplu = ters_gruplu.chars().rev().collect::<String>();
+
+    kesir.map_or_else(
+        || format!("${işaret}{gruplu}"),
+        |kesir| format!("${işaret}{gruplu}.{kesir}"),
+    )
 }
 
 /// İkili arama konumundan iki yana yalnız gerektiği kadar ilerleyerek null

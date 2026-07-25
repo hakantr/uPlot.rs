@@ -1137,6 +1137,13 @@ impl KartOturumu {
             .to_string()
     }
 
+    pub fn mum_tarih_etiketi(&self, indeks: u32) -> String {
+        usize::try_from(indeks)
+            .ok()
+            .and_then(|indeks| self.grafik.mum_tarih_etiketi(indeks))
+            .unwrap_or_default()
+    }
+
     pub fn dagilim_vurusu(&self, genişlik: u32, yükseklik: u32, x: f32, y: f32) -> Vec<f64> {
         self.grafik
             .dağılım_vuruşu_boyutta(genişlik, yükseklik, x, y)
@@ -2145,7 +2152,7 @@ mod testler {
         };
         let grup = &katalog[başlangıç..bitiş];
         assert!(grup.contains("çubuk: kimlik !== \"multi-bars-non-justified\""));
-        assert!(katalog.contains("!kart.çubuk && oturum.seri_gorunur(indeks)"));
+        assert!(katalog.contains("!kart.çubuk && !kart.kutuBıyık && oturum.seri_gorunur(indeks)"));
         assert!(katalog.contains("oturum?.cubuk_vurusu"));
         assert!(katalog.contains("fill=\"rgba(255,255,255,.3)\""));
         assert!(katalog.contains("öncekiMultiBarsKaydırma.scrollLeft"));
@@ -3946,6 +3953,16 @@ mod testler {
         let svg = oturum.svg(1_920, 600);
         assert!(svg.contains("#4ab650"));
         assert!(svg.contains("#e54245"));
-        assert_eq!(oturum.kutu_biyik_vurusu(1_920, 600, 76.0, 100.0).len(), 10);
+        assert!(svg.contains("fill=\"#000000\" stroke=\"none\""));
+        assert_eq!(oturum.gorunur_x_araligi().as_slice(), [0.0, 217.0]);
+        assert_eq!(oturum.kutu_biyik_vurusu(1_920, 600, 72.0, 100.0).len(), 10);
+        assert_eq!(oturum.mum_tarih_etiketi(0), "2019-01-01");
+        assert_eq!(oturum.mum_tarih_etiketi(217), "2019-10-25");
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("hareketliLejant: true"));
+        assert!(web.contains("[\"date\", \"open\", \"high\", \"low\", \"close\", \"volume\"]"));
+        assert!(web.contains("Open: ${usd(değerler[0])}"));
+        assert!(web.contains("oturum?.mum_tarih_etiketi(indeks)"));
+        assert!(web.contains("yalnız görünür mum aralığını O(V)"));
     }
 }

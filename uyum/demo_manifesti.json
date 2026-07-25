@@ -1175,7 +1175,7 @@
           "cizim-alani-kirpmasi": "devralındı",
           "dinamik-eksen-izgara": "devralındı",
           "surekli-imlec-izleme": "devralındı",
-          "canli-coklu-seri-lejanti": "devralındı",
+          "canli-coklu-seri-lejanti": "uygulanamaz",
           "kosullu-bos-ve-dolu-noktalar": "uygulanamaz",
           "secim-yakinlastirma": "kartta_etkin",
           "cift-tik-tam-gorunum": "kartta_etkin",
@@ -1189,6 +1189,7 @@
           "paniksiz-hata-bildirimi": "devralındı"
         },
         "gerekçeler": {
+          "canli-coklu-seri-lejanti": "Beş sütun bağımsız çizgi serileri değil, kaynak özel mum çizicisinin OHLC ve hacim alanlarıdır; kaynak demo setSeries veya tıklanabilir seri lejantı sunmaz.",
           "kosullu-bos-ve-dolu-noktalar": "Mum eklentisi normal seri noktaları çizmez."
         }
       },
@@ -1201,6 +1202,12 @@
         "high-low-wicks",
         "fixed-zero-to-two-thousand-volume-scale",
         "utc-date-labels",
+        "moving-utc-usd-ohlc-volume-tooltip",
+        "two-filled-rect-black-outline-candle-bodies",
+        "device-pixel-aligned-candle-geometry",
+        "visible-window-candle-rendering",
+        "logarithmic-column-hit-testing",
+        "interaction-overlay-without-main-scene-redraw",
         "column-highlight-hit-testing",
         "gpui-wasm-catalog-parity",
         "common-interaction-profile"

@@ -2509,10 +2509,17 @@
       tanım: () => candlestick_kart_tanim_ornegi(),
       tanımYolu: "src/kart/candlestick_ohlc.rs",
       seriler: ["Open", "High", "Low", "Close", "Volume"].map(etiket => ({ etiket, renk: "#000000" })),
-      yardım: "İmleci hareket ettir: kaynak sütun vurgusu · yeşil yükseliş, kırmızı düşüş · altta hacim",
+      yardım: "İmleci hareket ettir: kaynak sütun vurgusu + UTC/OHLC/hacim bilgi kutusu · yeşil yükseliş, kırmızı düşüş",
       değişkenNokta: false,
       kutuBıyık: true,
+      hareketliLejant: true,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Gold için tek hizalı tarih sütunundaki Open/High/Low/Close ve hacmi, kaynak demo ile aynı mum + hacim yüzeyinde gösterir.",
+        api: "MumDüzeni UTC zamanlarını OHLC sütunlarından ayrı bir yan veri olarak taşır. Beş seri bağımsız çizgiler değil, tek mum geometrisinin zorunlu alanlarıdır; bu yüzden kaynakta setSeries/legend toggle uygulanmaz.",
+        izleme: "Piyasa fiyatı, finansal telemetri veya açık-yüksek-düşük-kapanış biçimindeki pencere özetlerinde yönü, aralığı ve hacmi aynı zaman sütununda incelemek için uygundur.",
+        maliyet: "218 kaynak satırı gömülüdür. Ana sahne yalnız görünür mum aralığını O(V) çizer; sütun vuruşu sıralı X üzerinde O(log N), pointer hareketi ise ana sahneyi yeniden üretmeden yalnız hafif vurgu ve tooltip katmanını taşır.",
+      },
     };
     document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
       <article class="kart" data-kart="cursor-bind" aria-current="false" tabindex="0">
@@ -6732,7 +6739,7 @@
       if (tamKurulum || aktifKart !== "sine-stream") yüzeyiEşitle();
       svg.dataset.etkileşim = "hover-x-zoom";
       const imleçNoktaları = kart.seriler.map((seri, indeks) =>
-        !kart.çubuk && oturum.seri_gorunur(indeks)
+        !kart.çubuk && !kart.kutuBıyık && oturum.seri_gorunur(indeks)
           ? `<circle id="imleç-nokta-${indeks}" visibility="hidden" r="2.5" fill="${seri.renk}"/>`
           : ""
       ).join("");
@@ -6747,6 +6754,14 @@
             <rect width="44" height="22" rx="3" fill="${seri.renk}"/>
             <text fill="#ffffff" font-size="11" text-anchor="middle"></text>
           </g>` : "").join("")}` : "";
+      const mumTooltip = kart.hareketliLejant ? `
+        <g id="kutu-biyik-tooltip" class="box-whisker-tooltip" visibility="hidden">
+          <rect width="224" height="108" rx="3"
+            fill="rgba(255,249,196,.92)" stroke="rgba(0,0,0,.22)"/>
+          ${["date", "open", "high", "low", "close", "volume"].map((alan, satır) =>
+            `<text data-box-tooltip="${alan}" x="8" y="${17 + satır * 16}"></text>`
+          ).join("")}
+        </g>` : "";
       if (!svg.querySelector(":scope > #etkileşim")) svg.insertAdjacentHTML("beforeend", `
         <g id="etkileşim" pointer-events="none">
           <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
@@ -6758,6 +6773,7 @@
           <line id="imleç-y" visibility="hidden" stroke="#6b7280" stroke-dasharray="4 4"/>
           ${imleçNoktaları}
           ${eksenGöstergeleri}
+          ${mumTooltip}
         </g>`);
       boyutSenkronKatmanınıGüncelle(svg);
       const yığmaLejantı = aktifKart.startsWith("stacked-series-");
@@ -6791,8 +6807,8 @@
         const xLejantEtiketi = aktifKart === "svg-image" ? "Value" : "x";
         arayüzHedefi?.insertAdjacentHTML("beforeend", `
           ${kart.scrollSync || !kart.yardım ? "" : `<div class="yardım">${kart.yardım}</div>`}
-          <div class="lejant"><span>${xLejantEtiketi}: <b id="x-değeri">--</b></span>
-          ${lejantSerileri}</div>`);
+          ${kart.hareketliLejant ? "" : `<div class="lejant"><span>${xLejantEtiketi}: <b id="x-değeri">--</b></span>
+          ${lejantSerileri}</div>`}`);
       }
       if (aktifKart.startsWith("stream-data-")) {
         const [x, ...değerler] = oturum.son_degerler();
@@ -7230,8 +7246,24 @@
         vurgu?.setAttribute("x", x); vurgu?.setAttribute("y", y);
         vurgu?.setAttribute("width", genişlik); vurgu?.setAttribute("height", yükseklik);
         vurgu?.setAttribute("visibility", "visible");
-        const framework = oturum?.kutu_biyik_etiketi(indeks) ?? "";
-        const alanlar = {
+        const mum = aktifKart === "candlestick-ohlc";
+        const framework = mum
+          ? (oturum?.mum_tarih_etiketi(indeks) ?? "")
+          : (oturum?.kutu_biyik_etiketi(indeks) ?? "");
+        const usd = değer => Number.isFinite(değer)
+          ? `$${Number(değer).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}`
+          : "—";
+        const alanlar = mum ? {
+          date: `Date: ${framework}`,
+          open: `Open: ${usd(değerler[0])}`,
+          high: `High: ${usd(değerler[1])}`,
+          low: `Low: ${usd(değerler[2])}`,
+          close: `Close: ${usd(değerler[3])}`,
+          volume: `Volume: ${Number.isFinite(değerler[4]) ? Number(değerler[4]).toFixed(0) : "—"}`,
+        } : {
           lib: `Lib: ${framework}`,
           median: `Median: ${Number(değerler[0]).toFixed(2)}`,
           q1: `q1: ${Number(değerler[1]).toFixed(2)}`,
@@ -7245,21 +7277,27 @@
         }
         const tooltipWidth = Math.min(
           sağ - sol,
-          Math.max(224, Array.from(framework).length * 6.5 + 16),
+          Math.max(
+            224,
+            Math.max(...Object.values(alanlar).map(içerik => Array.from(içerik).length))
+              * 6.5 + 16,
+          ),
         );
         tooltip?.querySelector("rect")?.setAttribute("width", tooltipWidth);
-        const tooltipX = Math.max(sol, Math.min(sağ - tooltipWidth, hamX + 14));
-        const tooltipY = Math.max(üst, Math.min(alt - 108, hamY + 14));
+        const tooltipX = mum ? hamX : Math.max(sol, Math.min(sağ - tooltipWidth, hamX + 14));
+        const tooltipY = mum ? hamY : Math.max(üst, Math.min(alt - 108, hamY + 14));
         tooltip?.setAttribute("transform", `translate(${tooltipX} ${tooltipY})`);
         tooltip?.setAttribute("visibility", "visible");
-        const xHedefi = chart.querySelector("#x-değeri");
-        if (xHedefi) xHedefi.textContent = framework || String(indeks + 1);
-        değerler.forEach((değer, seriİndeksi) => {
-          const hedef = chart.querySelector(`#seri-değeri-${seriİndeksi}`);
-          if (hedef) {
-            hedef.textContent = Number.isFinite(değer) ? Number(değer).toFixed(2) : "—";
-          }
-        });
+        if (!mum) {
+          const xHedefi = chart.querySelector("#x-değeri");
+          if (xHedefi) xHedefi.textContent = framework || String(indeks + 1);
+          değerler.forEach((değer, seriİndeksi) => {
+            const hedef = chart.querySelector(`#seri-değeri-${seriİndeksi}`);
+            if (hedef) {
+              hedef.textContent = Number.isFinite(değer) ? Number(değer).toFixed(2) : "—";
+            }
+          });
+        }
         return;
       }
       if (kartlar[aktifKart].dağılım) {

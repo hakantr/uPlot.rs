@@ -74,7 +74,7 @@ pub fn candlestick_ohlc_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), Up
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Grafik, Komut};
+    use crate::{Grafik, Komut, grafik::usd_biçimle};
 
     #[test]
     fn kaynak_ohlc_verisi_ve_mum_geometrisi_korunur() -> Result<(), UplotHatası> {
@@ -94,13 +94,53 @@ mod testler {
                 .get(4)
                 .is_some_and(|hacim| (10.0..=250.0).contains(hacim))
         );
-        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        assert_eq!(grafik.mum_tarih_etiketi(0).as_deref(), Some("2019-01-01"));
+        assert_eq!(grafik.mum_tarih_etiketi(217).as_deref(), Some("2019-10-25"));
+        assert_eq!(usd_biçimle(1_284.7, 2), "$1,284.70");
+        assert_eq!(usd_biçimle(-1_300.0, 0), "$-1,300");
+        assert_eq!(grafik.görünür_x_aralığı(), Aralık::yeni(0.0, 217.0)?);
+        let vuruş = grafik.kutu_bıyık_vuruşu(1_920, 600, 72.0, 100.0);
+        assert!(vuruş.is_some(), "ilk mum sütunu vurulmalı");
+        if let Some(vuruş) = vuruş {
+            assert_eq!(vuruş.0, 0);
+            assert_eq!(&vuruş.4[..4], &[1_284.7, 1_284.75, 1_282.85, 1_283.35]);
+        }
+        let sahne = grafik.çiz();
         assert!(sahne.komutlar().iter().any(|komut| {
             matches!(komut, Komut::Dikdörtgen { dolgu, .. } if dolgu == "#4ab650")
         }));
         assert!(sahne.komutlar().iter().any(|komut| {
             matches!(komut, Komut::Dikdörtgen { dolgu, .. } if dolgu == "#e54245")
         }));
+        assert!(sahne.komutlar().iter().any(|komut| {
+            matches!(
+                komut,
+                Komut::Dikdörtgen {
+                    dolgu,
+                    çizgi,
+                    kalınlık,
+                    ..
+                } if dolgu == "#000000" && çizgi == "none" && *kalınlık == 0.0
+            )
+        }));
+
+        let tam_mum_dikdörtgenleri = sahne
+            .komutlar()
+            .iter()
+            .filter(|komut| matches!(komut, Komut::Dikdörtgen { .. }))
+            .count();
+        assert!(grafik.görünür_x_aralığını_ayarla(Aralık::yeni(100.0, 110.0)?, true));
+        let yakın_sahne = grafik.çiz();
+        let yakın_mum_dikdörtgenleri = yakın_sahne
+            .komutlar()
+            .iter()
+            .filter(|komut| matches!(komut, Komut::Dikdörtgen { .. }))
+            .count();
+        assert!(
+            yakın_mum_dikdörtgenleri * 5 < tam_mum_dikdörtgenleri,
+            "yalnız görünür mumlar çizilmeli: {yakın_mum_dikdörtgenleri}/{tam_mum_dikdörtgenleri}"
+        );
         Ok(())
     }
 }

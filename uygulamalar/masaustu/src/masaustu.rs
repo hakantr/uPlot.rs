@@ -7529,6 +7529,19 @@ impl Render for ChartListesi {
                  en çok 30 kutu ve ayrık değer sayısıyla O(N)'dir; ortak wheel/touch/drag ürün \
                  uzantısıdır.",
             ),
+            KartKimliği::Candlestick => Some(
+                "Amaç: Gold için tek hizalı tarih sütunundaki Open/High/Low/Close ve hacmi \
+                 kaynak demodaki aynı mum + hacim yüzeyinde gösterir. API: MumDüzeni UTC \
+                 zamanlarını OHLC sütunlarından ayrı yan veri olarak taşır. Beş seri bağımsız \
+                 çizgiler değil tek mum geometrisinin zorunlu alanlarıdır; kaynak özel çizicisi \
+                 setSeries/legend toggle sunmaz. Hover ana sahneyi yeniden çizmeden mavi sütun \
+                 vurgusunu ve sarı Date/Open/High/Low/Close/Volume bilgi kutusunu hafif katmanda \
+                 taşır. Fiyatlar kaynak fmtUSD biçiminde, tarih UTC YYYY-MM-DD olarak gösterilir. \
+                 İzleme: piyasa fiyatı veya OHLC pencere özetlerinde yönü, aralığı ve hacmi aynı \
+                 zaman sütununda incelemek için uygundur. Maliyet: 218 kaynak satırı gömülüdür; \
+                 ana sahne yalnız görünür mum aralığını O(V) çizer, sütun vuruşu sıralı X üzerinde \
+                 O(log N)'dir. Ortak wheel/touch/drag davranışları ürün uzantısıdır.",
+            ),
             _ => None,
         };
         let kullanım_rehberi_açık = self.kullanım_rehberi_açık;
@@ -7617,6 +7630,7 @@ impl Render for ChartListesi {
                         | KartKimliği::Bars(_)
                         | KartKimliği::BarsValuesAutosize(_)
                         | KartKimliği::BoxWhisker(_)
+                        | KartKimliği::Candlestick
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )
