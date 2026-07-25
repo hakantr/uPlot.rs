@@ -59,7 +59,7 @@ use uplot_rs::{
     pixel_align_kartı, points_kartları, points_kartı, resize_kartı, scale_padding_kartı,
     scales_dir_ori_kartları, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
     sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları,
-    sparklines_bars_kartı, sparklines_kartları, sparklines_kartı, sparse_kartı,
+    sparklines_bars_kartı, sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı,
     stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
     sync_cursor_kartı, sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı,
     timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
@@ -161,7 +161,7 @@ impl KartKimliği {
             Self::SoftMinMax(_) => "Soft Min/Max · 5 ilişkili yüzey",
             Self::SparklinesBars(_) => "Sparkline + Floating Bars · 2 ilişkili yüzey",
             Self::Sparklines(_) => "Sparklines · 10×2 tablo",
-            Self::Sparse(örnek) => örnek.başlık(),
+            Self::Sparse(_) => "Sparse · 3 pathBuilder",
             Self::StackedSeries(örnek) => örnek.başlık(),
             Self::StreamData(örnek) => örnek.başlık(),
             Self::SvgImage => "uPlot to image PoC",
@@ -550,6 +550,7 @@ pub struct ChartListesi {
     soft_minmax_grafikleri: Vec<(SoftMinMaxÖrneği, Entity<GpuiGrafik>)>,
     sparklines_bars_grafikleri: Vec<(SparklinesBarsÖrneği, Entity<GpuiGrafik>)>,
     sparklines_grafikleri: Vec<(SparklineÖrneği, Entity<GpuiGrafik>)>,
+    sparse_grafikleri: Vec<(SparseÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grubu: SyncCursorGrubu,
     timeseries_discrete_grafikleri: Vec<(TimeseriesDiscreteÖrneği, Entity<GpuiGrafik>)>,
@@ -651,6 +652,12 @@ impl ChartListesi {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
                 }
+            } else if matches!(bu.aktif_kart, KartKimliği::Sparse(_)) {
+                for (_, grafik) in &bu.sparse_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
             } else if let Some(grafik) = &bu.grafik {
                 grafik.update(cx, |grafik, cx| {
                     grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
@@ -711,6 +718,7 @@ impl ChartListesi {
             soft_minmax_grafikleri: Vec::new(),
             sparklines_bars_grafikleri: Vec::new(),
             sparklines_grafikleri: Vec::new(),
+            sparse_grafikleri: Vec::new(),
             sync_cursor_grafikleri: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
             timeseries_discrete_grafikleri: Vec::new(),
@@ -924,7 +932,15 @@ impl ChartListesi {
                 }
             };
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
-            yüzeyler.push((örnek, cx.new(|_| GpuiGrafik::yeni(grafik))));
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                    bu.açıklama_istendi = true;
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
         }
         self.pixel_align_akışı = PixelAlignAkışı::yeni(140).ok();
         self.pixel_align_son_kare = Some(Instant::now());
@@ -1210,6 +1226,99 @@ impl ChartListesi {
         cx.notify();
     }
 
+    fn sparse_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = sparse_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Sparse grubu oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.sparse_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.sparse_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, move |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if bu.scales_dir_ori_senkronlanıyor {
+                    return;
+                }
+                match olay {
+                    GpuiGrafikOlayı::İmleçDeğişti => {
+                        let yayın = bu
+                            .sparse_grafikleri
+                            .iter()
+                            .find(|(kimlik, _)| *kimlik == örnek)
+                            .and_then(|(_, grafik)| grafik.read(cx).senkron_yayını());
+                        let yüzeyler = bu.sparse_grafikleri.clone();
+                        bu.scales_dir_ori_senkronlanıyor = true;
+                        for (hedef, hedef_grafik) in yüzeyler {
+                            if hedef == örnek {
+                                continue;
+                            }
+                            if let Some((x, y, seri)) = yayın {
+                                hedef_grafik.update(cx, |grafik, cx| {
+                                    grafik.senkron_veri_imleci_ayarla(x, y, seri, cx);
+                                });
+                            } else {
+                                hedef_grafik.update(cx, |grafik, cx| {
+                                    grafik.senkron_imleci_temizle(cx);
+                                });
+                            }
+                        }
+                        bu.scales_dir_ori_senkronlanıyor = false;
+                    }
+                    GpuiGrafikOlayı::DurumDeğişti => {
+                        let aralıklar = bu
+                            .sparse_grafikleri
+                            .iter()
+                            .find(|(kimlik, _)| *kimlik == örnek)
+                            .map(|(_, grafik)| {
+                                let grafik = grafik.read(cx);
+                                (
+                                    grafik.grafik().görünür_x_aralığı(),
+                                    grafik.grafik().görünür_y_aralığı(),
+                                )
+                            });
+                        if let Some((x, y)) = aralıklar {
+                            let yüzeyler = bu.sparse_grafikleri.clone();
+                            bu.scales_dir_ori_senkronlanıyor = true;
+                            for (hedef, hedef_grafik) in yüzeyler {
+                                if hedef != örnek {
+                                    hedef_grafik.update(cx, |grafik, cx| {
+                                        grafik.görünür_aralıkları_ayarla(x, y, true, cx);
+                                    });
+                                }
+                            }
+                            bu.scales_dir_ori_senkronlanıyor = false;
+                        }
+                    }
+                    GpuiGrafikOlayı::Açıklamaİstendi => bu.açıklama_istendi = true,
+                    GpuiGrafikOlayı::FareBırakıldı => {}
+                }
+                cx.notify();
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.sparse_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
         match grafik_oluştur(
@@ -1437,6 +1546,7 @@ impl ChartListesi {
         self.soft_minmax_grafikleri.clear();
         self.sparklines_bars_grafikleri.clear();
         self.sparklines_grafikleri.clear();
+        self.sparse_grafikleri.clear();
         if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -1539,6 +1649,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.sparklines_yüzeylerini_oluştur(cx);
+        } else if matches!(kart, KartKimliği::Sparse(_)) {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.sparse_yüzeylerini_oluştur(cx);
         } else {
             self.sync_cursor_grafikleri.clear();
             self.timeseries_discrete_grafikleri.clear();
@@ -2539,6 +2658,15 @@ impl Render for ChartListesi {
                 .sparklines_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if matches!(aktif_kart, KartKimliği::Sparse(_)) {
+            geri_var = self
+                .sparse_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .sparse_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         }
         let çizim_hatası = self.hata.clone().or(bileşen_hatası);
         let seri_adları = if aktif_kart == KartKimliği::TimeseriesDiscrete {
@@ -3289,21 +3417,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(kart, cx);
                 }))
             })
-            .children(SparseÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::Sparse(örnek);
+            .child({
+                let kart = KartKimliği::Sparse(SparseÖrneği::YerleşikDoğrusal);
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
                     "sparse",
-                    aktif_kart == kart,
-                    "13.608 X · 4.608 dolu Y",
+                    "Sparse · 3 pathBuilder",
+                    "sparse",
+                    matches!(aktif_kart, KartKimliği::Sparse(_)),
+                    "aynı 13.608 X · native / points / naive",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .children(StackedSeriesÖrneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::StackedSeries(örnek);
                 katalog_kartı(
@@ -3986,6 +4114,10 @@ impl Render for ChartListesi {
                                     grafik.önceki_görünüm(cx);
                                 });
                             }
+                        } else if matches!(bu.aktif_kart, KartKimliği::Sparse(_)) {
+                            for (_, grafik) in &bu.sparse_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
                                 grafik.önceki_görünüm(cx);
@@ -4067,6 +4199,10 @@ impl Render for ChartListesi {
                                 grafik.update(cx, |grafik, cx| {
                                     grafik.tam_görünüm(cx);
                                 });
+                            }
+                        } else if matches!(bu.aktif_kart, KartKimliği::Sparse(_)) {
+                            for (_, grafik) in &bu.sparse_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
                             }
                         } else if let Some(grafik) = &bu.grafik {
                             grafik.update(cx, |grafik, cx| {
@@ -4850,6 +4986,36 @@ impl Render for ChartListesi {
                                 )
                         }),
                 )
+        } else if matches!(aktif_kart, KartKimliği::Sparse(_)) {
+            let yüzey = |örnek| {
+                self.sparse_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(700.0))
+                .overflow_scroll()
+                .p_2()
+                .children(SparseÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    div()
+                        .mb_2()
+                        .child(
+                            div()
+                                .text_sm()
+                                .font_weight(FontWeight::BOLD)
+                                .child(örnek.başlık()),
+                        )
+                        .child(
+                            div()
+                                .w(px(800.0))
+                                .h(px(200.0))
+                                .border_1()
+                                .border_color(rgb(0xc0c0c0))
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                        )
+                }))
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
             let boyut = self
                 .boyut_senkron_akışı
@@ -5080,6 +5246,17 @@ impl Render for ChartListesi {
                  440 değeri binary içine gömerek fetch/parser yaşam döngüsünü kaldırır. \
                  Kaynak cursor/select/legend kapalıdır; ortak wheel/touch/drag yalnız \
                  geliştirici etkinleştirirse çekirdek uzantısıdır.",
+            ),
+            KartKimliği::Sparse(_) => Some(
+                "Amaç: aynı seyrek telemetride optimize native linear, tek toplu özel kare \
+                 noktalar ve naif moveTo/lineTo yolunun görünüm ve maliyet farkını karşılaştırır. \
+                 API: sparse_kartları tek decode sonrası üç yüzeyi kaynak sırasıyla üretir; \
+                 saf_doğrusal_yol native piksel kovasını atlar, kare points tek Alan/Path2D \
+                 komutunda batch edilir. İzleme: uzun null koşularında native yol genel \
+                 seçimdir; olay yoğunluğunda points, algoritma kıyasında naive kullanılır. \
+                 Maliyet: native piksel başına giriş/min/max/çıkışı koruyup null koşularını \
+                 tek kırılmaya indirir; points 4.430 kareyi tek fill path'te taşır; naive \
+                 13.608 girdiyi tarayıp dolu noktalarla sınır kırpma kesişimlerini çizer.",
             ),
             KartKimliği::Scatter => Some(
                 "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \

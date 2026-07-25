@@ -2526,7 +2526,7 @@
         { "yol": "demos/data/sparse.json", "sha256": "5a6765b1aacb846fb125b404cc491d5ae1635fa3460b2fb43fd0d376607801d4" },
         { "yol": "src/paths/linear.js", "sha256": "8f5002721c15f9a965b0e56522c58378c5b412856356c85188c74066ffba6749" }
       ],
-      "fixture": "src/kart/sparse.rs#sparse_kartı",
+      "fixture": "src/kart/sparse.rs#sparse_kartları",
       "örnek": "examples/sparse.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -2556,7 +2556,10 @@
         "source-three-800x200-surfaces", "source-exact-13608-x-values",
         "source-exact-4608-non-null-y-values", "source-622-contiguous-runs",
         "fixed-y-range-100-350", "native-linear-path-builder",
-        "custom-2x2-square-point-builder", "panic-free-naive-moveto-line-builder",
+        "native-pixel-bucket-decimation-with-null-gaps",
+        "custom-2x2-square-single-batched-path-builder",
+        "panic-free-full-scan-naive-moveto-line-builder",
+        "source-three-surface-group", "collapsible-usage-guide",
         "gpui-wasm-parity", "common-interaction-profile"
       ],
       "kanıt": {

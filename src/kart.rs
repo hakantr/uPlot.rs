@@ -194,7 +194,7 @@ pub use sparklines_bars::{
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SparklinesBarsÖrneği, sparklines_bars_kartları,
     sparklines_bars_kartı,
 };
-pub use sparse::{SPARSE_KART_TANIM_ÖRNEĞİ, SparseÖrneği, sparse_kartı};
+pub use sparse::{SPARSE_KART_TANIM_ÖRNEĞİ, SparseÖrneği, sparse_kartları, sparse_kartı};
 pub use stacked_series::{
     STACKED_SERIES_KANIT_TOHUMU, STACKED_SERIES_KART_TANIM_ÖRNEĞİ, StackedSeriesÖrneği,
     stacked_series_kartı, stacked_series_kartı_görünür,

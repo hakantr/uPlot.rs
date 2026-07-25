@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::path::PathBuf;
-use uplot_rs::{Grafik, SparseÖrneği, sparse_kartı};
+use uplot_rs::{Grafik, sparse_kartları};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let çıktı = std::env::args()
@@ -8,8 +8,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("target/sparse"));
     std::fs::create_dir_all(&çıktı)?;
-    for örnek in SparseÖrneği::TÜMÜ {
-        let (seçenekler, veri) = sparse_kartı(örnek)?;
+    for (örnek, seçenekler, veri) in sparse_kartları()? {
         let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();
         std::fs::write(çıktı.join(format!("{}.svg", örnek.kimlik())), svg)?;
     }

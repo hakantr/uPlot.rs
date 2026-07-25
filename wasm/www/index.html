@@ -295,6 +295,13 @@
     .sparklines-grafik { position: relative; width: 150px; height: 30px;
                          overflow: hidden; background: pink; }
     .sparklines-grafik svg { display: block; width: 150px; height: 30px; }
+    #chart.sparse-yüzeyi { display: block; min-width: 0; overflow: auto;
+                           place-items: unset; padding: 8px; box-sizing: border-box; }
+    .sparse-yığın { width: 800px; display: grid; gap: 10px; }
+    .sparse-grafik { position: relative; width: 800px; background: #fff;
+                     border: 1px solid silver; }
+    .sparse-grafik h3 { margin: 5px 8px; font-size: 12px; }
+    .sparse-grafik svg { display: block; width: 800px; height: 200px; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -1562,27 +1569,30 @@
     ];
     document.querySelector('[data-kart="sparklines"]')?.insertAdjacentHTML(
       "afterend",
-      sparseYüzeyleri.map(([kimlik, başlık, durum]) => `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>sparse</small>
-          <div class="durum">13.608 x · 4.608 değer · ${durum}</div>
-        </article>`).join("")
+      `<article class="kart" data-kart="sparse" aria-current="false" tabindex="0">
+        <strong>Sparse · 3 pathBuilder</strong><small>sparse</small>
+        <div class="durum">aynı 13.608 X · native / points / naive</div>
+      </article>`
     );
-    for (const [kimlik, başlık, yardım] of sparseYüzeyleri) {
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/sparse.html">sparse.html</a>
+    kartlar.sparse = {
+      başlık: "Sparse · 3 pathBuilder",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/sparse.html">sparse.html</a>
           · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data/sparse.json">sparse.json</a>
           · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/paths/linear.js">paths/linear.js</a>
-          <br>Resmî üç 800×200 yüzey, 13.608 X kaydı, 4.608 dolu Y değeri, 622 kesintisiz parça ve sabit 100…350 Y aralığıyla Rust çekirdeğinde korunur.`,
-        tanım: () => sparse_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/sparse.rs",
-        seriler: [{ etiket: "Value", renk: "red" }],
-        yardım: `${yardım} · sürükle: seç · tekerlek: yakınlaştır · çift tıkla: tam görünüm`,
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+          <br>Aynı veri ve sabit 100…350 Y aralığı üzerinde kaynak üçlüsü birlikte gösterilir: piksel-kovalı native linear, tek toplu kare Path2D ve tüm görünür indeksleri tarayan saf moveTo/lineTo.`,
+      tanım: () => sparse_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/sparse.rs",
+      seriler: [{ etiket: "Value", renk: "red" }],
+      yardım: "Üç eşzamanlı yüzey · ortak veri ve cursor karşılaştırması",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Aynı seyrek telemetride optimize yerleşik çizgi, tek toplu özel noktalar ve naif doğrusal yolun görünüm/maliyet farkını karşılaştırır.",
+        api: "sparse_kartları tek decode sonrası üç seçenek/veri yüzeyi üretir. saf_doğrusal_yol native piksel kovasını atlar; Kare points tek Alan/Path2D komutunda batch edilir.",
+        izleme: "Uzun null koşuları olan zaman serilerinde native yol genel seçimdir; olay yoğunluğu için points, algoritma kıyası için naive yüzey kullanılır.",
+        maliyet: "Native görünür piksel başına giriş/min/max/çıkışı korur ve null koşularını tek kırılmaya indirir. Points 4.430 görünür kareyi tek fill path'te taşır. Naive 13.608 girdiyi tarar; 4.430 dolu nokta ve sınır kırpma kesişimlerini moveTo/lineTo ile kurar.",
+      },
+    };
     const stackedSeriesYüzeyleri = [
       ["stacked-series-stacked-1", "Stacked 1", "800×400 · 30 nokta × 5 seri"],
       ["stacked-series-stacked-2", "Stacked 2", "800×400 · aynı veri ters seri sırası"],
@@ -1601,7 +1611,7 @@
       ["stacked-series-groups", "stacking groups", "A/B bağımsız yığma grupları"],
       ["stacked-series-joined-mixed", "stacked joined/mixed", "join · çizgi + yığılmış çubuk"],
     ];
-    document.querySelector('[data-kart="sparse-custom-naive-linear"]')?.insertAdjacentHTML(
+    document.querySelector('[data-kart="sparse"]')?.insertAdjacentHTML(
       "afterend",
       stackedSeriesYüzeyleri.map(([kimlik, başlık, durum]) => `
         <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
@@ -2654,6 +2664,8 @@
     let sparklinesBarsEtkinİndeks = 0;
     let sparklinesOturumları = [];
     let sparklinesEtkinİndeks = 0;
+    let sparseOturumları = [];
+    let sparseEtkinİndeks = 0;
     let scalesDirOriİmleci = null;
     let scalesDirOriÇizimKaresi = null;
     let syncCursorKöprüsü = null;
@@ -4650,6 +4662,12 @@
         </g>`);
       const rect = svg.getBoundingClientRect();
       yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      const xAralığı = yüzeyOturumu.gorunur_x_araligi();
+      const yAralığı = yüzeyOturumu.gorunur_y_araligi();
+      yüzey.dataset.xEnAz = String(xAralığı[0] ?? "");
+      yüzey.dataset.xEnCok = String(xAralığı[1] ?? "");
+      yüzey.dataset.yEnAz = String(yAralığı[0] ?? "");
+      yüzey.dataset.yEnCok = String(yAralığı[1] ?? "");
     }
 
     function sparklinesBarsÇiz() {
@@ -4728,6 +4746,55 @@
       kontrolleriGüncelle();
     }
 
+    function sparseYüzeyiniÇiz(indeks) {
+      const yüzey = chart.querySelector(`[data-sparse-index="${indeks}"]`);
+      const yüzeyOturumu = sparseOturumları[indeks];
+      if (!yüzey || !yüzeyOturumu) return;
+      yüzey.innerHTML = `<h3>${sparseYüzeyleri[indeks][1]}</h3>${yüzeyOturumu.svg(800, 200)}`;
+      const svg = yüzey.querySelector("svg");
+      if (!svg) return;
+      softMinMaxEtkileşimKatmanınıKur(svg);
+      svg.dataset.etkileşim = "sync-sparse";
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      const xAralığı = yüzeyOturumu.gorunur_x_araligi();
+      const yAralığı = yüzeyOturumu.gorunur_y_araligi();
+      yüzey.dataset.xEnAz = String(xAralığı[0] ?? "");
+      yüzey.dataset.xEnCok = String(xAralığı[1] ?? "");
+      yüzey.dataset.yEnAz = String(yAralığı[0] ?? "");
+      yüzey.dataset.yEnCok = String(yAralığı[1] ?? "");
+    }
+
+    function sparseÇiz() {
+      if (!chart.classList.contains("sparse-yüzeyi")
+        || chart.querySelectorAll(".sparse-grafik").length !== sparseYüzeyleri.length) {
+        chart.className = "sparse-yüzeyi";
+        chart.innerHTML = `<div class="sparse-yığın">${sparseYüzeyleri.map((_, indeks) =>
+          `<article class="sparse-grafik" data-sparse-index="${indeks}"></article>`
+        ).join("")}</div>`;
+      }
+      sparseYüzeyleri.forEach((_, indeks) => sparseYüzeyiniÇiz(indeks));
+      oturum = sparseOturumları[sparseEtkinİndeks] ?? sparseOturumları[0] ?? null;
+      kontrolleriGüncelle();
+    }
+
+    function sparseİmleciSenkronla(kaynakSvg) {
+      if (aktifKart !== "sparse" || !kaynakSvg) return;
+      for (const hedefSvg of chart.querySelectorAll(".sparse-grafik svg")) {
+        if (hedefSvg === kaynakSvg) continue;
+        for (const kimlik of ["imleç-x", "imleç-y", "imleç-nokta-0"]) {
+          const kaynak = kaynakSvg.querySelector(`#${kimlik}`);
+          const hedef = hedefSvg.querySelector(`#${kimlik}`);
+          if (!kaynak || !hedef) continue;
+          for (const nitelik of ["visibility", "x1", "x2", "y1", "y2", "cx", "cy", "fill"]) {
+            const değer = kaynak.getAttribute(nitelik);
+            if (değer === null) hedef.removeAttribute(nitelik);
+            else hedef.setAttribute(nitelik, değer);
+          }
+        }
+      }
+    }
+
     function çiz() {
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
@@ -4777,6 +4844,10 @@
         sparklinesÇiz();
         return;
       }
+      if (aktifKart === "sparse") {
+        sparseÇiz();
+        return;
+      }
       if (!oturum) return;
       const öncekiMultiBarsKartı = chart.dataset.cizilenKart;
       const öncekiMultiBarsKaydırma = chart.querySelector(".multi-bars-kaydırma");
@@ -4796,6 +4867,7 @@
       chart.classList.remove("soft-minmax-yüzeyi");
       chart.classList.remove("sparklines-bars-yüzeyi");
       chart.classList.remove("sparklines-yüzeyi");
+      chart.classList.remove("sparse-yüzeyi");
       chart.classList.toggle("nice-scale-yüzeyi", aktifKart === "nice-scale");
       chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
       const sayı = Number(nokta.value);
@@ -5069,6 +5141,8 @@
             ? chart.querySelector(
                 `[data-sparklines-index="${sparklinesEtkinİndeks}"] svg`
               )
+          : aktifKart === "sparse"
+            ? chart.querySelector(`[data-sparse-index="${sparseEtkinİndeks}"] svg`)
         : chart.querySelector("svg"));
       if (!svg || !oturum) return false;
       const rect = svg.getBoundingClientRect();
@@ -5153,6 +5227,9 @@
               ?? chart.querySelector(
                 `[data-sparklines-index="${sparklinesEtkinİndeks}"]`
               )
+          : aktifKart === "sparse"
+            ? olay.target?.closest?.(".sparse-grafik")
+              ?? chart.querySelector(`[data-sparse-index="${sparseEtkinİndeks}"]`)
           : null;
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
       if (!svg) return { x: NaN, y: NaN, svg: null, view: { width: 0, height: 0 } };
@@ -5371,11 +5448,13 @@
       const çizgiler = ["imleç-x", "imleç-y"].map(id => svg.querySelector(`#${id}`));
       const etkileşimKapsamı = svg.closest(".soft-minmax-grafik")
         ?? svg.closest(".sparklines-grafik")
+        ?? svg.closest(".sparse-grafik")
         ?? chart;
       const noktalar = kartlar[aktifKart].seriler.map((_, indeks) => svg.querySelector(`#imleç-nokta-${indeks}`));
       const öğeler = [...çizgiler, ...noktalar];
       if (hamX < sol || hamX > sağ || hamY < üst || hamY > alt) {
         öğeler.forEach(öğe => öğe?.setAttribute("visibility", "hidden"));
+        sparseİmleciSenkronla(svg);
         svg.querySelectorAll(".eksen-gosterge").forEach(öğe => öğe.setAttribute("visibility", "hidden"));
         const bilgiKutusu = etkileşimKapsamı.querySelector("#imlec-bilgi-kutusu");
         if (bilgiKutusu) bilgiKutusu.hidden = true;
@@ -5512,6 +5591,7 @@
             ? seriDeğeri.toLocaleString("tr-TR", {maximumFractionDigits: 3}) : "--";
         });
       }
+      sparseİmleciSenkronla(svg);
     }
 
     function pointerHareketiniİşle(olay) {
@@ -5656,6 +5736,17 @@
         if (svg) yüzeyiEşitle(svg);
       }
     }
+    function sparseOturumunuSeç(olay) {
+      if (aktifKart !== "sparse") return;
+      const yüzey = olay.target?.closest?.(".sparse-grafik");
+      const indeks = Number(yüzey?.dataset.sparseIndex);
+      if (Number.isInteger(indeks) && sparseOturumları[indeks]) {
+        sparseEtkinİndeks = indeks;
+        oturum = sparseOturumları[indeks];
+        const svg = yüzey.querySelector("svg");
+        if (svg) yüzeyiEşitle(svg);
+      }
+    }
     for (const olayTürü of ["pointerdown", "pointermove", "pointerup", "wheel", "dblclick", "scroll"]) {
       chart.addEventListener(olayTürü, scatterOturumunuSeç, { capture: true, passive: true });
       chart.addEventListener(olayTürü, softMinMaxOturumunuSeç, { capture: true, passive: true });
@@ -5663,6 +5754,9 @@
         capture: true, passive: true,
       });
       chart.addEventListener(olayTürü, sparklinesOturumunuSeç, {
+        capture: true, passive: true,
+      });
+      chart.addEventListener(olayTürü, sparseOturumunuSeç, {
         capture: true, passive: true,
       });
     }
@@ -5786,6 +5880,17 @@
             xDikey ? (alan.alt - a) / alan.yükseklik : (b - alan.sol) / alan.genişlik,
             seçim.açıklama,
           );
+          if (aktifKart === "sparse" && !seçim.açıklama) {
+            const enAz = xDikey
+              ? (alan.alt - b) / alan.yükseklik
+              : (a - alan.sol) / alan.genişlik;
+            const enÇok = xDikey
+              ? (alan.alt - a) / alan.yükseklik
+              : (b - alan.sol) / alan.genişlik;
+            sparseOturumları.forEach(yüzey => {
+              if (yüzey !== oturum) yüzey.secimi_bitir(enAz, enÇok, false);
+            });
+          }
           hata.textContent = "";
           çiz();
           if (eylem === 2) {
@@ -5888,6 +5993,11 @@
       const datumTemizlendi = aktifKart === "measure-datums"
         && (oturum?.olcum_datumlarini_temizle() ?? false);
       const görünümDeğişti = etkileşimler.çiftTık && (oturum?.tam_gorunum() ?? false);
+      if (aktifKart === "sparse" && görünümDeğişti) {
+        sparseOturumları.forEach(yüzey => {
+          if (yüzey !== oturum) yüzey.tam_gorunum();
+        });
+      }
       if (datumTemizlendi || görünümDeğişti) çiz();
     });
 
@@ -5913,6 +6023,19 @@
           olay.deltaMode === 0,
           tekerlekEkseni(olay),
         );
+        if (aktifKart === "sparse" && görünümDeğişti) {
+          sparseOturumları.forEach(yüzey => {
+            if (yüzey !== oturum) {
+              yüzey.tekerlek_eksende(
+                yatayOran,
+                dikeyOran,
+                -delta,
+                olay.deltaMode === 0,
+                tekerlekEkseni(olay),
+              );
+            }
+          });
+        }
         if (görünümDeğişti) {
           chart.focus({ preventScroll: true });
         }
@@ -5972,6 +6095,9 @@
       } else if (aktifKart === "sparklines") {
         sparklinesOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         sparklinesÇiz();
+      } else if (aktifKart === "sparse") {
+        sparseOturumları.forEach(yüzey => yüzey.onceki_gorunum());
+        sparseÇiz();
       } else if (oturum?.onceki_gorunum()) çiz();
     });
     tamGörünüm.addEventListener("click", () => {
@@ -6021,6 +6147,9 @@
       } else if (aktifKart === "sparklines") {
         sparklinesOturumları.forEach(yüzey => yüzey.tam_gorunum());
         sparklinesÇiz();
+      } else if (aktifKart === "sparse") {
+        sparseOturumları.forEach(yüzey => yüzey.tam_gorunum());
+        sparseÇiz();
       } else if (oturum?.tam_gorunum()) çiz();
     });
     tekerlekEtkileşimi.addEventListener("change", () => {
@@ -6071,6 +6200,10 @@
         );
       } else if (aktifKart === "sparklines") {
         sparklinesOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "sparse") {
+        sparseOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else {
@@ -6203,6 +6336,11 @@
           sparklinesEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "sparklines";
         }
+        if (kimlik !== "sparse" && kimlik.startsWith("sparse-")) {
+          const indeks = sparseYüzeyleri.findIndex(yüzey => yüzey[0] === kimlik);
+          sparseEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "sparse";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -6253,6 +6391,7 @@
           softMinMaxOturumları,
           sparklinesBarsOturumları,
           sparklinesOturumları,
+          sparseOturumları,
         ].some(yüzeyler => yüzeyler.includes(oturum));
         if (!gruplanmışOturum) oturum?.free();
         oturum = null;
@@ -6280,6 +6419,8 @@
         sparklinesBarsOturumları = [];
         sparklinesOturumları.forEach(yüzey => yüzey.free());
         sparklinesOturumları = [];
+        sparseOturumları.forEach(yüzey => yüzey.free());
+        sparseOturumları = [];
         scalesDirOriİmleci = null;
         if (scalesDirOriÇizimKaresi !== null) {
           cancelAnimationFrame(scalesDirOriÇizimKaresi);
@@ -6510,6 +6651,16 @@
           oturum = sparklinesOturumları[sparklinesEtkinİndeks]
             ?? sparklinesOturumları[0]
             ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "sparse") {
+          sparseOturumları = sparseYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey[0], 13_608);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = sparseOturumları[sparseEtkinİndeks] ?? sparseOturumları[0] ?? null;
           çiz();
           return;
         }

@@ -2522,6 +2522,9 @@ mod testler {
 
     #[test]
     fn sparse_wasm_üç_kaynak_yüzeyini_korur() {
+        let kartlar = uplot_rs::sparse_kartları();
+        assert!(kartlar.is_ok());
+        assert_eq!(kartlar.as_ref().map(Vec::len), Ok(3));
         for örnek in SparseÖrneği::TÜMÜ {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             assert!(oturum.is_ok(), "{}", örnek.kimlik());
@@ -2533,10 +2536,17 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
             assert!(svg.contains("red"));
             if örnek == SparseÖrneği::ÖzelNoktalar {
-                assert!(svg.contains("<rect"));
+                assert!(svg.contains("<path"));
             }
         }
-        assert!(sparse_kart_tanim_ornegi().contains("sparse_kartı"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"sparse\"")
+                .count(),
+            1
+        );
+        assert!(web.contains("function sparseÇiz()"));
+        assert!(sparse_kart_tanim_ornegi().contains("sparse_kartları"));
         assert_eq!(kart_sayisi(), 365);
     }
 

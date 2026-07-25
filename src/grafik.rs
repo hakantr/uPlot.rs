@@ -3496,8 +3496,13 @@ impl Grafik {
             } else {
                 genişlik
             };
-            let çizilecek_indeksler =
-                çizilecek_indeksler(self.veri.x(), değerler, x_aralığı, x_piksel_uzunluğu);
+            let çizilecek_indeksler = if seri.saf_doğrusal_yol
+                || seri.çizim_türü == crate::SeriÇizimTürü::Noktalar
+            {
+                görünür_x_indeksleri(self.veri.x(), x_aralığı).collect()
+            } else {
+                çizilecek_indeksler(self.veri.x(), değerler, x_aralığı, x_piksel_uzunluğu)
+            };
             let ilk_görünür = self
                 .veri
                 .x()
@@ -3743,6 +3748,7 @@ impl Grafik {
                             piksel_hizası,
                         )
                     });
+                let mut toplu_kareler = Vec::new();
                 for (indeks, nokta, x_değeri, y_değeri) in &görünür_noktalar {
                     if seri
                         .nokta_indeksleri
@@ -3772,18 +3778,25 @@ impl Grafik {
                             çizgi: nokta_rengi,
                             kalınlık: seri.nokta_kalınlığı,
                         }),
-                        crate::NoktaŞekli::Kare => sahne.ekle(Komut::Dikdörtgen {
-                            konum: Nokta::yeni(
-                                nokta.x - seri.nokta_boyutu / 2.0,
-                                nokta.y - seri.nokta_boyutu / 2.0,
-                            ),
-                            genişlik: seri.nokta_boyutu,
-                            yükseklik: seri.nokta_boyutu,
-                            dolgu,
-                            çizgi: nokta_rengi,
-                            kalınlık: seri.nokta_kalınlığı,
-                        }),
+                        crate::NoktaŞekli::Kare => {
+                            let yarı = seri.nokta_boyutu / 2.0;
+                            toplu_kareler.push(vec![
+                                Nokta::yeni(nokta.x - yarı, nokta.y - yarı),
+                                Nokta::yeni(nokta.x + yarı, nokta.y - yarı),
+                                Nokta::yeni(nokta.x + yarı, nokta.y + yarı),
+                                Nokta::yeni(nokta.x - yarı, nokta.y + yarı),
+                            ]);
+                        }
                     }
+                }
+                if !toplu_kareler.is_empty() {
+                    sahne.ekle(Komut::Alan {
+                        çokgenler: toplu_kareler,
+                        dolgu: seri
+                            .nokta_dolgusu
+                            .clone()
+                            .unwrap_or_else(|| seri_rengi.clone()),
+                    });
                 }
 
                 if let Some(düzen) = self.seçenekler.en_yakın_tooltip.as_ref() {
@@ -6182,20 +6195,29 @@ fn çizilecek_indeksler(
     let Some(görünür_y) = y.get(görünür.clone()) else {
         return Vec::new();
     };
-    if görünür_sayı.saturating_sub(1) < eşik || görünür_y.iter().any(Option::is_none) {
+    if görünür_sayı.saturating_sub(1) < eşik {
         return görünür.collect();
     }
 
     let mut sonuç = Vec::with_capacity(eşik);
     let mut kova = None::<(usize, usize, usize, usize, usize, f64, f64)>;
+    let mut boşlukta = false;
     let Some(görünür_x) = x.get(görünür.clone()) else {
         return sonuç;
     };
     for (göreli, (x_değeri, y_değeri)) in görünür_x.iter().zip(görünür_y).enumerate() {
         let indeks = görünür.start.saturating_add(göreli);
         let Some(y_değeri) = y_değeri else {
+            if let Some((_, ilk, son, en_az_i, en_çok_i, _, _)) = kova.take() {
+                kova_indekslerini_ekle(&mut sonuç, ilk, en_az_i, en_çok_i, son);
+            }
+            if !boşlukta {
+                sonuç.push(indeks);
+                boşlukta = true;
+            }
             continue;
         };
+        boşlukta = false;
         let oran = (*x_değeri - aralık.en_az) / (aralık.en_çok - aralık.en_az);
         let yeni_kova = (oran * f64::from(piksel_genişliği))
             .round()

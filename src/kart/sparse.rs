@@ -7,10 +7,9 @@ use crate::{
 #[path = "veri/sparse.rs"]
 mod kaynak_veri;
 
-pub const SPARSE_KART_TANIM_ÖRNEĞİ: &str = r##"for örnek in SparseÖrneği::TÜMÜ {
-    let (seçenekler, veri) = sparse_kartı(örnek)?;
-    // 13.608 X, 4.608 dolu Y, null koşuları, yerleşik/özel yol ve
-    // 2×2 kare nokta geometrisi çekirdekte çözülür.
+pub const SPARSE_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in sparse_kartları()? {
+    // Aynı 13.608 X / 4.608 dolu Y snapshot'ı üzerinde optimize native,
+    // tek toplu points Path2D ve saf moveTo/lineTo maliyetleri karşılaştırılır.
     let grafik = Grafik::yeni(seçenekler, veri)?;
 }"##;
 
@@ -56,6 +55,20 @@ pub fn sparse_kartı(
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
     let (x, y) = kaynak_veri::sparse_verisi()?;
     let veri = HizalıVeri::yeni(x, vec![y])?;
+    Ok((sparse_seçenekleri(örnek)?, veri))
+}
+
+pub fn sparse_kartları() -> Result<Vec<(SparseÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası>
+{
+    let (x, y) = kaynak_veri::sparse_verisi()?;
+    let veri = HizalıVeri::yeni(x, vec![y])?;
+    SparseÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| Ok((örnek, sparse_seçenekleri(örnek)?, veri.clone())))
+        .collect()
+}
+
+fn sparse_seçenekleri(örnek: SparseÖrneği) -> Result<GrafikSeçenekleri, UplotHatası> {
     let seri = match örnek {
         SparseÖrneği::YerleşikDoğrusal => SeriSeçenekleri::yeni("Sparse")
             .renk("red")
@@ -82,7 +95,7 @@ pub fn sparse_kartı(
         .y_ölçeği(YÖlçekSeçenekleri::yeni("y").aralık(Aralık::yeni(100.0, 350.0)?))
         .etkileşimler(ortak_kart_etkileşimleri())
         .seri(seri);
-    Ok((seçenekler, veri))
+    Ok(seçenekler)
 }
 
 #[cfg(test)]
@@ -124,14 +137,30 @@ mod testler {
             nokta_serisi.map(|seri| seri.nokta_şekli),
             Some(NoktaŞekli::Kare)
         );
+        let beklenen_kare_sayısı = nokta_verisi
+            .seriler()
+            .first()
+            .map(|seri| {
+                seri.iter()
+                    .flatten()
+                    .filter(|değer| (100.0..=350.0).contains(*değer))
+                    .count()
+            })
+            .unwrap_or_default();
         let sahne = Grafik::yeni(nokta_seçenekleri, nokta_verisi)?.çiz();
-        assert!(sahne.komutlar().iter().any(|komut| matches!(
-            komut,
-            Komut::Dikdörtgen { genişlik, yükseklik, dolgu, .. }
-                if (*genişlik - 2.0).abs() <= f32::EPSILON
-                    && (*yükseklik - 2.0).abs() <= f32::EPSILON
-                    && dolgu == "red"
-        )));
+        assert!(sahne.komutlar().iter().any(|komut| match komut {
+            Komut::Alan { çokgenler, dolgu } if dolgu == "red" => {
+                çokgenler.len() == beklenen_kare_sayısı
+                    && çokgenler.iter().all(|kare| match kare.as_slice() {
+                        [ilk, sağ_üst, _, sol_alt] => {
+                            (sağ_üst.x - ilk.x - 2.0).abs() <= f32::EPSILON
+                                && (sol_alt.y - ilk.y - 2.0).abs() <= f32::EPSILON
+                        }
+                        _ => false,
+                    })
+            }
+            _ => false,
+        }));
 
         let (saf_seçenekleri, _) = sparse_kartı(SparseÖrneği::ÖzelSafDoğrusal)?;
         assert!(
@@ -157,6 +186,40 @@ mod testler {
             });
             assert!(parça_sayısı.is_some_and(|sayı| sayı > 1));
         }
+        Ok(())
+    }
+
+    #[test]
+    fn native_yol_seyrekleşir_saf_yol_tüm_dolu_noktaları_korur() -> Result<(), UplotHatası> {
+        let yol_noktaları = |örnek| -> Result<usize, UplotHatası> {
+            let (seçenekler, veri) = sparse_kartı(örnek)?;
+            let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+            Ok(sahne
+                .komutlar()
+                .iter()
+                .find_map(|komut| match komut {
+                    Komut::Yol { parçalar, .. } => {
+                        Some(parçalar.iter().map(Vec::len).sum::<usize>())
+                    }
+                    _ => None,
+                })
+                .unwrap_or_default())
+        };
+        let native = yol_noktaları(SparseÖrneği::YerleşikDoğrusal)?;
+        let saf = yol_noktaları(SparseÖrneği::ÖzelSafDoğrusal)?;
+        assert!(native < saf, "native={native}, saf={saf}");
+        assert_eq!(saf, 4_471);
+        Ok(())
+    }
+
+    #[test]
+    fn üç_kaynak_yüzeyi_tek_grup_api_ile_üretilir() -> Result<(), UplotHatası> {
+        let kartlar = sparse_kartları()?;
+        assert_eq!(kartlar.len(), 3);
+        assert_eq!(
+            kartlar.iter().map(|kart| kart.0).collect::<Vec<_>>(),
+            SparseÖrneği::TÜMÜ
+        );
         Ok(())
     }
 }
