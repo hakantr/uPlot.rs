@@ -2830,7 +2830,8 @@
         "source-other-surfaces-idle-legend-null",
         "single-catalog-card-three-independent-surfaces",
         "shared-once-decoded-arc-source", "same-graph-live-set-data-fast-path",
-        "coalesced-100ms-three-surface-scheduler", "bounded-terminal-stop",
+        "coalesced-100ms-three-surface-scheduler", "single-pending-animation-frame-backpressure",
+        "bounded-terminal-stop",
         "no-cross-surface-cursor-or-scale-sync", "collapsed-usage-guide",
         "source-selection-disabled", "gpui-wasm-parity",
         "common-interaction-profile", "panic-free-source-decoding"
@@ -2838,7 +2839,7 @@
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
-        "performans": "uygulandı_kanıtlı"
+        "performans": "kısmi"
       }
     },
     {

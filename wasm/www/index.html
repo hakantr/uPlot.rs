@@ -3190,6 +3190,7 @@
     let pixelAlignAnimationFrame = null;
     let pixelAlignSonKare = null;
     let streamDataZamanlayıcı = null;
+    let streamDataAnimationFrame = null;
     let softMinMaxZamanlayıcı = null;
     let tooltipsZamanlayıcı = null;
     let boyutSenkronZamanlayıcı = null;
@@ -7573,6 +7574,14 @@
       kontrolleriGüncelle();
     }
 
+    function streamDataÇiziminiPlanla() {
+      if (streamDataAnimationFrame !== null) return;
+      streamDataAnimationFrame = requestAnimationFrame(() => {
+        streamDataAnimationFrame = null;
+        if (aktifKart === "stream-data") streamDataÇiz();
+      });
+    }
+
     function thinBarsYüzeyiniÇiz(indeks) {
       const tanım = inceÇubukYüzeyleri[indeks];
       const yüzey = chart.querySelector(`[data-thin-bars-index="${indeks}"]`);
@@ -10755,6 +10764,10 @@
           clearInterval(streamDataZamanlayıcı);
           streamDataZamanlayıcı = null;
         }
+        if (streamDataAnimationFrame !== null) {
+          cancelAnimationFrame(streamDataAnimationFrame);
+          streamDataAnimationFrame = null;
+        }
         if (tooltipsZamanlayıcı !== null) {
           clearInterval(tooltipsZamanlayıcı);
           tooltipsZamanlayıcı = null;
@@ -11427,7 +11440,7 @@
                 değişti = yüzey.stream_data_ilerlet() || değişti;
               });
               if (değişti) {
-                streamDataÇiz();
+                streamDataÇiziminiPlanla();
                 hata.textContent = "";
               } else {
                 clearInterval(streamDataZamanlayıcı);

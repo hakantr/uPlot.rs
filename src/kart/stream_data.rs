@@ -348,6 +348,11 @@ mod testler {
     #[test]
     fn grup_üç_yüzeyi_aynı_tikte_ilerletir() -> Result<(), UplotHatası> {
         let mut grup = StreamDataGrubu::yeni()?;
+        assert!(
+            grup.akışlar
+                .windows(2)
+                .all(|çift| matches!(çift, [bir, iki] if Arc::ptr_eq(&bir.kaynak, &iki.kaynak)))
+        );
         assert!(grup.ilerlet());
         assert_eq!(
             grup.akış(StreamDataÖrneği::SabitUzunluk)

@@ -3147,6 +3147,8 @@ mod testler {
         );
         assert!(!web.contains("data-kart=\"stream-data-fixed-sliding\""));
         assert!(web.contains("function streamDataÇiz()"));
+        assert!(web.contains("function streamDataÇiziminiPlanla()"));
+        assert!(web.contains("streamDataAnimationFrame = requestAnimationFrame"));
         assert!(web.contains("independent-stream-data"));
         assert!(stream_data_kart_tanim_ornegi().contains("StreamDataGrubu"));
         assert!(stream_data_kart_tanim_ornegi().contains("canlı_veriyi_ayarla"));
