@@ -2659,6 +2659,7 @@ mod testler {
 
     #[test]
     fn svg_image_wasm_bağımsız_kaynak_belgesini_üretir() {
+        let web = include_str!("../www/index.html");
         let oturum = KartOturumu::yeni("svg-image", 100);
         assert!(oturum.is_ok());
         let Ok(oturum) = oturum else {
@@ -2670,6 +2671,12 @@ mod testler {
         assert!(svg.contains("test chart"));
         assert!(svg.contains("fill=\"pink\""));
         assert!(svg.contains("stroke=\"blue\""));
+        assert!(svg.contains("M64.00 143.00 L220.00 100.00 L376.00 57.00"));
+        assert!(web.contains("function svgImageCanvasınıÇiz(canvas, svgMetni)"));
+        assert!(web.contains("Math.ceil(cssGenişliği * pikselOranı)"));
+        assert!(web.contains("Başlangıç anlık görüntüsü · DPR canvas"));
+        assert!(web.contains("görüntü.onerror = () =>"));
+        assert!(web.contains("Güncel SVG'yi indir"));
         assert!(svg_image_kart_tanim_ornegi().contains("bağımsız_svg"));
         assert_eq!(kart_sayisi(), 365);
     }

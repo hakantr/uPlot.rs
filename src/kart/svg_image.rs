@@ -1,12 +1,16 @@
 use super::ortak_kart_etkileşimleri;
 #[cfg(feature = "svg")]
 use crate::Grafik;
-use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
+use crate::{
+    GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, YÖlçekEtiketBiçimi,
+    YÖlçekSeçenekleri,
+};
 
 pub const SVG_IMAGE_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = svg_image_kartı()?;
 let grafik = Grafik::yeni(seçenekler, veri)?;
 let bağımsız_svg = grafik.çiz().svg();
-// Başlık, eksenler ve seri tek bir taşınabilir SVG belgesindedir.
+// Başlık, eksenler, arka plan ve seri tek bir taşınabilir SVG belgesindedir.
+// WASM örneği bu belgeyi kaynak PoC gibi DPR boyutlu ikinci canvas'a bir kez rasterler.
 "##;
 
 /// `demos/svg-image.html` içindeki 400×200 "test chart" yüzeyini kurar.
@@ -17,8 +21,11 @@ pub fn svg_image_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHata
     let seçenekler = GrafikSeçenekleri::yeni(400, 200)?
         .başlık("test chart")
         .x_zaman(false)
+        .x_eksen_etiket_biçimi(YÖlçekEtiketBiçimi::ArtımaGöre)
         .arka_plan_rengi("pink")
+        .ızgara_rengi("#00000012")
         .etkileşimler(ortak_kart_etkileşimleri())
+        .y_ölçeği(YÖlçekSeçenekleri::yeni("y").etiket_biçimi(YÖlçekEtiketBiçimi::ArtımaGöre))
         .seri(SeriSeçenekleri::yeni("Value").renk("blue"));
     let veri = HizalıVeri::yeni(
         vec![1.0, 2.0, 3.0],
@@ -44,6 +51,11 @@ mod testler {
         assert_eq!(seçenekler.başlık, "test chart");
         assert!(!seçenekler.x_zaman);
         assert_eq!(
+            seçenekler.x_eksen_etiket_biçimi,
+            YÖlçekEtiketBiçimi::ArtımaGöre
+        );
+        assert_eq!(seçenekler.ızgara_rengi, "#00000012");
+        assert_eq!(
             seçenekler.seriler.first().map(|seri| seri.etiket.as_str()),
             Some("Value")
         );
@@ -58,6 +70,11 @@ mod testler {
         assert!(svg.contains("test chart"));
         assert!(svg.contains("fill=\"pink\""));
         assert!(svg.contains("stroke=\"blue\""));
+        assert!(svg.contains("M64.00 143.00 L220.00 100.00 L376.00 57.00"));
+        assert_eq!(svg.matches("r=\"2.00\"").count(), 3);
+        assert!(!svg.contains("<canvas"));
+        assert!(!svg.contains("<foreignObject"));
+        assert_eq!(svg, svg_image_belgesi()?);
         Ok(())
     }
 }

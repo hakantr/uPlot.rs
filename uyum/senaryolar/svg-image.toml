@@ -15,8 +15,13 @@ arka_plan = "pink"
 [görüntü]
 kaynak_yaklaşımı = "canvas + u.root.outerHTML + CSS → canvas"
 rust_yaklaşımı = "başlık + eksenler + seri → tek bağımsız SVG belgesi"
+kaynak_yaşam_döngüsü = "queueMicrotask içinde yalnız ilk görünümü yakala"
+wasm_kaynak_eşliği = "başlangıç SVG'sini bir kez devicePixelRatio boyutlu 400×258 canvas'a rasterle"
+gpui_yaklaşımı = "normal görünümde ek string/Blob üretmeden native sahne; export core/CLI API'sinde"
 wasm_indirme_kontrolü = true
-wasm_canlı_ve_dışa_aktarılmış_çift_görünüm = true
+wasm_güncel_svg_indirme_uzantısı = true
+wasm_canlı_ve_canvas_anlık_görüntü_çifti = true
+çıktı_belirlenimci = true
 
 [etkileşim]
 ortak_davranış_profili = "resize-temeli-v1"

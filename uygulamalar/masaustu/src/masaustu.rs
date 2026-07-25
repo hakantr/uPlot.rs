@@ -2512,7 +2512,7 @@ impl Render for ChartListesi {
                 )
             }
             KartKimliği::SvgImage => {
-                "3 nokta × 1 seri · 400×200 bağımsız SVG görüntüsü".to_string()
+                "3 nokta × 1 seri · 400×200 canlı sahne · bağımsız SVG API".to_string()
             }
             KartKimliği::SyncCursor => {
                 "5 yüzey · 3.004 nokta · iki cursor eşleme grubu".to_string()
@@ -3643,7 +3643,7 @@ impl Render for ChartListesi {
                     "uPlot to image PoC",
                     "svg-image",
                     aktif_kart == KartKimliği::SvgImage,
-                    "400×200 · tek bağımsız SVG belgesi",
+                    "400×200 canlı · tek bağımsız SVG belgesi",
                     panel,
                     vurgu,
                 )
@@ -5515,6 +5515,28 @@ impl Render for ChartListesi {
                  yaratmaz. Kaynak yüzeyler arasında cursor/ölçek senkronu yoktur ve port da \
                  onları bağımsız tutar. Rastgele çubuk verisi tekrarlanabilir test için \
                  belgelenmiş tohuma bağlanır.",
+            ),
+            KartKimliği::StreamData(_) => Some(
+                "Amaç: sabit uzunlukta kayan pencere, sürekli büyüyen veri ve sabit ölçekli \
+                 büyüyen veri akışlarını aynı kaynak bağlamında karşılaştırır. API: \
+                 StreamDataGrubu tek decode edilmiş Arc kaynağı paylaşır; kartları() üç \
+                 bağımsız Grafik üretir, canlı_veriyi_ayarla seçenek ve yüzey ağacını koruyan \
+                 setData karşılığıdır. İzleme: CPU/RAM/ağ yerine servis telemetrisi, log oranı \
+                 veya sensör değerleri geçirilebilir. Maliyet: kaynak üç ayrı 100 ms timer \
+                 kullanır; port aynı tikte tek scheduler ile üç yüzeyi günceller ve veri \
+                 sonunda gereksiz kopya/çizimi durdurur. Cursor ve ölçekler yüzeyler arasında \
+                 senkronlanmaz; wheel/touch/drag kaynak dışı isteğe bağlı çekirdek uzantısıdır.",
+            ),
+            KartKimliği::SvgImage => Some(
+                "Amaç: canlı grafik ile rapor veya olay eki olarak saklanabilen bağımsız \
+                 görüntü anlık görüntüsünü ayırır. API: svg_image_belgesi() başlık, eksen, pink \
+                 arka plan ve mavi seriyi tek belirlenimci SVG belgesinde üretir; CLI örneği \
+                 bunu dosyaya yazar. İzleme: dashboard panelini etkileşim durumundan bağımsız \
+                 paylaşmak için uygundur. Maliyet: kaynak DOM outerHTML, CSS kuralları, \
+                 foreignObject, Blob/Image ve iki DPR raster draw yapar; native port aynı \
+                 içeriği tek sahne yürüyüşünde CSS/DOM bağımlılığı olmadan üretir. WASM kaynak \
+                 eşliği için başlangıç SVG'sini bir kez DPR canvas'a rasterler; GPUI normal \
+                 görünümünde ek string/Blob üretmez.",
             ),
             KartKimliği::Scatter => Some(
                 "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \

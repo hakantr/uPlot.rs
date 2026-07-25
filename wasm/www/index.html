@@ -128,10 +128,13 @@
     #chart.svg-image-yüzeyi { display: flex; flex-direction: column; justify-content: flex-start;
                               gap: 10px; overflow: auto; }
     #chart.svg-image-yüzeyi > svg,
-    #chart.svg-image-yüzeyi .svg-image-çıktısı svg {
+    #chart.svg-image-yüzeyi .svg-image-çıktısı canvas {
       flex: 0 0 auto; width: 400px; height: 200px; background: pink;
     }
-    #chart.svg-image-yüzeyi .lejant { position: static; min-height: 18px; }
+    #chart.svg-image-yüzeyi .lejant { position: static; width: 400px; min-height: 28px;
+                                      padding: 5px; box-sizing: border-box;
+                                      background: pink; }
+    #chart.svg-image-yüzeyi .svg-image-çıktısı canvas { height: 258px; }
     .svg-image-çıktısı { display: grid; gap: 4px; justify-items: center; padding-top: 8px;
                          border-top: 1px dashed #d1d5db; }
     .svg-image-çıktısı strong { color: #6b7280; font-size: 11px; }
@@ -532,7 +535,7 @@
             <button id="dinamik-seri-sil" type="button">Seri sil</button>
           </span>
           <button id="soft-minmax-baslat" type="button" hidden>▶ dataMax++</button>
-          <button id="svg-indir" type="button" hidden>SVG görüntüsünü indir</button>
+          <button id="svg-indir" type="button" hidden>Güncel SVG'yi indir</button>
           <span id="sync-cursor-kontrolleri" hidden>
             <label class="eklenti-anahtarı">
               <input id="sync-cursor-etkin" type="checkbox" checked> Cursor sync
@@ -1705,19 +1708,25 @@
       "afterend",
       `<article class="kart" data-kart="svg-image" aria-current="false" tabindex="0">
         <strong>uPlot to image PoC</strong><small>svg-image</small>
-        <div class="durum">400×200 · bağımsız SVG görüntüsü</div>
+        <div class="durum">400×200 canlı · DPR canvas anlık görüntüsü</div>
       </article>`
     );
     kartlar["svg-image"] = {
       başlık: "uPlot to image PoC",
       kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/svg-image.html">svg-image.html</a>
-        <br>Resmî PoC canvas ve DOM katmanlarını sonradan bir görüntüde birleştirir. Rust sahnesi başlığı, eksenleri ve mavi seriyi doğrudan tek bir taşınabilir SVG belgesinde üretir.`,
+        <br>Resmî PoC ilk uPlot canvas'ını başlık/eksen/lejant DOM katmanlarıyla bir microtask içinde DPR boyutlu ikinci canvas'a bir kez birleştirir. Port, aynı ilk anlık görüntüyü taşınabilir SVG sahnesinden DPR boyutlu canvas'a rasterler; güncel görünüm SVG olarak ayrıca indirilebilir.`,
       tanım: () => svg_image_kart_tanim_ornegi(),
       tanımYolu: "src/kart/svg_image.rs",
       seriler: [{ etiket: "Value", renk: "blue" }],
-      yardım: "3 kaynak noktası · bağımsız SVG · sürükle: seç · tekerlek: yakınlaştır",
+      yardım: "",
       değişkenNokta: false,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Canlı grafik yüzeyi ile dışa aktarılabilir, etkileşimden bağımsız görüntü anlık görüntüsünü yan yana karşılaştırır.",
+        api: "svg_image_belgesi() başlık, eksen, pink arka plan ve mavi seriyi tek belirlenimci SVG'de üretir. WASM başlangıç SVG'sini yalnız bir kez DPR boyutlu canvas'a rasterler; indirme düğmesi tıklama anındaki görünümü yeniden üretir.",
+        izleme: "Grafana benzeri panellerde rapor, olay eki veya paylaşılabilir durum görüntüsü üretmek için kullanılır. Anlık görüntü canlı yüzey sonradan yakınlaştırılsa da kaynak demo gibi ilk durumu korur.",
+        maliyet: "Kaynak DOM outerHTML, tüm uPlot CSS kuralları, foreignObject, Blob URL, Image parse ve iki raster draw yapar. Rust sahnesi CSS/DOM bağımlılığını kaldırır; yalnız WASM eşlik önizlemesi DPR² canvas maliyeti taşır ve Blob URL hem load hem error yolunda geri alınır.",
+      },
     };
     document.querySelector('[data-kart="svg-image"]')?.insertAdjacentHTML(
       "afterend",
@@ -5043,6 +5052,50 @@
       kontrolleriGüncelle();
     }
 
+    function svgImageCanvasınıÇiz(canvas, svgMetni) {
+      if (!canvas) return;
+      const cssGenişliği = 400;
+      const cssYüksekliği = 258;
+      const pikselOranı = Math.max(1, Number(window.devicePixelRatio) || 1);
+      canvas.width = Math.ceil(cssGenişliği * pikselOranı);
+      canvas.height = Math.ceil(cssYüksekliği * pikselOranı);
+      canvas.style.width = `${cssGenişliği}px`;
+      canvas.style.height = `${cssYüksekliği}px`;
+      canvas.dataset.pikselOranı = String(pikselOranı);
+      const bağlam = canvas.getContext("2d");
+      if (!bağlam) {
+        hata.textContent = "SVG Image canvas 2D bağlamı oluşturulamadı";
+        return;
+      }
+      bağlam.setTransform(pikselOranı, 0, 0, pikselOranı, 0, 0);
+      bağlam.fillStyle = "pink";
+      bağlam.fillRect(0, 0, cssGenişliği, cssYüksekliği);
+      const görüntü = new Image();
+      const url = URL.createObjectURL(
+        new Blob([svgMetni], { type: "image/svg+xml;charset=utf-8" })
+      );
+      const urlYiBırak = () => URL.revokeObjectURL(url);
+      görüntü.onload = () => {
+        bağlam.drawImage(görüntü, 0, 0, 400, 200);
+        bağlam.font = "600 12px system-ui, sans-serif";
+        bağlam.textBaseline = "middle";
+        bağlam.fillStyle = "#111111";
+        bağlam.fillText("Value:  --", 130, 244);
+        bağlam.strokeStyle = "blue";
+        bağlam.lineWidth = 2;
+        bağlam.strokeRect(221, 236, 13, 13);
+        bağlam.fillText("Value:  --", 240, 244);
+        canvas.dataset.hazır = "true";
+        urlYiBırak();
+      };
+      görüntü.onerror = () => {
+        hata.textContent = "Başlangıç SVG görüntüsü canvas'a rasterlenemedi";
+        canvas.dataset.hazır = "false";
+        urlYiBırak();
+      };
+      görüntü.src = url;
+    }
+
     function çiz() {
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
@@ -5283,9 +5336,10 @@
           ? chart.querySelector(".nice-scale-boyut")
           : chart;
       if (tamKurulum) {
+        const xLejantEtiketi = aktifKart === "svg-image" ? "Value" : "x";
         arayüzHedefi?.insertAdjacentHTML("beforeend", `
           ${kart.scrollSync || !kart.yardım ? "" : `<div class="yardım">${kart.yardım}</div>`}
-          <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
+          <div class="lejant"><span>${xLejantEtiketi}: <b id="x-değeri">--</b></span>
           ${lejantSerileri}</div>`);
       }
       if (aktifKart.startsWith("stream-data-")) {
@@ -5311,9 +5365,13 @@
         chart.insertAdjacentHTML(
           "beforeend",
           `<div class="svg-image-çıktısı">
-            <strong>Bağımsız SVG çıktısı</strong>
-            ${oturum.svg(400, 200)}
+            <strong>Başlangıç anlık görüntüsü · DPR canvas</strong>
+            <canvas aria-label="Başlangıç grafik anlık görüntüsü"></canvas>
           </div>`
+        );
+        svgImageCanvasınıÇiz(
+          chart.querySelector(".svg-image-çıktısı canvas"),
+          svgÇıktısı,
         );
       }
       if (tamKurulum) chart.querySelectorAll("[data-seri-toggle]").forEach(öğe => {
@@ -6590,7 +6648,7 @@
         bağlantı.href = url;
         bağlantı.download = "uplot-rs-test-chart.svg";
         bağlantı.click();
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 0);
         hata.textContent = "";
       } catch (neden) {
         hata.textContent = `SVG görüntüsü üretilemedi: ${String(neden)}`;

@@ -2714,14 +2714,18 @@
       "özellikler": [
         "source-exact-400x200-chart", "source-exact-three-point-data",
         "source-blue-series", "source-pink-background", "live-and-exported-visual-pair",
-        "standalone-svg-document",
-        "title-axes-series-single-document", "wasm-svg-download",
+        "standalone-svg-document", "deterministic-svg-export",
+        "title-axes-series-background-single-document",
+        "source-once-after-render-snapshot-lifecycle",
+        "wasm-dpr-raster-canvas-preview", "wasm-current-svg-download-extension",
+        "blob-url-revoke-on-load-and-error",
+        "collapsed-usage-guide",
         "gpui-wasm-parity", "common-interaction-profile", "panic-free-export"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
-        "performans": "uygulanamaz"
+        "performans": "uygulandı_kanıtlı"
       }
     },
     {

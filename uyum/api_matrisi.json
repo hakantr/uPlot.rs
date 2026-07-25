@@ -539,7 +539,7 @@
     },
     {
       "kaynak_yolu": "u.root.outerHTML + canvas drawImage image export PoC",
-      "rust_karşılığı": "Grafik::çiz().svg / svg_image_belgesi",
+      "rust_karşılığı": "Grafik::çiz().svg / svg_image_belgesi / WASM tek-seferlik DPR canvas rasteri",
       "durum": "tam_kanıtlı",
       "test": "src/kart/svg_image.rs"
     },
