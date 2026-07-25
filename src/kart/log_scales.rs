@@ -1,5 +1,7 @@
 const KAYNAK_PAKETLER: [&str; 13] = include!("veri/log_scales_paket.rs");
 
+use std::sync::OnceLock;
+
 use super::ortak_kart_etkileşimleri;
 use crate::{
     GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, YÖlçekSeçenekleri
@@ -21,10 +23,14 @@ const SUNUCULAR: [(&str, &str); 12] = [
     ("Minehut", "#75505a"),
 ];
 
-pub const LOG_SCALES_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) =
-    log_scales_kartı(LogScalesÖrneği::Logaritmik)?;
-// Ölçek dönüşümü, eksen bölmeleri ve etkileşimler çekirdekte çözülür.
-let grafik = Grafik::yeni(seçenekler, veri)?;"##;
+pub const LOG_SCALES_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in
+    log_scales_kartları()?
+{
+    // İki bağımsız yüzey aynı Arc-backed kaynak veriyi paylaşır.
+    let grafik = Grafik::yeni(seçenekler, veri)?;
+}"##;
+
+static PAYLAŞILAN_VERİ: OnceLock<Result<HizalıVeri, UplotHatası>> = OnceLock::new();
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogScalesÖrneği {
@@ -61,6 +67,25 @@ impl LogScalesÖrneği {
 pub fn log_scales_kartı(
     örnek: LogScalesÖrneği,
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
+    Ok((log_scales_seçenekleri(örnek)?, paylaşılan_veri()?))
+}
+
+/// Resmî sayfadaki log ve linear yüzeyleri kaynak sırasıyla ve tek immutable
+/// veri deposuyla üretir. Cursor ve görünüm durumları kaynak gibi bağımsızdır.
+pub fn log_scales_kartları()
+-> Result<Vec<(LogScalesÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    let veri = paylaşılan_veri()?;
+    LogScalesÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| Ok((örnek, log_scales_seçenekleri(örnek)?, veri.clone())))
+        .collect()
+}
+
+fn paylaşılan_veri() -> Result<HizalıVeri, UplotHatası> {
+    PAYLAŞILAN_VERİ.get_or_init(kaynak_verisini_çöz).clone()
+}
+
+fn kaynak_verisini_çöz() -> Result<HizalıVeri, UplotHatası> {
     let zaman_paketi = KAYNAK_PAKETLER
         .first()
         .copied()
@@ -83,9 +108,13 @@ pub fn log_scales_kartı(
             .collect();
         seriler.push(seri);
     }
-    let veri = HizalıVeri::yeni(x, seriler)?;
+    HizalıVeri::yeni(x, seriler)
+}
+
+fn log_scales_seçenekleri(örnek: LogScalesÖrneği) -> Result<GrafikSeçenekleri, UplotHatası> {
     let mut seçenekler = GrafikSeçenekleri::yeni(1_600, 600)?
         .başlık(örnek.başlık())
+        .birincil_y_eksen_genişliği(60.0)
         .etkileşimler(ortak_kart_etkileşimleri());
     for (ad, renk) in SUNUCULAR {
         seçenekler = seçenekler.seri(
@@ -94,10 +123,15 @@ pub fn log_scales_kartı(
                 .boşlukları_birleştir(true),
         );
     }
-    if örnek == LogScalesÖrneği::Logaritmik {
-        seçenekler = seçenekler.y_ölçeği(YÖlçekSeçenekleri::yeni("y").logaritmik(10.0));
-    }
-    Ok((seçenekler, veri))
+    let y_ölçeği = YÖlçekSeçenekleri::yeni("y")
+        .eksen_genişliği(60.0)
+        .eksen_en_az_etiket_boşluğu(15.0);
+    seçenekler = seçenekler.y_ölçeği(if örnek == LogScalesÖrneği::Logaritmik {
+        y_ölçeği.logaritmik(10.0)
+    } else {
+        y_ölçeği
+    });
+    Ok(seçenekler)
 }
 
 fn paket_çöz(paket: &str) -> Result<Vec<Option<f64>>, UplotHatası> {
@@ -207,8 +241,7 @@ mod testler {
             4_916_648.0,
             9_688_875.0,
         ];
-        for örnek in LogScalesÖrneği::TÜMÜ {
-            let (seçenekler, veri) = log_scales_kartı(örnek)?;
+        for (örnek, seçenekler, veri) in log_scales_kartları()? {
             assert_eq!(veri.uzunluk(), 1_440);
             assert_eq!(veri.seriler().len(), 12);
             assert_eq!(veri.x().first().copied(), Some(1_594_953_046.0));
@@ -251,7 +284,34 @@ mod testler {
             Some(YÖlçekDağılımı::Logaritmik { taban }) if taban == 10.0
         ));
         let (doğrusal, _) = log_scales_kartı(LogScalesÖrneği::Doğrusal)?;
-        assert!(doğrusal.y_ölçekleri.is_empty());
+        assert!(matches!(
+            doğrusal.y_ölçekleri.first().map(|ölçek| ölçek.dağılım),
+            Some(YÖlçekDağılımı::Doğrusal)
+        ));
+        assert!(LogScalesÖrneği::TÜMÜ.into_iter().all(|örnek| {
+            log_scales_kartı(örnek).is_ok_and(|(seçenekler, _)| {
+                seçenekler.birincil_y_eksen_genişliği == Some(60.0)
+                    && seçenekler.y_ölçekleri.first().is_some_and(|ölçek| {
+                        ölçek.eksen_genişliği == 60.0 && ölçek.eksen_en_az_etiket_boşluğu == 15.0
+                    })
+            })
+        }));
+        Ok(())
+    }
+
+    #[test]
+    fn iki_yüzey_aynı_arc_backed_veriyi_paylaşır() -> Result<(), UplotHatası> {
+        let kartlar = log_scales_kartları()?;
+        assert_eq!(kartlar.len(), 2);
+        let [ilk, ikinci] = kartlar.as_slice() else {
+            return Err(kaynak_hatası("iki kaynak yüzeyi bekleniyordu"));
+        };
+        assert_eq!(ilk.2, ikinci.2);
+        assert_eq!(
+            ilk.2.x().as_ptr(),
+            ikinci.2.x().as_ptr(),
+            "HizalıVeri clone veri sütunlarını çoğaltmamalı"
+        );
         Ok(())
     }
 }

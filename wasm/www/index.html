@@ -377,6 +377,16 @@
       height: 600px !important; max-width: none; }
     .line-paths-grafik .lejant { color: #c7d0d9;
       background: rgba(20,22,25,.9); }
+    #chart.log-scales-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .log-scales-yığın { min-width: min-content; display: grid;
+      align-items: flex-start; gap: 20px; }
+    .log-scales-grafik { position: relative; width: 1600px;
+      min-height: 640px; border: 1px solid #e5e7eb; border-radius: 8px;
+      background: #fff; overflow: hidden; }
+    .log-scales-grafik > h3 { margin: 7px 10px 2px; color: #111827;
+      font-size: 13px; }
+    .log-scales-grafik svg { display: block; width: 1600px !important;
+      height: 600px !important; max-width: none; }
     #chart.bars-grouped-stacked-yüzeyi { display: block; min-width: 0; overflow: auto;
                                          place-items: unset; padding: 8px;
                                          box-sizing: border-box; }
@@ -2960,27 +2970,29 @@
       ["Timolia", "#eb644d"], ["FunCraft", "#b9592d"],
       ["GommeHD", "#d14ead"], ["Minehut", "#75505a"],
     ];
-    for (const [kimlik, başlık] of [
-      ["log-scales-log-y", "Log Y Scale"],
-      ["log-scales-linear-y", "Linear Y Scale"],
-    ]) {
-      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>log-scales</small>
-          <div class="durum">1.440 zaman × 12 sunucu</div>
-        </article>`);
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/log-scales.html">log-scales.html</a>
-          <br>İki resmî grafik aynı 1.440 zaman damgası ve 12 sunucu serisini kullanır; log10 dönüşümü, bölmeler ve kaynak sıfırlarının 1'e çevrilmesi Rust çekirdeğinde çözülür.`,
-        tanım: () => log_scales_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/log_scales.rs",
-        seriler: logScalesSerileri.map(([etiket, renk]) => ({ etiket, renk })),
-        yardım: "Sürükle: seç · tekerlek: yakınlaştır · boşluk + sürükle: taşı",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="log-scales" aria-current="false" tabindex="0">
+        <strong>Log Scales · 2 independent surfaces</strong><small>log-scales</small>
+        <div class="durum">ortak Arc veri · log10/linear · bağımsız zoom</div>
+      </article>`);
+    kartlar["log-scales"] = {
+      başlık: "Log Scales · 2 independent surfaces",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/log-scales.html">log-scales.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/src/opts.js">log axis splits/filter</a>
+        <br>İki resmî yüzey kaynak sırasıyla tek karttadır. Aynı Arc-backed 1.440×12 veriyi paylaşır; cursor ve zoom bağımsızdır. Y ekseni size=60/space=15 kullanır; çekirdek 1..9 log bölmelerini piksel yoğunluğuna göre etiketler.`,
+      tanım: () => log_scales_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/log_scales.rs",
+      seriler: logScalesSerileri.map(([etiket, renk]) => ({ etiket, renk })),
+      yardım: "İki yüzey bağımsız etkileşir · aynı veri deposu ve aynı seri renkleri",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Aynı yüksek dinamik aralıklı zaman serisini log10 ve doğrusal Y ölçeklerinde yan yana karşılaştırır.",
+        api: "log_scales_kartları() iki Grafik tanımını tek Arc-backed HizalıVeri ile verir. axis.size=60, axis.space=15 ve yoğunluğa bağlı all/12357/125/1 etiket filtresi çekirdektedir.",
+        izleme: "Oyuncu, istek veya kaynak telemetrisinde oran değişimi ile mutlak farkı aynı kaynak veriden okumak için uygundur.",
+        maliyet: "Paket yalnız bir kez çözülür; veri kopyalanmaz. Pointer yalnız etkin yüzeyin hafif cursor/lejant katmanını günceller.",
+      },
+    };
 
     const logScales2Kartları = [
       ["log-scales2-linear-wide", "Linear Scale (0.000001 -> 100,000,000)",
@@ -3057,6 +3069,8 @@
     let latencyHeatmapEtkinİndeks = 0;
     let linePathsOturumları = [];
     let linePathsEtkinİndeks = 0;
+    let logScalesOturumları = [];
+    let logScalesEtkinİndeks = 0;
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
     let timeseriesDiscreteEtkinİndeks = 0;
@@ -3382,6 +3396,10 @@
       renk,
       seriler: [{ etiket: "Y", renk }],
     }));
+    const logScalesYüzeyleri = [
+      { kimlik: "log-scales-log-y", başlık: "Log Y Scale" },
+      { kimlik: "log-scales-linear-y", başlık: "Linear Y Scale" },
+    ];
     const nearestNonNullYüzeyleri = [
       {
         kimlik: "nearest-non-null-x-value",
@@ -6545,6 +6563,78 @@
       kontrolleriGüncelle();
     }
 
+    function logScalesYüzeyiniÇiz(indeks) {
+      const tanım = logScalesYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-log-scales-index="${indeks}"]`);
+      const yüzeyOturumu = logScalesOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const şablon = document.createElement("template");
+      şablon.innerHTML = yüzeyOturumu.svg(1600, 600).trim();
+      const yeniSvg = şablon.content.querySelector("svg");
+      let svg = yüzey.querySelector("svg");
+      if (svg && yeniSvg) {
+        svgYüzeyiniYerindeGüncelle(svg, yeniSvg);
+      } else {
+        yüzey.innerHTML = `
+          <h3>${tanım.başlık}</h3>
+          ${yüzeyOturumu.svg(1600, 600)}
+          <div class="lejant">
+            <span>x: <b id="x-değeri">--</b></span>
+            ${logScalesSerileri.map(([etiket, renk], seri) =>
+              `<span><i class="örnek" style="border-color:${renk};background:${renk}"></i>
+                ${etiket}: <b id="seri-değeri-${seri}">--</b></span>`
+            ).join("")}
+          </div>`;
+        svg = yüzey.querySelector("svg");
+      }
+      if (!svg) return;
+      if (!svg.querySelector(":scope > #etkileşim")) {
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden" fill="rgba(37,99,235,.12)"
+              stroke="#2563eb"/>
+            <line id="imleç-x" visibility="hidden" stroke="#111827"
+              stroke-width="1" opacity=".55"/>
+            <line id="imleç-y" visibility="hidden" stroke="#111827"
+              stroke-width="1" opacity=".55"/>
+            ${logScalesSerileri.map(([, renk], seri) =>
+              `<circle id="imleç-nokta-${seri}" visibility="hidden" r="4"
+                fill="${renk}" stroke="#ffffff" stroke-width="1.5"/>`
+            ).join("")}
+          </g>`);
+      }
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      svg.dataset.etkileşim = "log-scales-independent-cursor-zoom";
+      yüzey.onpointerenter = () => {
+        logScalesEtkinİndeks = indeks;
+        oturum = logScalesOturumları[indeks] ?? null;
+        kontrolleriGüncelle();
+      };
+    }
+
+    function logScalesÇiz() {
+      const ilkKurulum = !chart.classList.contains("log-scales-yüzeyi")
+        || chart.querySelectorAll(".log-scales-grafik").length
+          !== logScalesYüzeyleri.length;
+      if (ilkKurulum) {
+        chart.className = "log-scales-yüzeyi";
+        chart.innerHTML = `<div class="log-scales-yığın">
+          ${logScalesYüzeyleri.map((_, indeks) =>
+            `<article class="log-scales-grafik"
+              data-log-scales-index="${indeks}"></article>`
+          ).join("")}
+        </div>`;
+        logScalesYüzeyleri.forEach((_, indeks) => logScalesYüzeyiniÇiz(indeks));
+      } else {
+        logScalesYüzeyiniÇiz(logScalesEtkinİndeks);
+      }
+      oturum = logScalesOturumları[logScalesEtkinİndeks]
+        ?? logScalesOturumları[0]
+        ?? null;
+      kontrolleriGüncelle();
+    }
+
     function scatterYüzeyiniÇiz(indeks) {
       const tanım = scatterYüzeyleri[indeks];
       const yüzey = chart.querySelector(`[data-scatter-index="${indeks}"]`);
@@ -7632,6 +7722,10 @@
         linePathsÇiz();
         return;
       }
+      if (aktifKart === "log-scales") {
+        logScalesÇiz();
+        return;
+      }
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
         return;
@@ -8088,6 +8182,10 @@
         ? chart.querySelector(
             `[data-line-paths-index="${linePathsEtkinİndeks}"] svg`
           )
+        : aktifKart === "log-scales"
+        ? chart.querySelector(
+            `[data-log-scales-index="${logScalesEtkinİndeks}"] svg`
+          )
         : aktifKart === "scatter"
         ? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"] svg`)
         : aktifKart === "box-whisker"
@@ -8230,6 +8328,11 @@
           ?? chart.querySelector(
             `[data-line-paths-index="${linePathsEtkinİndeks}"]`
           )
+        : aktifKart === "log-scales"
+        ? olay.target?.closest?.(".log-scales-grafik")
+          ?? chart.querySelector(
+            `[data-log-scales-index="${logScalesEtkinİndeks}"]`
+          )
         : aktifKart === "scatter"
         ? olay.target?.closest?.(".scatter-grafik")
           ?? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"]`)
@@ -8333,6 +8436,12 @@
           linePathsEtkinİndeks = indeks;
           oturum = linePathsOturumları[indeks];
           kartlar["line-paths"].seriler = linePathsYüzeyleri[indeks].seriler;
+        }
+      } else if (aktifKart === "log-scales" && bağımsızYüzey) {
+        const indeks = Number(bağımsızYüzey.dataset.logScalesIndex);
+        if (Number.isInteger(indeks) && logScalesOturumları[indeks]) {
+          logScalesEtkinİndeks = indeks;
+          oturum = logScalesOturumları[indeks];
         }
       }
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
@@ -8680,6 +8789,7 @@
         ?? svg.closest(".focus-cursor-grafik")
         ?? svg.closest(".gradients-grafik")
         ?? svg.closest(".line-paths-grafik")
+        ?? svg.closest(".log-scales-grafik")
         ?? svg.closest(".sparklines-grafik")
         ?? svg.closest(".sparse-grafik")
         ?? svg.closest(".stacked-series-grafik")
@@ -9137,6 +9247,17 @@
         if (svg) yüzeyiEşitle(svg);
       }
     }
+    function logScalesOturumunuSeç(olay) {
+      if (aktifKart !== "log-scales") return;
+      const yüzey = olay.target?.closest?.(".log-scales-grafik");
+      const indeks = Number(yüzey?.dataset.logScalesIndex);
+      if (Number.isInteger(indeks) && logScalesOturumları[indeks]) {
+        logScalesEtkinİndeks = indeks;
+        oturum = logScalesOturumları[indeks];
+        const svg = yüzey.querySelector("svg");
+        if (svg) yüzeyiEşitle(svg);
+      }
+    }
     function softMinMaxOturumunuSeç(olay) {
       if (aktifKart !== "soft-minmax") return;
       const yüzey = olay.target?.closest?.(".soft-minmax-grafik");
@@ -9244,6 +9365,9 @@
     for (const olayTürü of ["pointerdown", "pointermove", "pointerup", "wheel", "dblclick", "scroll"]) {
       chart.addEventListener(olayTürü, scatterOturumunuSeç, { capture: true, passive: true });
       chart.addEventListener(olayTürü, linePathsOturumunuSeç, {
+        capture: true, passive: true,
+      });
+      chart.addEventListener(olayTürü, logScalesOturumunuSeç, {
         capture: true, passive: true,
       });
       chart.addEventListener(olayTürü, softMinMaxOturumunuSeç, { capture: true, passive: true });
@@ -9530,7 +9654,9 @@
       );
       chart.querySelectorAll(
         ".line-paths-grafik #imleç-x, .line-paths-grafik #imleç-y, "
-        + ".line-paths-grafik [id^='imleç-nokta-']"
+        + ".line-paths-grafik [id^='imleç-nokta-'], "
+        + ".log-scales-grafik #imleç-x, .log-scales-grafik #imleç-y, "
+        + ".log-scales-grafik [id^='imleç-nokta-']"
       ).forEach(öğe => öğe.setAttribute("visibility", "hidden"));
       chart.querySelector("#timeline-vurgu")?.setAttribute("visibility", "hidden");
     });
@@ -9889,6 +10015,10 @@
         linePathsOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
+      } else if (aktifKart === "log-scales") {
+        logScalesOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
@@ -10125,6 +10255,13 @@
           linePathsEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "line-paths";
         }
+        if (kimlik !== "log-scales" && kimlik.startsWith("log-scales-")) {
+          const indeks = logScalesYüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === kimlik
+          );
+          logScalesEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "log-scales";
+        }
         if (["months-no-leap", "months-leap", "months-russian"].includes(kimlik)) {
           kimlik = "months";
         }
@@ -10255,6 +10392,7 @@
           highLowBandsOturumları,
           latencyHeatmapOturumları,
           linePathsOturumları,
+          logScalesOturumları,
           syncCursorOturumları,
           timeseriesDiscreteOturumları,
           timezonesDstOturumları,
@@ -10305,6 +10443,9 @@
         linePathsOturumları.forEach(yüzey => yüzey.free());
         linePathsOturumları = [];
         linePathsEtkinİndeks = 0;
+        logScalesOturumları.forEach(yüzey => yüzey.free());
+        logScalesOturumları = [];
+        logScalesEtkinİndeks = 0;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
         syncCursorOturumları = [];
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
@@ -10572,6 +10713,22 @@
           });
           oturum = linePathsOturumları[linePathsEtkinİndeks]
             ?? linePathsOturumları[0]
+            ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "log-scales") {
+          const istenenİndeks = logScalesYüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === oturumKimliği
+          );
+          logScalesEtkinİndeks = istenenİndeks >= 0 ? istenenİndeks : 0;
+          logScalesOturumları = logScalesYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = logScalesOturumları[logScalesEtkinİndeks]
+            ?? logScalesOturumları[0]
             ?? null;
           çiz();
           return;

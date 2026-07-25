@@ -57,22 +57,22 @@ use uplot_rs::{
     focus_cursor_kartları, focus_cursor_kartı, gradients_kartları, gradients_kartı,
     grid_over_series_kartı, high_low_bands_kartları, high_low_bands_kartı,
     latency_heatmap_kartları, latency_heatmap_kartı, line_paths_kartları, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
-    missing_data_kartları, missing_data_null_kartı, months_artık_yılsız_kartı, months_kartları,
-    multi_bars_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
-    ortak_kart_etkileşimleri, path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları,
-    pixel_align_kartı, points_kartları, points_kartı, resize_kartı, scale_padding_kartı,
-    scales_dir_ori_kartları, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
-    sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları,
-    sparklines_bars_kartı, sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı,
-    stacked_series_kartları, stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı,
-    svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı,
-    thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı, time_periods_kartları,
-    time_periods_kartı, timeline_discrete_kartları, timeline_discrete_kartı,
-    timeseries_discrete_kartları, timeseries_discrete_kartı, timezones_dst_kartları,
-    timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı, trendlines_kartı,
-    update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
-    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği, İmleçBağSeçenekleri,
+    log_scales_kartları, log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı,
+    measure_datums_kartı, missing_data_kartları, missing_data_null_kartı,
+    months_artık_yılsız_kartı, months_kartları, multi_bars_kartı, nearest_non_null_kartı,
+    nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartları,
+    path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı, points_kartları, points_kartı,
+    resize_kartı, scale_padding_kartı, scales_dir_ori_kartları, scales_dir_ori_kartı,
+    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı,
+    sparklines_bars_kartları, sparklines_bars_kartı, sparklines_kartları, sparklines_kartı,
+    sparse_kartları, sparse_kartı, stacked_series_kartları, stacked_series_kartı,
+    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
+    sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
+    thin_bars_stroke_fill_kartı, time_periods_kartları, time_periods_kartı,
+    timeline_discrete_kartları, timeline_discrete_kartı, timeseries_discrete_kartları,
+    timeseries_discrete_kartı, timezones_dst_kartları, timezones_dst_kartı, tooltips_closest_kartı,
+    tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı,
+    y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği, İmleçBağSeçenekleri,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -126,7 +126,7 @@ enum KartKimliği {
     HighLowBands,
     LatencyHeatmap,
     LinePaths,
-    LogScales(LogScalesÖrneği),
+    LogScales,
     LogScales2(LogScales2Örneği),
     MassSpectrum,
     MeasureDatums,
@@ -196,7 +196,7 @@ impl KartKimliği {
             Self::HighLowBands => "High/Low Bands · 12 related surfaces",
             Self::LatencyHeatmap => "Latency Heatmap · 5 related surfaces",
             Self::LinePaths => "Line Paths · 8 synced surfaces",
-            Self::LogScales(örnek) => örnek.başlık(),
+            Self::LogScales => "Log Scales · 2 independent surfaces",
             Self::LogScales2(örnek) => örnek.başlık(),
             Self::MassSpectrum => "Mass Spectrum",
             Self::MeasureDatums => "Measure / Datums",
@@ -332,7 +332,7 @@ impl KartKimliği {
             Self::LinePaths => {
                 "line-paths.html · 8 cursor-synced null/linear/spline/stepped/bars surfaces"
             }
-            Self::LogScales(_) => {
+            Self::LogScales => {
                 "log-scales.html · 12 Minecraft sunucusu · log10 ve doğrusal Y ölçeği"
             }
             Self::LogScales2(_) => {
@@ -420,7 +420,7 @@ impl KartKimliği {
             Self::HighLowBands => HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
             Self::LatencyHeatmap => LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ,
             Self::LinePaths => LINE_PATHS_KART_TANIM_ÖRNEĞİ,
-            Self::LogScales(_) => LOG_SCALES_KART_TANIM_ÖRNEĞİ,
+            Self::LogScales => LOG_SCALES_KART_TANIM_ÖRNEĞİ,
             Self::LogScales2(_) => LOG_SCALES2_KART_TANIM_ÖRNEĞİ,
             Self::MassSpectrum => MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ,
             Self::MeasureDatums => MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
@@ -490,7 +490,7 @@ impl KartKimliği {
             Self::HighLowBands => "src/kart/high_low_bands.rs",
             Self::LatencyHeatmap => "src/kart/latency_heatmap.rs",
             Self::LinePaths => "src/kart/line_paths.rs",
-            Self::LogScales(_) => "src/kart/log_scales.rs",
+            Self::LogScales => "src/kart/log_scales.rs",
             Self::LogScales2(_) => "src/kart/log_scales2.rs",
             Self::MassSpectrum => "src/kart/mass_spectrum.rs",
             Self::MeasureDatums => "src/kart/measure_datums.rs",
@@ -557,6 +557,7 @@ pub struct ChartListesi {
     latency_heatmap_grafikleri: Vec<(LatencyHeatmapÖrneği, Entity<GpuiGrafik>)>,
     line_paths_grafikleri: Vec<(LinePathsÖrneği, Entity<GpuiGrafik>)>,
     line_paths_senkronlanıyor: bool,
+    log_scales_grafikleri: Vec<(LogScalesÖrneği, Entity<GpuiGrafik>)>,
     pixel_align_akışı: Option<PixelAlignAkışı>,
     pixel_align_son_kare: Option<Instant>,
     sine_akışı: Option<SineAkışı>,
@@ -687,6 +688,12 @@ impl ChartListesi {
                 }
             } else if bu.aktif_kart == KartKimliği::LinePaths {
                 for (_, grafik) in &bu.line_paths_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if bu.aktif_kart == KartKimliği::LogScales {
+                for (_, grafik) in &bu.log_scales_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -891,6 +898,7 @@ impl ChartListesi {
             latency_heatmap_grafikleri: Vec::new(),
             line_paths_grafikleri: Vec::new(),
             line_paths_senkronlanıyor: false,
+            log_scales_grafikleri: Vec::new(),
             pixel_align_akışı: None,
             pixel_align_son_kare: None,
             sine_akışı: None,
@@ -1560,6 +1568,43 @@ impl ChartListesi {
         }
         self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
         self.line_paths_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
+    fn log_scales_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = log_scales_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("Log Scales ailesi oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.log_scales_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.log_scales_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                bu.standart_grafik_olayını_işle(olay, cx);
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.log_scales_grafikleri = yüzeyler;
         self.hata = None;
         cx.notify();
     }
@@ -2791,6 +2836,7 @@ impl ChartListesi {
         self.latency_heatmap_grafikleri.clear();
         self.line_paths_grafikleri.clear();
         self.line_paths_senkronlanıyor = false;
+        self.log_scales_grafikleri.clear();
         self.scales_dir_ori_grafikleri.clear();
         self.scatter_grafikleri.clear();
         self.bars_grouped_stacked_grafikleri.clear();
@@ -2879,6 +2925,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.line_paths_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::LogScales {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.log_scales_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -3817,7 +3872,7 @@ fn grafik_oluştur(
             f64::from(latency_ofset),
         ),
         KartKimliği::LinePaths => line_paths_kartı(LinePathsÖrneği::YalnızNoktalar),
-        KartKimliği::LogScales(örnek) => log_scales_kartı(örnek),
+        KartKimliği::LogScales => log_scales_kartı(LogScalesÖrneği::Logaritmik),
         KartKimliği::LogScales2(örnek) => log_scales2_kartı(örnek),
         KartKimliği::MassSpectrum => mass_spectrum_kartı(),
         KartKimliği::MeasureDatums => measure_datums_kartı(),
@@ -4029,8 +4084,8 @@ impl Render for ChartListesi {
             KartKimliği::LinePaths => {
                 "8 yüzey · ortak 101 nokta · 4 null boşluğu · senkron cursor".to_string()
             }
-            KartKimliği::LogScales(_) => {
-                "1.440 zaman damgası × 12 kaynak sunucu serisi".to_string()
+            KartKimliği::LogScales => {
+                "2 bağımsız yüzey · ortak Arc veri · 1.440 zaman × 12 sunucu".to_string()
             }
             KartKimliği::LogScales2(örnek) => match örnek {
                 LogScales2Örneği::GenişDoğrusal
@@ -4215,6 +4270,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .line_paths_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::LogScales {
+            geri_var = self
+                .log_scales_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .log_scales_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         } else if aktif_kart == KartKimliği::SyncCursor {
@@ -4625,21 +4689,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(kart, cx);
                 }))
             })
-            .children(LogScalesÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::LogScales(örnek);
+            .child({
+                let kart = KartKimliği::LogScales;
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
+                    "log-scales",
+                    "Log Scales · 2 independent surfaces",
                     "log-scales",
                     aktif_kart == kart,
-                    "1.440 zaman × 12 sunucu · kaynak veri",
+                    "Ortak Arc veri · log10/linear · bağımsız cursor ve zoom",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .children(LogScales2Örneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::LogScales2(örnek);
                 katalog_kartı(
@@ -5817,6 +5881,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.line_paths_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
                             }
+                        } else if bu.aktif_kart == KartKimliği::LogScales {
+                            for (_, grafik) in &bu.log_scales_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             for (_, grafik) in &bu.sync_cursor_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5977,6 +6045,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.line_paths_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
                             }
+                        } else if bu.aktif_kart == KartKimliği::LogScales {
+                            for (_, grafik) in &bu.log_scales_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             for (_, grafik) in &bu.sync_cursor_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -6121,6 +6193,8 @@ impl Render for ChartListesi {
                         } else if bu.aktif_kart == KartKimliği::LinePaths {
                             bu.line_paths_senkronlanıyor = false;
                             bu.line_paths_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::LogScales {
+                            bu.log_scales_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             bu.sync_cursor_grubu = SyncCursorGrubu::yeni();
                             bu.sync_cursor_yüzeylerini_oluştur(cx);
@@ -6455,6 +6529,39 @@ impl Render for ChartListesi {
                         .child(
                             div()
                                 .w(px(2_400.0))
+                                .h(px(600.0))
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                        )
+                }))
+        } else if aktif_kart == KartKimliği::LogScales {
+            let yüzey = |örnek| {
+                self.log_scales_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(1_290.0))
+                .overflow_y_scroll()
+                .p_2()
+                .children(LogScalesÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    div()
+                        .id(SharedString::from(format!("{}-surface", örnek.kimlik())))
+                        .flex_none()
+                        .w_full()
+                        .h(px(630.0))
+                        .mb_3()
+                        .overflow_x_scroll()
+                        .child(
+                            div()
+                                .text_sm()
+                                .font_weight(FontWeight::SEMIBOLD)
+                                .child(örnek.başlık()),
+                        )
+                        .child(
+                            div()
+                                .w(px(1_600.0))
                                 .h(px(600.0))
                                 .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
                         )
@@ -7962,6 +8069,9 @@ impl Render for ChartListesi {
             KartKimliği::LinePaths => {
                 "Sekiz yüzey aynı veri zamanını ve cursor'ı paylaşır · seçim, wheel ve görünüm geçmişi etkin yüzeyde bağımsızdır"
             }
+            KartKimliği::LogScales => {
+                "Log10 ve linear yüzey aynı veriyi paylaşır · cursor, seçim, wheel ve görünüm geçmişi yüzey başına bağımsızdır"
+            }
             _ => {
                 "Sürükle: seç · boşluk + sürükle: taşı · kıstır: X/Y yakınlaştır · çift tıkla: tam görünüm"
             }
@@ -8163,6 +8273,19 @@ impl Render for ChartListesi {
                  Maliyet: veri sekiz kez kopyalanmaz; pointer ana yol geometrisini yeniden \
                  üretmeden hafif cursor katmanlarını günceller. Ana sahne yalnız veri, görünür \
                  ölçek, seri seçimi veya boyut değiştiğinde yeniden boyanır.",
+            ),
+            KartKimliği::LogScales => Some(
+                "Amaç: aynı 1.440 zaman damgası ve 12 Minecraft sunucu serisini log10 ve \
+                 doğrusal Y ölçeklerinde kaynak sırasıyla karşılaştırır. API: \
+                 log_scales_kartları iki bağımsız Grafik tanımını tek Arc-backed HizalıVeri \
+                 deposuyla döndürür; kaynak sıfırları log güvenliği için bir kez 1'e çevrilir. \
+                 Y eksenleri kaynak axis.size=60 ve axis.space=15 geometrisini kullanır. \
+                 Çekirdek log10 bölmelerini her büyüklükte 1..9 üretir, yalnız etiketleri \
+                 kullanılabilir piksel alanına göre all / 12357 / 125 / 1 kümelerine \
+                 seyreltir. İzleme: yüksek dinamik aralıklı oyuncu, istek veya kaynak \
+                 telemetrisinde hem oran değişimini hem mutlak farkı yan yana okumak içindir. \
+                 Maliyet: veri iki kez çözülmez veya kopyalanmaz; cursor ve zoom kaynak gibi \
+                 bağımsızdır, pointer yalnız etkin yüzeyin hafif katmanını günceller.",
             ),
             KartKimliği::DrawHooks => Some(
                 "Amaç: uPlot yaşam döngüsünün drawClear, drawSeries, özel points.show ve draw \

@@ -3661,6 +3661,8 @@ impl Grafik {
         let birincil_biçim =
             birincil_ölçek.map_or(YÖlçekEtiketBiçimi::Otomatik, |ölçek| ölçek.etiket_biçimi);
         let birincil_çarpan = birincil_ölçek.map_or(1.0, |ölçek| ölçek.eksen_değer_çarpanı);
+        let birincil_etiket_boşluğu =
+            birincil_ölçek.map_or(30.0, |ölçek| ölçek.eksen_en_az_etiket_boşluğu);
 
         let eksen_komutları_başlangıcı = sahne.komutlar().len();
         let y_boyutu = if self.seçenekler.x_dikey {
@@ -3730,6 +3732,7 @@ impl Grafik {
                         genişlik,
                         birincil_dağılım,
                         birincil_biçim,
+                        birincil_etiket_boşluğu,
                     )
                 {
                     sahne.ekle(Komut::Metin {
@@ -3800,6 +3803,7 @@ impl Grafik {
                     yükseklik,
                     birincil_dağılım,
                     birincil_biçim,
+                    birincil_etiket_boşluğu,
                 )
             {
                 sahne.ekle(Komut::Metin {
@@ -3936,6 +3940,7 @@ impl Grafik {
                     yükseklik,
                     Some(ölçek.dağılım),
                     ölçek.etiket_biçimi,
+                    ölçek.eksen_en_az_etiket_boşluğu,
                 ) {
                     sahne.ekle(Komut::Metin {
                         konum: Nokta::yeni(eksen_x, y + 4.0),
@@ -7045,7 +7050,7 @@ fn logaritmik_bölmeler(aralık: Aralık, taban: f64) -> Vec<f64> {
     let ilk = aralık.en_az.log(taban).floor() as i32;
     let son = aralık.en_çok.log(taban).ceil() as i32;
     let çarpanlar: &[f64] = if (taban - 10.0).abs() <= f64::EPSILON {
-        &[1.0, 2.0, 5.0]
+        &[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
     } else {
         &[1.0]
     };
@@ -7681,14 +7686,15 @@ fn ölçek_eksen_değerini_yaz(
     }
 }
 
-/// Resmî geniş log demolarında 1/2/5 ızgarası korunurken bilimsel eksen
-/// metinleri yalnız tam taban kuvvetlerine yazılır.
+/// uPlot log eksen filtresi: ızgara her büyüklükte tüm bölmeleri korur, eksen
+/// metinlerini ise kullanılabilir piksel alanına göre seyreltir.
 fn log_etiketi_göster(
     değer: f64,
     aralık: Aralık,
     boyut: f32,
     dağılım: Option<YÖlçekDağılımı>,
     biçim: YÖlçekEtiketBiçimi,
+    en_az_boşluk: f32,
 ) -> bool {
     if matches!(dağılım, Some(YÖlçekDağılımı::ArcSinh { .. })) {
         if değer == 0.0 {
@@ -7700,27 +7706,58 @@ fn log_etiketi_göster(
     let Some(YÖlçekDağılımı::Logaritmik { taban }) = dağılım else {
         return true;
     };
-    if !matches!(
-        biçim,
-        YÖlçekEtiketBiçimi::Bilimsel
-            | YÖlçekEtiketBiçimi::İkiliÜs
-            | YÖlçekEtiketBiçimi::İkiliŞapka
-    ) || değer <= 0.0
+    if değer <= 0.0
         || aralık.en_az <= 0.0
         || !boyut.is_finite()
         || boyut <= 0.0
+        || !en_az_boşluk.is_finite()
+        || en_az_boşluk <= 0.0
     {
         return true;
     }
     let üs = değer.log(taban);
-    if !üs.is_finite() || (üs - üs.round()).abs() > 1e-9 {
+    if !üs.is_finite() {
         return false;
     }
+    let tam_kuvvet = (üs - üs.round()).abs() <= 1e-9;
+    let özel_kuvvet_biçimi = matches!(
+        biçim,
+        YÖlçekEtiketBiçimi::Bilimsel
+            | YÖlçekEtiketBiçimi::İkiliÜs
+            | YÖlçekEtiketBiçimi::İkiliŞapka
+    );
+
+    if (taban - 10.0).abs() <= f64::EPSILON && !özel_kuvvet_biçimi {
+        let açıklık = aralık.en_çok.log10() - aralık.en_az.log10();
+        if !açıklık.is_finite() || açıklık <= 0.0 {
+            return true;
+        }
+        let piksel_farkı =
+            |aday: f64| f64::from(boyut) * (10.0_f64.log10() - aday.log10()).abs() / açıklık;
+        let büyüklük = 10_f64.powf(değer.log10().floor());
+        let öncül = (değer / büyüklük).round() as i32;
+        let en_az_boşluk = f64::from(en_az_boşluk);
+        if piksel_farkı(9.0) >= en_az_boşluk {
+            return (1..=9).contains(&öncül);
+        }
+        if piksel_farkı(7.0) >= en_az_boşluk {
+            return matches!(öncül, 1 | 2 | 3 | 5 | 7);
+        }
+        if piksel_farkı(5.0) >= en_az_boşluk {
+            return matches!(öncül, 1 | 2 | 5);
+        }
+        if öncül != 1 {
+            return false;
+        }
+    } else if !tam_kuvvet {
+        return false;
+    }
+
     let en_az_üs = aralık.en_az.log(taban).floor() as i32;
     let en_çok_üs = aralık.en_çok.log(taban).ceil() as i32;
     let üs = üs.round() as i32;
     let açıklık = en_çok_üs.saturating_sub(en_az_üs).max(1);
-    let adım = (f64::from(açıklık) * 22.0 / f64::from(boyut))
+    let adım = (f64::from(açıklık) * f64::from(en_az_boşluk) / f64::from(boyut))
         .ceil()
         .max(1.0) as i32;
     en_çok_üs.saturating_sub(üs).rem_euclid(adım) == 0
@@ -8190,13 +8227,15 @@ mod eksen_testleri {
     }
 
     #[test]
-    fn log10_bölmeleri_kaynak_bir_iki_beş_düzenini_korur() {
+    fn log10_bölmeleri_kaynak_birden_dokuza_düzenini_korur() {
         let aralık = Aralık::yeni(1.0, 1_000.0);
         let Ok(aralık) = aralık else { return };
         assert_eq!(
             logaritmik_bölmeler(aralık, 10.0),
             [
-                1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1_000.0
+                1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0,
+                70.0, 80.0, 90.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0, 900.0,
+                1_000.0
             ]
         );
         assert_eq!(
@@ -8228,6 +8267,7 @@ mod eksen_testleri {
             600.0,
             Some(YÖlçekDağılımı::Logaritmik { taban: 10.0 }),
             YÖlçekEtiketBiçimi::Bilimsel,
+            30.0,
         ));
         assert!(!log_etiketi_göster(
             2e-6,
@@ -8238,6 +8278,7 @@ mod eksen_testleri {
             600.0,
             Some(YÖlçekDağılımı::Logaritmik { taban: 10.0 }),
             YÖlçekEtiketBiçimi::Bilimsel,
+            30.0,
         ));
         assert!(log_etiketi_göster(
             2_f64.powi(20),
@@ -8248,6 +8289,7 @@ mod eksen_testleri {
             204.0,
             Some(YÖlçekDağılımı::Logaritmik { taban: 2.0 }),
             YÖlçekEtiketBiçimi::İkiliŞapka,
+            30.0,
         ));
         assert!(!log_etiketi_göster(
             2_f64.powi(18),
@@ -8258,7 +8300,34 @@ mod eksen_testleri {
             204.0,
             Some(YÖlçekDağılımı::Logaritmik { taban: 2.0 }),
             YÖlçekEtiketBiçimi::İkiliŞapka,
+            30.0,
         ));
+    }
+
+    #[test]
+    fn log10_etiketleri_piksel_alanına_göre_kaynak_kümelerini_seçer() {
+        let aralık = Aralık {
+            en_az: 1.0,
+            en_çok: 1_000.0,
+        };
+        let görünür = |boyut: f32| {
+            (1..=9)
+                .filter(|öncül| {
+                    log_etiketi_göster(
+                        f64::from(*öncül),
+                        aralık,
+                        boyut,
+                        Some(YÖlçekDağılımı::Logaritmik { taban: 10.0 }),
+                        YÖlçekEtiketBiçimi::Otomatik,
+                        15.0,
+                    )
+                })
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(görünür(1_200.0), (1..=9).collect::<Vec<_>>());
+        assert_eq!(görünür(600.0), [1, 2, 3, 5, 7]);
+        assert_eq!(görünür(240.0), [1, 2, 5]);
+        assert_eq!(görünür(90.0), [1]);
     }
 
     #[test]

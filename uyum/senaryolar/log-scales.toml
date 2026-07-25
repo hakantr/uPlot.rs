@@ -1,6 +1,6 @@
 id = "log-scales"
 kaynak = "../uPlot/demos/log-scales.html"
-fixture = "src/kart/log_scales.rs#log_scales_kartı"
+fixture = "src/kart/log_scales.rs#log_scales_kartları"
 device_pixel_ratio = 1
 alt_grafik_sayısı = 2
 
@@ -15,6 +15,12 @@ kaynak_sıfır_dönüşümü = 1
 grafikler = ["log10-y", "linear-y"]
 log_tabanı = 10
 bosluklari_birlestir = true
+ortak_veri_deposu = true
+cursor_ve_zoom = "yüzey başına bağımsız"
+log_bölmeleri = "1..9"
+log_etiket_filtresi = ["all", "12357", "125", "1", "magnitude-skip"]
+y_eksen_genişliği = 60
+y_eksen_asgari_etiket_boşluğu = 15
 
 [kanıt]
 masaüstü = "uygulamalar/masaustu/src/masaustu.rs"

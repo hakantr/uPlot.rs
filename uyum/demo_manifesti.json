@@ -1917,7 +1917,7 @@
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" },
         { "yol": "src/utils.js", "sha256": "8df33192e0ab7b4f4cf64fae9829fc0dc0300a618668699f43c5881ed8a0553c" }
       ],
-      "fixture": "src/kart/log_scales.rs#log_scales_kartı",
+      "fixture": "src/kart/log_scales.rs#log_scales_kartları",
       "örnek": "examples/log_scales.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -1941,14 +1941,17 @@
       "sahip_faz": 2,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "two-source-charts", "source-exact-1440-timestamps", "twelve-server-series",
+        "one-card-two-independent-source-surfaces", "shared-arc-backed-source-data",
+        "source-exact-1440-timestamps", "twelve-server-series",
         "lossless-delta-varint-source-asset", "source-zero-to-one-log-normalization",
         "log10-y-scale", "linear-y-scale", "source-span-gaps", "automatic-log-range",
-        "log-axis-1-2-5-splits", "clock-aligned-time-splits", "midnight-date-label",
+        "log-axis-1-through-9-splits", "source-pixel-density-label-filter",
+        "source-axis-size-60-space-15", "independent-cursor-zoom-history",
+        "clock-aligned-time-splits", "midnight-date-label",
         "gpui-wasm-catalog-parity", "common-interaction-profile",
         "panic-free-source-decoder"
       ],
-      "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+      "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "tam_kanıtlı" }
     },
     {
       "sıra": 32,

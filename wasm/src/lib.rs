@@ -3949,7 +3949,12 @@ mod testler {
             assert!(svg.contains(örnek.başlık()));
             assert!(svg.contains("#d0b283"));
         }
-        assert!(log_scales_kart_tanim_ornegi().contains("Logaritmik"));
+        assert!(log_scales_kart_tanim_ornegi().contains("log_scales_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(web.matches("data-kart=\"log-scales\"").count(), 1);
+        assert!(!web.contains("data-kart=\"log-scales-log-y\""));
+        assert!(web.contains("const logScalesYüzeyleri"));
+        assert!(web.contains("log-scales-independent-cursor-zoom"));
     }
 
     #[test]
