@@ -1285,6 +1285,28 @@ impl Grafik {
         Ok(())
     }
 
+    /// `axis-autosize.html` içindeki `setData()` ile X `values` callback
+    /// durumunu aynı grafik örneğinde atomik olarak günceller.
+    ///
+    /// Seri görünürlüğü, kullanıcı görünümü ve etkileşim geçmişi korunur;
+    /// yalnız veri, otomatik tam Y aralığı ve X ekseni etiket çarpanı değişir.
+    pub fn canlı_veriyi_x_etiket_çarpanında_ayarla(
+        &mut self,
+        veri: HizalıVeri,
+        çarpan: f64,
+    ) -> Result<(), UplotHatası> {
+        if !çarpan.is_finite() || çarpan <= 0.0 {
+            return Err(UplotHatası::GeçersizÇarpan { değer: çarpan });
+        }
+        let önceki = self.seçenekler.x_eksen_değer_çarpanı;
+        self.seçenekler.x_eksen_değer_çarpanı = çarpan;
+        if let Err(hata) = self.canlı_veriyi_ayarla(veri) {
+            self.seçenekler.x_eksen_değer_çarpanı = önceki;
+            return Err(hata);
+        }
+        Ok(())
+    }
+
     /// Uzak veri sağlayıcıdan gelen yeni veriyi uygular ve istenen X aralığını korur.
     ///
     /// `zoom-fetch` kaynağındaki `setData(data, false)` + `setScale("x", range)`
@@ -1666,14 +1688,6 @@ impl Grafik {
         } else {
             24.0
         };
-        if self.seçenekler.otomatik_x_sağ_pay {
-            let x_artımı = uygun_artım(self.görünür_x_aralığı(), genişlik_px, 50.0);
-            let son_etiket = eksen_değerini_yaz(
-                self.görünür_x_aralığı().en_çok * self.seçenekler.x_eksen_değer_çarpanı,
-                x_artımı * self.seçenekler.x_eksen_değer_çarpanı,
-            );
-            sağ_pay = sağ_pay.max(8.0 + son_etiket.chars().count() as f32 * 4.0);
-        }
         let mut sol_pay: f32 = if !self.seçenekler.birincil_y_eksen_görünür && sol_eksen_sayısı == 0
         {
             gizli_eksen_payı
@@ -1728,20 +1742,64 @@ impl Grafik {
             let dağılım = ölçek.map(|ölçek| ölçek.dağılım);
             let biçim = ölçek.map_or(YÖlçekEtiketBiçimi::Otomatik, |ölçek| ölçek.etiket_biçimi);
             let çarpan = ölçek.map_or(1.0, |ölçek| ölçek.eksen_değer_çarpanı);
-            let en_uzun = self
+            let etiketler = self
                 .y_eksen_bölmeleri(&self.seçenekler.birincil_y_ölçeği, aralık, çizim_yüksekliği)
                 .into_iter()
                 .map(|değer| {
                     ölçek_eksen_değerini_yaz(değer * çarpan, artım, birim, dağılım, biçim)
-                        .chars()
-                        .count()
                 })
-                .max()
-                .unwrap_or(1);
+                .collect::<Vec<_>>();
             if let Some(hesap) = self.seçenekler.otomatik_y_eksen_genişliği_hesabı {
+                let en_uzun = etiketler
+                    .iter()
+                    .map(|etiket| etiket.chars().count())
+                    .max()
+                    .unwrap_or(1);
                 sol_pay = hesap.taban + en_uzun as f32 * hesap.karakter_başına;
             } else {
-                sol_pay = sol_pay.max(24.0 + en_uzun as f32 * 7.0);
+                let en_uzun = etiketler
+                    .iter()
+                    .map(|etiket| yaklaşık_metin_genişliği(etiket, 12.0))
+                    .fold(0.0_f32, f32::max);
+                // Kaynak callback: ticks.size + axis.gap + measureText().
+                sol_pay = (15.0 + en_uzun).ceil();
+            }
+        }
+        if self.seçenekler.otomatik_x_sağ_pay {
+            // Kaynak `autoPadRight` en fazla üç yerleşim çevrimi yapar ve
+            // son gerçek split etiketinin yarı genişliği taşarsa payı artırır.
+            sağ_pay = 8.0;
+            let x_aralığı = self.görünür_x_aralığı();
+            for _ in 0..3 {
+                let çizim_genişliği = (genişlik_px - sol_pay - sağ_pay).max(1.0);
+                let x_artımı = uygun_artım(
+                    x_aralığı,
+                    çizim_genişliği,
+                    self.seçenekler.x_eksen_asgari_etiket_boşluğu,
+                );
+                let Some(son_bölme) = eksen_bölmeleri_artımla(x_aralığı, x_artımı).last().copied()
+                else {
+                    break;
+                };
+                let son_etiket = eksen_değerini_yaz(
+                    son_bölme * self.seçenekler.x_eksen_değer_çarpanı,
+                    x_artımı * self.seçenekler.x_eksen_değer_çarpanı,
+                );
+                let yarı_genişlik = yaklaşık_metin_genişliği(&son_etiket, 12.0) / 2.0;
+                let bölme_oranı =
+                    ((son_bölme - x_aralığı.en_az) / (x_aralığı.en_çok - x_aralığı.en_az)) as f32;
+                let sağ_etiket_kenarı = sol_pay + bölme_oranı * çizim_genişliği + yarı_genişlik;
+                let sağ_grafik_kenarı = genişlik_px - sağ_pay;
+                let yeni = if sağ_etiket_kenarı >= genişlik_px {
+                    (sağ_etiket_kenarı - sağ_grafik_kenarı).max(8.0)
+                } else {
+                    8.0
+                };
+                if (yeni - sağ_pay).abs() < 0.5 {
+                    sağ_pay = yeni;
+                    break;
+                }
+                sağ_pay = yeni;
             }
         }
         (
@@ -3193,6 +3251,16 @@ impl Grafik {
         let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
         let genişlik = sağ - sol;
         let yükseklik = alt - üst;
+        if let Some(renk) = &self.seçenekler.çizim_alanı_arka_plan_rengi {
+            sahne.ekle(Komut::Dikdörtgen {
+                konum: Nokta::yeni(sol, üst),
+                genişlik,
+                yükseklik,
+                dolgu: renk.clone(),
+                çizgi: "#00000000".to_string(),
+                kalınlık: 0.0,
+            });
+        }
 
         if let Some((üst_renk, alt_renk)) = self
             .seçenekler
@@ -3461,9 +3529,9 @@ impl Grafik {
                 });
             } else {
                 let eksen_etiketi_x = if self.seçenekler.birincil_y_karşıda {
-                    sağ + self.seçenekler.birincil_y_eksen_genişliği.unwrap_or(48.0) * 0.56
+                    (sağ + genişlik_px as f32) / 2.0
                 } else {
-                    sol - self.seçenekler.birincil_y_eksen_genişliği.unwrap_or(48.0) * 0.56
+                    sol / 2.0
                 };
                 sahne.ekle(Komut::DöndürülmüşMetin {
                     konum: Nokta::yeni(eksen_etiketi_x, (üst + alt) / 2.0),
@@ -6940,6 +7008,25 @@ fn eksen_bölmeleri_artımla(aralık: Aralık, artım: f64) -> Vec<f64> {
         değer += artım;
     }
     bölmeler
+}
+
+fn yaklaşık_metin_genişliği(metin: &str, boyut: f32) -> f32 {
+    metin
+        .chars()
+        .map(|karakter| {
+            let em = match karakter {
+                '0'..='9' => 0.556,
+                '.' | ',' | ':' | ';' | '!' | '|' => 0.278,
+                '-' | '−' | '+' | '=' => 0.584,
+                'e' | 'a' | 's' | 'x' | 'y' | 'z' => 0.5,
+                'i' | 'l' | 'I' | 'j' | 't' => 0.278,
+                'm' | 'w' | 'M' | 'W' => 0.833,
+                ' ' => 0.278,
+                _ => 0.667,
+            };
+            em * boyut
+        })
+        .sum()
 }
 
 fn üç_anlamlı_basamak(değer: f64) -> String {

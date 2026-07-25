@@ -997,6 +997,8 @@ impl EtkileşimSeçenekleri {
 pub struct GrafikSeçenekleri {
     pub başlık: String,
     pub arka_plan_rengi: String,
+    /// uPlot `.u-under` katmanı gibi yalnız veri çizim alanının arka planı.
+    pub çizim_alanı_arka_plan_rengi: Option<String>,
     pub başlık_rengi: String,
     pub genişlik: u32,
     pub yükseklik: u32,
@@ -1100,6 +1102,7 @@ impl GrafikSeçenekleri {
         Ok(Self {
             başlık: String::new(),
             arka_plan_rengi: "#ffffff".to_string(),
+            çizim_alanı_arka_plan_rengi: None,
             başlık_rengi: "#111111".to_string(),
             genişlik,
             yükseklik,
@@ -1198,6 +1201,11 @@ impl GrafikSeçenekleri {
 
     pub fn arka_plan_rengi(mut self, renk: impl Into<String>) -> Self {
         self.arka_plan_rengi = renk.into();
+        self
+    }
+
+    pub fn çizim_alanı_arka_plan_rengi(mut self, renk: impl Into<String>) -> Self {
+        self.çizim_alanı_arka_plan_rengi = Some(renk.into());
         self
     }
 

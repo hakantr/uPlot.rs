@@ -633,6 +633,23 @@ impl GpuiGrafik {
         Ok(())
     }
 
+    pub fn canlı_veriyi_x_etiket_çarpanında_ayarla(
+        &mut self,
+        veri: HizalıVeri,
+        çarpan: f64,
+        cx: &mut Context<Self>,
+    ) -> Result<(), UplotHatası> {
+        let korunacak_imleç = self.imleç.as_ref().map(|imleç| imleç.fare);
+        self.grafik
+            .canlı_veriyi_x_etiket_çarpanında_ayarla(veri, çarpan)?;
+        self.açıklama_vuruşu = None;
+        if let Some(fare) = korunacak_imleç {
+            self.canlı_imleci_yenile(fare);
+        }
+        self.grafik_bildir(cx);
+        Ok(())
+    }
+
     /// uPlot `setData()` sırasında yaptığı gibi aynı hafif cursor katmanını
     /// korur ve sabit fare konumundaki canlı değerleri yeni veriden çözer.
     fn canlı_imleci_yenile(&mut self, fare: Nokta) {

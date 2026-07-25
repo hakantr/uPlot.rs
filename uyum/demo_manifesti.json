@@ -842,23 +842,30 @@
         "gerekçeler": {}
       },
       "sahip_faz": 2,
-      "kapsam_durumu": "uygulandı_kanıtlı",
+      "kapsam_durumu": "tam_kanıtlı",
       "özellikler": [
         "source-equivalent-501-point-generator",
-        "dynamic-power-of-ten-data-updates",
-        "fresh-deterministic-random-geometry-per-update",
+        "source-500ms-power-of-ten-lifecycle-on-gpui-and-wasm",
+        "fresh-seeded-random-geometry-on-every-update",
+        "same-instance-set-data-update",
+        "set-series-and-view-state-preservation",
         "multiplied-x-axis-values",
-        "automatic-y-axis-width",
-        "automatic-right-x-padding",
+        "measured-label-aware-automatic-y-axis-width",
+        "three-cycle-last-split-right-padding-convergence",
+        "rotated-y-axis-label",
+        "source-root-and-underlay-backgrounds",
+        "timer-stop-at-1e9-and-card-exit",
+        "standard-legend-set-series",
+        "collapsed-usage-cost-guide",
         "gpui-wasm-dynamic-controls",
         "common-interaction-profile"
       ],
       "kanıt": {
-        "api": "kısmi",
+        "api": "tam_kanıtlı",
         "sayısal": "tam_kanıtlı",
-        "statik_görsel": "uygulandı_kanıtlı",
-        "davranış": "uygulandı_kanıtlı",
-        "performans": "uygulandı_kanıtlı"
+        "statik_görsel": "tam_kanıtlı",
+        "davranış": "tam_kanıtlı",
+        "performans": "tam_kanıtlı"
       }
     },
     {

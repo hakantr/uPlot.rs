@@ -5,7 +5,7 @@
 use uplot_rs::{
     ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, Aralık,
+    AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, Aralık, AxisAutosizeAkışı,
     BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
     BOX_WHISKER_KART_TANIM_ÖRNEĞİ, BoyutSenkronAkışı, CANDLESTICK_KART_TANIM_ÖRNEĞİ,
     CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
@@ -74,6 +74,7 @@ pub struct KartOturumu {
     soft_minmax_akışı: Option<SoftMinMaxAkışı>,
     boyut_senkron_akışı: Option<BoyutSenkronAkışı>,
     y_shifted_series_akışı: Option<YShiftedSeriesAkışı>,
+    axis_autosize_akışı: Option<AxisAutosizeAkışı>,
     pixel_align_akışı: Option<PixelAlignAkışı>,
     multi_bars_kategorileri: Option<Vec<bool>>,
     multi_bars_veri_sürümü: u64,
@@ -415,6 +416,7 @@ impl KartOturumu {
         } else {
             None
         };
+        let axis_autosize_akışı = (kart_kimliği == "axis-autosize").then(AxisAutosizeAkışı::yeni);
         let pixel_align_akışı = PixelAlignÖrneği::kimlikten(kart_kimliği)
             .map(|_| PixelAlignAkışı::yeni(140))
             .transpose()
@@ -442,6 +444,7 @@ impl KartOturumu {
             soft_minmax_akışı,
             boyut_senkron_akışı,
             y_shifted_series_akışı,
+            axis_autosize_akışı,
             pixel_align_akışı,
             multi_bars_kategorileri,
             multi_bars_veri_sürümü: 0,
@@ -1013,9 +1016,31 @@ impl KartOturumu {
     }
 
     pub fn axis_autosize_carpani_ayarla(&mut self, çarpan: f64) -> Result<(), JsValue> {
-        let (seçenekler, veri) = axis_autosize_kartı(çarpan).map_err(js_hatası)?;
-        self.grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
+        if self.kart_kimliği != "axis-autosize" {
+            return Err(JsValue::from_str(
+                "Axis AutoSize çarpanı yalnız axis-autosize kartında değiştirilebilir",
+            ));
+        }
+        let akış = self
+            .axis_autosize_akışı
+            .as_mut()
+            .ok_or_else(|| JsValue::from_str("Axis AutoSize akış durumu bulunamadı"))?;
+        let (çarpan, veri) = akış.çarpanı_ayarla(çarpan).map_err(js_hatası)?;
+        self.grafik
+            .canlı_veriyi_x_etiket_çarpanında_ayarla(veri, çarpan)
+            .map_err(js_hatası)?;
         Ok(())
+    }
+
+    pub fn axis_autosize_ilerlet(&mut self) -> Result<bool, JsValue> {
+        if self.kart_kimliği != "axis-autosize" {
+            return Ok(false);
+        }
+        self.axis_autosize_akışı
+            .as_mut()
+            .ok_or_else(|| JsValue::from_str("Axis AutoSize akış durumu bulunamadı"))?
+            .grafiği_ilerlet(&mut self.grafik)
+            .map_err(js_hatası)
     }
 
     pub fn sync_y_zero_asamasini_ayarla(&mut self, aşama: &str) -> Result<bool, JsValue> {
@@ -3795,7 +3820,21 @@ mod testler {
                 .zip(önceki.first())
                 .is_some_and(|(yeni, eski)| yeni > eski)
         );
-        assert!(oturum.svg(1048, 600).contains("500000000000.00"));
+        assert!(oturum.svg(1048, 600).contains("500000000000"));
+        assert!(matches!(
+            oturum.gorunur_x_araligini_ayarla(100.0, 400.0, true),
+            Ok(true)
+        ));
+        let görünür_x = oturum.gorunur_x_araligi();
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(0, false), Ok(true)));
+        assert!(oturum.axis_autosize_carpani_ayarla(1e8).is_ok());
+        assert_eq!(oturum.gorunur_x_araligi(), görünür_x);
+        assert!(!oturum.seri_gorunur(0));
+        assert!(oturum.axis_autosize_ilerlet().is_ok());
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("}, 500);"));
+        assert!(web.contains("clearInterval(autosizeZamanlayıcı)"));
+        assert!(web.contains("aktifKart === \"axis-autosize\""));
     }
 
     #[test]

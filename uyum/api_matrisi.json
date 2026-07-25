@@ -1108,6 +1108,30 @@
       "test": "src/kart/arcsinh_scales.rs + wasm/src/lib.rs"
     },
     {
+      "kaynak_yolu": "axis-autosize setInterval(500) + u.setData(getData(...))",
+      "rust_karşılığı": "AxisAutosizeAkışı + Grafik::canlı_veriyi_x_etiket_çarpanında_ayarla",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/axis_autosize.rs + wasm/src/lib.rs + uygulamalar/masaustu/src/masaustu.rs"
+    },
+    {
+      "kaynak_yolu": "axis-autosize autoPadRight cycleNum / last split label edge",
+      "rust_karşılığı": "Grafik::çizim_alanı_boyutta üç çevrimli son gerçek X bölmesi payı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/axis_autosize.rs"
+    },
+    {
+      "kaynak_yolu": "axis-autosize axes[1].size measureText + labelGap/labelSize",
+      "rust_karşılığı": "yaklaşık_metin_genişliği + otomatik_y_eksen_genişliği + DöndürülmüşMetin",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/axis_autosize.rs + wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "axis-autosize .uplot / .u-under backgrounds",
+      "rust_karşılığı": "GrafikSeçenekleri::arka_plan_rengi + çizim_alanı_arka_plan_rengi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/axis_autosize.rs"
+    },
+    {
       "kaynak_yolu": "axis-control Axis.space=50 / side=1 / label layout budget",
       "rust_karşılığı": "YÖlçekSeçenekleri::eksen_en_az_etiket_boşluğu + birincil_y_sağda + birincil_y_eksen_genişliği",
       "durum": "tam_kanıtlı",

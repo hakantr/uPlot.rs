@@ -6,30 +6,55 @@ device_pixel_ratio = 1
 durum = "dinamik"
 
 [veri]
-nokta_sayısı = 501
-çarpan_kuvvetleri = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-güncelleme_ms = 500
-formül = "(random()-0.5 + sin(x*0.00002)*40 + sin(x*0.001)*5 + sin(x*0.1)*2) * mult"
-kanıt_tohumu = "0xA170_512E"
-her_aşamada_yeni_rastgele_geometri = true
+"nokta_sayısı" = 501
+"çarpan_kuvvetleri" = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+"güncelleme_ms" = 500
+"formül" = "(random()-0.5 + sin(x*0.00002)*40 + sin(x*0.001)*5 + sin(x*0.1)*2) * mult"
+"kanıt_tohumu" = "0xA170_512E"
+"her_aşamada_yeni_rastgele_geometri" = true
+"aynı_çarpana_dönüşte_yeni_geometri" = true
 
 [eksen]
-x_etiketi = "X Axis Label"
-y_etiketi = "Y Axis Label"
-y_rengi = "#ff0000"
-x_değerleri_çarpanlı = true
-otomatik_x_sağ_pay = true
-otomatik_y_genişliği = true
+"x_etiketi" = "X Axis Label"
+"y_etiketi" = "Y Axis Label"
+"y_rengi" = "#ff0000"
+"x_değerleri_çarpanlı" = true
+"otomatik_x_sağ_pay" = true
+"otomatik_y_genişliği" = true
+"y_etiketi_döndürme" = -90
+"y_etiketi_boşluğu" = 8
+"y_etiketi_yerleşim_boyutu" = 28
+"x_etiketi_yerleşim_boyutu" = 20
+"sağ_pay_yakınsama_çevrimi" = 3
+"kök_arka_plan" = "#eeeeee"
+"çizim_alanı_arka_plan" = "#d6d6d6"
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
-tekerlek_x_yakınlaştır = true
-seçim_yakınlaştır = true
-çift_tıkla_tam_görünüm = true
-dokunma_xy_yakınlaştır = true
-boşluk_sol_sürükleme_taşıma = true
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
+"tekerlek_x_yakınlaştır" = true
+"seçim_yakınlaştır" = true
+"çift_tıkla_tam_görünüm" = true
+"dokunma_xy_yakınlaştır" = true
+"boşluk_sol_sürükleme_taşıma" = true
+set_series = true
+"güncellemede_seri_görünürlüğünü_koru" = true
+"güncellemede_kullanıcı_görünümünü_koru" = true
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["yaşam_döngüsü"]
+"aynı_grafik_örneği" = true
+set_data = true
+"gpui_zamanlayıcı" = true
+"wasm_zamanlayıcı" = true
+"son_aşamada_dur" = 9
+"karttan_çıkışta_iptal" = true
+
+[performans]
+"güncelleme" = "O(501)"
+"seçenek_ağacını_yeniden_kurma" = false
+"etkileşim_katmanını_yeniden_kurma" = false
+"sağ_pay_azami_çevrim" = 3
+
+["kanıt"]
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg = "target/axis-autosize.svg"

@@ -1086,6 +1086,12 @@
         yardım: "Kaynak animasyonu: her 500 ms’de 10× · kaydırıcıyla çarpan elle de doğrulanabilir",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "Aynı 501 noktalı sinyal 500 ms aralıklarla 10 kat büyürken X son etiketi ile Y değerleri için gereken eksen payının kendini yeniden ölçmesini gösterir.",
+          api: "AxisAutosizeAkışı kaynak 1…10⁹ yaşam döngüsünü yürütür; Grafik::canlı_veriyi_x_etiket_çarpanında_ayarla aynı grafik örneğinde setData ve X values çarpanını atomik yeniler. Lejant setSeries görünürlüğü güncellemeler boyunca korunur.",
+          izleme: "Değer büyüklüğü çalışma anında birkaç mertebe değişebilen sayaç, kapasite ve finans telemetrisinde etiketlerin kırpılmasını önlemek için kullanın. Ortak wheel, seçim, pan ve touch görünümü veri güncellenirken kaybolmaz.",
+          maliyet: "Her tikte 501 yeni değer O(N) üretilir; grafik, olay katmanları ve seçenek ağacı yeniden kurulmaz. Y ölçümü gerçek etiket genişliklerini yaklaşıklar; sağ pay son gerçek X split'i üzerinde en fazla üç yakınsama çevrimi yapar. Zamanlayıcı 10⁹'da ve karttan çıkışta durur.",
+        },
       },
       "axis-indicators": {
         başlık: "Axis indicators",
@@ -6425,7 +6431,8 @@
         || aktifKart === "y-shifted-series"
         || aktifKart === "dependent-scale"
         || aktifKart === "arcsinh-scales"
-        || aktifKart === "axis-control";
+        || aktifKart === "axis-control"
+        || aktifKart === "axis-autosize";
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks) || değiştirilebilirLejant
           ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>

@@ -11,26 +11,27 @@ use std::time::{Duration, Instant};
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
     ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
-    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    AXIS_CONTROL_KART_TANIM_ÖRNEĞİ, AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
-    BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ, BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-    BOX_WHISKER_BENCHMARKLERİ, BOX_WHISKER_KART_TANIM_ÖRNEĞİ, BoyutSenkronAkışı,
-    CANDLESTICK_KART_TANIM_ÖRNEĞİ, CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
-    CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ, CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği,
-    DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ, DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
-    DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri, FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ,
-    FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ, GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği,
-    Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ, HighLowBandsÖrneği,
-    LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ, LOG_SCALES_KART_TANIM_ÖRNEĞİ,
-    LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği, LinePathsÖrneği, LogScales2Örneği,
-    LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
-    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, MULTI_BARS_KART_TANIM_ÖRNEĞİ,
-    MissingDataÖrneği, MultiBarsÖrneği, NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ,
-    NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ, NearestNonNullÖrneği, NoDataÖrneği,
-    PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ, PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ,
-    PathGapClipÖrneği, PixelAlignAkışı, PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ,
-    SCALE_PADDING_KART_TANIM_ÖRNEĞİ, SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ,
-    SCROLL_SYNC_KART_TANIM_ÖRNEĞİ, SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
+    ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_ARALIK_MS,
+    AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ, AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
+    AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ, AxisAutosizeAkışı, BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ,
+    BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ, BOX_WHISKER_BENCHMARKLERİ,
+    BOX_WHISKER_KART_TANIM_ÖRNEĞİ, BoyutSenkronAkışı, CANDLESTICK_KART_TANIM_ÖRNEĞİ,
+    CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
+    CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
+    DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri,
+    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ,
+    GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği, Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
+    HighLowBandsÖrneği, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ,
+    LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
+    LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ,
+    MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ,
+    MULTI_BARS_KART_TANIM_ÖRNEĞİ, MissingDataÖrneği, MultiBarsÖrneği,
+    NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
+    NearestNonNullÖrneği, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
+    PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignAkışı,
+    PixelAlignÖrneği, PointsÖrneği, RESIZE_KART_TANIM_ÖRNEĞİ, SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+    SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ, SCATTER_KART_TANIM_ÖRNEĞİ, SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
+    SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
     STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS, STREAM_DATA_KART_TANIM_ÖRNEĞİ,
     SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
@@ -532,6 +533,7 @@ pub struct ChartListesi {
     tekerlek_anahtarı: Entity<Anahtar>,
     arcsinh_kuvvet: i32,
     autosize_kuvvet: i32,
+    axis_autosize_akışı: Option<AxisAutosizeAkışı>,
     latency_kova: u8,
     latency_ofset: u8,
     açıklama_istendi: bool,
@@ -752,6 +754,7 @@ impl ChartListesi {
             tekerlek_anahtarı,
             arcsinh_kuvvet: 0,
             autosize_kuvvet: 0,
+            axis_autosize_akışı: None,
             latency_kova: 5,
             latency_ofset: 0,
             açıklama_istendi: false,
@@ -2091,6 +2094,8 @@ impl ChartListesi {
         self.kullanım_rehberi_açık = false;
         self.arcsinh_kuvvet = 0;
         self.autosize_kuvvet = 0;
+        self.axis_autosize_akışı =
+            (kart == KartKimliği::AxisAutosize).then(AxisAutosizeAkışı::yeni);
         self.latency_kova = 5;
         self.latency_ofset = 0;
         self.açıklama_istendi = false;
@@ -2331,7 +2336,60 @@ impl ChartListesi {
             self.points_grafikleri.clear();
             self.grafiği_yenile(self.nokta_sayısı, cx);
         }
-        if kart == KartKimliği::AlignDataCost {
+        if kart == KartKimliği::AxisAutosize {
+            self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
+                loop {
+                    cx.background_executor()
+                        .timer(Duration::from_millis(AXIS_AUTOSIZE_ARALIK_MS))
+                        .await;
+                    let devam = bu
+                        .update(cx, |bu, cx| {
+                            if bu.aktif_kart != KartKimliği::AxisAutosize {
+                                return false;
+                            }
+                            let sonraki = bu
+                                .axis_autosize_akışı
+                                .as_mut()
+                                .ok_or_else(|| UplotHatası::GeçersizKaynakVeri {
+                                    varlık: "AxisAutosizeAkışı",
+                                    açıklama: "masaüstü akış durumu bulunamadı".to_string(),
+                                })
+                                .and_then(AxisAutosizeAkışı::ilerlet);
+                            let Some((çarpan, veri)) = (match sonraki {
+                                Ok(sonraki) => sonraki,
+                                Err(hata) => {
+                                    bu.hata = Some(format!("Axis AutoSize güncellenemedi: {hata}"));
+                                    cx.notify();
+                                    return false;
+                                }
+                            }) else {
+                                return false;
+                            };
+                            let Some(grafik) = &bu.grafik else {
+                                bu.hata =
+                                    Some("Axis AutoSize grafik yüzeyi bulunamadı".to_string());
+                                cx.notify();
+                                return false;
+                            };
+                            if let Err(hata) = grafik.update(cx, |grafik, cx| {
+                                grafik.canlı_veriyi_x_etiket_çarpanında_ayarla(veri, çarpan, cx)
+                            }) {
+                                bu.hata = Some(format!("Axis AutoSize güncellenemedi: {hata}"));
+                                cx.notify();
+                                return false;
+                            }
+                            bu.autosize_kuvvet = çarpan.log10().round() as i32;
+                            bu.hata = None;
+                            cx.notify();
+                            true
+                        })
+                        .unwrap_or(false);
+                    if !devam {
+                        break;
+                    }
+                }
+            }));
+        } else if kart == KartKimliği::AlignDataCost {
             self.align_data_zamanlayıcısı = Some(cx.spawn(async move |bu, cx| {
                 let mut etkin = false;
                 loop {
@@ -2737,8 +2795,34 @@ impl ChartListesi {
     }
 
     fn autosize_kuvvetini_ayarla(&mut self, kuvvet: i32, cx: &mut Context<Self>) {
-        self.autosize_kuvvet = kuvvet.clamp(0, 9);
-        self.grafiği_yenile(self.nokta_sayısı, cx);
+        let kuvvet = kuvvet.clamp(0, 9);
+        let çarpan = 10_f64.powi(kuvvet);
+        let sonuç = self
+            .axis_autosize_akışı
+            .get_or_insert_with(AxisAutosizeAkışı::yeni)
+            .çarpanı_ayarla(çarpan)
+            .and_then(|(çarpan, veri)| {
+                let grafik =
+                    self.grafik
+                        .as_ref()
+                        .ok_or_else(|| UplotHatası::GeçersizKaynakVeri {
+                            varlık: "AxisAutosizeAkışı",
+                            açıklama: "masaüstü grafik yüzeyi bulunamadı".to_string(),
+                        })?;
+                grafik.update(cx, |grafik, cx| {
+                    grafik.canlı_veriyi_x_etiket_çarpanında_ayarla(veri, çarpan, cx)
+                })
+            });
+        match sonuç {
+            Ok(()) => {
+                self.autosize_kuvvet = kuvvet;
+                self.hata = None;
+            }
+            Err(hata) => {
+                self.hata = Some(format!("Axis AutoSize güncellenemedi: {hata}"));
+            }
+        }
+        cx.notify();
     }
 
     fn latency_histogramını_ayarla(&mut self, kova: u8, ofset: u8, cx: &mut Context<Self>) {
@@ -3574,6 +3658,7 @@ impl Render for ChartListesi {
                 | KartKimliği::DependentScale
                 | KartKimliği::ArcSinhScales
                 | KartKimliği::AxisControl
+                | KartKimliği::AxisAutosize
         ) {
             self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
                 grafik
@@ -6614,6 +6699,20 @@ impl Render for ChartListesi {
                  Maliyet: 500.001 değer bellekte korunur; her piksel kovasında ilk/min/maks/son \
                  adaylarıyla sahne O(plot width) noktaya iner, pointer ana yolu yeniden kurmaz.",
             ),
+            KartKimliği::AxisAutosize => Some(
+                "Amaç: aynı 501 noktalı sinyal 500 ms aralıklarla 10 kat büyürken X son etiketi \
+                 ile Y değerleri için gereken eksen payının kendini yeniden ölçmesini gösterir. \
+                 API: AxisAutosizeAkışı kaynak 1…10⁹ yaşam döngüsünü yürütür; \
+                 Grafik::canlı_veriyi_x_etiket_çarpanında_ayarla aynı Grafik örneğinde setData \
+                 ve X values çarpanını atomik yeniler. Lejant setSeries görünürlüğü tikler \
+                 boyunca korunur. İzleme: büyüklüğü çalışma anında birkaç mertebe değişebilen \
+                 sayaç, kapasite ve finans telemetrisinde etiket kırpılmasını önlemek içindir; \
+                 ortak wheel, seçim, pan ve touch görünümü veri güncellenirken kaybolmaz. \
+                 Maliyet: her tikte 501 yeni değer O(N) üretilir; grafik, olay katmanları ve \
+                 seçenek ağacı yeniden kurulmaz. Y etiketi genişliği ölçülür, sağ pay son gerçek \
+                 X split'inde en fazla üç çevrimde yakınsar; görev 10⁹'da veya karttan çıkışta \
+                 bırakılır.",
+            ),
             KartKimliği::TimeseriesDiscrete => Some(
                 "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
                  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
@@ -6961,6 +7060,7 @@ impl Render for ChartListesi {
                         | KartKimliği::DependentScale
                         | KartKimliği::ArcSinhScales
                         | KartKimliği::AxisControl
+                        | KartKimliği::AxisAutosize
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )
@@ -6978,6 +7078,7 @@ impl Render for ChartListesi {
                         | KartKimliği::DependentScale
                         | KartKimliği::ArcSinhScales
                         | KartKimliği::AxisControl
+                        | KartKimliği::AxisAutosize
                 ),
                 |öğe| {
                 öğe.child(
