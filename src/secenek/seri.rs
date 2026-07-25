@@ -52,6 +52,8 @@ pub struct SeriSeçenekleri {
     pub çubuk_genişlik_oranı: f32,
     pub azami_çubuk_genişliği: f32,
     pub çubuk_hizası: i8,
+    /// uPlot bars `radius: [value, base]` değer ucunun genişliğe göre oranı.
+    pub çubuk_uç_yarıçap_oranı: f32,
     /// Aynı stile sahip çubukları uPlot `Path2D` gibi tek dolgu ve tek
     /// vuruş yolunda toplar.
     pub toplu_çubuk_yolu: bool,
@@ -109,6 +111,7 @@ impl SeriSeçenekleri {
             çubuk_genişlik_oranı: 0.6,
             azami_çubuk_genişliği: f32::INFINITY,
             çubuk_hizası: 0,
+            çubuk_uç_yarıçap_oranı: 0.0,
             toplu_çubuk_yolu: false,
             yüzen_çubuk_üst_serisi: None,
             çubuk_dolguları: Vec::new(),
@@ -284,6 +287,13 @@ impl SeriSeçenekleri {
 
     pub fn çubuk_hizası(mut self, hiza: i8) -> Self {
         self.çubuk_hizası = hiza.clamp(-1, 1);
+        self
+    }
+
+    pub fn çubuk_uç_yarıçap_oranı(mut self, oran: f32) -> Self {
+        if oran.is_finite() {
+            self.çubuk_uç_yarıçap_oranı = oran.clamp(0.0, 0.5);
+        }
         self
     }
 

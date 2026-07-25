@@ -5190,6 +5190,7 @@ impl Grafik {
             } else if seri.toplu_çubuk_yolu
                 && seri.çubuk_dolguları.is_empty()
                 && seri.çubuk_çizgileri.is_empty()
+                && seri.çubuk_uç_yarıçap_oranı <= 0.0
             {
                 toplu_çokgenler.push(vec![
                     Nokta::yeni(x0, çubuk_üst),
@@ -5200,14 +5201,17 @@ impl Grafik {
             } else {
                 let dolgu = seri.çubuk_dolguları.get(indeks).unwrap_or(varsayılan_dolgu);
                 let çizgi = seri.çubuk_çizgileri.get(indeks).unwrap_or(&seri.renk);
-                sahne.ekle(Komut::Dikdörtgen {
-                    konum: Nokta::yeni(x0, çubuk_üst),
-                    genişlik: x1 - x0,
-                    yükseklik: çubuk_alt - çubuk_üst,
-                    dolgu: dolgu.clone(),
-                    çizgi: çizgi.clone(),
-                    kalınlık: seri.çizgi_kalınlığı,
-                });
+                sahne.ekle(çubuk_komutu(
+                    Nokta::yeni(x0, çubuk_üst),
+                    x1 - x0,
+                    çubuk_alt - çubuk_üst,
+                    dolgu.clone(),
+                    çizgi.clone(),
+                    seri.çizgi_kalınlığı,
+                    seri.çubuk_uç_yarıçap_oranı,
+                    crate::ÇubukYönü::Dikey,
+                    üst_değer < taban_değer,
+                ));
             }
         }
         if !toplu_çokgenler.is_empty() {

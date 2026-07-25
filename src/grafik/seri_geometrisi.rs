@@ -165,37 +165,6 @@ pub(super) fn bant_yönünde(fark: f64, yön: crate::BantYönü) -> bool {
     }
 }
 
-pub(super) fn bant_dilim_çokgeni(
-    a: (f32, f32, f32, f64),
-    b: (f32, f32, f32, f64),
-    yön: crate::BantYönü,
-) -> Option<Vec<Nokta>> {
-    let a_geçerli = bant_yönünde(a.3, yön);
-    let b_geçerli = bant_yönünde(b.3, yön);
-    if a_geçerli && b_geçerli {
-        return Some(vec![
-            Nokta::yeni(a.0, a.1),
-            Nokta::yeni(b.0, b.1),
-            Nokta::yeni(b.0, b.2),
-            Nokta::yeni(a.0, a.2),
-        ]);
-    }
-    if a_geçerli == b_geçerli {
-        return None;
-    }
-    let payda = a.3 - b.3;
-    if !payda.is_finite() || payda.abs() <= f64::EPSILON {
-        return None;
-    }
-    let oran = (a.3 / payda).clamp(0.0, 1.0) as f32;
-    let kesişim = Nokta::yeni(a.0 + (b.0 - a.0) * oran, a.1 + (b.1 - a.1) * oran);
-    if a_geçerli {
-        Some(vec![Nokta::yeni(a.0, a.1), kesişim, Nokta::yeni(a.0, a.2)])
-    } else {
-        Some(vec![kesişim, Nokta::yeni(b.0, b.1), Nokta::yeni(b.0, b.2)])
-    }
-}
-
 fn monoton_eğri_noktaları(noktalar: &[Nokta]) -> Vec<Nokta> {
     if noktalar.len() < 3 {
         return noktalar.to_vec();

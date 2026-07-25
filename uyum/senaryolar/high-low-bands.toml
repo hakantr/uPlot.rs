@@ -1,9 +1,10 @@
 id = "high-low-bands"
 kaynak = "../uPlot/demos/high-low-bands.html"
-fixture = "src/kart/high_low_bands.rs#high_low_bands_kartı"
+fixture = "src/kart/high_low_bands.rs#high_low_bands_kartları"
 device_pixel_ratio = 1
 alt_grafik_sayısı = 12
-kanıt_tohumu = "0x48494241"
+kaynak_sırası_tek_kartta = true
+rastgele_normalizasyon = "kaynak çalıştırmasından alınmış deterministik örnek"
 
 [veri]
 nokta_sayıları = [365, 101, 101, 10, 4, 83, 3, 6, 6, 363, 363, 42]
@@ -17,6 +18,15 @@ null_boşlukları_birleştir = false
 çubuk_oranı = 0.6
 azami_çubuk_piksel = [100, 200]
 milisaniye_zaman_ekseni = true
+bağımsız_görünüm_geçmişi = true
+ortak_veri_çiftleri = [
+  "differing-paths/bars",
+  "inverted-lines/inverted-bars",
+  "unaligned-bars/unaligned-stroke",
+]
+kaynak_nokta_görünürlüğü = true
+yuvarlak_bar_dış_uçları = true
+bant_çokgenleri_koşu_başına_birleştirilir = true
 
 [kanıt]
 masaüstü = "uygulamalar/masaustu/src/masaustu.rs"

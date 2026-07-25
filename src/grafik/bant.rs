@@ -1,6 +1,7 @@
 use super::{
     Grafik,
-    seri_geometrisi::{bant_dilim_çokgeni, bant_yönünde, seri_ara_değeri},
+    seri_geometrisi::{bant_yönünde, seri_ara_değeri},
+    çubuk_komutu,
 };
 use crate::cizim::kirpma::çokgeni_dikdörtgene_kırp;
 use crate::{Aralık, Komut, Nokta, Sahne};
@@ -86,6 +87,8 @@ impl Grafik {
                         .iter()
                         .map(|(_, _, alt)| Some(*alt))
                         .collect::<Vec<_>>();
+                    let mut örnekler =
+                        Vec::with_capacity(koşu.len().saturating_sub(1).saturating_mul(8) + 1);
                     for indeks in 0..koşu.len().saturating_sub(1) {
                         let Some((x0, _, _)) = koşu.get(indeks).copied() else {
                             continue;
@@ -96,8 +99,8 @@ impl Grafik {
                         if x1 < x_aralığı.en_az || x0 > x_aralığı.en_çok {
                             continue;
                         }
-                        let mut örnekler = Vec::with_capacity(9);
-                        for adım in 0..=8 {
+                        let ilk_adım = usize::from(!örnekler.is_empty());
+                        for adım in ilk_adım..=8 {
                             let t = adım as f64 / 8.0;
                             let x_değeri = x0 + (x1 - x0) * t;
                             let Some(üst_değer) =
@@ -129,28 +132,23 @@ impl Grafik {
                                 );
                             örnekler.push((x, üst_y, alt_y, üst_değer - alt_değer));
                         }
-                        for çift in örnekler.windows(2) {
-                            let Some(a) = çift.first().copied() else {
-                                continue;
-                            };
-                            let Some(b) = çift.get(1).copied() else {
-                                continue;
-                            };
-                            if let Some(çokgen) = bant_dilim_çokgeni(a, b, bant.yön) {
-                                let kırpılmış =
-                                    çokgeni_dikdörtgene_kırp(&çokgen, sol, sağ, üst, alt);
-                                if kırpılmış.len() >= 3 {
-                                    çokgenler.push(kırpılmış);
-                                }
-                            }
+                    }
+                    for çokgen in bant_örneklerini_birleştir(&örnekler, bant.yön) {
+                        let kırpılmış = çokgeni_dikdörtgene_kırp(&çokgen, sol, sağ, üst, alt);
+                        if kırpılmış.len() >= 3 {
+                            çokgenler.push(kırpılmış);
                         }
                     }
                 }
                 çokgenler
             };
             if !çokgenler.is_empty() {
+                let yuvarlatılmış_çubuk_bandı = üst_ayarları.çizim_türü
+                    == crate::SeriÇizimTürü::Çubuk
+                    && üst_ayarları.çubuk_uç_yarıçap_oranı > 0.0;
                 let çubuk_kenarları = (üst_ayarları.çizim_türü == crate::SeriÇizimTürü::Çubuk
-                    && üst_ayarları.çizgi_kalınlığı > 0.0)
+                    && üst_ayarları.çizgi_kalınlığı > 0.0
+                    && !yuvarlatılmış_çubuk_bandı)
                     .then(|| {
                         çokgenler
                             .iter()
@@ -162,10 +160,39 @@ impl Grafik {
                             })
                             .collect::<Vec<_>>()
                     });
-                sahne.ekle(Komut::Alan {
-                    çokgenler,
-                    dolgu: bant.dolgu.clone(),
-                });
+                if yuvarlatılmış_çubuk_bandı {
+                    for çokgen in &çokgenler {
+                        let Some(ilk) = çokgen.first().copied() else {
+                            continue;
+                        };
+                        let Some(karşı) = çokgen.get(2).copied() else {
+                            continue;
+                        };
+                        let x0 = ilk.x.min(karşı.x);
+                        let x1 = ilk.x.max(karşı.x);
+                        let y0 = ilk.y.min(karşı.y);
+                        let y1 = ilk.y.max(karşı.y);
+                        if x1 <= x0 || y1 <= y0 {
+                            continue;
+                        }
+                        sahne.ekle(çubuk_komutu(
+                            Nokta::yeni(x0, y0),
+                            x1 - x0,
+                            y1 - y0,
+                            bant.dolgu.clone(),
+                            üst_ayarları.renk.clone(),
+                            üst_ayarları.çizgi_kalınlığı,
+                            üst_ayarları.çubuk_uç_yarıçap_oranı,
+                            crate::ÇubukYönü::Dikey,
+                            ilk.y > karşı.y,
+                        ));
+                    }
+                } else {
+                    sahne.ekle(Komut::Alan {
+                        çokgenler,
+                        dolgu: bant.dolgu.clone(),
+                    });
+                }
                 if let Some(parçalar) = çubuk_kenarları {
                     sahne.ekle(Komut::Yol {
                         parçalar,
@@ -240,5 +267,88 @@ impl Grafik {
             }
         }
         çokgenler
+    }
+}
+
+type BantÖrneği = (f32, f32, f32, f64);
+
+fn bant_örneklerini_birleştir(
+    örnekler: &[BantÖrneği], yön: crate::BantYönü
+) -> Vec<Vec<Nokta>> {
+    let mut sonuç = Vec::new();
+    let mut üst_yolu = Vec::new();
+    let mut alt_yolu = Vec::new();
+    for çift in örnekler.windows(2) {
+        let Some(a) = çift.first().copied() else {
+            continue;
+        };
+        let Some(b) = çift.get(1).copied() else {
+            continue;
+        };
+        let a_geçerli = bant_yönünde(a.3, yön);
+        let b_geçerli = bant_yönünde(b.3, yön);
+        match (a_geçerli, b_geçerli) {
+            (true, true) => {
+                if üst_yolu.is_empty() {
+                    üst_yolu.push(Nokta::yeni(a.0, a.1));
+                    alt_yolu.push(Nokta::yeni(a.0, a.2));
+                }
+                üst_yolu.push(Nokta::yeni(b.0, b.1));
+                alt_yolu.push(Nokta::yeni(b.0, b.2));
+            }
+            (true, false) => {
+                if üst_yolu.is_empty() {
+                    üst_yolu.push(Nokta::yeni(a.0, a.1));
+                    alt_yolu.push(Nokta::yeni(a.0, a.2));
+                }
+                if let Some((üst_kesişim, alt_kesişim)) = bant_kesişimi(a, b) {
+                    üst_yolu.push(üst_kesişim);
+                    alt_yolu.push(alt_kesişim);
+                }
+                bant_koşusunu_bitir(&mut sonuç, &mut üst_yolu, &mut alt_yolu);
+            }
+            (false, true) => {
+                bant_koşusunu_bitir(&mut sonuç, &mut üst_yolu, &mut alt_yolu);
+                if let Some((üst_kesişim, alt_kesişim)) = bant_kesişimi(a, b) {
+                    üst_yolu.push(üst_kesişim);
+                    alt_yolu.push(alt_kesişim);
+                }
+                üst_yolu.push(Nokta::yeni(b.0, b.1));
+                alt_yolu.push(Nokta::yeni(b.0, b.2));
+            }
+            (false, false) => {
+                bant_koşusunu_bitir(&mut sonuç, &mut üst_yolu, &mut alt_yolu);
+            }
+        }
+    }
+    bant_koşusunu_bitir(&mut sonuç, &mut üst_yolu, &mut alt_yolu);
+    sonuç
+}
+
+fn bant_kesişimi(a: BantÖrneği, b: BantÖrneği) -> Option<(Nokta, Nokta)> {
+    let payda = a.3 - b.3;
+    if !payda.is_finite() || payda.abs() <= f64::EPSILON {
+        return None;
+    }
+    let oran = (a.3 / payda).clamp(0.0, 1.0) as f32;
+    let x = a.0 + (b.0 - a.0) * oran;
+    Some((
+        Nokta::yeni(x, a.1 + (b.1 - a.1) * oran),
+        Nokta::yeni(x, a.2 + (b.2 - a.2) * oran),
+    ))
+}
+
+fn bant_koşusunu_bitir(
+    sonuç: &mut Vec<Vec<Nokta>>,
+    üst_yolu: &mut Vec<Nokta>,
+    alt_yolu: &mut Vec<Nokta>,
+) {
+    if üst_yolu.len() >= 2 && alt_yolu.len() >= 2 {
+        let mut çokgen = std::mem::take(üst_yolu);
+        çokgen.extend(alt_yolu.drain(..).rev());
+        sonuç.push(çokgen);
+    } else {
+        üst_yolu.clear();
+        alt_yolu.clear();
     }
 }

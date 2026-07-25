@@ -134,7 +134,7 @@ pub use grid_over_series::{
 };
 pub use high_low_bands::{
     HIGH_LOW_BANDS_KANIT_TOHUMU, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ, HighLowBandsÖrneği,
-    high_low_bands_kartı,
+    high_low_bands_kartları, high_low_bands_kartı,
 };
 pub use latency_heatmap::{
     LATENCY_HEATMAP_KANIT_TOHUMU, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,

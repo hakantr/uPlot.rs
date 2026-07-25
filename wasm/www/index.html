@@ -340,6 +340,17 @@
       font-size: 11px; }
     .gradients-grafik svg { display: block; width: 800px !important;
       height: 600px !important; }
+    #chart.high-low-bands-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .high-low-bands-yığın { min-width: min-content; display: grid;
+      align-items: flex-start; gap: 16px; }
+    .high-low-bands-grafik { position: relative; width: max-content;
+      border: 1px solid #e5e7eb; border-radius: 8px;
+      background: #fff; overflow: hidden; }
+    .high-low-bands-grafik > h3 { margin: 7px 10px 2px; color: #111827;
+      font-size: 13px; }
+    .high-low-bands-grafik > p { margin: 0 10px 5px; color: #6b7280;
+      font-size: 11px; }
+    .high-low-bands-grafik svg { display: block; max-width: none; }
     #chart.bars-grouped-stacked-yüzeyi { display: block; min-width: 0; overflow: auto;
                                          place-items: unset; padding: 8px;
                                          box-sizing: border-box; }
@@ -2836,36 +2847,32 @@
       },
     };
 
-    for (const [kimlik, başlık, durum, seriler] of [
-      ["high-low-bands-temps-year", "Temps · 365 days", "365 gün · null boşlukları", [["Low", "#008000"], ["High", "#ff0000"], ["Avg", "#0000ff"]]],
-      ["high-low-bands-differing-paths", "Differing Paths", "101 nokta · line/step/spline", [["linear", "#008000"], ["stepBefore", "#ff00ff"], ["spline", "#0000ff"], ["stepAfter", "#ff0000"]]],
-      ["high-low-bands-bars", "Bars", "101 nokta · 4 çubuk bandı", [["bars 1", "#008000"], ["bars 2", "#ff00ff"], ["bars 3", "#0000ff"], ["bars 4", "#ff0000"]]],
-      ["high-low-bands-simple", "High/Low Band", "10 nokta · basit bant", [["High", "#ff0000"], ["Low", "#0000ff"]]],
-      ["high-low-bands-crossing", "Crossing High/Low Band", "4 nokta · kesişen bant", [["High", "#ff0000"], ["Low", "#0000ff"]]],
-      ["high-low-bands-temps-partial", "Temps · partial data", "83 nokta · eksik uçlar", [["Low", "#008000"], ["High", "#ff0000"], ["Avg", "#0000ff"]]],
-      ["high-low-bands-average-only", "Temps · average only", "3 nokta · yalnız ortalama", [["Low", "#008000"], ["High", "#ff0000"], ["Avg", "#0000ff"]]],
-      ["high-low-bands-inverted-lines", "Inverted bands · lines", "6 nokta · iki yön", [["-2", "#ff0000"], ["-1", "#ffa500"], ["1", "#0000ff"], ["2", "#008000"]]],
-      ["high-low-bands-inverted-bars", "Inverted bands · bars", "6 nokta · ters çubuk bantları", [["-2", "#ff0000"], ["-1", "#ffa500"], ["1", "#0000ff"], ["2", "#008000"]]],
-      ["high-low-bands-unaligned-bars", "Unaligned bars + band clipping issue", "363 seyrek nokta", [["Alt", "#ff0000"], ["Üst", "#0000ff"]]],
-      ["high-low-bands-unaligned-stroke", "Unaligned bars · stroke + zero-alpha fill", "363 seyrek nokta · vuruş", [["Alt", "#ff0000"], ["Üst", "#0000ff"]]],
-      ["high-low-bands-very-thin-bars", "Very thin bars", "42 zaman noktası · ms", [["Alt", "#ff0000"], ["Üst", "#0000ff"]]],
-    ]) {
-      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>high-low-bands</small><div class="durum">${durum}</div>
-        </article>`);
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/high-low-bands.html">high-low-bands.html</a>
-          <br>12 resmî alt grafik; yönlü bant, null kırpması, line/step/spline/bar yolları ve aynı veri setleri Rust çekirdeğinde çözülür.`,
-        tanım: () => high_low_bands_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/high_low_bands.rs",
-        seriler: seriler.map(([etiket, renk]) => ({ etiket, renk })),
-        yardım: "Bant dolguları yalnız geçerli yönde ve iki sınır serisinin ortak veri aralıklarında çizilir",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="high-low-bands" aria-current="false" tabindex="0">
+        <strong>High/Low Bands · 12 related surfaces</strong><small>high-low-bands</small>
+        <div class="durum">ortak veri · line/step/spline/bar · bağımsız görünüm</div>
+      </article>`);
+    kartlar["high-low-bands"] = {
+      başlık: "High/Low Bands · 12 related surfaces",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/high-low-bands.html">high-low-bands.html</a>
+        <br>Resmî sayfadaki 12 bağımsız yüzey kaynak sırasıyla tek kartta gösterilir. Eş veri kullanan line/bar çiftleri aynı immutable veri deposunu paylaşır; yönlü bant, null kırpması, nokta görünürlüğü ve yuvarlak bar uçları Rust çekirdeğinde çözülür.`,
+      tanım: () => high_low_bands_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/high_low_bands.rs",
+      seriler: [
+        { etiket: "Low", renk: "#008000" },
+        { etiket: "High", renk: "#ff0000" },
+        { etiket: "Avg", renk: "#0000ff" },
+      ],
+      yardım: "12 kaynak yüzeyi bağımsız zoom/pan geçmişini korur; aynı girdinin farklı path sonuçları yan yana incelenebilir",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Aynı alt/üst sınır verisinin line, step, spline ve bar yollarında bant dolgusu üretmesini; kesişim, ters yön, null koşusu ve hizalanmamış veri farklarını tek sayfada karşılaştırır.",
+        api: "high_low_bands_kartları() 12 Grafik tanımını kaynak sırasıyla verir. Eş veri kullanan üç yüzey çifti aynı HizalıVeri Arc deposunu paylaşır; SeriBandı yönü, kaynak points seçimi ve bar dış-uç yarıçapı seçeneklerde taşınır.",
+        izleme: "Sıcaklık aralığı, güven bandı, min/max telemetri ve gecikme zarfı gibi alt/üst eşikli zaman serilerini boş veri koşularını yanlış birleştirmeden göstermek için uygundur.",
+        maliyet: "Kesintisiz bant aralıkları yüzlerce küçük dörtgen yerine tek birleşik çokgen koşusu olarak çizilir. Pointer yalnız etkin yüzeyin cursor/lejant katmanını günceller; diğer 11 retained yüzey yeniden üretilmez.",
+      },
+    };
 
     for (const [kimlik, başlık, durum, seriler] of [
       ["latency-heatmap-raw", "Latency Heatmap (~35k)", "100 zaman sütunu · ham örnekler", []],
@@ -3019,6 +3026,8 @@
     let focusCursorEtkinİndeks = 0;
     let gradientsOturumları = [];
     let gradientsEtkinİndeks = 0;
+    let highLowBandsOturumları = [];
+    let highLowBandsEtkinİndeks = 0;
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
     let timeseriesDiscreteEtkinİndeks = 0;
@@ -3208,6 +3217,95 @@
         seriler: [{ etiket: "Tank 1", renk: "#00ff00" }],
       },
     ];
+    const highLowBandsYüzeyleri = [
+      {
+        kimlik: "high-low-bands-temps-year",
+        başlık: "Temps",
+        açıklama: "365 gün · kaynak null koşuları ve °F ekseni",
+        boyut: [1920, 600],
+        seriler: [["Low", "#008000"], ["High", "#ff0000"], ["Avg", "#0000ff"]],
+      },
+      {
+        kimlik: "high-low-bands-differing-paths",
+        başlık: "Differing Paths",
+        açıklama: "101 nokta · linear / stepBefore / spline / stepAfter",
+        boyut: [1920, 600],
+        seriler: [["linear", "#008000"], ["stepBefore", "#ff00ff"], ["spline", "#0000ff"], ["stepAfter", "#ff0000"]],
+      },
+      {
+        kimlik: "high-low-bands-bars",
+        başlık: "Bars",
+        açıklama: "Differing Paths ile aynı immutable 101×4 veri · kaynak points:false ve yuvarlak kırmızı dış uç",
+        boyut: [1920, 600],
+        seriler: [["bars 1", "#008000"], ["bars 2", "#ff00ff"], ["bars 3", "#0000ff"], ["bars 4", "#ff0000"]],
+      },
+      {
+        kimlik: "high-low-bands-simple",
+        başlık: "High/Low Band",
+        açıklama: "10 nokta · başlıksız kaynak yüzeyi · basit yönlü bant",
+        boyut: [1920, 600],
+        seriler: [["High", "#ff0000"], ["Low", "#0000ff"]],
+      },
+      {
+        kimlik: "high-low-bands-crossing",
+        başlık: "Crossing High/Low Band",
+        açıklama: "4 nokta · başlıksız kaynak yüzeyi · üç kesin kesişim",
+        boyut: [1920, 600],
+        seriler: [["High", "#ff0000"], ["Low", "#0000ff"]],
+      },
+      {
+        kimlik: "high-low-bands-temps-partial",
+        başlık: "Temps",
+        açıklama: "83 nokta · alt/üst serilerin eksik uçları",
+        boyut: [1920, 600],
+        seriler: [["Low", "#008000"], ["High", "#ff0000"], ["Avg", "#0000ff"]],
+      },
+      {
+        kimlik: "high-low-bands-average-only",
+        başlık: "Temps",
+        açıklama: "3 nokta · alt/üst tümü null, yalnız ortalama çizgisi",
+        boyut: [1920, 600],
+        seriler: [["Low", "#008000"], ["High", "#ff0000"], ["Avg", "#0000ff"]],
+      },
+      {
+        kimlik: "high-low-bands-inverted-lines",
+        başlık: "Inverted bands",
+        açıklama: "6 nokta · iki bant yönü · line yolları",
+        boyut: [1920, 600],
+        seriler: [["-2", "#ff0000"], ["-1", "#ffa500"], ["1", "#0000ff"], ["2", "#008000"]],
+      },
+      {
+        kimlik: "high-low-bands-inverted-bars",
+        başlık: "Inverted bands",
+        açıklama: "Aynı immutable 6×4 veri · bar yolları ve yuvarlak dış uçlar",
+        boyut: [1920, 600],
+        seriler: [["-2", "#ff0000"], ["-1", "#ffa500"], ["1", "#0000ff"], ["2", "#008000"]],
+      },
+      {
+        kimlik: "high-low-bands-unaligned-bars",
+        başlık: "Unaligned bars + band clipping issue",
+        açıklama: "363 seyrek nokta · fill-only bar sınırları",
+        boyut: [400, 300],
+        seriler: [["Alt", "#ff0000"], ["Üst", "#0000ff"]],
+      },
+      {
+        kimlik: "high-low-bands-unaligned-stroke",
+        başlık: "Unaligned bars + band clipping issue (with stroke, also 0-alpha fill)",
+        açıklama: "Aynı immutable 363 nokta · stroke ve sıfır-alfa fill",
+        boyut: [400, 300],
+        seriler: [["Alt", "#ff0000"], ["Üst", "#0000ff"]],
+      },
+      {
+        kimlik: "high-low-bands-very-thin-bars",
+        başlık: "Very thin bars",
+        açıklama: "42 milisaniye noktası · sıkıştırılmış ince bar",
+        boyut: [800, 300],
+        seriler: [["Alt", "#ff0000"], ["Üst", "#0000ff"]],
+      },
+    ].map(yüzey => ({
+      ...yüzey,
+      seriler: yüzey.seriler.map(([etiket, renk]) => ({ etiket, renk })),
+    }));
     const nearestNonNullYüzeyleri = [
       {
         kimlik: "nearest-non-null-x-value",
@@ -3344,6 +3442,14 @@
           || !gradientsOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !gradientsOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "high-low-bands") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !highLowBandsOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !highLowBandsOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -6113,6 +6219,92 @@
       kontrolleriGüncelle();
     }
 
+    function highLowBandsYüzeyiniÇiz(indeks) {
+      const tanım = highLowBandsYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-high-low-bands-index="${indeks}"]`);
+      const yüzeyOturumu = highLowBandsOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const [genişlik, yükseklik] = tanım.boyut;
+      const şablon = document.createElement("template");
+      şablon.innerHTML = yüzeyOturumu.svg(genişlik, yükseklik).trim();
+      const yeniSvg = şablon.content.querySelector("svg");
+      let svg = yüzey.querySelector("svg");
+      if (svg && yeniSvg) {
+        svgYüzeyiniYerindeGüncelle(svg, yeniSvg);
+      } else {
+        yüzey.innerHTML = `
+          <h3>${tanım.başlık}</h3>
+          <p>${tanım.açıklama}</p>
+          ${yüzeyOturumu.svg(genişlik, yükseklik)}
+          <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
+            ${tanım.seriler.map((seri, seriİndeksi) => `
+              <span><i class="örnek" style="border-color:${seri.renk};background:${seri.renk}"></i>
+                ${seri.etiket || `Seri ${seriİndeksi + 1}`}: <b id="seri-değeri-${seriİndeksi}">--</b></span>
+            `).join("")}
+          </div>
+        `;
+        svg = yüzey.querySelector("svg");
+      }
+      if (!svg) return;
+      svg.style.width = `${genişlik}px`;
+      svg.style.height = `${yükseklik}px`;
+      if (!svg.querySelector(":scope > #etkileşim")) {
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)"
+              stroke="#3b82f6"/>
+            <line id="imleç-x" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            <line id="imleç-y" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            ${tanım.seriler.map((seri, seriİndeksi) =>
+              `<circle id="imleç-nokta-${seriİndeksi}" visibility="hidden" r="2.5"
+                fill="${seri.renk}"/>`
+            ).join("")}
+          </g>`);
+      }
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      svg.dataset.etkileşim = "independent-high-low-bands";
+      yüzey.onpointerenter = () => {
+        highLowBandsEtkinİndeks = indeks;
+        oturum = highLowBandsOturumları[indeks] ?? null;
+        kartlar["high-low-bands"].seriler = tanım.seriler;
+        kontrolleriGüncelle();
+      };
+      yüzey.onpointerleave = () => {
+        svg.querySelectorAll("#imleç-x, #imleç-y, [id^='imleç-nokta-']")
+          .forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+      };
+    }
+
+    function highLowBandsÇiz() {
+      const ilkKurulum = !chart.classList.contains("high-low-bands-yüzeyi")
+        || chart.querySelectorAll(".high-low-bands-grafik").length
+          !== highLowBandsYüzeyleri.length;
+      if (ilkKurulum) {
+        chart.className = "high-low-bands-yüzeyi";
+        chart.innerHTML = `<div class="high-low-bands-yığın">
+          ${highLowBandsYüzeyleri.map((_, indeks) =>
+            `<article class="high-low-bands-grafik"
+              data-high-low-bands-index="${indeks}"></article>`
+          ).join("")}
+        </div>`;
+        highLowBandsYüzeyleri.forEach((_, indeks) =>
+          highLowBandsYüzeyiniÇiz(indeks)
+        );
+      } else {
+        highLowBandsYüzeyiniÇiz(highLowBandsEtkinİndeks);
+      }
+      oturum = highLowBandsOturumları[highLowBandsEtkinİndeks]
+        ?? highLowBandsOturumları[0]
+        ?? null;
+      kartlar["high-low-bands"].seriler =
+        highLowBandsYüzeyleri[highLowBandsEtkinİndeks]?.seriler
+        ?? highLowBandsYüzeyleri[0].seriler;
+      kontrolleriGüncelle();
+    }
+
     function scatterYüzeyiniÇiz(indeks) {
       const tanım = scatterYüzeyleri[indeks];
       const yüzey = chart.querySelector(`[data-scatter-index="${indeks}"]`);
@@ -7188,6 +7380,10 @@
         gradientsÇiz();
         return;
       }
+      if (aktifKart === "high-low-bands") {
+        highLowBandsÇiz();
+        return;
+      }
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
         return;
@@ -7303,6 +7499,7 @@
       chart.classList.remove("data-smoothing-yüzeyi");
       chart.classList.remove("focus-cursor-yüzeyi");
       chart.classList.remove("gradients-yüzeyi");
+      chart.classList.remove("high-low-bands-yüzeyi");
       chart.classList.remove("soft-minmax-yüzeyi");
       chart.classList.remove("sparklines-bars-yüzeyi");
       chart.classList.remove("sparklines-yüzeyi");
@@ -7629,6 +7826,10 @@
         ? chart.querySelector(
             `[data-gradients-index="${gradientsEtkinİndeks}"] svg`
           )
+        : aktifKart === "high-low-bands"
+        ? chart.querySelector(
+            `[data-high-low-bands-index="${highLowBandsEtkinİndeks}"] svg`
+          )
         : aktifKart === "scatter"
         ? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"] svg`)
         : aktifKart === "box-whisker"
@@ -7756,6 +7957,11 @@
           ?? chart.querySelector(
             `[data-gradients-index="${gradientsEtkinİndeks}"]`
           )
+        : aktifKart === "high-low-bands"
+        ? olay.target?.closest?.(".high-low-bands-grafik")
+          ?? chart.querySelector(
+            `[data-high-low-bands-index="${highLowBandsEtkinİndeks}"]`
+          )
         : aktifKart === "scatter"
         ? olay.target?.closest?.(".scatter-grafik")
           ?? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"]`)
@@ -7838,6 +8044,13 @@
           gradientsEtkinİndeks = indeks;
           oturum = gradientsOturumları[indeks];
           kartlar["gradients"].seriler = gradientsYüzeyleri[indeks].seriler;
+        }
+      } else if (aktifKart === "high-low-bands" && bağımsızYüzey) {
+        const indeks = Number(bağımsızYüzey.dataset.highLowBandsIndex);
+        if (Number.isInteger(indeks) && highLowBandsOturumları[indeks]) {
+          highLowBandsEtkinİndeks = indeks;
+          oturum = highLowBandsOturumları[indeks];
+          kartlar["high-low-bands"].seriler = highLowBandsYüzeyleri[indeks].seriler;
         }
       }
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
@@ -9054,6 +9267,11 @@
           if (yüzey.onceki_gorunum()) gradientsYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "high-low-bands") {
+        highLowBandsOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.onceki_gorunum()) highLowBandsYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.onceki_gorunum()) syncCursorYüzeyiÇiz(indeks);
@@ -9151,6 +9369,11 @@
           if (yüzey.tam_gorunum()) gradientsYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "high-low-bands") {
+        highLowBandsOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.tam_gorunum()) highLowBandsYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.tam_gorunum()) syncCursorYüzeyiÇiz(indeks);
@@ -9244,6 +9467,10 @@
         );
       } else if (aktifKart === "gradients") {
         gradientsOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "high-low-bands") {
+        highLowBandsOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "sync-cursor") {
@@ -9459,6 +9686,13 @@
           gradientsEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "gradients";
         }
+        if (kimlik !== "high-low-bands" && kimlik.startsWith("high-low-bands-")) {
+          const indeks = highLowBandsYüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === kimlik
+          );
+          highLowBandsEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "high-low-bands";
+        }
         if (["months-no-leap", "months-leap", "months-russian"].includes(kimlik)) {
           kimlik = "months";
         }
@@ -9586,6 +9820,7 @@
           dataSmoothingOturumları,
           focusCursorOturumları,
           gradientsOturumları,
+          highLowBandsOturumları,
           syncCursorOturumları,
           timeseriesDiscreteOturumları,
           timezonesDstOturumları,
@@ -9627,6 +9862,9 @@
         gradientsOturumları.forEach(yüzey => yüzey.free());
         gradientsOturumları = [];
         gradientsEtkinİndeks = 0;
+        highLowBandsOturumları.forEach(yüzey => yüzey.free());
+        highLowBandsOturumları = [];
+        highLowBandsEtkinİndeks = 0;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
         syncCursorOturumları = [];
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
@@ -9846,6 +10084,22 @@
           });
           oturum = gradientsOturumları[gradientsEtkinİndeks]
             ?? gradientsOturumları[0]
+            ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "high-low-bands") {
+          const istenenİndeks = highLowBandsYüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === oturumKimliği
+          );
+          highLowBandsEtkinİndeks = istenenİndeks >= 0 ? istenenİndeks : 0;
+          highLowBandsOturumları = highLowBandsYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = highLowBandsOturumları[highLowBandsEtkinİndeks]
+            ?? highLowBandsOturumları[0]
             ?? null;
           çiz();
           return;

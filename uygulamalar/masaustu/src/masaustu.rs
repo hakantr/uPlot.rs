@@ -55,23 +55,23 @@ use uplot_rs::{
     cursor_bind_kartı, cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartları,
     custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı, draw_hooks_kartı,
     focus_cursor_kartları, focus_cursor_kartı, gradients_kartları, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
-    missing_data_kartları, missing_data_null_kartı, months_artık_yılsız_kartı, months_kartları,
-    multi_bars_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
-    ortak_kart_etkileşimleri, path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları,
-    pixel_align_kartı, points_kartları, points_kartı, resize_kartı, scale_padding_kartı,
-    scales_dir_ori_kartları, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
-    sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları,
-    sparklines_bars_kartı, sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı,
-    stacked_series_kartları, stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı,
-    svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı,
-    thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı, time_periods_kartları,
-    time_periods_kartı, timeline_discrete_kartları, timeline_discrete_kartı,
-    timeseries_discrete_kartları, timeseries_discrete_kartı, timezones_dst_kartları,
-    timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı, trendlines_kartı,
-    update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
-    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği, İmleçBağSeçenekleri,
+    grid_over_series_kartı, high_low_bands_kartları, high_low_bands_kartı, latency_heatmap_kartı,
+    line_paths_kartı, log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı,
+    measure_datums_kartı, missing_data_kartları, missing_data_null_kartı,
+    months_artık_yılsız_kartı, months_kartları, multi_bars_kartı, nearest_non_null_kartı,
+    nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartları,
+    path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı, points_kartları, points_kartı,
+    resize_kartı, scale_padding_kartı, scales_dir_ori_kartları, scales_dir_ori_kartı,
+    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı,
+    sparklines_bars_kartları, sparklines_bars_kartı, sparklines_kartları, sparklines_kartı,
+    sparse_kartları, sparse_kartı, stacked_series_kartları, stacked_series_kartı,
+    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
+    sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
+    thin_bars_stroke_fill_kartı, time_periods_kartları, time_periods_kartı,
+    timeline_discrete_kartları, timeline_discrete_kartı, timeseries_discrete_kartları,
+    timeseries_discrete_kartı, timezones_dst_kartları, timezones_dst_kartı, tooltips_closest_kartı,
+    tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı,
+    y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği, İmleçBağSeçenekleri,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -122,7 +122,7 @@ enum KartKimliği {
     FocusCursor,
     Gradients,
     GridOverSeries,
-    HighLowBands(HighLowBandsÖrneği),
+    HighLowBands,
     LatencyHeatmap(LatencyHeatmapÖrneği),
     LinePaths(LinePathsÖrneği),
     LogScales(LogScalesÖrneği),
@@ -192,7 +192,7 @@ impl KartKimliği {
             Self::FocusCursor => "Focus Cursor · 4 related surfaces",
             Self::Gradients => "Gradients · 5 related surfaces",
             Self::GridOverSeries => "Grid Over Series",
-            Self::HighLowBands(örnek) => örnek.başlık(),
+            Self::HighLowBands => "High/Low Bands · 12 related surfaces",
             Self::LatencyHeatmap(örnek) => örnek.başlık(),
             Self::LinePaths(örnek) => örnek.başlık(),
             Self::LogScales(örnek) => örnek.başlık(),
@@ -324,7 +324,7 @@ impl KartKimliği {
             Self::FocusCursor => "focus-cursor.html · cursor.focus + setSeries",
             Self::Gradients => "gradients.html · scaleGradient + cursor point colors",
             Self::GridOverSeries => "grid-over-series.html · drawOrder: series, axes",
-            Self::HighLowBands(_) => "high-low-bands.html · yönlü line/step/spline/bar bantları",
+            Self::HighLowBands => "high-low-bands.html · 12 ilişkili line/step/spline/bar yüzeyi",
             Self::LatencyHeatmap(_) => {
                 "latency-heatmap.html · rand.js · draw hook, mode-2 ve histogram kovaları"
             }
@@ -416,7 +416,7 @@ impl KartKimliği {
             Self::FocusCursor => FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ,
             Self::Gradients => GRADIENTS_KART_TANIM_ÖRNEĞİ,
             Self::GridOverSeries => GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ,
-            Self::HighLowBands(_) => HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
+            Self::HighLowBands => HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
             Self::LatencyHeatmap(_) => LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ,
             Self::LinePaths(_) => LINE_PATHS_KART_TANIM_ÖRNEĞİ,
             Self::LogScales(_) => LOG_SCALES_KART_TANIM_ÖRNEĞİ,
@@ -486,7 +486,7 @@ impl KartKimliği {
             Self::FocusCursor => "src/kart/focus_cursor.rs",
             Self::Gradients => "src/kart/gradients.rs",
             Self::GridOverSeries => "src/kart/grid_over_series.rs",
-            Self::HighLowBands(_) => "src/kart/high_low_bands.rs",
+            Self::HighLowBands => "src/kart/high_low_bands.rs",
             Self::LatencyHeatmap(_) => "src/kart/latency_heatmap.rs",
             Self::LinePaths(_) => "src/kart/line_paths.rs",
             Self::LogScales(_) => "src/kart/log_scales.rs",
@@ -552,6 +552,7 @@ pub struct ChartListesi {
     data_smoothing_ölçümleri_ms: Vec<(SmoothingÖrneği, f64)>,
     focus_cursor_grafikleri: Vec<(FocusÖrneği, Entity<GpuiGrafik>)>,
     gradients_grafikleri: Vec<(GradientÖrneği, Entity<GpuiGrafik>)>,
+    high_low_bands_grafikleri: Vec<(HighLowBandsÖrneği, Entity<GpuiGrafik>)>,
     pixel_align_akışı: Option<PixelAlignAkışı>,
     pixel_align_son_kare: Option<Instant>,
     sine_akışı: Option<SineAkışı>,
@@ -664,6 +665,12 @@ impl ChartListesi {
                 }
             } else if bu.aktif_kart == KartKimliği::Gradients {
                 for (_, grafik) in &bu.gradients_grafikleri {
+                    grafik.update(cx, |grafik, cx| {
+                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+                    });
+                }
+            } else if bu.aktif_kart == KartKimliği::HighLowBands {
+                for (_, grafik) in &bu.high_low_bands_grafikleri {
                     grafik.update(cx, |grafik, cx| {
                         grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
                     });
@@ -864,6 +871,7 @@ impl ChartListesi {
             data_smoothing_ölçümleri_ms: Vec::new(),
             focus_cursor_grafikleri: Vec::new(),
             gradients_grafikleri: Vec::new(),
+            high_low_bands_grafikleri: Vec::new(),
             pixel_align_akışı: None,
             pixel_align_son_kare: None,
             sine_akışı: None,
@@ -1388,6 +1396,43 @@ impl ChartListesi {
         }
         self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
         self.gradients_grafikleri = yüzeyler;
+        self.hata = None;
+        cx.notify();
+    }
+
+    fn high_low_bands_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
+        let sonuç = high_low_bands_kartları();
+        let Ok(kartlar) = sonuç else {
+            self.hata = sonuç
+                .err()
+                .map(|hata| format!("High/Low Bands ailesi oluşturulamadı: {hata}"));
+            self.grafik = None;
+            self.high_low_bands_grafikleri.clear();
+            cx.notify();
+            return;
+        };
+        let mut yüzeyler = Vec::with_capacity(kartlar.len());
+        for (örnek, seçenekler, veri) in kartlar {
+            let mut grafik = match Grafik::yeni(seçenekler, veri) {
+                Ok(grafik) => grafik,
+                Err(hata) => {
+                    self.hata = Some(format!("{} yüzeyi oluşturulamadı: {hata}", örnek.başlık()));
+                    self.grafik = None;
+                    self.high_low_bands_grafikleri.clear();
+                    cx.notify();
+                    return;
+                }
+            };
+            grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+            let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                bu.standart_grafik_olayını_işle(olay, cx);
+            })
+            .detach();
+            yüzeyler.push((örnek, grafik));
+        }
+        self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
+        self.high_low_bands_grafikleri = yüzeyler;
         self.hata = None;
         cx.notify();
     }
@@ -2615,6 +2660,7 @@ impl ChartListesi {
         self.data_smoothing_ölçümleri_ms.clear();
         self.focus_cursor_grafikleri.clear();
         self.gradients_grafikleri.clear();
+        self.high_low_bands_grafikleri.clear();
         self.scales_dir_ori_grafikleri.clear();
         self.scatter_grafikleri.clear();
         self.bars_grouped_stacked_grafikleri.clear();
@@ -2676,6 +2722,15 @@ impl ChartListesi {
             self.pixel_align_grafikleri.clear();
             self.points_grafikleri.clear();
             self.gradients_yüzeylerini_oluştur(cx);
+        } else if kart == KartKimliği::HighLowBands {
+            self.sync_cursor_grafikleri.clear();
+            self.timeseries_discrete_grafikleri.clear();
+            self.nearest_non_null_grafikleri.clear();
+            self.months_grafikleri.clear();
+            self.path_gap_clip_grafikleri.clear();
+            self.pixel_align_grafikleri.clear();
+            self.points_grafikleri.clear();
+            self.high_low_bands_yüzeylerini_oluştur(cx);
         } else if kart == KartKimliği::SyncCursor {
             self.sync_cursor_grubu = SyncCursorGrubu::yeni();
             self.timeseries_discrete_grafikleri.clear();
@@ -3579,7 +3634,7 @@ fn grafik_oluştur(
         KartKimliği::FocusCursor => focus_cursor_kartı(FocusÖrneği::İmleç),
         KartKimliği::Gradients => gradients_kartı(GradientÖrneği::YatayÇizgi),
         KartKimliği::GridOverSeries => grid_over_series_kartı(),
-        KartKimliği::HighLowBands(örnek) => high_low_bands_kartı(örnek),
+        KartKimliği::HighLowBands => high_low_bands_kartı(HighLowBandsÖrneği::YıllıkSıcaklık),
         KartKimliği::LatencyHeatmap(örnek) => {
             latency_heatmap_kartı(örnek, f64::from(latency_kova), f64::from(latency_ofset))
         }
@@ -3785,9 +3840,9 @@ impl Render for ChartListesi {
             KartKimliği::GridOverSeries => {
                 "30 nokta × 3 dolgulu seri · ızgara üst katmanda".to_string()
             }
-            KartKimliği::HighLowBands(örnek) => {
-                let uzunluk = örnek.nokta_sayısı();
-                format!("{uzunluk} nokta · yönlü ve boşluğa duyarlı bant")
+            KartKimliği::HighLowBands => {
+                "12 bağımsız yüzey · 3 ortak immutable veri çifti · line/step/spline/bar"
+                    .to_string()
             }
             KartKimliği::LatencyHeatmap(LatencyHeatmapÖrneği::Ham) => {
                 "100 zaman sütunu · yaklaşık 35 bin ham örnek".to_string()
@@ -3961,6 +4016,15 @@ impl Render for ChartListesi {
                 .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
             yakınlaştırılmış = self
                 .gradients_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        } else if aktif_kart == KartKimliği::HighLowBands {
+            geri_var = self
+                .high_low_bands_grafikleri
+                .iter()
+                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
+            yakınlaştırılmış = self
+                .high_low_bands_grafikleri
                 .iter()
                 .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
         } else if aktif_kart == KartKimliği::SyncCursor {
@@ -4326,21 +4390,21 @@ impl Render for ChartListesi {
                     bu.kartı_seç(KartKimliği::AddDelSeries, cx);
                 })),
             )
-            .children(HighLowBandsÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::HighLowBands(örnek);
+            .child({
+                let kart = KartKimliği::HighLowBands;
                 katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
+                    "high-low-bands",
+                    "High/Low Bands · 12 related surfaces",
                     "high-low-bands",
                     aktif_kart == kart,
-                    "Yönlü bant · boşluk ve yol kırpması",
+                    "Ortak veri çiftleri · line/step/spline/bar · null/kesişim",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            }))
+            })
             .children(LatencyHeatmapÖrneği::TÜMÜ.into_iter().map(|örnek| {
                 let kart = KartKimliği::LatencyHeatmap(örnek);
                 katalog_kartı(
@@ -5560,6 +5624,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.gradients_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
                             }
+                        } else if bu.aktif_kart == KartKimliği::HighLowBands {
+                            for (_, grafik) in &bu.high_low_bands_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.önceki_görünüm(cx));
+                            }
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             for (_, grafik) in &bu.sync_cursor_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5708,6 +5776,10 @@ impl Render for ChartListesi {
                             for (_, grafik) in &bu.gradients_grafikleri {
                                 grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
                             }
+                        } else if bu.aktif_kart == KartKimliği::HighLowBands {
+                            for (_, grafik) in &bu.high_low_bands_grafikleri {
+                                grafik.update(cx, |grafik, cx| grafik.tam_görünüm(cx));
+                            }
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             for (_, grafik) in &bu.sync_cursor_grafikleri {
                                 grafik.update(cx, |grafik, cx| {
@@ -5845,6 +5917,8 @@ impl Render for ChartListesi {
                             bu.focus_cursor_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::Gradients {
                             bu.gradients_yüzeylerini_oluştur(cx);
+                        } else if bu.aktif_kart == KartKimliği::HighLowBands {
+                            bu.high_low_bands_yüzeylerini_oluştur(cx);
                         } else if bu.aktif_kart == KartKimliği::SyncCursor {
                             bu.sync_cursor_grubu = SyncCursorGrubu::yeni();
                             bu.sync_cursor_yüzeylerini_oluştur(cx);
@@ -6072,6 +6146,48 @@ impl Render for ChartListesi {
                             .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik))
                     }),
                 ))
+        } else if aktif_kart == KartKimliği::HighLowBands {
+            let yüzey = |örnek| {
+                self.high_low_bands_grafikleri
+                    .iter()
+                    .find(|(kimlik, _)| *kimlik == örnek)
+                    .map(|(_, grafik)| grafik.clone())
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(6_400.0))
+                .overflow_y_scroll()
+                .p_2()
+                .children(HighLowBandsÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    let (genişlik, yükseklik) = match örnek {
+                        HighLowBandsÖrneği::HizalanmamışÇubuklar
+                        | HighLowBandsÖrneği::HizalanmamışÇubukVuruşu => (400.0, 300.0),
+                        HighLowBandsÖrneği::ÇokİnceÇubuklar => (800.0, 300.0),
+                        _ => (1_920.0, 600.0),
+                    };
+                    div()
+                        .id(SharedString::from(format!(
+                            "high-low-bands-{}-surface",
+                            örnek.kimlik()
+                        )))
+                        .flex_none()
+                        .w_full()
+                        .h(px(yükseklik + 30.0))
+                        .mb_3()
+                        .overflow_x_scroll()
+                        .child(
+                            div()
+                                .text_sm()
+                                .font_weight(FontWeight::SEMIBOLD)
+                                .child(örnek.başlık()),
+                        )
+                        .child(
+                            div()
+                                .w(px(genişlik))
+                                .h(px(yükseklik))
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                        )
+                }))
         } else if aktif_kart == KartKimliği::SyncCursor {
             let cpu = sync_yüzeyi(SyncCursorÖrneği::Cpu);
             let ram = sync_yüzeyi(SyncCursorÖrneği::Ram);
@@ -7731,6 +7847,20 @@ impl Render for ChartListesi {
                  yüzeyde çizilir. Eksen komutları geçici Vec ayırmadan yerinde rotate ile seri \
                  katmanının arkasından önüne alınır; pointer yalnız hafif cursor/lejant \
                  katmanını günceller.",
+            ),
+            KartKimliği::HighLowBands => Some(
+                "Amaç: resmî high-low-bands.html sayfasındaki 12 bağımsız yüzeyi kaynak \
+                 sırasıyla birlikte gösterir; farklı path builder, yönlü/kesişen bant, null \
+                 koşusu, unaligned ve milisaniyelik ince bar farkları aynı sayfada görülebilir. \
+                 API: high_low_bands_kartları tüm yüzeyleri tek grupta döndürür; Differing \
+                 Paths/Bars, inverted lines/bars ve iki unaligned yüzey immutable HizalıVeri \
+                 depolarını paylaşır. SeriBandı yön ve dolgu sınırlarını; SeriSeçenekleri point \
+                 görünürlüğü, bar genişliği, azami genişlik ve değer ucu yarıçapını taşır. \
+                 İzleme: min/max/ortalama sıcaklık, güven aralığı ve alt-üst telemetri \
+                 sınırlarını boşlukları yanlış köprülemeden okumak içindir. Maliyet: örneklenen \
+                 eğri bant dilimleri komşu dörtgenler yerine sürekli çokgen koşularında \
+                 birleştirilir; pointer yalnız etkin yüzeyin hafif cursor/lejant katmanını \
+                 günceller, ana geometri yalnız veri/ölçek/boyut/görünürlük değişiminde çizilir.",
             ),
             KartKimliği::DrawHooks => Some(
                 "Amaç: uPlot yaşam döngüsünün drawClear, drawSeries, özel points.show ve draw \

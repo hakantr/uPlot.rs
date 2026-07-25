@@ -3877,9 +3877,22 @@ mod testler {
         for örnek in HighLowBandsÖrneği::TÜMÜ {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             let Ok(oturum) = oturum else { continue };
-            assert!(oturum.svg(960, 400).contains(örnek.başlık()));
+            let svg = oturum.svg(960, 400);
+            assert!(svg.contains("<svg"));
+            assert!(svg.contains("<path") || svg.contains("<rect"));
         }
-        assert!(high_low_bands_kart_tanim_ornegi().contains("FarklıYollar"));
+        let çubuklar = KartOturumu::yeni("high-low-bands-bars", 100);
+        let Ok(çubuklar) = çubuklar else { return };
+        let çubuk_svg = çubuklar.svg(1920, 600);
+        assert!(çubuk_svg.contains("<rect"));
+        assert_eq!(çubuk_svg.matches("<circle").count(), 0);
+        assert!(high_low_bands_kart_tanim_ornegi().contains("high_low_bands_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(web.matches("data-kart=\"high-low-bands\"").count(), 1);
+        assert!(!web.contains("data-kart=\"high-low-bands-bars\""));
+        assert!(web.contains("const highLowBandsYüzeyleri"));
+        assert!(web.contains("function highLowBandsÇiz()"));
+        assert!(web.contains("data-high-low-bands-index"));
     }
 
     #[test]

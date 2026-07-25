@@ -10,10 +10,10 @@ use crate::{
 
 const KAYNAK_JSON: &str = include_str!("veri/high_low_bands.json");
 pub const HIGH_LOW_BANDS_KANIT_TOHUMU: u32 = 0x4849_4241;
-pub const HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) =
-    high_low_bands_kartı(HighLowBandsÖrneği::FarklıYollar)?;
-// Bant yönü, boşluk kırpması ve yol geometrisi çekirdekte çözülür.
-let grafik = Grafik::yeni(seçenekler, veri)?;"##;
+pub const HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in high_low_bands_kartları()? {
+    // Bant yönü, boşluk kırpması ve yol geometrisi çekirdekte çözülür.
+    let grafik = Grafik::yeni(seçenekler, veri)?;
+}"##;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HighLowBandsÖrneği {
@@ -110,6 +110,23 @@ impl HighLowBandsÖrneği {
             .copied()
             .unwrap_or_default()
     }
+
+    pub fn durum(self) -> &'static str {
+        match self {
+            Self::YıllıkSıcaklık => "365 gün · null boşlukları",
+            Self::FarklıYollar => "101 nokta · line/step/spline",
+            Self::Çubuklar => "aynı 101×4 veri · bar + yuvarlak dış uç",
+            Self::BasitBant => "10 nokta · basit bant",
+            Self::KesişenBant => "4 nokta · üç kesin kesişim",
+            Self::KısmiSıcaklık => "83 nokta · eksik uçlar",
+            Self::YalnızOrtalama => "3 nokta · yalnız ortalama",
+            Self::TersÇizgiler => "6 nokta · iki bant yönü",
+            Self::TersÇubuklar => "aynı 6×4 veri · yuvarlak dış uçlar",
+            Self::HizalanmamışÇubuklar => "363 seyrek nokta · fill",
+            Self::HizalanmamışÇubukVuruşu => "aynı 363 nokta · stroke",
+            Self::ÇokİnceÇubuklar => "42 milisaniye noktası · ince bar",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -119,6 +136,7 @@ struct KaynakKök {
 
 #[derive(Debug, Clone, Deserialize)]
 struct KaynakGrafik {
+    title: String,
     width: u32,
     height: u32,
     x_time: bool,
@@ -136,6 +154,7 @@ struct KaynakSeri {
     width: f32,
     dash: Option<[f32; 2]>,
     path: KaynakYol,
+    points: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -166,6 +185,68 @@ fn kaynak_grafikler() -> Result<&'static [KaynakGrafik], UplotHatası> {
     }
 }
 
+fn kaynak_verileri() -> Result<&'static [HizalıVeri], UplotHatası> {
+    static VERİLER: OnceLock<Result<Vec<HizalıVeri>, String>> = OnceLock::new();
+    match VERİLER.get_or_init(|| {
+        let kaynaklar = kaynak_grafikler().map_err(|hata| hata.to_string())?;
+        let mut veriler = Vec::<HizalıVeri>::with_capacity(kaynaklar.len());
+        for (indeks, kaynak) in kaynaklar.iter().enumerate() {
+            if let Some(önceki) = kaynaklar
+                .get(..indeks)
+                .and_then(|öncekiler| öncekiler.iter().position(|aday| aday.data == kaynak.data))
+                .and_then(|önceki| veriler.get(önceki))
+            {
+                veriler.push(önceki.clone());
+                continue;
+            }
+            let x_kaynağı = kaynak
+                .data
+                .first()
+                .ok_or_else(|| "X veri sütunu bulunamadı".to_string())?;
+            let x = x_kaynağı
+                .iter()
+                .enumerate()
+                .map(|(indeks, değer)| {
+                    değer.ok_or_else(|| format!("{indeks}. X değeri sonlu değil"))
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            let seriler = kaynak
+                .data
+                .iter()
+                .skip(1)
+                .cloned()
+                .map(|mut seri| {
+                    seri.resize(x.len(), None);
+                    seri
+                })
+                .collect::<Vec<_>>();
+            veriler.push(HizalıVeri::yeni(x, seriler).map_err(|hata| hata.to_string())?);
+        }
+        Ok(veriler)
+    }) {
+        Ok(veriler) => Ok(veriler),
+        Err(açıklama) => Err(UplotHatası::GeçersizKaynakVeri {
+            varlık: "src/kart/veri/high_low_bands.json",
+            açıklama: açıklama.clone(),
+        }),
+    }
+}
+
+/// Resmî sayfadaki on iki bağımsız yüzeyi kaynak sırasıyla döndürür.
+///
+/// Differing Paths/Bars, inverted lines/bars ve iki unaligned yüzey aynı
+/// immutable aligned veri depolarını paylaşır.
+pub fn high_low_bands_kartları()
+-> Result<Vec<(HighLowBandsÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    HighLowBandsÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| {
+            let (seçenekler, veri) = high_low_bands_kartı(örnek)?;
+            Ok((örnek, seçenekler, veri))
+        })
+        .collect()
+}
+
 pub fn high_low_bands_kartı(
     örnek: HighLowBandsÖrneği,
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
@@ -175,27 +256,15 @@ pub fn high_low_bands_kartı(
             açıklama: format!("{}. kaynak grafik bulunamadı", örnek.indeks()),
         }
     })?;
-    let x_kaynağı = kaynak
-        .data
-        .first()
-        .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
-    let x = x_kaynağı
-        .iter()
-        .enumerate()
-        .map(|(indeks, değer)| değer.ok_or(UplotHatası::SonluOlmayanX { indeks }))
-        .collect::<Result<Vec<_>, _>>()?;
-    let seriler = kaynak
-        .data
-        .iter()
-        .skip(1)
-        .cloned()
-        .map(|mut seri| {
-            seri.resize(x.len(), None);
-            seri
-        })
-        .collect::<Vec<_>>();
+    let veri =
+        kaynak_verileri()?
+            .get(örnek.indeks())
+            .cloned()
+            .ok_or(UplotHatası::YetersizVeri {
+                uzunluk: örnek.indeks(),
+            })?;
     let mut seçenekler = GrafikSeçenekleri::yeni(kaynak.width, kaynak.height)?
-        .başlık(örnek.başlık())
+        .başlık(&kaynak.title)
         .x_zaman(kaynak.x_time)
         .x_zaman_milisaniye(kaynak.milliseconds)
         .etkileşimler(ortak_kart_etkileşimleri());
@@ -207,21 +276,26 @@ pub fn high_low_bands_kartı(
     ) {
         seçenekler = seçenekler.y_ölçeği(YÖlçekSeçenekleri::yeni("y").birim("°F"));
     }
-    for kaynak_seri in &kaynak.series {
-        seçenekler = seçenekler.seri(kaynak_serisini_oluştur(kaynak_seri));
+    for (seri_indeksi, kaynak_seri) in kaynak.series.iter().enumerate() {
+        seçenekler = seçenekler.seri(kaynak_serisini_oluştur(örnek, seri_indeksi, kaynak_seri));
     }
     for kaynak_bant in &kaynak.bands {
         seçenekler = seçenekler.bant(kaynak_bandı_oluştur(kaynak, kaynak_bant)?);
     }
-    Ok((seçenekler, HizalıVeri::yeni(x, seriler)?))
+    Ok((seçenekler, veri))
 }
 
-fn kaynak_serisini_oluştur(kaynak: &KaynakSeri) -> SeriSeçenekleri {
+fn kaynak_serisini_oluştur(
+    örnek: HighLowBandsÖrneği,
+    seri_indeksi: usize,
+    kaynak: &KaynakSeri,
+) -> SeriSeçenekleri {
     let mut seri = SeriSeçenekleri::yeni(&kaynak.label)
         .renk(css_rengini_hex(
             kaynak.stroke.as_deref().unwrap_or("#00000000"),
         ))
-        .çizgi_kalınlığı(kaynak.width);
+        .çizgi_kalınlığı(kaynak.width)
+        .noktaları_göster(kaynak.points);
     if let Some(dolgu) = kaynak.fill.as_deref() {
         seri = seri.dolgu(css_rengini_hex(dolgu));
     }
@@ -234,7 +308,13 @@ fn kaynak_serisini_oluştur(kaynak: &KaynakSeri) -> SeriSeçenekleri {
         "spline" => seri.eğri(),
         "bars" => {
             let [oran, azami] = kaynak.path.size.unwrap_or([0.6, 100.0]);
-            seri.çubuk(true).çubuk_boyutu(oran, azami)
+            let yuvarlatılmış = (örnek == HighLowBandsÖrneği::Çubuklar && seri_indeksi == 3)
+                || (örnek == HighLowBandsÖrneği::TersÇubuklar && matches!(seri_indeksi, 0 | 3));
+            seri = seri.çubuk(true).çubuk_boyutu(oran, azami);
+            if yuvarlatılmış {
+                seri = seri.çubuk_uç_yarıçap_oranı(0.3);
+            }
+            seri
         }
         _ => seri,
     }
@@ -309,17 +389,44 @@ mod testler {
     #[test]
     fn on_iki_kaynak_grafiğin_veri_ve_bant_sayıları_korunur() -> Result<(), UplotHatası> {
         let beklenen = [365, 101, 101, 10, 4, 83, 3, 6, 6, 363, 363, 42];
-        for (örnek, uzunluk) in HighLowBandsÖrneği::TÜMÜ.into_iter().zip(beklenen) {
-            let (seçenekler, veri) = high_low_bands_kartı(örnek)?;
+        let kartlar = high_low_bands_kartları()?;
+        assert_eq!(kartlar.len(), 12);
+        assert_eq!(
+            kartlar
+                .iter()
+                .map(|(örnek, _, _)| *örnek)
+                .collect::<Vec<_>>(),
+            HighLowBandsÖrneği::TÜMÜ
+        );
+        for ((örnek, seçenekler, veri), uzunluk) in kartlar.into_iter().zip(beklenen) {
             assert_eq!(veri.uzunluk(), uzunluk);
             assert!(!seçenekler.bantlar.is_empty());
-            let bant_alanı_var = Grafik::yeni(seçenekler, veri)?
-                .çiz()
-                .komutlar()
-                .iter()
-                .any(|komut| matches!(komut, Komut::Alan { .. }));
-            assert_eq!(bant_alanı_var, örnek != HighLowBandsÖrneği::YalnızOrtalama);
+            let bant_geometrisi_var =
+                Grafik::yeni(seçenekler, veri)?
+                    .çiz()
+                    .komutlar()
+                    .iter()
+                    .any(|komut| {
+                        matches!(
+                            komut,
+                            Komut::Alan { .. } | Komut::YuvarlatılmışDikdörtgen { .. }
+                        )
+                    });
+            assert_eq!(
+                bant_geometrisi_var,
+                örnek != HighLowBandsÖrneği::YalnızOrtalama
+            );
         }
+        let (_, farklı) = high_low_bands_kartı(HighLowBandsÖrneği::FarklıYollar)?;
+        let (_, çubuklar) = high_low_bands_kartı(HighLowBandsÖrneği::Çubuklar)?;
+        let (_, ters_çizgiler) = high_low_bands_kartı(HighLowBandsÖrneği::TersÇizgiler)?;
+        let (_, ters_çubuklar) = high_low_bands_kartı(HighLowBandsÖrneği::TersÇubuklar)?;
+        let (_, hizalanmamış) = high_low_bands_kartı(HighLowBandsÖrneği::HizalanmamışÇubuklar)?;
+        let (_, hizalanmamış_vuruş) =
+            high_low_bands_kartı(HighLowBandsÖrneği::HizalanmamışÇubukVuruşu)?;
+        assert!(farklı.aynı_depolamayı_paylaşıyor(&çubuklar));
+        assert!(ters_çizgiler.aynı_depolamayı_paylaşıyor(&ters_çubuklar));
+        assert!(hizalanmamış.aynı_depolamayı_paylaşıyor(&hizalanmamış_vuruş));
         Ok(())
     }
 
@@ -340,6 +447,27 @@ mod testler {
         );
         let (ters, _) = high_low_bands_kartı(HighLowBandsÖrneği::TersÇizgiler)?;
         assert!(ters.bantlar.iter().any(|bant| bant.yön == BantYönü::EnÇoğa));
+        let (çubuklar, veri) = high_low_bands_kartı(HighLowBandsÖrneği::Çubuklar)?;
+        assert!(
+            çubuklar
+                .seriler
+                .iter()
+                .all(|seri| seri.noktaları_göster == Some(false))
+        );
+        assert_eq!(
+            çubuklar
+                .seriler
+                .last()
+                .map(|seri| seri.çubuk_uç_yarıçap_oranı),
+            Some(0.3)
+        );
+        assert!(
+            Grafik::yeni(çubuklar, veri)?
+                .çiz()
+                .komutlar()
+                .iter()
+                .any(|komut| matches!(komut, Komut::YuvarlatılmışDikdörtgen { .. }))
+        );
         Ok(())
     }
 
@@ -359,7 +487,43 @@ mod testler {
                 _ => None,
             })
             .sum::<usize>();
-        assert!(çokgen_sayısı > 500);
+        assert!(
+            çokgen_sayısı > 1 && çokgen_sayısı < 50,
+            "birleştirilmiş bant çokgeni sayısı: {çokgen_sayısı}"
+        );
+        let (_, veri) = high_low_bands_kartı(HighLowBandsÖrneği::YıllıkSıcaklık)?;
+        let low = veri.seriler().first().ok_or(UplotHatası::YetersizVeri {
+            uzunluk: veri.seriler().len(),
+        })?;
+        let high = veri.seriler().get(1).ok_or(UplotHatası::YetersizVeri {
+            uzunluk: veri.seriler().len(),
+        })?;
+        let avg = veri.seriler().get(2).ok_or(UplotHatası::YetersizVeri {
+            uzunluk: veri.seriler().len(),
+        })?;
+        assert!(
+            low.get(50..60)
+                .is_some_and(|koşu| koşu.iter().all(Option::is_none))
+        );
+        assert!(
+            high.get(50..60)
+                .is_some_and(|koşu| koşu.iter().all(Option::is_none))
+        );
+        assert!(
+            low.get(100..110)
+                .is_some_and(|koşu| koşu.iter().all(Option::is_none))
+        );
+        assert!(
+            high.get(200..210)
+                .is_some_and(|koşu| koşu.iter().all(Option::is_none))
+        );
+        assert!(
+            avg.get(300..310)
+                .is_some_and(|koşu| koşu.iter().all(Option::is_none))
+        );
+        assert_eq!(low.last(), Some(&None));
+        assert_eq!(high.last(), Some(&None));
+        assert_eq!(avg.last(), Some(&Some(38.0)));
         Ok(())
     }
 }

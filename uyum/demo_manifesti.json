@@ -1778,7 +1778,7 @@
         { "yol": "src/paths/monotoneCubic.js", "sha256": "913743f98c9ff49607c8c384050da65eb9cd6a9e48409993c1f37a799ca88b15" },
         { "yol": "src/paths/bars.js", "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56" }
       ],
-      "fixture": "src/kart/high_low_bands.rs#high_low_bands_kartı",
+      "fixture": "src/kart/high_low_bands.rs#high_low_bands_kartları",
       "örnek": "examples/high_low_bands.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -1802,9 +1802,12 @@
       "sahip_faz": 1,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "twelve-source-subcharts", "source-exact-embedded-datasets", "fixed-proof-seed",
+        "one-card-twelve-independent-source-surfaces", "source-exact-embedded-datasets",
+        "deterministic-captured-random-sample", "shared-immutable-source-data-pairs",
         "directional-band-clipping", "crossing-band-splitting", "null-gap-band-clipping",
         "linear-step-before-step-after-spline", "series-bars-with-size-and-max-width",
+        "source-point-visibility", "source-value-end-bar-radius",
+        "merged-continuous-band-polygons",
         "unaligned-and-very-thin-bar-regressions", "milliseconds-time-axis",
         "gpui-wasm-catalog-parity", "common-interaction-profile", "panic-free-source-parser"
       ],
