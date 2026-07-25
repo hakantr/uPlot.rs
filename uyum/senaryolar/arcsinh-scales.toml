@@ -5,28 +5,38 @@ viewport = [1600, 600]
 device_pixel_ratio = 1
 durum = "etkileşimli"
 
-[veri]
-nokta_sayısı = 111
+["veri"]
+"nokta_sayısı" = 111
 en_az = -1000.0
 merkez = 0.0
-en_çok = 1000.0
-magnitüdler = [-3, -2, -1, 0, 1, 2]
+"en_çok" = 1000.0
+"magnitüdler" = [-3, -2, -1, 0, 1, 2]
 
 [arcsinh]
-dağılım = 4
-başlangıç_eşiği = 1.0
-eşik_kuvvetleri = [-3, -2, -1, 0, 1, 2, 3]
+"dağılım" = 4
+"başlangıç_eşiği" = 1.0
+"eşik_kuvvetleri" = [-3, -2, -1, 0, 1, 2, 3]
 sahiplik = "çekirdek"
+"başlangıç_aralığı" = [-1000.0, 1000.0]
+ana_etiketler = [-1000.0, -100.0, -10.0, -1.0, 0.0, 1.0, 10.0, 100.0, 1000.0]
+"ara_bölmeler" = "her decade içinde 1..9"
+"otomatik_aralık" = "rangeAsinh fullMags"
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
-tekerlek_x_yakınlaştır = true
-seçim_yakınlaştır = true
-çift_tıkla_tam_görünüm = true
-dokunma_xy_yakınlaştır = true
-boşluk_sol_sürükleme_taşıma = true
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
+"tekerlek_x_yakınlaştır" = true
+"seçim_yakınlaştır" = true
+"çift_tıkla_tam_görünüm" = true
+"dokunma_xy_yakınlaştır" = true
+"boşluk_sol_sürükleme_taşıma" = true
+"nonlinear_ters_dönüşüm" = "asinh/sinh"
+set_series = true
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+[performans]
+"eşik_değişimi" = "O(N + tick)"
+"pointer_ana_yolu_yeniden_çizmez" = true
+
+["kanıt"]
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg = "target/arcsinh-scales.svg"

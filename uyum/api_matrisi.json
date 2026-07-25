@@ -1084,6 +1084,30 @@
       "test": "src/kart/dependent_scale.rs + wasm/src/lib.rs"
     },
     {
+      "kaynak_yolu": "Scale.distr=4 / Scale.asinh / rangeAsinh",
+      "rust_karşılığı": "YÖlçekDağılımı::ArcSinh + arcsinh_otomatik_aralık",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/arcsinh_scales.rs"
+    },
+    {
+      "kaynak_yolu": "asinhAxisSplits + log10AxisValsFilt",
+      "rust_karşılığı": "grafik::arcsinh_bölmeleri + ArcSinh magnitude etiket filtresi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/arcsinh_scales.rs + wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "valToPos / posToVal for nonlinear Y interactions",
+      "rust_karşılığı": "etkilesim::y_aralığını_dönüştür / y_aralığını_geri_dönüştür",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/arcsinh_scales.rs"
+    },
+    {
+      "kaynak_yolu": "runtime Scale.asinh mutation + redraw(true,true)",
+      "rust_karşılığı": "Grafik::y_arcsinh_eşiği_ayarla + GPUI/WASM eşik kontrolleri",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/arcsinh_scales.rs + wasm/src/lib.rs"
+    },
+    {
       "kaynak_yolu": "hooks.drawClear annotation visibility filter",
       "rust_karşılığı": "Grafik annotation görünürlük ve kırpma katmanı",
       "durum": "tam_kanıtlı",

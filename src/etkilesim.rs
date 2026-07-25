@@ -1,7 +1,9 @@
 use std::collections::VecDeque;
 use web_time::{Duration, Instant};
 
-use crate::{Aralık, EtkileşimSeçenekleri, TekerlekEkseni, TekerlekKipi, UplotHatası};
+use crate::{
+    Aralık, EtkileşimSeçenekleri, TekerlekEkseni, TekerlekKipi, UplotHatası, YÖlçekDağılımı,
+};
 
 #[derive(Clone, Copy, Default, PartialEq)]
 struct Görünüm {
@@ -184,6 +186,7 @@ impl EtkileşimDenetleyicisi {
         ))
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn tekerlek(
         &mut self,
         yatay_odak_oranı: f64,
@@ -192,6 +195,7 @@ impl EtkileşimDenetleyicisi {
         ham_delta: f64,
         platform_hassas: bool,
         eksen: TekerlekEkseni,
+        y_dağılımı: YÖlçekDağılımı,
     ) -> Result<bool, UplotHatası> {
         if !self.ayarlar.tekerlek_etkileşimi {
             return Ok(false);
@@ -247,12 +251,21 @@ impl EtkileşimDenetleyicisi {
             mevcut_x
         };
         let mevcut_y = self.görünüm.y.unwrap_or(görünür_y);
-        let y_odak = mevcut_y.en_az
-            + (1.0 - dikey_odak_oranı.clamp(0.0, 1.0)) * (mevcut_y.en_çok - mevcut_y.en_az);
         let y = if matches!(eksen, TekerlekEkseni::İkisi | TekerlekEkseni::Y) {
-            mevcut_y.uyarlanabilir_tekerlek_yakınlaştır(
-                self.tam_y, y_odak, delta, hassas, tekerlek,
-            )?
+            let dönüştürülmüş = y_aralığını_dönüştür(mevcut_y, y_dağılımı).unwrap_or(mevcut_y);
+            let dönüştürülmüş_tam =
+                y_aralığını_dönüştür(self.tam_y, y_dağılımı).unwrap_or(self.tam_y);
+            let y_odak = dönüştürülmüş.en_az
+                + (1.0 - dikey_odak_oranı.clamp(0.0, 1.0))
+                    * (dönüştürülmüş.en_çok - dönüştürülmüş.en_az);
+            let yeni = dönüştürülmüş.uyarlanabilir_tekerlek_yakınlaştır(
+                dönüştürülmüş_tam,
+                y_odak,
+                delta,
+                hassas,
+                tekerlek,
+            )?;
+            y_aralığını_geri_dönüştür(yeni, y_dağılımı).unwrap_or(yeni)
         } else {
             mevcut_y
         };
@@ -314,6 +327,7 @@ impl EtkileşimDenetleyicisi {
         &mut self,
         yatay_fark_oranı: f64,
         dikey_fark_oranı: f64,
+        y_dağılımı: YÖlçekDağılımı,
     ) -> Result<bool, UplotHatası> {
         if !yatay_fark_oranı.is_finite() || !dikey_fark_oranı.is_finite() {
             return Err(UplotHatası::GeçersizAralık {
@@ -329,11 +343,14 @@ impl EtkileşimDenetleyicisi {
             self.tam_x,
             -yatay_fark_oranı * (başlangıç.x.en_çok - başlangıç.x.en_az),
         )?;
+        let dönüştürülmüş = y_aralığını_dönüştür(başlangıç.y, y_dağılımı).unwrap_or(başlangıç.y);
+        let dönüştürülmüş_tam = y_aralığını_dönüştür(self.tam_y, y_dağılımı).unwrap_or(self.tam_y);
         let y = kaydır(
-            başlangıç.y,
-            self.tam_y,
-            dikey_fark_oranı * (başlangıç.y.en_çok - başlangıç.y.en_az),
+            dönüştürülmüş,
+            dönüştürülmüş_tam,
+            dikey_fark_oranı * (dönüştürülmüş.en_çok - dönüştürülmüş.en_az),
         )?;
+        let y = y_aralığını_geri_dönüştür(y, y_dağılımı).unwrap_or(y);
         let yeni = Görünüm {
             x: (x != self.tam_x).then_some(x),
             y: (y != self.tam_y).then_some(y),
@@ -374,6 +391,7 @@ impl EtkileşimDenetleyicisi {
         yatay_odak_oranı: f64,
         dikey_odak_oranı: f64,
         çarpan: f64,
+        y_dağılımı: YÖlçekDağılımı,
     ) -> Result<bool, UplotHatası> {
         if !self.dokunma_sürüyor
             || !yatay_odak_oranı.is_finite()
@@ -384,15 +402,20 @@ impl EtkileşimDenetleyicisi {
             return Ok(false);
         }
         let x = odakta_yakınlaştır(self.görünür_x(), self.tam_x, yatay_odak_oranı, çarpan)?;
+        let mevcut_y = self
+            .görünüm
+            .y
+            .or(self.dokunma_başlangıç_y)
+            .unwrap_or(self.tam_y);
+        let dönüştürülmüş = y_aralığını_dönüştür(mevcut_y, y_dağılımı).unwrap_or(mevcut_y);
+        let dönüştürülmüş_tam = y_aralığını_dönüştür(self.tam_y, y_dağılımı).unwrap_or(self.tam_y);
         let y = odakta_yakınlaştır(
-            self.görünüm
-                .y
-                .or(self.dokunma_başlangıç_y)
-                .unwrap_or(self.tam_y),
-            self.tam_y,
+            dönüştürülmüş,
+            dönüştürülmüş_tam,
             1.0 - dikey_odak_oranı,
             çarpan,
         )?;
+        let y = y_aralığını_geri_dönüştür(y, y_dağılımı).unwrap_or(y);
         let yeni = Görünüm {
             x: (x != self.tam_x).then_some(x),
             y: (y != self.tam_y).then_some(y),
@@ -428,6 +451,56 @@ impl EtkileşimDenetleyicisi {
         self.son_tekerlek = None;
         self.tekerlek_hareketi_kaydedildi = false;
         self.birikmiş_hassas_delta = 0.0;
+    }
+}
+
+pub(crate) fn y_aralığını_dönüştür(
+    aralık: Aralık,
+    dağılım: YÖlçekDağılımı,
+) -> Option<Aralık> {
+    Aralık::yeni(
+        y_değerini_dönüştür(aralık.en_az, dağılım)?,
+        y_değerini_dönüştür(aralık.en_çok, dağılım)?,
+    )
+    .ok()
+}
+
+pub(crate) fn y_aralığını_geri_dönüştür(
+    aralık: Aralık,
+    dağılım: YÖlçekDağılımı,
+) -> Option<Aralık> {
+    Aralık::yeni(
+        y_değerini_geri_dönüştür(aralık.en_az, dağılım)?,
+        y_değerini_geri_dönüştür(aralık.en_çok, dağılım)?,
+    )
+    .ok()
+}
+
+pub(crate) fn y_değerini_dönüştür(
+    değer: f64, dağılım: YÖlçekDağılımı
+) -> Option<f64> {
+    match dağılım {
+        YÖlçekDağılımı::Doğrusal => Some(değer),
+        YÖlçekDağılımı::Logaritmik { taban } if değer > 0.0 && taban > 1.0 => {
+            Some(değer.log(taban))
+        }
+        YÖlçekDağılımı::ArcSinh { eşik } if eşik > 0.0 => Some((değer / eşik).asinh()),
+        YÖlçekDağılımı::Weibull if değer > 0.0 && değer < 1.0 => {
+            Some((-(-değer).ln_1p()).ln())
+        }
+        _ => None,
+    }
+}
+
+pub(crate) fn y_değerini_geri_dönüştür(
+    değer: f64, dağılım: YÖlçekDağılımı
+) -> Option<f64> {
+    match dağılım {
+        YÖlçekDağılımı::Doğrusal => Some(değer),
+        YÖlçekDağılımı::Logaritmik { taban } if taban > 1.0 => Some(taban.powf(değer)),
+        YÖlçekDağılımı::ArcSinh { eşik } if eşik > 0.0 => Some(değer.sinh() * eşik),
+        YÖlçekDağılımı::Weibull => Some(1.0 - (-değer.exp()).exp()),
+        _ => None,
     }
 }
 

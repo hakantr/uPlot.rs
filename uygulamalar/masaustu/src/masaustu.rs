@@ -3572,6 +3572,7 @@ impl Render for ChartListesi {
                 | KartKimliği::YScaleDrag
                 | KartKimliği::YShiftedSeries
                 | KartKimliği::DependentScale
+                | KartKimliği::ArcSinhScales
         ) {
             self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
                 grafik
@@ -6589,6 +6590,18 @@ impl Render for ChartListesi {
                  dönüşümü ve bölmeleri O(1) ek maliyettir. Pointer yalnız hafif cursor/lejant \
                  katmanını taşır; ana yol setSeries, görünüm veya boyut değişiminde yenilenir.",
             ),
+            KartKimliği::ArcSinhScales => Some(
+                "Amaç: sıfır çevresindeki küçük değişimleri doğrusal, büyük pozitif ve negatif \
+                 büyüklükleri logaritmik okunabilirlikle aynı eksende gösterir. API: \
+                 YÖlçekSeçenekleri::arcsinh doğrusal merkez eşiğini tanımlar; \
+                 y_arcsinh_eşiği_ayarla aynı Grafik örneğinde ham aralığı ve görünüm geçmişini \
+                 koruyarak geometriyi yeniler. Lejant setSeries ile Value serisini açıp \
+                 kapatır. İzleme: artı ve eksi yönde birkaç mertebeye yayılan sapma, gecikme \
+                 farkı veya bilanço telemetrisi için uygundur; wheel, seçim, pan ve touch ters \
+                 ArcSinh dönüşümünü çekirdekte uygular. Maliyet: 111 noktalı tek yol ve \
+                 decade/multiple ızgarası yalnız eşik, veri, görünüm veya boyut değişiminde \
+                 O(N + tick) yenilenir; pointer ana yolu yeniden üretmez.",
+            ),
             KartKimliği::TimeseriesDiscrete => Some(
                 "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
                  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
@@ -6934,6 +6947,7 @@ impl Render for ChartListesi {
                         | KartKimliği::YScaleDrag
                         | KartKimliği::YShiftedSeries
                         | KartKimliği::DependentScale
+                        | KartKimliği::ArcSinhScales
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )
@@ -6949,6 +6963,7 @@ impl Render for ChartListesi {
                         | KartKimliği::YScaleDrag
                         | KartKimliği::YShiftedSeries
                         | KartKimliği::DependentScale
+                        | KartKimliği::ArcSinhScales
                 ),
                 |öğe| {
                 öğe.child(

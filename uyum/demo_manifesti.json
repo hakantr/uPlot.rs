@@ -712,17 +712,25 @@
       "özellikler": [
         "source-equivalent-symmetric-111-point-data",
         "arcsinh-y-distribution",
+        "source-asinh-axis-decade-and-multiple-splits",
+        "mandatory-zero-and-power-of-ten-labels",
+        "distribution-aware-auto-range",
         "runtime-linear-threshold-control",
         "nonlinear-axis-and-cursor-mapping",
+        "nonlinear-wheel-selection-pan-touch-inverse-mapping",
+        "threshold-preserves-view-and-history",
+        "standard-legend-set-series",
         "gpui-wasm-threshold-controls",
+        "single-path-o-n-threshold-redraw",
+        "collapsed-usage-cost-guide",
         "common-interaction-profile"
       ],
       "kanıt": {
-        "api": "kısmi",
+        "api": "tam_kanıtlı",
         "sayısal": "tam_kanıtlı",
-        "statik_görsel": "uygulandı_kanıtlı",
-        "davranış": "uygulandı_kanıtlı",
-        "performans": "bekliyor"
+        "statik_görsel": "tam_kanıtlı",
+        "davranış": "tam_kanıtlı",
+        "performans": "tam_kanıtlı"
       }
     },
     {

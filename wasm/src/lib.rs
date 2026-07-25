@@ -3739,8 +3739,20 @@ mod testler {
             return;
         };
         let önce = oturum.svg(960, 400);
+        for etiket in [
+            ">-1000<", ">-100<", ">-10<", ">-1<", ">0<", ">1<", ">10<", ">100<", ">1000<",
+        ] {
+            assert!(önce.contains(etiket), "{etiket}");
+        }
+        assert!(!önce.contains("-184.69"));
         assert!(oturum.y_arcsinh_esigi_ayarla("y", 0.001));
         assert_ne!(oturum.svg(960, 400), önce);
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(0, false), Ok(true)));
+        assert!(!oturum.svg(960, 400).contains("stroke=\"#0000ff\""));
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(0, true), Ok(true)));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("aktifKart === \"arcsinh-scales\""));
+        assert!(web.contains("ters ArcSinh dönüşümünü çekirdekte uygular"));
     }
 
     #[test]

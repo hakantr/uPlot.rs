@@ -14,7 +14,10 @@ use crate::cizim::kirpma::{
 use crate::cizim::{
     DoğrusalGradyan, GradyanRenkDurağı, Komut, KöşeYarıçapları, MetinHizası, Nokta, Sahne,
 };
-use crate::etkilesim::EtkileşimDenetleyicisi;
+use crate::etkilesim::{
+    EtkileşimDenetleyicisi, y_aralığını_dönüştür, y_aralığını_geri_dönüştür,
+    y_değerini_geri_dönüştür,
+};
 use crate::{
     Aralık, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri, HizalıVeri, NullİmleçDüzeni,
     SeriBandı, TekerlekEkseni, UplotHatası, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi,
@@ -640,6 +643,10 @@ impl Grafik {
                         birincil_ölçek.is_none_or(|ölçek| ölçek.log_tam_büyüklükler),
                     )
                     .unwrap_or_else(|| Aralık::otomatik(değerler())),
+                    Some(YÖlçekDağılımı::ArcSinh { .. }) => {
+                        arcsinh_otomatik_aralık(değerler().flatten().copied())
+                            .unwrap_or_else(|| Aralık::otomatik(değerler()))
+                    }
                     _ => birincil_ölçek
                         .and_then(|ölçek| ölçek.sayısal_aralık)
                         .and_then(|ayarlar| {
@@ -745,8 +752,7 @@ impl Grafik {
         }
         let x_aralığı = self.görünür_x_aralığı();
         let x = x_aralığı.en_az + yatay_oran * (x_aralığı.en_çok - x_aralığı.en_az);
-        let y_aralığı = self.görünür_y_aralığı();
-        let y = y_aralığı.en_çok - dikey_oran * (y_aralığı.en_çok - y_aralığı.en_az);
+        let y = self.y_değeri_orandan(self.görünür_y_aralığı(), 1.0 - dikey_oran);
         self.ölçüm_datumları
             .get_mut(datum - 1)
             .is_some_and(|hedef| {
@@ -2158,11 +2164,18 @@ impl Grafik {
         self.elle_x_aralığını_etkileşime_aktar();
         self.elle_y_aralıklarını_etkileşime_aktar();
         let görünür_y = self.görünür_y_aralığı();
+        let y_dağılımı = self.birincil_y_dağılımı();
         let (x_oranı, y_oranı) =
             self.fiziksel_oranları_mantıksala(yatay_odak_oranı, dikey_odak_oranı);
-        let değişti = self
-            .etkileşim
-            .tekerlek(x_oranı, y_oranı, görünür_y, delta, hassas, eksen)?;
+        let değişti = self.etkileşim.tekerlek(
+            x_oranı,
+            y_oranı,
+            görünür_y,
+            delta,
+            hassas,
+            eksen,
+            y_dağılımı,
+        )?;
         if değişti && matches!(eksen, TekerlekEkseni::İkisi | TekerlekEkseni::X) {
             self.x_aralığını_veriye_yapıştır();
         }
@@ -2251,7 +2264,10 @@ impl Grafik {
             mevcut_x
         };
         let y = if y_etkin {
-            oran_aralığı(mevcut_y, 1.0 - y0, 1.0 - y1)?
+            let dağılım = self.birincil_y_dağılımı();
+            let dönüştürülmüş = y_aralığını_dönüştür(mevcut_y, dağılım).unwrap_or(mevcut_y);
+            let aralık = oran_aralığı(dönüştürülmüş, 1.0 - y0, 1.0 - y1)?;
+            y_aralığını_geri_dönüştür(aralık, dağılım).unwrap_or(aralık)
         } else {
             mevcut_y
         };
@@ -2341,7 +2357,9 @@ impl Grafik {
     ) -> Result<bool, UplotHatası> {
         let (x_farkı, y_farkı) =
             self.fiziksel_farkları_mantıksala(yatay_fark_oranı, dikey_fark_oranı);
-        let değişti = self.etkileşim.taşı(x_farkı, y_farkı)?;
+        let değişti = self
+            .etkileşim
+            .taşı(x_farkı, y_farkı, self.birincil_y_dağılımı())?;
         if değişti {
             self.x_aralığını_veriye_yapıştır();
         }
@@ -2367,9 +2385,10 @@ impl Grafik {
     ) -> Result<bool, UplotHatası> {
         let (x_oranı, y_oranı) =
             self.fiziksel_oranları_mantıksala(yatay_odak_oranı, dikey_odak_oranı);
-        let değişti = self
-            .etkileşim
-            .dokunma_yakınlaştır(x_oranı, y_oranı, çarpan)?;
+        let y_dağılımı = self.birincil_y_dağılımı();
+        let değişti =
+            self.etkileşim
+                .dokunma_yakınlaştır(x_oranı, y_oranı, çarpan, y_dağılımı)?;
         if değişti {
             self.x_aralığını_veriye_yapıştır();
         }
@@ -2487,6 +2506,19 @@ impl Grafik {
                     self.y_aralığı(self.görünür_x_aralığı())
                 }
             })
+    }
+
+    fn birincil_y_dağılımı(&self) -> YÖlçekDağılımı {
+        self.ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
+            .map_or(YÖlçekDağılımı::Doğrusal, |ölçek| ölçek.dağılım)
+    }
+
+    fn y_değeri_orandan(&self, aralık: Aralık, oran: f64) -> f64 {
+        let dağılım = self.birincil_y_dağılımı();
+        let dönüştürülmüş = y_aralığını_dönüştür(aralık, dağılım).unwrap_or(aralık);
+        let değer = dönüştürülmüş.en_az
+            + oran.clamp(0.0, 1.0) * (dönüştürülmüş.en_çok - dönüştürülmüş.en_az);
+        y_değerini_geri_dönüştür(değer, dağılım).unwrap_or(değer)
     }
 
     /// Adlandırılmış bir Y ölçeğinin geçerli görünür aralığını döndürür.
@@ -2860,8 +2892,7 @@ impl Grafik {
         let mut bilgiler = Vec::with_capacity(self.seçenekler.seriler.len().saturating_add(1));
         if düzen.imleç_değeri {
             let x = self.x_değeri_orandan(self.görünür_x_aralığı(), yatay_oran);
-            let y_aralığı = self.görünür_y_aralığı();
-            let y = y_aralığı.en_çok - dikey_oran * (y_aralığı.en_çok - y_aralığı.en_az);
+            let y = self.y_değeri_orandan(self.görünür_y_aralığı(), 1.0 - dikey_oran);
             bilgiler.push(crate::TooltipBilgisi {
                 seri: None,
                 metin: format!("({x:.2}, {y:.2})"),
@@ -3031,9 +3062,8 @@ impl Grafik {
         } else {
             dikey_oran.clamp(0.0, 1.0) * çizim_boyutu
         };
-        let görünür_y = self.görünür_y_aralığı();
         let fare_değeri =
-            görünür_y.en_çok - dikey_oran.clamp(0.0, 1.0) * (görünür_y.en_çok - görünür_y.en_az);
+            self.y_değeri_orandan(self.görünür_y_aralığı(), 1.0 - dikey_oran.clamp(0.0, 1.0));
         let mut en_yakın = None;
         let mut en_kısa = f64::INFINITY;
         for (indeks, değer) in değerler.into_iter().enumerate() {
@@ -5892,6 +5922,10 @@ impl Grafik {
                         logaritmik_otomatik_aralık(görünür(), taban, tam)
                             .unwrap_or_else(|| Aralık::otomatik(görünür()))
                     }
+                    Some(YÖlçekDağılımı::ArcSinh { .. }) => {
+                        arcsinh_otomatik_aralık(görünür().flatten().copied())
+                            .unwrap_or_else(|| Aralık::otomatik(görünür()))
+                    }
                     _ if anahtar == self.seçenekler.birincil_y_ölçeği
                         && self.seçenekler.kütle_spektrumu_y_aralığı =>
                     {
@@ -6190,9 +6224,7 @@ impl Grafik {
         let ölçek = self.ölçek_seçeneği(anahtar);
         match ölçek.map(|ölçek| ölçek.dağılım) {
             Some(YÖlçekDağılımı::ArcSinh { eşik }) if eşik.is_finite() && eşik > 0.0 => {
-                let en_az = (aralık.en_az / eşik).asinh();
-                let en_çok = (aralık.en_çok / eşik).asinh();
-                dönüşmüş_bölmeler(en_az, en_çok, boyut, |değer| eşik * değer.sinh())
+                arcsinh_bölmeleri(aralık, eşik)
             }
             Some(YÖlçekDağılımı::Logaritmik { taban }) if aralık.en_az > 0.0 => {
                 logaritmik_bölmeler(aralık, taban)
@@ -6322,19 +6354,44 @@ fn dönüştürülmüş_konum(
     başlangıç + ((değer - en_az) / (en_çok - en_az)) as f32 * uzunluk
 }
 
-fn dönüşmüş_bölmeler(
-    en_az: f64,
-    en_çok: f64,
-    boyut: f32,
-    geri: impl Fn(f64) -> f64,
-) -> Vec<f64> {
-    let adım_sayısı = (boyut / 55.0).round().clamp(3.0, 12.0) as u32;
-    (0..=adım_sayısı)
-        .map(|indeks| {
-            let oran = f64::from(indeks) / f64::from(adım_sayısı);
-            geri(en_az + (en_çok - en_az) * oran)
-        })
-        .collect()
+fn arcsinh_bölmeleri(aralık: Aralık, eşik: f64) -> Vec<f64> {
+    fn pozitif(en_az: f64, en_çok: f64) -> Vec<f64> {
+        if !en_az.is_finite() || !en_çok.is_finite() || en_az <= 0.0 || en_az > en_çok {
+            return Vec::new();
+        }
+        let ilk_üs = en_az.log10().floor() as i32;
+        let son_üs = en_çok.log10().floor() as i32;
+        let mut sonuç = Vec::new();
+        for üs in ilk_üs..=son_üs {
+            let taban = 10_f64.powi(üs);
+            for katsayı in 1..10 {
+                let değer = f64::from(katsayı) * taban;
+                if değer >= en_az * (1.0 - 1e-12) && değer <= en_çok * (1.0 + 1e-12) {
+                    sonuç.push(artıma_yuvarla(değer, taban));
+                }
+            }
+        }
+        sonuç
+    }
+
+    let mut sonuç = if aralık.en_az < -eşik {
+        let mut negatif = pozitif(eşik.max(-aralık.en_çok), -aralık.en_az);
+        negatif.reverse();
+        negatif.into_iter().map(|değer| -değer).collect()
+    } else if aralık.en_az <= -eşik && -eşik <= aralık.en_çok {
+        vec![-eşik]
+    } else {
+        Vec::new()
+    };
+    if aralık.en_az <= 0.0 && aralık.en_çok >= 0.0 {
+        sonuç.push(0.0);
+    }
+    if aralık.en_çok > eşik {
+        sonuç.extend(pozitif(eşik.max(aralık.en_az), aralık.en_çok));
+    } else if aralık.en_az <= eşik && eşik <= aralık.en_çok {
+        sonuç.push(eşik);
+    }
+    sonuç
 }
 
 fn zaman_bölmeleri(
@@ -6501,6 +6558,38 @@ fn logaritmik_otomatik_aralık<'a>(
             (en_çok / üst_adım).ceil() * üst_adım,
         )
     };
+    Aralık::yeni(alt, üst).ok()
+}
+
+fn arcsinh_otomatik_aralık(değerler: impl Iterator<Item = f64>) -> Option<Aralık> {
+    let (en_az, en_çok) = sonlu_sınırlar(değerler)?;
+    let büyüt = |değer: f64, alt: bool| {
+        if değer == 0.0 {
+            0.0
+        } else {
+            let üs = değer.abs().log10();
+            let üs = if (değer < 0.0) == alt {
+                üs.ceil()
+            } else {
+                üs.floor()
+            };
+            değer.signum() * 10_f64.powf(üs)
+        }
+    };
+    let mut alt = büyüt(en_az, true);
+    let mut üst = büyüt(en_çok, false);
+    if alt == üst {
+        if alt < 0.0 {
+            alt *= 10.0;
+            üst /= 10.0;
+        } else if alt > 0.0 {
+            alt /= 10.0;
+            üst *= 10.0;
+        } else {
+            alt = -1.0;
+            üst = 1.0;
+        }
+    }
     Aralık::yeni(alt, üst).ok()
 }
 
@@ -6977,6 +7066,7 @@ fn ölçek_eksen_değerini_yaz(
         YÖlçekEtiketBiçimi::İkiliŞapka => ikili_şapka_etiketi(değer),
         YÖlçekEtiketBiçimi::Kompakt => kompakt_sayı(değer),
         YÖlçekEtiketBiçimi::Otomatik => match dağılım {
+            Some(YÖlçekDağılımı::ArcSinh { .. }) => format!("{değer}"),
             Some(YÖlçekDağılımı::Logaritmik { taban }) if (taban - 2.0).abs() <= f64::EPSILON => {
                 ikili_üs_etiketi(değer)
             }
@@ -7007,6 +7097,13 @@ fn log_etiketi_göster(
     dağılım: Option<YÖlçekDağılımı>,
     biçim: YÖlçekEtiketBiçimi,
 ) -> bool {
+    if matches!(dağılım, Some(YÖlçekDağılımı::ArcSinh { .. })) {
+        if değer == 0.0 {
+            return true;
+        }
+        let üs = değer.abs().log10();
+        return üs.is_finite() && (üs - üs.round()).abs() <= 1e-9;
+    }
     let Some(YÖlçekDağılımı::Logaritmik { taban }) = dağılım else {
         return true;
     };

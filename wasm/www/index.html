@@ -1052,6 +1052,12 @@
         yardım: "Eşik denetimi: ArcSinh doğrusal merkezini değiştir · ortak yakınlaştırma profili etkin",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "Sıfır çevresindeki küçük değişimleri doğrusal, büyük pozitif ve negatif büyüklükleri logaritmik okunabilirlikle aynı eksende gösterir.",
+          api: "YÖlçekSeçenekleri::arcsinh doğrusal merkez eşiğini tanımlar; y_arcsinh_eşiği_ayarla aynı Grafik örneğinde ham aralığı ve görünüm geçmişini koruyarak geometriyi yeniler. Lejant setSeries ile Value serisini açıp kapatır.",
+          izleme: "Artı ve eksi yönde birkaç mertebeye yayılan sapma, gecikme farkı veya bilanço telemetrisi için kullanın. Wheel, seçim, pan ve touch ters ArcSinh dönüşümünü çekirdekte uygular.",
+          maliyet: "111 noktalı tek yol ve decade/multiple ızgarası yalnız eşik, veri, görünüm veya boyut değişiminde O(N + tick) yenilenir. Pointer ana yolu yeniden üretmeden hafif cursor ve lejant katmanını taşır.",
+        },
       },
       "axis-control": {
         başlık: "Axis Control",
@@ -6411,7 +6417,8 @@
         || aktifKart === "wind-direction"
         || aktifKart === "y-scale-drag"
         || aktifKart === "y-shifted-series"
-        || aktifKart === "dependent-scale";
+        || aktifKart === "dependent-scale"
+        || aktifKart === "arcsinh-scales";
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks) || değiştirilebilirLejant
           ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>
