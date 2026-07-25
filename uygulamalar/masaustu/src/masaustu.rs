@@ -35,10 +35,10 @@ use uplot_rs::{
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
     STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS, STREAM_DATA_KART_TANIM_ÖRNEĞİ,
     SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
-    ScalesDirOriÖrneği, ScatterÖrneği, SeriSeçenekleri, SineAkışı, SmoothingÖrneği,
-    SoftMinMaxAkışı, SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği,
-    StackedSeriesÖrneği, StreamDataGrubu, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği,
-    SyncYZeroAşaması, THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
+    ScalesDirOriÖrneği, ScatterÖrneği, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı,
+    SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği,
+    StreamDataGrubu, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği, SyncYZeroAşaması,
+    THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
     TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ, TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
     TIMEZONES_DST_KART_TANIM_ÖRNEĞİ, TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ,
     TOOLTIPS_KART_TANIM_ÖRNEĞİ, TRENDLINES_KART_TANIM_ÖRNEĞİ, ThinBarsÖrneği, TimePeriodsÖrneği,
@@ -46,30 +46,30 @@ use uplot_rs::{
     UPDATE_CURSOR_SELECT_RESIZE_ARALIK_MS, UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
     UplotHatası, WIND_DIRECTION_KART_TANIM_ÖRNEĞİ, Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ,
     Y_SHIFTED_SERIES_ARALIK_MS, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ, YShiftedSeriesAkışı,
-    add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, annotations_kartı, arcsinh_scales_kartı, area_fill_kartı,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartları,
-    bars_grouped_stacked_kartı, bars_values_autosize_kartları, bars_values_autosize_kartı,
-    box_whisker_kartları, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
-    missing_data_kartları, missing_data_null_kartı, months_artık_yılsız_kartı, months_kartları,
-    multi_bars_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
-    ortak_kart_etkileşimleri, path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları,
-    pixel_align_kartı, points_kartları, points_kartı, resize_kartı, scale_padding_kartı,
-    scales_dir_ori_kartları, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı,
-    sine_stream_kartı, soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları,
-    sparklines_bars_kartı, sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı,
-    stacked_series_kartları, stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı,
-    svg_image_kartı, sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı,
-    thin_bars_stroke_fill_kartları, thin_bars_stroke_fill_kartı, time_periods_kartları,
-    time_periods_kartı, timeline_discrete_kartları, timeline_discrete_kartı,
-    timeseries_discrete_kartları, timeseries_discrete_kartı, timezones_dst_kartları,
-    timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı, trendlines_kartı,
-    update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
-    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği, İmleçBağSeçenekleri,
+    add_del_series_ek_seçeneği, add_del_series_ek_verisi, add_del_series_kartı,
+    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, annotations_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartları, bars_grouped_stacked_kartı,
+    bars_values_autosize_kartları, bars_values_autosize_kartı, box_whisker_kartları,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı, missing_data_kartları,
+    missing_data_null_kartı, months_artık_yılsız_kartı, months_kartları, multi_bars_kartı,
+    nearest_non_null_kartı, nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri,
+    path_gap_clip_kartları, path_gap_clip_kartı, pixel_align_kartları, pixel_align_kartı,
+    points_kartları, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartları,
+    scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
+    soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları, sparklines_bars_kartı,
+    sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı, stacked_series_kartları,
+    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
+    sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
+    thin_bars_stroke_fill_kartı, time_periods_kartları, time_periods_kartı,
+    timeline_discrete_kartları, timeline_discrete_kartı, timeseries_discrete_kartları,
+    timeseries_discrete_kartı, timezones_dst_kartları, timezones_dst_kartı, tooltips_closest_kartı,
+    tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı,
+    y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği, İmleçBağSeçenekleri,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -3100,16 +3100,8 @@ impl ChartListesi {
             return;
         };
         let değerler = add_del_series_ek_verisi(self.dinamik_seri_sayacı);
-        let sonuç = grafik.update(cx, |grafik, cx| {
-            grafik.seri_ekle(
-                1,
-                SeriSeçenekleri::yeni("Orange")
-                    .renk("#ffa500")
-                    .dolgu("#ffa5001a"),
-                değerler,
-                cx,
-            )
-        });
+        let seçenek = add_del_series_ek_seçeneği(self.dinamik_seri_sayacı);
+        let sonuç = grafik.update(cx, |grafik, cx| grafik.seri_ekle(1, seçenek, değerler, cx));
         match sonuç {
             Ok(()) => {
                 self.dinamik_seri_sayacı = self.dinamik_seri_sayacı.wrapping_add(1);
@@ -5085,16 +5077,15 @@ impl Render for ChartListesi {
             .when(aktif_kart == KartKimliği::AddDelSeries, |öğe| {
                 öğe
                     .child(
-                        Dugme::yeni("dinamik-seri-ekle", "Seri ekle")
+                        Dugme::yeni("dinamik-seri-ekle", "Add Series")
                             .boyutu(DugmeBoyutu::Kucuk)
                             .turu(DugmeTuru::Ikincil)
                             .tiklaninca(cx.listener(|bu, _, _, cx| bu.dinamik_seri_ekle(cx))),
                     )
                     .child(
-                        Dugme::yeni("dinamik-seri-sil", "Seri sil")
+                        Dugme::yeni("dinamik-seri-sil", "Del Series")
                             .boyutu(DugmeBoyutu::Kucuk)
                             .turu(DugmeTuru::Ikincil)
-                            .devre_disi(mevcut_seri_sayısı < 2)
                             .tiklaninca(cx.listener(|bu, _, _, cx| bu.dinamik_seri_sil(cx))),
                     )
             })
@@ -7027,7 +7018,7 @@ impl Render for ChartListesi {
 
         let yardım = match aktif_kart {
             KartKimliği::AddDelSeries => {
-                "Seri ekle: turuncu seriyi kaynak indeksi 2'ye ekle · Seri sil: aynı indeksi kaldır"
+                "Add Series: sidx=2'ye yeni renkli seri · Del Series: aynı indeksi kaldır · yüzey kimliği korunur"
             }
             KartKimliği::CursorBind => {
                 "Tıkla: click! iletimi · sürükle: yakınlaştır · Ctrl+sürükle: kenarlıksız sarı seçim + Annotation Text"
@@ -7600,6 +7591,17 @@ impl Render for ChartListesi {
                  istemek veya normal tıklamayı üst uygulamaya iletmek için uygundur. Maliyet: \
                  30×3 kaynak seri O(N) çizilir; bind kararı ve click iletimi O(1), Ctrl seçiminde \
                  yalnız hafif seçim katmanı ve modal güncellenir.",
+            ),
+            KartKimliği::AddDelSeries => Some(
+                "Amaç: aynı grafik örneğinde çalışma zamanında seri ekleme/silme, hizalı veri \
+                 sütunlarını koruma ve setData ölçek sıfırlamasını gösterir. API: Grafik::seri_ekle \
+                 ve seri_sil doğrulanmış işlemlerdir; SeriYaşamDöngüsüOlayı X'i sayan resmî \
+                 seriesIdx ile addSeries/delSeries olayını setData olayından önce taşır. İlk \
+                 ekleme kaynak turuncusudur; sonraki eklemeler geliştiricinin serileri ayırt \
+                 edebilmesi için belirlenimci paletten renk alır. İzleme: çalışan bir panele yeni \
+                 sensör, CPU veya metrik eklerken grafik ve etkileşim kimliğini korumak için \
+                 uygundur. Maliyet: sütun üretimi O(N), hizalı yapı doğrulaması ve yeniden çizim \
+                 O(N×S)'dir; GPUI Entity ve yüzey kimliği değişmez.",
             ),
             _ => None,
         };

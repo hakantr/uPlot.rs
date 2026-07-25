@@ -3,7 +3,11 @@ mod isi_haritasi;
 mod seri_geometrisi;
 mod timeline;
 
-use std::{cell::RefCell, collections::BTreeMap};
+use std::{
+    cell::RefCell,
+    collections::BTreeMap,
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 use seri_geometrisi::seri_yol_noktaları;
 
@@ -34,6 +38,24 @@ pub enum SeçimEylemi {
     /// `cursor-bind` bağı yakınlaştırmayı durdurup açıklama UI'si istedi.
     Açıklamaİstendi,
 }
+
+/// uPlot `addSeries` / `delSeries` kancalarının kaynak sırasını, X serisini
+/// de sayan resmî `seriesIdx` değeriyle taşır.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SeriYaşamDöngüsüOlayı {
+    Eklendi {
+        seri_indeksi: usize,
+        başlangıç: bool,
+    },
+    Silindi {
+        seri_indeksi: usize,
+    },
+    VeriAyarlandı {
+        seri_sayısı: usize,
+    },
+}
+
+static SON_GRAFİK_KİMLİĞİ: AtomicU64 = AtomicU64::new(1);
 
 /// Null bir hizalı örneğin çevresinde imleç indeksinin hangi yönde aranacağını belirler.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -502,6 +524,7 @@ impl DağılımVuruşDizini {
 
 /// Doğrulanmış seçenek ve veriyi taşıyan çizelge örneği.
 pub struct Grafik {
+    kimlik: u64,
     seçenekler: GrafikSeçenekleri,
     veri: HizalıVeri,
     etkileşim: EtkileşimDenetleyicisi,
@@ -514,6 +537,7 @@ pub struct Grafik {
     çubuk_vuruş_dizini: RefCell<Option<ÇubukVuruşDizini>>,
     dağılım_vuruş_dizini: RefCell<Option<DağılımVuruşDizini>>,
     otomatik_çubuk_metinleri: Option<OtomatikÇubukMetinÖnbelleği>,
+    seri_yaşam_döngüsü_olayları: Vec<SeriYaşamDöngüsüOlayı>,
 }
 
 #[derive(Debug)]
@@ -757,7 +781,18 @@ impl Grafik {
                         .collect()
                 });
         let otomatik_çubuk_metinleri = otomatik_çubuk_metin_önbelleği(&seçenekler, &veri);
+        let seri_yaşam_döngüsü_olayları = if seçenekler.seri_yaşam_döngüsünü_izle {
+            (0..=seçenekler.seriler.len())
+                .map(|seri_indeksi| SeriYaşamDöngüsüOlayı::Eklendi {
+                    seri_indeksi,
+                    başlangıç: true,
+                })
+                .collect()
+        } else {
+            Vec::new()
+        };
         Ok(Self {
+            kimlik: SON_GRAFİK_KİMLİĞİ.fetch_add(1, Ordering::Relaxed),
             seçenekler,
             veri,
             etkileşim,
@@ -770,6 +805,7 @@ impl Grafik {
             çubuk_vuruş_dizini: RefCell::new(None),
             dağılım_vuruş_dizini: RefCell::new(None),
             otomatik_çubuk_metinleri,
+            seri_yaşam_döngüsü_olayları,
         })
     }
 
@@ -787,6 +823,23 @@ impl Grafik {
                 .copied()
                 .or_else(|| self.etkileşim.görünür_y()),
         )
+    }
+
+    fn doğrulanmış_durumu_uygula(&mut self, yeni: Self, seçenekleri_değiştir: bool) {
+        if seçenekleri_değiştir {
+            self.seçenekler = yeni.seçenekler;
+            self.açıklama_stil_indeksleri = yeni.açıklama_stil_indeksleri;
+        }
+        self.veri = yeni.veri;
+        self.etkileşim = yeni.etkileşim;
+        self.odak_serisi = None;
+        self.elle_x_aralığı = None;
+        self.elle_y_aralıkları.clear();
+        self.eksen_sürükleme = None;
+        self.ölçüm_datumları = [None, None];
+        self.çubuk_vuruş_dizini = RefCell::new(None);
+        self.dağılım_vuruş_dizini = RefCell::new(None);
+        self.otomatik_çubuk_metinleri = yeni.otomatik_çubuk_metinleri;
     }
 
     pub fn ölçüm_datumunu_ayarla(
@@ -1205,7 +1258,7 @@ impl Grafik {
         let mut seçenekler = self.seçenekler.clone();
         seçenekler.etkileşimler = self.etkileşim.ayarlar();
         let yeni = Self::yeni(seçenekler, veri)?;
-        *self = yeni;
+        self.doğrulanmış_durumu_uygula(yeni, false);
         Ok(())
     }
 
@@ -1488,7 +1541,18 @@ impl Grafik {
         seçenekler.etkileşimler = self.etkileşim.ayarlar();
         seçenekler.seriler.insert(indeks, seçenek);
         let yeni = Self::yeni(seçenekler, veri)?;
-        *self = yeni;
+        self.doğrulanmış_durumu_uygula(yeni, true);
+        if self.seçenekler.seri_yaşam_döngüsünü_izle {
+            self.seri_yaşam_döngüsü_olayları
+                .push(SeriYaşamDöngüsüOlayı::Eklendi {
+                    seri_indeksi: indeks + 1,
+                    başlangıç: false,
+                });
+            self.seri_yaşam_döngüsü_olayları
+                .push(SeriYaşamDöngüsüOlayı::VeriAyarlandı {
+                    seri_sayısı: self.seçenekler.seriler.len() + 1,
+                });
+        }
         Ok(())
     }
 
@@ -1507,7 +1571,17 @@ impl Grafik {
         seçenekler.etkileşimler = self.etkileşim.ayarlar();
         seçenekler.seriler.remove(indeks);
         let yeni = Self::yeni(seçenekler, veri)?;
-        *self = yeni;
+        self.doğrulanmış_durumu_uygula(yeni, true);
+        if self.seçenekler.seri_yaşam_döngüsünü_izle {
+            self.seri_yaşam_döngüsü_olayları
+                .push(SeriYaşamDöngüsüOlayı::Silindi {
+                    seri_indeksi: indeks + 1,
+                });
+            self.seri_yaşam_döngüsü_olayları
+                .push(SeriYaşamDöngüsüOlayı::VeriAyarlandı {
+                    seri_sayısı: self.seçenekler.seriler.len() + 1,
+                });
+        }
         Ok(())
     }
 
@@ -1887,8 +1961,26 @@ impl Grafik {
         self.etkileşim.ayarlar()
     }
 
+    /// Grafik örneğinin `setData`, `addSeries` ve `delSeries` boyunca
+    /// değişmeyen kimliği.
+    pub const fn kimlik(&self) -> u64 {
+        self.kimlik
+    }
+
+    pub fn seri_yaşam_döngüsü_olayları(&self) -> &[SeriYaşamDöngüsüOlayı] {
+        &self.seri_yaşam_döngüsü_olayları
+    }
+
+    pub fn seri_yaşam_döngüsü_olaylarını_al(&mut self) -> Vec<SeriYaşamDöngüsüOlayı> {
+        std::mem::take(&mut self.seri_yaşam_döngüsü_olayları)
+    }
+
     pub fn seri_seçenekleri(&self) -> &[crate::SeriSeçenekleri] {
         &self.seçenekler.seriler
+    }
+
+    pub fn hizalı_veri(&self) -> &HizalıVeri {
+        &self.veri
     }
 
     pub fn eksen_göstergeleri_etkin(&self) -> bool {

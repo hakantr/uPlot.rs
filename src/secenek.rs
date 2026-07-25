@@ -1123,6 +1123,9 @@ pub struct GrafikSeçenekleri {
     pub tooltip: Option<TooltipDüzeni>,
     pub boyut_senkron_düzeni: Option<BoyutSenkronDüzeni>,
     pub lejant_canlı: bool,
+    /// `addSeries` / `delSeries` kancalarının kaynak sırasını tüketiciye
+    /// aktarmak için yaşam döngüsü olay kuyruğunu etkinleştirir.
+    pub seri_yaşam_döngüsünü_izle: bool,
     pub çizim_sırası: ÇizimSırası,
     /// uPlot `opts.pxAlign` karşılığıdır. `1`, koordinatları tam piksele
     /// yuvarlar; `0`, canlı akışlarda alt piksel hareketini korur.
@@ -1209,6 +1212,7 @@ impl GrafikSeçenekleri {
             tooltip: None,
             boyut_senkron_düzeni: None,
             lejant_canlı: true,
+            seri_yaşam_döngüsünü_izle: false,
             çizim_sırası: ÇizimSırası::EksenlerSeriler,
             piksel_hizası: 1.0,
             ızgara_rengi: "#e5e7eb".to_string(),
@@ -1437,6 +1441,11 @@ impl GrafikSeçenekleri {
 
     pub fn lejant_canlı(mut self, canlı: bool) -> Self {
         self.lejant_canlı = canlı;
+        self
+    }
+
+    pub fn seri_yaşam_döngüsünü_izle(mut self, izle: bool) -> Self {
+        self.seri_yaşam_döngüsünü_izle = izle;
         self
     }
 

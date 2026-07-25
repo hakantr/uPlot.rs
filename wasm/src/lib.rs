@@ -26,7 +26,7 @@ use uplot_rs::{
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
     STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_KART_TANIM_ÖRNEĞİ, SVG_IMAGE_KART_TANIM_ÖRNEĞİ,
     SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği,
-    ScatterÖrneği, SeriSeçenekleri, SeçimEylemi, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı,
+    ScatterÖrneği, SeriYaşamDöngüsüOlayı, SeçimEylemi, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı,
     SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği,
     StreamDataAkışı, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği, SyncYZeroAşaması,
     THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
@@ -38,26 +38,27 @@ use uplot_rs::{
     Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ, Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ, YShiftedSeriesAkışı,
     YüzeyDikdörtgeni, ZOOM_FETCH_KANIT_ÖRNEĞİ, ZOOM_RANGER_GRIPS_KANIT_ÖRNEĞİ,
     ZOOM_RANGER_XY_KANIT_ÖRNEĞİ, ZOOM_TOUCH_KART_TANIM_ÖRNEĞİ, ZOOM_WHEEL_KART_TANIM_ÖRNEĞİ,
-    ZoomFetchAkışı, add_del_series_ek_verisi, add_del_series_kartı, align_data_maliyet_kartı,
-    align_data_çizgi_çubuk_kartı, annotations_kartı, arcsinh_scales_kartı, area_fill_kartı,
-    axis_autosize_kartı, axis_control_kartı, axis_indicators_kartı, bars_grouped_stacked_kartı,
-    bars_values_autosize_kartı, box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı,
-    cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı,
-    dependent_scale_kartı, draw_hooks_kartı, focus_cursor_kartı, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı,
-    log_scales_kartı, log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı,
-    missing_data_null_kartı, missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı,
-    months_artık_yılsız_kartı, months_rusça_kartı, multi_bars_kartı,
-    multi_bars_kitaplık_etiketleri, multi_bars_kitaplık_kartı, nearest_non_null_kartı,
-    nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı,
-    pixel_align_kartı, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartı,
-    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
-    sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
-    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_aşamasını_ayarla,
-    sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
-    timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
-    trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
-    y_shifted_series_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
+    ZoomFetchAkışı, add_del_series_ek_seçeneği, add_del_series_ek_verisi, add_del_series_kartı,
+    align_data_maliyet_kartı, align_data_çizgi_çubuk_kartı, annotations_kartı,
+    arcsinh_scales_kartı, area_fill_kartı, axis_autosize_kartı, axis_control_kartı,
+    axis_indicators_kartı, bars_grouped_stacked_kartı, bars_values_autosize_kartı,
+    box_whisker_kartı, candlestick_ohlc_kartı, cursor_bind_kartı, cursor_snap_kartı,
+    cursor_tooltip_kartı, custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı,
+    draw_hooks_kartı, focus_cursor_kartı, gradients_kartı, grid_over_series_kartı,
+    high_low_bands_kartı, latency_heatmap_kartı, line_paths_kartı, log_scales_kartı,
+    log_scales2_kartı, mass_spectrum_kartı, measure_datums_kartı, missing_data_null_kartı,
+    missing_data_x_boşluğu_kartı, months_artık_yıllı_kartı, months_artık_yılsız_kartı,
+    months_rusça_kartı, multi_bars_kartı, multi_bars_kitaplık_etiketleri,
+    multi_bars_kitaplık_kartı, nearest_non_null_kartı, nice_scale_kartı, no_data_kartı,
+    ortak_kart_etkileşimleri, path_gap_clip_kartı, pixel_align_kartı, points_kartı, resize_kartı,
+    scale_padding_kartı, scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
+    soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı, sparse_kartı, stacked_series_kartı,
+    stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı, sync_cursor_kartı,
+    sync_y_zero_aşamasını_ayarla, sync_y_zero_kartı, thin_bars_stroke_fill_kartı,
+    time_periods_kartı, timeline_discrete_kartı, timeseries_discrete_kartı, timezones_dst_kartı,
+    tooltips_closest_kartı, tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı,
+    wind_direction_kartı, y_scale_drag_kartı, y_shifted_series_kartı, zoom_touch_kartı,
+    zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
 };
 use wasm_bindgen::prelude::*;
 
@@ -695,25 +696,43 @@ impl KartOturumu {
 
     pub fn add_del_seri_ekle(&mut self) -> Result<bool, JsValue> {
         let değerler = add_del_series_ek_verisi(self.dinamik_seri_sayacı);
+        let seçenek = add_del_series_ek_seçeneği(self.dinamik_seri_sayacı);
         self.grafik
-            .seri_ekle(
-                1,
-                SeriSeçenekleri::yeni("Orange")
-                    .renk("#ffa500")
-                    .dolgu("#ffa5001a"),
-                değerler,
-            )
+            .seri_ekle(1, seçenek, değerler)
             .map_err(js_hatası)?;
         self.dinamik_seri_sayacı = self.dinamik_seri_sayacı.wrapping_add(1);
         Ok(true)
     }
 
     pub fn add_del_seri_sil(&mut self) -> Result<bool, JsValue> {
-        if self.grafik.seri_seçenekleri().len() < 2 {
-            return Ok(false);
-        }
         self.grafik.seri_sil(1).map_err(js_hatası)?;
         Ok(true)
+    }
+
+    pub fn add_del_seri_olaylari_al(&mut self) -> Vec<String> {
+        self.grafik
+            .seri_yaşam_döngüsü_olaylarını_al()
+            .into_iter()
+            .map(|olay| match olay {
+                SeriYaşamDöngüsüOlayı::Eklendi {
+                    seri_indeksi,
+                    başlangıç,
+                } => format!(
+                    "addSeries{} {seri_indeksi}",
+                    if başlangıç { " (init)" } else { "" }
+                ),
+                SeriYaşamDöngüsüOlayı::Silindi { seri_indeksi } => {
+                    format!("delSeries {seri_indeksi}")
+                }
+                SeriYaşamDöngüsüOlayı::VeriAyarlandı { seri_sayısı } => {
+                    format!("setData {seri_sayısı}")
+                }
+            })
+            .collect()
+    }
+
+    pub fn grafik_kimligi(&self) -> f64 {
+        self.grafik.kimlik() as f64
     }
 
     pub fn seri_sayisi(&self) -> usize {
@@ -3316,23 +3335,65 @@ mod testler {
     }
 
     #[test]
-    fn add_del_series_wasm_seriyi_atomik_günceller() {
+    fn add_del_series_wasm_aynı_yüzeyde_kaynak_olay_sırasını_korur() {
         let oturum = KartOturumu::yeni("add-del-series", 100);
         assert!(oturum.is_ok());
         let Ok(mut oturum) = oturum else {
             return;
         };
+        let kimlik = oturum.grafik_kimligi();
         assert_eq!(oturum.seri_sayisi(), 3);
+        assert_eq!(
+            oturum.add_del_seri_olaylari_al(),
+            vec![
+                "addSeries (init) 0",
+                "addSeries (init) 1",
+                "addSeries (init) 2",
+                "addSeries (init) 3",
+            ]
+        );
         assert!(matches!(oturum.add_del_seri_ekle(), Ok(true)));
+        assert_eq!(oturum.grafik_kimligi(), kimlik);
         assert_eq!(oturum.seri_sayisi(), 4);
         assert_eq!(
             oturum.seri_etiketleri().get(1).map(String::as_str),
             Some("Orange")
         );
+        assert_eq!(
+            oturum.add_del_seri_olaylari_al(),
+            vec!["addSeries 2", "setData 5"]
+        );
         assert!(oturum.svg(960, 400).contains("#ffa500"));
+        assert!(matches!(oturum.add_del_seri_ekle(), Ok(true)));
+        assert_eq!(oturum.grafik_kimligi(), kimlik);
+        assert_eq!(
+            oturum.seri_etiketleri().get(1).map(String::as_str),
+            Some("Purple")
+        );
+        assert!(oturum.svg(960, 400).contains("#8b5cf6"));
         assert!(matches!(oturum.add_del_seri_sil(), Ok(true)));
-        assert_eq!(oturum.seri_sayisi(), 3);
+        assert_eq!(oturum.grafik_kimligi(), kimlik);
+        assert_eq!(oturum.seri_sayisi(), 4);
+        assert_eq!(
+            oturum.add_del_seri_olaylari_al(),
+            vec!["addSeries 2", "setData 6", "delSeries 2", "setData 5",]
+        );
         assert!(add_del_series_kart_tanim_ornegi().contains("seri_ekle"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("dinamikSeriYerinde"));
+        assert!(web.contains("addDelSeriOlaylarınıYaz"));
+        assert!(web.contains("chart.dataset.grafikKimligi"));
+
+        let Ok(mut sınır) = KartOturumu::yeni("add-del-series", 100) else {
+            return;
+        };
+        sınır.add_del_seri_olaylari_al();
+        assert_eq!(sınır.add_del_seri_sil(), Ok(true));
+        assert_eq!(sınır.add_del_seri_sil(), Ok(true));
+        assert_eq!(sınır.seri_sayisi(), 1);
+        assert!(
+            web.contains("<button id=\"dinamik-seri-sil\" type=\"button\">Del Series</button>")
+        );
     }
 
     #[test]

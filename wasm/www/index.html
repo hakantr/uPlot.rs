@@ -630,8 +630,8 @@
             <output id="latency-ofset-degeri">0</output>
           </label>
           <span id="dinamik-seri-kontrolleri" hidden>
-            <button id="dinamik-seri-ekle" type="button">Seri ekle</button>
-            <button id="dinamik-seri-sil" type="button">Seri sil</button>
+            <button id="dinamik-seri-ekle" type="button">Add Series</button>
+            <button id="dinamik-seri-sil" type="button">Del Series</button>
           </span>
           <button id="soft-minmax-baslat" type="button" hidden>▶ dataMax++</button>
           <button id="svg-indir" type="button" hidden>Güncel SVG'yi indir</button>
@@ -2557,7 +2557,7 @@
       başlık: "Add/Delete Series",
       kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/add-del-series.html">add-del-series.html</a>
         <br>Grafik başlığı kaynakla aynı “Area Fill”; 1…30 X değerleri ve −10…10 havuzundan üç başlangıç serisi sabit kanıt tohumu ile üretilir.
-        <br>Seri ekle/sil, resmî sidx=2 konumunu Rust Y-serisi indeksi 1 olarak atomik ve paniksiz uygular; ölçekler setData gibi yeniden hesaplanır.`,
+        <br>Tek yüzey kimliği korunur; olay akışı resmî sidx=2 için addSeries/delSeries → setData sırasını iletir ve ölçekleri setData gibi sıfırlar. İlk eklenen seri kaynak turuncusudur; sonraki eklemeler renk ayrımı için belirlenimci paleti kullanır.`,
       tanım: () => add_del_series_kart_tanim_ornegi(),
       tanımYolu: "src/kart/add_del_series.rs",
       seriler: [
@@ -2565,10 +2565,16 @@
         { etiket: "Green", renk: "#008000" },
         { etiket: "Blue", renk: "#0000ff" },
       ],
-      yardım: "Seri ekle: turuncu seriyi kaynak indeksi 2'ye ekle · Seri sil: aynı indeksi kaldır",
+      yardım: "Add Series: sidx=2'ye yeni renkli seri · Del Series: aynı indeksi kaldır · yüzey kimliği korunur",
       değişkenNokta: false,
       dinamikSeri: true,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Aynı grafik örneğinde çalışma zamanında seri ekleme/silme, veri sütunlarını hizalı tutma ve setData ölçek sıfırlamasını gösterir.",
+        api: "Grafik::seri_ekle / seri_sil doğrulanmış ve geri alınabilir işlemlerdir. SeriYaşamDöngüsüOlayı, X'i sayan resmî seriesIdx ile addSeries veya delSeries olayını setData olayından önce verir.",
+        izleme: "Çalışan bir izleme paneline yeni sensör/çekirdek eklemek ya da kaldırmak için grafik, etkileşim ve dış kontrol kimliğini kaybetmeden kullanılabilir.",
+        maliyet: "Yeni sütun üretimi O(N), hizalı veri yapısı O(N×S) doğrulanır ve görünür yollar O(N×S) yeniden çizilir. WASM dış kabuğu, SVG kökü ve kontrol odağı yerinde kalır.",
+      },
     };
     for (const [kimlik, başlık, durum] of [
       ["align-data-cost", "Align Data · join cost", "5×5×1000 tablo · NULL_EXPAND"],
@@ -6659,8 +6665,11 @@
       const seriİmzası = kart.seriler.map(seri =>
         `${seri.etiket}\u0000${seri.renk}`
       ).join("\u0001");
+      const dinamikSeriYerinde = aktifKart === "add-del-series"
+        && chart.dataset.cizilenKart === aktifKart
+        && Boolean(chart.querySelector(":scope > svg"));
       const tamKurulum = chart.dataset.cizilenKart !== aktifKart
-        || chart.dataset.seriImzasi !== seriİmzası
+        || (!dinamikSeriYerinde && chart.dataset.seriImzasi !== seriİmzası)
         || !chart.querySelector("svg");
       const multiBarsKategoriEtiketleri =
         Array.from(oturum.multi_bars_kategori_etiketleri?.() ?? []);
@@ -6709,6 +6718,7 @@
         const yeniSvg = şablon.content.firstElementChild;
         svgYüzeyiniYerindeGüncelle(mevcutSvg, yeniSvg);
       }
+      chart.dataset.seriImzasi = seriİmzası;
       if (aktifKart === "nice-scale") {
         const yüzey = chart.querySelector(".nice-scale-boyut");
         if (yüzey && yüzey !== niceScaleResizeYüzeyi) {
@@ -6768,6 +6778,9 @@
             `<text data-box-tooltip="${alan}" x="8" y="${17 + satır * 16}"></text>`
           ).join("")}
         </g>` : "";
+      if (aktifKart === "add-del-series" && !tamKurulum) {
+        svg.querySelector(":scope > #etkileşim")?.remove();
+      }
       if (!svg.querySelector(":scope > #etkileşim")) svg.insertAdjacentHTML("beforeend", `
         <g id="etkileşim" pointer-events="none">
           <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)" stroke="#3b82f6"/>
@@ -6815,6 +6828,12 @@
           ${kart.scrollSync || !kart.yardım ? "" : `<div class="yardım">${kart.yardım}</div>`}
           ${kart.hareketliLejant ? "" : `<div class="lejant"><span>${xLejantEtiketi}: <b id="x-değeri">--</b></span>
           ${lejantSerileri}</div>`}`);
+      } else if (aktifKart === "add-del-series") {
+        const lejant = arayüzHedefi?.querySelector(":scope > .lejant");
+        if (lejant) {
+          const xDeğeri = lejant.querySelector("#x-değeri")?.textContent ?? "--";
+          lejant.innerHTML = `<span>x: <b id="x-değeri">${xDeğeri}</b></span>${lejantSerileri}`;
+        }
       }
       if (aktifKart.startsWith("stream-data-")) {
         const [x, ...değerler] = oturum.son_degerler();
@@ -8465,10 +8484,21 @@
       if (aktifKart !== "sync-cursor" || !syncCursorKöprüsü) return;
       syncCursorKöprüsü.fare_senkronunu_ayarla(syncCursorFareEtkin.checked);
     });
+    function addDelSeriOlaylarınıYaz() {
+      if (aktifKart !== "add-del-series" || !oturum) return;
+      chart.dataset.grafikKimligi = String(oturum.grafik_kimligi());
+      for (const mesaj of oturum.add_del_seri_olaylari_al()) {
+        console.log(mesaj);
+      }
+    }
+
     dinamikSeriEkle.addEventListener("click", () => {
       if (aktifKart !== "add-del-series" || !oturum) return;
       try {
-        if (oturum.add_del_seri_ekle()) çiz();
+        if (oturum.add_del_seri_ekle()) {
+          addDelSeriOlaylarınıYaz();
+          çiz();
+        }
         hata.textContent = "";
       } catch (neden) {
         hata.textContent = `Seri eklenemedi: ${String(neden)}`;
@@ -8477,7 +8507,10 @@
     dinamikSeriSil.addEventListener("click", () => {
       if (aktifKart !== "add-del-series" || !oturum) return;
       try {
-        if (oturum.add_del_seri_sil()) çiz();
+        if (oturum.add_del_seri_sil()) {
+          addDelSeriOlaylarınıYaz();
+          çiz();
+        }
         hata.textContent = "";
       } catch (neden) {
         hata.textContent = `Seri silinemedi: ${String(neden)}`;
@@ -9140,6 +9173,7 @@
           Number(nokta.value)
         );
         oturum.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+        if (kimlik === "add-del-series") addDelSeriOlaylarınıYaz();
         çiz();
         if (kimlik === "update-cursor-select-resize") {
           boyutSenkronZamanlayıcı = setInterval(() => {

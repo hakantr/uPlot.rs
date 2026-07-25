@@ -69,8 +69,8 @@ mod zoom_touch;
 mod zoom_wheel;
 
 pub use add_del_series::{
-    ADD_DEL_SERIES_KANIT_TOHUMU, ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, add_del_series_ek_verisi,
-    add_del_series_kartı,
+    ADD_DEL_SERIES_KANIT_TOHUMU, ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, add_del_series_ek_seçeneği,
+    add_del_series_ek_verisi, add_del_series_kartı,
 };
 pub use align_data::{
     ALIGN_DATA_KANIT_TOHUMU, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, align_data_maliyet_kartı,

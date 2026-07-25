@@ -1336,12 +1336,18 @@
         "source-equivalent-xs-and-value-pool",
         "seeded-reference-random-stream",
         "source-initial-red-green-blue-filled-series",
-        "core-atomic-add-series",
-        "core-atomic-delete-series",
+        "stable-graph-identity-across-add-delete-and-set-data",
+        "source-add-series-then-set-data-event-order",
+        "source-delete-series-then-set-data-event-order",
+        "source-init-add-series-events-including-x",
+        "core-transactional-add-series",
+        "core-transactional-delete-series",
         "core-validated-set-data",
         "source-index-two-to-rust-y-index-one",
-        "orange-dynamic-series",
+        "source-orange-first-dynamic-series",
+        "deterministic-distinct-dynamic-series-palette-extension",
         "typed-invalid-series-index-error",
+        "retained-wasm-shell-svg-root-and-control-focus",
         "dynamic-multi-series-cursor-legend",
         "gpui-wasm-catalog-parity",
         "common-interaction-profile"
@@ -1351,7 +1357,7 @@
         "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı",
         "davranış": "uygulandı_kanıtlı",
-        "performans": "bekliyor"
+        "performans": "uygulandı_kanıtlı"
       }
     },
     {

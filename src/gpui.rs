@@ -332,6 +332,16 @@ impl GpuiGrafik {
         &self.grafik
     }
 
+    pub fn grafik_kimliği(&self) -> u64 {
+        self.grafik.kimlik()
+    }
+
+    pub fn seri_yaşam_döngüsü_olaylarını_al(
+        &mut self,
+    ) -> Vec<crate::SeriYaşamDöngüsüOlayı> {
+        self.grafik.seri_yaşam_döngüsü_olaylarını_al()
+    }
+
     pub fn hata(&self) -> Option<&str> {
         self.hata.as_deref()
     }

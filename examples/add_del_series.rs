@@ -1,6 +1,8 @@
 use std::error::Error;
 use std::path::PathBuf;
-use uplot_rs::{Grafik, SeriSeçenekleri, add_del_series_ek_verisi, add_del_series_kartı};
+use uplot_rs::{
+    Grafik, add_del_series_ek_seçeneği, add_del_series_ek_verisi, add_del_series_kartı,
+};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let çıktı = std::env::args()
@@ -14,9 +16,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut grafik = Grafik::yeni(seçenekler, veri)?;
     grafik.seri_ekle(
         1,
-        SeriSeçenekleri::yeni("Orange")
-            .renk("#ffa500")
-            .dolgu("#ffa5001a"),
+        add_del_series_ek_seçeneği(0),
         add_del_series_ek_verisi(0),
     )?;
     std::fs::write(&çıktı, grafik.çiz().svg())?;
