@@ -8661,28 +8661,32 @@ mod eksen_testleri {
     }
 
     #[test]
-    fn zaman_bölmeleri_kaynak_dört_sekiz_saat_ve_üç_gün_adımlarını_seçer() {
+    fn zaman_bölmeleri_kaynak_dört_sekiz_saat_ve_üç_gün_adımlarını_seçer() -> Result<(), UplotHatası>
+    {
         let adımı_seç = |hedef: f64, milisaniye: bool| {
-            let aralık = Aralık::yeni(0.0, hedef * 28.0).expect("geçerli zaman aralığı");
-            zaman_bölmeleri(
-                aralık,
-                1_400.0,
-                50.0,
-                milisaniye,
-                crate::ZamanDilimi::Utc,
-                None,
+            let aralık = Aralık::yeni(0.0, hedef * 28.0)?;
+            Ok::<_, UplotHatası>(
+                zaman_bölmeleri(
+                    aralık,
+                    1_400.0,
+                    50.0,
+                    milisaniye,
+                    crate::ZamanDilimi::Utc,
+                    None,
+                )
+                .1,
             )
-            .1
         };
-        assert_eq!(adımı_seç(0.001, false), 0.001);
-        assert_eq!(adımı_seç(1.1, false), 5.0);
-        assert_eq!(adımı_seç(4.0 * 3_600.0, false), 4.0 * 3_600.0);
-        assert_eq!(adımı_seç(8.0 * 3_600.0, false), 8.0 * 3_600.0);
-        assert_eq!(adımı_seç(3.0 * 86_400.0, false), 3.0 * 86_400.0);
-        assert_eq!(adımı_seç(60.0 * 86_400.0, false), 60.0 * 86_400.0);
-        assert_eq!(adımı_seç(100.0 * 365.0 * 86_400.0, false), 3_153_600_000.0);
-        assert_eq!(adımı_seç(2.1, true), 5.0);
-        assert_eq!(adımı_seç(25.0, true), 25.0);
+        assert_eq!(adımı_seç(0.001, false)?, 0.001);
+        assert_eq!(adımı_seç(1.1, false)?, 5.0);
+        assert_eq!(adımı_seç(4.0 * 3_600.0, false)?, 4.0 * 3_600.0);
+        assert_eq!(adımı_seç(8.0 * 3_600.0, false)?, 8.0 * 3_600.0);
+        assert_eq!(adımı_seç(3.0 * 86_400.0, false)?, 3.0 * 86_400.0);
+        assert_eq!(adımı_seç(60.0 * 86_400.0, false)?, 60.0 * 86_400.0);
+        assert_eq!(adımı_seç(100.0 * 365.0 * 86_400.0, false)?, 3_153_600_000.0);
+        assert_eq!(adımı_seç(2.1, true)?, 5.0);
+        assert_eq!(adımı_seç(25.0, true)?, 25.0);
+        Ok(())
     }
 
     #[test]
