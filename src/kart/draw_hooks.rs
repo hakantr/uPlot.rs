@@ -1,6 +1,7 @@
 use super::ortak_kart_etkileşimleri;
 use crate::{
-    Aralık, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, ÇizimKancasıDüzeni,
+    GrafikSeçenekleri, HizalıVeri, SayısalAralıkAyarları, SayısalAralıkParçası, SeriSeçenekleri,
+    UplotHatası, YumuşakSınırKipi, YÖlçekSeçenekleri, ÇizimKancasıDüzeni,
 };
 
 pub const DRAW_HOOKS_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = draw_hooks_kartı()?;
@@ -27,13 +28,18 @@ pub fn draw_hooks_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHat
     let seçenekler = GrafikSeçenekleri::yeni(600, 400)?
         .başlık("Draw Hooks")
         .x_zaman(false)
-        .y_aralığı(Aralık::yeni(0.0, 80.0)?)
         .ızgara_rengi("#000000")
         .eksen_göstergeleri(true)
         .x_eksen_rengi("#000000")
         .birincil_y_eksen_rengi("#000000")
         .x_eksen_çentik_uzunluğu(10.0)
         .birincil_y_eksen_çentik_uzunluğu(10.0)
+        .y_ölçeği(
+            YÖlçekSeçenekleri::yeni("y").sayısal_aralık(SayısalAralıkAyarları::yeni(
+                SayısalAralıkParçası::yeni(0.1, Some(0.0), YumuşakSınırKipi::Koşullu),
+                SayısalAralıkParçası::yeni(0.1, Some(0.0), YumuşakSınırKipi::Koşullu),
+            )),
+        )
         .imleç_noktalarını_göster(false)
         .çizim_kancaları(kancalar)
         .etkileşimler(ortak_kart_etkileşimleri())
@@ -46,7 +52,7 @@ pub fn draw_hooks_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHat
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{GradyanRenkDurağı, Grafik, Komut, Nokta};
+    use crate::{Aralık, GradyanRenkDurağı, Grafik, Komut, Nokta};
 
     #[test]
     fn kaynak_veri_ve_dört_çizim_kancası_korunur() -> Result<(), UplotHatası> {
@@ -97,7 +103,9 @@ mod testler {
         assert_eq!(seçenekler.birincil_y_eksen_çentik_uzunluğu, 10.0);
         assert!(!seçenekler.imleç_noktaları_görünür);
 
-        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        assert_eq!(grafik.görünür_y_aralığı(), Aralık::yeni(3.0, 80.0)?);
+        let sahne = grafik.çiz();
         let komutlar = sahne.komutlar();
         let son = komutlar.last();
         assert!(matches!(
@@ -198,6 +206,7 @@ mod testler {
     fn set_data_medyan_önbelleğini_yeniler() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = draw_hooks_kartı()?;
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        let önceki_aralık = grafik.görünür_y_aralığı();
         let önceki_y = grafik
             .çiz()
             .komutlar()
@@ -222,6 +231,8 @@ mod testler {
                 vec![Some(70.0), Some(70.0), Some(70.0)],
             ],
         )?)?;
+        let yeni_aralık = grafik.görünür_y_aralığı();
+        assert_ne!(önceki_aralık, yeni_aralık);
         let yeni_y = grafik
             .çiz()
             .komutlar()
