@@ -2455,7 +2455,9 @@
         "source-exact-400x200-chart", "deterministic-proof-three-series",
         "surface-rect-resync-after-scroll", "client-to-scene-core-mapping",
         "mouseenter-layout-resync", "gpui-wasm-scroll-surface-parity",
-        "natural-scroll-default", "optional-common-interaction-profile"
+        "natural-scroll-default", "optional-common-interaction-profile",
+        "single-passive-scroll-listener", "invalid-measurement-keeps-last-valid-rect",
+        "surface-only-sync-without-scene-redraw"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",

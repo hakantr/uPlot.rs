@@ -86,4 +86,28 @@ mod testler {
         let son_konum = kaydırılmış.and_then(|yüzey| yüzey.sahne_konumu(220.0, 220.0, 400, 200));
         assert_eq!(ilk_konum, son_konum);
     }
+
+    #[test]
+    fn gpui_layout_kökeni_değişse_de_aynı_görsel_nokta_aynı_datuma_döner() -> Result<(), UplotHatası>
+    {
+        let (seçenekler, veri) = scroll_sync_kartı()?;
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        let önce = YüzeyDikdörtgeni::yeni(64.0, 480.0, 400.0, 200.0)
+            .and_then(|yüzey| yüzey.sahne_konumu(264.0, 580.0, 400, 200));
+        let sonra = YüzeyDikdörtgeni::yeni(64.0, 180.0, 400.0, 200.0)
+            .and_then(|yüzey| yüzey.sahne_konumu(264.0, 280.0, 400, 200));
+        assert_eq!(önce, sonra);
+
+        let önce = önce.ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        let sonra = sonra.ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        let (sol, sağ, _, _) = grafik.çizim_alanı_boyutta(400, 200);
+        let önce_oranı = f64::from(((önce.x - sol) / (sağ - sol)).clamp(0.0, 1.0));
+        let sonra_oranı = f64::from(((sonra.x - sol) / (sağ - sol)).clamp(0.0, 1.0));
+        assert_eq!(
+            grafik.en_yakın_noktalar(önce_oranı),
+            grafik.en_yakın_noktalar(sonra_oranı),
+            "GPUI her pointer olayında güncel paint/layout kökenini kullandığında datum sabit kalmalı"
+        );
+        Ok(())
+    }
 }

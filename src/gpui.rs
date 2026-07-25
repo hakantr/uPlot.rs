@@ -3150,6 +3150,33 @@ mod testler {
     }
 
     #[test]
+    fn scroll_sync_güncel_gpui_layout_kökenini_ana_sahneyi_değiştirmeden_kullanır()
+    -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = crate::kart::scroll_sync_kartı()?;
+        let bileşen = GpuiGrafik::yeni(Grafik::yeni(seçenekler, veri)?);
+        let ana_sahne = bileşen.ana_sahne.clone();
+        let komut_sayısı = ana_sahne.komutlar().len();
+
+        bileşen.çizim_sınırları.set(Some(Bounds::new(
+            point(px(64.0), px(480.0)),
+            size(px(400.0), px(200.0)),
+        )));
+        let önce = bileşen.sahne_konumu(point(px(264.0), px(580.0)));
+
+        bileşen.çizim_sınırları.set(Some(Bounds::new(
+            point(px(64.0), px(180.0)),
+            size(px(400.0), px(200.0)),
+        )));
+        let sonra = bileşen.sahne_konumu(point(px(264.0), px(280.0)));
+
+        assert_eq!(önce, Some(Nokta::yeni(200.0, 100.0)));
+        assert_eq!(önce, sonra);
+        assert!(Rc::ptr_eq(&bileşen.ana_sahne, &ana_sahne));
+        assert_eq!(bileşen.ana_sahne.komutlar().len(), komut_sayısı);
+        Ok(())
+    }
+
+    #[test]
     fn y_kaydırılmış_hover_geometrisi_ile_ham_lejant_değeri_ayrılır() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = crate::kart::y_shifted_series_kartı()?;
         let grafik = Grafik::yeni(seçenekler, veri)?;

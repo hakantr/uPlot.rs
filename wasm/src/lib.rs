@@ -476,10 +476,14 @@ impl KartOturumu {
     }
 
     pub fn yuzeyi_esitle(&mut self, sol: f64, ust: f64, genislik: f64, yukseklik: f64) -> bool {
-        let yeni = YüzeyDikdörtgeni::yeni(sol, ust, genislik, yukseklik);
-        let geçerli = yeni.is_some();
-        self.yüzey = yeni;
-        geçerli
+        let Some(yeni) = YüzeyDikdörtgeni::yeni(sol, ust, genislik, yukseklik) else {
+            // Gizlenen/yeniden yerleşen DOM düğümü geçici olarak 0×0
+            // ölçülebilir. uPlot'un son geçerli `rect` önbelleği gibi önceki
+            // eşlemeyi koru; geçici ölçüm pointer koordinatlarını silmesin.
+            return false;
+        };
+        self.yüzey = Some(yeni);
+        true
     }
 
     pub fn istemci_konumu(
@@ -2827,13 +2831,38 @@ mod testler {
         let Ok(mut oturum) = oturum else {
             return;
         };
-        assert!(oturum.svg(400, 200).contains(".syncRect()"));
+        let svg = oturum.svg(400, 200);
+        assert!(svg.contains(".syncRect()"));
         assert!(oturum.yuzeyi_esitle(10.0, 410.0, 400.0, 200.0));
         let önce = oturum.istemci_konumu(210.0, 510.0, 400, 200);
         assert!(oturum.yuzeyi_esitle(10.0, 110.0, 400.0, 200.0));
         let sonra = oturum.istemci_konumu(210.0, 210.0, 400, 200);
         assert_eq!(önce, sonra);
+        assert_eq!(
+            oturum.svg(400, 200),
+            svg,
+            "syncRect yalnız yüzey önbelleğini yenilemeli; ana sahneyi değiştirmemeli"
+        );
+        assert!(!oturum.geri_var());
+        assert!(!oturum.yakinlastirilmis());
+
+        assert!(!oturum.yuzeyi_esitle(10.0, 110.0, 0.0, 200.0));
+        assert_eq!(
+            oturum.istemci_konumu(210.0, 210.0, 400, 200),
+            sonra,
+            "geçici 0×0 ölçüm son geçerli yüzey eşlemesini silmemeli"
+        );
         assert!(scroll_sync_kart_tanim_ornegi().contains("scroll_sync_kartı"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches(
+                "chart.addEventListener(\"scroll\", yüzeyiEşitle, { passive: true, capture: true });"
+            )
+            .count(),
+            1,
+            "scroll listener kart geçişlerinde çoğalmamalı"
+        );
+        assert!(web.contains("chart.addEventListener(\"pointerenter\", () => {"));
     }
 
     #[test]
