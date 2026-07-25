@@ -225,7 +225,21 @@ mod testler {
             .çiz()
             .komutlar()
             .iter()
-            .filter(|komut| matches!(komut, Komut::Daire { .. }))
+            .map(|komut| match komut {
+                Komut::Daire { .. } => 1,
+                Komut::Daireler { merkezler, .. } => merkezler.len(),
+                _ => 0,
+            })
+            .sum())
+    }
+
+    fn toplu_daire_komutu_sayısı(örnek: PointsÖrneği) -> Result<usize, UplotHatası> {
+        let (seçenekler, veri) = points_kartı(örnek)?;
+        Ok(Grafik::yeni(seçenekler, veri)?
+            .çiz()
+            .komutlar()
+            .iter()
+            .filter(|komut| matches!(komut, Komut::Daireler { .. }))
             .count())
     }
 
@@ -244,6 +258,11 @@ mod testler {
         let varsayılan_veri = kartlar.get(1).map(|kart| &kart.2);
         let aşırı_veri = kartlar.get(2).map(|kart| &kart.2);
         assert_eq!(varsayılan_veri, aşırı_veri);
+        assert!(
+            varsayılan_veri
+                .zip(aşırı_veri)
+                .is_some_and(|(varsayılan, aşırı)| varsayılan.aynı_depolamayı_paylaşıyor(aşırı))
+        );
         let (seçenekler, veri) = points_kartı(PointsÖrneği::Karma)?;
         assert_eq!(veri.seriler().len(), 4);
         assert!(
@@ -282,6 +301,62 @@ mod testler {
         assert_eq!(daire_sayısı(PointsÖrneği::Karma)?, 403);
         assert_eq!(daire_sayısı(PointsÖrneği::VarsayılanYoğunluk)?, 180);
         assert_eq!(daire_sayısı(PointsÖrneği::AşırıYoğun)?, 0);
+        assert_eq!(toplu_daire_komutu_sayısı(PointsÖrneği::Karma)?, 3);
+        assert_eq!(
+            toplu_daire_komutu_sayısı(PointsÖrneği::VarsayılanYoğunluk)?,
+            1
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn paths_null_mavi_seriyi_yol_ve_dolgu_olmadan_yalnız_nokta_olarak_çizer()
+    -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = points_kartı(PointsÖrneği::Karma)?;
+        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+        assert!(
+            !sahne
+                .komutlar()
+                .iter()
+                .any(|komut| matches!(komut, Komut::Yol { renk, .. } if renk == "blue"))
+        );
+        assert!(!sahne.komutlar().iter().any(
+            |komut| matches!(komut, Komut::Alan { dolgu, .. } if dolgu == "rgba(0,0,255,0.1)")
+        ));
+        assert!(
+            sahne
+                .komutlar()
+                .iter()
+                .any(|komut| matches!(komut, Komut::Daireler { çizgi, .. } if çizgi == "blue"))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn aşırı_yoğun_yüzey_x_zoomunda_noktaları_yeniden_gösterir() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = points_kartı(PointsÖrneği::AşırıYoğun)?;
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        let tam_sahne = grafik.çiz();
+        assert_eq!(
+            tam_sahne
+                .komutlar()
+                .iter()
+                .filter(|komut| matches!(komut, Komut::Daireler { .. }))
+                .count(),
+            0
+        );
+        let yakın = grafik.çiz_aralıkta(Some(Aralık::yeni(1.0, 180.0)?));
+        assert_eq!(
+            yakın
+                .komutlar()
+                .iter()
+                .filter_map(|komut| match komut {
+                    Komut::Daireler { merkezler, .. } => Some(merkezler.len()),
+                    _ => None,
+                })
+                .sum::<usize>(),
+            180
+        );
         Ok(())
     }
 
@@ -305,10 +380,13 @@ mod testler {
         let yakın_daireler = yakın
             .komutlar()
             .iter()
-            .filter(|komut| matches!(komut, Komut::Daire { .. }))
-            .count();
-        assert!(yakın_daireler > 0);
-        assert!(yakın_daireler < 94);
+            .filter_map(|komut| match komut {
+                Komut::Daire { .. } => Some(1),
+                Komut::Daireler { merkezler, .. } => Some(merkezler.len()),
+                _ => None,
+            })
+            .sum::<usize>();
+        assert_eq!(yakın_daireler, 19);
         Ok(())
     }
 }

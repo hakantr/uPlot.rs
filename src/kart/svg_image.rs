@@ -71,7 +71,7 @@ mod testler {
         assert!(svg.contains("fill=\"pink\""));
         assert!(svg.contains("stroke=\"blue\""));
         assert!(svg.contains("M64.00 143.00 L220.00 100.00 L376.00 57.00"));
-        assert_eq!(svg.matches("r=\"2.00\"").count(), 3);
+        assert_eq!(svg.matches("a2.00 2.00 0 1 0").count(), 6);
         assert!(!svg.contains("<canvas"));
         assert!(!svg.contains("<foreignObject"));
         assert_eq!(svg, svg_image_belgesi()?);

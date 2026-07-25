@@ -2288,6 +2288,8 @@
         "source-exact-sparse-2761-index-data", "source-null-indexes",
         "conditional-point-density", "points-space-zero", "points-paths-null",
         "points-fill-size-width", "pixel-gap-single-point-filter",
+        "batched-path2d-style-point-commands", "shared-arc-default-too-dense-data",
+        "too-dense-points-reappear-on-x-zoom", "sparse-fixed-zoom-golden-count",
         "viewport-edge-and-nearest-index-gap-scan",
         "gpui-wasm-catalog-parity", "common-interaction-profile",
         "panic-free-source-data-feedback"

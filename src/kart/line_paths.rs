@@ -193,7 +193,10 @@ mod testler {
             assert!(sahne.komutlar().iter().any(|komut| {
                 matches!(
                     komut,
-                    Komut::Yol { .. } | Komut::Daire { .. } | Komut::Dikdörtgen { .. }
+                    Komut::Yol { .. }
+                        | Komut::Daire { .. }
+                        | Komut::Daireler { .. }
+                        | Komut::Dikdörtgen { .. }
                 )
             }));
         }
@@ -228,8 +231,12 @@ mod testler {
         let daireler = sahne
             .komutlar()
             .iter()
-            .filter(|komut| matches!(komut, Komut::Daire { .. }))
-            .count();
+            .map(|komut| match komut {
+                Komut::Daire { .. } => 1,
+                Komut::Daireler { merkezler, .. } => merkezler.len(),
+                _ => 0,
+            })
+            .sum::<usize>();
         assert_eq!(daireler, 97);
         assert!(
             !sahne

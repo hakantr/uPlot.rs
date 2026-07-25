@@ -110,7 +110,13 @@ mod testler {
         let görünür = grafik.görünür_x_aralığı();
         assert_eq!(görünür.en_az, 15.0);
         assert_eq!(görünür.en_çok, 81.0);
-        assert!(grafik.çiz().svg().matches("<circle").count() > 0);
+        assert!(grafik.çiz().komutlar().iter().any(|komut| {
+            matches!(komut, crate::Komut::Daire { .. })
+                || matches!(
+                    komut,
+                    crate::Komut::Daireler { merkezler, .. } if !merkezler.is_empty()
+                )
+        }));
 
         assert!(grafik.seri_görünürlüğünü_ayarla(1, false)?);
         assert_eq!(

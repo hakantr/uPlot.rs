@@ -1579,7 +1579,7 @@
         amaç: "Varsayılan marker yoğunluğu, space=0, yalnız-nokta yolu ve boşluklar arasındaki tekil ölçümleri birlikte karşılaştırır.",
         api: "points.space görünür piksel kapasitesini, paths:null yalnız marker çizimini, NoktaFiltreKipi ise gap sınırlarından seçilen indeksleri belirler.",
         izleme: "Seyrek olayları çizgiyle süreklilik izlenimi vermeden gösterin; yoğun telemetride marker'ları otomatik gizleyin.",
-        maliyet: "Dört statik yüzey toplam 3321 X konumu tarar. Gap filtresi O(N+G×99), işaret çizimi seçilen k kadar; zoom filtreyi görünür piksel düzleminde yeniden hesaplar.",
+        maliyet: "Dört statik yüzey toplam 3321 X konumu tarar. Gap filtresi O(N+G×99); aynı stildeki yüzlerce marker GPUI ve SVG'de tek toplu path komutunda boyanır. Zoom filtreyi görünür piksel düzleminde yeniden hesaplar.",
       },
     };
 

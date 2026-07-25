@@ -82,22 +82,37 @@ mod testler {
         let kaynak_nokta_sayısı = sahne
             .komutlar()
             .iter()
-            .filter(|komut| {
-                matches!(
-                    komut,
-                    Komut::Daire {
-                        yarıçap,
-                        dolgu,
-                        çizgi,
-                        kalınlık,
-                        ..
-                    } if *yarıçap == 2.0
-                        && dolgu == "#ffffff"
-                        && çizgi == "#ff0000"
-                        && *kalınlık == 1.0
-                )
+            .map(|komut| match komut {
+                Komut::Daire {
+                    yarıçap,
+                    dolgu,
+                    çizgi,
+                    kalınlık,
+                    ..
+                } if *yarıçap == 2.0
+                    && dolgu == "#ffffff"
+                    && çizgi == "#ff0000"
+                    && *kalınlık == 1.0 =>
+                {
+                    1
+                }
+                Komut::Daireler {
+                    merkezler,
+                    yarıçap,
+                    dolgu,
+                    çizgi,
+                    kalınlık,
+                    ..
+                } if *yarıçap == 2.0
+                    && dolgu == "#ffffff"
+                    && çizgi == "#ff0000"
+                    && *kalınlık == 1.0 =>
+                {
+                    merkezler.len()
+                }
+                _ => 0,
             })
-            .count();
+            .sum::<usize>();
         assert_eq!(kaynak_nokta_sayısı, 130);
         Ok(())
     }

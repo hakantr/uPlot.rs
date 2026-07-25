@@ -4302,6 +4302,8 @@ impl Grafik {
                         merkezler: toplu_merkezler,
                         yarıçap,
                         dolgu: seri.dolgu.clone(),
+                        çizgi: "#00000000".to_string(),
+                        kalınlık: 0.0,
                         kesme_sınırları: Some((Nokta::yeni(sol, üst), Nokta::yeni(sağ, alt))),
                     });
                 }
@@ -4685,6 +4687,7 @@ impl Grafik {
                         )
                     });
                 let mut toplu_kareler = Vec::new();
+                let mut toplu_daireler = Vec::<(String, String, Vec<Nokta>)>::new();
                 for (indeks, nokta, x_değeri, y_değeri) in &görünür_noktalar {
                     if seri
                         .nokta_indeksleri
@@ -4707,13 +4710,19 @@ impl Grafik {
                         .clone()
                         .unwrap_or_else(|| "#ffffff".to_string());
                     match seri.nokta_şekli {
-                        crate::NoktaŞekli::Daire => sahne.ekle(Komut::Daire {
-                            merkez: *nokta,
-                            yarıçap: ((seri.nokta_boyutu - seri.nokta_kalınlığı) / 2.0).max(0.0),
-                            dolgu,
-                            çizgi: nokta_rengi,
-                            kalınlık: seri.nokta_kalınlığı,
-                        }),
+                        crate::NoktaŞekli::Daire => {
+                            if let Some((_, _, merkezler)) =
+                                toplu_daireler
+                                    .iter_mut()
+                                    .find(|(grup_dolgusu, grup_çizgisi, _)| {
+                                        grup_dolgusu == &dolgu && grup_çizgisi == &nokta_rengi
+                                    })
+                            {
+                                merkezler.push(*nokta);
+                            } else {
+                                toplu_daireler.push((dolgu, nokta_rengi, vec![*nokta]));
+                            }
+                        }
                         crate::NoktaŞekli::Kare => {
                             let yarı = seri.nokta_boyutu / 2.0;
                             toplu_kareler.push(vec![
@@ -4723,6 +4732,19 @@ impl Grafik {
                                 Nokta::yeni(nokta.x - yarı, nokta.y + yarı),
                             ]);
                         }
+                    }
+                }
+                for (dolgu, çizgi, merkezler) in toplu_daireler {
+                    let yarıçap = ((seri.nokta_boyutu - seri.nokta_kalınlığı) / 2.0).max(0.0);
+                    if yarıçap > 0.0 {
+                        sahne.ekle(Komut::Daireler {
+                            merkezler,
+                            yarıçap,
+                            dolgu,
+                            çizgi,
+                            kalınlık: seri.nokta_kalınlığı,
+                            kesme_sınırları: None,
+                        });
                     }
                 }
                 if !toplu_kareler.is_empty() {

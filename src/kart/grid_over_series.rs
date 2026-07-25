@@ -107,7 +107,10 @@ mod testler {
         let Some(son_seri) = sahne.komutlar().iter().rposition(|komut| {
             matches!(
                 komut,
-                Komut::Yol { .. } | Komut::Alan { .. } | Komut::Daire { .. }
+                Komut::Yol { .. }
+                    | Komut::Alan { .. }
+                    | Komut::Daire { .. }
+                    | Komut::Daireler { .. }
             )
         }) else {
             return Err(UplotHatası::YetersizVeri { uzunluk: 0 });

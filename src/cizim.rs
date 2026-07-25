@@ -101,6 +101,8 @@ pub enum Komut {
         merkezler: Vec<Nokta>,
         yarıçap: f32,
         dolgu: String,
+        çizgi: String,
+        kalınlık: f32,
         kesme_sınırları: Option<(Nokta, Nokta)>,
     },
     Dikdörtgen {
@@ -340,6 +342,8 @@ impl Sahne {
                     merkezler,
                     yarıçap,
                     dolgu,
+                    çizgi,
+                    kalınlık,
                     kesme_sınırları,
                 } => {
                     let kırpma_kimliği = kesme_sınırları.map(|(başlangıç, bitiş)| {
@@ -374,9 +378,11 @@ impl Sahne {
                     }
                     let _ = writeln!(
                         çıktı,
-                        "  <path d=\"{}\" fill=\"{}\" stroke=\"none\"{} />",
+                        "  <path d=\"{}\" fill=\"{}\" stroke=\"{}\" stroke-width=\"{}\"{} />",
                         d.trim_end(),
                         kaçış(dolgu),
+                        kaçış(çizgi),
+                        sayı(*kalınlık),
                         kırpma_kimliği.map_or_else(String::new, |kimlik| {
                             format!(" clip-path=\"url(#{})\"", kaçış(&kimlik))
                         })

@@ -2343,7 +2343,7 @@ mod testler {
 
         assert!(oturum.secim_yakinlastir(0.15, 0.35).is_ok());
         let yakın = oturum.svg(800, 400);
-        assert!(yakın.contains("<circle"));
+        assert!(yakın.contains("a2.00 2.00 0 1 0"));
         assert!(ortak_kart_dokunma_etkilesimi());
         assert!(oturum.dokunmayi_baslat());
         assert!(oturum.dokunma_yakinlastir(0.5, 0.5, 1.25).is_ok());
@@ -2687,6 +2687,16 @@ mod testler {
             let (genişlik, yükseklik) = örnek.kaynak_boyutu();
             let svg = oturum.svg(genişlik, yükseklik);
             assert!(svg.contains(örnek.başlık()));
+            assert_eq!(
+                svg.matches("<circle").count(),
+                0,
+                "{} noktaları ayrı SVG düğümlerine açılmamalı",
+                örnek.kimlik()
+            );
+            if örnek == PointsÖrneği::Karma {
+                assert!(svg.contains("stroke=\"blue\""));
+                assert!(svg.contains("stroke=\"orange\""));
+            }
         }
         assert!(points_kart_tanim_ornegi().contains("points_kartları"));
         let web = include_str!("../www/index.html");
@@ -3385,7 +3395,7 @@ mod testler {
         assert!(matches!(oturum.seri_gorunurlugu_ayarla(1, true), Ok(true)));
         assert!(matches!(oturum.secim_yakinlastir(0.151, 0.817), Ok(true)));
         assert_eq!(oturum.gorunur_x_araligi(), vec![15.0, 81.0]);
-        assert!(oturum.svg(800, 600).matches("<circle").count() > 0);
+        assert!(oturum.svg(800, 600).contains("a2.00 2.00 0 1 0"));
         assert!(trendlines_kart_tanim_ornegi().contains("seçim_yakınlaştır"));
         assert_eq!(kart_sayisi(), 365);
     }
@@ -3645,8 +3655,9 @@ mod testler {
         assert_eq!(svg.matches("fill=\"none\"").count(), 13);
         assert_eq!(
             svg.matches("fill=\"#ffffff\" stroke=\"#ff0000\"").count(),
-            130
+            13
         );
+        assert_eq!(svg.matches("a2.00 2.00 0 1 0").count(), 260);
     }
 
     #[test]
@@ -4042,7 +4053,7 @@ mod testler {
         let seri = svg.rfind("fill=\"#42A5F5\"");
         let ızgara = svg.rfind("stroke=\"#00000033\"");
         assert!(matches!((seri, ızgara), (Some(seri), Some(ızgara)) if ızgara > seri));
-        assert_eq!(svg.matches("<circle").count(), 90);
+        assert_eq!(svg.matches("a2.00 2.00 0 1 0").count(), 180);
         assert!(svg.contains("fill=\"#000000\""));
         assert!(grid_over_series_kart_tanim_ornegi().contains("ÇizimSırası"));
         let web = include_str!("../www/index.html");
