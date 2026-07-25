@@ -328,6 +328,18 @@
       height: 600px !important; }
     .focus-cursor-grafik .lejant { max-height: 42px; overflow: auto; }
     .focus-cursor-grafik [data-focus-legend] { transition: opacity 70ms linear; }
+    #chart.gradients-yüzeyi { display: block; overflow: auto; padding: 8px; }
+    .gradients-yığın { min-width: min-content; display: flex; flex-wrap: wrap;
+      align-items: flex-start; gap: 16px; }
+    .gradients-grafik { position: relative; flex: 0 0 800px; width: 800px;
+      min-height: 670px; border: 1px solid #e5e7eb; border-radius: 8px;
+      background: #fff; overflow: hidden; }
+    .gradients-grafik > h3 { margin: 7px 10px 2px; color: #111827;
+      font-size: 13px; }
+    .gradients-grafik > p { margin: 0 10px 5px; color: #6b7280;
+      font-size: 11px; }
+    .gradients-grafik svg { display: block; width: 800px !important;
+      height: 600px !important; }
     #chart.bars-grouped-stacked-yüzeyi { display: block; min-width: 0; overflow: auto;
                                          place-items: unset; padding: 8px;
                                          box-sizing: border-box; }
@@ -2774,29 +2786,28 @@
         maliyet: "130K örnek iki yüzey arasında kopyalanmaz. Pointer hareketinde yalnız cursor/legend ve mevcut seri path nitelikleri güncellenir; path d geometrisi sabit kalır.",
       },
     };
-    for (const [kimlik, başlık, durum, seriler] of [
-      ["gradients-horizontal-stroke", "Scale-aligned gradient strokes (hz)", "5 nokta · X'e hizalı ayrık duraklar", [{ etiket: "Trends", renk: "#ff0000" }]],
-      ["gradients-vertical-stroke", "Scale-aligned gradient strokes (vt)", "5 nokta · Y'ye hizalı mavi/kırmızı", [{ etiket: "Over/Under", renk: "#ff0000" }]],
-      ["gradients-vertical-arcsinh", "Scale-aligned gradient strokes (vt)", "5 nokta · ArcSinh · 3 ayrık renk", [{ etiket: "Over/Under", renk: "#ff0000" }]],
-      ["gradients-scale-fills", "Scale-aligned gradient fills", "6 nokta · 2 basınç dolgusu", [{ etiket: "Tank 1 (red = high pressure)", renk: "#00ff00" }, { etiket: "Tank 2 (red = low pressure)", renk: "#ff00ff" }]],
-      ["gradients-relative-fill", "Data min/max % relative gradient fills", "6 nokta · görünür min/orta/max", [{ etiket: "Tank 1", renk: "#00ff00" }]],
-    ]) {
-      document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
-        <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
-          <strong>${başlık}</strong><small>gradients</small><div class="durum">${durum}</div>
-        </article>`);
-      kartlar[kimlik] = {
-        başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/gradients.html">gradients.html</a>
-          <br>scaleGradient durak seçimi, ayrık/akıcı renkler, ArcSinh konumları ve görünür veri min/max hesabı Rust çekirdeğinde yeniden çözülür.`,
-        tanım: () => gradients_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/gradients.rs",
-        seriler,
-        yardım: "Gradyan durakları yakınlaştırma ve taşıma sonrası görünür ölçekle yeniden hizalanır",
-        değişkenNokta: false,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
+      <article class="kart" data-kart="gradients" aria-current="false" tabindex="0">
+        <strong>Gradients · 5 related surfaces</strong><small>gradients</small>
+        <div class="durum">ayrık stroke · ArcSinh · ortak data4 dolguları</div>
+      </article>`);
+    kartlar["gradients"] = {
+      başlık: "Gradients · 5 related surfaces",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/gradients.html">gradients.html</a>
+        <br>Resmî sayfadaki beş yüzey kaynak sırasıyla birlikte gösterilir. Dikey lineer/ArcSinh yüzeyleri aynı data2 deposunu, iki dolgu yüzeyi aynı data4 deposunu paylaşır; scaleGradient, cursor point rengi ve görünür min/max hesabı Rust çekirdeğinde çözülür.`,
+      tanım: () => gradients_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/gradients.rs",
+      seriler: [{ etiket: "Trends", renk: "#ff0000" }],
+      yardım: "Beş yüzeyde gradyan durakları zoom, pan ve görünür ölçek değişiminde yeniden hizalanır",
+      değişkenNokta: false,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "X/Y hizalı ayrık stroke, ArcSinh koordinatı, iki ölçek dolgusu ve görünür veri min/max dolgusunu aynı kaynak sayfası düzeninde karşılaştırır.",
+        api: "gradients_kartları() beş bağımsız Grafik döndürür. ÖlçekGradyanı değer, ±sonsuz ve görünür_veri_oranı duraklarını; seri_imleç_rengi cursor point callback sonucunu taşır.",
+        izleme: "Eşik bölgelerini çizgi ya da dolgu rengiyle belirginleştirmek ve görünür pencerenin min/orta/max basıncını okumak için uygundur.",
+        maliyet: "Ortak data2/data4 sütunları Arc ile paylaşılır. Pointer yalnız etkin yüzeyin cursor/lejant katmanını günceller; gradyan ve ana yollar yalnız ölçek, veri, görünürlük veya boyut değişince yeniden çözülür.",
+      },
+    };
 
     document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
       <article class="kart" data-kart="grid-over-series" aria-current="false" tabindex="0">
@@ -3000,6 +3011,8 @@
     let dataSmoothingEtkinİndeks = 0;
     let focusCursorOturumları = [];
     let focusCursorEtkinİndeks = 0;
+    let gradientsOturumları = [];
+    let gradientsEtkinİndeks = 0;
     let syncCursorOturumları = [];
     let timeseriesDiscreteOturumları = [];
     let timeseriesDiscreteEtkinİndeks = 0;
@@ -3154,6 +3167,41 @@
         lejant: false,
       },
     ];
+    const gradientsYüzeyleri = [
+      {
+        kimlik: "gradients-horizontal-stroke",
+        başlık: "Scale-aligned gradient strokes (hz)",
+        açıklama: "5 nokta · X'e hizalı ayrık kırmızı/turuncu/mavi duraklar",
+        seriler: [{ etiket: "Trends", renk: "#ff0000" }],
+      },
+      {
+        kimlik: "gradients-vertical-stroke",
+        başlık: "Scale-aligned gradient strokes (vt)",
+        açıklama: "5 nokta · Y'ye hizalı ayrık mavi/kırmızı duraklar",
+        seriler: [{ etiket: "Over/Under", renk: "#ff0000" }],
+      },
+      {
+        kimlik: "gradients-vertical-arcsinh",
+        başlık: "Scale-aligned gradient strokes (vt) · ArcSinh",
+        açıklama: "Aynı data2 · ArcSinh Y · mavi/kırmızı/yeşil",
+        seriler: [{ etiket: "Over/Under", renk: "#ff0000" }],
+      },
+      {
+        kimlik: "gradients-scale-fills",
+        başlık: "Scale-aligned gradient fills",
+        açıklama: "6 nokta · ortak data4 · iki basınç dolgusu",
+        seriler: [
+          { etiket: "Tank 1 (red = high pressure)", renk: "#00ff00" },
+          { etiket: "Tank 2 (red = low pressure)", renk: "#ff00ff" },
+        ],
+      },
+      {
+        kimlik: "gradients-relative-fill",
+        başlık: "Data min/max % relative gradient fills",
+        açıklama: "Aynı data4 · ikinci Y gizli · görünür min/orta/max",
+        seriler: [{ etiket: "Tank 1", renk: "#00ff00" }],
+      },
+    ];
     const nearestNonNullYüzeyleri = [
       {
         kimlik: "nearest-non-null-x-value",
@@ -3282,6 +3330,14 @@
           || !focusCursorOturumları.some(yüzey => yüzey.geri_var());
         tamGörünüm.disabled = !etkileşimler.çiftTık
           || !focusCursorOturumları.some(yüzey => yüzey.yakinlastirilmis());
+        dinamikSeriSil.disabled = true;
+        return;
+      }
+      if (aktifKart === "gradients") {
+        görünümGeri.disabled = !etkileşimler.geçmiş
+          || !gradientsOturumları.some(yüzey => yüzey.geri_var());
+        tamGörünüm.disabled = !etkileşimler.çiftTık
+          || !gradientsOturumları.some(yüzey => yüzey.yakinlastirilmis());
         dinamikSeriSil.disabled = true;
         return;
       }
@@ -5970,6 +6026,87 @@
       kontrolleriGüncelle();
     }
 
+    function gradientsYüzeyiniÇiz(indeks) {
+      const tanım = gradientsYüzeyleri[indeks];
+      const yüzey = chart.querySelector(`[data-gradients-index="${indeks}"]`);
+      const yüzeyOturumu = gradientsOturumları[indeks];
+      if (!tanım || !yüzey || !yüzeyOturumu) return;
+      const şablon = document.createElement("template");
+      şablon.innerHTML = yüzeyOturumu.svg(800, 600).trim();
+      const yeniSvg = şablon.content.querySelector("svg");
+      let svg = yüzey.querySelector("svg");
+      if (svg && yeniSvg) {
+        svgYüzeyiniYerindeGüncelle(svg, yeniSvg);
+      } else {
+        yüzey.innerHTML = `
+          <h3>${tanım.başlık}</h3>
+          <p>${tanım.açıklama}</p>
+          ${yüzeyOturumu.svg(800, 600)}
+          <div class="lejant"><span>x: <b id="x-değeri">--</b></span>
+            ${tanım.seriler.map((seri, seriİndeksi) => `
+              <span><i class="örnek" style="border-color:${seri.renk};background:${seri.renk}"></i>
+                ${seri.etiket}: <b id="seri-değeri-${seriİndeksi}">--</b></span>
+            `).join("")}
+          </div>
+        `;
+        svg = yüzey.querySelector("svg");
+      }
+      if (!svg) return;
+      if (!svg.querySelector(":scope > #etkileşim")) {
+        svg.insertAdjacentHTML("beforeend", `
+          <g id="etkileşim" pointer-events="none">
+            <rect id="seçim" visibility="hidden" fill="rgba(59,130,246,.18)"
+              stroke="#3b82f6"/>
+            <line id="imleç-x" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            <line id="imleç-y" visibility="hidden" stroke="#6b7280"
+              stroke-dasharray="4 4"/>
+            ${tanım.seriler.map((seri, seriİndeksi) =>
+              `<circle id="imleç-nokta-${seriİndeksi}" visibility="hidden" r="2.5"
+                fill="${seri.renk}"/>`
+            ).join("")}
+          </g>`);
+      }
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+      svg.dataset.etkileşim = "independent-gradients";
+      yüzey.onpointerenter = () => {
+        gradientsEtkinİndeks = indeks;
+        oturum = gradientsOturumları[indeks] ?? null;
+        kartlar["gradients"].seriler = tanım.seriler;
+        kontrolleriGüncelle();
+      };
+      yüzey.onpointerleave = () => {
+        svg.querySelectorAll("#imleç-x, #imleç-y, [id^='imleç-nokta-']")
+          .forEach(öğe => öğe.setAttribute("visibility", "hidden"));
+      };
+    }
+
+    function gradientsÇiz() {
+      const ilkKurulum = !chart.classList.contains("gradients-yüzeyi")
+        || chart.querySelectorAll(".gradients-grafik").length
+          !== gradientsYüzeyleri.length;
+      if (ilkKurulum) {
+        chart.className = "gradients-yüzeyi";
+        chart.innerHTML = `<div class="gradients-yığın">
+          ${gradientsYüzeyleri.map((_, indeks) =>
+            `<article class="gradients-grafik"
+              data-gradients-index="${indeks}"></article>`
+          ).join("")}
+        </div>`;
+        gradientsYüzeyleri.forEach((_, indeks) => gradientsYüzeyiniÇiz(indeks));
+      } else {
+        gradientsYüzeyiniÇiz(gradientsEtkinİndeks);
+      }
+      oturum = gradientsOturumları[gradientsEtkinİndeks]
+        ?? gradientsOturumları[0]
+        ?? null;
+      kartlar["gradients"].seriler =
+        gradientsYüzeyleri[gradientsEtkinİndeks]?.seriler
+        ?? gradientsYüzeyleri[0].seriler;
+      kontrolleriGüncelle();
+    }
+
     function scatterYüzeyiniÇiz(indeks) {
       const tanım = scatterYüzeyleri[indeks];
       const yüzey = chart.querySelector(`[data-scatter-index="${indeks}"]`);
@@ -7041,6 +7178,10 @@
         focusCursorÇiz();
         return;
       }
+      if (aktifKart === "gradients") {
+        gradientsÇiz();
+        return;
+      }
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
         return;
@@ -7155,6 +7296,7 @@
       chart.classList.remove("custom-scales-yüzeyi");
       chart.classList.remove("data-smoothing-yüzeyi");
       chart.classList.remove("focus-cursor-yüzeyi");
+      chart.classList.remove("gradients-yüzeyi");
       chart.classList.remove("soft-minmax-yüzeyi");
       chart.classList.remove("sparklines-bars-yüzeyi");
       chart.classList.remove("sparklines-yüzeyi");
@@ -7477,6 +7619,10 @@
         ? chart.querySelector(
             `[data-focus-cursor-index="${focusCursorEtkinİndeks}"] svg`
           )
+        : aktifKart === "gradients"
+        ? chart.querySelector(
+            `[data-gradients-index="${gradientsEtkinİndeks}"] svg`
+          )
         : aktifKart === "scatter"
         ? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"] svg`)
         : aktifKart === "box-whisker"
@@ -7599,6 +7745,11 @@
           ?? chart.querySelector(
             `[data-focus-cursor-index="${focusCursorEtkinİndeks}"]`
           )
+        : aktifKart === "gradients"
+        ? olay.target?.closest?.(".gradients-grafik")
+          ?? chart.querySelector(
+            `[data-gradients-index="${gradientsEtkinİndeks}"]`
+          )
         : aktifKart === "scatter"
         ? olay.target?.closest?.(".scatter-grafik")
           ?? chart.querySelector(`[data-scatter-index="${scatterEtkinİndeks}"]`)
@@ -7674,6 +7825,13 @@
           focusCursorEtkinİndeks = indeks;
           oturum = focusCursorOturumları[indeks];
           kartlar["focus-cursor"].seriler = focusCursorYüzeyleri[indeks].seriler;
+        }
+      } else if (aktifKart === "gradients" && bağımsızYüzey) {
+        const indeks = Number(bağımsızYüzey.dataset.gradientsIndex);
+        if (Number.isInteger(indeks) && gradientsOturumları[indeks]) {
+          gradientsEtkinİndeks = indeks;
+          oturum = gradientsOturumları[indeks];
+          kartlar["gradients"].seriler = gradientsYüzeyleri[indeks].seriler;
         }
       }
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
@@ -8019,6 +8177,7 @@
         ?? svg.closest(".custom-scales-grafik")
         ?? svg.closest(".data-smoothing-grafik")
         ?? svg.closest(".focus-cursor-grafik")
+        ?? svg.closest(".gradients-grafik")
         ?? svg.closest(".sparklines-grafik")
         ?? svg.closest(".sparse-grafik")
         ?? svg.closest(".stacked-series-grafik")
@@ -8884,6 +9043,11 @@
           if (yüzey.onceki_gorunum()) focusCursorYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "gradients") {
+        gradientsOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.onceki_gorunum()) gradientsYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.onceki_gorunum()) syncCursorYüzeyiÇiz(indeks);
@@ -8976,6 +9140,11 @@
           if (yüzey.tam_gorunum()) focusCursorYüzeyiniÇiz(indeks);
         });
         kontrolleriGüncelle();
+      } else if (aktifKart === "gradients") {
+        gradientsOturumları.forEach((yüzey, indeks) => {
+          if (yüzey.tam_gorunum()) gradientsYüzeyiniÇiz(indeks);
+        });
+        kontrolleriGüncelle();
       } else if (aktifKart === "sync-cursor") {
         syncCursorOturumları.forEach((yüzey, indeks) => {
           if (yüzey.tam_gorunum()) syncCursorYüzeyiÇiz(indeks);
@@ -9065,6 +9234,10 @@
         );
       } else if (aktifKart === "focus-cursor") {
         focusCursorOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "gradients") {
+        gradientsOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else if (aktifKart === "sync-cursor") {
@@ -9275,6 +9448,11 @@
           focusCursorEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "focus-cursor";
         }
+        if (kimlik !== "gradients" && kimlik.startsWith("gradients-")) {
+          const indeks = gradientsYüzeyleri.findIndex(yüzey => yüzey.kimlik === kimlik);
+          gradientsEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "gradients";
+        }
         if (["months-no-leap", "months-leap", "months-russian"].includes(kimlik)) {
           kimlik = "months";
         }
@@ -9401,6 +9579,7 @@
           customScalesOturumları,
           dataSmoothingOturumları,
           focusCursorOturumları,
+          gradientsOturumları,
           syncCursorOturumları,
           timeseriesDiscreteOturumları,
           timezonesDstOturumları,
@@ -9439,6 +9618,9 @@
         focusCursorOturumları.forEach(yüzey => yüzey.free());
         focusCursorOturumları = [];
         focusCursorEtkinİndeks = 0;
+        gradientsOturumları.forEach(yüzey => yüzey.free());
+        gradientsOturumları = [];
+        gradientsEtkinİndeks = 0;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
         syncCursorOturumları = [];
         timeseriesDiscreteOturumları.forEach(yüzey => yüzey.free());
@@ -9642,6 +9824,22 @@
           });
           oturum = focusCursorOturumları[focusCursorEtkinİndeks]
             ?? focusCursorOturumları[0]
+            ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "gradients") {
+          const istenenİndeks = gradientsYüzeyleri.findIndex(
+            yüzey => yüzey.kimlik === oturumKimliği
+          );
+          gradientsEtkinİndeks = istenenİndeks >= 0 ? istenenİndeks : 0;
+          gradientsOturumları = gradientsYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 100);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = gradientsOturumları[gradientsEtkinİndeks]
+            ?? gradientsOturumları[0]
             ?? null;
           çiz();
           return;

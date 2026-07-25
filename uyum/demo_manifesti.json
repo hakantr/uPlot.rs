@@ -1689,7 +1689,7 @@
         { "yol": "dist/uPlot.d.ts", "sha256": "c9fb5d1fe8f2084b44690c841e84ab63402549d9420535a6081b389a461fefe5" },
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
-      "fixture": "src/kart/gradients.rs#gradients_kartı",
+      "fixture": "src/kart/gradients.rs#gradients_kartları",
       "örnek": "examples/gradients.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -1713,7 +1713,8 @@
       "sahip_faz": 1,
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
-        "five-source-subcharts", "source-exact-inline-data", "scale-aligned-gradient-strokes",
+        "one-card-five-independent-source-surfaces", "source-exact-inline-data",
+        "shared-immutable-data2-and-data4", "scale-aligned-gradient-strokes",
         "scale-aligned-gradient-fills", "discrete-color-stops", "continuous-color-stops",
         "arcsinh-gradient-coordinates", "visible-data-relative-stops", "gradient-cursor-colors",
         "svg-gpui-gradient-renderers", "gpui-wasm-catalog-parity", "common-interaction-profile",

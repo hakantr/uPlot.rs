@@ -3849,7 +3849,12 @@ mod testler {
         let Ok(oturum) = oturum else { return };
         assert_eq!(oturum.imlec_seri_renkleri(0.0), ["#ff0000"]);
         assert_eq!(oturum.imlec_seri_renkleri(0.25), ["#ffa500"]);
-        assert!(gradients_kart_tanim_ornegi().contains("GradientÖrneği::ÖlçekDolguları"));
+        assert!(gradients_kart_tanim_ornegi().contains("gradients_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(web.matches("data-kart=\"gradients\"").count(), 1);
+        assert!(!web.contains("data-kart=\"gradients-horizontal-stroke\""));
+        assert!(web.contains("const gradientsYüzeyleri"));
+        assert!(web.contains("function gradientsÇiz()"));
     }
 
     #[test]

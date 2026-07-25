@@ -1,6 +1,6 @@
 id = "gradients"
 kaynak = "../uPlot/demos/gradients.html"
-fixture = "src/kart/gradients.rs#gradients_kartı"
+fixture = "src/kart/gradients.rs#gradients_kartları"
 viewport = [800, 600]
 device_pixel_ratio = 1
 durum = "beş-kaynak-alt-grafiği"
@@ -14,9 +14,11 @@ dolgular = [[0, 1, 2, 3, 4, 5], [10, 20, 30, 40, 50, 60], [1, 3, 5, 8, 15, 20]]
 yatay_ayrık = [[0, "red"], [30, "orange"], [50, "blue"]]
 dikey_ayrık = [[-100, "blue"], [0, "red"]]
 arcsinh_ayrık = [["-Infinity", "blue"], [-10, "red"], [0, "green"]]
-göreli_oranlar = [0.0, 0.5, 1.0]
+goreli_oranlar = [0.0, 0.5, 1.0]
+ortak_veri_depolari = ["data2: vertical+arcsinh", "data4: scale-fills+relative-fill"]
+callback_kapsami = "fixture çıktısı; keyfi JS callback kimliği/yan etkisi değil"
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+[kanit]
+masaustu = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg = "target/gradients/gradients-horizontal-stroke.svg"

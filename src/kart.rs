@@ -126,7 +126,9 @@ pub use draw_hooks::{DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, draw_hooks_kartı};
 pub use focus_cursor::{
     FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, focus_cursor_kartları, focus_cursor_kartı,
 };
-pub use gradients::{GRADIENTS_KART_TANIM_ÖRNEĞİ, GradientÖrneği, gradients_kartı};
+pub use gradients::{
+    GRADIENTS_KART_TANIM_ÖRNEĞİ, GradientÖrneği, gradients_kartları, gradients_kartı,
+};
 pub use grid_over_series::{
     GRID_OVER_SERIES_KANIT_TOHUMU, GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, grid_over_series_kartı,
 };
