@@ -53,10 +53,10 @@ use uplot_rs::{
     multi_bars_kitaplık_etiketleri, multi_bars_kitaplık_kartı, nearest_non_null_kartı,
     nice_scale_kartı, no_data_kartı, ortak_kart_etkileşimleri, path_gap_clip_kartı,
     pixel_align_kartı, points_kartı, resize_kartı, scale_padding_kartı, scales_dir_ori_kartı,
-    scatter_kartı, scroll_sync_kartı, sine_stream_kartı, soft_minmax_kartı, sparklines_bars_kartı,
-    sparklines_kartı, sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür,
-    stream_data_kartı, svg_image_kartı, sync_cursor_kartı, sync_y_zero_aşamasını_ayarla,
-    sync_y_zero_kartı, thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
+    scatter_kartı, scroll_sync_kartı, soft_minmax_kartı, sparklines_bars_kartı, sparklines_kartı,
+    sparse_kartı, stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı,
+    svg_image_kartı, sync_cursor_kartı, sync_y_zero_aşamasını_ayarla, sync_y_zero_kartı,
+    thin_bars_stroke_fill_kartı, time_periods_kartı, timeline_discrete_kartı,
     timeseries_discrete_kartı, timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı,
     trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
     y_shifted_series_kartı, zoom_touch_kartı, zoom_wheel_kartı, ÇubukYönü, ÇubukÖrneği,
@@ -86,6 +86,14 @@ pub struct KartOturumu {
 impl KartOturumu {
     #[wasm_bindgen(constructor)]
     pub fn yeni(kart_kimliği: &str, nokta_sayısı: usize) -> Result<KartOturumu, JsValue> {
+        // Kaynak demo ilk uPlot verisini ve bütün sonraki `setData()`
+        // karelerini tek akış nesnesinden üretir. Grafik ve RAF için ayrı
+        // SineAkışı kurmak epoch/tohum sıçramasına yol açar.
+        let sine_akışı = if kart_kimliği == "sine-stream" {
+            Some(SineAkışı::yeni().map_err(js_hatası)?)
+        } else {
+            None
+        };
         let (seçenekler, veri) = match kart_kimliği {
             "add-del-series" => add_del_series_kartı(),
             "align-data-cost" => align_data_maliyet_kartı(),
@@ -184,7 +192,13 @@ impl KartOturumu {
                     scatter_kartı,
                 ),
             "scroll-sync" => scroll_sync_kartı(),
-            "sine-stream" => sine_stream_kartı(),
+            "sine-stream" => sine_akışı
+                .as_ref()
+                .ok_or_else(|| UplotHatası::GeçersizKaynakVeri {
+                    varlık: "SineAkışı",
+                    açıklama: "ilk Grafik için akış durumu bulunamadı".to_string(),
+                })
+                .and_then(SineAkışı::kartı),
             kimlik if kimlik.starts_with("soft-minmax-") => SoftMinMaxÖrneği::kimlikten(kimlik)
                 .map_or_else(
                     || {
@@ -400,11 +414,6 @@ impl KartOturumu {
         }
         .map_err(js_hatası)?;
         let grafik = Grafik::yeni(seçenekler, veri).map_err(js_hatası)?;
-        let sine_akışı = if kart_kimliği == "sine-stream" {
-            Some(SineAkışı::yeni().map_err(js_hatası)?)
-        } else {
-            None
-        };
         let soft_minmax_akışı =
             SoftMinMaxÖrneği::kimlikten(kart_kimliği).map(|_| SoftMinMaxAkışı::yeni());
         let stream_data_akışı = StreamDataÖrneği::kimlikten(kart_kimliği)
@@ -2872,9 +2881,20 @@ mod testler {
         let Ok(mut oturum) = oturum else {
             return;
         };
+        let önceki_veri = oturum.grafik.veri().clone();
+        assert_eq!(
+            oturum.sine_akışı.as_ref().and_then(|akış| akış.veri().ok()),
+            Some(önceki_veri.clone()),
+            "ilk Grafik ve RAF aynı SineAkışı anlık görüntüsünden başlamalı"
+        );
         let önce = oturum.svg(1_920, 600);
         assert!(önce.contains("6 series x 600 points @ 60fps"));
         assert!(oturum.sine_akisini_ilerlet().is_ok_and(|değişti| değişti));
+        let sonraki_veri = oturum.grafik.veri();
+        assert_eq!(sonraki_veri.x().get(..599), önceki_veri.x().get(1..));
+        for (önceki, sonraki) in önceki_veri.seriler().iter().zip(sonraki_veri.seriler()) {
+            assert_eq!(sonraki.get(..599), önceki.get(1..));
+        }
         assert_ne!(oturum.svg(1_920, 600), önce);
         assert!(sine_stream_kart_tanim_ornegi().contains("SineAkışı"));
         let web = include_str!("../www/index.html");

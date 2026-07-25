@@ -290,4 +290,67 @@ mod testler {
         assert_ne!(grafik.çiz().svg(), önce);
         Ok(())
     }
+
+    #[test]
+    fn ardışık_kareler_tek_akışta_yalnız_ilki_düşürüp_sona_bir_değer_ekler()
+    -> Result<(), UplotHatası> {
+        let mut akış = SineAkışı::kanıt()?;
+        let (_, ilk) = akış.kartı()?;
+        let ikinci = akış.ilerlet()?;
+        let üçüncü = akış.ilerlet()?;
+
+        for (önceki, sonraki) in [(&ilk, &ikinci), (&ikinci, &üçüncü)] {
+            assert_eq!(sonraki.x().get(..599), önceki.x().get(1..));
+            assert_eq!(
+                sonraki
+                    .x()
+                    .last()
+                    .zip(önceki.x().last())
+                    .map(|(sonraki, önceki)| sonraki - önceki),
+                Some(ÖRNEK_ARALIĞI_SN)
+            );
+            for (önceki_seri, sonraki_seri) in önceki.seriler().iter().zip(sonraki.seriler()) {
+                assert_eq!(sonraki_seri.get(..599), önceki_seri.get(1..));
+            }
+        }
+        assert_eq!(
+            ikinci
+                .x()
+                .windows(2)
+                .filter(|çift| matches!(**çift, [a, b] if a == b))
+                .count(),
+            1,
+            "kaynak x599 tekrarı kayan pencereden doğal olarak çıkana kadar korunmalı"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn kaynak_set_data_varsayılanı_yakınlaştırmayı_sonraki_karede_sıfırlar()
+    -> Result<(), UplotHatası> {
+        let mut akış = SineAkışı::kanıt()?;
+        let (seçenekler, veri) = akış.kartı()?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        assert!(grafik.seçim_yakınlaştır(0.25, 0.75)?);
+        assert!(grafik.yakınlaştırılmış());
+
+        let sonraki = akış.ilerlet()?;
+        let beklenen_x = Aralık::yeni(
+            *sonraki
+                .x()
+                .first()
+                .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?,
+            *sonraki
+                .x()
+                .last()
+                .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?,
+        )?;
+        grafik.veriyi_ayarla(sonraki)?;
+
+        assert_eq!(grafik.görünür_x_aralığı(), beklenen_x);
+        assert_eq!(grafik.görünür_y_aralığı(), Aralık::yeni(-6.0, 6.0)?);
+        assert!(!grafik.yakınlaştırılmış());
+        assert!(!grafik.geri_var());
+        Ok(())
+    }
 }

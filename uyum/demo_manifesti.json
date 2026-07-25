@@ -2502,14 +2502,16 @@
         "source-six-series-600-points", "source-sine-series",
         "source-box-muller-bounded-random-walks", "fixed-minus6-plus6-y-range",
         "source-initial-duplicate-x-lifecycle", "runtime-current-epoch",
+        "single-stream-state-from-first-paint-through-raf",
         "wasm-request-animation-frame", "gpui-next-frame-live-set-data",
         "same-graph-widget-svg-surface", "in-place-svg-node-update",
-        "persistent-cursor-selection-overlay", "common-interaction-profile"
+        "persistent-cursor-selection-overlay", "source-set-data-resets-scales",
+        "common-interaction-profile"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
-        "performans": "uygulandı_kanıtlı"
+        "performans": "kısmi"
       }
     },
     {

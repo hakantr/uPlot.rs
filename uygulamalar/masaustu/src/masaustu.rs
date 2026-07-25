@@ -2684,15 +2684,27 @@ impl ChartListesi {
 
     fn grafiği_yenile(&mut self, nokta_sayısı: usize, cx: &mut Context<Self>) {
         self.nokta_sayısı = nokta_sayısı;
-        match grafik_oluştur(
-            self.aktif_kart,
-            self.no_data_örneği,
-            nokta_sayısı,
-            self.autosize_kuvvet,
-            self.latency_kova,
-            self.latency_ofset,
-            140,
-        ) {
+        let sonuç = if self.aktif_kart == KartKimliği::SineStream {
+            self.sine_akışı
+                .as_ref()
+                .ok_or_else(|| UplotHatası::GeçersizKaynakVeri {
+                    varlık: "SineAkışı",
+                    açıklama: "ilk Grafik için akış durumu bulunamadı".to_string(),
+                })
+                .and_then(SineAkışı::kartı)
+                .and_then(|(seçenekler, veri)| Grafik::yeni(seçenekler, veri))
+        } else {
+            grafik_oluştur(
+                self.aktif_kart,
+                self.no_data_örneği,
+                nokta_sayısı,
+                self.autosize_kuvvet,
+                self.latency_kova,
+                self.latency_ofset,
+                140,
+            )
+        };
+        match sonuç {
             Ok(mut yeni) => {
                 yeni.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
                 if let Some(grafik) = &self.grafik {

@@ -3177,6 +3177,30 @@ mod testler {
     }
 
     #[test]
+    fn sine_stream_set_data_statik_gpui_yollarını_önbellekte_korur() -> Result<(), UplotHatası> {
+        let mut akış = crate::kart::SineAkışı::kanıt()?;
+        let (seçenekler, veri) = akış.kartı()?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        let eski = grafik.çiz();
+        grafik.veriyi_ayarla(akış.ilerlet()?)?;
+        let yeni = grafik.çiz();
+        assert_eq!(eski.boyut(), yeni.boyut());
+
+        let sınırlar = Bounds::new(point(px(0.0), px(0.0)), size(px(1_920.0), px(600.0)));
+        let mut önbellek = GpuiYolÖnbelleği::default();
+        önbellek.yüzeyi_hazırla(&eski, sınırlar);
+        önbellek.yollar = vec![Some(Path::new(point(px(0.0), px(0.0)))); eski.komutlar().len()];
+        let korunan = önbellek.sahneyi_değiştir(&eski, &yeni);
+
+        assert!(korunan > 0, "eksen/grid gibi statik yollar korunmalı");
+        assert!(
+            korunan < eski.komutlar().len(),
+            "altı canlı seri ve dolguları yeni veriyle geçersizleşmeli"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn y_kaydırılmış_hover_geometrisi_ile_ham_lejant_değeri_ayrılır() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = crate::kart::y_shifted_series_kartı()?;
         let grafik = Grafik::yeni(seçenekler, veri)?;
