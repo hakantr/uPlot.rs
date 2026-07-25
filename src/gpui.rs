@@ -1295,7 +1295,7 @@ impl GpuiGrafik {
         }
         if let Some((başlangıç, bitiş)) = self.seçim {
             let (dolgu, çizgi) = if self.açıklama_seçimi {
-                ("#ffff004d", "#d4a800")
+                ("#ffff004d", "#ffff0000")
             } else {
                 ("#3b82f633", "#3b82f6")
             };
@@ -2060,7 +2060,8 @@ impl Render for GpuiGrafik {
                     {
                         let konum = bu.imleç_ızgarasına_oturt(konum).unwrap_or(konum);
                         bu.seçim = Some((konum, konum));
-                        bu.açıklama_seçimi = ayarlar.ctrl_açıklama && olay.modifiers.control;
+                        bu.açıklama_seçimi = ayarlar.imleç_bağları.ctrl_seçim_ölçeğini_durdur
+                            && olay.modifiers.control;
                     }
                     if ana_sahne_değişti {
                         if görünüm_değişti {
@@ -2108,12 +2109,24 @@ impl Render for GpuiGrafik {
                         let ayarlar = bu.grafik.etkileşim_seçenekleri();
                         let x_farkı = (bitiş.x - başlangıç.x).abs();
                         let y_farkı = (bitiş.y - başlangıç.y).abs();
-                        let yeterli = if ayarlar.seçim_xy_yakınlaştır {
-                            x_farkı >= 4.0 || y_farkı >= 4.0
-                        } else if bu.grafik.x_dikey_mi() {
-                            y_farkı >= 4.0
+                        let kaynak_sıfır_eşik = ayarlar.imleç_bağları.ctrl_seçim_ölçeğini_durdur
+                            || ayarlar.imleç_bağları.tıklamayı_ilet;
+                        let x_yeterli = if kaynak_sıfır_eşik {
+                            x_farkı > f32::EPSILON
                         } else {
                             x_farkı >= 4.0
+                        };
+                        let y_yeterli = if kaynak_sıfır_eşik {
+                            y_farkı > f32::EPSILON
+                        } else {
+                            y_farkı >= 4.0
+                        };
+                        let yeterli = if ayarlar.seçim_xy_yakınlaştır {
+                            x_yeterli || y_yeterli
+                        } else if bu.grafik.x_dikey_mi() {
+                            y_yeterli
+                        } else {
+                            x_yeterli
                         };
                         if yeterli {
                             let (sol, sağ, üst, alt) = bu.çizim_alanı();
@@ -2123,8 +2136,8 @@ impl Render for GpuiGrafik {
                                     f64::from((başlangıç.y - üst) / (alt - üst)),
                                     f64::from((bitiş.x - sol) / (sağ - sol)),
                                     f64::from((bitiş.y - üst) / (alt - üst)),
-                                    x_farkı >= 4.0,
-                                    y_farkı >= 4.0,
+                                    x_yeterli,
+                                    y_yeterli,
                                 ) {
                                     Ok(değişti) => {
                                         bu.hata = None;

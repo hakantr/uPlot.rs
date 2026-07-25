@@ -121,7 +121,7 @@ pub use secenek::{
     TekerlekEkseni, TekerlekKipi, TimelineDüzeni, TimelineHücresi, TooltipBilgisi, TooltipDüzeni,
     XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri, ZamanDilimi,
     ZoomRangerSeçenekleri, ZoomSürüklemeKipi, ÇizimKancasıDüzeni, ÇizimSırası, ÇubukDüzeni,
-    ÇubukYönü, ÖlçekGradyanı, İkincilXEksen,
+    ÇubukYönü, ÖlçekGradyanı, İkincilXEksen, İmleçBağSeçenekleri,
 };
 pub use veri::{BoşlukKipi, HizalıDeğer, HizalıVeri, hizalı_verileri_birleştir};
 pub use yuzey::YüzeyDikdörtgeni;

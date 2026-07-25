@@ -768,6 +768,46 @@ impl TekerlekAyarları {
     }
 }
 
+/// uPlot `cursor.bind` sarmalayıcılarının platformdan bağımsız davranış
+/// sözleşmesi. Yüzey adaptörü gerçek fare/pointer olayını bağlar; çekirdek
+/// yalnız hangi olayın iletileceğini ve Ctrl seçiminin ölçeği değiştirip
+/// değiştirmeyeceğini belirler.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct İmleçBağSeçenekleri {
+    /// Kaynaktaki `filtBtn0` gibi yalnız birincil düğmeyi kabul eder.
+    pub yalnız_birincil_tuş: bool,
+    /// Ctrl sürüklemede normal `cursor.drag.setScale` geçici olarak kapatılır.
+    pub ctrl_seçim_ölçeğini_durdur: bool,
+    /// Ctrl seçimi bittiğinde yüzey `Annotation Text` istemi açar.
+    pub açıklama_metni_iste: bool,
+    /// Sürükleme olmayan birincil tıklamayı tüketiciye iletir.
+    pub tıklamayı_ilet: bool,
+}
+
+impl Default for İmleçBağSeçenekleri {
+    fn default() -> Self {
+        Self {
+            yalnız_birincil_tuş: true,
+            ctrl_seçim_ölçeğini_durdur: false,
+            açıklama_metni_iste: false,
+            tıklamayı_ilet: false,
+        }
+    }
+}
+
+impl İmleçBağSeçenekleri {
+    /// Resmî `cursor-bind.html` içindeki mousedown/mouseup/click bağlarını
+    /// aynı deklaratif sözleşmeyle kurar.
+    pub const fn cursor_bind() -> Self {
+        Self {
+            yalnız_birincil_tuş: true,
+            ctrl_seçim_ölçeğini_durdur: true,
+            açıklama_metni_iste: true,
+            tıklamayı_ilet: true,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct EtkileşimSeçenekleri {
     /// uPlot'un resmi `wheelZoomPlugin` portunu etkinleştirir. Varsayılan: kapalı.
@@ -785,8 +825,8 @@ pub struct EtkileşimSeçenekleri {
     /// Resmî `zoom-touch` demosundaki kıstırarak yakınlaştırma ve tek parmakla
     /// taşıma davranışlarını etkinleştirir. Varsayılan: kapalı.
     pub dokunma_etkileşimi: bool,
-    /// `cursor-bind` demosundaki Ctrl + sürükleme açıklama seçim bağını etkinleştirir.
-    pub ctrl_açıklama: bool,
+    /// uPlot `cursor.bind` olay sarmalayıcılarının çekirdek sözleşmesi.
+    pub imleç_bağları: İmleçBağSeçenekleri,
     /// `cursor-tooltip` demosundaki imleç bilgi kutusunu etkinleştirir.
     pub imleç_bilgi_kutusu: bool,
     /// `y-scale-drag` demosundaki ekseni sürükleyerek ölçeği kaydırma ve
@@ -927,7 +967,7 @@ impl Default for EtkileşimSeçenekleri {
             çift_tıkla_tam_görünüm: true,
             görünüm_geçmişi: false,
             dokunma_etkileşimi: false,
-            ctrl_açıklama: false,
+            imleç_bağları: İmleçBağSeçenekleri::default(),
             imleç_bilgi_kutusu: false,
             eksen_sürükleme: false,
             zoom_ranger: ZoomRangerSeçenekleri::default(),
@@ -973,7 +1013,13 @@ impl EtkileşimSeçenekleri {
     }
 
     pub fn ctrl_açıklama(mut self, etkin: bool) -> Self {
-        self.ctrl_açıklama = etkin;
+        self.imleç_bağları.ctrl_seçim_ölçeğini_durdur = etkin;
+        self.imleç_bağları.açıklama_metni_iste = etkin;
+        self
+    }
+
+    pub fn imleç_bağları(mut self, bağlar: İmleçBağSeçenekleri) -> Self {
+        self.imleç_bağları = bağlar;
         self
     }
 

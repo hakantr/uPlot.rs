@@ -1268,10 +1268,16 @@
         "source-equivalent-xs-and-value-pool",
         "seeded-reference-random-stream",
         "three-filled-linear-series",
+        "declarative-cursor-bind-policy",
+        "primary-button-event-forwarding",
+        "non-drag-click-forwarding",
         "core-owned-selection-resolution",
         "ctrl-drag-yellow-annotation-selection",
+        "fill-only-yellow-selection",
+        "source-zero-distance-drag-threshold",
         "ctrl-selection-suppresses-scale-change",
         "annotation-text-request-without-persistence",
+        "real-annotation-text-dialog-in-gpui-and-wasm",
         "gpui-wasm-catalog-parity",
         "common-interaction-profile"
       ],
@@ -1280,7 +1286,7 @@
         "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı",
         "davranış": "uygulandı_kanıtlı",
-        "performans": "bekliyor"
+        "performans": "uygulandı_kanıtlı"
       }
     },
     {

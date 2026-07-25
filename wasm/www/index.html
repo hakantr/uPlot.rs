@@ -2530,7 +2530,7 @@
       başlık: "Cursor Bind (try Ctrl + drag)",
       kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/cursor-bind.html">cursor-bind.html</a>
         <br>Kaynaktaki 1…30 X değerleri, −10…10 örnekleme havuzu ve üç renkli seri sabit kanıt tohumu ile üretilir.
-        <br>Ctrl+sürükle sarı açıklama seçimi yapar, normal seçim zoomunu durdurur ve kaynak gibi Annotation Text ister; kaynak demo metni kalıcı çizime eklemez.`,
+        <br>Tek 1920×600 yüzeyde birincil mousedown/mouseup/click bağları iletilir. Ctrl+sürükle sarı açıklama seçimi yapar, normal seçim zoomunu durdurur ve kaynak gibi Annotation Text ister; kaynak demo metni kalıcı çizime eklemez.`,
       tanım: () => cursor_bind_kart_tanim_ornegi(),
       tanımYolu: "src/kart/cursor_bind.rs",
       seriler: [
@@ -2538,9 +2538,15 @@
         { etiket: "Green", renk: "#008000" },
         { etiket: "Blue", renk: "#0000ff" },
       ],
-      yardım: "Sürükle: yakınlaştır · Ctrl+sürükle: sarı açıklama seçimi · açıklama seçimi zoom yapmaz",
+      yardım: "Tıkla: click! iletimi · sürükle: yakınlaştır · Ctrl+sürükle: kenarlıksız sarı açıklama seçimi + Annotation Text",
       değişkenNokta: false,
       etkileşimler: () => ({ ...ortakEtkileşimler(), ctrlAçıklama: true }),
+      kullanım: {
+        amaç: "Bir grafik olayının varsayılan uPlot işleyicisini çağırıp çevresine uygulama politikası eklemeyi gösterir: normal sürükleme zoom, Ctrl sürükleme açıklama istemidir.",
+        api: "İmleçBağSeçenekleri; birincil tuş filtresi, Ctrl sırasında setScale durdurma, açıklama metni istemi ve sürüklemesiz click iletimini tek deklaratif sözleşmede tanımlar.",
+        izleme: "Grafana benzeri yüzeylerde seçim zoomunu korurken Ctrl ile olay/incident açıklaması istemek veya normal tıklamayı üst uygulamaya iletmek için kullanılabilir.",
+        maliyet: "30×3 kaynak seri O(N) çizilir. Bind kararı ve click iletimi O(1)'dir; Ctrl seçiminde veri ya da ana sahne yeniden kurulmaz, yalnız seçim katmanı ve modal güncellenir.",
+      },
     };
     document.querySelector("aside")?.insertAdjacentHTML("beforeend", `
       <article class="kart" data-kart="add-del-series" aria-current="false" tabindex="0">
@@ -7696,7 +7702,7 @@
         ? Math.abs(sürükleme.sonY - sürükleme.başY)
         : xDikey ? Math.abs(sürükleme.son - sürükleme.baş) : alan.yükseklik);
       seçim.setAttribute("fill", sürükleme.açıklama ? "rgba(255,255,0,.3)" : "rgba(59,130,246,.18)");
-      seçim.setAttribute("stroke", sürükleme.açıklama ? "#d4a800" : "#3b82f6");
+      seçim.setAttribute("stroke", sürükleme.açıklama ? "transparent" : "#3b82f6");
       seçim.setAttribute("visibility", "visible");
     }
 
@@ -7987,10 +7993,15 @@
       const seçim = sürükleme;
       sürükleme = null;
       const xySeçim = oturum?.secim_xy_yakinlastir() ?? false;
+      const kaynakSıfırEşik = (oturum?.imlec_tiklama_bagi_etkin() ?? false)
+        || etkileşimler.ctrlAçıklama;
+      const xFarkı = Math.abs(seçim.sonX - seçim.başX);
+      const yFarkı = Math.abs(seçim.sonY - seçim.başY);
+      const xGeçerli = kaynakSıfırEşik ? xFarkı > Number.EPSILON : xFarkı >= 4;
+      const yGeçerli = kaynakSıfırEşik ? yFarkı > Number.EPSILON : yFarkı >= 4;
       const geçerli = xySeçim
-        ? Math.abs(seçim.sonX - seçim.başX) >= 4
-          || Math.abs(seçim.sonY - seçim.başY) >= 4
-        : Math.abs(seçim.son - seçim.baş) >= 4;
+        ? xGeçerli || yGeçerli
+        : (oturum?.x_dikey() ?? false) ? yGeçerli : xGeçerli;
       if (geçerli) {
         const xDikey = oturum?.x_dikey() ?? false;
         const a = Math.min(seçim.baş, seçim.son);
@@ -8002,8 +8013,8 @@
                 (seçim.başY - alan.üst) / alan.yükseklik,
                 (seçim.sonX - alan.sol) / alan.genişlik,
                 (seçim.sonY - alan.üst) / alan.yükseklik,
-                Math.abs(seçim.sonX - seçim.başX) >= 4,
-                Math.abs(seçim.sonY - seçim.başY) >= 4,
+                xGeçerli,
+                yGeçerli,
               ) ? 1 : 0
             : oturum.secimi_bitir(
                 xDikey ? (alan.alt - b) / alan.yükseklik : (a - alan.sol) / alan.genişlik,
@@ -8034,6 +8045,12 @@
       }
       if (!geçerli) {
         chart.querySelector("#seçim")?.setAttribute("visibility", "hidden");
+        if ((oturum?.imlec_tiklama_bagi_etkin() ?? false)
+          && olay.button === 0
+          && olay.clientX === seçim.clientX
+          && olay.clientY === seçim.clientY) {
+          console.log("click!");
+        }
         if (aktifKart === "tooltips-closest"
           && !seçim.hareketEtti
           && olay.clientX === seçim.clientX

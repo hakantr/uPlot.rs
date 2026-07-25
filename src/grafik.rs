@@ -2463,8 +2463,8 @@ impl Grafik {
 
     /// Seçim bırakma davranışını kart ayarlarına göre çekirdekte çözümler.
     ///
-    /// `açıklama_tuşu` açıkken `ctrl_açıklama` etkin bir kart normal seçim
-    /// yakınlaştırmasını uygulamaz; yüzeyin metin istemesi için ayrı sonuç döner.
+    /// `açıklama_tuşu` açıkken cursor bind sözleşmesi normal seçim ölçeklemesini
+    /// geçici olarak durdurur; yüzeyin metin istemesi için ayrı sonuç döner.
     pub fn seçimi_bitir(
         &mut self,
         başlangıç_oranı: f64,
@@ -2475,14 +2475,18 @@ impl Grafik {
         if !ayarlar.seçim_yakınlaştır {
             return Ok(SeçimEylemi::Değişmedi);
         }
-        if açıklama_tuşu && ayarlar.ctrl_açıklama {
+        if açıklama_tuşu && ayarlar.imleç_bağları.ctrl_seçim_ölçeğini_durdur {
             if !başlangıç_oranı.is_finite() || !bitiş_oranı.is_finite() {
                 return Err(UplotHatası::GeçersizAralık {
                     en_az: başlangıç_oranı,
                     en_çok: bitiş_oranı,
                 });
             }
-            return Ok(SeçimEylemi::Açıklamaİstendi);
+            return Ok(if ayarlar.imleç_bağları.açıklama_metni_iste {
+                SeçimEylemi::Açıklamaİstendi
+            } else {
+                SeçimEylemi::Değişmedi
+            });
         }
         self.seçim_yakınlaştır(başlangıç_oranı, bitiş_oranı)
             .map(|değişti| {

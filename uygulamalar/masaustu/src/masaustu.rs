@@ -1,11 +1,12 @@
 //! GPUI masaüstü chart kataloğu; dağıtılan bileşeni kullanan örnek uygulama.
 
 use gpui::{
-    ClickEvent, Context, Entity, FontWeight, IntoElement, Render, SharedString, Task, Window, div,
-    prelude::*, px, rgb,
+    ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement, Render, SharedString, Task,
+    Window, div, prelude::*, px, rgb, rgba,
 };
 use ortak_bilesenler::{
-    Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, PlatformPencere,
+    Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
+    MetinAlaniOlayi, PlatformPencere,
 };
 use std::time::{Duration, Instant};
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
@@ -68,7 +69,7 @@ use uplot_rs::{
     timeseries_discrete_kartları, timeseries_discrete_kartı, timezones_dst_kartları,
     timezones_dst_kartı, tooltips_closest_kartı, tooltips_kartı, trendlines_kartı,
     update_cursor_select_resize_kartı, wind_direction_kartı, y_scale_drag_kartı,
-    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği,
+    y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği, İmleçBağSeçenekleri,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -510,7 +511,7 @@ impl KartKimliği {
 
     fn etkileşimler(self) -> EtkileşimSeçenekleri {
         if self == Self::CursorBind {
-            ortak_kart_etkileşimleri().ctrl_açıklama(true)
+            ortak_kart_etkileşimleri().imleç_bağları(İmleçBağSeçenekleri::cursor_bind())
         } else if matches!(self, Self::StreamData(_)) {
             ortak_kart_etkileşimleri().seçim_yakınlaştır(false)
         } else if self == Self::YScaleDrag {
@@ -540,6 +541,9 @@ pub struct ChartListesi {
     latency_kova: u8,
     latency_ofset: u8,
     açıklama_istendi: bool,
+    açıklama_odak_bekliyor: bool,
+    açıklama_metni: Entity<MetinAlani>,
+    cursor_bind_tıklama_sayısı: u32,
     dinamik_seri_sayacı: u32,
     align_data_zamanlayıcısı: Option<Task<()>>,
     pixel_align_akışı: Option<PixelAlignAkışı>,
@@ -584,8 +588,41 @@ pub struct ChartListesi {
 }
 
 impl ChartListesi {
+    fn açıklama_istemini_aç(&mut self, cx: &mut Context<Self>) {
+        self.açıklama_metni
+            .update(cx, |alan, cx| alan.metni_ayarla("", cx));
+        self.açıklama_istendi = true;
+        self.açıklama_odak_bekliyor = true;
+    }
+
+    fn açıklama_istemini_kapat(&mut self, cx: &mut Context<Self>) {
+        self.açıklama_istendi = false;
+        self.açıklama_odak_bekliyor = false;
+        self.açıklama_metni
+            .update(cx, |alan, cx| alan.metni_ayarla("", cx));
+        cx.notify();
+    }
+
+    fn standart_grafik_olayını_işle(&mut self, olay: &GpuiGrafikOlayı, cx: &mut Context<Self>) {
+        match olay {
+            GpuiGrafikOlayı::Açıklamaİstendi => self.açıklama_istemini_aç(cx),
+            GpuiGrafikOlayı::FareBırakıldı if self.aktif_kart == KartKimliği::CursorBind => {
+                self.cursor_bind_tıklama_sayısı = self.cursor_bind_tıklama_sayısı.saturating_add(1);
+            }
+            _ => {}
+        }
+        cx.notify();
+    }
+
     pub fn yeni(cx: &mut Context<Self>) -> Self {
         let etkileşimler = ortak_kart_etkileşimleri();
+        let açıklama_metni = cx.new(|cx| MetinAlani::yeni("Annotation Text", cx));
+        cx.subscribe(&açıklama_metni, |bu, _, olay: &MetinAlaniOlayi, cx| {
+            if *olay == MetinAlaniOlayi::Onaylandi {
+                bu.açıklama_istemini_kapat(cx);
+            }
+        })
+        .detach();
         let tekerlek_anahtarı = cx.new(|cx| {
             Anahtar::yeni(
                 "Tekerlek eklentisi · Otomatik",
@@ -760,10 +797,7 @@ impl ChartListesi {
         );
         if let Some(grafik) = &grafik {
             cx.subscribe(grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
         }
@@ -782,6 +816,9 @@ impl ChartListesi {
             latency_kova: 5,
             latency_ofset: 0,
             açıklama_istendi: false,
+            açıklama_odak_bekliyor: false,
+            açıklama_metni,
+            cursor_bind_tıklama_sayısı: 0,
             dinamik_seri_sayacı: 0,
             align_data_zamanlayıcısı: None,
             pixel_align_akışı: None,
@@ -2064,10 +2101,7 @@ impl ChartListesi {
                 } else {
                     let grafik = cx.new(|_| GpuiGrafik::yeni(yeni));
                     cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                        if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                            bu.açıklama_istendi = true;
-                        }
-                        cx.notify();
+                        bu.standart_grafik_olayını_işle(olay, cx);
                     })
                     .detach();
                     self.grafik = Some(grafik);
@@ -2293,6 +2327,10 @@ impl ChartListesi {
         self.latency_kova = 5;
         self.latency_ofset = 0;
         self.açıklama_istendi = false;
+        self.açıklama_odak_bekliyor = false;
+        self.açıklama_metni
+            .update(cx, |alan, cx| alan.metni_ayarla("", cx));
+        self.cursor_bind_tıklama_sayısı = 0;
         self.dinamik_seri_sayacı = 0;
         self.align_data_zamanlayıcısı = None;
         self.pixel_align_akışı = None;
@@ -3287,6 +3325,13 @@ fn grafik_oluştur(
 
 impl Render for ChartListesi {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if self.açıklama_istendi && self.açıklama_odak_bekliyor {
+            self.açıklama_odak_bekliyor = false;
+            self.açıklama_metni
+                .read(cx)
+                .focus_handle(cx)
+                .focus(window, cx);
+        }
         if self.aktif_kart == KartKimliği::SineStream && !self.sine_kare_bekleniyor {
             self.sine_kare_bekleniyor = true;
             cx.on_next_frame(window, |bu, _window, cx| {
@@ -6985,7 +7030,7 @@ impl Render for ChartListesi {
                 "Seri ekle: turuncu seriyi kaynak indeksi 2'ye ekle · Seri sil: aynı indeksi kaldır"
             }
             KartKimliği::CursorBind => {
-                "Sürükle: yakınlaştır · Ctrl+sürükle: sarı açıklama seçimi · açıklama seçimi zoom yapmaz"
+                "Tıkla: click! iletimi · sürükle: yakınlaştır · Ctrl+sürükle: kenarlıksız sarı seçim + Annotation Text"
             }
             KartKimliği::ScrollSync => {
                 "Kutuyu kaydır · grafik üzerinde imleç ve seçim konumu kaydırmadan sonra doğru kalır"
@@ -7013,6 +7058,8 @@ impl Render for ChartListesi {
             }
         };
         let açıklama_istendi = self.açıklama_istendi;
+        let açıklama_metni = self.açıklama_metni.clone();
+        let cursor_bind_tıklama_sayısı = self.cursor_bind_tıklama_sayısı;
         let no_data_seçenekleri = div()
             .id("no-data-secenekleri")
             .mb_3()
@@ -7542,6 +7589,18 @@ impl Render for ChartListesi {
                  ana sahne yalnız görünür mum aralığını O(V) çizer, sütun vuruşu sıralı X üzerinde \
                  O(log N)'dir. Ortak wheel/touch/drag davranışları ürün uzantısıdır.",
             ),
+            KartKimliği::CursorBind => Some(
+                "Amaç: bir grafik olayının varsayılan işleyicisini koruyup çevresine uygulama \
+                 politikası eklemeyi gösterir; normal sürükleme zoom, Ctrl sürükleme açıklama \
+                 istemidir. API: İmleçBağSeçenekleri birincil tuş filtresi, Ctrl sırasında \
+                 setScale durdurma, gerçek Annotation Text istemi ve sürüklemesiz click \
+                 iletimini tek deklaratif sözleşmede tanımlar. Kaynaktaki gibi sarı seçim yalnız \
+                 dolgu taşır; metin İptal/Tamam/Enter sonrasında kalıcı çizime eklenmez. İzleme: \
+                 Grafana benzeri yüzeylerde seçim zoomunu korurken Ctrl ile olay/incident notu \
+                 istemek veya normal tıklamayı üst uygulamaya iletmek için uygundur. Maliyet: \
+                 30×3 kaynak seri O(N) çizilir; bind kararı ve click iletimi O(1), Ctrl seçiminde \
+                 yalnız hafif seçim katmanı ve modal güncellenir.",
+            ),
             _ => None,
         };
         let kullanım_rehberi_açık = self.kullanım_rehberi_açık;
@@ -7565,14 +7624,15 @@ impl Render for ChartListesi {
             )
             .child(araçlar)
             .when(aktif_kart == KartKimliği::NoData, |öğe| {
-                öğe.child(
-                    div()
-                        .mb_1()
-                        .text_xs()
-                        .text_color(soluk)
-                        .child("No Data kaynağı · 33 erişilebilir seçenek"),
-                )
-                .child(no_data_seçenekleri)
+                öğe
+                    .child(
+                        div()
+                            .mb_1()
+                            .text_xs()
+                            .text_color(soluk)
+                            .child("No Data kaynağı · 33 erişilebilir seçenek"),
+                    )
+                    .child(no_data_seçenekleri)
             })
             .child(div().mb_2().text_xs().text_color(soluk).child(yardım))
             .when_some(kullanım_rehberi, |öğe, rehber| {
@@ -7652,44 +7712,44 @@ impl Render for ChartListesi {
                         | KartKimliği::AxisIndicators
                 ),
                 |öğe| {
-                öğe.child(
-                    div().mb_2().flex().flex_wrap().gap_2().children(
-                        tooltip_serileri.into_iter().map(
-                            |(indeks, etiket, görünür)| {
-                                Dugme::yeni(
-                                    SharedString::from(format!(
-                                        "tooltip-seri-{indeks}"
-                                    )),
-                                    SharedString::from(format!(
-                                        "● {etiket}{}",
-                                        if görünür { "" } else { " · gizli" }
-                                    )),
-                                )
-                                .boyutu(DugmeBoyutu::Kucuk)
-                                .turu(if görünür {
-                                    DugmeTuru::Hayalet
-                                } else {
-                                    DugmeTuru::Ikincil
-                                })
-                                .tiklaninca(cx.listener(move |bu, _, _, cx| {
-                                    bu.tooltip_serisini_değiştir(indeks, cx);
-                                }))
-                            },
+                    öğe.child(
+                        div().mb_2().flex().flex_wrap().gap_2().children(
+                            tooltip_serileri
+                                .into_iter()
+                                .map(|(indeks, etiket, görünür)| {
+                                    Dugme::yeni(
+                                        SharedString::from(format!("tooltip-seri-{indeks}")),
+                                        SharedString::from(format!(
+                                            "● {etiket}{}",
+                                            if görünür { "" } else { " · gizli" }
+                                        )),
+                                    )
+                                    .boyutu(DugmeBoyutu::Kucuk)
+                                    .turu(if görünür {
+                                        DugmeTuru::Hayalet
+                                    } else {
+                                        DugmeTuru::Ikincil
+                                    })
+                                    .tiklaninca(cx.listener(move |bu, _, _, cx| {
+                                        bu.tooltip_serisini_değiştir(indeks, cx);
+                                    }))
+                                }),
                         ),
-                    ),
-                )
-            },
+                    )
+                },
             )
-            .when(açıklama_istendi, |öğe| {
+            .when(aktif_kart == KartKimliği::CursorBind, |öğe| {
                 öğe.child(
                     div()
                         .mb_2()
                         .p_2()
                         .rounded_md()
-                        .bg(rgb(0xfffbeb))
+                        .bg(rgb(0xf8fafc))
                         .text_sm()
-                        .text_color(rgb(0x92400e))
-                        .child("Annotation Text istendi · kaynak demo girilen metni kalıcı çizime eklemez"),
+                        .text_color(rgb(0x475569))
+                        .child(format!(
+                            "cursor.bind click! iletimi · {cursor_bind_tıklama_sayısı} tıklama"
+                        )),
                 )
             })
             .when_some(çizim_hatası, |öğe, hata| {
@@ -7713,16 +7773,13 @@ impl Render for ChartListesi {
                     .border_color(rgb(0xd1d5db))
                     .bg(rgb(0x111827))
                     .child(
-                        Dugme::yeni(
-                            "kart-tanimi-toggle",
-                            kart_tanımı_etiketi,
-                        )
-                        .boyutu(DugmeBoyutu::Kucuk)
-                        .turu(DugmeTuru::Hayalet)
-                        .tiklaninca(cx.listener(|bu, _, _, cx| {
-                            bu.kart_tanımı_açık = !bu.kart_tanımı_açık;
-                            cx.notify();
-                        })),
+                        Dugme::yeni("kart-tanimi-toggle", kart_tanımı_etiketi)
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Hayalet)
+                            .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                bu.kart_tanımı_açık = !bu.kart_tanımı_açık;
+                                cx.notify();
+                            })),
                     )
                     .when(kart_tanımı_açık, |öğe| {
                         öğe.child(
@@ -7739,11 +7796,70 @@ impl Render for ChartListesi {
 
         let içerik = div()
             .size_full()
+            .relative()
             .flex()
             .flex_row()
             .bg(zemin)
             .child(liste)
-            .child(ayrıntı);
+            .child(ayrıntı)
+            .when(açıklama_istendi, |kök| {
+                kök.child(
+                    div()
+                        .id("cursor-bind-annotation-overlay")
+                        .absolute()
+                        .inset_0()
+                        .occlude()
+                        .flex()
+                        .items_center()
+                        .justify_center()
+                        .bg(rgba(0x00000080))
+                        .child(
+                            div()
+                                .id("cursor-bind-annotation-dialog")
+                                .w(px(380.0))
+                                .p_4()
+                                .rounded_lg()
+                                .border_1()
+                                .border_color(rgb(0xd1d5db))
+                                .shadow_lg()
+                                .bg(rgb(0xffffff))
+                                .on_mouse_down(gpui::MouseButton::Left, |_, _, cx| {
+                                    cx.stop_propagation();
+                                })
+                                .child(
+                                    div()
+                                        .mb_3()
+                                        .text_lg()
+                                        .font_weight(FontWeight::SEMIBOLD)
+                                        .text_color(rgb(0x111827))
+                                        .child("Annotation Text"),
+                                )
+                                .child(div().mb_3().child(açıklama_metni.clone()))
+                                .child(
+                                    div()
+                                        .flex()
+                                        .justify_end()
+                                        .gap_2()
+                                        .child(
+                                            Dugme::yeni("cursor-bind-annotation-cancel", "İptal")
+                                                .boyutu(DugmeBoyutu::Kucuk)
+                                                .turu(DugmeTuru::Ikincil)
+                                                .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                                    bu.açıklama_istemini_kapat(cx);
+                                                })),
+                                        )
+                                        .child(
+                                            Dugme::yeni("cursor-bind-annotation-ok", "Tamam")
+                                                .boyutu(DugmeBoyutu::Kucuk)
+                                                .turu(DugmeTuru::Birincil)
+                                                .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                                    bu.açıklama_istemini_kapat(cx);
+                                                })),
+                                        ),
+                                ),
+                        ),
+                )
+            });
 
         PlatformPencere::yeni("uplot-rs-pencere", "uPlot.rs Grafik Kataloğu", içerik)
             .ayarlar(CubukAyarlari::default().kompakt(true))

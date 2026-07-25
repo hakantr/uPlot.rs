@@ -673,7 +673,24 @@ impl KartOturumu {
     }
 
     pub fn ctrl_aciklama_etkin(&self) -> bool {
-        self.grafik.etkileşim_seçenekleri().ctrl_açıklama
+        self.grafik
+            .etkileşim_seçenekleri()
+            .imleç_bağları
+            .ctrl_seçim_ölçeğini_durdur
+    }
+
+    pub fn imlec_tiklama_bagi_etkin(&self) -> bool {
+        self.grafik
+            .etkileşim_seçenekleri()
+            .imleç_bağları
+            .tıklamayı_ilet
+    }
+
+    pub fn imlec_yalniz_birincil_tus(&self) -> bool {
+        self.grafik
+            .etkileşim_seçenekleri()
+            .imleç_bağları
+            .yalnız_birincil_tuş
     }
 
     pub fn add_del_seri_ekle(&mut self) -> Result<bool, JsValue> {
@@ -3535,11 +3552,19 @@ mod testler {
         };
         assert!(oturum.svg(1_920, 600).contains("Cursor Bind"));
         assert!(oturum.ctrl_aciklama_etkin());
+        assert!(oturum.imlec_tiklama_bagi_etkin());
+        assert!(oturum.imlec_yalniz_birincil_tus());
         assert_eq!(oturum.secimi_bitir(0.2, 0.6, true), Ok(2));
         assert!(!oturum.yakinlastirilmis());
         assert_eq!(oturum.secimi_bitir(0.2, 0.6, false), Ok(1));
         assert!(oturum.yakinlastirilmis());
         assert!(cursor_bind_kart_tanim_ornegi().contains("cursor_bind_kartı"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("console.log(\"click!\")"));
+        assert!(web.contains("kaynakSıfırEşik"));
+        assert!(web.contains("sürükleme.açıklama ? \"transparent\""));
+        assert!(web.contains("id=\"açıklama-diyaloğu\""));
+        assert!(web.contains("İmleçBağSeçenekleri"));
     }
 
     #[test]

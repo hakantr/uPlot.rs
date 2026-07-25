@@ -1,10 +1,12 @@
 use super::{ortak_kart_etkileşimleri, veri_uretici::KanıtRastgele};
-use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
+use crate::{
+    GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, İmleçBağSeçenekleri
+};
 
 pub const CURSOR_BIND_KANIT_TOHUMU: u32 = 0xC0B1_1D00;
 
 pub const CURSOR_BIND_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = cursor_bind_kartı()?;
-// Ctrl + sürükleme açıklama seçimi kart etkileşim seçeneğinden yüzeylere aktarılır.
+// cursor.bind: birincil tuş filtresi, click iletimi ve Ctrl seçim politikası.
 let grafik = Grafik::yeni(seçenekler, veri)?;"##;
 
 /// `demos/cursor-bind.html` grafiğini ve Ctrl + sürükleme bağını üretir.
@@ -23,7 +25,8 @@ pub fn cursor_bind_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHa
         })
         .collect();
     let veri = HizalıVeri::yeni(x, seriler)?;
-    let etkileşimler = ortak_kart_etkileşimleri().ctrl_açıklama(true);
+    let etkileşimler =
+        ortak_kart_etkileşimleri().imleç_bağları(İmleçBağSeçenekleri::cursor_bind());
     let seçenekler = GrafikSeçenekleri::yeni(1_920, 600)?
         .başlık("Cursor Bind (try Ctrl + drag)")
         .x_zaman(false)
@@ -69,7 +72,22 @@ mod testler {
                 .all(|değer| (-10.0..=10.0).contains(değer))
         );
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
-        assert!(grafik.etkileşim_seçenekleri().ctrl_açıklama);
+        assert_eq!(
+            grafik.etkileşim_seçenekleri().imleç_bağları,
+            İmleçBağSeçenekleri::cursor_bind()
+        );
+        assert_eq!(
+            grafik
+                .seri_seçenekleri()
+                .iter()
+                .map(|seri| (seri.renk.as_str(), seri.dolgu.as_deref()))
+                .collect::<Vec<_>>(),
+            vec![
+                ("#ff0000", Some("#ff00001a")),
+                ("#008000", Some("#00ff001a")),
+                ("#0000ff", Some("#0000ff1a")),
+            ]
+        );
         assert_eq!(
             grafik.seçimi_bitir(0.2, 0.6, true)?,
             SeçimEylemi::Açıklamaİstendi
@@ -80,6 +98,13 @@ mod testler {
             SeçimEylemi::Yakınlaştırıldı
         );
         assert!(grafik.yakınlaştırılmış());
+
+        let (seçenekler, veri) = cursor_bind_kartı()?;
+        let mut sıfır_eşik = Grafik::yeni(seçenekler, veri)?;
+        assert_eq!(
+            sıfır_eşik.seçimi_bitir(0.5, 0.500_001, false)?,
+            SeçimEylemi::Yakınlaştırıldı
+        );
         Ok(())
     }
 }
