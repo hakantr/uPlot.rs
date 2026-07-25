@@ -3476,6 +3476,14 @@ mod testler {
             oturum.imlec_oranlarini_uyarla(0.14, 0.16, 100.0, 100.0),
             vec![0.1, 0.2]
         );
+        assert_eq!(
+            oturum.imlec_oranlarini_uyarla(0.99, 0.99, 96.0, 96.0),
+            vec![100.0 / 96.0, 100.0 / 96.0]
+        );
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("alan.genişlik * svgKutusu.width / view.width"));
+        assert!(web.contains("başX: başlangıçX"));
+        assert!(web.contains("aktifKart === \"cursor-snap\""));
     }
 
     #[test]

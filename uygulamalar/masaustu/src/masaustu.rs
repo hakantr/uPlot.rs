@@ -3488,6 +3488,7 @@ impl Render for ChartListesi {
             aktif_kart,
             KartKimliği::TooltipsClosest
                 | KartKimliği::Tooltips
+                | KartKimliği::CursorSnap
                 | KartKimliği::Trendlines
                 | KartKimliği::UpdateCursorSelectResize
                 | KartKimliği::WindDirection
@@ -6357,6 +6358,18 @@ impl Render for ChartListesi {
                  katmanını taşır; uçlar yalnız ölçek, resize veya setSeries sonrasında yeniden \
                  hesaplanır. Kaynak points.space=10 ve tek-piksel yarım-piksel hizası korunur.",
             ),
+            KartKimliği::CursorSnap => Some(
+                "Amaç: cursor çizgilerini ve alan seçiminin iki ucunu kaynak cursor.move \
+                 callback'i gibi aynı 10×10 CSS piksel ızgarasına oturtur; hover noktaları \
+                 dönüştürülmüş X'e en yakın gerçek veri örneğinde kalır. API: \
+                 GrafikSeçenekleri::imleç_ızgara_adımı dönüşüm sahipliğini çekirdeğe taşır; \
+                 GPUI ve WASM cursor, seçim başlangıcı ve seçim bitişinde aynı sonucu kullanır. \
+                 Lejant setSeries ile üç dolu çizgi serisini ayrı açıp kapatır. İzleme: \
+                 gürültülü zaman serilerinde tekrarlanabilir piksel adımlarıyla karşılaştırma \
+                 ve zoom penceresi seçmek içindir. Maliyet: snap O(1), hizalı en yakın X \
+                 araması O(log N)'dir; normal pointer hareketi ana üç yolu yeniden çizmez, \
+                 yalnız hafif cursor/hover/lejant katmanını günceller.",
+            ),
             KartKimliği::UpdateCursorSelectResize => Some(
                 "Amaç: setCursor, cursor._lock ve setSelect ile kurulmuş kalıcı etkileşim \
                  durumunun setSize sırasında çizim alanı oranlarında kalmasını gösterir. API: \
@@ -6751,6 +6764,7 @@ impl Render for ChartListesi {
                     aktif_kart,
                     KartKimliği::TooltipsClosest
                         | KartKimliği::Tooltips
+                        | KartKimliği::CursorSnap
                         | KartKimliği::Trendlines
                         | KartKimliği::UpdateCursorSelectResize
                         | KartKimliği::WindDirection
@@ -6764,6 +6778,7 @@ impl Render for ChartListesi {
                     aktif_kart,
                     KartKimliği::TooltipsClosest
                         | KartKimliği::Tooltips
+                        | KartKimliği::CursorSnap
                         | KartKimliği::Trendlines
                         | KartKimliği::UpdateCursorSelectResize
                         | KartKimliği::WindDirection

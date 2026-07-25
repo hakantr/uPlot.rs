@@ -1006,6 +1006,30 @@
       "test": "src/kart/y_shifted_series.rs + wasm/src/lib.rs"
     },
     {
+      "kaynak_yolu": "cursor.move rounds left/top to a 10 CSS pixel grid",
+      "rust_karşılığı": "Grafik::imleç_oranlarını_uyarla + responsive GPUI/WASM piksel dönüşümü",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/cursor_snap.rs + wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "cursor.move transformed mousedown/mousemove drives select rectangle",
+      "rust_karşılığı": "GPUI ve WASM snap edilmiş seçim başlangıç/bitiş koordinatları",
+      "durum": "tam_kanıtlı",
+      "test": "src/gpui.rs + wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "cursor points resolve nearest data index after move transform",
+      "rust_karşılığı": "snap edilmiş cursor oranından İmleçÇözümü gerçek veri geometrisi",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/cursor_snap.rs + src/gpui.rs"
+    },
+    {
+      "kaynak_yolu": "setSeries show from standard legend",
+      "rust_karşılığı": "Cursor Snap GPUI/WASM değiştirilebilir seri lejantı",
+      "durum": "tam_kanıtlı",
+      "test": "uygulamalar/masaustu/src/masaustu.rs + wasm/src/lib.rs"
+    },
+    {
       "kaynak_yolu": "hooks.drawClear annotation visibility filter",
       "rust_karşılığı": "Grafik annotation görünürlük ve kırpma katmanı",
       "durum": "tam_kanıtlı",

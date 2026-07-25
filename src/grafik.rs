@@ -1923,7 +1923,11 @@ impl Grafik {
         };
         let x = ((yatay * çizim_genişliği / adım).round() * adım) / çizim_genişliği;
         let y = ((dikey * çizim_yüksekliği / adım).round() * adım) / çizim_yüksekliği;
-        Some((x.clamp(0.0, 1.0), y.clamp(0.0, 1.0)))
+        // Resmî `cursor.move` callback'i sonucu ikinci kez kırpmaz. Çizim
+        // alanının son 10 px hücresi sınırda bittiğinde yuvarlanan imleç çok
+        // az dışarı taşabilir; seçim uçları da aynı dönüştürülmüş koordinatı
+        // kullanır.
+        Some((x, y))
     }
 
     pub fn tekerlek_etkileşimi_ayarla(&mut self, etkin: bool) {

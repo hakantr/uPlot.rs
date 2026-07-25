@@ -1254,6 +1254,28 @@ impl GpuiGrafik {
         (sol..=sağ).contains(&nokta.x) && (üst..=alt).contains(&nokta.y)
     }
 
+    fn imleç_ızgarasına_oturt(&self, nokta: Nokta) -> Option<Nokta> {
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        let genişlik = sağ - sol;
+        let yükseklik = alt - üst;
+        let içerik_ölçeği = self.çizim_sınırları.get().map_or(1.0, |sınırlar| {
+            let (kaynak_g, kaynak_y) = self.grafik.boyut();
+            (f32::from(sınırlar.size.width) / kaynak_g as f32)
+                .min(f32::from(sınırlar.size.height) / kaynak_y as f32)
+                .max(f32::EPSILON)
+        });
+        let (yatay, dikey) = self.grafik.imleç_oranlarını_uyarla(
+            f64::from((nokta.x - sol) / genişlik),
+            f64::from((nokta.y - üst) / yükseklik),
+            f64::from(genişlik * içerik_ölçeği),
+            f64::from(yükseklik * içerik_ölçeği),
+        )?;
+        Some(Nokta::yeni(
+            sol + yatay as f32 * genişlik,
+            üst + dikey as f32 * yükseklik,
+        ))
+    }
+
     fn imleci_güncelle(&mut self, pencere_konumu: ::gpui::Point<Pixels>) -> bool {
         if self.imleç_kilitli {
             return false;
@@ -1297,17 +1319,12 @@ impl GpuiGrafik {
             });
             return false;
         }
-        let yatay = f64::from((fare.x - sol) / (sağ - sol));
-        let dikey = f64::from((fare.y - üst) / (alt - üst));
-        let Some((yatay, dikey)) = self.grafik.imleç_oranlarını_uyarla(
-            yatay,
-            dikey,
-            f64::from(sağ - sol),
-            f64::from(alt - üst),
-        ) else {
+        let Some(fare) = self.imleç_ızgarasına_oturt(fare) else {
             self.imleç = None;
             return self.grafik.imleç_odağını_temizle();
         };
+        let yatay = f64::from((fare.x - sol) / (sağ - sol));
+        let dikey = f64::from((fare.y - üst) / (alt - üst));
         let x_dikey = self.grafik.x_dikey_mi();
         let odak_değişti = self.grafik.imleç_odağını_güncelle(
             yatay,
@@ -1816,13 +1833,14 @@ impl Render for GpuiGrafik {
                 {
                     let (sol, sağ, üst, alt) = bu.çizim_alanı();
                     let xy = bu.grafik.etkileşim_seçenekleri().seçim_xy_yakınlaştır;
-                    let bitiş = if xy {
+                    let ham_bitiş = if xy {
                         Nokta::yeni(konum.x.clamp(sol, sağ), konum.y.clamp(üst, alt))
                     } else if bu.grafik.x_dikey_mi() {
                         Nokta::yeni(başlangıç.x, konum.y.clamp(üst, alt))
                     } else {
                         Nokta::yeni(konum.x.clamp(sol, sağ), başlangıç.y)
                     };
+                    let bitiş = bu.imleç_ızgarasına_oturt(ham_bitiş).unwrap_or(ham_bitiş);
                     bu.seçim = Some((başlangıç, bitiş));
                 }
                 if olay.dragging()
@@ -1934,6 +1952,7 @@ impl Render for GpuiGrafik {
                         && let Some(konum) = bu.sahne_konumu(olay.position)
                         && bu.grafik_alanında(konum)
                     {
+                        let konum = bu.imleç_ızgarasına_oturt(konum).unwrap_or(konum);
                         bu.seçim = Some((konum, konum));
                         bu.açıklama_seçimi = ayarlar.ctrl_açıklama && olay.modifiers.control;
                     }
@@ -2906,6 +2925,28 @@ mod testler {
                 if (*genişlik - 100.0).abs() <= f32::EPSILON
                     && (*yükseklik - 200.0).abs() <= f32::EPSILON
         )));
+        Ok(())
+    }
+
+    #[test]
+    fn cursor_snap_duyarlı_yüzeyde_css_pikselini_ve_seçim_ucunu_korur() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = crate::kart::cursor_snap_kartı()?;
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        let bileşen = GpuiGrafik::yeni(grafik);
+        bileşen.çizim_sınırları.set(Some(Bounds::new(
+            point(px(0.0), px(0.0)),
+            size(px(960.0), px(300.0)),
+        )));
+        let (sol, sağ, üst, alt) = bileşen.çizim_alanı();
+        let ölçek = 0.5;
+        let ham = Nokta::yeni(sol + 0.143 * (sağ - sol), üst + 0.167 * (alt - üst));
+        let oturan = bileşen
+            .imleç_ızgarasına_oturt(ham)
+            .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        let css_x = (oturan.x - sol) * ölçek;
+        let css_y = (oturan.y - üst) * ölçek;
+        assert!((css_x / 10.0 - (css_x / 10.0).round()).abs() < 0.0001);
+        assert!((css_y / 10.0 - (css_y / 10.0).round()).abs() < 0.0001);
         Ok(())
     }
 

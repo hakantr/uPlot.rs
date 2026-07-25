@@ -1005,6 +1005,12 @@
         yardım: "İmleç: 10×10 piksel ızgarasına oturur · sürükle: seç · boşluk + sürükle: taşı",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "İmleci ve alan seçiminin iki ucunu aynı 10×10 CSS piksel ızgarasına oturtarak gürültülü ölçümlerde kararlı inceleme pencereleri üretir.",
+          api: "GrafikSeçenekleri::imleç_ızgara_adımı kaynak cursor.move dönüşümünü çekirdekte tanımlar; GPUI ve WASM aynı dönüşümü cursor, hover çözümü ve seçim başlangıç/bitişinde kullanır. Lejant setSeries ile üç seriyi ayrı ayrı açıp kapatır.",
+          izleme: "Zaman çizelgesinde tekrarlanabilir piksel adımlarıyla karşılaştırma ve zoom yapmak için uygundur. Hover noktaları ızgaraya değil, dönüştürülmüş cursor X'ine en yakın gerçek veri örneğine bağlı kalır.",
+          maliyet: "Snap O(1), hizalı X araması O(log N)'dir. Pointer hareketi yalnız hafif cursor, hover ve lejant düğümlerini taşır; üç ana yol setSeries, ölçek veya resize olmadıkça yeniden üretilmez.",
+        },
       },
       "missing-data-null": {
         başlık: "Missing Data (null values)",
@@ -6322,6 +6328,7 @@
       const yığmaLejantı = aktifKart.startsWith("stacked-series-");
       const değiştirilebilirLejant = yığmaLejantı
         || aktifKart.startsWith("multi-bars-")
+        || aktifKart === "cursor-snap"
         || aktifKart === "tooltips-closest"
         || aktifKart === "tooltips"
         || aktifKart === "trendlines"
@@ -6911,8 +6918,11 @@
         imleciGüncelle(olay);
         return;
       }
+      const svgKutusu = svg.getBoundingClientRect();
+      const cssÖlçekX = svgKutusu.width / view.width;
+      const cssÖlçekY = svgKutusu.height / view.height;
       const uyarlanmış = oturum?.imlec_oranlarini_uyarla(
-        hamOranX, hamOranY, sağ - sol, alt - üst
+        hamOranX, hamOranY, (sağ - sol) * cssÖlçekX, (alt - üst) * cssÖlçekY
       ) ?? [];
       if (uyarlanmış.length !== 2) return;
       const [oran, dikeyOran] = uyarlanmış;
@@ -7130,8 +7140,19 @@
       const alan = çizimAlanı(view);
       const xDikey = oturum?.x_dikey() ?? false;
       const xySeçim = oturum?.secim_xy_yakinlastir() ?? false;
-      sürükleme.sonX = Math.max(alan.sol, Math.min(alan.sağ, x));
-      sürükleme.sonY = Math.max(alan.üst, Math.min(alan.alt, y));
+      const sınırlıX = Math.max(alan.sol, Math.min(alan.sağ, x));
+      const sınırlıY = Math.max(alan.üst, Math.min(alan.alt, y));
+      const svgKutusu = svg.getBoundingClientRect();
+      const uyarlanmış = oturum?.imlec_oranlarini_uyarla(
+        (sınırlıX - alan.sol) / alan.genişlik,
+        (sınırlıY - alan.üst) / alan.yükseklik,
+        alan.genişlik * svgKutusu.width / view.width,
+        alan.yükseklik * svgKutusu.height / view.height,
+      ) ?? [];
+      sürükleme.sonX = uyarlanmış.length === 2
+        ? alan.sol + uyarlanmış[0] * alan.genişlik : sınırlıX;
+      sürükleme.sonY = uyarlanmış.length === 2
+        ? alan.üst + uyarlanmış[1] * alan.yükseklik : sınırlıY;
       sürükleme.son = xDikey ? sürükleme.sonY : sürükleme.sonX;
       const seçim = svg.querySelector("#seçim");
       seçim.setAttribute("x", xySeçim
@@ -7347,7 +7368,7 @@
       }
       if (olay.button !== 0) return;
       chart.focus({ preventScroll: true });
-      const { x, y, view } = svgKonumu(olay);
+      const { x, y, svg, view } = svgKonumu(olay);
       const alan = çizimAlanı(view);
       if (oturum?.eksen_suruklemeyi_baslat(view.width, view.height, x, y)) {
         chart.setPointerCapture(olay.pointerId);
@@ -7373,13 +7394,26 @@
       if (x < alan.sol || x > alan.sağ || y < alan.üst || y > alan.alt) return;
       chart.setPointerCapture(olay.pointerId);
       const xDikey = oturum?.x_dikey() ?? false;
+      const svgKutusu = svg?.getBoundingClientRect();
+      const uyarlanmış = svg && svgKutusu
+        ? oturum?.imlec_oranlarini_uyarla(
+            (x - alan.sol) / alan.genişlik,
+            (y - alan.üst) / alan.yükseklik,
+            alan.genişlik * svgKutusu.width / view.width,
+            alan.yükseklik * svgKutusu.height / view.height,
+          ) ?? []
+        : [];
+      const başlangıçX = uyarlanmış.length === 2
+        ? alan.sol + uyarlanmış[0] * alan.genişlik : x;
+      const başlangıçY = uyarlanmış.length === 2
+        ? alan.üst + uyarlanmış[1] * alan.yükseklik : y;
       sürükleme = {
-        baş: xDikey ? y : x,
-        son: xDikey ? y : x,
-        başX: x,
-        sonX: x,
-        başY: y,
-        sonY: y,
+        baş: xDikey ? başlangıçY : başlangıçX,
+        son: xDikey ? başlangıçY : başlangıçX,
+        başX: başlangıçX,
+        sonX: başlangıçX,
+        başY: başlangıçY,
+        sonY: başlangıçY,
         clientX: olay.clientX,
         clientY: olay.clientY,
         hareketEtti: false,

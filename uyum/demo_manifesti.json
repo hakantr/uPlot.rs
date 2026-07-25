@@ -476,7 +476,7 @@
           "duyarli-boyutlandirma": "devralındı",
           "cizim-alani-kirpmasi": "devralındı",
           "dinamik-eksen-izgara": "devralındı",
-          "surekli-imlec-izleme": "kartta_kapalı",
+          "surekli-imlec-izleme": "kartta_etkin",
           "canli-coklu-seri-lejanti": "devralındı",
           "kosullu-bos-ve-dolu-noktalar": "devralındı",
           "secim-yakinlastirma": "kartta_etkin",
@@ -491,7 +491,7 @@
           "paniksiz-hata-bildirimi": "devralındı"
         },
         "gerekçeler": {
-          "surekli-imlec-izleme": "Resmî cursor-snap kartı imleci bilinçli olarak 10×10 piksel ızgaraya oturtur."
+          "surekli-imlec-izleme": "İmleç pointer hareketini sürekli izler; yalnız fiziksel konum kaynak cursor.move callback'iyle 10×10 CSS piksel ızgarasına dönüştürülür."
         }
       },
       "sahip_faz": 4,
@@ -502,6 +502,11 @@
         "three-filled-linear-series",
         "core-owned-cursor-move-transform",
         "10x10-pixel-cursor-grid",
+        "css-pixel-responsive-grid",
+        "snapped-selection-start-and-end",
+        "raw-data-hover-after-snapped-cursor",
+        "set-series-legend-controls",
+        "lightweight-cursor-layer",
         "gpui-wasm-cursor-equivalence",
         "common-interaction-profile"
       ],
@@ -510,7 +515,7 @@
         "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı",
         "davranış": "uygulandı_kanıtlı",
-        "performans": "bekliyor"
+        "performans": "uygulandı_kanıtlı"
       }
     },
     {

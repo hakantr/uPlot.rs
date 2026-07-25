@@ -6,7 +6,8 @@ pub const CURSOR_SNAP_KANIT_TOHUMU: u32 = 0x534E_4150;
 
 pub const CURSOR_SNAP_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = cursor_snap_kartı()?;
 // 10×10 piksel imleç ızgarası çekirdekte tanımlıdır; GPUI ve WASM
-// yüzeylerinin ayrıca yuvarlama kodu yazması gerekmez.
+// yüzeylerinin ayrıca yuvarlama kodu yazması gerekmez. cursor.move dönüşümü
+// hem hafif cursor katmanına hem de seçim başlangıç/bitiş uçlarına uygulanır.
 let grafik = Grafik::yeni(seçenekler, veri)?;"##;
 
 /// Resmî `demos/cursor-snap.html` verisini, üç serisini, dolgu renklerini ve
@@ -58,6 +59,10 @@ mod testler {
         assert_eq!(
             grafik.imleç_oranlarını_uyarla(0.14, 0.16, 100.0, 100.0),
             Some((0.1, 0.2))
+        );
+        assert_eq!(
+            grafik.imleç_oranlarını_uyarla(0.99, 0.99, 96.0, 96.0),
+            Some((100.0 / 96.0, 100.0 / 96.0))
         );
         Ok(())
     }
