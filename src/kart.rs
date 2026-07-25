@@ -187,7 +187,9 @@ pub use soft_minmax::{
     SOFT_MINMAX_KART_TANIM_ÖRNEĞİ, SoftMinMaxAkışı, SoftMinMaxÖrneği, soft_minmax_kartları,
     soft_minmax_kartı,
 };
-pub use sparklines::{SPARKLINES_KART_TANIM_ÖRNEĞİ, SparklineÖrneği, sparklines_kartı};
+pub use sparklines::{
+    SPARKLINES_KART_TANIM_ÖRNEĞİ, SparklineÖrneği, sparklines_kartları, sparklines_kartı,
+};
 pub use sparklines_bars::{
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SparklinesBarsÖrneği, sparklines_bars_kartları,
     sparklines_bars_kartı,

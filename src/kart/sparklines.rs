@@ -1,15 +1,17 @@
 use super::ortak_kart_etkileşimleri;
-use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
+use crate::{
+    GrafikSeçenekleri, HizalıVeri, SayısalAralıkAyarları, SayısalAralıkParçası, SeriSeçenekleri,
+    UplotHatası, YumuşakSınırKipi, YÖlçekSeçenekleri,
+};
 
 #[path = "veri/sparklines.rs"]
 mod kaynak_veri;
 
 use kaynak_veri::{SPARKLINE_KAYITLARI, SparklineKaydı};
 
-pub const SPARKLINES_KART_TANIM_ÖRNEĞİ: &str = r##"for örnek in SparklineÖrneği::TÜMÜ {
-    let (seçenekler, veri) = sparklines_kartı(örnek)?;
-    // 150×30 kompakt yüzey, gizli eksenler, kaynak CSV değerleri ve
-    // ortak isteğe bağlı etkileşimler çekirdekte çözülür.
+pub const SPARKLINES_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in sparklines_kartları()? {
+    // Resmî 10 satır × 2 sütun tablosundaki 150×30 yüzeyler, kaynak CSV
+    // değerleri ve bağımsız uPlot numeric Y aralıkları birlikte üretilir.
     let grafik = Grafik::yeni(seçenekler, veri)?;
 }"##;
 
@@ -24,6 +26,8 @@ enum SparklineÖlçümü {
 pub struct SparklineÖrneği(u8);
 
 impl SparklineÖrneği {
+    pub const İLK: Self = Self(0);
+
     pub const TÜMÜ: [Self; 20] = [
         Self(0),
         Self(1),
@@ -45,6 +49,19 @@ impl SparklineÖrneği {
         Self(17),
         Self(18),
         Self(19),
+    ];
+
+    pub const SATIRLAR: [(Self, Self); 10] = [
+        (Self(0), Self(1)),
+        (Self(2), Self(3)),
+        (Self(4), Self(5)),
+        (Self(6), Self(7)),
+        (Self(8), Self(9)),
+        (Self(10), Self(11)),
+        (Self(12), Self(13)),
+        (Self(14), Self(15)),
+        (Self(16), Self(17)),
+        (Self(18), Self(19)),
     ];
 
     pub fn kimlik(self) -> &'static str {
@@ -249,6 +266,12 @@ pub fn sparklines_kartı(
         .y_ızgarası_göster(false)
         .piksel_hizası(0.0)
         .etkileşimler(ortak_kart_etkileşimleri())
+        .y_ölçeği(
+            YÖlçekSeçenekleri::yeni("y").sayısal_aralık(SayısalAralıkAyarları::yeni(
+                SayısalAralıkParçası::yeni(0.1, Some(0.0), YumuşakSınırKipi::Koşullu),
+                SayısalAralıkParçası::yeni(0.1, Some(0.0), YumuşakSınırKipi::Koşullu),
+            )),
+        )
         .seri(
             SeriSeçenekleri::yeni(örnek.ölçüm())
                 .renk("#03a9f4")
@@ -256,6 +279,19 @@ pub fn sparklines_kartı(
                 .noktaları_göster(false),
         );
     Ok((seçenekler, veri))
+}
+
+/// Resmî tablonun 10 hisse × (hacim, kapanış) yüzeylerini satır sırasıyla
+/// tek bir kaynak grubu olarak üretir.
+pub fn sparklines_kartları()
+-> Result<Vec<(SparklineÖrneği, GrafikSeçenekleri, HizalıVeri)>, UplotHatası> {
+    SparklineÖrneği::TÜMÜ
+        .into_iter()
+        .map(|örnek| {
+            let (seçenekler, veri) = sparklines_kartı(örnek)?;
+            Ok((örnek, seçenekler, veri))
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -291,6 +327,45 @@ mod testler {
                 .and_then(|seri| seri.get(21))
                 .copied(),
             Some(Some(6.24))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn on_satır_iki_sütun_tek_kaynak_grubunda_korunur() -> Result<(), UplotHatası> {
+        let kartlar = sparklines_kartları()?;
+        assert_eq!(kartlar.len(), 20);
+        for (satır, ((hacim, kapanış), çift)) in SparklineÖrneği::SATIRLAR
+            .into_iter()
+            .zip(kartlar.chunks_exact(2))
+            .enumerate()
+        {
+            assert_eq!(çift.first().map(|kart| kart.0), Some(hacim));
+            assert_eq!(çift.get(1).map(|kart| kart.0), Some(kapanış));
+            assert_eq!(hacim.simge(), kapanış.simge());
+            assert_eq!(hacim.ölçüm(), "Hacim");
+            assert_eq!(kapanış.ölçüm(), "Kapanış");
+            assert_eq!(usize::from(hacim.0) / 2, satır);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn aapl_y_aralıkları_kaynağın_range_num_davranışını_korur() -> Result<(), UplotHatası> {
+        let (hacim_seçenekleri, hacim_verisi) = sparklines_kartı(SparklineÖrneği::TÜMÜ[0])?;
+        let hacim = crate::Grafik::yeni(hacim_seçenekleri, hacim_verisi)?;
+        let hacim_aralığı = hacim.görünür_y_aralığı();
+        assert_eq!(
+            (hacim_aralığı.en_az, hacim_aralığı.en_çok),
+            (15_000_000.0, 40_000_000.0)
+        );
+
+        let (kapanış_seçenekleri, kapanış_verisi) = sparklines_kartı(SparklineÖrneği::TÜMÜ[1])?;
+        let kapanış = crate::Grafik::yeni(kapanış_seçenekleri, kapanış_verisi)?;
+        let kapanış_aralığı = kapanış.görünür_y_aralığı();
+        assert_eq!(
+            (kapanış_aralığı.en_az, kapanış_aralığı.en_çok),
+            (232.0, 269.0)
         );
         Ok(())
     }

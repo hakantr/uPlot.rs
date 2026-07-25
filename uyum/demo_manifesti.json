@@ -2479,7 +2479,7 @@
         { "yol": "demos/data/TSLA.csv", "sha256": "4252b8850602b4208bf109eee71652e2c4f8e2b9eb50e5f808954c88864d756d" },
         { "yol": "demos/data/ZNGA.csv", "sha256": "895f534a58e2e533945a3a534b324a571c2e76e784a8f373774281ef0b6d3c10" }
       ],
-      "fixture": "src/kart/sparklines.rs#sparklines_kartı",
+      "fixture": "src/kart/sparklines.rs#sparklines_kartları",
       "örnek": "examples/sparklines.rs",
       "masaüstü_örneği": "uygulamalar/masaustu/src/masaustu.rs",
       "wasm_örneği": "wasm/www/index.html",
@@ -2504,9 +2504,11 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "source-ten-symbols-two-metrics", "source-twenty-150x30-surfaces",
+        "source-single-table-group", "source-independent-range-num-y-scales",
         "source-exact-twenty-two-row-csv-data", "px-align-false",
         "hidden-axes-grid-points", "pink-canvas-blue-stroke-fill",
-        "compact-core-surface", "gpui-wasm-parity", "common-interaction-profile"
+        "compact-core-surface", "embedded-source-snapshot-no-fetch",
+        "collapsible-usage-guide", "gpui-wasm-parity", "common-interaction-profile"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",

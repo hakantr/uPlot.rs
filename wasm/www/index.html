@@ -283,6 +283,18 @@
                                    font-size: 13px; }
     .sparklines-bars-grafik > p { margin: 0 10px 5px; color: #6b7280; font-size: 11px; }
     .sparklines-bars-grafik svg { display: block; width: 800px; height: 400px; }
+    #chart.sparklines-yüzeyi { display: block; min-width: 0; overflow: auto;
+                               place-items: unset; padding: 8px; box-sizing: border-box; }
+    .sparklines-tablo { width: 386px; display: grid;
+                        grid-template-columns: 84px 150px 150px;
+                        gap: 1px; padding: 1px; background: #d1d5db; }
+    .sparklines-başlık, .sparklines-simge { min-height: 30px; display: grid;
+                                            place-items: center; background: #fff;
+                                            color: #111827; font-size: 12px;
+                                            font-weight: 700; }
+    .sparklines-grafik { position: relative; width: 150px; height: 30px;
+                         overflow: hidden; background: pink; }
+    .sparklines-grafik svg { display: block; width: 150px; height: 30px; }
     .lejant { position: absolute; left: 60px; right: 18px; bottom: 10px;
               display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px;
               font-size: 11px; font-weight: 600; line-height: 1.1; pointer-events: none; }
@@ -1518,34 +1530,37 @@
     ]);
     document.querySelector('[data-kart="sparklines-bars"]')?.insertAdjacentHTML(
       "afterend",
-      sparklineYüzeyleri.map(yüzey => `
-        <article class="kart" data-kart="${yüzey.kimlik}" aria-current="false" tabindex="0">
-          <strong>${yüzey.başlık}</strong><small>sparklines</small>
-          <div class="durum">22 CSV kaydı · 150×30</div>
-        </article>`).join("")
+      `<article class="kart" data-kart="sparklines" aria-current="false" tabindex="0">
+        <strong>Sparklines · 10×2 tablo</strong><small>sparklines</small>
+        <div class="durum">10 hisse × hacim/kapanış · 20 yüzey</div>
+      </article>`
     );
-    for (const yüzey of sparklineYüzeyleri) {
-      kartlar[yüzey.kimlik] = {
-        başlık: yüzey.başlık,
-        kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/sparklines.html">sparklines.html</a>
-          · <a href="https://github.com/leeoniya/uPlot/tree/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data">10 kaynak CSV</a>
-          · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/uDSV.iife.min.js">uDSV parser</a>
-          <br>Resmî tablodaki 10 hisse × hacim/kapanış yüzeyinin 22 kaydı, 150×30 boyutu, pembe arka planı, mavi çizgi/dolgusu ve pxAlign:false davranışı Rust çekirdeğinde korunur.`,
-        tanım: () => sparklines_kart_tanim_ornegi(),
-        tanımYolu: "src/kart/sparklines.rs",
-        seriler: [{ etiket: yüzey.ölçüm, renk: "#03a9f4" }],
-        yardım: `${yüzey.başlık} · kaynak CSV · kompakt yüzey`,
-        değişkenNokta: false,
-        kompakt: true,
-        etkileşimler: () => ortakEtkileşimler(),
-      };
-    }
+    kartlar.sparklines = {
+      başlık: "Sparklines · 10×2 tablo",
+      kaynak: `Kaynak: <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/sparklines.html">sparklines.html</a>
+        · <a href="https://github.com/leeoniya/uPlot/tree/0e5812c504430f5c804e0f993376d8999b26cc34/demos/data">10 kaynak CSV</a>
+        · <a href="https://github.com/leeoniya/uPlot/blob/0e5812c504430f5c804e0f993376d8999b26cc34/demos/lib/uDSV.iife.min.js">uDSV parser</a>
+        <br>Kaynağın tek tablosundaki 10 hisse × hacim/kapanış yüzeyi birlikte gösterilir. Her 150×30 yüzey kendi <code>rangeNum(min,max,.1,true)</code> Y aralığını, pembe zemini, mavi çizgi/dolguyu ve <code>pxAlign:false</code> davranışını korur.`,
+      tanım: () => sparklines_kart_tanim_ornegi(),
+      tanımYolu: "src/kart/sparklines.rs",
+      seriler: [{ etiket: "Value", renk: "#03a9f4" }],
+      yardım: "10 hisse × 2 ölçüm · aynı tablo · 20 bağımsız kompakt yüzey",
+      değişkenNokta: false,
+      kompakt: true,
+      etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Yoğun bir izleme tablosunda çok sayıda küçük serinin biçimini ve son dönem hareketini tek bakışta karşılaştırır; ilişkili yüzeyler ayrı katalog kartlarına bölünmez.",
+        api: "sparklines_kartları() kaynak satır sırasıyla 20 (örnek, seçenekler, veri) üçlüsü döndürür. SparklineÖrneği::SATIRLAR her hissenin Hacim/Kapanış çiftini tanımlar; her yüzey bağımsız uPlot rangeNum Y aralığı kullanır.",
+        izleme: "Hisse yerine servis, pod veya sensör satırı; Hacim/Kapanış yerine trafik, hata, gecikme ya da son değer sütunları yerleştirilebilir.",
+        maliyet: "Kaynak Promise.all ile 10 CSV'yi paralel yükleyip 20 statik canvas kurar. Bu port doğrulanmış 440 değeri binary içine gömer; ağ/fetch/parser yaşam döngüsünü kaldırır ve 20 yüzeyi aynı sayfada kurar. Kaynak cursor/select/legend kapalıdır; ortak wheel/touch/drag geliştirici etkinleştirirse çekirdek uzantısıdır.",
+      },
+    };
     const sparseYüzeyleri = [
       ["sparse-native-linear", "Native linear pathBuilder", "Yerleşik doğrusal yol"],
       ["sparse-custom-points", "Custom points pathBuilder", "2×2 özel kare noktalar"],
       ["sparse-custom-naive-linear", "Custom linear pathBuilder - naive w/moveTo()", "Paniksiz moveTo/lineTo yolu"],
     ];
-    document.querySelector('[data-kart="sparklines-znga-close"]')?.insertAdjacentHTML(
+    document.querySelector('[data-kart="sparklines"]')?.insertAdjacentHTML(
       "afterend",
       sparseYüzeyleri.map(([kimlik, başlık, durum]) => `
         <article class="kart" data-kart="${kimlik}" aria-current="false" tabindex="0">
@@ -2637,6 +2652,8 @@
     let softMinMaxEtkinİndeks = 0;
     let sparklinesBarsOturumları = [];
     let sparklinesBarsEtkinİndeks = 0;
+    let sparklinesOturumları = [];
+    let sparklinesEtkinİndeks = 0;
     let scalesDirOriİmleci = null;
     let scalesDirOriÇizimKaresi = null;
     let syncCursorKöprüsü = null;
@@ -4660,6 +4677,57 @@
       kontrolleriGüncelle();
     }
 
+    function sparklinesYüzeyiniÇiz(indeks) {
+      const yüzey = chart.querySelector(`[data-sparklines-index="${indeks}"]`);
+      const yüzeyOturumu = sparklinesOturumları[indeks];
+      if (!yüzey || !yüzeyOturumu) return;
+      const svgÇıktısı = yüzeyOturumu.svg(150, 30);
+      const mevcutSvg = yüzey.querySelector("svg");
+      if (!mevcutSvg) {
+        yüzey.innerHTML = svgÇıktısı;
+      } else {
+        const şablon = document.createElement("template");
+        şablon.innerHTML = svgÇıktısı.trim();
+        svgYüzeyiniYerindeGüncelle(mevcutSvg, şablon.content.firstElementChild);
+      }
+      const svg = yüzey.querySelector("svg");
+      if (!svg) return;
+      softMinMaxEtkileşimKatmanınıKur(svg);
+      svg.dataset.etkileşim = "independent-sparklines";
+      const rect = svg.getBoundingClientRect();
+      yüzeyOturumu.yuzeyi_esitle(rect.left, rect.top, rect.width, rect.height);
+    }
+
+    function sparklinesÇiz() {
+      if (!chart.classList.contains("sparklines-yüzeyi")
+        || chart.querySelectorAll(".sparklines-grafik").length !== sparklineYüzeyleri.length) {
+        chart.className = "sparklines-yüzeyi";
+        chart.innerHTML = `<div class="sparklines-tablo" role="table"
+          aria-label="10 hisse için hacim ve kapanış sparklines tablosu">
+          <div class="sparklines-başlık" role="columnheader">Simge</div>
+          <div class="sparklines-başlık" role="columnheader">Volume</div>
+          <div class="sparklines-başlık" role="columnheader">Close</div>
+          ${sparklineSimgeleri.map((simge, satır) => `
+            <div class="sparklines-simge" role="rowheader">${simge}</div>
+            <div class="sparklines-grafik" role="cell"
+              data-sparklines-index="${satır * 2}"></div>
+            <div class="sparklines-grafik" role="cell"
+              data-sparklines-index="${satır * 2 + 1}"></div>`).join("")}
+        </div>`;
+      }
+      sparklineYüzeyleri.forEach((_, indeks) => sparklinesYüzeyiniÇiz(indeks));
+      oturum = sparklinesOturumları[sparklinesEtkinİndeks]
+        ?? sparklinesOturumları[0]
+        ?? null;
+      const xAralığı = oturum?.gorunur_x_araligi() ?? [];
+      const yAralığı = oturum?.gorunur_y_araligi() ?? [];
+      chart.dataset.xEnAz = String(xAralığı[0] ?? "");
+      chart.dataset.xEnCok = String(xAralığı[1] ?? "");
+      chart.dataset.yEnAz = String(yAralığı[0] ?? "");
+      chart.dataset.yEnCok = String(yAralığı[1] ?? "");
+      kontrolleriGüncelle();
+    }
+
     function çiz() {
       if (aktifKart === "sync-cursor") {
         syncCursorÇiz();
@@ -4705,6 +4773,10 @@
         sparklinesBarsÇiz();
         return;
       }
+      if (aktifKart === "sparklines") {
+        sparklinesÇiz();
+        return;
+      }
       if (!oturum) return;
       const öncekiMultiBarsKartı = chart.dataset.cizilenKart;
       const öncekiMultiBarsKaydırma = chart.querySelector(".multi-bars-kaydırma");
@@ -4723,6 +4795,7 @@
       chart.classList.remove("scatter-yüzeyi");
       chart.classList.remove("soft-minmax-yüzeyi");
       chart.classList.remove("sparklines-bars-yüzeyi");
+      chart.classList.remove("sparklines-yüzeyi");
       chart.classList.toggle("nice-scale-yüzeyi", aktifKart === "nice-scale");
       chart.classList.toggle("multi-bars-yüzeyi", aktifKart.startsWith("multi-bars-"));
       const sayı = Number(nokta.value);
@@ -4992,6 +5065,10 @@
             ? chart.querySelector(
                 `[data-sparklines-bars-index="${sparklinesBarsEtkinİndeks}"] svg`
               )
+          : aktifKart === "sparklines"
+            ? chart.querySelector(
+                `[data-sparklines-index="${sparklinesEtkinİndeks}"] svg`
+              )
         : chart.querySelector("svg"));
       if (!svg || !oturum) return false;
       const rect = svg.getBoundingClientRect();
@@ -5070,6 +5147,11 @@
             ? olay.target?.closest?.(".sparklines-bars-grafik")
               ?? chart.querySelector(
                 `[data-sparklines-bars-index="${sparklinesBarsEtkinİndeks}"]`
+              )
+          : aktifKart === "sparklines"
+            ? olay.target?.closest?.(".sparklines-grafik")
+              ?? chart.querySelector(
+                `[data-sparklines-index="${sparklinesEtkinİndeks}"]`
               )
           : null;
       const svg = bağımsızYüzey?.querySelector("svg") ?? chart.querySelector("svg");
@@ -5287,7 +5369,9 @@
         return;
       }
       const çizgiler = ["imleç-x", "imleç-y"].map(id => svg.querySelector(`#${id}`));
-      const etkileşimKapsamı = svg.closest(".soft-minmax-grafik") ?? chart;
+      const etkileşimKapsamı = svg.closest(".soft-minmax-grafik")
+        ?? svg.closest(".sparklines-grafik")
+        ?? chart;
       const noktalar = kartlar[aktifKart].seriler.map((_, indeks) => svg.querySelector(`#imleç-nokta-${indeks}`));
       const öğeler = [...çizgiler, ...noktalar];
       if (hamX < sol || hamX > sağ || hamY < üst || hamY > alt) {
@@ -5561,10 +5645,24 @@
         if (svg) yüzeyiEşitle(svg);
       }
     }
+    function sparklinesOturumunuSeç(olay) {
+      if (aktifKart !== "sparklines") return;
+      const yüzey = olay.target?.closest?.(".sparklines-grafik");
+      const indeks = Number(yüzey?.dataset.sparklinesIndex);
+      if (Number.isInteger(indeks) && sparklinesOturumları[indeks]) {
+        sparklinesEtkinİndeks = indeks;
+        oturum = sparklinesOturumları[indeks];
+        const svg = yüzey.querySelector("svg");
+        if (svg) yüzeyiEşitle(svg);
+      }
+    }
     for (const olayTürü of ["pointerdown", "pointermove", "pointerup", "wheel", "dblclick", "scroll"]) {
       chart.addEventListener(olayTürü, scatterOturumunuSeç, { capture: true, passive: true });
       chart.addEventListener(olayTürü, softMinMaxOturumunuSeç, { capture: true, passive: true });
       chart.addEventListener(olayTürü, sparklinesBarsOturumunuSeç, {
+        capture: true, passive: true,
+      });
+      chart.addEventListener(olayTürü, sparklinesOturumunuSeç, {
         capture: true, passive: true,
       });
     }
@@ -5871,6 +5969,9 @@
       } else if (aktifKart === "sparklines-bars") {
         sparklinesBarsOturumları.forEach(yüzey => yüzey.onceki_gorunum());
         sparklinesBarsÇiz();
+      } else if (aktifKart === "sparklines") {
+        sparklinesOturumları.forEach(yüzey => yüzey.onceki_gorunum());
+        sparklinesÇiz();
       } else if (oturum?.onceki_gorunum()) çiz();
     });
     tamGörünüm.addEventListener("click", () => {
@@ -5917,6 +6018,9 @@
       } else if (aktifKart === "sparklines-bars") {
         sparklinesBarsOturumları.forEach(yüzey => yüzey.tam_gorunum());
         sparklinesBarsÇiz();
+      } else if (aktifKart === "sparklines") {
+        sparklinesOturumları.forEach(yüzey => yüzey.tam_gorunum());
+        sparklinesÇiz();
       } else if (oturum?.tam_gorunum()) çiz();
     });
     tekerlekEtkileşimi.addEventListener("change", () => {
@@ -5963,6 +6067,10 @@
         );
       } else if (aktifKart === "sparklines-bars") {
         sparklinesBarsOturumları.forEach(yüzey =>
+          yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
+        );
+      } else if (aktifKart === "sparklines") {
+        sparklinesOturumları.forEach(yüzey =>
           yüzey.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek)
         );
       } else {
@@ -6088,6 +6196,13 @@
           sparklinesBarsEtkinİndeks = indeks >= 0 ? indeks : 0;
           kimlik = "sparklines-bars";
         }
+        if (kimlik !== "sparklines"
+          && kimlik.startsWith("sparklines-")
+          && !kimlik.startsWith("sparklines-bars-")) {
+          const indeks = sparklineYüzeyleri.findIndex(yüzey => yüzey.kimlik === kimlik);
+          sparklinesEtkinİndeks = indeks >= 0 ? indeks : 0;
+          kimlik = "sparklines";
+        }
         if (kimlik !== "no-data" && kimlik.startsWith("no-data-")) {
           const noDataSeçimi = document.querySelector("#no-data-variation");
           if (noDataSeçimi?.querySelector(`option[value="${CSS.escape(kimlik)}"]`)) {
@@ -6125,7 +6240,21 @@
         sonTooltipİmleci = null;
         syncYZeroZamanlayıcıları.forEach(clearTimeout);
         syncYZeroZamanlayıcıları = [];
-        oturum?.free();
+        const gruplanmışOturum = [
+          syncCursorOturumları,
+          timeseriesDiscreteOturumları,
+          nearestNonNullOturumları,
+          monthsOturumları,
+          pathGapClipOturumları,
+          pixelAlignOturumları,
+          pointsOturumları,
+          scalesDirOriOturumları,
+          scatterOturumları,
+          softMinMaxOturumları,
+          sparklinesBarsOturumları,
+          sparklinesOturumları,
+        ].some(yüzeyler => yüzeyler.includes(oturum));
+        if (!gruplanmışOturum) oturum?.free();
         oturum = null;
         syncCursorOturumları.forEach(yüzey => yüzey.free());
         syncCursorOturumları = [];
@@ -6149,6 +6278,8 @@
         softMinMaxOturumları = [];
         sparklinesBarsOturumları.forEach(yüzey => yüzey.free());
         sparklinesBarsOturumları = [];
+        sparklinesOturumları.forEach(yüzey => yüzey.free());
+        sparklinesOturumları = [];
         scalesDirOriİmleci = null;
         if (scalesDirOriÇizimKaresi !== null) {
           cancelAnimationFrame(scalesDirOriÇizimKaresi);
@@ -6366,6 +6497,18 @@
           });
           oturum = sparklinesBarsOturumları[sparklinesBarsEtkinİndeks]
             ?? sparklinesBarsOturumları[0]
+            ?? null;
+          çiz();
+          return;
+        }
+        if (kimlik === "sparklines") {
+          sparklinesOturumları = sparklineYüzeyleri.map(yüzey => {
+            const yüzeyOturumu = new KartOturumu(yüzey.kimlik, 22);
+            yüzeyOturumu.tekerlek_etkilesimi_ayarla(etkileşimler.tekerlek);
+            return yüzeyOturumu;
+          });
+          oturum = sparklinesOturumları[sparklinesEtkinİndeks]
+            ?? sparklinesOturumları[0]
             ?? null;
           çiz();
           return;

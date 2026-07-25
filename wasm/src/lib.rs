@@ -2490,6 +2490,12 @@ mod testler {
 
     #[test]
     fn sparklines_wasm_yirmi_kompakt_yüzeyi_korur() {
+        let kartlar = uplot_rs::sparklines_kartları();
+        assert!(kartlar.is_ok());
+        let Ok(kartlar) = kartlar else {
+            return;
+        };
+        assert_eq!(kartlar.len(), 20);
         for örnek in SparklineÖrneği::TÜMÜ {
             let oturum = KartOturumu::yeni(örnek.kimlik(), 100);
             assert!(oturum.is_ok(), "{}", örnek.kimlik());
@@ -2502,7 +2508,15 @@ mod testler {
             assert!(svg.contains("#03a9f4"));
             assert!(svg.contains("#b3e5fc"));
         }
-        assert!(sparklines_kart_tanim_ornegi().contains("sparklines_kartı"));
+        assert!(sparklines_kart_tanim_ornegi().contains("sparklines_kartları"));
+        let web = include_str!("../www/index.html");
+        assert_eq!(
+            web.matches("<article class=\"kart\" data-kart=\"sparklines\"")
+                .count(),
+            1
+        );
+        assert!(web.contains("function sparklinesÇiz()"));
+        assert!(web.contains("class=\"sparklines-tablo\""));
         assert_eq!(kart_sayisi(), 365);
     }
 

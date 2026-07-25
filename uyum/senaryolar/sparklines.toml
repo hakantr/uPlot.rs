@@ -1,17 +1,23 @@
 id = "sparklines"
 kaynak = "../uPlot/demos/sparklines.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/sparklines.rs#sparklines_kartı"
+fixture = "src/kart/sparklines.rs#sparklines_kartları"
 simge_sayısı = 10
 yüzey_sayısı = 20
 kayıt_sayısı = 22
 boyut = [150, 30]
+toplam_nokta_sayısı = 440
+yerleşim = "tek_tablo_10_satır_2_grafik_sütunu"
+veri_yaşam_döngüsü = "kaynak_csv_anlık_gömülü_snapshot"
 
 [kanıt]
 veri = "on_kaynak_csv_aynen"
 ölçümler = ["Volume", "Close/Last"]
+pencere = "her_yüzey_bağımsız_rangeNum_min_max_0_1_true"
 piksel_hizası = 0
 eksenler = "gizli"
 renkler = ["pink", "#03a9f4", "#b3e5fc"]
+ilişki = "tek_kaynak_sayfasındaki_yirmi_yüzey_tek_kartta"
+etkileşim = "kaynak_cursor_select_legend_kapalı_ortak_port_uzantısı_isteğe_bağlı"
 masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
