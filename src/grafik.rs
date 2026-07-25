@@ -2489,6 +2489,19 @@ impl Grafik {
             })
     }
 
+    /// Adlandırılmış bir Y ölçeğinin geçerli görünür aralığını döndürür.
+    ///
+    /// `scale.from` ile türetilen ölçekler, X autoscale ve birincil Y
+    /// etkileşimleri sonrasında da kaynak ölçekle aynı görünüm oranını korur.
+    pub fn görünür_y_ölçek_aralığı(&self, anahtar: &str) -> Option<Aralık> {
+        self.ölçek_seçeneği(anahtar)?;
+        Some(self.görünür_ölçek_aralığı(
+            anahtar,
+            self.görünür_x_aralığı(),
+            self.etkileşim.görünür_y(),
+        ))
+    }
+
     pub fn seri_görünür_y_aralığı(&self, seri_indeksi: usize) -> Option<Aralık> {
         let seri = self.seçenekler.seriler.get(seri_indeksi)?;
         Some(self.görünür_ölçek_aralığı(
@@ -6174,7 +6187,8 @@ impl Grafik {
     }
 
     fn y_eksen_bölmeleri(&self, anahtar: &str, aralık: Aralık, boyut: f32) -> Vec<f64> {
-        match self.ölçek_seçeneği(anahtar).map(|ölçek| ölçek.dağılım) {
+        let ölçek = self.ölçek_seçeneği(anahtar);
+        match ölçek.map(|ölçek| ölçek.dağılım) {
             Some(YÖlçekDağılımı::ArcSinh { eşik }) if eşik.is_finite() && eşik > 0.0 => {
                 let en_az = (aralık.en_az / eşik).asinh();
                 let en_çok = (aralık.en_çok / eşik).asinh();
@@ -6190,7 +6204,11 @@ impl Grafik {
             .into_iter()
             .filter(|değer| (*değer >= aralık.en_az) && (*değer <= aralık.en_çok))
             .collect(),
-            _ => eksen_bölmeleri(aralık, boyut, 30.0),
+            _ => eksen_bölmeleri(
+                aralık,
+                boyut,
+                ölçek.map_or(30.0, |ölçek| ölçek.eksen_en_az_etiket_boşluğu),
+            ),
         }
     }
 
@@ -6973,8 +6991,8 @@ fn ölçek_eksen_değerini_yaz(
     };
     if birim.is_empty() {
         sayı
-    } else if birim == "%" {
-        format!("{sayı}%")
+    } else if birim == "%" || birim.starts_with('°') {
+        format!("{sayı}{birim}")
     } else {
         format!("{sayı} {birim}")
     }

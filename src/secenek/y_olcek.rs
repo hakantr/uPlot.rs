@@ -67,6 +67,11 @@ pub struct YÖlçekSeçenekleri {
     pub ters_yön: bool,
     pub eksen_değer_çarpanı: f64,
     pub etiket_biçimi: YÖlçekEtiketBiçimi,
+    /// Eksen bölmeleri arasındaki hedef en düşük CSS piksel boşluğu.
+    ///
+    /// uPlot `axis.space` karşılığıdır. Ölçek geometrisini değiştirmez;
+    /// yalnız aynı aralıkta kaç eksen bölmesi üretileceğini belirler.
+    pub eksen_en_az_etiket_boşluğu: f32,
     pub log_tam_büyüklükler: bool,
     pub güzel_ölçek: Option<GüzelÖlçekDüzeni>,
     pub sayısal_aralık: Option<SayısalAralıkAyarları>,
@@ -90,6 +95,7 @@ impl YÖlçekSeçenekleri {
             ters_yön: false,
             eksen_değer_çarpanı: 1.0,
             etiket_biçimi: YÖlçekEtiketBiçimi::Otomatik,
+            eksen_en_az_etiket_boşluğu: 30.0,
             log_tam_büyüklükler: true,
             güzel_ölçek: None,
             sayısal_aralık: None,
@@ -187,6 +193,14 @@ impl YÖlçekSeçenekleri {
 
     pub fn etiket_biçimi(mut self, biçim: YÖlçekEtiketBiçimi) -> Self {
         self.etiket_biçimi = biçim;
+        self
+    }
+
+    /// uPlot `axis.space` karşılığı olarak Y ekseni etiket yoğunluğunu ayarlar.
+    pub fn eksen_en_az_etiket_boşluğu(mut self, boşluk: f32) -> Self {
+        if boşluk.is_finite() && boşluk > 0.0 {
+            self.eksen_en_az_etiket_boşluğu = boşluk;
+        }
         self
     }
 

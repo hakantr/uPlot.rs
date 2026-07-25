@@ -3571,6 +3571,7 @@ impl Render for ChartListesi {
                 | KartKimliği::WindDirection
                 | KartKimliği::YScaleDrag
                 | KartKimliği::YShiftedSeries
+                | KartKimliği::DependentScale
         ) {
             self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
                 grafik
@@ -6575,6 +6576,19 @@ impl Render for ChartListesi {
                  kurulmaz; 30 mavi çubuk tek dolgu ve tek stroke yolunda toplanır. Timer karttan \
                  çıkıldığında iptal edilir, cursor hafif katmanda aynı konumdan yeniden çözülür.",
             ),
+            KartKimliği::DependentScale => Some(
+                "Amaç: tek Fahrenheit veri yolunu iki birimde okumayı sağlar; Celsius ekseni \
+                 ikinci bir seri veya ikinci çizim yolu değildir. API: \
+                 YÖlçekSeçenekleri::sayısal_aralık resmî rangeNum(40,80,.1,true) sonucunu, \
+                 kaynak_dönüşümü z.from=y ilişkisini ve eksen_en_az_etiket_boşluğu sağ \
+                 axis.space=20 davranışını taşır. Lejant setSeries ile aynı Grafik örneğindeki \
+                 blah serisini açıp kapatır. İzleme: sıcaklık, hız veya kapasite gibi doğrusal \
+                 dönüştürülebilen aynı telemetriyi iki birim sisteminde gösterin; X ya da Y \
+                 görünümü değiştiğinde türetilmiş eksen kaynak ölçeğin min/max dönüşümünü \
+                 korur. Maliyet: yalnız bir 7 noktalı çizgi O(N) üretilir; ikinci eksen \
+                 dönüşümü ve bölmeleri O(1) ek maliyettir. Pointer yalnız hafif cursor/lejant \
+                 katmanını taşır; ana yol setSeries, görünüm veya boyut değişiminde yenilenir.",
+            ),
             KartKimliği::TimeseriesDiscrete => Some(
                 "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
                  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
@@ -6919,6 +6933,7 @@ impl Render for ChartListesi {
                         | KartKimliği::WindDirection
                         | KartKimliği::YScaleDrag
                         | KartKimliği::YShiftedSeries
+                        | KartKimliği::DependentScale
                 ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )
@@ -6933,6 +6948,7 @@ impl Render for ChartListesi {
                         | KartKimliği::WindDirection
                         | KartKimliği::YScaleDrag
                         | KartKimliği::YShiftedSeries
+                        | KartKimliği::DependentScale
                 ),
                 |öğe| {
                 öğe.child(

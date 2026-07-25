@@ -3711,12 +3711,24 @@ mod testler {
     fn dependent_scale_wasm_iki_sıcaklık_eksenini_üretir() {
         let oturum = KartOturumu::yeni("dependent-scale", 100);
         assert!(oturum.is_ok());
-        let Ok(oturum) = oturum else {
+        let Ok(mut oturum) = oturum else {
             return;
         };
         let svg = oturum.svg(600, 400);
-        assert!(svg.contains("° F"));
-        assert!(svg.contains("° C"));
+        assert!(svg.contains(">40° F<"));
+        assert!(svg.contains(">80° F<"));
+        assert!(svg.contains(">4° C<"));
+        assert!(svg.contains(">28° C<"));
+        assert!(!svg.contains(" °"));
+        assert!(svg.contains("stroke=\"#008000\""));
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(0, false), Ok(true)));
+        assert!(!oturum.svg(600, 400).contains("stroke=\"#008000\""));
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(0, true), Ok(true)));
+
+        let web = include_str!("../www/index.html");
+        assert!(web.contains("aktifKart === \"dependent-scale\""));
+        assert!(web.contains("eksen_en_az_etiket_boşluğu"));
+        assert!(web.contains("Pointer yalnız hafif cursor ve lejant katmanlarını taşır"));
     }
 
     #[test]

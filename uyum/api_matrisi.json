@@ -1060,6 +1060,30 @@
       "test": "src/kart/missing_data.rs"
     },
     {
+      "kaynak_yolu": "Scale.from + affine Scale.range",
+      "rust_karşılığı": "YÖlçekSeçenekleri::kaynak_dönüşümü + Grafik::görünür_y_ölçek_aralığı",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/dependent_scale.rs"
+    },
+    {
+      "kaynak_yolu": "default rangeNum(min,max,.1,true) on dependent source scale",
+      "rust_karşılığı": "YÖlçekSeçenekleri::sayısal_aralık / SayısalAralıkAyarları",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/dependent_scale.rs"
+    },
+    {
+      "kaynak_yolu": "Y Axis.space",
+      "rust_karşılığı": "YÖlçekSeçenekleri::eksen_en_az_etiket_boşluğu",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/dependent_scale.rs"
+    },
+    {
+      "kaynak_yolu": "dependent-scale standard legend setSeries show",
+      "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla + GPUI/WASM değiştirilebilir lejant",
+      "durum": "tam_kanıtlı",
+      "test": "src/kart/dependent_scale.rs + wasm/src/lib.rs"
+    },
+    {
       "kaynak_yolu": "hooks.drawClear annotation visibility filter",
       "rust_karşılığı": "Grafik annotation görünürlük ve kırpma katmanı",
       "durum": "tam_kanıtlı",

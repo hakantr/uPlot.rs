@@ -647,17 +647,24 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "source-equivalent-seven-point-data",
+        "source-range-num-ten-percent-padding",
         "derived-scale-from-y",
         "fahrenheit-to-celsius-affine-transform",
         "left-and-right-unit-axes",
+        "right-axis-twenty-css-pixel-space",
+        "unit-values-without-extra-space",
+        "derived-range-invariant-through-interactions",
+        "standard-legend-set-series",
+        "single-data-path-two-axis-o1-transform",
+        "collapsed-usage-cost-guide",
         "common-interaction-profile"
       ],
       "kanıt": {
-        "api": "kısmi",
+        "api": "tam_kanıtlı",
         "sayısal": "tam_kanıtlı",
-        "statik_görsel": "uygulandı_kanıtlı",
-        "davranış": "uygulandı_kanıtlı",
-        "performans": "bekliyor"
+        "statik_görsel": "tam_kanıtlı",
+        "davranış": "tam_kanıtlı",
+        "performans": "tam_kanıtlı"
       }
     },
     {

@@ -1035,6 +1035,12 @@
         yardım: "Sol eksen: °F · sağ eksen: türetilmiş °C · tekerlek/seçim/touch ortak profili",
         değişkenNokta: false,
         etkileşimler: () => ortakEtkileşimler(),
+        kullanım: {
+          amaç: "Tek Fahrenheit veri yolunu iki birimde okumayı sağlar; Celsius ekseni ikinci bir seri veya ikinci çizim yolu değildir.",
+          api: "YÖlçekSeçenekleri::sayısal_aralık resmî rangeNum(40,80,.1,true) sonucunu, kaynak_dönüşümü z.from=y ilişkisini ve eksen_en_az_etiket_boşluğu sağ axis.space=20 davranışını taşır. Lejant setSeries ile aynı Grafik örneğindeki blah serisini açıp kapatır.",
+          izleme: "Sıcaklık, hız veya kapasite gibi doğrusal dönüştürülebilen aynı telemetriyi iki birim sisteminde gösterin. X ya da Y görünümü değiştiğinde türetilmiş eksen kaynak ölçeğin min/max dönüşümünü korur.",
+          maliyet: "Yalnız bir 7 noktalı çizgi O(N) üretilir; ikinci eksen dönüşümü ve bölmeleri O(1) ek maliyettir. Pointer yalnız hafif cursor ve lejant katmanlarını taşır; ana yol setSeries, görünüm veya boyut değişiminde yenilenir.",
+        },
       },
       "arcsinh-scales": {
         başlık: "ArcSinh Y Scale",
@@ -6404,7 +6410,8 @@
         || aktifKart === "update-cursor-select-resize"
         || aktifKart === "wind-direction"
         || aktifKart === "y-scale-drag"
-        || aktifKart === "y-shifted-series";
+        || aktifKart === "y-shifted-series"
+        || aktifKart === "dependent-scale";
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks) || değiştirilebilirLejant
           ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>

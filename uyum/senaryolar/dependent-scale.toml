@@ -9,23 +9,40 @@ durum = "etkileşimli"
 x = [1, 2, 3, 4, 5, 6, 7]
 fahrenheit = [40, 43, 60, 65, 71, 73, 80]
 
-[türetilmiş_ölçek]
+["türetilmiş_ölçek"]
 kaynak = "y"
 hedef = "z"
-çarpan = 0.5555555555555556
-kaydırma = -17.77777777777778
+"çarpan" = 0.5555555555555556
+"kaydırma" = -17.77777777777778
+"başlangıç_kaynak_aralığı" = [36, 84]
+"başlangıç_hedef_aralığı" = [2.2222222222222223, 28.88888888888889]
 sol_birim = "° F"
-sağ_birim = "° C"
+"sağ_birim" = "° C"
+"birim_öncesi_boşluk" = false
+"sağ_eksen_en_az_etiket_boşluğu" = 20
+"beklenen_sol_bölmeler" = [40, 45, 50, 55, 60, 65, 70, 75, 80]
+"beklenen_sağ_bölmeler" = [4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28]
 
-[etkileşim]
-ortak_davranış_profili = "resize-temeli-v1"
-tekerlek_x_yakınlaştır = true
-seçim_yakınlaştır = true
-çift_tıkla_tam_görünüm = true
-dokunma_xy_yakınlaştır = true
-boşluk_sol_sürükleme_taşıma = true
+[seri]
+etiket = "blah"
+renk = "#008000"
+set_series = true
 
-[kanıt]
-masaüstü = "uygulamalar/masaustu/src/masaustu.rs"
+["etkileşim"]
+"ortak_davranış_profili" = "resize-temeli-v1"
+"tekerlek_x_yakınlaştır" = true
+"seçim_yakınlaştır" = true
+"çift_tıkla_tam_görünüm" = true
+"dokunma_xy_yakınlaştır" = true
+"boşluk_sol_sürükleme_taşıma" = true
+"türetilmiş_ölçek_invariantı" = "z=(y-32)*5/9"
+
+[performans]
+"veri_yolu_sayısı" = 1
+"türetilmiş_eksen_ek_maliyeti" = "O(1)"
+"pointer_ana_yolu_yeniden_çizmez" = true
+
+["kanıt"]
+"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
 wasm = "wasm/www/index.html"
 svg = "target/dependent-scale.svg"
