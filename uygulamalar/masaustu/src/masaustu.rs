@@ -916,7 +916,7 @@ impl ChartListesi {
         cx.notify();
     }
 
-    fn tooltips_closest_serisini_değiştir(&mut self, seri: usize, cx: &mut Context<Self>) {
+    fn tooltip_serisini_değiştir(&mut self, seri: usize, cx: &mut Context<Self>) {
         let Some(grafik) = self.grafik.clone() else {
             return;
         };
@@ -3481,7 +3481,10 @@ impl Render for ChartListesi {
                 format!("x: {x}    {seriler}")
             },
         );
-        let tooltips_closest_serileri = if aktif_kart == KartKimliği::TooltipsClosest {
+        let tooltip_serileri = if matches!(
+            aktif_kart,
+            KartKimliği::TooltipsClosest | KartKimliği::Tooltips
+        ) {
             self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
                 grafik
                     .read(cx)
@@ -6317,6 +6320,20 @@ impl Render for ChartListesi {
                  Tarih metni platformlar arası belirlenim için UTC'dir; kaynak browser-local \
                  Date kullandığından bu bilinçli, belgeli tek sunum farkıdır.",
             ),
+            KartKimliği::Tooltips => Some(
+                "Amaç: ham imleç X/Y konumu ile en yakın veri indeksindeki görünür seri \
+                 noktalarını ayrı, hafif bilgi kutularında gösterir; kaynak örneğin her iki \
+                 saniyede destroy/new uPlot yaşam döngüsünde imleç konumunu koruma sınamasını \
+                 sürdürür. API: TooltipDüzeni imleç ve seri kutularını, yeniden_kurma_ms yaşam \
+                 döngüsünü ve dış cursor memo kararını tanımlar; lejant setSeries ile One ve \
+                 varsayılan gizli Two serisini aynı yüzeyde açıp kapatır. İzleme: cursor \
+                 konumu ile örneklenmiş ölçümün farklı olduğunu geliştiriciye açıkça göstermek \
+                 ve panel yeniden kurulurken inceleme bağlamının kaybolmamasını sınamak için \
+                 uygundur. Maliyet: veri yalnız 7×2'dir; ana yollar yalnız setSeries, ölçek veya \
+                 kasıtlı iki saniyelik kaynak yeniden kurulumunda boyanır. Normal pointer \
+                 hareketi önbellekli ana yüzeye dokunmaz, yalnız mevcut tooltip katmanlarını \
+                 ve cursor çizgilerini taşır.",
+            ),
             KartKimliği::TimeseriesDiscrete => Some(
                 "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
                  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
@@ -6651,17 +6668,25 @@ impl Render for ChartListesi {
                 )
             })
             .when(
-                aktif_kart != KartKimliği::TooltipsClosest,
+                !matches!(
+                    aktif_kart,
+                    KartKimliği::TooltipsClosest | KartKimliği::Tooltips
+                ),
                 |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
             )
-            .when(aktif_kart == KartKimliği::TooltipsClosest, |öğe| {
+            .when(
+                matches!(
+                    aktif_kart,
+                    KartKimliği::TooltipsClosest | KartKimliği::Tooltips
+                ),
+                |öğe| {
                 öğe.child(
                     div().mb_2().flex().flex_wrap().gap_2().children(
-                        tooltips_closest_serileri.into_iter().map(
+                        tooltip_serileri.into_iter().map(
                             |(indeks, etiket, görünür)| {
                                 Dugme::yeni(
                                     SharedString::from(format!(
-                                        "tooltips-closest-seri-{indeks}"
+                                        "tooltip-seri-{indeks}"
                                     )),
                                     SharedString::from(format!(
                                         "● {etiket}{}",
@@ -6675,13 +6700,14 @@ impl Render for ChartListesi {
                                     DugmeTuru::Ikincil
                                 })
                                 .tiklaninca(cx.listener(move |bu, _, _, cx| {
-                                    bu.tooltips_closest_serisini_değiştir(indeks, cx);
+                                    bu.tooltip_serisini_değiştir(indeks, cx);
                                 }))
                             },
                         ),
                     ),
                 )
-            })
+            },
+            )
             .when(açıklama_istendi, |öğe| {
                 öğe.child(
                     div()

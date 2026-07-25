@@ -2989,7 +2989,14 @@ mod testler {
         );
         assert_eq!(oturum.gorunur_y_araligi(), başlangıç_y);
         let yakın_x = oturum.gorunur_x_araligi();
-        assert!(yakın_x[1] - yakın_x[0] < başlangıç_x[1] - başlangıç_x[0]);
+        assert_eq!(yakın_x.len(), 2);
+        assert_eq!(başlangıç_x.len(), 2);
+        let ([yakın_en_az, yakın_en_çok], [başlangıç_en_az, başlangıç_en_çok]) =
+            (yakın_x.as_slice(), başlangıç_x.as_slice())
+        else {
+            return;
+        };
+        assert!(yakın_en_çok - yakın_en_az < başlangıç_en_çok - başlangıç_en_az);
         assert!(oturum.tam_gorunum());
         let tooltip = oturum.en_yakin_tooltip(0.0, 0);
         assert_eq!(tooltip.len(), 4);
@@ -3031,11 +3038,22 @@ mod testler {
         assert_eq!(bilgiler.len(), 12);
         assert_eq!(bilgiler.first().map(String::as_str), Some("-1"));
         assert_eq!(bilgiler.get(6).map(String::as_str), Some("0"));
+        assert!(matches!(oturum.seri_gorunurlugu_ayarla(1, true), Ok(true)));
+        assert_eq!(oturum.tooltip_bilgileri(0.5, 0.5).len(), 18);
         assert_eq!(oturum.tooltip_yeniden_kurma_ms(), 2_000);
         assert!(oturum.tooltip_imlec_durumunu_koru());
         assert!(matches!(oturum.tooltip_yeniden_kur(), Ok(true)));
+        assert!(!oturum.seri_gorunur(1));
         assert!(oturum.svg(600, 400).contains("Tooltips"));
         assert!(tooltips_kart_tanim_ornegi().contains("tooltip_bilgileri"));
+        let web = include_str!("../www/index.html");
+        assert!(web.contains(r#"aktifKart === "tooltips""#));
+        assert!(web.contains("çokluTooltipKatmanınıKur"));
+        assert!(
+            !web.contains(
+                r#"chart.querySelectorAll(".coklu-tooltip").forEach(öğe => öğe.remove())"#
+            )
+        );
         assert_eq!(kart_sayisi(), 365);
     }
 

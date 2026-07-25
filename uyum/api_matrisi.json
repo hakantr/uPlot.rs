@@ -772,6 +772,18 @@
       "test": "src/kart/tooltips.rs"
     },
     {
+      "kaynak_yolu": "default legend label click / setSeries toggles hidden Two",
+      "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla / GPUI ve WASM lejant düğmeleri",
+      "durum": "tam_kanıtlı",
+      "test": "wasm/src/lib.rs"
+    },
+    {
+      "kaynak_yolu": "tooltip DOM nodes created once in init; setCursor updates text and position",
+      "rust_karşılığı": "GpuiGrafik hafif overlay katmanı / WASM çokluTooltipKatmanınıKur",
+      "durum": "tam_kanıtlı",
+      "test": "wasm/src/lib.rs"
+    },
+    {
       "kaynak_yolu": "cursor mouseenter/mouseleave tooltip visibility",
       "rust_karşılığı": "GpuiGrafik ve WASM pointer yaşam döngüsü",
       "durum": "tam_kanıtlı",

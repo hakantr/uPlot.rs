@@ -47,7 +47,7 @@ mod testler {
         assert!(seçenekler.seriler.first().is_some_and(|seri| seri.göster));
         assert!(seçenekler.seriler.get(1).is_some_and(|seri| !seri.göster));
 
-        let grafik = crate::Grafik::yeni(seçenekler, veri)?;
+        let mut grafik = crate::Grafik::yeni(seçenekler, veri)?;
         let düzen = grafik
             .tooltip_düzeni()
             .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
@@ -70,6 +70,19 @@ mod testler {
         assert_eq!(
             bilgiler.get(1).map(|bilgi| bilgi.metin_rengi.as_str()),
             Some("red")
+        );
+        assert!(grafik.seri_görünürlüğünü_ayarla(1, true)?);
+        let görünür_bilgiler = grafik.tooltip_bilgileri(0.5, 0.5);
+        assert_eq!(görünür_bilgiler.len(), 3);
+        assert_eq!(
+            görünür_bilgiler.get(2).map(|bilgi| bilgi.metin.as_str()),
+            Some("(4, 55)")
+        );
+        assert_eq!(
+            görünür_bilgiler
+                .get(2)
+                .map(|bilgi| bilgi.metin_rengi.as_str()),
+            Some("blue")
         );
         Ok(())
     }

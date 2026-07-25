@@ -2140,6 +2140,12 @@
       değişkenNokta: false,
       çokluTooltip: true,
       etkileşimler: () => ortakEtkileşimler(),
+      kullanım: {
+        amaç: "Ham imleç X/Y konumunu ve en yakın veri indeksindeki görünür seri noktalarını ayrı bilgi kutularında gösterir; iki saniyelik kaynak destroy/new yaşam döngüsünde imleç bağlamını korur.",
+        api: "TooltipDüzeni imleç/seri kutularını ve yeniden_kurma_ms süresini tanımlar. Lejant setSeries ile One ve varsayılan gizli Two serisini aynı yüzeyde açıp kapatır.",
+        izleme: "Cursor konumu ile örneklenmiş ölçümün farkını görünür kılmak ve panel yeniden kurulurken inceleme bağlamının kaybolmadığını sınamak için uygundur.",
+        maliyet: "Veri 7×2'dir. Pointer hareketi ana SVG'yi yeniden kurmaz; önceden oluşturulan tooltip overlay'lerinin metin ve transform benzeri konum stillerini günceller. Yalnız kaynakta kasıtlı olan iki saniyelik yeniden kurulum ana grafiği yeniler.",
+      },
     };
     document.querySelector('[data-kart="tooltips"]')?.insertAdjacentHTML(
       "afterend",
@@ -6285,7 +6291,8 @@
       const yığmaLejantı = aktifKart.startsWith("stacked-series-");
       const değiştirilebilirLejant = yığmaLejantı
         || aktifKart.startsWith("multi-bars-")
-        || aktifKart === "tooltips-closest";
+        || aktifKart === "tooltips-closest"
+        || aktifKart === "tooltips";
       const lejantSerileri = kart.seriler.map((seri, indeks) =>
         oturum.seri_gorunur(indeks) || değiştirilebilirLejant
           ? `<span ${değiştirilebilirLejant ? `data-seri-toggle="${indeks}" role="button" tabindex="0" title="Seriyi göster/gizle" style="pointer-events:auto;cursor:pointer;opacity:${oturum.seri_gorunur(indeks) ? 1 : .4}"` : ""}>
@@ -6393,6 +6400,7 @@
           bilgiKutusu?.classList.add("en-yakin");
         }
       }
+      if (kart.çokluTooltip && tamKurulum) çokluTooltipKatmanınıKur();
       if (aktifKart === "sine-stream" && grafikÜzerinde && sonPointerOlayı) {
         imleciGüncelle(sonPointerOlayı);
       }
@@ -6562,9 +6570,27 @@
       return { sol, sağ, üst, alt, genişlik: sağ - sol, yükseklik: alt - üst };
     }
 
+    function çokluTooltipKatmanınıKur() {
+      if (!kartlar[aktifKart].çokluTooltip) return;
+      const seriYuvaları = [-1, ...kartlar[aktifKart].seriler.map((_, indeks) => indeks)];
+      for (const seri of seriYuvaları) {
+        if (chart.querySelector(`.coklu-tooltip[data-seri="${seri}"]`)) continue;
+        const kutu = document.createElement("div");
+        kutu.className = "coklu-tooltip";
+        kutu.dataset.seri = String(seri);
+        kutu.hidden = true;
+        chart.appendChild(kutu);
+      }
+    }
+
+    function çokluTooltipGizle() {
+      chart.querySelectorAll(".coklu-tooltip").forEach(öğe => { öğe.hidden = true; });
+    }
+
     function çokluTooltipGüncelle(yatayOran, dikeyOran, svg, view) {
-      chart.querySelectorAll(".coklu-tooltip").forEach(öğe => öğe.remove());
+      çokluTooltipGizle();
       if (!kartlar[aktifKart].çokluTooltip || !oturum || !svg) return;
+      çokluTooltipKatmanınıKur();
       const bilgiler = Array.from(oturum.tooltip_bilgileri(yatayOran, dikeyOran));
       if (bilgiler.length === 0 || bilgiler.length % 6 !== 0) return;
       const alan = çizimAlanı(view);
@@ -6580,15 +6606,14 @@
         const kaynakY = alan.üst + oranY * alan.yükseklik;
         const pikselX = svgKutusu.left - chartKutusu.left + kaynakX / view.width * svgKutusu.width;
         const pikselY = svgKutusu.top - chartKutusu.top + kaynakY / view.height * svgKutusu.height;
-        const kutu = document.createElement("div");
-        kutu.className = "coklu-tooltip";
-        kutu.dataset.seri = String(seri);
+        const kutu = chart.querySelector(`.coklu-tooltip[data-seri="${seri}"]`);
+        if (!kutu) continue;
         kutu.textContent = metin;
         kutu.style.background = bilgiler[indeks + 4];
         kutu.style.color = bilgiler[indeks + 5];
-        chart.appendChild(kutu);
-        kutu.style.left = `${Math.min(pikselX + 10, chart.clientWidth - kutu.offsetWidth - 4)}px`;
-        kutu.style.top = `${Math.min(pikselY + 10, chart.clientHeight - kutu.offsetHeight - 4)}px`;
+        kutu.style.left = `${seri < 0 ? pikselX : Math.round(pikselX)}px`;
+        kutu.style.top = `${seri < 0 ? pikselY : Math.round(pikselY)}px`;
+        kutu.hidden = false;
       }
     }
 
@@ -6797,7 +6822,7 @@
           delete bilgiKutusu.dataset.karsilastirmaUrl;
         }
         if (kartlar[aktifKart].enYakınTooltip) svg.style.cursor = "";
-        chart.querySelectorAll(".coklu-tooltip").forEach(öğe => öğe.remove());
+        çokluTooltipGizle();
         return;
       }
       const hamOranX = Math.max(0, Math.min(1, (hamX - sol) / (sağ - sol)));
@@ -7412,7 +7437,7 @@
         delete bilgiKutusu.dataset.karsilastirmaUrl;
       }
       chart.querySelectorAll("svg").forEach(svg => { svg.style.cursor = ""; });
-      chart.querySelectorAll(".coklu-tooltip").forEach(öğe => öğe.remove());
+      çokluTooltipGizle();
       chart.querySelector("#çubuk-vurgu")?.setAttribute("visibility", "hidden");
       chart.querySelector("#kutu-biyik-vurgu")?.setAttribute("visibility", "hidden");
       chart.querySelector("#timeline-vurgu")?.setAttribute("visibility", "hidden");

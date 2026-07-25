@@ -17,11 +17,17 @@ ham_imleç_iki_ondalık = true
 görünür_seri_en_yakın_nokta = true
 gizli_seri_atlanır = true
 fare_çıkışında_gizlenir = true
+overlay_pointer_events = "none"
+overlay_düğümleri = "init sırasında bir kez; pointer hareketinde metin/konum güncellemesi"
+konum_ofseti = 0
+seri_konumu = "valToPos sonucu en yakın CSS piksel"
 imleç_durumu_yeniden_kurmada_korunur = true
 yeniden_kurma_ms = 2000
 
 [etkileşim]
 ortak_davranış_profili = "resize-temeli-v1"
+lejant_set_series = true
+gizli_seri_lejantta_görünür = true
 
 [kanıt]
 örnek = "examples/tooltips.rs"

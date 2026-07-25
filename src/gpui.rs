@@ -747,7 +747,6 @@ impl GpuiGrafik {
     ) -> Result<bool, UplotHatası> {
         let değişti = self.grafik.seri_görünürlüğünü_ayarla(indeks, görünür)?;
         if değişti {
-            self.imleç = None;
             self.grafik_bildir(cx);
         }
         Ok(değişti)
@@ -1606,10 +1605,19 @@ impl Render for GpuiGrafik {
                                 sol + (sağ - sol) * bilgi.yatay_oran.clamp(0.0, 1.0) as f32;
                             let kaynak_y =
                                 üst + (alt - üst) * bilgi.dikey_oran.clamp(0.0, 1.0) as f32;
-                            let kutu_sol = (yatay_pay + kaynak_x * ölçek + 10.0)
-                                .clamp(4.0, (f32::from(sınırlar.size.width) - 112.0).max(4.0));
-                            let kutu_üst = (dikey_pay + kaynak_y * ölçek + 10.0)
-                                .clamp(4.0, (f32::from(sınırlar.size.height) - 32.0).max(4.0));
+                            let seri_tooltipi = bilgi.seri.is_some();
+                            let fiziksel_x = yatay_pay + kaynak_x * ölçek;
+                            let fiziksel_y = dikey_pay + kaynak_y * ölçek;
+                            let kutu_sol = if seri_tooltipi {
+                                fiziksel_x.round()
+                            } else {
+                                fiziksel_x
+                            };
+                            let kutu_üst = if seri_tooltipi {
+                                fiziksel_y.round()
+                            } else {
+                                fiziksel_y
+                            };
                             (
                                 kutu_sol,
                                 kutu_üst,

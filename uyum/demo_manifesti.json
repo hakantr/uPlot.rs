@@ -3156,6 +3156,8 @@
       "özellikler": [
         "source-exact-seven-points-and-two-series", "source-hidden-second-series",
         "raw-cursor-value-tooltip", "visible-series-nearest-point-tooltip",
+        "legend-set-series", "stable-pointer-transparent-tooltip-overlays",
+        "exact-zero-offset-tooltip-anchor", "no-main-redraw-on-cursor",
         "mouseenter-mouseleave-visibility", "two-second-chart-recreation",
         "cursor-state-preserved-across-recreation", "gpui-wasm-parity",
         "common-interaction-profile", "panic-free-tooltip-resolution"
@@ -3163,7 +3165,7 @@
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
         "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı",
-        "performans": "kısmi"
+        "performans": "uygulandı_kanıtlı"
       }
     },
     {
