@@ -3610,7 +3610,7 @@ mod testler {
     fn nice_scale_wasm_boyuta_duyarli_izgarayi_üretir() {
         let oturum = KartOturumu::yeni("nice-scale", 100);
         assert!(oturum.is_ok());
-        let Ok(oturum) = oturum else {
+        let Ok(mut oturum) = oturum else {
             return;
         };
         let geniş = oturum.svg(1920, 600);
@@ -3620,11 +3620,18 @@ mod testler {
         assert!(geniş.contains(">250<"));
         assert!(dar.contains(">-200<"));
         assert!(dar.contains(">400<"));
+        assert!(oturum.tekerlek_eksende(0.5, 0.5, 1.0, false, 1).is_ok());
+        let yakın_x = oturum.gorunur_x_araligi();
+        let yeniden_boyutlanmış = oturum.svg(800, 360);
+        assert_eq!(oturum.gorunur_x_araligi(), yakın_x);
+        assert!(yeniden_boyutlanmış.contains("<path"));
         let web = include_str!("../www/index.html");
         assert!(web.contains("class=\"nice-scale-boyut\""));
         assert!(web.contains("resize: both"));
         assert!(web.contains("niceScaleResizeObserver = new ResizeObserver"));
         assert!(web.contains("niceScaleResizeAnimationFrame = requestAnimationFrame"));
+        assert!(web.contains("niceScaleResizeKaresi"));
+        assert!(web.contains("niceScalePlotYuksekligi"));
     }
 
     #[test]

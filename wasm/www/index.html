@@ -3199,6 +3199,7 @@
     let chartResizeObserver = null;
     let niceScaleResizeObserver = null;
     let niceScaleResizeYüzeyi = null;
+    let niceScaleBekleyenBoyut = null;
     let syncYZeroZamanlayıcıları = [];
     const syncCursorYüzeyleri = [
       { kimlik: "sync-cursor-cpu", başlık: "CPU", seriler: [["CPU 1", "red"], ["CPU 2", "green"], ["CPU 3", "blue"]] },
@@ -8121,13 +8122,31 @@
           niceScaleResizeObserver?.disconnect();
           niceScaleResizeYüzeyi = yüzey;
           let sonBoyut = `${yüzey.clientWidth}x${yüzey.clientHeight}`;
-          niceScaleResizeObserver = new ResizeObserver(() => {
-            const boyut = `${yüzey.clientWidth}x${yüzey.clientHeight}`;
-            if (boyut === sonBoyut || niceScaleResizeAnimationFrame !== null) return;
-            sonBoyut = boyut;
+          niceScaleResizeObserver = new ResizeObserver(girdiler => {
+            const girdi = girdiler.find(öğe => öğe.target === yüzey);
+            const genişlik = Math.max(100, Math.round(
+              girdi?.contentRect.width || yüzey.clientWidth
+            ));
+            const yükseklik = Math.max(100, Math.round(
+              girdi?.contentRect.height || yüzey.clientHeight
+            ));
+            const boyut = `${genişlik}x${yükseklik}`;
+            if (boyut === sonBoyut) return;
+            niceScaleBekleyenBoyut = { genişlik, yükseklik, imza: boyut };
+            if (niceScaleResizeAnimationFrame !== null) return;
             niceScaleResizeAnimationFrame = requestAnimationFrame(() => {
               niceScaleResizeAnimationFrame = null;
-              if (aktifKart === "nice-scale" && yüzey.isConnected) çiz();
+              const bekleyen = niceScaleBekleyenBoyut;
+              niceScaleBekleyenBoyut = null;
+              if (aktifKart !== "nice-scale" || !yüzey.isConnected || !bekleyen) return;
+              sonBoyut = bekleyen.imza;
+              chart.dataset.niceScaleResizeBoyutu = bekleyen.imza;
+              chart.dataset.niceScalePlotYuksekligi =
+                String(Math.max(1, bekleyen.yükseklik - 96));
+              chart.dataset.niceScaleResizeKaresi = String(
+                Number(chart.dataset.niceScaleResizeKaresi || "0") + 1
+              );
+              çiz();
             });
           });
           niceScaleResizeObserver.observe(yüzey);
@@ -8136,6 +8155,11 @@
         niceScaleResizeObserver.disconnect();
         niceScaleResizeObserver = null;
         niceScaleResizeYüzeyi = null;
+        niceScaleBekleyenBoyut = null;
+        if (niceScaleResizeAnimationFrame !== null) {
+          cancelAnimationFrame(niceScaleResizeAnimationFrame);
+          niceScaleResizeAnimationFrame = null;
+        }
       }
       const svg = chart.querySelector("svg");
       if (!svg) return;

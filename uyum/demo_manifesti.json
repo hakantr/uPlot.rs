@@ -2086,12 +2086,14 @@
         "source-two-percent-range-padding", "source-thirty-pixel-axis-space",
         "responsive-range-and-increment", "responsive-grid-and-labels",
         "source-resize-both-surface", "source-minimum-100px-resize-surface",
-        "resize-observer-frame-coalescing",
+        "resize-observer-content-rect", "latest-size-frame-coalescing",
+        "retained-svg-node-on-resize", "resize-preserves-zoom-cursor-layers",
+        "source-height-matrix-golden-proof",
         "one-two-two-point-five-five-ten-increments", "translucent-series-fills",
         "gpui-wasm-catalog-parity", "common-interaction-profile",
         "panic-free-invalid-layout-feedback"
       ],
-      "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
+      "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "tam_kanıtlı", "davranış": "tam_kanıtlı", "performans": "tam_kanıtlı" }
     },
     {
       "sıra": 35,

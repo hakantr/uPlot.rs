@@ -12,6 +12,10 @@ asgari_genişlik = 100
 asgari_yükseklik = 100
 wasm_tetikleme = "ResizeObserver + requestAnimationFrame"
 masaüstü_tetikleme = "GPUI pencere/panel yerleşim boyutu"
+wasm_boyut_kaynağı = "ResizeObserver.contentRect"
+wasm_burst_birleştirme = "son boyut tek requestAnimationFrame"
+svg_düğümü = "yerinde güncellenir"
+zoom_cursor_durumu = "resize sırasında korunur"
 
 [veri]
 x = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
@@ -27,6 +31,7 @@ geniş_aralık = [-150.0, 250.0]
 geniş_artım = 50.0
 dar_aralık = [-200.0, 400.0]
 dar_artım = 200.0
+kanıt_plot_yükseklikleri = [4, 104, 144, 204, 384, 624, 804, 1104]
 
 [etkileşim]
 ortak_davranış_profili = "resize-temeli-v1"

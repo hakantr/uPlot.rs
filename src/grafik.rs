@@ -8210,13 +8210,46 @@ mod eksen_testleri {
 
     #[test]
     fn güzel_sayı_kaynak_eşiklerini_korur() {
+        assert_eq!(güzel_sayı(149.0, true), Some(100.0));
+        assert_eq!(güzel_sayı(150.0, true), Some(200.0));
         assert_eq!(güzel_sayı(225.0, true), Some(200.0));
         assert_eq!(güzel_sayı(226.0, true), Some(250.0));
+        assert_eq!(güzel_sayı(299.0, true), Some(250.0));
         assert_eq!(güzel_sayı(300.0, true), Some(500.0));
+        assert_eq!(güzel_sayı(699.0, true), Some(500.0));
         assert_eq!(güzel_sayı(700.0, true), Some(1_000.0));
         assert_eq!(güzel_sayı(200.0, false), Some(200.0));
         assert_eq!(güzel_sayı(201.0, false), Some(500.0));
         assert_eq!(güzel_sayı(0.0, false), None);
+    }
+
+    #[test]
+    fn güzel_ölçek_kaynak_boyut_matrisiyle_eşleşir() {
+        let veri = Aralık {
+            en_az: -123.0,
+            en_çok: 230.0,
+        };
+        let örnekler = [
+            (4.0, -500.0, 500.0, 500.0),
+            (104.0, -250.0, 250.0, 250.0),
+            (144.0, -200.0, 400.0, 200.0),
+            (204.0, -200.0, 300.0, 100.0),
+            (384.0, -150.0, 250.0, 50.0),
+            (624.0, -150.0, 250.0, 25.0),
+            (804.0, -140.0, 240.0, 20.0),
+            (1_104.0, -130.0, 240.0, 10.0),
+        ];
+        for (plot_yüksekliği, alt, üst, artım) in örnekler {
+            assert_eq!(
+                güzel_ölçek(veri, plot_yüksekliği, 30.0).map(|(aralık, bulunan_artım)| (
+                    aralık.en_az,
+                    aralık.en_çok,
+                    bulunan_artım
+                )),
+                Some((alt, üst, artım)),
+                "plot yüksekliği: {plot_yüksekliği}"
+            );
+        }
     }
 
     #[test]
