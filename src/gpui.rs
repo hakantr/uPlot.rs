@@ -6,6 +6,7 @@ mod svg_kaydi;
 pub use svg_kaydi::{GpuiSvgKaydı, GpuiSvgKayıtAyarları};
 
 use std::cell::{Cell, RefCell};
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use ::gpui::{
@@ -151,6 +152,7 @@ struct GpuiYolÖnbelleği {
     sınırlar: Option<Bounds<Pixels>>,
     yollar: Vec<Option<ÖnbellekliGpuiYol>>,
     ikincil_yollar: Vec<Option<ÖnbellekliGpuiYol>>,
+    renkler: HashMap<String, Hsla>,
 }
 
 #[derive(Clone)]
@@ -188,6 +190,15 @@ struct BoyanabilirGpuiYol {
 }
 
 impl GpuiYolÖnbelleği {
+    fn renk(&mut self, kod: &str) -> Hsla {
+        if let Some(renk) = self.renkler.get(kod) {
+            return *renk;
+        }
+        let renk = renk_çöz(kod);
+        self.renkler.insert(kod.to_owned(), renk);
+        renk
+    }
+
     fn yüzeyi_hazırla(&mut self, sahne: &Sahne, sınırlar: Bounds<Pixels>) {
         let sahne_boyutu = sahne.boyut();
         if self.sahne_boyutu != Some(sahne_boyutu) || self.sınırlar != Some(sınırlar) {
@@ -2434,7 +2445,7 @@ fn sahneyi_önbellekli_boya(
                         size(px(kaynak_g as f32 * ölçek), px(kaynak_y as f32 * ölçek)),
                     ),
                     px(0.0),
-                    renk_çöz(renk),
+                    yol_önbelleği.renk(renk),
                     px(0.0),
                     rgba(0x00000000),
                     BorderStyle::default(),
@@ -2452,7 +2463,7 @@ fn sahneyi_önbellekli_boya(
                     yol.line_to(dönüştür(*bitiş));
                     yol.build().ok()
                 }) {
-                    pencere.paint_scaled_path(yol.fiziksel, renk_çöz(renk));
+                    pencere.paint_scaled_path(yol.fiziksel, yol_önbelleği.renk(renk));
                 }
             }
             Komut::KesikliÇizgi {
@@ -2469,7 +2480,7 @@ fn sahneyi_önbellekli_boya(
                     yol.line_to(dönüştür(*bitiş));
                     yol.build().ok()
                 }) {
-                    pencere.paint_scaled_path(yol.fiziksel, renk_çöz(renk));
+                    pencere.paint_scaled_path(yol.fiziksel, yol_önbelleği.renk(renk));
                 }
             }
             Komut::Yol {
@@ -2490,7 +2501,7 @@ fn sahneyi_önbellekli_boya(
                     }
                     yol.build().ok()
                 }) {
-                    pencere.paint_scaled_path(yol.fiziksel, renk_çöz(renk));
+                    pencere.paint_scaled_path(yol.fiziksel, yol_önbelleği.renk(renk));
                 }
             }
             Komut::GradyanYol {
@@ -2511,7 +2522,7 @@ fn sahneyi_önbellekli_boya(
                     }
                     yol.build().ok()
                 }) {
-                    gradyan_yolunu_boya(yol, gradyan, &dönüştür, pencere);
+                    gradyan_yolunu_boya(yol, gradyan, &dönüştür, yol_önbelleği, pencere);
                 }
             }
             Komut::KesikliYol {
@@ -2535,7 +2546,7 @@ fn sahneyi_önbellekli_boya(
                     }
                     yol.build().ok()
                 }) {
-                    pencere.paint_scaled_path(yol.fiziksel, renk_çöz(renk));
+                    pencere.paint_scaled_path(yol.fiziksel, yol_önbelleği.renk(renk));
                 }
             }
             Komut::Alan { çokgenler, dolgu } => {
@@ -2555,7 +2566,7 @@ fn sahneyi_önbellekli_boya(
                     }
                     yol.build().ok()
                 }) {
-                    pencere.paint_scaled_path(yol.fiziksel, renk_çöz(dolgu));
+                    pencere.paint_scaled_path(yol.fiziksel, yol_önbelleği.renk(dolgu));
                 }
             }
             Komut::GradyanAlan {
@@ -2577,7 +2588,7 @@ fn sahneyi_önbellekli_boya(
                     }
                     yol.build().ok()
                 }) {
-                    gradyan_yolunu_boya(yol, gradyan, &dönüştür, pencere);
+                    gradyan_yolunu_boya(yol, gradyan, &dönüştür, yol_önbelleği, pencere);
                 }
             }
             Komut::Daire {
@@ -2596,9 +2607,9 @@ fn sahneyi_önbellekli_boya(
                 pencere.paint_quad(quad(
                     daire_sınırları,
                     yarıçap,
-                    renk_çöz(dolgu),
+                    yol_önbelleği.renk(dolgu),
                     px(*kalınlık * ölçek),
-                    renk_çöz(çizgi),
+                    yol_önbelleği.renk(çizgi),
                     BorderStyle::default(),
                 ));
             }
@@ -2645,8 +2656,8 @@ fn sahneyi_önbellekli_boya(
                     })
                     .flatten();
                 if let Some(dolgu_yolu) = dolgu_yolu {
-                    let dolgu_boyası = renk_çöz(dolgu);
-                    let çizgi_boyası = renk_çöz(çizgi);
+                    let dolgu_boyası = yol_önbelleği.renk(dolgu);
+                    let çizgi_boyası = yol_önbelleği.renk(çizgi);
                     if let Some((başlangıç, bitiş)) = kesme_sınırları {
                         let başlangıç = dönüştür(*başlangıç);
                         let bitiş = dönüştür(*bitiş);
@@ -2718,8 +2729,8 @@ fn sahneyi_önbellekli_boya(
                     })
                     .flatten();
                 if let Some(dolgu_yolu) = dolgu_yolu {
-                    let dolgu_boyası = renk_çöz(dolgu);
-                    let çizgi_boyası = renk_çöz(çizgi);
+                    let dolgu_boyası = yol_önbelleği.renk(dolgu);
+                    let çizgi_boyası = yol_önbelleği.renk(çizgi);
                     if let Some((başlangıç, bitiş)) = kesme_sınırları {
                         let başlangıç = dönüştür(*başlangıç);
                         let bitiş = dönüştür(*bitiş);
@@ -2761,9 +2772,9 @@ fn sahneyi_önbellekli_boya(
                 pencere.paint_quad(quad(
                     Bounds::new(konum, size(px(*genişlik * ölçek), px(*yükseklik * ölçek))),
                     px(0.0),
-                    renk_çöz(dolgu),
+                    yol_önbelleği.renk(dolgu),
                     px(*kalınlık * ölçek),
-                    renk_çöz(çizgi),
+                    yol_önbelleği.renk(çizgi),
                     BorderStyle::default(),
                 ));
             }
@@ -2785,9 +2796,9 @@ fn sahneyi_önbellekli_boya(
                         bottom_right: px(yarıçaplar.alt_sağ * ölçek),
                         bottom_left: px(yarıçaplar.alt_sol * ölçek),
                     },
-                    renk_çöz(dolgu),
+                    yol_önbelleği.renk(dolgu),
                     px(*kalınlık * ölçek),
-                    renk_çöz(çizgi),
+                    yol_önbelleği.renk(çizgi),
                     BorderStyle::default(),
                 ));
             }
@@ -2806,7 +2817,7 @@ fn sahneyi_önbellekli_boya(
                 let koşu = TextRun {
                     len: paylaşımlı.len(),
                     font: pencere.text_style().font(),
-                    color: renk_çöz(renk),
+                    color: yol_önbelleği.renk(renk),
                     background_color: None,
                     underline: None,
                     strikethrough: None,
@@ -2850,7 +2861,7 @@ fn sahneyi_önbellekli_boya(
                     let koşu = TextRun {
                         len: paylaşımlı.len(),
                         font: pencere.text_style().font(),
-                        color: renk_çöz(renk),
+                        color: yol_önbelleği.renk(renk),
                         background_color: None,
                         underline: None,
                         strikethrough: None,
@@ -2924,13 +2935,14 @@ fn gradyan_yolunu_boya(
     yol: BoyanabilirGpuiYol,
     gradyan: &DoğrusalGradyan,
     dönüştür: &impl Fn(Nokta) -> ::gpui::Point<Pixels>,
+    renk_önbelleği: &mut GpuiYolÖnbelleği,
     pencere: &mut Window,
 ) {
     let Some(ilk) = gradyan.duraklar.first() else {
         return;
     };
     if gradyan.duraklar.len() == 1 {
-        pencere.paint_scaled_path(yol.fiziksel, renk_çöz(&ilk.renk));
+        pencere.paint_scaled_path(yol.fiziksel, renk_önbelleği.renk(&ilk.renk));
         return;
     }
     let başlangıç = dönüştür(gradyan.başlangıç);
@@ -2950,7 +2962,7 @@ fn gradyan_yolunu_boya(
     };
     let eksen_farkı = eksen_bitişi - eksen_başlangıcı;
     if eksen_farkı.abs() <= f32::EPSILON {
-        pencere.paint_scaled_path(yol.fiziksel, renk_çöz(&ilk.renk));
+        pencere.paint_scaled_path(yol.fiziksel, renk_önbelleği.renk(&ilk.renk));
         return;
     }
     let sınır_başı = if yatay {
@@ -2986,7 +2998,7 @@ fn gradyan_yolunu_boya(
         } else {
             sınır_sonu
         },
-        renk_çöz(&ilk.renk),
+        renk_önbelleği.renk(&ilk.renk),
         pencere,
     );
 
@@ -3003,8 +3015,8 @@ fn gradyan_yolunu_boya(
         let sağ_yüzde = (sağ_konum - sınır_başı) / sınır_uzunluğu;
         let arka_plan = linear_gradient(
             açı,
-            linear_color_stop(renk_çöz(&sol.renk), sol_yüzde),
-            linear_color_stop(renk_çöz(&sağ.renk), sağ_yüzde),
+            linear_color_stop(renk_önbelleği.renk(&sol.renk), sol_yüzde),
+            linear_color_stop(renk_önbelleği.renk(&sağ.renk), sağ_yüzde),
         );
         boya_maskeli_aralık(
             &yol,
@@ -3031,7 +3043,7 @@ fn gradyan_yolunu_boya(
             } else {
                 son_konum
             },
-            renk_çöz(&son.renk),
+            renk_önbelleği.renk(&son.renk),
             pencere,
         );
     }
@@ -3681,6 +3693,15 @@ mod testler {
     }
 
     #[test]
+    fn gpui_renk_önbelleği_aynı_css_rengini_bir_kez_saklar() {
+        let mut önbellek = GpuiYolÖnbelleği::default();
+        let ilk = önbellek.renk("rgb(255 193 7 / 20%)");
+        let ikinci = önbellek.renk("rgb(255 193 7 / 20%)");
+        assert_eq!(ilk, ikinci);
+        assert_eq!(önbellek.renkler.len(), 1);
+    }
+
+    #[test]
     fn gpui_yol_önbelleği_renk_değişiminde_geometriyi_korur() {
         let eski = yol_sahnesi("#ff0000", 2.0, 200.0);
         let yeni = yol_sahnesi("#0000ff", 2.0, 200.0);
@@ -3689,6 +3710,7 @@ mod testler {
             sınırlar: None,
             yollar: Vec::new(),
             ikincil_yollar: Vec::new(),
+            renkler: HashMap::new(),
         };
         önbelleğe_örnek_yol_ekle(&mut önbellek);
 
@@ -3708,6 +3730,7 @@ mod testler {
                 sınırlar: None,
                 yollar: Vec::new(),
                 ikincil_yollar: Vec::new(),
+                renkler: HashMap::new(),
             };
             önbelleğe_örnek_yol_ekle(&mut önbellek);
 
@@ -3735,6 +3758,7 @@ mod testler {
             sınırlar: None,
             yollar: vec![Some(örnek_önbellekli_yol()), Some(örnek_önbellekli_yol())],
             ikincil_yollar: vec![None, None],
+            renkler: HashMap::new(),
         };
 
         assert_eq!(önbellek.sahneyi_değiştir(&eski, &yeni), 1);
@@ -3751,6 +3775,7 @@ mod testler {
             sınırlar: None,
             yollar: Vec::with_capacity(32),
             ikincil_yollar: Vec::with_capacity(32),
+            renkler: HashMap::new(),
         };
         önbelleğe_örnek_yol_ekle(&mut önbellek);
         let yol_kapasitesi = önbellek.yollar.capacity();
