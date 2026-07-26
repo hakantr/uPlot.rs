@@ -5,7 +5,7 @@ mod web {
     use gpui::{App, AppContext as _, WindowOptions};
     use gpui_platform::{single_threaded_web, web_init};
     use ortak_bilesenler::{OrtakBilesenAyarlari, baslat};
-    use uplot_rs_gpui_katalog::ChartListesi;
+    use uplot_rs_gpui_katalog::{ChartListesi, başlat as katalog_başlat};
 
     pub fn başlat() {
         web_init();
@@ -25,6 +25,7 @@ mod web {
             web_hatası(&format!("Ortak GPUI bileşenleri başlatılamadı: {hata}"));
             return;
         }
+        katalog_başlat(cx);
 
         if let Err(hata) =
             cx.open_window(WindowOptions::default(), |_, cx| cx.new(ChartListesi::yeni))

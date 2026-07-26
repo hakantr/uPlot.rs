@@ -3,9 +3,9 @@
 #[cfg(not(target_family = "wasm"))]
 use gpui::ClipboardItem;
 use gpui::{
-    AccessibleAction, ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement, KeyBinding,
-    Render, Role, ScrollStrategy, SharedString, Task, UniformListScrollHandle, Window, div,
-    prelude::*, px, rgb, rgba, uniform_list,
+    AccessibleAction, App, ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement,
+    KeyBinding, Render, Role, ScrollStrategy, SharedString, Task, UniformListScrollHandle, Window,
+    div, prelude::*, px, rgb, rgba, uniform_list,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
@@ -85,6 +85,15 @@ use web_time::Instant;
 mod web_köprüsü;
 
 gpui::actions!(uplot_katalog, [KartıEtkinleştir]);
+
+/// Ortak grafik ve katalog GPUI eylemlerini uygulamaya bir kez kaydeder.
+pub fn başlat(cx: &mut App) {
+    uplot_rs::gpui::başlat(cx);
+    cx.bind_keys([
+        KeyBinding::new("enter", KartıEtkinleştir, Some("uplot_katalog_kartı")),
+        KeyBinding::new("space", KartıEtkinleştir, Some("uplot_katalog_kartı")),
+    ]);
+}
 
 const PERFORMANS_KARE_SAYISI: usize = 180;
 const KARE_P95_BÜTÇESİ_MS: f64 = 16.7;
@@ -1811,10 +1820,6 @@ impl ChartListesi {
     }
 
     pub fn yeni(cx: &mut Context<Self>) -> Self {
-        cx.bind_keys([
-            KeyBinding::new("enter", KartıEtkinleştir, Some("uplot_katalog_kartı")),
-            KeyBinding::new("space", KartıEtkinleştir, Some("uplot_katalog_kartı")),
-        ]);
         let başlangıç_kartı = web_köprüsü::başlangıç_kartı().unwrap_or(KartKimliği::Resize);
         let etkileşimler = ortak_kart_etkileşimleri();
         let açıklama_metni = cx.new(|cx| MetinAlani::yeni("Annotation Text", cx));

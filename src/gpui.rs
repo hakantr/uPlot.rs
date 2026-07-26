@@ -10,11 +10,11 @@ use std::rc::Rc;
 
 use ::gpui::{
     App, BorderStyle, Bounds, ContentMask, Context, Corners, Entity, EventEmitter, FocusHandle,
-    Hsla, IntoElement, KeyDownEvent, KeyUpEvent, MouseButton, MouseDownEvent, MouseExitEvent,
-    MouseMoveEvent, MouseUpEvent, Path, PathBuilder, PinchEvent, Pixels, Render, Role,
-    ScaledPixels, ScrollDelta, ScrollWheelEvent, SharedString, StyleRefinement, TextAlign, TextRun,
-    TouchPhase, WeakEntity, Window, canvas, deferred, div, linear_color_stop, linear_gradient,
-    point, prelude::*, px, quad, rgb, rgba, size,
+    Hsla, IntoElement, KeyBinding, KeyDownEvent, KeyUpEvent, MouseButton, MouseDownEvent,
+    MouseExitEvent, MouseMoveEvent, MouseUpEvent, Path, PathBuilder, PinchEvent, Pixels, Render,
+    Role, ScaledPixels, ScrollDelta, ScrollWheelEvent, SharedString, StyleRefinement, TextAlign,
+    TextRun, TouchPhase, WeakEntity, Window, canvas, deferred, div, linear_color_stop,
+    linear_gradient, point, prelude::*, px, quad, rgb, rgba, size,
 };
 
 use crate::{
@@ -24,6 +24,24 @@ use crate::{
     bilgi_kutusunu_yerleştir,
 };
 use web_time::Instant;
+
+::gpui::actions!(
+    uplot_rs,
+    [ÖlçümüTemizle, BirinciDatumuAyarla, İkinciDatumuAyarla]
+);
+
+/// uPlot.rs grafiklerinin varsayılan GPUI klavye eylemlerini kaydeder.
+///
+/// Uygulama başlatılırken bir kez çağrılmalıdır. Eylemler yalnız
+/// `uplot_rs_grafik` bağlamında çalışır; uygulama isterse GPUI keymap
+/// katmanında bunları geçersiz kılabilir.
+pub fn başlat(cx: &mut App) {
+    cx.bind_keys([
+        KeyBinding::new("escape", ÖlçümüTemizle, Some("uplot_rs_grafik")),
+        KeyBinding::new("1", BirinciDatumuAyarla, Some("uplot_rs_grafik")),
+        KeyBinding::new("2", İkinciDatumuAyarla, Some("uplot_rs_grafik")),
+    ]);
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct GpuiYüzeyDönüşümü {
@@ -294,6 +312,21 @@ impl Render for GpuiAnaYüzey {
 }
 
 impl GpuiGrafik {
+    fn ölçüm_datumunu_imleçte_ayarla(&mut self, datum: usize, cx: &mut Context<Self>) {
+        if !self.grafik.ölçüm_datumları_etkin() {
+            return;
+        }
+        let Some(imleç) = self.imleç.as_ref() else {
+            return;
+        };
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        let yatay = f64::from((imleç.fare.x - sol) / (sağ - sol));
+        let dikey = f64::from((imleç.fare.y - üst) / (alt - üst));
+        self.grafik.ölçüm_datumunu_ayarla(datum, yatay, dikey);
+        cx.stop_propagation();
+        self.grafik_bildir(cx);
+    }
+
     pub fn yeni(grafik: Grafik) -> Self {
         let boyut_senkron_katmanı = grafik.boyut_senkron_düzeni();
         let ana_sahne = Rc::new(grafik.çiz());
@@ -1985,6 +2018,7 @@ impl Render for GpuiGrafik {
             .role(Role::Group)
             .aria_label("Etkileşimli uPlot.rs grafiği")
             .track_focus(&odak)
+            .key_context("uplot_rs_grafik")
             .size_full()
             .min_h(px(120.0))
             .overflow_hidden()
@@ -1996,24 +2030,21 @@ impl Render for GpuiGrafik {
             .when(!taşıyor && self.açıklama_vuruşu.is_some(), |yüzey| {
                 yüzey.cursor_pointer()
             })
+            .on_action(cx.listener(|bu, _: &ÖlçümüTemizle, _, cx| {
+                if bu.grafik.ölçüm_datumlarını_temizle() {
+                    cx.stop_propagation();
+                    bu.grafik_bildir(cx);
+                }
+            }))
+            .on_action(cx.listener(|bu, _: &BirinciDatumuAyarla, _, cx| {
+                bu.ölçüm_datumunu_imleçte_ayarla(1, cx);
+            }))
+            .on_action(cx.listener(|bu, _: &İkinciDatumuAyarla, _, cx| {
+                bu.ölçüm_datumunu_imleçte_ayarla(2, cx);
+            }))
             .on_key_down(cx.listener(|bu, olay: &KeyDownEvent, _, cx| {
                 let tuş = olay.keystroke.key.as_str();
-                if tuş == "escape" && bu.grafik.ölçüm_datumları_etkin() {
-                    bu.grafik.ölçüm_datumlarını_temizle();
-                    cx.stop_propagation();
-                    bu.grafik_bildir(cx);
-                } else if matches!(tuş, "1" | "2")
-                    && bu.grafik.ölçüm_datumları_etkin()
-                    && let Some(imleç) = bu.imleç.as_ref()
-                {
-                    let (sol, sağ, üst, alt) = bu.çizim_alanı();
-                    let yatay = f64::from((imleç.fare.x - sol) / (sağ - sol));
-                    let dikey = f64::from((imleç.fare.y - üst) / (alt - üst));
-                    let datum = if tuş == "1" { 1 } else { 2 };
-                    bu.grafik.ölçüm_datumunu_ayarla(datum, yatay, dikey);
-                    cx.stop_propagation();
-                    bu.grafik_bildir(cx);
-                } else if tuş == "space" {
+                if tuş == "space" {
                     bu.boşluk_basılı = true;
                     bu.seçim = None;
                     bu.açıklama_seçimi = false;

@@ -68,11 +68,15 @@ The Cargo package name is the lowercase `uplot-rs`; Rust exposes it in code as
 The ready component remains in an explicit GPUI namespace:
 
 ```rust
-use uplot_rs::{Grafik, gpui::GpuiGrafik};
+use uplot_rs::{Grafik, gpui::{GpuiGrafik, başlat}};
 
+başlat(cx); // once during GPUI application setup
 let chart = Grafik::yeni(options, data)?;
 let surface = cx.new(|_| GpuiGrafik::yeni(chart));
 ```
+
+`başlat` registers chart keys through GPUI's Action/KeyBinding system; the
+application can remap those actions in its own GPUI keymap layer.
 
 The GPUI catalog uses this component but is not included in the library package.
 The retained scene model does not disable GPUI GPU acceleration: commands are

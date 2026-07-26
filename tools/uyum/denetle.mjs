@@ -114,10 +114,12 @@ if (
   );
 }
 if (
-  !webGirişi.includes("uplot_rs_gpui_katalog::ChartListesi") ||
-  !webGirişi.includes("cx.new(ChartListesi::yeni)")
+  !webGirişi.includes("uplot_rs_gpui_katalog::") ||
+  !webGirişi.includes("ChartListesi") ||
+  !webGirişi.includes("cx.new(ChartListesi::yeni)") ||
+  !webGirişi.includes("katalog_başlat(cx)")
 ) {
-  hata("GPUI Web girişi ortak Rust kart kataloğunu kullanmıyor");
+  hata("GPUI Web girişi ortak Rust kart kataloğunu ve eylemlerini kullanmıyor");
 }
 for (const kimlik of ["zoom-wheel", "zoom-touch"]) {
   if (ortakKatalog.includes(`.id("kart-${kimlik}")`)) {

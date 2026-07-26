@@ -68,11 +68,15 @@ alt çizgiye çevrilmesi nedeniyle `uplot_rs` olur. Kaynak depo
 Kullanımda açık GPUI ad alanı korunur:
 
 ```rust
-use uplot_rs::{Grafik, gpui::GpuiGrafik};
+use uplot_rs::{Grafik, gpui::{GpuiGrafik, başlat}};
 
+başlat(cx); // GPUI uygulama kurulurken bir kez
 let grafik = Grafik::yeni(seçenekler, veri)?;
 let yüzey = cx.new(|_| GpuiGrafik::yeni(grafik));
 ```
+
+`başlat`, grafik tuşlarını GPUI Action/KeyBinding sistemine kaydeder; uygulama
+aynı eylemleri kendi GPUI keymap katmanında yeniden bağlayabilir.
 
 GPUI katalog uygulaması bu bileşeni kullanır fakat kütüphane paketine girmez.
 Retained sahne modeli GPUI'nin GPU hızlandırmasını kaldırmaz; komutlar

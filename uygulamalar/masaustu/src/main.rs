@@ -10,7 +10,7 @@ use gpui_platform::application;
 #[cfg(not(target_family = "wasm"))]
 use ortak_bilesenler::{OrtakBilesenAyarlari, PencereKurulumAyarlari, baslat, pencere_secenekleri};
 #[cfg(not(target_family = "wasm"))]
-use uplot_rs_gpui_katalog::ChartListesi;
+use uplot_rs_gpui_katalog::{ChartListesi, başlat as katalog_başlat};
 
 #[cfg(not(target_family = "wasm"))]
 fn main() {
@@ -20,6 +20,7 @@ fn main() {
             cx.quit();
             return;
         }
+        katalog_başlat(cx);
         let başlangıç_geometrisi = Bounds::centered(None, size(px(1180.0), px(720.0)), cx);
         let mut seçenekler = pencere_secenekleri(
             cx,
