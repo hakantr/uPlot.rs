@@ -196,6 +196,7 @@ impl EtkileşimDenetleyicisi {
         platform_hassas: bool,
         eksen: TekerlekEkseni,
         y_dağılımı: YÖlçekDağılımı,
+        şimdi: Instant,
     ) -> Result<bool, UplotHatası> {
         if !self.ayarlar.tekerlek_etkileşimi {
             return Ok(false);
@@ -214,7 +215,6 @@ impl EtkileşimDenetleyicisi {
             TekerlekKipi::Ayrık => false,
             TekerlekKipi::Hassas => true,
         };
-        let şimdi = Instant::now();
         let yeni_hareket = self.son_tekerlek.is_none_or(|önceki| {
             şimdi.duration_since(önceki) >= Duration::from_millis(tekerlek.hareket_birleştirme_ms)
         });

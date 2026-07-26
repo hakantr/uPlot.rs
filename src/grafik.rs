@@ -2481,6 +2481,25 @@ impl Grafik {
         hassas: bool,
         eksen: TekerlekEkseni,
     ) -> Result<bool, UplotHatası> {
+        self.tekerlek_eksende_zamanda(
+            yatay_odak_oranı,
+            dikey_odak_oranı,
+            delta,
+            hassas,
+            eksen,
+            Instant::now(),
+        )
+    }
+
+    pub(crate) fn tekerlek_eksende_zamanda(
+        &mut self,
+        yatay_odak_oranı: f64,
+        dikey_odak_oranı: f64,
+        delta: f64,
+        hassas: bool,
+        eksen: TekerlekEkseni,
+        şimdi: Instant,
+    ) -> Result<bool, UplotHatası> {
         self.elle_x_aralığını_etkileşime_aktar();
         self.elle_y_aralıklarını_etkileşime_aktar();
         let görünür_y = self.görünür_y_aralığı();
@@ -2495,6 +2514,7 @@ impl Grafik {
             hassas,
             eksen,
             y_dağılımı,
+            şimdi,
         )?;
         if değişti && matches!(eksen, TekerlekEkseni::İkisi | TekerlekEkseni::X) {
             self.x_aralığını_veriye_yapıştır();

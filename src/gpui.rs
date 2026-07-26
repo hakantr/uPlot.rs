@@ -23,6 +23,7 @@ use crate::{
     SeriSeçenekleri, SeçimEylemi, TekerlekEkseni, UplotHatası, YüzeyDikdörtgeni,
     bilgi_kutusunu_yerleştir,
 };
+use web_time::Instant;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct GpuiYüzeyDönüşümü {
@@ -1515,7 +1516,7 @@ impl GpuiGrafik {
         odak_değişti
     }
 
-    fn tekerlek_yakınlaştır(&mut self, olay: &ScrollWheelEvent) -> bool {
+    fn tekerlek_yakınlaştır(&mut self, olay: &ScrollWheelEvent, şimdi: Instant) -> bool {
         let Some(fare) = self.sahne_konumu(olay.position) else {
             return false;
         };
@@ -1593,7 +1594,7 @@ impl GpuiGrafik {
         let dikey = f64::from((fare.y - üst) / (alt - üst));
         match self
             .grafik
-            .tekerlek_eksende(yatay, dikey, delta, hassas, eksen)
+            .tekerlek_eksende_zamanda(yatay, dikey, delta, hassas, eksen, şimdi)
         {
             Ok(değişti) => {
                 self.hata = None;
@@ -2123,7 +2124,8 @@ impl Render for GpuiGrafik {
             }))
             .on_scroll_wheel(cx.listener(|bu, olay: &ScrollWheelEvent, _, cx| {
                 let datum_değişti = bu.grafik.ölçüm_datumlarını_temizle();
-                let görünüm_değişti = bu.tekerlek_yakınlaştır(olay);
+                let şimdi = cx.background_executor().now();
+                let görünüm_değişti = bu.tekerlek_yakınlaştır(olay, şimdi);
                 if görünüm_değişti {
                     bu.görünüm_bildir(false, cx);
                 } else if datum_değişti {
