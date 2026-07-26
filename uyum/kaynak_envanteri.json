@@ -860,19 +860,19 @@
       "sembol": "PathBuilderFactories.bars",
       "durum": "tam_kanıtlı",
       "rust_karşılığı": "SeriSeçenekleri::çubuk / çubuk_boyutu",
-      "test": "src/kart/stacked_series.rs"
+      "test": "uygulamalar/ornekler/src/stacked_series.rs"
     },
     {
       "sembol": "PathBuilderFactories.linear",
       "durum": "tam_kanıtlı",
       "rust_karşılığı": "YolKipi::Doğrusal / SeriSeçenekleri::saf_doğrusal_yol",
-      "test": "src/kart/sparse.rs"
+      "test": "uygulamalar/ornekler/src/sparse.rs"
     },
     {
       "sembol": "PathBuilderFactories.points",
       "durum": "tam_kanıtlı",
       "rust_karşılığı": "SeriSeçenekleri::nokta_şekli / NoktaŞekli::Kare",
-      "test": "src/kart/sparse.rs"
+      "test": "uygulamalar/ornekler/src/sparse.rs"
     },
     {
       "sembol": "PathBuilderFactories.spline",
@@ -946,7 +946,7 @@
       "sembol": "Points.filter",
       "durum": "tam_kanıtlı",
       "rust_karşılığı": "SeriSeçenekleri::nokta_indeksleri",
-      "test": "src/kart/stacked_series.rs"
+      "test": "uygulamalar/ornekler/src/stacked_series.rs"
     },
     {
       "sembol": "Points.one",
@@ -1100,7 +1100,7 @@
       "sembol": "Series.paths",
       "durum": "tam_kanıtlı",
       "rust_karşılığı": "YolKipi / NoktaŞekli / saf_doğrusal_yol",
-      "test": "src/kart/sparse.rs"
+      "test": "uygulamalar/ornekler/src/sparse.rs"
     },
     {
       "sembol": "Series.points",
@@ -1134,7 +1134,7 @@
       "sembol": "Series.value",
       "durum": "tam_kanıtlı",
       "rust_karşılığı": "SeriSeçenekleri::lejant_değerleri",
-      "test": "src/kart/stacked_series.rs"
+      "test": "uygulamalar/ornekler/src/stacked_series.rs"
     },
     {
       "sembol": "Series.values",

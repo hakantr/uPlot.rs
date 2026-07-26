@@ -285,9 +285,9 @@ mod testler {
         let mut akış = SineAkışı::kanıt()?;
         let (seçenekler, veri) = akış.kartı()?;
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
-        let önce = grafik.çiz().test_svg();
+        let önce = grafik.çiz();
         grafik.veriyi_ayarla(akış.ilerlet()?)?;
-        assert_ne!(grafik.çiz().test_svg(), önce);
+        assert_ne!(grafik.çiz(), önce);
         Ok(())
     }
 

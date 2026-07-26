@@ -1,7 +1,7 @@
 id = "tooltips-closest"
 kaynak = "../uPlot/demos/tooltips-closest.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/tooltips_closest.rs#tooltips_closest_kartı"
+fixture = "uygulamalar/ornekler/src/tooltips_closest.rs#tooltips_closest_kartı"
 viewport = [1920, 600]
 durum = "en_yakın_seri_commit_tooltipi"
 

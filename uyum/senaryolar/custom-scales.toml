@@ -1,6 +1,6 @@
 id = "custom-scales"
 kaynak = "../uPlot/demos/custom-scales.html"
-fixture = "src/kart/custom_scales.rs#custom_scales_kartları"
+fixture = "uygulamalar/ornekler/src/custom_scales.rs#custom_scales_kartları"
 viewport = [800, 800]
 device_pixel_ratio = 1
 durum = "tek-kart-üç-bağımsız-yüzey"

@@ -1,6 +1,6 @@
 id = "focus-cursor"
 kaynak = "../uPlot/demos/focus-cursor.html"
-fixture = "src/kart/focus_cursor.rs#focus_cursor_kartları"
+fixture = "uygulamalar/ornekler/src/focus_cursor.rs#focus_cursor_kartları"
 viewport = [1920, 600]
 device_pixel_ratio = 1
 durum = "dört-odak-alt-grafiği"

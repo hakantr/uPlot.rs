@@ -89,7 +89,7 @@ pub fn update_cursor_select_resize_kartı(
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::Grafik;
+    use crate::{Grafik, Komut};
 
     #[test]
     fn kaynak_veri_boyut_akışı_ve_oransal_katmanlar_korunur() -> Result<(), UplotHatası> {
@@ -132,8 +132,14 @@ mod testler {
         assert!((düzen.hover_x_oranı - 363.0 / 725.0).abs() < 0.0001);
         assert!((düzen.hover_y_oranı - 400.0 / 733.0).abs() < 0.0001);
         let ana_sahne = grafik.çiz();
-        assert!(!ana_sahne.test_svg().contains("#607d8b"));
-        assert!(!ana_sahne.test_svg().contains("#00000012"));
+        assert!(!ana_sahne.komutlar().iter().any(|komut| matches!(
+            komut,
+            Komut::KesikliÇizgi { renk, .. } if renk == "#607d8b"
+        )));
+        assert!(!ana_sahne.komutlar().iter().any(|komut| matches!(
+            komut,
+            Komut::Dikdörtgen { dolgu, .. } if dolgu == "#00000012"
+        )));
         assert!(grafik.boyutu_ayarla(400, 400)?);
         assert_eq!(grafik.boyut_senkron_düzeni(), Some(düzen));
         Ok(())

@@ -1,6 +1,6 @@
 id = "arcsinh-scales"
 kaynak = "../uPlot/demos/arcsinh-scales.html"
-fixture = "src/kart/arcsinh_scales.rs#arcsinh_scales_kartı"
+fixture = "uygulamalar/ornekler/src/arcsinh_scales.rs#arcsinh_scales_kartı"
 viewport = [1600, 600]
 device_pixel_ratio = 1
 durum = "etkileşimli"

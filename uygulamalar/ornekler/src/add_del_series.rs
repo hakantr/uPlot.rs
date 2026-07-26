@@ -83,7 +83,7 @@ pub fn add_del_series_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), Uplo
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Grafik, SeriYaşamDöngüsüOlayı};
+    use crate::{Grafik, Komut, SeriYaşamDöngüsüOlayı};
 
     #[test]
     fn kaynak_serileri_atomik_eklenip_silinir() -> Result<(), UplotHatası> {
@@ -130,7 +130,13 @@ mod testler {
                 SeriYaşamDöngüsüOlayı::VeriAyarlandı { seri_sayısı: 5 },
             ]
         );
-        assert!(grafik.çiz().test_svg().contains("#ffa500"));
+        assert!(
+            grafik
+                .çiz()
+                .komutlar()
+                .iter()
+                .any(|komut| matches!(komut, Komut::Yol { renk, .. } if renk == "#ffa500"))
+        );
         grafik.seri_sil(1)?;
         assert_eq!(grafik.kimlik(), kimlik);
         assert_eq!(grafik.seri_seçenekleri().len(), 3);

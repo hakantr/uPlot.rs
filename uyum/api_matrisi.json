@@ -7,289 +7,289 @@
       "kaynak_yolu": "AlignedData",
       "rust_karşılığı": "HizalıVeri / HizalıDeğer",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/path_gap_clip.rs"
+      "test": "uygulamalar/ornekler/src/path_gap_clip.rs"
     },
     {
       "kaynak_yolu": "AlignedData null / undefined semantics",
       "rust_karşılığı": "HizalıDeğer::Boş / HizalıDeğer::Tanımsız",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/path_gap_clip.rs"
+      "test": "uygulamalar/ornekler/src/path_gap_clip.rs"
     },
     {
       "kaynak_yolu": "Options.width",
       "rust_karşılığı": "GrafikSeçenekleri::genişlik",
       "durum": "tam_kanıtlı",
-      "test": "tests/resize.rs"
+      "test": "uygulamalar/ornekler/tests/resize.rs"
     },
     {
       "kaynak_yolu": "Options.height",
       "rust_karşılığı": "GrafikSeçenekleri::yükseklik",
       "durum": "tam_kanıtlı",
-      "test": "tests/resize.rs"
+      "test": "uygulamalar/ornekler/tests/resize.rs"
     },
     {
       "kaynak_yolu": "Options.title",
       "rust_karşılığı": "GrafikSeçenekleri::başlık",
       "durum": "kısmi",
-      "test": "tests/resize.rs"
+      "test": "uygulamalar/ornekler/tests/resize.rs"
     },
     {
       "kaynak_yolu": "Options.series",
       "rust_karşılığı": "GrafikSeçenekleri::seriler",
       "durum": "kısmi",
-      "test": "tests/resize.rs"
+      "test": "uygulamalar/ornekler/tests/resize.rs"
     },
     {
       "kaynak_yolu": "Scale.time",
       "rust_karşılığı": "GrafikSeçenekleri::x_zaman",
       "durum": "kısmi",
-      "test": "tests/resize.rs"
+      "test": "uygulamalar/ornekler/tests/resize.rs"
     },
     {
       "kaynak_yolu": "Scale.range",
       "rust_karşılığı": "Aralık",
       "durum": "kısmi",
-      "test": "tests/resize.rs"
+      "test": "uygulamalar/ornekler/tests/resize.rs"
     },
     {
       "kaynak_yolu": "Series.stroke",
       "rust_karşılığı": "SeriSeçenekleri::renk",
       "durum": "kısmi",
-      "test": "tests/resize.rs"
+      "test": "uygulamalar/ornekler/tests/resize.rs"
     },
     {
       "kaynak_yolu": "Series.width",
       "rust_karşılığı": "SeriSeçenekleri::çizgi_kalınlığı",
       "durum": "kısmi",
-      "test": "tests/resize.rs"
+      "test": "uygulamalar/ornekler/tests/resize.rs"
     },
     {
       "kaynak_yolu": "Series.fill",
       "rust_karşılığı": "SeriSeçenekleri::dolgu",
       "durum": "tam_kanıtlı",
-      "test": "tests/area_fill.rs"
+      "test": "uygulamalar/ornekler/tests/area_fill.rs"
     },
     {
       "kaynak_yolu": "Series.fillTo",
       "rust_karşılığı": "SeriSeçenekleri::dolgu_tabanı",
       "durum": "kısmi",
-      "test": "tests/area_fill.rs"
+      "test": "uygulamalar/ornekler/tests/area_fill.rs"
     },
     {
       "kaynak_yolu": "Series.paths.linear",
       "rust_karşılığı": "Grafik::çiz",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/path_gap_clip.rs"
+      "test": "uygulamalar/ornekler/src/path_gap_clip.rs"
     },
     {
       "kaynak_yolu": "uPlot.addSeries",
       "rust_karşılığı": "Grafik::seri_ekle",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/add_del_series.rs"
+      "test": "uygulamalar/ornekler/src/add_del_series.rs"
     },
     {
       "kaynak_yolu": "uPlot.delSeries",
       "rust_karşılığı": "Grafik::seri_sil",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/add_del_series.rs"
+      "test": "uygulamalar/ornekler/src/add_del_series.rs"
     },
     {
       "kaynak_yolu": "uPlot.setData",
       "rust_karşılığı": "Grafik::veriyi_ayarla",
       "durum": "kısmi",
-      "test": "src/kart/add_del_series.rs"
+      "test": "uygulamalar/ornekler/src/add_del_series.rs"
     },
     {
       "kaynak_yolu": "uPlot.join",
       "rust_karşılığı": "hizalı_verileri_birleştir",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/align_data.rs"
+      "test": "uygulamalar/ornekler/src/align_data.rs"
     },
     {
       "kaynak_yolu": "Series.spanGaps",
       "rust_karşılığı": "SeriSeçenekleri::boşlukları_birleştir",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/align_data.rs"
+      "test": "uygulamalar/ornekler/src/align_data.rs"
     },
     {
       "kaynak_yolu": "Series.paths.bars",
       "rust_karşılığı": "SeriSeçenekleri::çubuk",
       "durum": "kısmi",
-      "test": "src/kart/align_data.rs"
+      "test": "uygulamalar/ornekler/src/align_data.rs"
     },
     {
       "kaynak_yolu": "Plugin.hooks.setCursor",
       "rust_karşılığı": "GpuiGrafik::imleci_güncelle / KartOturumu::en_yakin_noktalar",
       "durum": "kısmi",
-      "test": "src/kart/cursor_tooltip.rs"
+      "test": "uygulamalar/ornekler/src/cursor_tooltip.rs"
     },
     {
       "kaynak_yolu": "Scale.distr/log",
       "rust_karşılığı": "XÖlçekDağılımı::Logaritmik / YÖlçekDağılımı::Logaritmik",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/custom_scales.rs"
+      "test": "uygulamalar/ornekler/src/custom_scales.rs"
     },
     {
       "kaynak_yolu": "Scale.fwd/bwd (distr: 100)",
       "rust_karşılığı": "YÖlçekDağılımı::Weibull",
       "durum": "kısmi",
-      "test": "src/kart/custom_scales.rs"
+      "test": "uygulamalar/ornekler/src/custom_scales.rs"
     },
     {
       "kaynak_yolu": "Options.bands",
       "rust_karşılığı": "SeriBandı",
       "durum": "kısmi",
-      "test": "src/kart/custom_scales.rs"
+      "test": "uygulamalar/ornekler/src/custom_scales.rs"
     },
     {
       "kaynak_yolu": "Plugin.hooks.draw",
       "rust_karşılığı": "NoktaKatmanı",
       "durum": "kısmi",
-      "test": "src/kart/custom_scales.rs"
+      "test": "uygulamalar/ornekler/src/custom_scales.rs"
     },
     {
       "kaynak_yolu": "Hooks.drawClear",
       "rust_karşılığı": "ÇizimKancasıDüzeni::gradyan",
       "durum": "kısmi",
-      "test": "src/kart/draw_hooks.rs"
+      "test": "uygulamalar/ornekler/src/draw_hooks.rs"
     },
     {
       "kaynak_yolu": "Hooks.drawSeries",
       "rust_karşılığı": "ÇizimKancasıDüzeni::seri_medyanları",
       "durum": "kısmi",
-      "test": "src/kart/draw_hooks.rs"
+      "test": "uygulamalar/ornekler/src/draw_hooks.rs"
     },
     {
       "kaynak_yolu": "Series.points.show (custom draw)",
       "rust_karşılığı": "ÇizimKancasıDüzeni::yıldız_noktalar",
       "durum": "kısmi",
-      "test": "src/kart/draw_hooks.rs"
+      "test": "uygulamalar/ornekler/src/draw_hooks.rs"
     },
     {
       "kaynak_yolu": "Hooks.draw",
       "rust_karşılığı": "ÇizimKancasıDüzeni::çizim_süresi_metni",
       "durum": "kısmi",
-      "test": "src/kart/draw_hooks.rs"
+      "test": "uygulamalar/ornekler/src/draw_hooks.rs"
     },
     {
       "kaynak_yolu": "Options.focus.alpha",
       "rust_karşılığı": "OdakDüzeni::yeni",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/focus_cursor.rs"
+      "test": "uygulamalar/ornekler/src/focus_cursor.rs"
     },
     {
       "kaynak_yolu": "Cursor.focus.prox/bias/dist",
       "rust_karşılığı": "Grafik::imleç_odağını_güncelle",
       "durum": "kısmi",
-      "test": "src/kart/focus_cursor.rs"
+      "test": "uygulamalar/ornekler/src/focus_cursor.rs"
     },
     {
       "kaynak_yolu": "uPlot.setSeries({focus})",
       "rust_karşılığı": "Grafik::imleç_odağını_güncelle / imleç_odağını_temizle",
       "durum": "kısmi",
-      "test": "src/kart/focus_cursor.rs"
+      "test": "uygulamalar/ornekler/src/focus_cursor.rs"
     },
     {
       "kaynak_yolu": "Hooks.setSeries",
       "rust_karşılığı": "OdakDüzeni::odak_kalınlığı / OdakStili",
       "durum": "kısmi",
-      "test": "src/kart/focus_cursor.rs"
+      "test": "uygulamalar/ornekler/src/focus_cursor.rs"
     },
     {
       "kaynak_yolu": "Series.stroke/fill (CanvasGradient)",
       "rust_karşılığı": "ÖlçekGradyanı / Komut::GradyanYol / Komut::GradyanAlan",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/gradients.rs"
+      "test": "uygulamalar/ornekler/src/gradients.rs"
     },
     {
       "kaynak_yolu": "uPlot.valToPos scaleGradient",
       "rust_karşılığı": "Grafik::ölçek_gradyanını_çöz",
       "durum": "kısmi",
-      "test": "src/kart/gradients.rs"
+      "test": "uygulamalar/ornekler/src/gradients.rs"
     },
     {
       "kaynak_yolu": "Cursor.points.fill callback",
       "rust_karşılığı": "Grafik::seri_imleç_rengi",
       "durum": "kısmi",
-      "test": "src/kart/gradients.rs"
+      "test": "uygulamalar/ornekler/src/gradients.rs"
     },
     {
       "kaynak_yolu": "Scale.distr: 4 gradient coordinates",
       "rust_karşılığı": "YÖlçekDağılımı::ArcSinh + ÖlçekGradyanı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/gradients.rs"
+      "test": "uygulamalar/ornekler/src/gradients.rs"
     },
     {
       "kaynak_yolu": "Options.drawOrder",
       "rust_karşılığı": "ÇizimSırası / GrafikSeçenekleri::çizim_sırası",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/grid_over_series.rs"
+      "test": "uygulamalar/ornekler/src/grid_over_series.rs"
     },
     {
       "kaynak_yolu": "Band.dir / band clipping",
       "rust_karşılığı": "BantYönü / Grafik::seri_bantlarını_çiz",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/high_low_bands.rs"
+      "test": "uygulamalar/ornekler/src/high_low_bands.rs"
     },
     {
       "kaynak_yolu": "uPlot.paths.stepped({align})",
       "rust_karşılığı": "SeriÇizimTürü::BasamakÖnce / BasamakSonra",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/path_gap_clip.rs"
+      "test": "uygulamalar/ornekler/src/path_gap_clip.rs"
     },
     {
       "kaynak_yolu": "Scale.dir (x)",
       "rust_karşılığı": "GrafikSeçenekleri::x_ters_yön",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/path_gap_clip.rs"
+      "test": "uygulamalar/ornekler/src/path_gap_clip.rs"
     },
     {
       "kaynak_yolu": "uPlot.paths.spline()",
       "rust_karşılığı": "SeriÇizimTürü::Eğri / Fritsch-Carlson monoton kübik örnekleme",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/high_low_bands.rs"
+      "test": "uygulamalar/ornekler/src/high_low_bands.rs"
     },
     {
       "kaynak_yolu": "uPlot.paths.bars({size}) series bands",
       "rust_karşılığı": "SeriSeçenekleri::çubuk_boyutu / çubuk bant çokgenleri",
       "durum": "kısmi",
-      "test": "src/kart/high_low_bands.rs"
+      "test": "uygulamalar/ornekler/src/high_low_bands.rs"
     },
     {
       "kaynak_yolu": "Options.ms",
       "rust_karşılığı": "GrafikSeçenekleri::x_zaman_milisaniye",
       "durum": "kısmi",
-      "test": "src/kart/high_low_bands.rs"
+      "test": "uygulamalar/ornekler/src/high_low_bands.rs"
     },
     {
       "kaynak_yolu": "Hooks.draw + valToPos heatmapPlugin",
       "rust_karşılığı": "IsıHaritasıDüzeni / Grafik::ısı_haritasını_çiz",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/latency_heatmap.rs"
+      "test": "uygulamalar/ornekler/src/latency_heatmap.rs"
     },
     {
       "kaynak_yolu": "mode: 2 + Series.facets + custom heatmap paths",
       "rust_karşılığı": "IsıHücresi / veri ve piksel hücre boyutları",
       "durum": "kısmi",
-      "test": "src/kart/latency_heatmap.rs"
+      "test": "uygulamalar/ornekler/src/latency_heatmap.rs"
     },
     {
       "kaynak_yolu": "uPlot.paths.bars({align,size,gap,disp})",
       "rust_karşılığı": "SeriÇizimTürü::Çubuk / çubuk_boyutu",
       "durum": "kısmi",
-      "test": "src/kart/latency_heatmap.rs"
+      "test": "uygulamalar/ornekler/src/latency_heatmap.rs"
     },
     {
       "kaynak_yolu": "histogram / aggAll / aggEach",
       "rust_karşılığı": "latency_heatmap::histogram_say",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/latency_heatmap.rs"
+      "test": "uygulamalar/ornekler/src/latency_heatmap.rs"
     },
     {
       "kaynak_yolu": "Series.paths: null",
       "rust_karşılığı": "SeriÇizimTürü::Noktalar",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/line_paths.rs"
+      "test": "uygulamalar/ornekler/src/line_paths.rs"
     },
     {
       "kaynak_yolu": "uPlot.paths.spline2 / catmullRomCentrip",
@@ -301,43 +301,43 @@
       "kaynak_yolu": "uPlot.paths.bars({align})",
       "rust_karşılığı": "SeriSeçenekleri::çubuk_hizası",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/line_paths.rs"
+      "test": "uygulamalar/ornekler/src/line_paths.rs"
     },
     {
       "kaynak_yolu": "Scale.distr: 3 / Scale.log",
       "rust_karşılığı": "YÖlçekDağılımı::Logaritmik / YÖlçekSeçenekleri::logaritmik",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/log_scales2.rs"
+      "test": "uygulamalar/ornekler/src/log_scales2.rs"
     },
     {
       "kaynak_yolu": "rangeLog / snapLogY",
       "rust_karşılığı": "grafik::logaritmik_otomatik_aralık",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/log_scales2.rs"
+      "test": "uygulamalar/ornekler/src/log_scales2.rs"
     },
     {
       "kaynak_yolu": "logAxisSplits",
       "rust_karşılığı": "grafik::logaritmik_bölmeler",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/log_scales2.rs"
+      "test": "uygulamalar/ornekler/src/log_scales2.rs"
     },
     {
       "kaynak_yolu": "Scale.dir",
       "rust_karşılığı": "YÖlçekSeçenekleri::ters_yön",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/log_scales2.rs"
+      "test": "uygulamalar/ornekler/src/log_scales2.rs"
     },
     {
       "kaynak_yolu": "Axis.values / Series.value",
       "rust_karşılığı": "YÖlçekEtiketBiçimi / eksen_değer_çarpanı / gösterim_değer_çarpanı",
       "durum": "kısmi",
-      "test": "src/kart/log_scales2.rs"
+      "test": "uygulamalar/ornekler/src/log_scales2.rs"
     },
     {
       "kaynak_yolu": "rangeLog(fullMags: false)",
       "rust_karşılığı": "YÖlçekSeçenekleri::logaritmik_kısmi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/log_scales2.rs"
+      "test": "uygulamalar/ornekler/src/log_scales2.rs"
     },
     {
       "kaynak_yolu": "_timeAxisSplits / timeAxisVals",
@@ -349,7 +349,7 @@
       "kaynak_yolu": "fmtDate(tpl, names)",
       "rust_karşılığı": "TarihAdları / zaman::yerel_eksen_etiketi",
       "durum": "kısmi",
-      "test": "src/kart/months.rs"
+      "test": "uygulamalar/ornekler/src/months.rs"
     },
     {
       "kaynak_yolu": "tzDate(date, 'Etc/UTC')",
@@ -361,19 +361,19 @@
       "kaynak_yolu": "Scale.range(self, dataMin, dataMax) dynamic nice scale",
       "rust_karşılığı": "YÖlçekSeçenekleri::güzel_ölçek / grafik::güzel_ölçek",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/nice_scale.rs"
+      "test": "uygulamalar/ornekler/src/nice_scale.rs"
     },
     {
       "kaynak_yolu": "Axis.incrs(self) / Axis.space",
       "rust_karşılığı": "GüzelÖlçekDüzeni::en_az_etiket_boşluğu / grafik::güzel_sayı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/nice_scale.rs"
+      "test": "uygulamalar/ornekler/src/nice_scale.rs"
     },
     {
       "kaynak_yolu": "uPlot.setSize({width, height})",
       "rust_karşılığı": "Grafik::çiz_boyutta / Grafik::çiz_görünür_boyutta",
       "durum": "kısmi",
-      "test": "src/kart/nice_scale.rs"
+      "test": "uygulamalar/ornekler/src/nice_scale.rs"
     },
     {
       "kaynak_yolu": "rangeNum(min, max, mult, extra)",
@@ -385,85 +385,85 @@
       "kaynak_yolu": "uPlot(opts, null|[]) / Scale.range(null, null)",
       "rust_karşılığı": "HizalıVeri::yeni(empty) / Grafik boş ölçek çizimi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/no_data.rs"
+      "test": "uygulamalar/ornekler/src/no_data.rs"
     },
     {
       "kaynak_yolu": "autoScaleX equal numeric/time value",
       "rust_karşılığı": "no_data_kartı tek nokta X aralığı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/no_data.rs"
+      "test": "uygulamalar/ornekler/src/no_data.rs"
     },
     {
       "kaynak_yolu": "Options.pxAlign / pxRoundGen",
       "rust_karşılığı": "GrafikSeçenekleri::piksel_hizası / grafik::piksele_hizala",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/pixel_align.rs"
+      "test": "uygulamalar/ornekler/src/pixel_align.rs"
     },
     {
       "kaynak_yolu": "Series.pxAlign / Series.points.show",
       "rust_karşılığı": "SeriSeçenekleri::piksel_hizası / noktaları_göster",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/pixel_align.rs"
+      "test": "uygulamalar/ornekler/src/pixel_align.rs"
     },
     {
       "kaynak_yolu": "Series.points.space / size / width / fill",
       "rust_karşılığı": "SeriSeçenekleri::nokta_boşluğu / nokta_stili",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/points.rs"
+      "test": "uygulamalar/ornekler/src/points.rs"
     },
     {
       "kaynak_yolu": "Series.points.filter / paths: null",
       "rust_karşılığı": "NoktaFiltreKipi::BoşlukArasındakiTekiller / SeriÇizimTürü::Noktalar",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/points.rs"
+      "test": "uygulamalar/ornekler/src/points.rs"
     },
     {
       "kaynak_yolu": "Scale.dir / Scale.ori",
       "rust_karşılığı": "GrafikSeçenekleri::x_ters_yön / x_dikey / YÖlçekSeçenekleri::ters_yön",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/scales_dir_ori.rs"
+      "test": "uygulamalar/ornekler/src/scales_dir_ori.rs"
     },
     {
       "kaynak_yolu": "Axis.side (0 top, 1 right, 2 bottom, 3 left)",
       "rust_karşılığı": "GrafikSeçenekleri::x_eksen_karşıda / birincil_y_karşıda",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/scales_dir_ori.rs"
+      "test": "uygulamalar/ornekler/src/scales_dir_ori.rs"
     },
     {
       "kaynak_yolu": "Options.mode: 2 / Series.facets",
       "rust_karşılığı": "DağılımDüzeni / DağılımSerisi / DağılımNoktası",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/scatter.rs"
+      "test": "uygulamalar/ornekler/src/scatter.rs"
     },
     {
       "kaynak_yolu": "cursor.dataIdx / cursor.points.size / focus.dist",
       "rust_karşılığı": "Grafik::dağılım_vuruşu_boyutta / DağılımVuruşu",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/scatter.rs"
+      "test": "uygulamalar/ornekler/src/scatter.rs"
     },
     {
       "kaynak_yolu": "uPlot.syncRect() / uPlot.rect",
       "rust_karşılığı": "YüzeyDikdörtgeni::sahne_konumu",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/scroll_sync.rs"
+      "test": "uygulamalar/ornekler/src/scroll_sync.rs"
     },
     {
       "kaynak_yolu": "requestAnimationFrame(update) / setData sliding window",
       "rust_karşılığı": "SineAkışı::ilerlet / Grafik::veriyi_ayarla",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/sine_stream.rs"
+      "test": "uygulamalar/ornekler/src/sine_stream.rs"
     },
     {
       "kaynak_yolu": "Axis.space",
       "rust_karşılığı": "GrafikSeçenekleri::x_eksen_asgari_etiket_boşluğu",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/sine_stream.rs"
+      "test": "uygulamalar/ornekler/src/sine_stream.rs"
     },
     {
       "kaynak_yolu": "Scale.range {min/max: {pad, hard, soft, mode}} / _rangeNum",
       "rust_karşılığı": "SayısalAralıkAyarları / SayısalAralıkParçası / Aralık::uplot_yapılandırılmış",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/soft_minmax.rs"
+      "test": "uygulamalar/ornekler/src/soft_minmax.rs"
     },
     {
       "kaynak_yolu": "Config.min / Config.max soft range parts",
@@ -475,277 +475,277 @@
       "kaynak_yolu": "Axis.show / compact Options.width / Options.height",
       "rust_karşılığı": "GrafikSeçenekleri::x_ekseni_göster / y_ekseni_göster / kompakt",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/sparklines.rs"
+      "test": "uygulamalar/ornekler/src/sparklines.rs"
     },
     {
       "kaynak_yolu": "Series.paths custom points / Path2D.rect",
       "rust_karşılığı": "SeriSeçenekleri::nokta_şekli / NoktaŞekli::Kare",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/sparse.rs"
+      "test": "uygulamalar/ornekler/src/sparse.rs"
     },
     {
       "kaynak_yolu": "Series.paths custom linear / Path2D.moveTo + lineTo",
       "rust_karşılığı": "SeriSeçenekleri::saf_doğrusal_yol / kesintili Yol geometrisi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/sparse.rs"
+      "test": "uygulamalar/ornekler/src/sparse.rs"
     },
     {
       "kaynak_yolu": "demos/stack.js stack / getStackedOpts / stack2",
       "rust_karşılığı": "stacked_series_kartı / stack2 / SeriBandı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/stacked_series.rs"
+      "test": "uygulamalar/ornekler/src/stacked_series.rs"
     },
     {
       "kaynak_yolu": "Series.value raw values over stacked drawing data",
       "rust_karşılığı": "SeriSeçenekleri::lejant_değerleri / Grafik::en_yakın_noktalar",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/stacked_series.rs"
+      "test": "uygulamalar/ornekler/src/stacked_series.rs"
     },
     {
       "kaynak_yolu": "Series.points.filter raw non-null indices after interpolation",
       "rust_karşılığı": "SeriSeçenekleri::nokta_indeksleri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/stacked_series.rs"
+      "test": "uygulamalar/ornekler/src/stacked_series.rs"
     },
     {
       "kaynak_yolu": "Hooks.setSeries restack on visibility toggle",
       "rust_karşılığı": "stacked_series_kartı_görünür / GPUI masaüstü ve web seri görünürlük kontrolleri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/stacked_series.rs"
+      "test": "uygulamalar/ornekler/src/stacked_series.rs"
     },
     {
       "kaynak_yolu": "uPlot.setData sliding/increasing stream slices",
       "rust_karşılığı": "StreamDataGrubu::ilerlet / Grafik::canlı_veriyi_ayarla",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/stream_data.rs"
+      "test": "uygulamalar/ornekler/src/stream_data.rs"
     },
     {
       "kaynak_yolu": "Scale.auto=false static x/%/mb ranges",
       "rust_karşılığı": "GrafikSeçenekleri::x_aralığı / YÖlçekSeçenekleri::aralık",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/stream_data.rs"
+      "test": "uygulamalar/ornekler/src/stream_data.rs"
     },
     {
       "kaynak_yolu": "Cursor.drag.setScale=false / Select.show=false",
       "rust_karşılığı": "EtkileşimSeçenekleri::seçim_yakınlaştır(false)",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/stream_data.rs"
+      "test": "uygulamalar/ornekler/src/stream_data.rs"
     },
     {
       "kaynak_yolu": "Series.value latest value when cursor index is null",
       "rust_karşılığı": "Grafik::son_değerler / GPUI masaüstü ve web lejant köprüleri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/stream_data.rs"
+      "test": "uygulamalar/ornekler/src/stream_data.rs"
     },
     {
       "kaynak_yolu": "u.root.outerHTML + canvas drawImage image export PoC",
       "rust_karşılığı": "GpuiGrafik::svg_kaydı / svg_dosyasına_yaz; yalnız açık istekte retained vektör kayıt geçişi",
       "durum": "tam_kanıtlı",
-      "test": "src/gpui/svg_kaydi.rs + src/kart/gpui_svg_export.rs"
+      "test": "src/gpui/svg_kaydi.rs + uygulamalar/ornekler/src/gpui_svg_export.rs"
     },
     {
       "kaynak_yolu": "uPlot.sync(key) / _sync",
       "rust_karşılığı": "SyncCursorGrubu::imleç_hedefleri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/sync_cursor.rs"
+      "test": "uygulamalar/ornekler/src/sync_cursor.rs"
     },
     {
       "kaynak_yolu": "src/sync.js sub / unsub / pub",
       "rust_karşılığı": "SyncCursorGrubu + GPUI GpuiGrafikOlayı + GPUI Web SyncCursorKoprusu",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/sync_cursor.rs"
+      "test": "uygulamalar/ornekler/src/sync_cursor.rs"
     },
     {
       "kaynak_yolu": "Cursor.sync scales / match / filters.pub",
       "rust_karşılığı": "SyncCursorGrubu::dikey_imleç_senkron_mu / seri_hedefi / senkronu_ayarla",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/sync_cursor.rs"
+      "test": "uygulamalar/ornekler/src/sync_cursor.rs"
     },
     {
       "kaynak_yolu": "Cursor.lock + cursor.focus.prox + setSeries",
       "rust_karşılığı": "SyncCursorGrubu::fare_bırak + Grafik::imleç_odağını_seriye_ayarla",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/sync_cursor.rs"
+      "test": "uygulamalar/ornekler/src/sync_cursor.rs"
     },
     {
       "kaynak_yolu": "Scale.range callback dataMin/dataMax",
       "rust_karşılığı": "sync_y_zero_aralıkları / SyncYZeroAşaması::Ham",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/sync_y_zero.rs"
+      "test": "uygulamalar/ornekler/src/sync_y_zero.rs"
     },
     {
       "kaynak_yolu": "symRange max(abs(dataMin), abs(dataMax))",
       "rust_karşılığı": "sync_y_zero_aralıkları / SyncYZeroAşaması::Simetrik",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/sync_y_zero.rs"
+      "test": "uygulamalar/ornekler/src/sync_y_zero.rs"
     },
     {
       "kaynak_yolu": "valToPos / posToVal shared zero pixel syncRange",
       "rust_karşılığı": "sync_y_zero_aralıkları / SyncYZeroAşaması::SıfırHizalı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/sync_y_zero.rs"
+      "test": "uygulamalar/ornekler/src/sync_y_zero.rs"
     },
     {
       "kaynak_yolu": "paths.bars opts.size / opts.align / opts.gap",
       "rust_karşılığı": "ÇubukDüzeni::genişlik_oranı / hizalama / ek_boşluk",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/thin_bars_stroke_fill.rs"
+      "test": "uygulamalar/ornekler/src/thin_bars_stroke_fill.rs"
     },
     {
       "kaynak_yolu": "paths.bars strokeWidth >= barWid / 2 fill fallback",
       "rust_karşılığı": "Grafik çubuk çiziminde ince vuruşun vuruş rengi dolgusuna düşmesi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/thin_bars_stroke_fill.rs"
+      "test": "uygulamalar/ornekler/src/thin_bars_stroke_fill.rs"
     },
     {
       "kaynak_yolu": "paths.bars direction, minimum width and zero-height skip",
       "rust_karşılığı": "ÇubukDüzeni::ters / minimum 1 piksel / sıfır değer bastırma",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/thin_bars_stroke_fill.rs"
+      "test": "uygulamalar/ornekler/src/thin_bars_stroke_fill.rs"
     },
     {
       "kaynak_yolu": "time-periods aggDays 24-hour UTC aggregation",
       "rust_karşılığı": "time_periods::günlük_veri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/time_periods.rs"
+      "test": "uygulamalar/ornekler/src/time_periods.rs"
     },
     {
       "kaynak_yolu": "scales.x2.from='x' range -31 days / axes side=2",
       "rust_karşılığı": "İkincilXEksen / Grafik ikinci zaman ekseni",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/time_periods.rs"
+      "test": "uygulamalar/ornekler/src/time_periods.rs"
     },
     {
       "kaynak_yolu": "series.values per-series comparison timestamp",
       "rust_karşılığı": "SeriSeçenekleri::x_zaman_kaydırması / Grafik::seri_zamanı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/time_periods.rs"
+      "test": "uygulamalar/ornekler/src/time_periods.rs"
     },
     {
       "kaynak_yolu": "demos/data/traffic.json hourly and month slices",
       "rust_karşılığı": "time_periods_traffic.json / saatlik_veri / aylık_veri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/time_periods.rs"
+      "test": "uygulamalar/ornekler/src/time_periods.rs"
     },
     {
       "kaynak_yolu": "timelinePlugin walk / distr SPACE_BETWEEN",
       "rust_karşılığı": "TimelineDüzeni::şerit_oranı / Grafik::timeline_çiz",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timeline_discrete.rs"
+      "test": "uygulamalar/ornekler/src/timeline_discrete.rs"
     },
     {
       "kaynak_yolu": "timelinePlugin mode 1 semantic spans",
       "rust_karşılığı": "semantic_hücreler / TimelineHücresi başlangıç-bitiş",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timeline_discrete.rs"
+      "test": "uygulamalar/ornekler/src/timeline_discrete.rs"
     },
     {
       "kaynak_yolu": "timelinePlugin mode 2 size [0.9, 100]",
       "rust_karşılığı": "periyodik_hücreler / TimelineHücresi::azami_genişlik",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timeline_discrete.rs"
+      "test": "uygulamalar/ornekler/src/timeline_discrete.rs"
     },
     {
       "kaynak_yolu": "uPlot.join null retain/expand + unsetSameFutureValues",
       "rust_karşılığı": "HizalıDeğer / BoşlukKipi / ardışıkları_birleştir",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timeline_discrete.rs"
+      "test": "uygulamalar/ornekler/src/timeline_discrete.rs"
     },
     {
       "kaynak_yolu": "timeseries-discrete fromTs / stepTs / numSteps",
       "rust_karşılığı": "timeseries_discrete::ortak_x_değerleri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timeseries_discrete.rs"
+      "test": "uygulamalar/ornekler/src/timeseries_discrete.rs"
     },
     {
       "kaynak_yolu": "series paths stepped align=1 with draw-time value shifts",
       "rust_karşılığı": "SeriSeçenekleri::basamak_sonra / timeseries_discrete shifted drawing data",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timeseries_discrete.rs"
+      "test": "uygulamalar/ornekler/src/timeseries_discrete.rs"
     },
     {
       "kaynak_yolu": "series values subtract DEV shifts for legend",
       "rust_karşılığı": "SeriSeçenekleri::lejant_değerleri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timeseries_discrete.rs"
+      "test": "uygulamalar/ornekler/src/timeseries_discrete.rs"
     },
     {
       "kaynak_yolu": "cursor sync key '_' and top legend moved into bottom legend",
       "rust_karşılığı": "TimeseriesDiscreteGrubu ortak imleç ve birleşik_lejant_değerleri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timeseries_discrete.rs"
+      "test": "uygulamalar/ornekler/src/timeseries_discrete.rs"
     },
     {
       "kaynak_yolu": "y splits [0,2,4] values DEV1/DEV2/DEV3",
       "rust_karşılığı": "GrafikSeçenekleri::y_özel_etiketler",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timeseries_discrete.rs"
+      "test": "uygulamalar/ornekler/src/timeseries_discrete.rs"
     },
     {
       "kaynak_yolu": "fmtDate.js tzDate / DateZoned timezone getters",
       "rust_karşılığı": "ZamanDilimi / zaman_dilimi_ofseti / yerel_eksen_etiketi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timezones_dst.rs"
+      "test": "uygulamalar/ornekler/src/timezones_dst.rs"
     },
     {
       "kaynak_yolu": "timeAxisSplits timezone-adjusted hourly baseline",
       "rust_karşılığı": "zaman_bölmeleri yerel ofset hizalaması",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timezones_dst.rs"
+      "test": "uygulamalar/ornekler/src/timezones_dst.rs"
     },
     {
       "kaynak_yolu": "Europe/London 2024 spring/fall DST transitions",
       "rust_karşılığı": "ZamanDilimi::EuropeLondon geçiş aralığı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timezones_dst.rs"
+      "test": "uygulamalar/ornekler/src/timezones_dst.rs"
     },
     {
       "kaynak_yolu": "America/Chicago 2024 spring/fall DST transitions",
       "rust_karşılığı": "ZamanDilimi::AmericaChicago geçiş aralığı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timezones_dst.rs"
+      "test": "uygulamalar/ornekler/src/timezones_dst.rs"
     },
     {
       "kaynak_yolu": "51 active genOpts/sliceRange surfaces",
       "rust_karşılığı": "timezones_dst_kartları / TimezonesDstÖrneği::bölüm_indeksi / kaynak_veri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timezones_dst.rs"
+      "test": "uygulamalar/ornekler/src/timezones_dst.rs"
     },
     {
       "kaynak_yolu": "cursor.sync key + setSeries for first four triples",
       "rust_karşılığı": "TimezonesDstGrubu / TimezonesDstÖrneği::senkron_grubu",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/timezones_dst.rs"
+      "test": "uygulamalar/ornekler/src/timezones_dst.rs"
     },
     {
       "kaynak_yolu": "tooltips-closest rustc-perf.json / 234 commits and four Opt series",
       "rust_karşılığı": "tooltips_closest_kartı / yerleşik kaynak fixture",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/tooltips_closest.rs"
+      "test": "uygulamalar/ornekler/src/tooltips_closest.rs"
     },
     {
       "kaynak_yolu": "cursor.focus prox 5 alpha 0.3",
       "rust_karşılığı": "OdakDüzeni / Grafik::imleç_odağını_güncelle",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/tooltips_closest.rs"
+      "test": "uygulamalar/ornekler/src/tooltips_closest.rs"
     },
     {
       "kaynak_yolu": "closest tooltip date, commit and percent-since-start formatter",
       "rust_karşılığı": "Grafik::en_yakın_tooltip / zaman::tooltip_tarihi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/tooltips_closest.rs"
+      "test": "uygulamalar/ornekler/src/tooltips_closest.rs"
     },
     {
       "kaynak_yolu": "drawAxes hook / interpolated indices as one vertical-guide path",
       "rust_karşılığı": "EnYakınTooltipDüzeni / tek Komut::Yol kılavuz grubu",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/tooltips_closest.rs"
+      "test": "uygulamalar/ornekler/src/tooltips_closest.rs"
     },
     {
       "kaynak_yolu": "cursor.drag x+y / legend setSeries / hidden series focus exclusion",
       "rust_karşılığı": "seçim_xy_yakınlaştır / seri_görünürlüğünü_ayarla / odak adayı filtresi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/tooltips_closest.rs"
+      "test": "uygulamalar/ornekler/src/tooltips_closest.rs"
     },
     {
       "kaynak_yolu": "plot same-position click opens perf compare start/end/stat URL; tooltip is pointer-transparent",
@@ -757,19 +757,19 @@
       "kaynak_yolu": "tooltips data [1..7] / One / hidden Two",
       "rust_karşılığı": "tooltips_kartı / HizalıVeri / SeriSeçenekleri::göster",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/tooltips.rs"
+      "test": "uygulamalar/ornekler/src/tooltips.rs"
     },
     {
       "kaynak_yolu": "cursor tooltip posToVal left/top with toFixed(2)",
       "rust_karşılığı": "Grafik::tooltip_bilgileri ham imleç girdisi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/tooltips.rs"
+      "test": "uygulamalar/ornekler/src/tooltips.rs"
     },
     {
       "kaynak_yolu": "series tooltip nearest dataIdx and visible series only",
       "rust_karşılığı": "Grafik::tooltip_bilgileri görünür seri çözümlemesi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/tooltips.rs"
+      "test": "uygulamalar/ornekler/src/tooltips.rs"
     },
     {
       "kaynak_yolu": "default legend label click / setSeries toggles hidden Two",
@@ -799,31 +799,31 @@
       "kaynak_yolu": "trendlines aligned data x=0..99 and two 100-value series",
       "rust_karşılığı": "trendlines_kartı / HizalıVeri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/trendlines.rs"
+      "test": "uygulamalar/ornekler/src/trendlines.rs"
     },
     {
       "kaynak_yolu": "hooks.drawSeries per visible series",
       "rust_karşılığı": "ÇizimKancasıDüzeni::seri_uç_trendleri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/trendlines.rs"
+      "test": "uygulamalar/ornekler/src/trendlines.rs"
     },
     {
       "kaynak_yolu": "series.idxs visible i0/i1 endpoint line",
       "rust_karşılığı": "Grafik görünür_noktalar first/last trend komutu",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/trendlines.rs"
+      "test": "uygulamalar/ornekler/src/trendlines.rs"
     },
     {
       "kaynak_yolu": "drawSeries setLineDash [5,5] with series stroke/width",
       "rust_karşılığı": "Komut::KesikliÇizgi trend_kesik ve seri stili",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/trendlines.rs"
+      "test": "uygulamalar/ornekler/src/trendlines.rs"
     },
     {
       "kaynak_yolu": "drawSeries odd series width half-pixel translation",
       "rust_karşılığı": "Grafik trend komutu tek piksel 0.5 ofseti",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/trendlines.rs"
+      "test": "uygulamalar/ornekler/src/trendlines.rs"
     },
     {
       "kaynak_yolu": "default points.space=ptDia(1)*2=10 and legend setSeries visibility",
@@ -835,13 +835,13 @@
       "kaynak_yolu": "scales.x.range valToIdx min/max data snap",
       "rust_karşılığı": "GrafikSeçenekleri::x_aralığını_veriye_yapıştır",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/trendlines.rs"
+      "test": "uygulamalar/ornekler/src/trendlines.rs"
     },
     {
       "kaynak_yolu": "setSize({width, height})",
       "rust_karşılığı": "Grafik::boyutu_ayarla",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/update_cursor_select_resize.rs"
+      "test": "uygulamalar/ornekler/src/update_cursor_select_resize.rs"
     },
     {
       "kaynak_yolu": "_setSize cursor.left/top proportional scaling",
@@ -865,7 +865,7 @@
       "kaynak_yolu": "update-cursor-select-resize 100ms 800..400 size loop",
       "rust_karşılığı": "BoyutSenkronAkışı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/update_cursor_select_resize.rs"
+      "test": "uygulamalar/ornekler/src/update_cursor_select_resize.rs"
     },
     {
       "kaynak_yolu": "setSize redraws canvas while cursor/select/cursorPts DOM nodes are retained",
@@ -877,73 +877,73 @@
       "kaynak_yolu": "series.auto: false",
       "rust_karşılığı": "SeriSeçenekleri::otomatik_ölçeğe_katıl(false)",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/wind_direction.rs"
+      "test": "uygulamalar/ornekler/src/wind_direction.rs"
     },
     {
       "kaynak_yolu": "series.paths custom wind vector geometry",
       "rust_karşılığı": "RüzgarYönüDüzeni",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/wind_direction.rs"
+      "test": "uygulamalar/ornekler/src/wind_direction.rs"
     },
     {
       "kaynak_yolu": "valToPos(times[i], 'x') + valToPos(speeds[i], 'y2')",
       "rust_karşılığı": "Grafik::rüzgar_yönlerini_çiz",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/wind_direction.rs"
+      "test": "uygulamalar/ornekler/src/wind_direction.rs"
     },
     {
       "kaynak_yolu": "(dirs[i] - 90) * PI / 180; len = 15",
       "rust_karşılığı": "RüzgarYönüDüzeni 15 px derece vektörü",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/wind_direction.rs"
+      "test": "uygulamalar/ornekler/src/wind_direction.rs"
     },
     {
       "kaynak_yolu": "getOuterIdxs(data[seriesIdx]) and unclipped boundary vectors",
       "rust_karşılığı": "Grafik::rüzgar_yönlerini_çiz görünüm dışı komşu taraması",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/wind_direction.rs"
+      "test": "uygulamalar/ornekler/src/wind_direction.rs"
     },
     {
       "kaynak_yolu": "single beginPath() + stroke() for all wind vectors",
       "rust_karşılığı": "tek Komut::Yol içinde iki noktalı vektör parçaları",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/wind_direction.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/wind_direction.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "setSeries show gates custom paths and autoscale",
       "rust_karşılığı": "seri_görünürlüğünü_ayarla + görünür seri autoscale filtresi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/wind_direction.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/wind_direction.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "hooks.ready: .u-axis mousedown",
       "rust_karşılığı": "Grafik::eksen_sürüklemeyi_başlat",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_scale_drag.rs"
+      "test": "uygulamalar/ornekler/src/y_scale_drag.rs"
     },
     {
       "kaynak_yolu": "setScale(scaleKey, {min + d * unitsPerPx, max + d * unitsPerPx})",
       "rust_karşılığı": "Grafik::eksen_sürükle normal kaydırma",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_scale_drag.rs"
+      "test": "uygulamalar/ornekler/src/y_scale_drag.rs"
     },
     {
       "kaynak_yolu": "shiftKey grow/contract min-max formula",
       "rust_karşılığı": "Grafik::eksen_sürükle Shift ölçekleme",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_scale_drag.rs"
+      "test": "uygulamalar/ornekler/src/y_scale_drag.rs"
     },
     {
       "kaynak_yolu": "independent meter and km/h scales",
       "rust_karşılığı": "Grafik::elle_y_aralıkları",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_scale_drag.rs"
+      "test": "uygulamalar/ornekler/src/y_scale_drag.rs"
     },
     {
       "kaynak_yolu": "axes[1].size = 25 + longest label length * 6",
       "rust_karşılığı": "OtomatikEksenGenişliği + otomatik_y_eksen_genişliği_hesabı(25, 6)",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_scale_drag.rs"
+      "test": "uygulamalar/ornekler/src/y_scale_drag.rs"
     },
     {
       "kaynak_yolu": "document mousemove/mouseup keeps drag alive outside axis",
@@ -955,61 +955,61 @@
       "kaynak_yolu": "setSeries invalidates auto scale after manual setScale",
       "rust_karşılığı": "seri_görünürlüğünü_ayarla elle ölçek aralığını temizler",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_scale_drag.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/y_scale_drag.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "mode.data(data)",
       "rust_karşılığı": "YShiftedSeriesAkışı kaydırılmış seri geometrisi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs"
+      "test": "uygulamalar/ornekler/src/y_shifted_series.rs"
     },
     {
       "kaynak_yolu": "series.fillTo(u, seriesIdx, dataMin, dataMax, band, scale)",
       "rust_karşılığı": "SeriSeçenekleri::dolgu_tabanı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs"
+      "test": "uygulamalar/ornekler/src/y_shifted_series.rs"
     },
     {
       "kaynak_yolu": "series.value(u, rawValue, seriesIdx, idx)",
       "rust_karşılığı": "SeriSeçenekleri::lejant_değerleri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs"
+      "test": "uygulamalar/ornekler/src/y_shifted_series.rs"
     },
     {
       "kaynak_yolu": "axis.values shifted modulo/core labels",
       "rust_karşılığı": "GrafikSeçenekleri::y_özel_etiketler",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs"
+      "test": "uygulamalar/ornekler/src/y_shifted_series.rs"
     },
     {
       "kaynak_yolu": "setInterval setData(mode.data(data), 2000)",
       "rust_karşılığı": "YShiftedSeriesAkışı::ilerlet_güncellemesi + Grafik::veriyi_y_sunumunda_ayarla",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/y_shifted_series.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "uPlot.paths.bars() fillTo baseline and single Path2D",
       "rust_karşılığı": "dolgu_tabanı + toplu_çubuk_yolu tek Alan/tek Yol",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/y_shifted_series.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "series.value changes legend only; cursor point uses shifted data",
       "rust_karşılığı": "ham lejant kanalı ile İmleçÇözümü geometri kanalının ayrılması",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs + src/gpui.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/y_shifted_series.rs + src/gpui.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "setData preserves series.show and re-resolves cursor on same instance",
       "rust_karşılığı": "atomik Y sunumu güncellemesi + GPUI canlı cursor yenileme",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/y_shifted_series.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "cursor.move rounds left/top to a 10 CSS pixel grid",
       "rust_karşılığı": "Grafik::imleç_oranlarını_uyarla + responsive GPUI masaüstü/web piksel dönüşümü",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/cursor_snap.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/cursor_snap.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "cursor.move transformed mousedown/mousemove drives select rectangle",
@@ -1021,7 +1021,7 @@
       "kaynak_yolu": "cursor points resolve nearest data index after move transform",
       "rust_karşılığı": "snap edilmiş cursor oranından İmleçÇözümü gerçek veri geometrisi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/cursor_snap.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/cursor_snap.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "setSeries show from standard legend",
@@ -1033,121 +1033,121 @@
       "kaynak_yolu": "missing-data.html creates two independent uPlot instances",
       "rust_karşılığı": "missing_data_kartları + tek katalog kartında iki bağımsız GPUI masaüstü/web yüzeyi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/missing_data.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/missing_data.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "series.value CPU/RAM percent and TCP MB formatting",
       "rust_karşılığı": "bitişik % eksen etiketi + yüzey lejantında bir ondalık %/MB biçimi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/missing_data.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/missing_data.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "standard legend setSeries show per independent plot",
       "rust_karşılığı": "Missing Data yüzeyine ait GPUI masaüstü/web seri anahtarları",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/missing_data.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/missing_data.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "series.gaps scans original adjacent data indices before path building",
       "rust_karşılığı": "azami_x_boşluğu gerçek indeks komşuluğu; seyrekleştirilmiş noktalar sahte gap üretmez",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/missing_data.rs"
+      "test": "uygulamalar/ornekler/src/missing_data.rs"
     },
     {
       "kaynak_yolu": "hidden series excluded from auto scale",
       "rust_karşılığı": "seri_görünürlüğünü_ayarla + görünür seri ölçek filtresi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/missing_data.rs"
+      "test": "uygulamalar/ornekler/src/missing_data.rs"
     },
     {
       "kaynak_yolu": "Scale.from + affine Scale.range",
       "rust_karşılığı": "YÖlçekSeçenekleri::kaynak_dönüşümü + Grafik::görünür_y_ölçek_aralığı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/dependent_scale.rs"
+      "test": "uygulamalar/ornekler/src/dependent_scale.rs"
     },
     {
       "kaynak_yolu": "default rangeNum(min,max,.1,true) on dependent source scale",
       "rust_karşılığı": "YÖlçekSeçenekleri::sayısal_aralık / SayısalAralıkAyarları",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/dependent_scale.rs"
+      "test": "uygulamalar/ornekler/src/dependent_scale.rs"
     },
     {
       "kaynak_yolu": "Y Axis.space",
       "rust_karşılığı": "YÖlçekSeçenekleri::eksen_en_az_etiket_boşluğu",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/dependent_scale.rs"
+      "test": "uygulamalar/ornekler/src/dependent_scale.rs"
     },
     {
       "kaynak_yolu": "dependent-scale standard legend setSeries show",
       "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla + GPUI masaüstü/web değiştirilebilir lejant",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/dependent_scale.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/dependent_scale.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "Scale.distr=4 / Scale.asinh / rangeAsinh",
       "rust_karşılığı": "YÖlçekDağılımı::ArcSinh + arcsinh_otomatik_aralık",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/arcsinh_scales.rs"
+      "test": "uygulamalar/ornekler/src/arcsinh_scales.rs"
     },
     {
       "kaynak_yolu": "asinhAxisSplits + log10AxisValsFilt",
       "rust_karşılığı": "grafik::arcsinh_bölmeleri + ArcSinh magnitude etiket filtresi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/arcsinh_scales.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/arcsinh_scales.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "valToPos / posToVal for nonlinear Y interactions",
       "rust_karşılığı": "etkilesim::y_aralığını_dönüştür / y_aralığını_geri_dönüştür",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/arcsinh_scales.rs"
+      "test": "uygulamalar/ornekler/src/arcsinh_scales.rs"
     },
     {
       "kaynak_yolu": "runtime Scale.asinh mutation + redraw(true,true)",
       "rust_karşılığı": "Grafik::y_arcsinh_eşiği_ayarla + GPUI masaüstü/web eşik kontrolleri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/arcsinh_scales.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/arcsinh_scales.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "axis-autosize setInterval(500) + u.setData(getData(...))",
       "rust_karşılığı": "AxisAutosizeAkışı + Grafik::canlı_veriyi_x_etiket_çarpanında_ayarla",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_autosize.rs + src/gpui.rs + uygulamalar/masaustu/src/main.rs"
+      "test": "uygulamalar/ornekler/src/axis_autosize.rs + src/gpui.rs + uygulamalar/masaustu/src/main.rs"
     },
     {
       "kaynak_yolu": "axis-autosize autoPadRight cycleNum / last split label edge",
       "rust_karşılığı": "Grafik::çizim_alanı_boyutta üç çevrimli son gerçek X bölmesi payı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_autosize.rs"
+      "test": "uygulamalar/ornekler/src/axis_autosize.rs"
     },
     {
       "kaynak_yolu": "axis-autosize axes[1].size measureText + labelGap/labelSize",
       "rust_karşılığı": "yaklaşık_metin_genişliği + otomatik_y_eksen_genişliği + DöndürülmüşMetin",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_autosize.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/axis_autosize.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "axis-autosize .uplot / .u-under backgrounds",
       "rust_karşılığı": "GrafikSeçenekleri::arka_plan_rengi + çizim_alanı_arka_plan_rengi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_autosize.rs"
+      "test": "uygulamalar/ornekler/src/axis_autosize.rs"
     },
     {
       "kaynak_yolu": "axis-control Axis.space=50 / side=1 / label layout budget",
       "rust_karşılığı": "YÖlçekSeçenekleri::eksen_en_az_etiket_boşluğu + birincil_y_sağda + birincil_y_eksen_genişliği",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_control.rs"
+      "test": "uygulamalar/ornekler/src/axis_control.rs"
     },
     {
       "kaynak_yolu": "axis-control axis label rotation + fixed -50..50 ticks",
       "rust_karşılığı": "Komut::DöndürülmüşMetin + GrafikSeçenekleri::y_sabit_bölmeler",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_control.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/axis_control.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "linear path decimation _drawAcc first/min/max/out",
       "rust_karşılığı": "çizilecek_indeksler / kova_indekslerini_ekle",
       "durum": "tam_kanıtlı",
-      "test": "src/grafik.rs + src/kart/axis_control.rs"
+      "test": "src/grafik.rs + uygulamalar/ornekler/src/axis_control.rs"
     },
     {
       "kaynak_yolu": "linear path zoom boundary outer indices",
@@ -1159,67 +1159,67 @@
       "kaynak_yolu": "axis-control standard legend setSeries show with fixed scale",
       "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla + GPUI masaüstü/web değiştirilebilir lejant",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_control.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/axis_control.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "axis-indicators Axis.size/border/ticks/stroke",
       "rust_karşılığı": "YÖlçekSeçenekleri::eksen_genişliği + renkli eksen sınır/bölme komutları",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_indicators.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/axis_indicators.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "axisIndicsPlugin init/setLegend + cursor.y=false",
       "rust_karşılığı": "GrafikSeçenekleri::eksen_göstergeleri + GPUI masaüstü/web hafif gösterge katmanı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_indicators.rs + src/gpui.rs"
+      "test": "uygulamalar/ornekler/src/axis_indicators.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "axis-indicators setSeries/null badge visibility",
       "rust_karşılığı": "Grafik::imleç_çözümü görünür-seri filtresi + değiştirilebilir lejant",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_indicators.rs"
+      "test": "uygulamalar/ornekler/src/axis_indicators.rs"
     },
     {
       "kaynak_yolu": "hooks.drawClear annotation visibility filter",
       "rust_karşılığı": "Grafik annotation görünürlük ve kırpma katmanı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/annotations.rs"
+      "test": "uygulamalar/ornekler/src/annotations.rs"
     },
     {
       "kaynak_yolu": "valToPos(mark.from/mark.to, 'x')",
       "rust_karşılığı": "Grafik::x_konumu annotation geometrisi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/annotations.rs"
+      "test": "uygulamalar/ornekler/src/annotations.rs"
     },
     {
       "kaynak_yolu": "annotationsPlugin types and xMarks",
       "rust_karşılığı": "AçıklamaDüzeni, AçıklamaStili ve Açıklamaİşareti",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/annotations.rs"
+      "test": "uygulamalar/ornekler/src/annotations.rs"
     },
     {
       "kaynak_yolu": "scales.y.range(u, dataMin, dataMax)",
       "rust_karşılığı": "GrafikSeçenekleri::kütle_spektrumu_y_aralığı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/mass_spectrum.rs"
+      "test": "uygulamalar/ornekler/src/mass_spectrum.rs"
     },
     {
       "kaynak_yolu": "fetch('./data/ms_spectrum.csv') columnar parse",
       "rust_karşılığı": "mass_spectrum_kartı kaynak CSV ayrıştırması",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/mass_spectrum.rs"
+      "test": "uygulamalar/ornekler/src/mass_spectrum.rs"
     },
     {
       "kaynak_yolu": "datumsPlugin keydown 1/2 and Escape",
       "rust_karşılığı": "Grafik::ölçüm_datumunu_ayarla / ölçüm_datumlarını_temizle",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/measure_datums.rs"
+      "test": "uygulamalar/ornekler/src/measure_datums.rs"
     },
     {
       "kaynak_yolu": "drawDatum and drawDelta hooks",
       "rust_karşılığı": "Grafik ölçüm datum sahne katmanı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/measure_datums.rs"
+      "test": "uygulamalar/ornekler/src/measure_datums.rs"
     }
   ]
 }

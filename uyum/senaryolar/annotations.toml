@@ -1,7 +1,7 @@
 id = "annotations"
 kaynak = "../uPlot/demos/annotations.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/annotations.rs#annotations_kartı"
+fixture = "uygulamalar/ornekler/src/annotations.rs#annotations_kartı"
 viewport = [1920, 600]
 durum = "tekil_ve_aralik_x_isaretleri"
 

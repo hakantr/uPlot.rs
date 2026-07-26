@@ -1,7 +1,7 @@
 id = "timezones-dst"
 "kaynak" = "../uPlot/demos/timezones-dst.html"
 "kaynak_commit" = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/timezones_dst.rs#timezones_dst_kartları"
+fixture = "uygulamalar/ornekler/src/timezones_dst.rs#timezones_dst_kartları"
 viewport = [600, 200]
 durum = "elli_bir_etkin_zaman_dilimi_yüzeyi"
 

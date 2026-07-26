@@ -1,3 +1,15 @@
+//! Katalog uygulamalarının örnek veri ve yapılandırmaları.
+//!
+//! Bu paket yayınlanmaz. Üretim kullanıcıları yalnız `uplot-rs` çekirdeğini
+//! alır; buradaki veri setleri ve demo kurucuları onların bağımlılık ağacına
+//! girmez.
+
+#![allow(confusable_idents)]
+
+#[cfg(test)]
+pub(crate) use uplot_rs::diagnostics::{Komut, Sahne};
+pub use uplot_rs::*;
+
 mod add_del_series;
 mod align_data;
 mod annotations;
@@ -65,6 +77,7 @@ mod veri_uretici;
 mod wind_direction;
 mod y_scale_drag;
 mod y_shifted_series;
+mod zaman;
 mod zoom_touch;
 mod zoom_wheel;
 

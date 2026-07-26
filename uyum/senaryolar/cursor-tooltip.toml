@@ -1,6 +1,6 @@
 id = "cursor-tooltip"
 kaynak = "../uPlot/demos/cursor-tooltip.html"
-fixture = "src/kart/cursor_tooltip.rs#cursor_tooltip_kartı"
+fixture = "uygulamalar/ornekler/src/cursor_tooltip.rs#cursor_tooltip_kartı"
 viewport = [600, 400]
 device_pixel_ratio = 1
 durum = "etkilesimli-bilgi-kutusu"

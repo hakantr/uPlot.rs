@@ -1,6 +1,6 @@
 id = "area-fill"
 kaynak = "../uPlot/demos/area-fill.html"
-fixture = "src/kart/area_fill.rs#area_fill_kartı"
+fixture = "uygulamalar/ornekler/src/area_fill.rs#area_fill_kartı"
 viewport = [1920, 600]
 device_pixel_ratio = 1
 durum = "etkileşimli"

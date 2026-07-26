@@ -1,6 +1,6 @@
 id = "soft-minmax"
 kaynak = "../uPlot/demos/soft-minmax.html"
-fixture = "src/kart/soft_minmax.rs#soft_minmax_kartları"
+fixture = "uygulamalar/ornekler/src/soft_minmax.rs#soft_minmax_kartları"
 viewport = [1600, 900]
 device_pixel_ratio = 1
 durum = "tek_grupta_beş_soft_minmax_yüzeyi"

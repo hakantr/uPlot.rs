@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import vm from "node:vm";
 
 const kaynakYolu = new URL("../../../uPlot/demos/path-gap-clip.html", import.meta.url);
-const hedefYolu = new URL("../../src/kart/veri/path_gap_clip.json", import.meta.url);
+const hedefYolu = new URL("../../uygulamalar/ornekler/src/veri/path_gap_clip.json", import.meta.url);
 const kaynak = readFileSync(kaynakYolu, "utf8");
 
 function blok(değişken, bitişİşareti) {

@@ -1,6 +1,6 @@
 id = "pixel-align"
 kaynak = "../uPlot/demos/pixel-align.html"
-fixture = "src/kart/pixel_align.rs#pixel_align_kartları"
+fixture = "uygulamalar/ornekler/src/pixel_align.rs#pixel_align_kartları"
 viewport = [1300, 1200]
 device_pixel_ratio = 1
 durum = "iki_canlı_yüzey"

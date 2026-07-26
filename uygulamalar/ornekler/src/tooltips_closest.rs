@@ -143,9 +143,12 @@ mod testler {
                     if renk == "#fcb0f17a" && parçalar.len() == 100
             )
         }));
-        let svg = sahne.test_svg();
-        assert_eq!(svg.matches("<circle").count(), 0);
-        assert_eq!(svg.matches("#fcb0f17a").count(), 1);
+        assert!(
+            !sahne
+                .komutlar()
+                .iter()
+                .any(|komut| matches!(komut, Komut::Daire { .. } | Komut::Daireler { .. }))
+        );
         Ok(())
     }
 

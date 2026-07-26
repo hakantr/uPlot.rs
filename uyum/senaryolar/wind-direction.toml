@@ -1,7 +1,7 @@
 id = "wind-direction"
 kaynak = "../uPlot/demos/wind-direction.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/wind_direction.rs#wind_direction_kartı"
+fixture = "uygulamalar/ornekler/src/wind_direction.rs#wind_direction_kartı"
 viewport = [800, 400]
 durum = "saatlik_hız_konumlarında_yön_vektörleri"
 

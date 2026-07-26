@@ -1,7 +1,7 @@
 id = "time-periods"
 kaynak = "../uPlot/demos/time-periods.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/time_periods.rs#time_periods_kartları"
+fixture = "uygulamalar/ornekler/src/time_periods.rs#time_periods_kartları"
 viewport = [1920, 200]
 durum = "tek_kartta_üç_bağımsız_kaynak_zaman_yüzeyi"
 

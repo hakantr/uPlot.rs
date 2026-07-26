@@ -1,7 +1,7 @@
 id = "update-cursor-select-resize"
 kaynak = "../uPlot/demos/update-cursor-select-resize.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/update_cursor_select_resize.rs#update_cursor_select_resize_kartı"
+fixture = "uygulamalar/ornekler/src/update_cursor_select_resize.rs#update_cursor_select_resize_kartı"
 viewport = [800, 800]
 durum = "boyut_değişirken_imleç_seçim_ve_hover_oranları_korunur"
 

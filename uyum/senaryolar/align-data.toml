@@ -1,6 +1,6 @@
 id = "align-data"
 kaynak = "../uPlot/demos/align-data.html"
-fixture = "src/kart/align_data.rs"
+fixture = "uygulamalar/ornekler/src/align_data.rs"
 viewport = [2560, 600]
 device_pixel_ratio = 1
 durum = "join-ve-karma-cizim"

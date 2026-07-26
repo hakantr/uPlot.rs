@@ -128,13 +128,14 @@ cargo fmt --all --check
 cargo check -p uplot-rs --lib --no-default-features
 cargo check -p uplot-rs --lib --no-default-features --features gpui-svg
 cargo check -p uplot-rs --lib --all-features
+cargo check -p uplot-rs-gpui-ornekler --all-features
 cargo check -p uplot-rs-gpui-katalog
 cargo check -p uplot-rs-gpui-web --target wasm32-unknown-unknown
 cargo check --target wasm32-unknown-unknown --workspace
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-targets --all-features
 RUSTFLAGS='--cfg phase12_allocator --cap-lints allow' \
-  cargo test --release -p uplot-rs --test performance_budgets \
+  cargo test --release -p uplot-rs-gpui-ornekler --test performance_budgets \
   --all-features -- --test-threads=1 --nocapture
 npm --prefix tools/uyum run denetle
 (cd uygulamalar/web && NO_COLOR=false trunk build --release --public-url /uPlot.rs/)

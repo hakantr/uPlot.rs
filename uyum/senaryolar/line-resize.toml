@@ -1,6 +1,6 @@
 id = "line-resize"
 kaynak = "../uPlot/demos/resize.html"
-fixture = "src/kart/resize.rs#resize_kartı"
+fixture = "uygulamalar/ornekler/src/resize.rs#resize_kartı"
 viewport = [800, 400]
 device_pixel_ratio = 1
 durum = "etkileşimli"

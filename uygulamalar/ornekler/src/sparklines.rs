@@ -447,7 +447,7 @@ mod testler {
     fn kompakt_sahne_kaynak_renklerini_ve_alt_pikseli_korur() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = sparklines_kartı(SparklineÖrneği::TÜMÜ[0])?;
         let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
-        assert!(sahne.test_svg().contains("width=\"150\" height=\"30\""));
+        assert_eq!(sahne.boyut(), (150, 30));
         assert!(matches!(
             sahne.komutlar().first(),
             Some(Komut::ArkaPlan { renk }) if renk == "pink"

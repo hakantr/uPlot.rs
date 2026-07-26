@@ -192,8 +192,9 @@ hash kilidini doğrular. Tarayıcı kataloğu `uygulamalar/web/Trunk.toml`
 - `src/etkilesim.rs`: kartın etkileşim durumu, yakınlaştırma ve görünüm geçmişi
 - `src/gpui.rs`: her normal build'de bulunan hazır GPUI grafik bileşeni
 - `src/gpui/svg_kaydi.rs`: yalnız `gpui-svg` ile derlenen vektör dışa aktarım
-- `src/kart.rs` + `src/kart/`: kaynak verisini koruyan kart fixture'ları
 - `src/secenek.rs` + `src/secenek/`: ilişkili seçenek türleri
+- `uygulamalar/ornekler/`: yayınlanmayan kart yapılandırmaları ve kaynak veri
+  fixture'ları; `uplot-rs` kullanıcılarının bağımlılıklarına girmez
 - `uygulamalar/katalog/`: native ve web'in paylaştığı tek GPUI kart kayıt
   defteri, ilişkili yüzey grupları ve açıklama UI'si
 - `uygulamalar/masaustu/`: ortak kataloğu native GPUI penceresinde açan giriş

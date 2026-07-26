@@ -1,6 +1,6 @@
 id = "gradients"
 kaynak = "../uPlot/demos/gradients.html"
-fixture = "src/kart/gradients.rs#gradients_kartları"
+fixture = "uygulamalar/ornekler/src/gradients.rs#gradients_kartları"
 viewport = [800, 600]
 device_pixel_ratio = 1
 durum = "beş-kaynak-alt-grafiği"

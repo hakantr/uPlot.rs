@@ -1,6 +1,6 @@
 id = "axis-indicators"
 kaynak = "../uPlot/demos/axis-indicators.html"
-fixture = "src/kart/axis_indicators.rs#axis_indicators_kartı"
+fixture = "uygulamalar/ornekler/src/axis_indicators.rs#axis_indicators_kartı"
 viewport = [1920, 600]
 device_pixel_ratio = 1
 durum = "etkileşimli"

@@ -259,7 +259,7 @@ fn dilim<T: Clone>(
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::Grafik;
+    use crate::{Grafik, Komut};
 
     #[test]
     fn üç_kaynak_yüzeyi_başlangıç_dilimlerini_korur() -> Result<(), UplotHatası> {
@@ -295,7 +295,9 @@ mod testler {
                     })?;
             assert!(son_x.is_finite());
             assert_eq!(son_değerler.len(), 3);
-            assert!(grafik.çiz().test_svg().contains(örnek.başlık()));
+            assert!(grafik.çiz().komutlar().iter().any(
+                |komut| matches!(komut, Komut::Metin { içerik, .. } if içerik == örnek.başlık())
+            ));
         }
         Ok(())
     }

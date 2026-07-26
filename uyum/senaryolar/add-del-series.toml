@@ -1,6 +1,6 @@
 id = "add-del-series"
 "kaynak" = "../uPlot/demos/add-del-series.html"
-fixture = "src/kart/add_del_series.rs#add_del_series_kartı"
+fixture = "uygulamalar/ornekler/src/add_del_series.rs#add_del_series_kartı"
 viewport = [1920, 600]
 device_pixel_ratio = 1
 "durum" = "etkileşimli-dinamik-seri"

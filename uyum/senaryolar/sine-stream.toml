@@ -1,6 +1,6 @@
 id = "sine-stream"
 kaynak = "../uPlot/demos/sine-stream.html"
-fixture = "src/kart/sine_stream.rs#sine_stream_kartı"
+fixture = "uygulamalar/ornekler/src/sine_stream.rs#sine_stream_kartı"
 viewport = [1920, 900]
 device_pixel_ratio = 1
 durum = "altı_seri_60fps_kayan_pencere"

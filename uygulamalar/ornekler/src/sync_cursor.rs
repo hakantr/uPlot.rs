@@ -333,7 +333,7 @@ fn dilim<T: Clone>(
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::Grafik;
+    use crate::{Grafik, Komut};
 
     #[test]
     fn beş_kaynak_yüzeyi_boyut_veri_ve_serileri_korur() -> Result<(), UplotHatası> {
@@ -342,12 +342,9 @@ mod testler {
             assert_eq!((seçenekler.genişlik, seçenekler.yükseklik), örnek.boyut());
             let beklenen = if örnek.grup() == 0 { 1_000 } else { 2 };
             assert_eq!(veri.uzunluk(), beklenen);
-            assert!(
-                Grafik::yeni(seçenekler, veri)?
-                    .çiz()
-                    .test_svg()
-                    .contains(örnek.başlık())
-            );
+            assert!(Grafik::yeni(seçenekler, veri)?.çiz().komutlar().iter().any(
+                |komut| matches!(komut, Komut::Metin { içerik, .. } if içerik == örnek.başlık())
+            ));
         }
         Ok(())
     }

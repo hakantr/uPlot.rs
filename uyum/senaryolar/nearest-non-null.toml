@@ -1,7 +1,7 @@
 id = "nearest-non-null"
 kaynak = "../uPlot/demos/nearest-non-null.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/nearest_non_null.rs#nearest_non_null_kartı"
+fixture = "uygulamalar/ornekler/src/nearest_non_null.rs#nearest_non_null_kartı"
 viewport = [1920, 600]
 durum = "bes_yuzeyli_null_proximity_ve_cursor_karsilastirmasi"
 

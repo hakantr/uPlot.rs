@@ -59,7 +59,7 @@ fn sayı(metin: &str, satır: usize) -> Result<f64, UplotHatası> {
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Aralık, Grafik};
+    use crate::{Aralık, Grafik, Komut};
 
     #[test]
     fn kaynak_csv_aynen_yüklenir() -> Result<(), UplotHatası> {
@@ -119,11 +119,20 @@ mod testler {
     #[test]
     fn kaynak_çizgi_ve_eksen_etiketleri_sahneye_çıkar() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = mass_spectrum_kartı()?;
-        let svg = Grafik::yeni(seçenekler, veri)?.çiz().test_svg();
-        assert!(svg.contains("Mass spectrum"));
-        assert!(svg.contains("m/z"));
-        assert!(svg.contains("relative abundance (%)"));
-        assert!(svg.contains("#305CDE"));
+        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+        for beklenen in ["Mass spectrum", "m/z", "relative abundance (%)"] {
+            assert!(sahne.komutlar().iter().any(|komut| matches!(
+                komut,
+                Komut::Metin { içerik, .. } | Komut::DöndürülmüşMetin { içerik, .. }
+                    if içerik == beklenen
+            )));
+        }
+        assert!(
+            sahne
+                .komutlar()
+                .iter()
+                .any(|komut| matches!(komut, Komut::Yol { renk, .. } if renk == "#305CDE"))
+        );
         Ok(())
     }
 

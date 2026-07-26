@@ -1,7 +1,7 @@
 id = "sparklines"
 kaynak = "../uPlot/demos/sparklines.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/sparklines.rs#sparklines_kartları"
+fixture = "uygulamalar/ornekler/src/sparklines.rs#sparklines_kartları"
 "simge_sayısı" = 10
 "yüzey_sayısı" = 20
 "kayıt_sayısı" = 22

@@ -59,7 +59,7 @@ pub fn scroll_sync_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHa
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Grafik, YüzeyDikdörtgeni};
+    use crate::{Grafik, Komut, YüzeyDikdörtgeni};
 
     #[test]
     fn kaynak_veri_boyutu_havuzu_ve_stilleri_korunur() -> Result<(), UplotHatası> {
@@ -72,9 +72,17 @@ mod testler {
         assert!(seçenekler.seriler.iter().all(|seri| seri.etiket == "Value"));
         assert!(!seçenekler.etkileşimler.tekerlek_etkileşimi);
         assert!(!seçenekler.etkileşimler.dokunma_etkileşimi);
-        let svg = Grafik::yeni(seçenekler, veri)?.çiz().test_svg();
-        assert!(svg.contains(".syncRect()"));
-        assert!(svg.contains("rgba(255,0,0,0.1)"));
+        let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
+        assert!(
+            sahne.komutlar().iter().any(
+                |komut| matches!(komut, Komut::Metin { içerik, .. } if içerik == ".syncRect()")
+            )
+        );
+        assert!(
+            sahne.komutlar().iter().any(
+                |komut| matches!(komut, Komut::Alan { dolgu, .. } if dolgu == "rgba(255,0,0,0.1)")
+            )
+        );
         Ok(())
     }
 

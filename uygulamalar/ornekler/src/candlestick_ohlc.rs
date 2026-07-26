@@ -74,7 +74,7 @@ pub fn candlestick_ohlc_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), Up
 #[cfg(test)]
 mod testler {
     use super::*;
-    use crate::{Grafik, Komut, grafik::usd_biçimle};
+    use crate::{Grafik, Komut};
 
     #[test]
     fn kaynak_ohlc_verisi_ve_mum_geometrisi_korunur() -> Result<(), UplotHatası> {
@@ -97,8 +97,6 @@ mod testler {
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
         assert_eq!(grafik.mum_tarih_etiketi(0).as_deref(), Some("2019-01-01"));
         assert_eq!(grafik.mum_tarih_etiketi(217).as_deref(), Some("2019-10-25"));
-        assert_eq!(usd_biçimle(1_284.7, 2), "$1,284.70");
-        assert_eq!(usd_biçimle(-1_300.0, 0), "$-1,300");
         assert_eq!(grafik.görünür_x_aralığı(), Aralık::yeni(0.0, 217.0)?);
         let vuruş = grafik.kutu_bıyık_vuruşu(1_920, 600, 72.0, 100.0);
         assert!(vuruş.is_some(), "ilk mum sütunu vurulmalı");

@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import vm from "node:vm";
 
 const kaynakYolu = new URL("../../../uPlot/demos/custom-scales.html", import.meta.url);
-const hedefYolu = new URL("../../src/kart/veri/custom_scales_kaynak.rs", import.meta.url);
+const hedefYolu = new URL("../../uygulamalar/ornekler/src/veri/custom_scales_kaynak.rs", import.meta.url);
 const kaynak = readFileSync(kaynakYolu, "utf8");
 const veriBaşlangıcı = kaynak.indexOf("let data =");
 const noktaBaşlangıcı = kaynak.indexOf("let pointVals");

@@ -1,7 +1,7 @@
 id = "sync-y-zero"
 kaynak = "../uPlot/demos/sync-y-zero.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/sync_y_zero.rs#sync_y_zero_kartı"
+fixture = "uygulamalar/ornekler/src/sync_y_zero.rs#sync_y_zero_kartı"
 viewport = [800, 400]
 durum = "üç_aşamalı_canlı_ölçek_hizalama"
 

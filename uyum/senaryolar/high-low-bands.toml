@@ -1,6 +1,6 @@
 id = "high-low-bands"
 kaynak = "../uPlot/demos/high-low-bands.html"
-fixture = "src/kart/high_low_bands.rs#high_low_bands_kartları"
+fixture = "uygulamalar/ornekler/src/high_low_bands.rs#high_low_bands_kartları"
 device_pixel_ratio = 1
 "alt_grafik_sayısı" = 12
 "kaynak_sırası_tek_kartta" = true
@@ -8,7 +8,7 @@ rastgele_normalizasyon = "kaynak çalıştırmasından alınmış deterministik 
 
 [veri]
 "nokta_sayıları" = [365, 101, 101, 10, 4, 83, 3, 6, 6, 363, 363, 42]
-"kaynak_varlık" = "src/kart/veri/high_low_bands.json"
+"kaynak_varlık" = "uygulamalar/ornekler/src/veri/high_low_bands.json"
 "kaynak_varlık_sha256" = "5f71fb3245493ee55666bdd71833917584f42451d169930d9cf286224d3f3040"
 
 ["davranış"]

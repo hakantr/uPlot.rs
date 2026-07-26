@@ -1,6 +1,6 @@
 id = "nice-scale"
 kaynak = "../uPlot/demos/nice-scale.html"
-fixture = "src/kart/nice_scale.rs#nice_scale_kartı"
+fixture = "uygulamalar/ornekler/src/nice_scale.rs#nice_scale_kartı"
 viewport = [1920, 600]
 dar_viewport = [600, 240]
 device_pixel_ratio = 1

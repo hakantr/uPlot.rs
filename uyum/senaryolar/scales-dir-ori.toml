@@ -1,6 +1,6 @@
 id = "scales-dir-ori"
 kaynak = "../uPlot/demos/scales-dir-ori.html"
-fixture = "src/kart/scales_dir_ori.rs#scales_dir_ori_kartları"
+fixture = "uygulamalar/ornekler/src/scales_dir_ori.rs#scales_dir_ori_kartları"
 viewport = [1920, 1500]
 device_pixel_ratio = 1
 durum = "on_altı_kaynak_yüzeyi"

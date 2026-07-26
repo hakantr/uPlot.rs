@@ -219,7 +219,7 @@ mod testler {
             assert!(çözülen.is_some());
             assert_eq!(çözülen.map(KartKimliği::slug), Some(slug));
         }
-        for örnek in uplot_rs::MultiBarsÖrneği::TÜMÜ {
+        for örnek in uplot_rs_gpui_ornekler::MultiBarsÖrneği::TÜMÜ {
             let kart = KartKimliği::MultiBars(örnek);
             assert_eq!(
                 KartKimliği::slugdan(kart.slug()).map(KartKimliği::slug),

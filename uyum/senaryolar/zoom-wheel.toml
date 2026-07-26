@@ -1,6 +1,6 @@
 id = "zoom-wheel"
 kaynak = "../uPlot/demos/zoom-wheel.html"
-fixture = "src/kart/zoom_wheel.rs#zoom_wheel_kartı"
+fixture = "uygulamalar/ornekler/src/zoom_wheel.rs#zoom_wheel_kartı"
 viewport = [600, 400]
 device_pixel_ratio = 1
 durum = "ortak_profile_devredildi_ayri_katalog_karti_yok"
@@ -27,7 +27,7 @@ x_y_birlikte = true
 "görünüm_geçmişi" = true
 
 ["kanıt"]
-"ortak_çekirdek" = "src/kart/zoom_wheel.rs#zoom_wheel_kartı"
+"ortak_çekirdek" = "uygulamalar/ornekler/src/zoom_wheel.rs#zoom_wheel_kartı"
 gpui_web_testi = "src/gpui.rs#zoom_wheel_gpui_web_kaynak_serilerini_üretir"
 svg = "target/zoom-wheel.svg"
 sunum = "Resize dahil tüm kartlarda ortak ve tercihe bağlı; ayrı katalog kartı yok"

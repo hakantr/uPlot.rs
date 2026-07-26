@@ -193,7 +193,7 @@ fn kaynak_veri() -> Result<&'static KaynakVeri, UplotHatası> {
     {
         Ok(kaynak) => Ok(kaynak),
         Err(açıklama) => Err(UplotHatası::GeçersizKaynakVeri {
-            varlık: "src/kart/veri/path_gap_clip.json",
+            varlık: "uygulamalar/ornekler/src/veri/path_gap_clip.json",
             açıklama: açıklama.clone(),
         }),
     }

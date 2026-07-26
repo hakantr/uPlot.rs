@@ -1,6 +1,6 @@
 id = "path-gap-clip"
 kaynak = "../uPlot/demos/path-gap-clip.html"
-fixture = "src/kart/path_gap_clip.rs#path_gap_clip_kartları"
+fixture = "uygulamalar/ornekler/src/path_gap_clip.rs#path_gap_clip_kartları"
 viewport = [1200, 600]
 device_pixel_ratio = 1
 durum = "15_kaynak_yüzeyi"

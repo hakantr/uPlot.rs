@@ -1,7 +1,7 @@
 id = "y-shifted-series"
 kaynak = "../uPlot/demos/y-shifted-series.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/y_shifted_series.rs#y_shifted_series_kartı"
+fixture = "uygulamalar/ornekler/src/y_shifted_series.rs#y_shifted_series_kartı"
 viewport = [1920, 600]
 durum = "aynı_ham_veri_normal_ve_kaydırılmış_kipte"
 

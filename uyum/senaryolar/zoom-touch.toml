@@ -1,6 +1,6 @@
 id = "zoom-touch"
 kaynak = "../uPlot/demos/zoom-touch.html"
-fixture = "src/kart/zoom_touch.rs#zoom_touch_kartı"
+fixture = "uygulamalar/ornekler/src/zoom_touch.rs#zoom_touch_kartı"
 viewport = [1920, 400]
 device_pixel_ratio = 1
 durum = "ortak_profile_devredildi_ayri_katalog_karti_yok"
@@ -26,7 +26,7 @@ two = [18.0, 24.0, 37.0, 55.0, 55.0, 60.0, 63.0]
 "görünüm_geçmişi" = true
 
 ["kanıt"]
-"ortak_çekirdek" = "src/kart/zoom_touch.rs#zoom_touch_kartı"
+"ortak_çekirdek" = "uygulamalar/ornekler/src/zoom_touch.rs#zoom_touch_kartı"
 gpui_web_testi = "src/gpui.rs#zoom_touch_gpui_web_kıstırmayı_çekirdekte_uygular"
 svg = "target/zoom-touch.svg"
 sunum = "Tüm kartlarda ortak touch davranışı; ayrı katalog kartı yok"

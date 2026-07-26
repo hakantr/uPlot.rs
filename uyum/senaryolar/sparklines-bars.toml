@@ -1,7 +1,7 @@
 id = "sparklines-bars"
 kaynak = "../uPlot/demos/sparklines-bars.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/sparklines_bars.rs#sparklines_bars_kartları"
+fixture = "uygulamalar/ornekler/src/sparklines_bars.rs#sparklines_bars_kartları"
 "yüzeyler" = ["sparklines-bars-gradient", "sparklines-bars-explicit-colors"]
 "boyut" = [800, 400]
 "nokta_sayısı" = 16

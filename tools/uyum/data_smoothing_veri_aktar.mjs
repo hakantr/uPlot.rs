@@ -18,4 +18,4 @@ const çıktı = "// Resmî taxi-trips.json ve JS algoritmalarından mekanik ür
   çiftler("SGG_REFERENCE", Array.from(bağlam.sggOut)) + çiftler("MOVING_REFERENCE", bağlam.movingOut) +
   `#[cfg(test)]\npub const SGG_REFERENCE_SUM: f64 = ${Array.from(bağlam.sggOut).reduce((a,b)=>a+b,0)};\n` +
   `#[cfg(test)]\npub const MOVING_REFERENCE_SUM: f64 = ${bağlam.movingOut.reduce((a,b)=>a+b,0)};\n`;
-writeFileSync(new URL("../../src/kart/veri/data_smoothing_kaynak.rs", import.meta.url), çıktı);
+writeFileSync(new URL("../../uygulamalar/ornekler/src/veri/data_smoothing_kaynak.rs", import.meta.url), çıktı);

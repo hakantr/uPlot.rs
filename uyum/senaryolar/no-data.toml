@@ -1,6 +1,6 @@
 id = "no-data"
 kaynak = "../uPlot/demos/no-data.html"
-fixture = "src/kart/no_data.rs#no_data_kartı"
+fixture = "uygulamalar/ornekler/src/no_data.rs#no_data_kartı"
 viewport = [800, 400]
 device_pixel_ratio = 1
 durum = "tek_katalog_karti_33_secilebilir_kaynak_yuzeyi"

@@ -1,7 +1,7 @@
 id = "mass-spectrum"
 kaynak = "../uPlot/demos/mass-spectrum.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/mass_spectrum.rs#mass_spectrum_kartı"
+fixture = "uygulamalar/ornekler/src/mass_spectrum.rs#mass_spectrum_kartı"
 viewport = [1920, 600]
 durum = "kaynak_csv_ve_ozel_y_araligi"
 

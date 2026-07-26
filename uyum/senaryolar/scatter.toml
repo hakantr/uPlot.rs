@@ -1,6 +1,6 @@
 id = "scatter"
 kaynak = "../uPlot/demos/scatter.html"
-fixture = "src/kart/scatter.rs#scatter_kartı"
+fixture = "uygulamalar/ornekler/src/scatter.rs#scatter_kartı"
 viewport = [1920, 1200]
 device_pixel_ratio = 1
 durum = "tek_kart_iki_bağımsız_mode2_yüzeyi"

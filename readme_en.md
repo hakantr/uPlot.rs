@@ -197,8 +197,9 @@ phase commits, test matrix, and release evidence.
 - `src/etkilesim.rs`: chart interaction state, zooming, and view history
 - `src/gpui.rs`: ready GPUI chart component included in every normal build
 - `src/gpui/svg_kaydi.rs`: vector export compiled only with `gpui-svg`
-- `src/kart.rs` + `src/kart/`: card fixtures preserving upstream data
 - `src/secenek.rs` + `src/secenek/`: grouped option types
+- `uygulamalar/ornekler/`: unpublished card configurations and source-data
+  fixtures; they are not dependencies of `uplot-rs` consumers
 - `uygulamalar/katalog/`: the single GPUI card registry, related-surface groups,
   and explanation UI shared by native and web
 - `uygulamalar/masaustu/`: native GPUI entry opening the shared catalogue

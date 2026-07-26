@@ -1,6 +1,6 @@
 id = "data-smoothing"
 kaynak = "../uPlot/demos/data-smoothing.html"
-fixture = "src/kart/data_smoothing.rs#data_smoothing_kartları"
+fixture = "uygulamalar/ornekler/src/data_smoothing.rs#data_smoothing_kartları"
 viewport = [1920, 300]
 device_pixel_ratio = 1
 durum = "tek-kart-dört-bağımsız-kaynak-yüzeyi"

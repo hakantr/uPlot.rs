@@ -1,7 +1,7 @@
 id = "sync-cursor"
 "kaynak" = "../uPlot/demos/sync-cursor.html"
 "kaynak_commit" = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/sync_cursor.rs#sync_cursor_kartı"
+fixture = "uygulamalar/ornekler/src/sync_cursor.rs#sync_cursor_kartı"
 "yüzey_sayısı" = 5
 "yüzeyler" = [
   "sync-cursor-cpu",

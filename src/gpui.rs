@@ -3155,6 +3155,116 @@ mod testler {
         sahne
     }
 
+    fn test_çizgi_kartı(
+        genişlik: u32,
+        yükseklik: u32,
+    ) -> Result<(crate::GrafikSeçenekleri, HizalıVeri), UplotHatası> {
+        let seçenekler = crate::GrafikSeçenekleri::yeni(genişlik, yükseklik)?
+            .başlık("GPUI çekirdek testi")
+            .x_zaman(false)
+            .seri(SeriSeçenekleri::yeni("Value").renk("red"));
+        let veri = HizalıVeri::yeni(
+            vec![0.0, 1.0, 2.0],
+            vec![vec![Some(0.0), Some(1.0), Some(0.5)]],
+        )?;
+        Ok((seçenekler, veri))
+    }
+
+    fn test_y_kaydırılmış_kartı() -> Result<(crate::GrafikSeçenekleri, HizalıVeri), UplotHatası> {
+        let ham = vec![Some(1.0), Some(2.0), Some(3.0)];
+        let seçenekler = crate::GrafikSeçenekleri::yeni(1_920, 600)?
+            .x_zaman(false)
+            .seri(
+                SeriSeçenekleri::yeni("Core 1")
+                    .renk("red")
+                    .lejant_değerleri(ham.clone()),
+            )
+            .seri(
+                SeriSeçenekleri::yeni("Core 2")
+                    .renk("green")
+                    .lejant_değerleri(ham.clone()),
+            )
+            .seri(
+                SeriSeçenekleri::yeni("Core 3")
+                    .renk("blue")
+                    .lejant_değerleri(ham),
+            );
+        let veri = HizalıVeri::yeni(
+            vec![0.0, 1.0, 2.0],
+            vec![
+                vec![Some(1.0), Some(2.0), Some(3.0)],
+                vec![Some(11.0), Some(12.0), Some(13.0)],
+                vec![Some(21.0), Some(22.0), Some(23.0)],
+            ],
+        )?;
+        Ok((seçenekler, veri))
+    }
+
+    fn test_boyut_senkron_kartı() -> Result<(crate::GrafikSeçenekleri, HizalıVeri), UplotHatası> {
+        let düzen = BoyutSenkronDüzeni::piksel_değerlerinden(
+            725.0, 733.0, 200.0, 200.0, 100.0, 0.0, 100.0, 733.0, 363.0, 400.0,
+        )
+        .ok_or_else(|| UplotHatası::GeçersizKaynakVeri {
+            varlık: "GPUI çekirdek testi",
+            açıklama: "boyut senkron düzeni oluşturulamadı".to_string(),
+        })?;
+        let seçenekler = crate::GrafikSeçenekleri::yeni(800, 800)?
+            .x_zaman(false)
+            .boyut_senkronu(düzen)
+            .seri(
+                SeriSeçenekleri::yeni("Value")
+                    .renk("red")
+                    .dolgu("#ff00001a"),
+            );
+        let veri = HizalıVeri::yeni(
+            vec![0.0, 1.0, 2.0],
+            vec![vec![Some(0.0), Some(1.0), Some(2.0)]],
+        )?;
+        Ok((seçenekler, veri))
+    }
+
+    fn test_dikey_kartı() -> Result<(crate::GrafikSeçenekleri, HizalıVeri), UplotHatası> {
+        let seçenekler = crate::GrafikSeçenekleri::yeni(320, 600)?
+            .x_zaman(false)
+            .x_dikey(true)
+            .etkileşimler(crate::EtkileşimSeçenekleri::default().seçim_xy_yakınlaştır(true))
+            .seri(SeriSeçenekleri::yeni("A").renk("red"))
+            .seri(SeriSeçenekleri::yeni("B").renk("blue"));
+        let veri = HizalıVeri::yeni(
+            vec![0.0, 1.0, 2.0],
+            vec![
+                vec![Some(0.0), Some(1.0), Some(2.0)],
+                vec![Some(2.0), Some(3.0), Some(4.0)],
+            ],
+        )?;
+        Ok((seçenekler, veri))
+    }
+
+    fn test_cursor_snap_kartı() -> Result<(crate::GrafikSeçenekleri, HizalıVeri), UplotHatası> {
+        let (seçenekler, veri) = test_çizgi_kartı(1_920, 600)?;
+        Ok((seçenekler.imleç_ızgara_adımı(10.0), veri))
+    }
+
+    fn test_açıklama_kartı() -> Result<(crate::GrafikSeçenekleri, HizalıVeri), UplotHatası> {
+        let açıklamalar = crate::AçıklamaDüzeni::default()
+            .stil(crate::AçıklamaStili::yeni(
+                "eqk",
+                "rgb(76 175 80)",
+                "rgb(76 175 80 / 20%)",
+                crate::AçıklamaHizası::Alt,
+            ))
+            .işaret(
+                crate::Açıklamaİşareti::yeni("eqk", 4.0, 4.0, "eqk_01")
+                    .açıklama("Earthquake 01!"),
+            );
+        let seçenekler = crate::GrafikSeçenekleri::yeni(1_920, 600)?
+            .x_zaman(false)
+            .açıklamalar(açıklamalar)
+            .seri(SeriSeçenekleri::yeni("Value").renk("red"));
+        let veri = HizalıVeri::yeni((1..=30).map(f64::from).collect(), vec![vec![Some(0.0); 30]])?;
+        Ok((seçenekler, veri))
+    }
+
     fn önbelleğe_örnek_yol_ekle(önbellek: &mut GpuiYolÖnbelleği) {
         önbellek.yollar = vec![Some(örnek_önbellekli_yol())];
     }
@@ -3224,7 +3334,7 @@ mod testler {
 
     #[test]
     fn hover_katmanı_ana_sahne_geometrisini_değiştirmez() -> Result<(), UplotHatası> {
-        let (seçenekler, veri) = crate::kart::resize_kartı(100)?;
+        let (seçenekler, veri) = test_çizgi_kartı(1_920, 600)?;
         let grafik = Grafik::yeni(seçenekler, veri)?;
         let mut bileşen = GpuiGrafik::yeni(grafik);
         let ana_komut_sayısı = bileşen.ana_sahne.komutlar().len();
@@ -3263,7 +3373,7 @@ mod testler {
     #[test]
     fn scroll_sync_güncel_gpui_layout_kökenini_ana_sahneyi_değiştirmeden_kullanır()
     -> Result<(), UplotHatası> {
-        let (seçenekler, veri) = crate::kart::scroll_sync_kartı()?;
+        let (seçenekler, veri) = test_çizgi_kartı(400, 200)?;
         let bileşen = GpuiGrafik::yeni(Grafik::yeni(seçenekler, veri)?);
         let ana_sahne = bileşen.ana_sahne.clone();
         let komut_sayısı = ana_sahne.komutlar().len();
@@ -3289,11 +3399,13 @@ mod testler {
 
     #[test]
     fn sine_stream_set_data_statik_gpui_yollarını_önbellekte_korur() -> Result<(), UplotHatası> {
-        let mut akış = crate::kart::SineAkışı::kanıt()?;
-        let (seçenekler, veri) = akış.kartı()?;
+        let (seçenekler, veri) = test_çizgi_kartı(1_920, 600)?;
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
         let eski = grafik.çiz();
-        grafik.veriyi_ayarla(akış.ilerlet()?)?;
+        grafik.veriyi_ayarla(HizalıVeri::yeni(
+            vec![0.0, 1.0, 2.0],
+            vec![vec![Some(0.5), Some(0.25), Some(1.5)]],
+        )?)?;
         let yeni = grafik.çiz();
         assert_eq!(eski.boyut(), yeni.boyut());
 
@@ -3313,7 +3425,7 @@ mod testler {
 
     #[test]
     fn y_kaydırılmış_hover_geometrisi_ile_ham_lejant_değeri_ayrılır() -> Result<(), UplotHatası> {
-        let (seçenekler, veri) = crate::kart::y_shifted_series_kartı()?;
+        let (seçenekler, veri) = test_y_kaydırılmış_kartı()?;
         let grafik = Grafik::yeni(seçenekler, veri)?;
         let çözüm = grafik
             .imleç_çözümü(0.0, 1_000.0)
@@ -3354,7 +3466,7 @@ mod testler {
 
     #[test]
     fn resize_kalıcı_katmanları_ana_sahneden_ayırır_ve_oranları_korur() -> Result<(), UplotHatası> {
-        let (seçenekler, veri) = crate::kart::update_cursor_select_resize_kartı(800)?;
+        let (seçenekler, veri) = test_boyut_senkron_kartı()?;
         let grafik = Grafik::yeni(seçenekler, veri)?;
         let mut bileşen = GpuiGrafik::yeni(grafik);
         assert!(bileşen.imleç_kilitli);
@@ -3433,8 +3545,7 @@ mod testler {
 
     #[test]
     fn dikey_x_yüzeyi_imleci_ve_xy_seçimini_fiziksel_yönelimde_çizer() -> Result<(), UplotHatası> {
-        let (seçenekler, veri) =
-            crate::kart::scales_dir_ori_kartı(crate::kart::ScalesDirOriÖrneği::XArtıSolYArtıÜst)?;
+        let (seçenekler, veri) = test_dikey_kartı()?;
         assert!(seçenekler.etkileşimler.seçim_xy_yakınlaştır);
         let grafik = Grafik::yeni(seçenekler, veri)?;
         let mut bileşen = GpuiGrafik::yeni(grafik);
@@ -3476,7 +3587,7 @@ mod testler {
 
     #[test]
     fn cursor_snap_duyarlı_yüzeyde_css_pikselini_ve_seçim_ucunu_korur() -> Result<(), UplotHatası> {
-        let (seçenekler, veri) = crate::kart::cursor_snap_kartı()?;
+        let (seçenekler, veri) = test_cursor_snap_kartı()?;
         let grafik = Grafik::yeni(seçenekler, veri)?;
         let bileşen = GpuiGrafik::yeni(grafik);
         bileşen.çizim_sınırları.set(Some(Bounds::new(
@@ -3498,7 +3609,7 @@ mod testler {
 
     #[test]
     fn annotation_hover_yalnız_etkileşim_sahnesini_değiştirir() -> Result<(), UplotHatası> {
-        let (seçenekler, veri) = crate::kart::annotations_kartı()?;
+        let (seçenekler, veri) = test_açıklama_kartı()?;
         let grafik = Grafik::yeni(seçenekler, veri)?;
         let mut bileşen = GpuiGrafik::yeni(grafik);
         let ana_sahne = bileşen.ana_sahne.clone();

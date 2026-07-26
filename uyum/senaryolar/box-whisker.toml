@@ -1,12 +1,12 @@
 id = "box-whisker"
 kaynak = "../uPlot/demos/box-whisker.html"
-fixture = "src/kart/box_whisker.rs#box_whisker_kartları"
+fixture = "uygulamalar/ornekler/src/box_whisker.rs#box_whisker_kartları"
 viewport = [800, 400]
 device_pixel_ratio = 1
 durum = "tek-kartta-on-yedi-bagimsiz-yuzey"
 
 ["veri"]
-"kaynak" = "src/kart/veri/box_whisker_results.json"
+"kaynak" = "uygulamalar/ornekler/src/veri/box_whisker_results.json"
 "kaynak_sha256" = "424daf68791f929a2136e4388b279b54f6dfc4aa098593f233aa45fa5d4ba931"
 "benchmark_sayısı" = 17
 "benchmark_başına_keyed_framework" = 98

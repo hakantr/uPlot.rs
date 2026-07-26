@@ -1,6 +1,6 @@
 id = "scale-padding"
 kaynak = "../uPlot/demos/scale-padding.html"
-fixture = "src/kart/scale_padding.rs#scale_padding_kartı"
+fixture = "uygulamalar/ornekler/src/scale_padding.rs#scale_padding_kartı"
 viewport = [1600, 600]
 device_pixel_ratio = 1
 durum = "etkileşimli"

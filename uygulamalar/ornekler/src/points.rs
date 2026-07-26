@@ -99,7 +99,7 @@ fn kaynak_veri() -> Result<&'static PointsKaynakVerisi, UplotHatası> {
     {
         Ok(kaynak) => Ok(kaynak),
         Err(açıklama) => Err(UplotHatası::GeçersizKaynakVeri {
-            varlık: "src/kart/veri/points.json",
+            varlık: "uygulamalar/ornekler/src/veri/points.json",
             açıklama: açıklama.clone(),
         }),
     }

@@ -1,7 +1,7 @@
 id = "tooltips"
 kaynak = "../uPlot/demos/tooltips.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/tooltips.rs#tooltips_kartı"
+fixture = "uygulamalar/ornekler/src/tooltips.rs#tooltips_kartı"
 viewport = [600, 400]
 durum = "ham_imleç_ve_görünür_seri_tooltipleri"
 

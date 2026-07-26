@@ -1,6 +1,6 @@
 id = "latency-heatmap"
 kaynak = "../uPlot/demos/latency-heatmap.html"
-fixture = "src/kart/latency_heatmap.rs#latency_heatmap_kartları"
+fixture = "uygulamalar/ornekler/src/latency_heatmap.rs#latency_heatmap_kartları"
 device_pixel_ratio = 1
 "alt_grafik_sayısı" = 5
 "kanıt_tohumu" = "0x1A7E4C7A"

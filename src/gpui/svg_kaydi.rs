@@ -189,17 +189,19 @@ mod testler {
     use std::hint::black_box;
 
     use super::*;
-    use crate::{
-        Grafik,
-        kart::{
-            GradientÖrneği, MultiBarsÖrneği, ScatterÖrneği, TimezonesDstÖrneği, area_fill_kartı,
-            box_whisker_kartı, cursor_snap_kartı, gradients_kartı, multi_bars_kartı, resize_kartı,
-            scatter_kartı, timezones_dst_kartı,
-        },
-    };
+    use crate::{Grafik, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri};
 
     fn resize_bileşeni() -> Result<GpuiGrafik, UplotHatası> {
-        let (seçenekler, veri) = resize_kartı(100)?;
+        let x = (0..100).map(f64::from).collect::<Vec<_>>();
+        let y = x
+            .iter()
+            .map(|değer| Some((değer / 10.0).sin()))
+            .collect::<Vec<_>>();
+        let seçenekler = GrafikSeçenekleri::yeni(800, 400)?
+            .başlık("Resize")
+            .x_zaman(false)
+            .seri(SeriSeçenekleri::yeni("Value").renk("red"));
+        let veri = HizalıVeri::yeni(x, vec![y])?;
         Ok(GpuiGrafik::yeni(Grafik::yeni(seçenekler, veri)?))
     }
 
@@ -216,13 +218,6 @@ mod testler {
         black_box(bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(800, 400)?));
         assert_eq!(crate::cizim::test_svg_serileştirme_çağrıları(), 1);
         Ok(())
-    }
-
-    fn kart_bileşeni(
-        kart: Result<(crate::GrafikSeçenekleri, crate::HizalıVeri), UplotHatası>,
-    ) -> Result<GpuiGrafik, UplotHatası> {
-        let (seçenekler, veri) = kart?;
-        Ok(GpuiGrafik::yeni(Grafik::yeni(seçenekler, veri)?))
     }
 
     #[test]
@@ -283,134 +278,6 @@ mod testler {
                 .içerik()
                 .contains("data-gpui-layer=\"etkilesim\"")
         );
-        Ok(())
-    }
-
-    #[test]
-    fn gradyan_tanımları_katmana_özgü_kimliklerle_kaydedilir() -> Result<(), UplotHatası> {
-        let bileşen = kart_bileşeni(gradients_kartı(GradientÖrneği::ÖlçekDolguları))?;
-        let kayıt = bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(800, 600)?);
-        let svg = kayıt.içerik();
-
-        assert!(svg.contains("<linearGradient id=\"gpui-ana-uplot-gradyan-"));
-        assert!(svg.contains("fill=\"url(#gpui-ana-uplot-gradyan-"));
-        assert!(!svg.contains("id=\"uplot-gradyan-"));
-        Ok(())
-    }
-
-    #[test]
-    fn yoğun_dağılım_tek_vektör_yolu_ve_kırpma_olarak_kaydedilir() -> Result<(), UplotHatası> {
-        let bileşen = kart_bileşeni(scatter_kartı(ScatterÖrneği::Scatter))?;
-        let kayıt = bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(800, 600)?);
-        let svg = kayıt.içerik();
-
-        assert!(svg.contains("id=\"gpui-ana-uplot-daire-kirpma-"));
-        assert!(svg.contains("clip-path=\"url(#gpui-ana-uplot-daire-kirpma-"));
-        assert!(svg.contains(" 0 1 0 "));
-        assert_eq!(svg.matches("<circle").count(), 0);
-        Ok(())
-    }
-
-    #[test]
-    fn multi_bars_şekil_metin_ve_renkleri_vektör_kalır() -> Result<(), UplotHatası> {
-        let bileşen = kart_bileşeni(multi_bars_kartı(MultiBarsÖrneği::KitaplıklarDikey))?;
-        let kayıt = bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(1_920, 1_080)?);
-        let svg = kayıt.içerik();
-
-        assert!(svg.contains("<path"));
-        assert!(svg.contains("<text"));
-        assert!(svg.contains(" Q"));
-        assert!(!svg.contains("<foreignObject"));
-        assert!(!svg.contains("<image"));
-        Ok(())
-    }
-
-    #[test]
-    fn area_fill_üç_serinin_çizgi_ve_dolgularını_korur() -> Result<(), UplotHatası> {
-        let bileşen = kart_bileşeni(area_fill_kartı())?;
-        let kayıt = bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(1_920, 600)?);
-        let svg = kayıt.içerik();
-
-        for dolgu in ["#ff00001a", "#00ff001a", "#0000ff1a"] {
-            assert!(svg.contains(&format!("fill=\"{dolgu}\"")));
-        }
-        for çizgi in ["#ff0000", "#008000", "#0000ff"] {
-            assert!(svg.contains(&format!("stroke=\"{çizgi}\"")));
-        }
-        assert!(svg.matches("stroke=\"none\"").count() >= 3);
-        Ok(())
-    }
-
-    #[test]
-    fn timezone_çok_satırlı_etiketi_tspan_olarak_kaydeder() -> Result<(), UplotHatası> {
-        let örnek = TimezonesDstÖrneği::yeni(12).ok_or(UplotHatası::BilinmeyenKart {
-            kimlik: "timezones-dst-13".to_string(),
-        })?;
-        let bileşen = kart_bileşeni(timezones_dst_kartı(örnek))?;
-        let kayıt = bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(600, 200)?);
-        let svg = kayıt.içerik();
-
-        assert!(svg.contains(">12am</tspan>"));
-        assert!(svg.contains("dy=\"1.2em\">3/31/24</tspan>"));
-        assert!(!svg.contains("12am\n3/31/24"));
-        Ok(())
-    }
-
-    #[test]
-    fn döndürülmüş_kategori_etiketleri_vektör_dönüşümü_kullanır() -> Result<(), UplotHatası> {
-        let bileşen = kart_bileşeni(box_whisker_kartı("01_run1k"))?;
-        let kayıt = bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(800, 400)?);
-        let svg = kayıt.içerik();
-
-        assert!(svg.contains("transform=\"rotate(-90.00 "));
-        assert!(!svg.contains("<foreignObject"));
-        Ok(())
-    }
-
-    #[test]
-    fn cursor_snap_kaydı_etkileşim_ve_bileşen_durumunu_korur() -> Result<(), UplotHatası> {
-        let mut bileşen = kart_bileşeni(cursor_snap_kartı())?;
-        let ham = crate::Nokta::yeni(123.4, 234.5);
-        let oturmuş =
-            bileşen
-                .imleç_ızgarasına_oturt(ham)
-                .ok_or(UplotHatası::GeçersizKaynakVeri {
-                    varlık: "cursor-snap",
-                    açıklama: "10x10 imleç ızgarası uygulanamadı".to_string(),
-                })?;
-        assert_ne!(oturmuş, ham);
-        bileşen.canlı_imleci_yenile(oturmuş);
-        bileşen.seçim = Some((
-            crate::Nokta::yeni(120.0, 140.0),
-            crate::Nokta::yeni(360.0, 280.0),
-        ));
-        bileşen.taşıma_başlangıcı = Some(crate::Nokta::yeni(200.0, 200.0));
-        bileşen.boşluk_basılı = true;
-
-        let ana_sahne = bileşen.ana_sahne.clone();
-        let imleç_öncesi = bileşen
-            .imleç
-            .as_ref()
-            .map(|imleç| (imleç.fare, imleç.veri_x, imleç.seri_değerleri.clone()));
-        let seçim_öncesi = bileşen.seçim;
-        let taşıma_öncesi = bileşen.taşıma_başlangıcı;
-        let kayıt =
-            bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(1_920, 600)?.etkileşim_katmanı(true));
-
-        assert!(kayıt.içerik().contains("data-gpui-layer=\"etkilesim\""));
-        assert!(kayıt.içerik().contains("stroke-dasharray="));
-        assert_eq!(
-            bileşen.imleç.as_ref().map(|imleç| (
-                imleç.fare,
-                imleç.veri_x,
-                imleç.seri_değerleri.clone()
-            )),
-            imleç_öncesi
-        );
-        assert_eq!(bileşen.seçim, seçim_öncesi);
-        assert_eq!(bileşen.taşıma_başlangıcı, taşıma_öncesi);
-        assert!(bileşen.boşluk_basılı);
-        assert!(std::rc::Rc::ptr_eq(&bileşen.ana_sahne, &ana_sahne));
         Ok(())
     }
 

@@ -1,6 +1,6 @@
 id = "axis-autosize"
 kaynak = "../uPlot/demos/axis-autosize.html"
-fixture = "src/kart/axis_autosize.rs#axis_autosize_kartı"
+fixture = "uygulamalar/ornekler/src/axis_autosize.rs#axis_autosize_kartı"
 viewport = [1048, 600]
 device_pixel_ratio = 1
 durum = "dinamik"

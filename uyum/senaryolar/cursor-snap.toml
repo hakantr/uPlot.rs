@@ -1,6 +1,6 @@
 id = "cursor-snap"
 kaynak = "../uPlot/demos/cursor-snap.html"
-fixture = "src/kart/cursor_snap.rs#cursor_snap_kartı"
+fixture = "uygulamalar/ornekler/src/cursor_snap.rs#cursor_snap_kartı"
 viewport = [1920, 600]
 device_pixel_ratio = 1
 durum = "etkileşimli"

@@ -1,6 +1,6 @@
 id = "line-paths"
 kaynak = "../uPlot/demos/line-paths.html"
-fixture = "src/kart/line_paths.rs#line_paths_kartları"
+fixture = "uygulamalar/ornekler/src/line_paths.rs#line_paths_kartları"
 device_pixel_ratio = 1
 "alt_grafik_sayısı" = 8
 

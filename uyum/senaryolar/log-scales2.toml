@@ -1,6 +1,6 @@
 id = "log-scales2"
 kaynak = "../uPlot/demos/log-scales2.html"
-fixture = "src/kart/log_scales2.rs#log_scales2_kartları"
+fixture = "uygulamalar/ornekler/src/log_scales2.rs#log_scales2_kartları"
 device_pixel_ratio = 1
 "alt_grafik_sayısı" = 12
 "katalog_kart_sayısı" = 1

@@ -1,6 +1,6 @@
 id = "scroll-sync"
 kaynak = "../uPlot/demos/scroll-sync.html"
-fixture = "src/kart/scroll_sync.rs#scroll_sync_kartı"
+fixture = "uygulamalar/ornekler/src/scroll_sync.rs#scroll_sync_kartı"
 viewport = [1200, 900]
 device_pixel_ratio = 1
 durum = "kaydırmada_yüzey_dikdörtgeni_yenilenir"

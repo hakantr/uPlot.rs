@@ -1,4 +1,4 @@
-use uplot_rs::{Grafik, UplotHatası, area_fill_kartı, diagnostics::Komut};
+use uplot_rs_gpui_ornekler::{Grafik, UplotHatası, area_fill_kartı, diagnostics::Komut};
 
 #[test]
 fn area_fill_kaynak_verisini_ve_dolgularını_korur() -> Result<(), UplotHatası> {

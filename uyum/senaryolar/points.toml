@@ -1,6 +1,6 @@
 id = "points"
 kaynak = "../uPlot/demos/points.html"
-fixture = "src/kart/points.rs#points_kartları"
+fixture = "uygulamalar/ornekler/src/points.rs#points_kartları"
 viewport = [1920, 1500]
 device_pixel_ratio = 1
 durum = "dört_kaynak_yüzeyi"
@@ -40,7 +40,7 @@ null_tarama_onceligi = "sağ_sonra_sol"
 "boşluk_sol_sürükleme_taşıma" = true
 
 ["kanıt"]
-"veri_varlığı" = "src/kart/veri/points.json"
+"veri_varlığı" = "uygulamalar/ornekler/src/veri/points.json"
 "veri_üreteci" = "tools/uyum/points_veri_aktar.mjs"
 svg_dizini = "target/points"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"

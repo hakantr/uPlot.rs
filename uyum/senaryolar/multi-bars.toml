@@ -1,7 +1,7 @@
 id = "multi-bars"
 kaynak = "../uPlot/demos/multi-bars.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/multi_bars.rs#multi_bars_kartı"
+fixture = "uygulamalar/ornekler/src/multi_bars.rs#multi_bars_kartı"
 viewport = [800, 400]
 durum = "dört_kaynak_yüzeyi"
 

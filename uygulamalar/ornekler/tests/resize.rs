@@ -1,4 +1,4 @@
-use uplot_rs::{
+use uplot_rs_gpui_ornekler::{
     Aralık, EtkileşimSeçenekleri, Grafik, HizalıVeri, TekerlekAyarları, TekerlekEkseni,
     TekerlekKipi, UplotHatası, ortak_kart_etkileşimleri, resize_kartı,
 };
@@ -13,11 +13,11 @@ fn resize_kartı_belirlenimci_gpui_sahnesi_üretir() -> Result<(), UplotHatası>
     assert_eq!(ilk, ikinci);
     assert!(
         ilk.komutlar().iter().any(
-            |komut| matches!(komut, uplot_rs::diagnostics::Komut::Metin { içerik, .. } if içerik == "Resize")
+            |komut| matches!(komut, uplot_rs_gpui_ornekler::diagnostics::Komut::Metin { içerik, .. } if içerik == "Resize")
         )
     );
     assert!(ilk.komutlar().iter().any(
-        |komut| matches!(komut, uplot_rs::diagnostics::Komut::Yol { renk, .. } if renk == "red")
+        |komut| matches!(komut, uplot_rs_gpui_ornekler::diagnostics::Komut::Yol { renk, .. } if renk == "red")
     ));
     assert_eq!(ilk.komutlar().len(), 43);
     Ok(())

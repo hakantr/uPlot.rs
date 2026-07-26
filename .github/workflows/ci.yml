@@ -76,7 +76,7 @@ jobs:
           # izole entegrasyon testi için cfg ile derlenir.
           RUSTFLAGS: "--cfg phase12_allocator --cap-lints allow"
         run: >-
-          cargo test --release -p uplot-rs --test performance_budgets
+          cargo test --release -p uplot-rs-gpui-ornekler --test performance_budgets
           --all-features -- --test-threads=1 --nocapture
 
   native-platformlar:

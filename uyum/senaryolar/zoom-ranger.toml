@@ -1,6 +1,6 @@
 id = "zoom-ranger"
 kaynak = "../uPlot/demos/zoom-ranger.html"
-fixture = "src/kart/zoom_wheel.rs#zoom_ranger_xy_grafiği"
+fixture = "uygulamalar/ornekler/src/zoom_wheel.rs#zoom_ranger_xy_grafiği"
 durum = "grips_ve_xy_ortak_api_alt_kumesi"
 veri_politikasi = "kaynak_veri_aynen"
 beklenen_nokta_sayisi = 100

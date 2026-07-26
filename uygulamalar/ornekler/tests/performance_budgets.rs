@@ -5,15 +5,12 @@ use std::{
     time::{Duration, Instant},
 };
 
-use uplot_rs::{
-    GpuiGrafik, GpuiSvgKayıtAyarları, Grafik, SineAkışı, TekerlekEkseni, UplotHatası,
+use uplot_rs_gpui_ornekler::{
+    GpuiGrafik, GpuiSvgKayıtAyarları, Grafik, LatencyHeatmapÖrneği, MultiBarsÖrneği, SineAkışı,
+    SparseÖrneği, SyncCursorÖrneği, TekerlekEkseni, UplotHatası,
     diagnostics::{GpuiRetainedBoyaÖlçer, Komut},
-    kart::{
-        LatencyHeatmapÖrneği, MultiBarsÖrneği, SparseÖrneği, SyncCursorÖrneği,
-        latency_heatmap_kartı, mass_spectrum_kartı, multi_bars_kartı, sparse_kartı,
-        sync_cursor_kartı,
-    },
-    resize_kartı,
+    latency_heatmap_kartı, mass_spectrum_kartı, multi_bars_kartı, resize_kartı, sparse_kartı,
+    sync_cursor_kartı,
 };
 
 const ÖLÇÜM_TURU: usize = 180;
@@ -248,7 +245,13 @@ fn sine_akışı_ölç() -> Result<(SüreDağılımı, usize, usize, TahsisÖlç
 
 fn ağır_senaryoyu_ölç(
     ad: &'static str,
-    kart: impl Fn() -> Result<(uplot_rs::GrafikSeçenekleri, uplot_rs::HizalıVeri), UplotHatası>,
+    kart: impl Fn() -> Result<
+        (
+            uplot_rs_gpui_ornekler::GrafikSeçenekleri,
+            uplot_rs_gpui_ornekler::HizalıVeri,
+        ),
+        UplotHatası,
+    >,
 ) -> Result<AğırSenaryoÖlçümü, UplotHatası> {
     let (seçenekler, veri) = kart()?;
     let mut grafik = Grafik::yeni(seçenekler, veri)?;

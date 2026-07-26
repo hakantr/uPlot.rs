@@ -1,7 +1,7 @@
 id = "zoom-fetch"
 kaynak = "../uPlot/demos/zoom-fetch.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/zoom_wheel.rs#ZoomFetchAkışı"
+fixture = "uygulamalar/ornekler/src/zoom_wheel.rs#ZoomFetchAkışı"
 viewport = [800, 400]
 durum = "çekirdek_akışı_ayrı_katalog_yüzeyi_yok"
 
@@ -13,5 +13,5 @@ durum = "çekirdek_akışı_ayrı_katalog_yüzeyi_yok"
 
 ["kanıt"]
 "örnek" = "uygulamalar/katalog/src/lib.rs"
-"ortak_çekirdek" = "src/kart/zoom_wheel.rs#ZoomFetchAkışı"
+"ortak_çekirdek" = "uygulamalar/ornekler/src/zoom_wheel.rs#ZoomFetchAkışı"
 gpui_web = "src/gpui.rs#zoom_fetch_kaniti"

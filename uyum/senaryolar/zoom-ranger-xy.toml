@@ -1,6 +1,6 @@
 id = "zoom-ranger-xy"
 kaynak = "../uPlot/demos/zoom-ranger-xy.html"
-fixture = "src/kart/zoom_wheel.rs#zoom_ranger_xy_grafiği"
+fixture = "uygulamalar/ornekler/src/zoom_wheel.rs#zoom_ranger_xy_grafiği"
 durum = "çekirdek_xy_ranger_ayrı_katalog_yüzeyi_yok"
 veri_politikasi = "kaynak_veri_aynen"
 beklenen_nokta_sayisi = 100
@@ -13,6 +13,6 @@ cift_yonlu_x_y_senkron = true
 yeniden_kullanilabilir_opsiyon = "ZoomRangerSeçenekleri"
 ayri_katalog_karti = false
 "örnek" = "uygulamalar/katalog/src/lib.rs"
-"ortak_çekirdek" = "src/kart/zoom_wheel.rs#zoom_ranger_xy_grafiği"
+"ortak_çekirdek" = "uygulamalar/ornekler/src/zoom_wheel.rs#zoom_ranger_xy_grafiği"
 gpui_web = "src/gpui.rs#zoom_wheel_gpui_web_kaynak_serilerini_üretir"
 svg = "target/zoom-ranger-xy.svg"

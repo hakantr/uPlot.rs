@@ -179,7 +179,7 @@ fn kaynak_grafikler() -> Result<&'static [KaynakGrafik], UplotHatası> {
     }) {
         Ok(grafikler) => Ok(grafikler),
         Err(açıklama) => Err(UplotHatası::GeçersizKaynakVeri {
-            varlık: "src/kart/veri/high_low_bands.json",
+            varlık: "uygulamalar/ornekler/src/veri/high_low_bands.json",
             açıklama: açıklama.clone(),
         }),
     }
@@ -226,7 +226,7 @@ fn kaynak_verileri() -> Result<&'static [HizalıVeri], UplotHatası> {
     }) {
         Ok(veriler) => Ok(veriler),
         Err(açıklama) => Err(UplotHatası::GeçersizKaynakVeri {
-            varlık: "src/kart/veri/high_low_bands.json",
+            varlık: "uygulamalar/ornekler/src/veri/high_low_bands.json",
             açıklama: açıklama.clone(),
         }),
     }
@@ -252,7 +252,7 @@ pub fn high_low_bands_kartı(
 ) -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
     let kaynak = kaynak_grafikler()?.get(örnek.indeks()).ok_or_else(|| {
         UplotHatası::GeçersizKaynakVeri {
-            varlık: "src/kart/veri/high_low_bands.json",
+            varlık: "uygulamalar/ornekler/src/veri/high_low_bands.json",
             açıklama: format!("{}. kaynak grafik bulunamadı", örnek.indeks()),
         }
     })?;
@@ -328,7 +328,7 @@ fn kaynak_bandı_oluştur(
         indeks
             .checked_sub(1)
             .ok_or_else(|| UplotHatası::GeçersizKaynakVeri {
-                varlık: "src/kart/veri/high_low_bands.json",
+                varlık: "uygulamalar/ornekler/src/veri/high_low_bands.json",
                 açıklama: format!("bant {ad} serisi X serisini gösteriyor"),
             })
     };

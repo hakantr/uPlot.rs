@@ -1,6 +1,6 @@
 id = "bars-grouped-stacked"
 kaynak = "../uPlot/demos/bars-grouped-stacked.html"
-fixture = "src/kart/bars_grouped_stacked.rs#bars_grouped_stacked_kartı"
+fixture = "uygulamalar/ornekler/src/bars_grouped_stacked.rs#bars_grouped_stacked_kartı"
 viewport = [800, 400]
 device_pixel_ratio = 1
 durum = "on-alt-grafik"

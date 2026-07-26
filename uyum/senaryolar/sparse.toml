@@ -1,7 +1,7 @@
 id = "sparse"
 kaynak = "../uPlot/demos/sparse.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/sparse.rs#sparse_kartları"
+fixture = "uygulamalar/ornekler/src/sparse.rs#sparse_kartları"
 "yüzeyler" = ["sparse-native-linear", "sparse-custom-points", "sparse-custom-naive-linear"]
 "yüzey_sayısı" = 3
 "boyut" = [800, 200]

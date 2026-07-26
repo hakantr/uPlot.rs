@@ -1,6 +1,6 @@
 id = "dependent-scale"
 kaynak = "../uPlot/demos/dependent-scale.html"
-fixture = "src/kart/dependent_scale.rs#dependent_scale_kartı"
+fixture = "uygulamalar/ornekler/src/dependent_scale.rs#dependent_scale_kartı"
 viewport = [600, 400]
 device_pixel_ratio = 1
 durum = "etkileşimli"

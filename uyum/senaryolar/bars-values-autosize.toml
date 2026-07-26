@@ -1,6 +1,6 @@
 id = "bars-values-autosize"
 kaynak = "../uPlot/demos/bars-values-autosize.html"
-fixture = "src/kart/bars_values_autosize.rs#bars_values_autosize_kartları"
+fixture = "uygulamalar/ornekler/src/bars_values_autosize.rs#bars_values_autosize_kartları"
 viewport = [1275, 600]
 device_pixel_ratio = 1
 durum = "tek-kartta-iki-bagimsiz-yuzey"

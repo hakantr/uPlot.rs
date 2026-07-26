@@ -1,7 +1,7 @@
 id = "months"
 kaynak = "../uPlot/demos/months.html"
-fixture = "src/kart/months.rs#months_artık_yılsız_kartı"
-alt_fixture = "src/kart/months.rs#months_artık_yıllı_kartı"
+fixture = "uygulamalar/ornekler/src/months.rs#months_artık_yılsız_kartı"
+alt_fixture = "uygulamalar/ornekler/src/months.rs#months_artık_yıllı_kartı"
 viewport = [1920, 200]
 device_pixel_ratio = 1
 durum = "iki_alt_grafikli_etkileşimli"

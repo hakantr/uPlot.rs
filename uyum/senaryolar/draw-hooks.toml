@@ -1,6 +1,6 @@
 id = "draw-hooks"
 kaynak = "../uPlot/demos/draw-hooks.html"
-fixture = "src/kart/draw_hooks.rs#draw_hooks_kartı"
+fixture = "uygulamalar/ornekler/src/draw_hooks.rs#draw_hooks_kartı"
 viewport = [600, 400]
 device_pixel_ratio = 1
 durum = "dört-kaynak-çizim-kancası"
@@ -22,4 +22,4 @@ grid_blur = "kaynakta yorumlu · uygulanmaz"
 masaustu = "uygulamalar/masaustu/src/main.rs"
 gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/draw-hooks.svg"
-set_data_cache = "src/kart/draw_hooks.rs#set_data_medyan_önbelleğini_yeniler"
+set_data_cache = "uygulamalar/ornekler/src/draw_hooks.rs#set_data_medyan_önbelleğini_yeniler"

@@ -1,6 +1,6 @@
 id = "months-ru"
 kaynak = "../uPlot/demos/months-ru.html"
-fixture = "src/kart/months.rs#months_rusça_kartı"
+fixture = "uygulamalar/ornekler/src/months.rs#months_rusça_kartı"
 viewport = [1920, 600]
 device_pixel_ratio = 1
 durum = "yerellestirilmis_etkilesimli"

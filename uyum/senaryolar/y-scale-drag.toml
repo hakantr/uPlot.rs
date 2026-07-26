@@ -1,7 +1,7 @@
 id = "y-scale-drag"
 kaynak = "../uPlot/demos/y-scale-drag.html"
 kaynak_commit = "0e5812c504430f5c804e0f993376d8999b26cc34"
-fixture = "src/kart/y_scale_drag.rs#y_scale_drag_kartı"
+fixture = "uygulamalar/ornekler/src/y_scale_drag.rs#y_scale_drag_kartı"
 viewport = [1200, 600]
 durum = "x_ve_bağımsız_y_ölçekleri_sürüklenebilir"
 

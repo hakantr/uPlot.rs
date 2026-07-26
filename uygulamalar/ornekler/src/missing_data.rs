@@ -121,7 +121,7 @@ fn csv_verisi() -> Result<HizalıVeri, UplotHatası> {
     let mut ram = Vec::new();
     let mut tcp = Vec::new();
 
-    for (indeks, satır) in include_str!("../../assets/data/missing-data.csv")
+    for (indeks, satır) in include_str!("../../../assets/data/missing-data.csv")
         .lines()
         .skip(1)
         .enumerate()

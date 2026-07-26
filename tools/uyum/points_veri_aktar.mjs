@@ -52,6 +52,6 @@ const çıktı = {
   seyrek,
 };
 writeFileSync(
-  resolve(kök, "src/kart/veri/points.json"),
+  resolve(kök, "uygulamalar/ornekler/src/veri/points.json"),
   `${JSON.stringify(çıktı)}\n`,
 );

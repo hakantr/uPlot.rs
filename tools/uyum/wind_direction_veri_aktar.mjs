@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 const kaynakYolu = "../uPlot/demos/wind-direction.html";
-const hedefYolu = "src/kart/veri/wind_direction.rs";
+const hedefYolu = "uygulamalar/ornekler/src/veri/wind_direction.rs";
 const kaynak = readFileSync(kaynakYolu, "utf8");
 const veriBaşlangıcı = kaynak.indexOf("let data = ");
 const diziBaşlangıcı = kaynak.indexOf("[", veriBaşlangıcı);

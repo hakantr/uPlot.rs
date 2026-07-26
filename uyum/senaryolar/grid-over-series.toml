@@ -1,6 +1,6 @@
 id = "grid-over-series"
 kaynak = "../uPlot/demos/grid-over-series.html"
-fixture = "src/kart/grid_over_series.rs#grid_over_series_kartı"
+fixture = "uygulamalar/ornekler/src/grid_over_series.rs#grid_over_series_kartı"
 viewport = [1920, 600]
 device_pixel_ratio = 1
 durum = "seri-sonra-eksen-katman-sırası"
