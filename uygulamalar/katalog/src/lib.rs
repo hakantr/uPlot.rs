@@ -1,8 +1,10 @@
 //! Native ve GPUI Web'in paylaştığı tek Rust grafik kataloğu.
 
+#[cfg(not(target_family = "wasm"))]
+use gpui::ClipboardItem;
 use gpui::{
-    ClickEvent, ClipboardItem, Context, Entity, Focusable, FontWeight, IntoElement, Render,
-    SharedString, Task, Window, div, prelude::*, px, rgb, rgba,
+    ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement, Render, SharedString, Task,
+    Window, div, prelude::*, px, rgb, rgba,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
@@ -77,6 +79,76 @@ use uplot_rs::{
 };
 use web_time::Instant;
 
+#[path = "web_koprusu.rs"]
+mod web_köprüsü;
+
+const PERFORMANS_KARE_SAYISI: usize = 180;
+const KARE_P95_BÜTÇESİ_MS: f64 = 16.7;
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Kareİstatistiği {
+    p50_ms: f64,
+    p95_ms: f64,
+    p99_ms: f64,
+    azami_ms: f64,
+}
+
+#[derive(Default)]
+struct KareÖlçer {
+    örnekler_ms: Vec<f64>,
+    son_kare: Option<Instant>,
+    sonuç: Option<Kareİstatistiği>,
+    çalışıyor: bool,
+}
+
+impl KareÖlçer {
+    fn başlat(&mut self) {
+        self.örnekler_ms.clear();
+        self.örnekler_ms.reserve(PERFORMANS_KARE_SAYISI);
+        self.son_kare = None;
+        self.sonuç = None;
+        self.çalışıyor = true;
+    }
+
+    fn kareyi_kaydet(&mut self, şimdi: Instant) {
+        if !self.çalışıyor {
+            return;
+        }
+        if let Some(önceki) = self.son_kare {
+            self.örnekler_ms
+                .push(şimdi.duration_since(önceki).as_secs_f64() * 1_000.0);
+        }
+        self.son_kare = Some(şimdi);
+        if self.örnekler_ms.len() >= PERFORMANS_KARE_SAYISI {
+            self.sonuç = kare_istatistiği(&self.örnekler_ms);
+            self.çalışıyor = false;
+        }
+    }
+
+    fn ilerleme(&self) -> usize {
+        self.örnekler_ms.len()
+    }
+}
+
+fn kare_istatistiği(örnekler_ms: &[f64]) -> Option<Kareİstatistiği> {
+    if örnekler_ms.is_empty() || örnekler_ms.iter().any(|değer| !değer.is_finite()) {
+        return None;
+    }
+    let mut sıralı = örnekler_ms.to_vec();
+    sıralı.sort_by(f64::total_cmp);
+    let yüzdelik = |oran: f64| {
+        let son = sıralı.len().saturating_sub(1);
+        let indeks = ((son as f64) * oran).round() as usize;
+        sıralı.get(indeks.min(son)).copied()
+    };
+    Some(Kareİstatistiği {
+        p50_ms: yüzdelik(0.50)?,
+        p95_ms: yüzdelik(0.95)?,
+        p99_ms: yüzdelik(0.99)?,
+        azami_ms: *sıralı.last()?,
+    })
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum KartKimliği {
     AddDelSeries,
@@ -148,6 +220,160 @@ enum KartKimliği {
 }
 
 impl KartKimliği {
+    #[cfg(any(target_family = "wasm", test))]
+    fn slug(self) -> &'static str {
+        match self {
+            Self::AddDelSeries => "add-del-series",
+            Self::AlignDataCost => "align-data",
+            Self::Resize => "resize",
+            Self::Annotations => "annotations",
+            Self::AreaFill => "area-fill",
+            Self::ScalePadding => "scale-padding",
+            Self::Months => "months",
+            Self::MonthsRussian => "months-ru",
+            Self::NiceScale => "nice-scale",
+            Self::NoData => "no-data",
+            Self::PathGapClip => "path-gap-clip",
+            Self::PixelAlign => "pixel-align",
+            Self::Points => "points",
+            Self::ScalesDirOri => "scales-dir-ori",
+            Self::Scatter => "scatter",
+            Self::ScrollSync => "scroll-sync",
+            Self::SineStream => "sine-stream",
+            Self::SoftMinMax(_) => "soft-minmax",
+            Self::SparklinesBars(_) => "sparklines-bars",
+            Self::Sparklines(_) => "sparklines",
+            Self::Sparse(_) => "sparse",
+            Self::StackedSeries(_) => "stacked-series",
+            Self::StreamData(_) => "stream-data",
+            Self::GpuiSvgExport => "gpui-svg-export",
+            Self::SyncCursor => "sync-cursor",
+            Self::SyncYZero(_) => "sync-y-zero",
+            Self::ThinBars(_) => "thin-bars-stroke-fill",
+            Self::TimePeriods(_) => "time-periods",
+            Self::TimelineDiscrete(_) => "timeline-discrete",
+            Self::TimeseriesDiscrete => "timeseries-discrete",
+            Self::TimezonesDst => "timezones-dst",
+            Self::TooltipsClosest => "tooltips-closest",
+            Self::Tooltips => "tooltips",
+            Self::Trendlines => "trendlines",
+            Self::UpdateCursorSelectResize => "update-cursor-select-resize",
+            Self::WindDirection => "wind-direction",
+            Self::YScaleDrag => "y-scale-drag",
+            Self::YShiftedSeries => "y-shifted-series",
+            Self::CursorBind => "cursor-bind",
+            Self::CursorSnap => "cursor-snap",
+            Self::CursorTooltip => "cursor-tooltip",
+            Self::CustomScales => "custom-scales",
+            Self::DataSmoothing => "data-smoothing",
+            Self::DrawHooks => "draw-hooks",
+            Self::FocusCursor => "focus-cursor",
+            Self::Gradients => "gradients",
+            Self::GridOverSeries => "grid-over-series",
+            Self::HighLowBands => "high-low-bands",
+            Self::LatencyHeatmap => "latency-heatmap",
+            Self::LinePaths => "line-paths",
+            Self::LogScales => "log-scales",
+            Self::LogScales2 => "log-scales2",
+            Self::MassSpectrum => "mass-spectrum",
+            Self::MeasureDatums => "measure-datums",
+            Self::MultiBars(örnek) => örnek.kimlik(),
+            Self::NearestNonNull => "nearest-non-null",
+            Self::MissingData => "missing-data",
+            Self::DependentScale => "dependent-scale",
+            Self::ArcSinhScales => "arcsinh-scales",
+            Self::AxisControl => "axis-control",
+            Self::AxisAutosize => "axis-autosize",
+            Self::AxisIndicators => "axis-indicators",
+            Self::Bars(_) => "bars-grouped-stacked",
+            Self::BarsValuesAutosize(_) => "bars-values-autosize",
+            Self::BoxWhisker(_) => "box-whisker",
+            Self::Candlestick => "candlestick-ohlc",
+        }
+    }
+
+    #[cfg(any(target_family = "wasm", test))]
+    fn slugdan(slug: &str) -> Option<Self> {
+        let kart = match slug {
+            "add-del-series" => Self::AddDelSeries,
+            "align-data" | "align-data-cost" => Self::AlignDataCost,
+            "resize" | "line-resize" => Self::Resize,
+            "annotations" => Self::Annotations,
+            "area-fill" => Self::AreaFill,
+            "scale-padding" => Self::ScalePadding,
+            "months" => Self::Months,
+            "months-ru" => Self::MonthsRussian,
+            "nice-scale" => Self::NiceScale,
+            "no-data" => Self::NoData,
+            "path-gap-clip" => Self::PathGapClip,
+            "pixel-align" => Self::PixelAlign,
+            "points" => Self::Points,
+            "scales-dir-ori" => Self::ScalesDirOri,
+            "scatter" => Self::Scatter,
+            "scroll-sync" => Self::ScrollSync,
+            "sine-stream" => Self::SineStream,
+            "soft-minmax" => Self::SoftMinMax(SoftMinMaxÖrneği::MinKip0),
+            "sparklines-bars" => Self::SparklinesBars(SparklinesBarsÖrneği::GradyanÇubuklar),
+            "sparklines" => Self::Sparklines(SparklineÖrneği::İLK),
+            "sparse" => Self::Sparse(SparseÖrneği::YerleşikDoğrusal),
+            "stacked-series" => Self::StackedSeries(StackedSeriesÖrneği::Stacked1),
+            "stream-data" => Self::StreamData(StreamDataÖrneği::SabitUzunluk),
+            "gpui-svg-export" => Self::GpuiSvgExport,
+            "sync-cursor" => Self::SyncCursor,
+            "sync-y-zero" => Self::SyncYZero(SyncYZeroAşaması::Ham),
+            "thin-bars-stroke-fill" => Self::ThinBars(ThinBarsÖrneği::Yoğunluk(
+                uplot_rs::ThinBarsYoğunluk::Normal30,
+            )),
+            "time-periods" => Self::TimePeriods(TimePeriodsÖrneği::SaatlikKullanıcılar),
+            "timeline-discrete" => {
+                Self::TimelineDiscrete(TimelineDiscreteÖrneği::DurumZamanÇizelgesi)
+            }
+            "timeseries-discrete" => Self::TimeseriesDiscrete,
+            "timezones-dst" => Self::TimezonesDst,
+            "tooltips-closest" => Self::TooltipsClosest,
+            "tooltips" => Self::Tooltips,
+            "trendlines" => Self::Trendlines,
+            "update-cursor-select-resize" => Self::UpdateCursorSelectResize,
+            "wind-direction" => Self::WindDirection,
+            "y-scale-drag" => Self::YScaleDrag,
+            "y-shifted-series" => Self::YShiftedSeries,
+            "cursor-bind" => Self::CursorBind,
+            "cursor-snap" => Self::CursorSnap,
+            "cursor-tooltip" => Self::CursorTooltip,
+            "custom-scales" => Self::CustomScales,
+            "data-smoothing" => Self::DataSmoothing,
+            "draw-hooks" => Self::DrawHooks,
+            "focus-cursor" => Self::FocusCursor,
+            "gradients" => Self::Gradients,
+            "grid-over-series" => Self::GridOverSeries,
+            "high-low-bands" => Self::HighLowBands,
+            "latency-heatmap" => Self::LatencyHeatmap,
+            "line-paths" => Self::LinePaths,
+            "log-scales" => Self::LogScales,
+            "log-scales2" => Self::LogScales2,
+            "mass-spectrum" => Self::MassSpectrum,
+            "measure-datums" => Self::MeasureDatums,
+            "nearest-non-null" => Self::NearestNonNull,
+            "missing-data" => Self::MissingData,
+            "dependent-scale" => Self::DependentScale,
+            "arcsinh-scales" => Self::ArcSinhScales,
+            "axis-control" => Self::AxisControl,
+            "axis-autosize" => Self::AxisAutosize,
+            "axis-indicators" => Self::AxisIndicators,
+            "bars-grouped-stacked" => Self::Bars(ÇubukÖrneği::ÇokGrupÇokSeriDikeyGruplu),
+            "bars-values-autosize" => Self::BarsValuesAutosize(ÇubukYönü::Dikey),
+            "box-whisker" => Self::BoxWhisker("01_run1k"),
+            "candlestick-ohlc" => Self::Candlestick,
+            _ => {
+                return MultiBarsÖrneği::TÜMÜ
+                    .into_iter()
+                    .find(|örnek| örnek.kimlik() == slug)
+                    .map(Self::MultiBars);
+            }
+        };
+        Some(kart)
+    }
+
     fn başlık(self) -> &'static str {
         match self {
             Self::AddDelSeries => "Add/Delete Series",
@@ -611,10 +837,21 @@ pub struct ChartListesi {
     scales_dir_ori_kilitli: bool,
     no_data_örneği: NoDataÖrneği,
     svg_kayıt_baytı: Option<usize>,
+    kare_ölçer: KareÖlçer,
+    performans_kare_bekleniyor: bool,
 }
 
 impl ChartListesi {
-    fn svg_kaydını_panoya_kopyala(&mut self, cx: &mut Context<Self>) {
+    fn kare_ölçümünü_başlat(&mut self, cx: &mut Context<Self>) {
+        if self.kare_ölçer.çalışıyor {
+            return;
+        }
+        self.kare_ölçer.başlat();
+        self.performans_kare_bekleniyor = false;
+        cx.notify();
+    }
+
+    fn svg_kaydını_dışa_aktar(&mut self, cx: &mut Context<Self>) {
         let Some(grafik) = self.grafik.as_ref() else {
             self.hata = Some("SVG kaydı için etkin GPUI yüzeyi bulunamadı".to_string());
             cx.notify();
@@ -629,8 +866,18 @@ impl ChartListesi {
             }
         };
         let kayıt = grafik.read(cx).svg_kaydı(ayarlar);
-        self.svg_kayıt_baytı = Some(kayıt.byte_değeri().len());
-        cx.write_to_clipboard(ClipboardItem::new_string(kayıt.stringe_dönüştür()));
+        let svg = kayıt.stringe_dönüştür();
+        self.svg_kayıt_baytı = Some(svg.len());
+        #[cfg(target_family = "wasm")]
+        if let Err(hata) =
+            web_köprüsü::svg_indir(&svg, &format!("uplot-rs-{}.svg", self.aktif_kart.slug()))
+        {
+            self.hata = Some(hata);
+            cx.notify();
+            return;
+        }
+        #[cfg(not(target_family = "wasm"))]
+        cx.write_to_clipboard(ClipboardItem::new_string(svg));
         self.hata = None;
         cx.notify();
     }
@@ -662,6 +909,7 @@ impl ChartListesi {
     }
 
     pub fn yeni(cx: &mut Context<Self>) -> Self {
+        let başlangıç_kartı = web_köprüsü::başlangıç_kartı().unwrap_or(KartKimliği::Resize);
         let etkileşimler = ortak_kart_etkileşimleri();
         let açıklama_metni = cx.new(|cx| MetinAlani::yeni("Annotation Text", cx));
         cx.subscribe(&açıklama_metni, |bu, _, olay: &MetinAlaniOlayi, cx| {
@@ -908,7 +1156,7 @@ impl ChartListesi {
             })
             .detach();
         }
-        Self {
+        let mut bu = Self {
             aktif_kart: KartKimliği::Resize,
             nokta_sayısı: 100,
             grafik,
@@ -982,7 +1230,13 @@ impl ChartListesi {
             scales_dir_ori_kilitli: false,
             no_data_örneği: NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
             svg_kayıt_baytı: None,
+            kare_ölçer: KareÖlçer::default(),
+            performans_kare_bekleniyor: false,
+        };
+        if başlangıç_kartı != KartKimliği::Resize {
+            bu.kartı_seç(başlangıç_kartı, cx);
         }
+        bu
     }
 
     fn timeseries_discrete_yüzeylerini_oluştur(&mut self, cx: &mut Context<Self>) {
@@ -2955,6 +3209,9 @@ impl ChartListesi {
         if self.aktif_kart == kart {
             return;
         }
+        if let Err(hata) = web_köprüsü::kart_url_adresini_güncelle(kart) {
+            self.hata = Some(hata);
+        }
         self.aktif_kart = kart;
         self.svg_kayıt_baytı = None;
         self.kart_tanımı_açık = false;
@@ -4133,12 +4390,62 @@ impl Render for ChartListesi {
                 cx.notify();
             });
         }
+        if self.kare_ölçer.çalışıyor && !self.performans_kare_bekleniyor {
+            self.performans_kare_bekleniyor = true;
+            cx.on_next_frame(window, |bu, _window, cx| {
+                bu.performans_kare_bekleniyor = false;
+                bu.kare_ölçer.kareyi_kaydet(Instant::now());
+                cx.notify();
+            });
+        }
         let panel = rgb(0xffffff);
         let zemin = rgb(0xf3f4f6);
         let metin = rgb(0x111827);
         let soluk = rgb(0x6b7280);
         let vurgu = rgb(0xdc2626);
         let aktif_kart = self.aktif_kart;
+        let kare_ölçüm_yazısı = if self.kare_ölçer.çalışıyor {
+            format!(
+                "Kare ölçümü: {}/{}",
+                self.kare_ölçer.ilerleme(),
+                PERFORMANS_KARE_SAYISI
+            )
+        } else if let Some(sonuç) = self.kare_ölçer.sonuç {
+            format!(
+                "Kare ms p50 {:.2} · p95 {:.2} · p99 {:.2} · max {:.2} · {}",
+                sonuç.p50_ms,
+                sonuç.p95_ms,
+                sonuç.p99_ms,
+                sonuç.azami_ms,
+                if sonuç.p95_ms < KARE_P95_BÜTÇESİ_MS {
+                    "bütçe geçti"
+                } else {
+                    "bütçe aşıldı"
+                }
+            )
+        } else {
+            "Kare ölçümü: istek bekliyor".to_string()
+        };
+        let gpu = window.gpu_specs();
+        let yazılım_gpu = gpu
+            .as_ref()
+            .is_some_and(|özellikler| özellikler.is_software_emulated);
+        let gpu_yazısı = gpu.map_or_else(
+            || "GPU: platform bilgisi sunulmadı".to_string(),
+            |özellikler| {
+                format!(
+                    "GPU: {} · {} · {}{}",
+                    özellikler.device_name,
+                    özellikler.backend_name,
+                    özellikler.driver_name,
+                    if özellikler.is_software_emulated {
+                        " · YAZILIM FALLBACK"
+                    } else {
+                        ""
+                    }
+                )
+            },
+        );
         let soft_minmax_canlı = matches!(aktif_kart, KartKimliği::SoftMinMax(_));
         let soft_minmax_çalışıyor = self.soft_minmax_çalışıyor;
         let sync_cursor_etkin = self.sync_cursor_grubu.senkron();
@@ -4236,7 +4543,16 @@ impl Render for ChartListesi {
             }
             KartKimliği::GpuiSvgExport => self.svg_kayıt_baytı.map_or_else(
                 || "3 nokta × 1 seri · kayıt yalnız düğmeye basıldığında çalışır".to_string(),
-                |bayt| format!("800×400 gerçek vektör SVG · {bayt} bayt panoya kopyalandı"),
+                |bayt| {
+                    format!(
+                        "800×400 gerçek vektör SVG · {bayt} bayt {}",
+                        if cfg!(target_family = "wasm") {
+                            "indirildi"
+                        } else {
+                            "panoya kopyalandı"
+                        }
+                    )
+                },
             ),
             KartKimliği::SyncCursor => {
                 "5 yüzey · 3.004 nokta · iki cursor eşleme grubu".to_string()
@@ -5862,6 +6178,22 @@ impl Render for ChartListesi {
                     .child(nokta_yazısı),
             )
             .child(tekerlek_anahtarı)
+            .child(
+                Dugme::yeni(
+                    "performans-kare-olc",
+                    if self.kare_ölçer.çalışıyor {
+                        "Kare ölçülüyor…"
+                    } else {
+                        "180 kare ölç"
+                    },
+                )
+                .boyutu(DugmeBoyutu::Kucuk)
+                .turu(DugmeTuru::Ikincil)
+                .devre_disi(self.kare_ölçer.çalışıyor)
+                .tiklaninca(cx.listener(|bu, _, _, cx| {
+                    bu.kare_ölçümünü_başlat(cx);
+                })),
+            )
             .when(aktif_kart == KartKimliği::SyncCursor, |öğe| {
                 öğe
                     .child(
@@ -5921,12 +6253,19 @@ impl Render for ChartListesi {
             })
             .when(aktif_kart == KartKimliği::GpuiSvgExport, |öğe| {
                 öğe.child(
-                    Dugme::yeni("gpui-svg-kaydet", "SVG’yi panoya kopyala")
-                        .boyutu(DugmeBoyutu::Kucuk)
-                        .turu(DugmeTuru::Ikincil)
-                        .tiklaninca(cx.listener(|bu, _, _, cx| {
-                            bu.svg_kaydını_panoya_kopyala(cx);
-                        })),
+                    Dugme::yeni(
+                        "gpui-svg-kaydet",
+                        if cfg!(target_family = "wasm") {
+                            "SVG’yi indir"
+                        } else {
+                            "SVG’yi panoya kopyala"
+                        },
+                    )
+                    .boyutu(DugmeBoyutu::Kucuk)
+                    .turu(DugmeTuru::Ikincil)
+                    .tiklaninca(cx.listener(|bu, _, _, cx| {
+                        bu.svg_kaydını_dışa_aktar(cx);
+                    })),
                 )
             })
             .when(aktif_kart == KartKimliği::ArcSinhScales, |öğe| {
@@ -9341,9 +9680,17 @@ impl Render for ChartListesi {
             .ayarlar(CubukAyarlari::default().kompakt(true))
             .sag(
                 div()
+                    .flex()
+                    .items_center()
+                    .gap_3()
                     .text_xs()
-                    .text_color(soluk)
-                    .child("Rust 2024 · MSRV 1.95"),
+                    .child(
+                        div()
+                            .text_color(if yazılım_gpu { vurgu } else { soluk })
+                            .child(gpu_yazısı),
+                    )
+                    .child(div().text_color(soluk).child(kare_ölçüm_yazısı))
+                    .child(div().text_color(soluk).child("Rust 2024 · MSRV 1.95")),
             )
     }
 }

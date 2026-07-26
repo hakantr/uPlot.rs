@@ -12,5 +12,21 @@ ortak_bilesenler = { path = "../../../gpui_kutuphanesi/kutuphaneler/ortak_bilese
 uplot-rs = { path = "../..", default-features = false, features = ["gpui-svg"] }
 web-time = "1.1.0"
 
+[target.'cfg(target_family = "wasm")'.dependencies]
+js-sys = "0.3"
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = [
+    "Blob",
+    "BlobPropertyBag",
+    "Document",
+    "Element",
+    "History",
+    "HtmlAnchorElement",
+    "Location",
+    "Node",
+    "Url",
+    "Window",
+] }
+
 [lints]
 workspace = true
