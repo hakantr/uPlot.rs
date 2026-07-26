@@ -86,6 +86,10 @@ pub struct GpuiGrafik {
     grafik: Grafik,
     ana_sahne: Rc<Sahne>,
     ana_yüzey: Option<Entity<GpuiAnaYüzey>>,
+    etkileşim_sahnesi: Rc<Sahne>,
+    etkileşim_yüzeyi: Option<Entity<GpuiEtkileşimYüzeyi>>,
+    ana_sahne_revizyonu: u64,
+    etkileşim_sahne_revizyonu: u64,
     imleç: Option<İmleçDurumu>,
     seçim: Option<(Nokta, Nokta)>,
     açıklama_seçimi: bool,
@@ -108,6 +112,20 @@ struct GpuiAnaYüzey {
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
     yol_önbelleği: Rc<RefCell<GpuiYolÖnbelleği>>,
     duyarlı_grafik: Option<WeakEntity<GpuiGrafik>>,
+}
+
+struct GpuiEtkileşimYüzeyi {
+    sahne: Rc<Sahne>,
+    yol_önbelleği: Rc<RefCell<GpuiYolÖnbelleği>>,
+}
+
+impl GpuiEtkileşimYüzeyi {
+    fn sahneyi_ayarla(&mut self, sahne: Rc<Sahne>) {
+        self.yol_önbelleği
+            .borrow_mut()
+            .sahneyi_değiştir(&self.sahne, &sahne);
+        self.sahne = sahne;
+    }
 }
 
 impl GpuiAnaYüzey {
@@ -288,6 +306,27 @@ impl Render for GpuiAnaYüzey {
     }
 }
 
+impl Render for GpuiEtkileşimYüzeyi {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        let sahne = self.sahne.clone();
+        let yol_önbelleği = self.yol_önbelleği.clone();
+        canvas(
+            |_, _, _| {},
+            move |sınırlar, _, pencere, uygulama| {
+                sahneyi_önbellekli_boya(
+                    &sahne,
+                    sınırlar,
+                    &mut yol_önbelleği.borrow_mut(),
+                    pencere,
+                    uygulama,
+                );
+            },
+        )
+        .absolute()
+        .size_full()
+    }
+}
+
 impl GpuiGrafik {
     pub fn yeni(grafik: Grafik) -> Self {
         let boyut_senkron_katmanı = grafik.boyut_senkron_düzeni();
@@ -296,6 +335,10 @@ impl GpuiGrafik {
             grafik,
             ana_sahne,
             ana_yüzey: None,
+            etkileşim_sahnesi: Rc::new(Sahne::yeni(1, 1)),
+            etkileşim_yüzeyi: None,
+            ana_sahne_revizyonu: 1,
+            etkileşim_sahne_revizyonu: 0,
             imleç: None,
             seçim: None,
             açıklama_seçimi: false,
@@ -320,6 +363,15 @@ impl GpuiGrafik {
 
     pub fn grafik_kimliği(&self) -> u64 {
         self.grafik.kimlik()
+    }
+
+    /// Retained ana ve etkileşim katmanlarının güncel revizyonlarını döndürür.
+    ///
+    /// Pointer hareketinde ana revizyon sabit kalır; yalnız hafif etkileşim
+    /// katmanı değişir. `setData`, `setSeries`, zoom ve resize ana revizyonu
+    /// artırır ve GPUI yol önbelleği yalnız değişen komutları geçersiz kılar.
+    pub const fn sahne_revizyonları(&self) -> (u64, u64) {
+        (self.ana_sahne_revizyonu, self.etkileşim_sahne_revizyonu)
     }
 
     pub fn seri_yaşam_döngüsü_olaylarını_al(
@@ -1345,6 +1397,16 @@ impl GpuiGrafik {
         sahne
     }
 
+    fn etkileşim_sahnesini_yenile(&mut self) -> bool {
+        let yeni = Rc::new(self.etkileşim_sahnesi());
+        if *yeni == *self.etkileşim_sahnesi {
+            return false;
+        }
+        self.etkileşim_sahnesi = yeni;
+        self.etkileşim_sahne_revizyonu = self.etkileşim_sahne_revizyonu.saturating_add(1);
+        true
+    }
+
     fn sahne_konumu(&self, pencere_konumu: ::gpui::Point<Pixels>) -> Option<Nokta> {
         let sınırlar = self.çizim_sınırları.get()?;
         let (kaynak_g, kaynak_y) = self.grafik.boyut();
@@ -1688,6 +1750,7 @@ impl GpuiGrafik {
     fn sahneyi_yenile(&mut self, cx: &mut Context<Self>) {
         self.açıklama_vuruşu = None;
         self.ana_sahne = Rc::new(self.grafik.çiz());
+        self.ana_sahne_revizyonu = self.ana_sahne_revizyonu.saturating_add(1);
         let duyarlı_grafik = self.grafik.duyarlı_boyut_mu().then(|| cx.weak_entity());
         if let Some(yüzey) = self.ana_yüzey.as_ref() {
             let sahne = self.ana_sahne.clone();
@@ -1744,7 +1807,24 @@ impl Render for GpuiGrafik {
                 })
             })
             .clone();
-        let etkileşim_sahnesi = Rc::new(self.etkileşim_sahnesi());
+        self.etkileşim_sahnesini_yenile();
+        let etkileşim_yüzeyi = self
+            .etkileşim_yüzeyi
+            .get_or_insert_with(|| {
+                let sahne = self.etkileşim_sahnesi.clone();
+                cx.new(|_| GpuiEtkileşimYüzeyi {
+                    sahne,
+                    yol_önbelleği: Rc::new(RefCell::new(GpuiYolÖnbelleği::default())),
+                })
+            })
+            .clone();
+        let etkileşim_sahnesi = self.etkileşim_sahnesi.clone();
+        etkileşim_yüzeyi.update(cx, |yüzey, yüzey_cx| {
+            if !Rc::ptr_eq(&yüzey.sahne, &etkileşim_sahnesi) {
+                yüzey.sahneyi_ayarla(etkileşim_sahnesi);
+                yüzey_cx.notify();
+            }
+        });
         let taşıyor = self.taşıma_başlangıcı.is_some();
         let taşımaya_hazır = self.boşluk_basılı && self.grafik.yakınlaştırılmış();
         let eksen_sürükleniyor = self.grafik.eksen_sürükleniyor();
@@ -2252,16 +2332,7 @@ impl Render for GpuiGrafik {
                 }),
             )
             .child(ana_yüzey.cached(StyleRefinement::default().size_full()))
-            .child(
-                canvas(
-                    |_, _, _| {},
-                    move |sınırlar, _, pencere, uygulama| {
-                        sahneyi_boya(&etkileşim_sahnesi, sınırlar, pencere, uygulama);
-                    },
-                )
-                .absolute()
-                .size_full(),
-            )
+            .child(etkileşim_yüzeyi.cached(StyleRefinement::default().size_full()))
             .when_some(
                 bilgi_kutusu,
                 |yüzey, (sol, üst, metin, kenarlık, bağlantı, azami_genişlik)| {
@@ -2801,6 +2872,48 @@ fn sahneyi_önbellekli_boya(
     }
 }
 
+/// Tahsisat ve cache regresyon testleri için normal retained boya hazırlığı.
+///
+/// Bu tür yalnız [`crate::diagnostics`] üzerinden sunulur; grafik oluşturma
+/// API'si değildir. İlk `tur` yolu kurar, sonraki turlar aynı fiziksel GPUI
+/// path'ini allocation yapmadan paylaşır.
+#[doc(hidden)]
+pub struct GpuiRetainedBoyaÖlçer {
+    sahne: Sahne,
+    sınırlar: Bounds<Pixels>,
+    önbellek: GpuiYolÖnbelleği,
+}
+
+#[doc(hidden)]
+impl GpuiRetainedBoyaÖlçer {
+    pub fn yeni() -> Self {
+        let mut sahne = Sahne::yeni(320, 180);
+        sahne.ekle(Komut::Yol {
+            parçalar: vec![vec![Nokta::yeni(10.0, 20.0), Nokta::yeni(200.0, 80.0)]],
+            renk: "#305cde".to_string(),
+            kalınlık: 2.0,
+        });
+        Self {
+            sahne,
+            sınırlar: Bounds::new(point(px(0.0), px(0.0)), size(px(320.0), px(180.0))),
+            önbellek: GpuiYolÖnbelleği::default(),
+        }
+    }
+
+    pub fn tur(&mut self) -> usize {
+        self.önbellek.yüzeyi_hazırla(&self.sahne, self.sınırlar);
+        self.önbellek
+            .yol(0, 2.0, || Some(Path::new(point(px(1.0), px(2.0)))))
+            .map_or(0, |yol| yol.fiziksel.vertices.len())
+    }
+}
+
+impl Default for GpuiRetainedBoyaÖlçer {
+    fn default() -> Self {
+        Self::yeni()
+    }
+}
+
 fn gradyan_yolunu_boya(
     yol: BoyanabilirGpuiYol,
     gradyan: &DoğrusalGradyan,
@@ -3120,11 +3233,29 @@ mod testler {
     }
 
     #[test]
+    fn bin_retained_boya_hazırlığı_svg_serileştirmesini_çalıştırmaz() {
+        crate::cizim::test_svg_serileştirme_sayacını_sıfırla();
+        let sahne = yol_sahnesi("#ff0000", 2.0, 200.0);
+        let sınırlar = Bounds::new(point(px(0.0), px(0.0)), size(px(320.0), px(180.0)));
+        let mut önbellek = GpuiYolÖnbelleği::default();
+        önbellek.yüzeyi_hazırla(&sahne, sınırlar);
+
+        for _ in 0..1_000 {
+            önbellek.yüzeyi_hazırla(&sahne, sınırlar);
+            let yol = önbellek.yol(0, 2.0, || Some(Path::new(point(px(1.0), px(2.0)))));
+            assert!(yol.is_some());
+        }
+
+        assert_eq!(crate::cizim::test_svg_serileştirme_çağrıları(), 0);
+    }
+
+    #[test]
     fn hover_katmanı_ana_sahne_geometrisini_değiştirmez() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = crate::kart::resize_kartı(100)?;
         let grafik = Grafik::yeni(seçenekler, veri)?;
         let mut bileşen = GpuiGrafik::yeni(grafik);
         let ana_komut_sayısı = bileşen.ana_sahne.komutlar().len();
+        let başlangıç_revizyonları = bileşen.sahne_revizyonları();
         assert!(ana_komut_sayısı > 0);
         assert!(bileşen.etkileşim_sahnesi().komutlar().is_empty());
 
@@ -3143,6 +3274,15 @@ mod testler {
         });
 
         assert!(!bileşen.etkileşim_sahnesi().komutlar().is_empty());
+        assert!(bileşen.etkileşim_sahnesini_yenile());
+        let hover_revizyonları = bileşen.sahne_revizyonları();
+        assert_eq!(hover_revizyonları.0, başlangıç_revizyonları.0);
+        assert_eq!(
+            hover_revizyonları.1,
+            başlangıç_revizyonları.1.saturating_add(1)
+        );
+        assert!(!bileşen.etkileşim_sahnesini_yenile());
+        assert_eq!(bileşen.sahne_revizyonları(), hover_revizyonları);
         assert_eq!(bileşen.ana_sahne.komutlar().len(), ana_komut_sayısı);
         Ok(())
     }

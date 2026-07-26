@@ -5,16 +5,8 @@
 
 use std::fmt::Write as _;
 
-#[cfg(test)]
-use std::cell::Cell;
-
 use super::{GpuiGrafik, GpuiYüzeyDönüşümü};
 use crate::UplotHatası;
-
-#[cfg(test)]
-std::thread_local! {
-    static SVG_KAYIT_ÇAĞRILARI: Cell<usize> = const { Cell::new(0) };
-}
 
 /// GPUI grafik yüzeyinin SVG snapshot boyutu ve katman seçimi.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -97,9 +89,6 @@ impl GpuiGrafik {
     /// Bu çağrı yeni grafik geometrisi üretmez ve GPUI paint/frame yoluna
     /// kayıtçı eklemez. Ana sahne yalnız bu yöntem çağrıldığında okunur.
     pub fn svg_kaydı(&self, ayarlar: GpuiSvgKayıtAyarları) -> GpuiSvgKaydı {
-        #[cfg(test)]
-        SVG_KAYIT_ÇAĞRILARI.with(|sayı| sayı.set(sayı.get() + 1));
-
         let (kaynak_g, kaynak_y) = self.ana_sahne.boyut();
         let dönüşüm = GpuiYüzeyDönüşümü::hesapla(
             kaynak_g,
@@ -216,16 +205,16 @@ mod testler {
 
     #[test]
     fn normal_retained_okuma_svg_kayıtçısını_çalıştırmaz() -> Result<(), UplotHatası> {
-        SVG_KAYIT_ÇAĞRILARI.with(|sayı| sayı.set(0));
+        crate::cizim::test_svg_serileştirme_sayacını_sıfırla();
         let bileşen = resize_bileşeni()?;
 
         for _ in 0..1_000 {
             black_box(bileşen.ana_sahne.komutlar());
         }
 
-        SVG_KAYIT_ÇAĞRILARI.with(|sayı| assert_eq!(sayı.get(), 0));
+        assert_eq!(crate::cizim::test_svg_serileştirme_çağrıları(), 0);
         black_box(bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(800, 400)?));
-        SVG_KAYIT_ÇAĞRILARI.with(|sayı| assert_eq!(sayı.get(), 1));
+        assert_eq!(crate::cizim::test_svg_serileştirme_çağrıları(), 1);
         Ok(())
     }
 

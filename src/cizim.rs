@@ -1,7 +1,25 @@
 #[cfg(any(feature = "gpui-svg", test))]
 use std::fmt::Write as _;
 
+#[cfg(test)]
+use std::cell::Cell;
+
 pub(crate) mod kirpma;
+
+#[cfg(test)]
+std::thread_local! {
+    static SVG_SERİLEŞTİRME_ÇAĞRILARI: Cell<usize> = const { Cell::new(0) };
+}
+
+#[cfg(test)]
+pub(crate) fn test_svg_serileştirme_sayacını_sıfırla() {
+    SVG_SERİLEŞTİRME_ÇAĞRILARI.with(|sayı| sayı.set(0));
+}
+
+#[cfg(test)]
+pub(crate) fn test_svg_serileştirme_çağrıları() -> usize {
+    SVG_SERİLEŞTİRME_ÇAĞRILARI.with(Cell::get)
+}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Nokta {
@@ -213,6 +231,9 @@ impl Sahne {
     /// isteği retained sahneyi vektör kaydına dönüştürür.
     #[cfg(any(feature = "gpui-svg", test))]
     pub(crate) fn svg_içeriği(&self, kimlik_öneki: &str) -> String {
+        #[cfg(test)]
+        SVG_SERİLEŞTİRME_ÇAĞRILARI.with(|sayı| sayı.set(sayı.get() + 1));
+
         let mut çıktı = String::new();
         for (komut_indeksi, komut) in self.komutlar.iter().enumerate() {
             match komut {

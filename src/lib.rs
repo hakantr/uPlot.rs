@@ -20,6 +20,7 @@ mod zaman;
 
 pub use cizim::{DoğrusalGradyan, GradyanRenkDurağı, KöşeYarıçapları, MetinHizası, Nokta};
 pub(crate) use cizim::{Komut, Sahne};
+pub use gpui::{GpuiGrafik, GpuiGrafikOlayı};
 #[cfg(feature = "gpui-svg")]
 pub use gpui::{GpuiSvgKaydı, GpuiSvgKayıtAyarları};
 pub use grafik::{
@@ -143,4 +144,5 @@ pub use yuzey::{
 /// seçeneklerinden daha sık değişebilir.
 pub mod diagnostics {
     pub use crate::cizim::{Komut, Sahne};
+    pub use crate::gpui::GpuiRetainedBoyaÖlçer;
 }
