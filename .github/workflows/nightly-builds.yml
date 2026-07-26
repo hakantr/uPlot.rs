@@ -117,7 +117,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  wasm:
+  gpui-web:
     name: uplot-rs-gpui-web
     runs-on: ubuntu-24.04
     steps:
@@ -135,7 +135,7 @@ jobs:
         with:
           repository: hakantr/gpui_kutuphanesi
           path: gpui_kutuphanesi
-      - name: Rust ve WASM hedefi
+      - name: Rust ve GPUI Web hedefi
         uses: dtolnay/rust-toolchain@1.95
         with:
           targets: wasm32-unknown-unknown
@@ -171,7 +171,7 @@ jobs:
   deploy:
     name: uplot-rs-pages
     runs-on: ubuntu-24.04
-    needs: wasm
+    needs: gpui-web
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -183,7 +183,7 @@ jobs:
   cleanup:
     name: eski gece kayıtlarını temizle
     runs-on: ubuntu-24.04
-    needs: [desktop, wasm, deploy]
+    needs: [desktop, gpui-web, deploy]
     steps:
       - name: Yalnız son iki Pages dağıtımını tut
         env:

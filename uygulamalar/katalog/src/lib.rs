@@ -8431,7 +8431,7 @@ impl Render for ChartListesi {
                  callback'i gibi aynı 10×10 CSS piksel ızgarasına oturtur; hover noktaları \
                  dönüştürülmüş X'e en yakın gerçek veri örneğinde kalır. API: \
                  GrafikSeçenekleri::imleç_ızgara_adımı dönüşüm sahipliğini çekirdeğe taşır; \
-                 GPUI ve WASM cursor, seçim başlangıcı ve seçim bitişinde aynı sonucu kullanır. \
+                 native ve web GPUI cursor, seçim başlangıcı ve seçim bitişinde aynı sonucu kullanır. \
                  Lejant setSeries ile üç dolu çizgi serisini ayrı açıp kapatır. İzleme: \
                  gürültülü zaman serilerinde tekrarlanabilir piksel adımlarıyla karşılaştırma \
                  ve zoom penceresi seçmek içindir. Maliyet: snap O(1), hizalı en yakın X \
@@ -8446,9 +8446,8 @@ impl Render for ChartListesi {
                  çekirdekte hesaplar; sağ alan yetmezse kutu imlecin soluna döner. İzleme: \
                  bir telemetri örneğinin zaman ve değerini ana çizimi değiştirmeden hızlıca \
                  okumak içindir. Maliyet: en yakın X araması O(log N), yerleşim O(1)'dir; \
-                 GPUI ana yol önbelleğini korur ve yalnız etkileşim canvas'ı ile overlay'i \
-                 yeniler, WASM pointer olaylarını requestAnimationFrame ile birleştirip aynı \
-                 SVG/path düğümlerini yerinde tutar.",
+                 GPUI ana yol önbelleğini korur ve yalnız hafif etkileşim katmanı ile overlay'i \
+                 yeniler; GPUI Web pointer olaylarını aynı retained sahne durumuna uygular.",
             ),
             KartKimliği::CustomScales => Some(
                 "Amaç: aynı 199×4 kaynak veriyi ve 20 siyah draw noktasını resmî sayfadaki \
@@ -8613,9 +8612,9 @@ impl Render for ChartListesi {
                 "Amaç: setCursor, cursor._lock ve setSelect ile kurulmuş kalıcı etkileşim \
                  durumunun setSize sırasında çizim alanı oranlarında kalmasını gösterir. API: \
                  BoyutSenkronDüzeni yalnız başlangıç cursor/select/hover oranlarını taşır; \
-                 Grafik::boyutu_ayarla veri ve ölçeği koruyarak ana sahneyi yeniden boyar. GPUI \
-                 adaptörü ana veri sahnesinden ayrı etkileşim canvas'ında, WASM adaptörü ise aynı \
-                 SVG içinde kimliği değişmeyen overlay düğümlerinde durumu saklar. Lejant \
+                 Grafik::boyutu_ayarla veri ve ölçeği koruyarak ana sahneyi yeniden boyar. Native \
+                 ve web GPUI adaptörleri ana veri sahnesinden ayrı hafif etkileşim katmanında \
+                 durumu saklar. Lejant \
                  setSeries kırmızı yolu ve hover noktasını birlikte gizler. İzleme: panel veya \
                  pencere boyutu değişirken kullanıcının kilitli inceleme konumunu kaybetmemek \
                  içindir. Maliyet: kaynak gibi setSize ana yolları yeniden çizer; cursor, seçim \
@@ -8647,7 +8646,7 @@ impl Render for ChartListesi {
                  farklı birimli metriklerin ayrıntı düzeyini paneli yeniden kurmadan ayrı ayrı \
                  ayarlamak için uygundur. Maliyet: hareketler ekran karesiyle birleştirilir; \
                  setScale eksen, grid ve iki kısa yolu yeniden boyar, cursor katmanı yerinde \
-                 kalır. WASM pointer capture, GPUI dışarıda mouse-up temizliğiyle sürüklemeyi \
+                 kalır. GPUI Web pointer capture, native GPUI dışarıda mouse-up temizliğiyle sürüklemeyi \
                  yüzey sınırının dışında da güvenle tamamlar.",
             ),
             KartKimliği::YShiftedSeries => Some(
@@ -8661,7 +8660,7 @@ impl Render for ChartListesi {
                  örneğinde atomik setData uygular. Lejant setSeries görünürlüğü kip geçişinde \
                  korunur. İzleme: aynı ölçekli çekirdek, pod veya kuyruk metriklerini üst üste \
                  binmeden ayrı şeritlerde izleyip ham değerlerini karşılaştırmak içindir. \
-                 Maliyet: seçenek ağacı, GPUI entity'si, SVG kabuğu ve etkileşim bağları yeniden \
+                 Maliyet: seçenek ağacı, GPUI entity'si, retained sahne ve etkileşim bağları yeniden \
                  kurulmaz; 30 mavi çubuk tek dolgu ve tek stroke yolunda toplanır. Timer karttan \
                  çıkıldığında iptal edilir, cursor hafif katmanda aynı konumdan yeniden çözülür.",
             ),

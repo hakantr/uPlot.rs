@@ -1,12 +1,36 @@
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const kok = resolve(import.meta.dirname, "../..");
 const kaynak = resolve(kok, "../uPlot");
 const beklenenCommit = "0e5812c504430f5c804e0f993376d8999b26cc34";
 const beklenenSurum = "1.6.32";
+
+for (const eskiYol of [
+  "examples",
+  "src/svg.rs",
+  "wasm",
+  "UPLOT_TAM_UYUM_FAZ_PLANI.md",
+  "UPlot_TAM_PORT_FAZI.md",
+]) {
+  if (existsSync(resolve(kok, eskiYol))) {
+    hata(`eski çoklu-renderer yolu yeniden eklenmiş: ${eskiYol}`);
+  }
+}
+
+const kökCargo = readFileSync(resolve(kok, "Cargo.toml"), "utf8");
+const kökLib = readFileSync(resolve(kok, "src/lib.rs"), "utf8");
+if (kökCargo.includes("[[example]]")) {
+  hata("kök paket eski CLI örnek hedeflerini yeniden tanımlıyor");
+}
+if (!kökCargo.includes('gpui = { version = "0.2.2", path = "../gpui/crates/gpui" }')) {
+  hata("GPUI kök paketin zorunlu çalışma zamanı bağımlılığı değil");
+}
+if (kökLib.includes("pub mod svg;")) {
+  hata("eski bağımsız SVG renderer yeniden dışa açılmış");
+}
 
 function hata(mesaj) {
   process.stderr.write(`uyum denetimi başarısız: ${mesaj}\n`);
