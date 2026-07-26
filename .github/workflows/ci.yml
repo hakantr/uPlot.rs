@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: hakantr/gpui
-          ref: bd1265677712f8c8e4c240899cb69415f32ded35
+          ref: bd126568b79160a1684703feb8200d6e243e52aa
           path: gpui
       - name: Kilitli GPUI bileşen kütüphanesi
         uses: actions/checkout@v4
@@ -101,7 +101,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: hakantr/gpui
-          ref: bd1265677712f8c8e4c240899cb69415f32ded35
+          ref: bd126568b79160a1684703feb8200d6e243e52aa
           path: gpui
       - name: Kilitli GPUI bileşen kütüphanesi
         uses: actions/checkout@v4

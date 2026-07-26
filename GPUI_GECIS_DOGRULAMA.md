@@ -6,7 +6,7 @@
 
 **Doğrulanan uygulama tabanı:** `af7fc90`
 
-**Kilitli GPUI:** `bd1265677712f8c8e4c240899cb69415f32ded35`
+**Kilitli GPUI:** `bd126568b79160a1684703feb8200d6e243e52aa`
 
 **Kilitli ortak bileşenler:** `c97926c3c15ab99091b51f7ed88bd98f357de409`
 
