@@ -3233,6 +3233,39 @@ fn css_alfa_kanalı(değer: &str) -> Option<u8> {
 mod testler {
     use super::*;
 
+    #[::gpui::test]
+    fn gpui_test_context_retained_sahne_ve_hover_katmanını_ayrı_tutar(
+        cx: &mut ::gpui::TestAppContext,
+    ) {
+        let kart = test_çizgi_kartı(800, 600);
+        assert!(kart.is_ok(), "test grafiği seçenekleri oluşturulamadı");
+        let Ok((seçenekler, veri)) = kart else {
+            return;
+        };
+        let grafik = Grafik::yeni(seçenekler, veri);
+        assert!(grafik.is_ok(), "test grafiği oluşturulamadı");
+        let Ok(grafik) = grafik else {
+            return;
+        };
+        let (grafik, cx) = cx.add_window_view(|_, _| GpuiGrafik::yeni(grafik));
+        let (ana_önce, etkileşim_önce, sınırlar) = grafik.read_with(cx, |grafik, _| {
+            let (ana, etkileşim) = grafik.sahne_revizyonları();
+            (ana, etkileşim, grafik.çizim_sınırları.get())
+        });
+        assert!(sınırlar.is_some(), "GPUI canvas sınırları hazırlanmadı");
+        let Some(sınırlar) = sınırlar else {
+            return;
+        };
+
+        cx.simulate_mouse_move(sınırlar.center(), None, ::gpui::Modifiers::none());
+
+        grafik.read_with(cx, |grafik, _| {
+            let (ana_sonra, etkileşim_sonra) = grafik.sahne_revizyonları();
+            assert_eq!(ana_sonra, ana_önce);
+            assert!(etkileşim_sonra > etkileşim_önce);
+        });
+    }
+
     fn yol_sahnesi(renk: &str, kalınlık: f32, bitiş_x: f32) -> Sahne {
         let mut sahne = Sahne::yeni(320, 180);
         sahne.ekle(Komut::Yol {
