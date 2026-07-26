@@ -18,7 +18,7 @@ use ::gpui::{
     linear_color_stop, linear_gradient, point, prelude::*, px, quad, rgb, rgba, size,
 };
 
-use crate::grafik::GpuiGörünümPenceresi;
+use crate::grafik::OransalGörünüm;
 use crate::{
     Aralık, AçıklamaVuruşu, BoyutSenkronDüzeni, DağılımVuruşu, DoğrusalGradyan,
     EnYakınTooltipBilgisi, Grafik, HizalıVeri, Komut, MetinHizası, Nokta, Sahne, SeriBandı,
@@ -54,7 +54,7 @@ struct GpuiYüzeyDönüşümü {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct GpuiVeriGörünümü {
-    pencere: GpuiGörünümPenceresi,
+    pencere: OransalGörünüm,
     çizim_alanı: (f32, f32, f32, f32),
 }
 
@@ -173,6 +173,274 @@ pub enum GpuiGrafikOlayı {
     FareBırakıldı,
     /// `cursor-bind` Ctrl seçimi tamamlandı; üst uygulama metin UI'si açabilir.
     Açıklamaİstendi,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum GpuiSeriEşleme {
+    /// Kaynak seri sırasını hedefteki aynı indekse taşır.
+    #[default]
+    İndeks,
+    /// Kaynak seri etiketini hedefte arar.
+    Etiket,
+}
+
+/// Bir [`GpuiGrafikGrubu`] içindeki ortak davranışların ayarları.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct GpuiGrafikGrupAyarları {
+    pub imleç: bool,
+    pub görünüm: bool,
+    pub seçim_görünümü: bool,
+    pub seri_görünürlüğü: bool,
+    pub imleç_kilidi: bool,
+    pub seri_eşleme: GpuiSeriEşleme,
+}
+
+impl Default for GpuiGrafikGrupAyarları {
+    fn default() -> Self {
+        Self {
+            imleç: true,
+            görünüm: true,
+            seçim_görünümü: true,
+            seri_görünürlüğü: true,
+            imleç_kilidi: true,
+            seri_eşleme: GpuiSeriEşleme::İndeks,
+        }
+    }
+}
+
+impl GpuiGrafikGrupAyarları {
+    pub fn seri_eşleme(mut self, eşleme: GpuiSeriEşleme) -> Self {
+        self.seri_eşleme = eşleme;
+        self
+    }
+
+    pub fn seçim_görünümü(mut self, etkin: bool) -> Self {
+        self.seçim_görünümü = etkin;
+        self
+    }
+
+    pub fn imleç_kilidi(mut self, etkin: bool) -> Self {
+        self.imleç_kilidi = etkin;
+        self
+    }
+}
+
+#[derive(Clone)]
+struct GpuiGrafikGrupÜyesi {
+    kimlik: String,
+    grafik: Entity<GpuiGrafik>,
+}
+
+/// Birden fazla GPUI grafik yüzeyini normalize oranlarla birlikte yönetir.
+///
+/// Üyelerin piksel boyutları, veri aralıkları ve Y ölçekleri farklı olabilir.
+/// Cursor, wheel, seçim, pan, eksen zoomu ve tam görünüm kaynak yüzeyin tam
+/// ölçeklerindeki fiziksel oran penceresiyle hedeflere aktarılır.
+pub struct GpuiGrafikGrubu {
+    üyeler: Vec<GpuiGrafikGrupÜyesi>,
+    ayarlar: GpuiGrafikGrupAyarları,
+    etkin: bool,
+    yayılıyor: bool,
+    imleç_kilitli: bool,
+    son_hata: Option<String>,
+}
+
+impl GpuiGrafikGrubu {
+    pub fn yeni(ayarlar: GpuiGrafikGrupAyarları) -> Self {
+        Self {
+            üyeler: Vec::new(),
+            ayarlar,
+            etkin: true,
+            yayılıyor: false,
+            imleç_kilitli: false,
+            son_hata: None,
+        }
+    }
+
+    pub fn etkin(&self) -> bool {
+        self.etkin
+    }
+
+    pub fn etkinliği_ayarla(&mut self, etkin: bool) -> bool {
+        let değişti = self.etkin != etkin;
+        self.etkin = etkin;
+        değişti
+    }
+
+    pub fn ayarlar(&self) -> GpuiGrafikGrupAyarları {
+        self.ayarlar
+    }
+
+    pub fn seçim_görünümünü_ayarla(&mut self, etkin: bool) -> bool {
+        let değişti = self.ayarlar.seçim_görünümü != etkin;
+        self.ayarlar.seçim_görünümü = etkin;
+        değişti
+    }
+
+    pub fn son_hata(&self) -> Option<&str> {
+        self.son_hata.as_deref()
+    }
+
+    pub fn üye_sayısı(&self) -> usize {
+        self.üyeler.len()
+    }
+
+    pub fn grafik_ekle(
+        &mut self,
+        kimlik: impl Into<String>,
+        grafik: Entity<GpuiGrafik>,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let kimlik = kimlik.into();
+        if self.üyeler.iter().any(|üye| üye.kimlik == kimlik) {
+            return false;
+        }
+        let olay_kimliğini = kimlik.clone();
+        cx.subscribe(&grafik, move |grup, _, olay: &GpuiGrafikOlayı, cx| {
+            grup.olayı_yay(&olay_kimliğini, *olay, cx);
+        })
+        .detach();
+        self.üyeler.push(GpuiGrafikGrupÜyesi { kimlik, grafik });
+        true
+    }
+
+    fn olayı_yay(
+        &mut self, kaynak_kimliği: &str, olay: GpuiGrafikOlayı, cx: &mut Context<Self>
+    ) {
+        if !self.etkin || self.yayılıyor {
+            return;
+        }
+        let Some(kaynak) = self
+            .üyeler
+            .iter()
+            .find(|üye| üye.kimlik == kaynak_kimliği)
+            .map(|üye| üye.grafik.clone())
+        else {
+            return;
+        };
+        let hedefler = self
+            .üyeler
+            .iter()
+            .filter(|üye| üye.kimlik != kaynak_kimliği)
+            .map(|üye| üye.grafik.clone())
+            .collect::<Vec<_>>();
+        self.yayılıyor = true;
+        match olay {
+            GpuiGrafikOlayı::İmleçDeğişti if self.ayarlar.imleç => {
+                let yayın = {
+                    let kaynak = kaynak.read(cx);
+                    kaynak.oransal_imleç_yayını().map(|(x, y, seri)| {
+                        let etiket = seri.and_then(|indeks| {
+                            kaynak
+                                .grafik()
+                                .seri_seçenekleri()
+                                .get(indeks)
+                                .map(|seri| seri.etiket.clone())
+                        });
+                        (x, y, seri, etiket)
+                    })
+                };
+                for hedef in hedefler {
+                    hedef.update(cx, |hedef, cx| {
+                        if let Some((x, y, kaynak_serisi, kaynak_etiketi)) = yayın.as_ref() {
+                            let odak_serisi = eşlenen_seri_indeksi(
+                                hedef,
+                                *kaynak_serisi,
+                                kaynak_etiketi.as_deref(),
+                                self.ayarlar.seri_eşleme,
+                            );
+                            hedef.senkron_imleci_ayarla(*x, Some(*y), odak_serisi, cx);
+                        } else {
+                            hedef.senkron_imleci_temizle(cx);
+                        }
+                    });
+                }
+            }
+            GpuiGrafikOlayı::GörünümDeğişti {
+                fare_basma_bırakma
+            } if self.ayarlar.görünüm && (!fare_basma_bırakma || self.ayarlar.seçim_görünümü) =>
+            {
+                let görünüm = kaynak.read(cx).oransal_görünüm_yayını();
+                for hedef in hedefler {
+                    let sonuç = hedef.update(cx, |hedef, cx| {
+                        hedef.oransal_görünümü_ayarla(görünüm, true, cx)
+                    });
+                    if let Err(hata) = sonuç {
+                        self.son_hata = Some(format!("Grup görünümü uygulanamadı: {hata}"));
+                    }
+                }
+            }
+            GpuiGrafikOlayı::DurumDeğişti if self.ayarlar.seri_görünürlüğü => {
+                let durum = {
+                    let kaynak = kaynak.read(cx);
+                    kaynak
+                        .grafik()
+                        .seri_seçenekleri()
+                        .iter()
+                        .enumerate()
+                        .map(|(indeks, seri)| {
+                            (seri.etiket.clone(), kaynak.grafik().seri_görünür_mü(indeks))
+                        })
+                        .collect::<Vec<_>>()
+                };
+                for hedef in hedefler {
+                    hedef.update(cx, |hedef, cx| {
+                        let mut değişti = false;
+                        for (kaynak_indeksi, (etiket, görünür)) in durum.iter().enumerate() {
+                            let hedef_indeksi = eşlenen_seri_indeksi(
+                                hedef,
+                                Some(kaynak_indeksi),
+                                Some(etiket),
+                                self.ayarlar.seri_eşleme,
+                            );
+                            if let Some(hedef_indeksi) = hedef_indeksi
+                                && hedef
+                                    .grafik
+                                    .seri_görünürlüğünü_ayarla(hedef_indeksi, *görünür)
+                                    .unwrap_or(false)
+                            {
+                                değişti = true;
+                            }
+                        }
+                        if değişti {
+                            hedef.grafik_bildir(cx);
+                        }
+                    });
+                }
+            }
+            GpuiGrafikOlayı::FareBırakıldı if self.ayarlar.imleç_kilidi => {
+                self.imleç_kilitli = !self.imleç_kilitli;
+                for üye in &self.üyeler {
+                    üye.grafik.update(cx, |grafik, cx| {
+                        grafik.senkron_kilidi_ayarla(self.imleç_kilitli, cx);
+                    });
+                }
+            }
+            _ => {}
+        }
+        self.yayılıyor = false;
+    }
+}
+
+fn eşlenen_seri_indeksi(
+    hedef: &GpuiGrafik,
+    kaynak_indeksi: Option<usize>,
+    kaynak_etiketi: Option<&str>,
+    eşleme: GpuiSeriEşleme,
+) -> Option<usize> {
+    match eşleme {
+        GpuiSeriEşleme::İndeks => {
+            kaynak_indeksi.filter(|indeks| *indeks < hedef.grafik().seri_seçenekleri().len())
+        }
+        GpuiSeriEşleme::Etiket => {
+            let etiket = kaynak_etiketi?;
+            hedef
+                .grafik()
+                .seri_seçenekleri()
+                .iter()
+                .position(|seri| seri.etiket == etiket)
+        }
+    }
 }
 
 /// Çekirdek [`Grafik`] durumunu GPUI canvas üzerinde gösteren hazır bileşen.
@@ -488,7 +756,7 @@ impl GpuiGrafik {
         let ana_sahne = Rc::new(grafik.gpui_tam_sahneyi_çiz());
         let eksen_sahnesi = Rc::new(grafik.gpui_eksen_sahnesini_çiz());
         let veri_görünümü = Rc::new(Cell::new(GpuiVeriGörünümü {
-            pencere: grafik.gpui_görünüm_penceresi(),
+            pencere: grafik.oransal_görünüm(),
             çizim_alanı: grafik.çizim_alanı_boyutta(grafik.boyut().0, grafik.boyut().1),
         }));
         Self {
@@ -596,6 +864,16 @@ impl GpuiGrafik {
         ))
     }
 
+    /// Grup üyeleri arasında piksel boyutundan bağımsız imleç yayını.
+    pub fn oransal_imleç_yayını(&self) -> Option<(f64, f64, Option<usize>)> {
+        self.senkron_yayını()
+    }
+
+    /// Grafiğin tam ölçekleri içindeki normalize görünüm penceresini yayınlar.
+    pub fn oransal_görünüm_yayını(&self) -> OransalGörünüm {
+        self.grafik.oransal_görünüm()
+    }
+
     fn etkin_en_yakın_tooltip(&self) -> Option<EnYakınTooltipBilgisi> {
         let imleç = self.imleç.as_ref()?;
         let seri = self.grafik.odak_serisi()?;
@@ -691,12 +969,25 @@ impl GpuiGrafik {
         odak_serisi: Option<usize>,
         cx: &mut Context<Self>,
     ) -> bool {
-        if self.imleç_kilitli || !yatay_oran.is_finite() {
+        if self.imleç_kilitli
+            || !yatay_oran.is_finite()
+            || dikey_oran.is_some_and(|oran| !oran.is_finite())
+        {
             return false;
         }
         let (sol, sağ, üst, alt) = self.çizim_alanı();
-        let x_oranı = yatay_oran.clamp(0.0, 1.0);
-        let Some(çözüm) = self.grafik.imleç_çözümü(x_oranı, f64::from(sağ - sol)) else {
+        let yatay_oran = yatay_oran.clamp(0.0, 1.0);
+        let dikey_oran = dikey_oran.map(|oran| oran.clamp(0.0, 1.0));
+        let fiziksel_dikey = dikey_oran.unwrap_or(0.5);
+        let (x_oranı, _) = self
+            .grafik
+            .fiziksel_oranları_mantıksala(yatay_oran, fiziksel_dikey);
+        let x_uzunluğu = if self.grafik.x_dikey_mi() {
+            alt - üst
+        } else {
+            sağ - sol
+        };
+        let Some(çözüm) = self.grafik.imleç_çözümü(x_oranı, f64::from(x_uzunluğu)) else {
             return false;
         };
         let seri_x_değerleri = çözüm
@@ -709,18 +1000,13 @@ impl GpuiGrafik {
             .iter()
             .map(|örnek| örnek.map(|örnek| örnek.değer))
             .collect();
-        let y = dikey_oran
-            .filter(|oran| oran.is_finite())
-            .map_or(-10.0, |oran| {
-                üst + oran.clamp(0.0, 1.0) as f32 * (alt - üst)
-            });
+        let fare = Nokta::yeni(
+            sol + yatay_oran as f32 * (sağ - sol),
+            dikey_oran.map_or(-10.0, |oran| üst + oran as f32 * (alt - üst)),
+        );
         self.açıklama_vuruşu = None;
         self.imleç = Some(İmleçDurumu {
-            fare: Nokta::yeni(
-                sol + self.grafik.x_konum_oranı(çözüm.imleç_x).unwrap_or(x_oranı) as f32
-                    * (sağ - sol),
-                y,
-            ),
+            fare,
             veri_x: çözüm.ortak_x,
             seri_x_değerleri,
             seri_değerleri,
@@ -732,6 +1018,20 @@ impl GpuiGrafik {
             cx.notify();
         }
         true
+    }
+
+    /// Normalize grup görünümünü bu grafiğin kendi tam ölçeklerine uygular.
+    pub fn oransal_görünümü_ayarla(
+        &mut self,
+        görünüm: OransalGörünüm,
+        geçmişe_ekle: bool,
+        cx: &mut Context<Self>,
+    ) -> Result<bool, UplotHatası> {
+        let değişti = self.grafik.oransal_görünümü_ayarla(görünüm, geçmişe_ekle)?;
+        if değişti {
+            self.görünüm_bildir(false, cx);
+        }
+        Ok(değişti)
     }
 
     pub fn senkron_imleci_temizle(&mut self, cx: &mut Context<Self>) -> bool {
@@ -1984,7 +2284,7 @@ impl GpuiGrafik {
 
     fn görünümü_yenile(&mut self) {
         self.veri_görünümü.set(GpuiVeriGörünümü {
-            pencere: self.grafik.gpui_görünüm_penceresi(),
+            pencere: self.grafik.oransal_görünüm(),
             çizim_alanı: self.çizim_alanı(),
         });
         self.görünüm_revizyonu = self.görünüm_revizyonu.saturating_add(1);
@@ -2405,6 +2705,7 @@ impl Render for GpuiGrafik {
                         bu.görünüm_bildir(false, cx);
                     } else {
                         bu.grafik_bildir(cx);
+                        GpuiGrafik::imleç_bildir(cx);
                     }
                 } else {
                     GpuiGrafik::imleç_bildir(cx);
@@ -2460,6 +2761,7 @@ impl Render for GpuiGrafik {
                     bu.eksen_üzerinde = false;
                     if bu.grafik.imleç_odağını_temizle() {
                         bu.grafik_bildir(cx);
+                        GpuiGrafik::imleç_bildir(cx);
                     } else {
                         GpuiGrafik::imleç_bildir(cx);
                     }
@@ -3901,7 +4203,7 @@ mod testler {
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
 
         assert!(grafik.tekerlek_eksende(0.5, 0.5, 1.0, false, TekerlekEkseni::X,)?);
-        let pencere = grafik.gpui_görünüm_penceresi();
+        let pencere = grafik.oransal_görünüm();
 
         assert!(pencere.sol > 0.0 || pencere.sağ < 1.0);
         assert!(pencere.üst.abs() <= f32::EPSILON);
@@ -3912,7 +4214,7 @@ mod testler {
     #[test]
     fn zoom_matrisi_kaynak_pencereyi_sabit_maskeye_taşır() {
         let görünüm = GpuiVeriGörünümü {
-            pencere: GpuiGörünümPenceresi {
+            pencere: OransalGörünüm {
                 sol: 0.25,
                 sağ: 0.75,
                 üst: 0.2,
@@ -3972,6 +4274,162 @@ mod testler {
             vec![vec![Some(0.0), Some(1.0), Some(0.5)]],
         )?;
         Ok((seçenekler, veri))
+    }
+
+    fn test_grup_kartı(
+        genişlik: u32,
+        yükseklik: u32,
+        x: Vec<f64>,
+        y: Vec<Option<f64>>,
+        etiket: &str,
+    ) -> Result<Grafik, UplotHatası> {
+        let seçenekler = crate::GrafikSeçenekleri::yeni(genişlik, yükseklik)?
+            .başlık(etiket)
+            .x_zaman(false)
+            .etkileşimler(
+                crate::EtkileşimSeçenekleri::default()
+                    .tekerlek_etkileşimi(true)
+                    .tekerlek_odaksız_etkileşim(true),
+            )
+            .seri(SeriSeçenekleri::yeni(etiket).renk("red"));
+        Grafik::yeni(seçenekler, HizalıVeri::yeni(x, vec![y])?)
+    }
+
+    #[::gpui::test]
+    fn grafik_grubu_farklı_boyut_ve_aralıklarda_tüm_oranları_korur(
+        cx: &mut ::gpui::TestAppContext,
+    ) {
+        let kaynak = test_grup_kartı(
+            1_920,
+            400,
+            vec![0.0, 1.0, 2.0, 3.0],
+            vec![Some(0.0), Some(10.0), Some(5.0), Some(8.0)],
+            "Kaynak",
+        );
+        let hedef = test_grup_kartı(
+            600,
+            240,
+            vec![100.0, 200.0, 300.0, 400.0],
+            vec![Some(-200.0), Some(0.0), Some(300.0), Some(100.0)],
+            "Hedef",
+        );
+        assert!(kaynak.is_ok() && hedef.is_ok());
+        let (Ok(kaynak), Ok(hedef)) = (kaynak, hedef) else {
+            return;
+        };
+        let (kaynak, hedef, grup) = cx.update(|cx| {
+            let kaynak = cx.new(|_| GpuiGrafik::yeni(kaynak));
+            let hedef = cx.new(|_| GpuiGrafik::yeni(hedef));
+            let grup = cx.new(|_| GpuiGrafikGrubu::yeni(GpuiGrafikGrupAyarları::default()));
+            grup.update(cx, |grup, cx| {
+                assert!(grup.grafik_ekle("kaynak", kaynak.clone(), cx));
+                assert!(grup.grafik_ekle("hedef", hedef.clone(), cx));
+            });
+            (kaynak, hedef, grup)
+        });
+        assert_eq!(grup.read_with(cx, |grup, _| grup.üye_sayısı()), 2);
+
+        kaynak.update(cx, |kaynak, cx| {
+            assert!(kaynak.senkron_imleci_ayarla(0.73, Some(0.21), Some(0), cx));
+            GpuiGrafik::imleç_bildir(cx);
+        });
+        let hedef_imleci = hedef.read_with(cx, |hedef, _| hedef.oransal_imleç_yayını());
+        assert!(hedef_imleci.is_some(), "hedef imleci senkronlanmadı");
+        let Some((x, y, seri)) = hedef_imleci else {
+            return;
+        };
+        assert!((x - 0.73).abs() < 1e-6);
+        assert!((y - 0.21).abs() < 1e-6);
+        assert_eq!(seri, Some(0));
+
+        kaynak.update(cx, |kaynak, cx| {
+            let değişti =
+                kaynak
+                    .grafik
+                    .tekerlek_eksende(0.68, 0.37, 1.0, false, TekerlekEkseni::İkisi);
+            assert_eq!(değişti, Ok(true));
+            kaynak.görünüm_bildir(false, cx);
+        });
+        let kaynak_görünümü = kaynak.read_with(cx, |kaynak, _| kaynak.oransal_görünüm_yayını());
+        let hedef_görünümü = hedef.read_with(cx, |hedef, _| hedef.oransal_görünüm_yayını());
+        for (kaynak, hedef) in [
+            (kaynak_görünümü.sol, hedef_görünümü.sol),
+            (kaynak_görünümü.sağ, hedef_görünümü.sağ),
+            (kaynak_görünümü.üst, hedef_görünümü.üst),
+            (kaynak_görünümü.alt, hedef_görünümü.alt),
+        ] {
+            assert!((kaynak - hedef).abs() < 1e-5);
+        }
+
+        kaynak.update(cx, |kaynak, cx| {
+            let sonuç = kaynak.seri_görünürlüğünü_ayarla(0, false, cx);
+            assert_eq!(sonuç, Ok(true));
+        });
+        assert!(!hedef.read_with(cx, |hedef, _| hedef.grafik().seri_görünür_mü(0)));
+    }
+
+    #[test]
+    fn oransal_görünüm_dikey_ters_ve_logaritmik_ölçeklerde_geri_döner() -> Result<(), UplotHatası> {
+        let tam = Aralık::yeni(1.0, 1_000.0)?;
+        let seçenekler = crate::GrafikSeçenekleri::yeni(360, 720)?
+            .x_zaman(false)
+            .x_aralığı(tam)
+            .x_logaritmik(10.0)
+            .x_ters_yön(true)
+            .x_dikey(true)
+            .y_ölçeği(
+                crate::YÖlçekSeçenekleri::yeni("y")
+                    .aralık(tam)
+                    .logaritmik(10.0)
+                    .ters_yön(true),
+            )
+            .seri(SeriSeçenekleri::yeni("Value").renk("red"));
+        let veri = HizalıVeri::yeni(
+            vec![1.0, 10.0, 100.0, 1_000.0],
+            vec![vec![Some(1.0), Some(10.0), Some(100.0), Some(1_000.0)]],
+        )?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        let beklenen = OransalGörünüm {
+            sol: 0.13,
+            sağ: 0.79,
+            üst: 0.24,
+            alt: 0.91,
+        };
+
+        assert!(grafik.oransal_görünümü_ayarla(beklenen, true)?);
+        let gerçek = grafik.oransal_görünüm();
+        for (beklenen, gerçek) in [
+            (beklenen.sol, gerçek.sol),
+            (beklenen.sağ, gerçek.sağ),
+            (beklenen.üst, gerçek.üst),
+            (beklenen.alt, gerçek.alt),
+        ] {
+            assert!((beklenen - gerçek).abs() < 1e-5);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn grafik_grubu_seriyi_etiket_veya_indeksle_eşleyebilir() -> Result<(), UplotHatası> {
+        let seçenekler = crate::GrafikSeçenekleri::yeni(600, 240)?
+            .x_zaman(false)
+            .seri(SeriSeçenekleri::yeni("green").renk("green"))
+            .seri(SeriSeçenekleri::yeni("red").renk("red"));
+        let veri = HizalıVeri::yeni(
+            vec![0.0, 1.0],
+            vec![vec![Some(0.0), Some(1.0)], vec![Some(1.0), Some(0.0)]],
+        )?;
+        let hedef = GpuiGrafik::yeni(Grafik::yeni(seçenekler, veri)?);
+
+        assert_eq!(
+            eşlenen_seri_indeksi(&hedef, Some(0), Some("red"), GpuiSeriEşleme::İndeks),
+            Some(0)
+        );
+        assert_eq!(
+            eşlenen_seri_indeksi(&hedef, Some(0), Some("red"), GpuiSeriEşleme::Etiket),
+            Some(1)
+        );
+        Ok(())
     }
 
     fn test_y_kaydırılmış_kartı() -> Result<(crate::GrafikSeçenekleri, HizalıVeri), UplotHatası> {

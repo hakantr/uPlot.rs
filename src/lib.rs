@@ -19,13 +19,15 @@ mod zaman;
 
 pub use cizim::{DoğrusalGradyan, GradyanRenkDurağı, KöşeYarıçapları, MetinHizası, Nokta};
 pub(crate) use cizim::{Komut, Sahne};
-pub use gpui::{GpuiGrafik, GpuiGrafikOlayı};
+pub use gpui::{
+    GpuiGrafik, GpuiGrafikGrubu, GpuiGrafikGrupAyarları, GpuiGrafikOlayı, GpuiSeriEşleme,
+};
 #[cfg(feature = "gpui-svg")]
 pub use gpui::{GpuiSvgKaydı, GpuiSvgKayıtAyarları};
 pub use grafik::{
-    AçıklamaVuruşu, DağılımVuruşu, EksenHedefi, Grafik, NullAtlamaYönü, SeriYaşamDöngüsüOlayı,
-    SeçimEylemi, TimelineVuruşu, ZoomRangerDurumu, ZoomRangerSürüklemeEkseni, İmleçSeriÖrneği,
-    İmleçÇözümü,
+    AçıklamaVuruşu, DağılımVuruşu, EksenHedefi, Grafik, NullAtlamaYönü, OransalGörünüm,
+    SeriYaşamDöngüsüOlayı, SeçimEylemi, TimelineVuruşu, ZoomRangerDurumu,
+    ZoomRangerSürüklemeEkseni, İmleçSeriÖrneği, İmleçÇözümü,
 };
 pub use hata::UplotHatası;
 pub use olcek::{Aralık, SayısalAralıkAyarları, SayısalAralıkParçası, YumuşakSınırKipi};

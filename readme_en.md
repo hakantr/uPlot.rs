@@ -85,6 +85,10 @@ transformation matrix to the same shared path vertices and clips the result to
 the plot mask. Only the small axis/grid/label layer is regenerated for the
 visible range. `setData`, `setSeries`, and resize still invalidate retained
 geometry because they actually change it.
+Use `GpuiGrafikGrubu` when multiple surfaces must behave as one. It propagates
+cursor, wheel, selection, pan, axis zoom, full-view reset, and series
+visibility using normalized surface ratios rather than raw pixels or data
+values, so members may have different dimensions, ranges, and scales.
 The retained command list is not a general-purpose second renderer backend.
 Normal integrations use `Grafik` + `gpui::GpuiGrafik`; inspection for tests,
 profiling, and custom verification tools is separated under

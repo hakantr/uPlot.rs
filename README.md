@@ -92,6 +92,11 @@ paylaşılan path köşelerine geç bir GPU dönüşüm matrisi uygular ve sonuc
 alanı maskesiyle kırpar. Yalnız eksen/grid/etiketlerden oluşan küçük katman
 görünür aralığa göre yenilenir. `setData`, `setSeries` ve resize ise veri
 geometrisini gerçekten değiştirdiği için retained katmanı geçersizleştirir.
+Birden fazla yüzey birlikte davranacaksa `GpuiGrafikGrubu` kullanılır. Grup;
+imleç, wheel, seçim, pan, eksen zoomu, tam görünüm ve seri görünürlüğünü ham
+piksel veya veri değeri yerine normalize yüzey oranlarıyla paylaşır. Böylece
+farklı genişlik, yükseklik, veri aralığı ve ölçeklere sahip üyeler aynı
+oransal etkileşimi korur.
 Retained komut listesi genel amaçlı ikinci bir renderer backend'i değildir.
 Normal entegrasyon `Grafik` + `gpui::GpuiGrafik` API'sini kullanır; test,
 profil ve özel doğrulama araçlarının inceleme ihtiyacı için

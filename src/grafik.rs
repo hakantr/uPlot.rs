@@ -92,14 +92,14 @@ pub struct İmleçÇözümü {
 /// yalnız bu pencereyi GPUI tarafında büyütür; veri noktaları yeniden
 /// örneklenmez veya yeniden konumlandırılmaz.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) struct GpuiGörünümPenceresi {
+pub struct OransalGörünüm {
     pub sol: f32,
     pub sağ: f32,
     pub üst: f32,
     pub alt: f32,
 }
 
-impl Default for GpuiGörünümPenceresi {
+impl Default for OransalGörünüm {
     fn default() -> Self {
         Self {
             sol: 0.0,
@@ -948,7 +948,11 @@ impl Grafik {
 
     /// Geçerli görünümün tam retained sahnedeki fiziksel kaynak penceresini
     /// döndürür. Logaritmik, ters ve dikey ölçekler burada bir kez çözülür.
-    pub(crate) fn gpui_görünüm_penceresi(&self) -> GpuiGörünümPenceresi {
+    /// Tam X/Y ölçekleri içinde geçerli görünümün fiziksel oranlarını verir.
+    ///
+    /// Bu değer farklı piksel boyutlarına, veri aralıklarına ve ölçek
+    /// dağılımlarına sahip grup üyeleri arasında doğrudan paylaşılabilir.
+    pub fn oransal_görünüm(&self) -> OransalGörünüm {
         let tam_x = self.etkileşim.tam_x();
         let görünür_x = self.görünür_x_aralığı();
         let tam_y = self.etkileşim.tam_y();
@@ -975,14 +979,14 @@ impl Grafik {
         // Y veri konumu çizimde alttan yukarı çevrilir.
         let (y_üst, y_alt) = ((1.0 - y0).min(1.0 - y1), (1.0 - y0).max(1.0 - y1));
         let mut pencere = if self.seçenekler.x_dikey {
-            GpuiGörünümPenceresi {
+            OransalGörünüm {
                 sol: y_üst,
                 sağ: y_alt,
                 üst: 1.0 - x_sağ,
                 alt: 1.0 - x_sol,
             }
         } else {
-            GpuiGörünümPenceresi {
+            OransalGörünüm {
                 sol: x_sol,
                 sağ: x_sağ,
                 üst: y_üst,
@@ -997,6 +1001,53 @@ impl Grafik {
         (pencere.sol, pencere.sağ) = sınırla(pencere.sol, pencere.sağ);
         (pencere.üst, pencere.alt) = sınırla(pencere.üst, pencere.alt);
         pencere
+    }
+
+    /// Başka bir grafik tarafından yayımlanan fiziksel oran penceresini bu
+    /// grafiğin kendi tam ölçeklerine uygular.
+    pub fn oransal_görünümü_ayarla(
+        &mut self,
+        görünüm: OransalGörünüm,
+        geçmişe_ekle: bool,
+    ) -> Result<bool, UplotHatası> {
+        let değerler = [görünüm.sol, görünüm.sağ, görünüm.üst, görünüm.alt];
+        if değerler.iter().any(|değer| !değer.is_finite())
+            || görünüm.sol < 0.0
+            || görünüm.sağ > 1.0
+            || görünüm.üst < 0.0
+            || görünüm.alt > 1.0
+            || görünüm.sol >= görünüm.sağ
+            || görünüm.üst >= görünüm.alt
+        {
+            return Err(UplotHatası::GeçersizAralık {
+                en_az: f64::from(görünüm.sol),
+                en_çok: f64::from(görünüm.sağ),
+            });
+        }
+
+        let (x_sol, x_sağ, y_üst, y_alt) = if self.seçenekler.x_dikey {
+            (
+                1.0 - görünüm.alt,
+                1.0 - görünüm.üst,
+                görünüm.sol,
+                görünüm.sağ,
+            )
+        } else {
+            (görünüm.sol, görünüm.sağ, görünüm.üst, görünüm.alt)
+        };
+        let tam_x = self.etkileşim.tam_x();
+        let x0 = self.x_değeri_orandan(tam_x, f64::from(x_sol));
+        let x1 = self.x_değeri_orandan(tam_x, f64::from(x_sağ));
+        let x = Aralık::yeni(x0.min(x1), x0.max(x1))?;
+
+        let tam_y = self.etkileşim.tam_y();
+        let y0 = self.birincil_y_değeri_konum_oranından(tam_y, f64::from(1.0 - y_alt));
+        let y1 = self.birincil_y_değeri_konum_oranından(tam_y, f64::from(1.0 - y_üst));
+        let y = Aralık::yeni(y0.min(y1), y0.max(y1))?;
+
+        self.elle_x_aralığı = None;
+        self.elle_y_aralıkları.clear();
+        Ok(self.etkileşim.görünür_aralıkları_ayarla(x, y, geçmişe_ekle))
     }
 
     /// Raster ölçeğini platform adaptöründen alır.
@@ -3079,6 +3130,15 @@ impl Grafik {
         let değer = dönüştürülmüş.en_az
             + oran.clamp(0.0, 1.0) * (dönüştürülmüş.en_çok - dönüştürülmüş.en_az);
         y_değerini_geri_dönüştür(değer, dağılım).unwrap_or(değer)
+    }
+
+    /// [`Self::y_konumu`] tarafından üretilen, alttan yukarı ölçülen fiziksel
+    /// oranı birincil Y ölçeğinin veri değerine geri dönüştürür.
+    fn birincil_y_değeri_konum_oranından(&self, aralık: Aralık, oran: f64) -> f64 {
+        let ters = self
+            .ölçek_seçeneği(&self.seçenekler.birincil_y_ölçeği)
+            .is_some_and(|ölçek| ölçek.ters_yön);
+        self.y_değeri_orandan(aralık, if ters { 1.0 - oran } else { oran })
     }
 
     /// Adlandırılmış bir Y ölçeğinin geçerli görünür aralığını döndürür.

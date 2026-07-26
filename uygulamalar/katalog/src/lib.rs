@@ -13,7 +13,9 @@ use ortak_bilesenler::{
 };
 use std::ops::Range;
 use std::time::Duration;
-use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
+use uplot_rs::gpui::{
+    GpuiGrafik, GpuiGrafikGrubu, GpuiGrafikGrupAyarları, GpuiGrafikOlayı, GpuiSeriEşleme,
+};
 use uplot_rs_gpui_ornekler::{
     ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_ARALIK_MS,
@@ -1179,7 +1181,7 @@ const KATALOG_KARTLARI: &[KatalogKartTanımı] = &[
         "Sync Cursor",
         "sync-cursor.html · sync.js · bench/data.json · 5 eşzamanlı yüzey",
         Some(
-            "Amaç: ayrı CPU, RAM ve TCP yüzeyleriyle farklı seri sıralı iki karşılaştırma  yüzeyini gerçek pub/sub ilişkileri içinde gösterir. API: SyncCursorGrubu  cursor, etiket bazlı setSeries, mouseup/down filtresi ve görünür X hedeflerini  çözer; CPU/RAM dikey cursor'ı ekran oranıyla değil aynı Y veri değerini hedef  ölçeğe yeniden projekte ederek paylaşır, TCP yalnız X'i izler. İzleme: farklı  birim ve aralıklardaki servis telemetrisinde aynı olay anını birlikte incelemek  için uygundur. Sync kapatmak yerel cursor/kilit durumunu silmez; ikinci grup  kaynak gibi cursor kilidi kullanmaz. Maliyet: beş ana canvas bağımsızdır;  pointer yalnız hafif etkileşim katmanını günceller. Ana yollar setSeries,  seçim, wheel/touch/drag veya boyut değişiminde yenilenir ve görünür X aralığı  yalnız abone yüzeylere taşınır.",
+            "Amaç: ayrı CPU, RAM ve TCP yüzeyleriyle farklı seri sıralı iki karşılaştırma yüzeyini çekirdek grup ilişkileri içinde gösterir. API: GpuiGrafikGrubu cursor, wheel, seçim, pan, eksen zoomu, tam görünüm ve setSeries olaylarını normalize fiziksel oranlarla bütün üyelere taşır; üyelerin genişlik, yükseklik, veri aralığı ve Y birimi aynı olmak zorunda değildir. İndeks veya etiket tabanlı seri eşleme grup ayarıdır. İzleme: farklı birim ve boyutlardaki servis telemetrisinde aynı oransal zamanı ve dikey konumu birlikte incelemek içindir. Sync kapatmak yerel cursor/kilit durumunu silmez; ikinci grup kaynak gibi cursor kilidi kullanmaz. Maliyet: beş retained yüzey bağımsız geometrisini korur; pointer yalnız hafif etkileşim katmanlarını, zoom ise paylaşılan görünüm matrislerini günceller.",
         ),
         SYNC_CURSOR_KART_TANIM_ÖRNEĞİ,
         "uygulamalar/ornekler/src/sync_cursor.rs",
@@ -1732,8 +1734,8 @@ pub struct ChartListesi {
     time_periods_grafikleri: Vec<(TimePeriodsÖrneği, Entity<GpuiGrafik>)>,
     timeline_discrete_grafikleri: Vec<(TimelineDiscreteÖrneği, Entity<GpuiGrafik>)>,
     sync_cursor_grafikleri: Vec<(SyncCursorÖrneği, Entity<GpuiGrafik>)>,
+    sync_cursor_çekirdek_grupları: Vec<Entity<GpuiGrafikGrubu>>,
     sync_cursor_grubu: SyncCursorGrubu,
-    sync_cursor_senkronlanıyor: bool,
     timeseries_discrete_grafikleri: Vec<(TimeseriesDiscreteÖrneği, Entity<GpuiGrafik>)>,
     timeseries_discrete_senkronlanıyor: bool,
     timezones_dst_grafikleri: Vec<(TimezonesDstÖrneği, Entity<GpuiGrafik>)>,
@@ -2238,8 +2240,8 @@ impl ChartListesi {
             time_periods_grafikleri: Vec::new(),
             timeline_discrete_grafikleri: Vec::new(),
             sync_cursor_grafikleri: Vec::new(),
+            sync_cursor_çekirdek_grupları: Vec::new(),
             sync_cursor_grubu: SyncCursorGrubu::yeni(),
-            sync_cursor_senkronlanıyor: false,
             timeseries_discrete_grafikleri: Vec::new(),
             timeseries_discrete_senkronlanıyor: false,
             timezones_dst_grafikleri: Vec::new(),
@@ -4072,95 +4074,11 @@ impl ChartListesi {
             };
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
-            cx.subscribe(&grafik, move |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if bu.sync_cursor_senkronlanıyor {
-                    return;
+            cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
+                    bu.açıklama_istendi = true;
+                    cx.notify();
                 }
-                match olay {
-                    GpuiGrafikOlayı::Açıklamaİstendi => {
-                        bu.açıklama_istendi = true;
-                    }
-                    GpuiGrafikOlayı::İmleçDeğişti => {
-                        let yayın = bu
-                            .sync_cursor_grafikleri
-                            .iter()
-                            .find(|(kimlik, _)| *kimlik == örnek)
-                            .and_then(|(_, grafik)| grafik.read(cx).senkron_veri_yayını());
-                        let hedefler = bu.sync_cursor_grubu.imleç_hedefleri(örnek);
-                        let yüzeyler = bu.sync_cursor_grafikleri.clone();
-                        bu.sync_cursor_senkronlanıyor = true;
-                        for hedef in hedefler {
-                            let Some((_, hedef_grafik)) =
-                                yüzeyler.iter().find(|(kimlik, _)| *kimlik == hedef)
-                            else {
-                                continue;
-                            };
-                            if let Some((x, y, kaynak_serisi)) = yayın {
-                                let hedef_serisi = kaynak_serisi.and_then(|indeks| {
-                                    bu.sync_cursor_grubu.seri_hedefi(örnek, hedef, indeks)
-                                });
-                                let dikey = bu
-                                    .sync_cursor_grubu
-                                    .dikey_imleç_senkron_mu(örnek, hedef)
-                                    .then_some(y);
-                                hedef_grafik.update(cx, |grafik, cx| {
-                                    if let Some(y) = dikey {
-                                        grafik.senkron_veri_imleci_ayarla(x, y, hedef_serisi, cx);
-                                    } else {
-                                        grafik.senkron_veri_x_imleci_ayarla(x, hedef_serisi, cx);
-                                    }
-                                });
-                            } else {
-                                hedef_grafik.update(cx, |grafik, cx| {
-                                    grafik.senkron_imleci_temizle(cx);
-                                });
-                            }
-                        }
-                        bu.sync_cursor_senkronlanıyor = false;
-                    }
-                    GpuiGrafikOlayı::FareBırakıldı => {
-                        let değişenler = bu.sync_cursor_grubu.fare_bırak(örnek);
-                        let yüzeyler = bu.sync_cursor_grafikleri.clone();
-                        for (kimlik, kilitli) in değişenler {
-                            if let Some((_, hedef)) =
-                                yüzeyler.iter().find(|(hedef, _)| *hedef == kimlik)
-                            {
-                                hedef.update(cx, |grafik, cx| {
-                                    grafik.senkron_kilidi_ayarla(kilitli, cx);
-                                });
-                            }
-                        }
-                    }
-                    GpuiGrafikOlayı::GörünümDeğişti {
-                        fare_basma_bırakma
-                    } => {
-                        let x = bu
-                            .sync_cursor_grafikleri
-                            .iter()
-                            .find(|(kimlik, _)| *kimlik == örnek)
-                            .map(|(_, grafik)| grafik.read(cx).grafik().görünür_x_aralığı());
-                        let hedefler = bu
-                            .sync_cursor_grubu
-                            .görünüm_hedefleri(örnek, *fare_basma_bırakma);
-                        let yüzeyler = bu.sync_cursor_grafikleri.clone();
-                        if let Some(x) = x {
-                            bu.sync_cursor_senkronlanıyor = true;
-                            for hedef in hedefler {
-                                let Some((_, hedef_grafik)) =
-                                    yüzeyler.iter().find(|(kimlik, _)| *kimlik == hedef)
-                                else {
-                                    continue;
-                                };
-                                hedef_grafik.update(cx, |grafik, cx| {
-                                    grafik.görünür_x_aralığını_ayarla(x, true, cx);
-                                });
-                            }
-                            bu.sync_cursor_senkronlanıyor = false;
-                        }
-                    }
-                    GpuiGrafikOlayı::DurumDeğişti => {}
-                }
-                cx.notify();
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -4169,10 +4087,40 @@ impl ChartListesi {
             self.hata = Some(hata);
             self.grafik = None;
             self.sync_cursor_grafikleri.clear();
+            self.sync_cursor_çekirdek_grupları.clear();
         } else {
+            let ana_grup = cx.new(|_| {
+                GpuiGrafikGrubu::yeni(
+                    GpuiGrafikGrupAyarları::default()
+                        .seçim_görünümü(self.sync_cursor_grubu.fare_basma_bırakma_senkron()),
+                )
+            });
+            let uyumsuz_grup = cx.new(|_| {
+                GpuiGrafikGrubu::yeni(
+                    GpuiGrafikGrupAyarları::default()
+                        .seri_eşleme(GpuiSeriEşleme::Etiket)
+                        .imleç_kilidi(false),
+                )
+            });
+            for (örnek, grafik) in &yüzeyler {
+                let grup = if matches!(
+                    örnek,
+                    SyncCursorÖrneği::Cpu | SyncCursorÖrneği::Ram | SyncCursorÖrneği::Tcp
+                ) {
+                    &ana_grup
+                } else {
+                    &uyumsuz_grup
+                };
+                grup.update(cx, |grup, cx| {
+                    grup.grafik_ekle(örnek.kimlik(), grafik.clone(), cx);
+                });
+            }
+            ana_grup.update(cx, |grup, _| {
+                grup.etkinliği_ayarla(self.sync_cursor_grubu.senkron());
+            });
             self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
             self.sync_cursor_grafikleri = yüzeyler;
-            self.sync_cursor_senkronlanıyor = false;
+            self.sync_cursor_çekirdek_grupları = vec![ana_grup, uyumsuz_grup];
             self.hata = None;
         }
         cx.notify();
@@ -4181,6 +4129,11 @@ impl ChartListesi {
     fn sync_cursor_senkronunu_değiştir(&mut self, cx: &mut Context<Self>) {
         let etkin = !self.sync_cursor_grubu.senkron();
         self.sync_cursor_grubu.senkronu_ayarla(etkin);
+        if let Some(grup) = self.sync_cursor_çekirdek_grupları.first() {
+            grup.update(cx, |grup, _| {
+                grup.etkinliği_ayarla(etkin);
+            });
+        }
         cx.notify();
     }
 
@@ -4190,8 +4143,11 @@ impl ChartListesi {
         seri: usize,
         cx: &mut Context<Self>,
     ) {
-        let yüzeyler = self.sync_cursor_grafikleri.clone();
-        let Some((_, kaynak)) = yüzeyler.iter().find(|(kimlik, _)| *kimlik == örnek) else {
+        let Some((_, kaynak)) = self
+            .sync_cursor_grafikleri
+            .iter()
+            .find(|(kimlik, _)| *kimlik == örnek)
+        else {
             return;
         };
         let görünür = !kaynak
@@ -4200,35 +4156,15 @@ impl ChartListesi {
             .seri_seçenekleri()
             .get(seri)
             .is_some_and(|seçenek| seçenek.göster);
-        self.sync_cursor_senkronlanıyor = true;
         if let Err(hata) = kaynak.update(cx, |grafik, cx| {
             grafik.seri_görünürlüğünü_ayarla(seri, görünür, cx)
         }) {
             self.hata = Some(format!(
                 "Sync Cursor seri görünürlüğü değiştirilemedi: {hata}"
             ));
-            self.sync_cursor_senkronlanıyor = false;
             cx.notify();
             return;
         }
-        for hedef in self.sync_cursor_grubu.imleç_hedefleri(örnek) {
-            let Some(hedef_seri) = self.sync_cursor_grubu.seri_hedefi(örnek, hedef, seri) else {
-                continue;
-            };
-            let Some((_, hedef_grafik)) = yüzeyler.iter().find(|(kimlik, _)| *kimlik == hedef)
-            else {
-                continue;
-            };
-            if let Err(hata) = hedef_grafik.update(cx, |grafik, cx| {
-                grafik.seri_görünürlüğünü_ayarla(hedef_seri, görünür, cx)
-            }) {
-                self.hata = Some(format!(
-                    "{} Sync Cursor seri görünürlüğü değiştirilemedi: {hata}",
-                    hedef.başlık()
-                ));
-            }
-        }
-        self.sync_cursor_senkronlanıyor = false;
         cx.notify();
     }
 
@@ -4236,6 +4172,11 @@ impl ChartListesi {
         let etkin = !self.sync_cursor_grubu.fare_basma_bırakma_senkron();
         self.sync_cursor_grubu
             .fare_basma_bırakma_senkronunu_ayarla(etkin);
+        if let Some(grup) = self.sync_cursor_çekirdek_grupları.first() {
+            grup.update(cx, |grup, _| {
+                grup.seçim_görünümünü_ayarla(etkin);
+            });
+        }
         cx.notify();
     }
 
