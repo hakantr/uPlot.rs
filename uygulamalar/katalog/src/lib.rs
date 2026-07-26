@@ -3,13 +3,15 @@
 #[cfg(not(target_family = "wasm"))]
 use gpui::ClipboardItem;
 use gpui::{
-    ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement, Render, SharedString, Task,
-    Window, div, prelude::*, px, rgb, rgba,
+    ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement, Render, ScrollStrategy,
+    SharedString, Task, UniformListScrollHandle, Window, div, prelude::*, px, rgb, rgba,
+    uniform_list,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
     MetinAlaniOlayi, PlatformPencere,
 };
+use std::ops::Range;
 use std::time::Duration;
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs_gpui_ornekler::{
@@ -1660,6 +1662,8 @@ impl KartKimliği {
 
 pub struct ChartListesi {
     aktif_kart: KartKimliği,
+    kart_listesi_kaydırma: UniformListScrollHandle,
+    kart_listesi_kaydırma_bekliyor: Option<usize>,
     nokta_sayısı: usize,
     grafik: Option<Entity<GpuiGrafik>>,
     hata: Option<String>,
@@ -2054,6 +2058,8 @@ impl ChartListesi {
         }
         let mut bu = Self {
             aktif_kart: KartKimliği::Resize,
+            kart_listesi_kaydırma: UniformListScrollHandle::new(),
+            kart_listesi_kaydırma_bekliyor: None,
             nokta_sayısı: 100,
             grafik,
             hata,
@@ -4120,6 +4126,12 @@ impl ChartListesi {
             self.hata = Some(hata);
         }
         self.aktif_kart = kart;
+        if let Some(indeks) = KATALOG_KARTLARI
+            .iter()
+            .position(|tanım| tanım.kimlik == kart.ana_kart())
+        {
+            self.kart_listesi_kaydırma_bekliyor = Some(indeks);
+        }
         self.svg_kayıt_baytı = None;
         self.kart_tanımı_açık = false;
         self.kullanım_rehberi_açık = false;
@@ -5186,6 +5198,13 @@ fn grafik_oluştur(
 
 impl Render for ChartListesi {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if let Some(indeks) = self.kart_listesi_kaydırma_bekliyor.take() {
+            cx.on_next_frame(window, move |bu, _, cx| {
+                bu.kart_listesi_kaydırma
+                    .scroll_to_item(indeks, ScrollStrategy::Nearest);
+                cx.notify();
+            });
+        }
         if self.açıklama_istendi && self.açıklama_odak_bekliyor {
             self.açıklama_odak_bekliyor = false;
             self.açıklama_metni
@@ -5953,7 +5972,8 @@ impl Render for ChartListesi {
             .h_full()
             .min_h_0()
             .flex_none()
-            .overflow_y_scroll()
+            .flex()
+            .flex_col()
             .p_4()
             .bg(panel)
             .border_r_1()
@@ -5973,31 +5993,53 @@ impl Render for ChartListesi {
                     .text_color(soluk)
                     .child("Canlı masaüstü doğrulaması"),
             )
-            .children(KATALOG_KARTLARI.iter().copied().map(|tanım| {
-                let kart = tanım.kimlik;
-                let aktif = aktif_kart_tanımı.kimlik == tanım.kimlik;
-                let grup_etiketi = match (tanım.grup, tanım.varyant_grubu) {
-                    (KatalogKartGrubu::Tek, _) => SharedString::from(tanım.slug),
-                    (KatalogKartGrubu::İlişkiliYüzeyler, Some(varyant)) => {
-                        SharedString::from(format!("{} · varyant grubu: {varyant}", tanım.slug))
-                    }
-                    (KatalogKartGrubu::İlişkiliYüzeyler, None) => {
-                        SharedString::from(format!("{} · ilişkili yüzeyler", tanım.slug))
-                    }
-                };
-                katalog_kartı(
-                    tanım.slug,
-                    tanım.başlık,
-                    grup_etiketi,
-                    aktif,
-                    tanım.kaynak,
-                    panel,
-                    vurgu,
+            .child(
+                uniform_list(
+                    "kart-listesi-ogeleri",
+                    KATALOG_KARTLARI.len(),
+                    cx.processor(move |bu, aralık: Range<usize>, _pencere, cx| {
+                        aralık
+                            .filter_map(|indeks| KATALOG_KARTLARI.get(indeks).copied())
+                            .map(|tanım| {
+                                let kart = tanım.kimlik;
+                                let aktif = bu.aktif_kart.ana_kart() == tanım.kimlik;
+                                let grup_etiketi = match (tanım.grup, tanım.varyant_grubu) {
+                                    (KatalogKartGrubu::Tek, _) => SharedString::from(tanım.slug),
+                                    (KatalogKartGrubu::İlişkiliYüzeyler, Some(varyant)) => {
+                                        SharedString::from(format!(
+                                            "{} · varyant grubu: {varyant}",
+                                            tanım.slug
+                                        ))
+                                    }
+                                    (KatalogKartGrubu::İlişkiliYüzeyler, None) => {
+                                        SharedString::from(format!(
+                                            "{} · ilişkili yüzeyler",
+                                            tanım.slug
+                                        ))
+                                    }
+                                };
+                                katalog_kartı(
+                                    tanım.slug,
+                                    tanım.başlık,
+                                    grup_etiketi,
+                                    aktif,
+                                    tanım.kaynak,
+                                    panel,
+                                    vurgu,
+                                )
+                                .on_click(cx.listener(
+                                    move |bu, _: &ClickEvent, _, cx| {
+                                        bu.kartı_seç(kart, cx);
+                                    },
+                                ))
+                            })
+                            .collect()
+                    }),
                 )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            }));
+                .track_scroll(&self.kart_listesi_kaydırma)
+                .flex_1()
+                .min_h_0(),
+            );
 
         let araçlar = div()
             .flex()
@@ -8899,7 +8941,9 @@ fn katalog_kartı(
     div()
         .id(kimlik)
         .cursor_pointer()
-        .mt_2()
+        .h(px(96.0))
+        .mb_2()
+        .overflow_hidden()
         .p_3()
         .rounded_lg()
         .border_1()

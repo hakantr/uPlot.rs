@@ -103,9 +103,10 @@ const webGirişi = readFileSync(
 if (
   !ortakKatalog.includes('.id("kart-listesi")') ||
   !ortakKatalog.includes(".min_h_0()") ||
-  !ortakKatalog.includes(".overflow_y_scroll()")
+  !ortakKatalog.includes("uniform_list(") ||
+  !ortakKatalog.includes(".track_scroll(&self.kart_listesi_kaydırma)")
 ) {
-  hata("ortak GPUI kart listesi dikey kaydırma sözleşmesini uygulamıyor");
+  hata("ortak GPUI kart listesi sanallaştırılmış kaydırma sözleşmesini uygulamıyor");
 }
 if (
   !webGirişi.includes("uplot_rs_gpui_katalog::ChartListesi") ||
