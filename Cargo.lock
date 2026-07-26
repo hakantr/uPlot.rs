@@ -5753,8 +5753,11 @@ name = "uplot-rs-gpui-katalog"
 version = "0.1.0"
 dependencies = [
  "gpui",
+ "js-sys",
  "ortak_bilesenler",
  "uplot-rs",
+ "wasm-bindgen",
+ "web-sys",
  "web-time",
 ]
 
@@ -5768,6 +5771,7 @@ dependencies = [
  "log",
  "ortak_bilesenler",
  "uplot-rs-gpui-katalog",
+ "web-sys",
 ]
 
 [[package]]

@@ -9,8 +9,12 @@ mod web {
     use uplot_rs_gpui_katalog::ChartListesi;
 
     pub fn başlat() {
-        console_error_panic_hook::set_once();
+        std::panic::set_hook(Box::new(|bilgi| {
+            web_hatası(&format!("GPUI Web/WebGPU paniği: {bilgi}"));
+            console_error_panic_hook::hook(bilgi);
+        }));
         gpui_web::init_logging();
+        web_durumunu_yaz("booting", "GPUI Web ve WebGPU hazırlanıyor…");
 
         let uygulama = Application::with_platform(Rc::new(gpui_web::WebPlatform::new(false)))
             .run_embedded(uygulamayı_kur);
@@ -29,14 +33,34 @@ mod web {
             .open_window(WindowOptions::default(), |_, cx| cx.new(ChartListesi::yeni))
             .is_err()
         {
-            web_hatası("GPUI Web penceresi açılamadı");
+            web_hatası("GPUI Web/WebGPU penceresi açılamadı");
             return;
         }
         cx.activate(true);
+        web_durumunu_yaz("started", "");
     }
 
     fn web_hatası(mesaj: &str) {
         log::error!("{mesaj}");
+        web_durumunu_yaz("failed", &format!("GPUI Web başlatılamadı: {mesaj}"));
+    }
+
+    fn web_durumunu_yaz(durum: &str, mesaj: &str) {
+        let Some(belge) = web_sys::window().and_then(|pencere| pencere.document()) else {
+            return;
+        };
+        if let Some(kök) = belge.document_element() {
+            let _ = kök.set_attribute("data-gpui-uplot", durum);
+        }
+        if let Some(durum_öğesi) = belge.get_element_by_id("boot-status") {
+            if durum == "started" {
+                durum_öğesi.remove();
+            } else {
+                durum_öğesi.set_text_content(Some(mesaj));
+                let _ = durum_öğesi
+                    .set_attribute("role", if durum == "failed" { "alert" } else { "status" });
+            }
+        }
     }
 }
 

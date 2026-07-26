@@ -35,6 +35,14 @@
         color: #334155;
         font: 14px system-ui, sans-serif;
       }
+      html[data-gpui-uplot="failed"] #boot-status {
+        z-index: 10;
+        padding: 24px;
+        color: #991b1b;
+        background: #fef2f2;
+        text-align: center;
+        white-space: pre-wrap;
+      }
     </style>
     <script>
       (() => {
@@ -46,15 +54,12 @@
         };
         addEventListener("error", (event) => fail(event.error?.message || event.message));
         addEventListener("unhandledrejection", (event) => fail(event.reason));
-        addEventListener("TrunkApplicationStarted", () => {
-          root.dataset.gpuiUplot = "started";
-          const status = document.getElementById("boot-status");
-          if (status) status.remove();
-        });
       })();
     </script>
   </head>
   <body>
-    <div id="boot-status" role="status">GPUI Web hazırlanıyor…</div>
+    <div id="boot-status" role="status" aria-live="assertive">
+      GPUI Web ve WebGPU hazırlanıyor…
+    </div>
   </body>
 </html>
