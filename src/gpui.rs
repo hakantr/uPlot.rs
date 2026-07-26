@@ -1833,6 +1833,12 @@ impl EventEmitter<GpuiGrafikOlayı> for GpuiGrafik {}
 
 impl Render for GpuiGrafik {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if self
+            .grafik
+            .cihaz_piksel_oranını_ayarla(window.scale_factor())
+        {
+            self.sahneyi_yenile(cx);
+        }
         let odak = self
             .odak
             .get_or_insert_with(|| cx.focus_handle().tab_stop(true))

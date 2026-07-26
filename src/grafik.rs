@@ -528,6 +528,9 @@ pub struct Grafik {
     kimlik: u64,
     seçenekler: GrafikSeçenekleri,
     veri: HizalıVeri,
+    /// Raster yüzeyin fiziksel/logical piksel oranı. Platform adaptörü bunu
+    /// sağlar; SVG gibi vektör tüketicileri varsayılan 1× değeri kullanır.
+    cihaz_piksel_oranı: f32,
     etkileşim: EtkileşimDenetleyicisi,
     odak_serisi: Option<usize>,
     elle_x_aralığı: Option<Aralık>,
@@ -846,6 +849,7 @@ impl Grafik {
             kimlik: SON_GRAFİK_KİMLİĞİ.fetch_add(1, Ordering::Relaxed),
             seçenekler,
             veri,
+            cihaz_piksel_oranı: 1.0,
             etkileşim,
             odak_serisi: None,
             elle_x_aralığı: None,
@@ -875,6 +879,26 @@ impl Grafik {
                 .copied()
                 .or_else(|| self.etkileşim.görünür_y()),
         )
+    }
+
+    /// Raster ölçeğini platform adaptöründen alır.
+    ///
+    /// Bu değer bir geliştirici seçeneği değildir: GPUI kendi pencere ölçeğini
+    /// iletir; çekirdeğin uPlot `pxAlign` adımı fiziksel piksel ızgarasına
+    /// dönüştürülür. SVG kaydı 1× varsayılanıyla aynı vektör semantiğini korur.
+    pub(crate) fn cihaz_piksel_oranını_ayarla(&mut self, oran: f32) -> bool {
+        let oran = if oran.is_finite() && oran > 0.0 {
+            oran
+        } else {
+            1.0
+        };
+        if self.cihaz_piksel_oranı.to_bits() == oran.to_bits() {
+            return false;
+        }
+        self.cihaz_piksel_oranı = oran;
+        self.çubuk_vuruş_dizini = RefCell::new(None);
+        self.dağılım_vuruş_dizini = RefCell::new(None);
+        true
     }
 
     fn doğrulanmış_durumu_uygula(&mut self, yeni: Self, seçenekleri_değiştir: bool) {
@@ -3805,6 +3829,7 @@ impl Grafik {
                         genişlik,
                     ),
                     self.seçenekler.piksel_hizası,
+                    self.cihaz_piksel_oranı,
                 );
                 if self.seçenekler.birincil_y_ızgara_görünür {
                     self.birincil_y_ızgara_çizgisini_ekle(
@@ -3857,6 +3882,7 @@ impl Grafik {
                         yükseklik,
                     ),
                 self.seçenekler.piksel_hizası,
+                self.cihaz_piksel_oranı,
             );
             if self.seçenekler.birincil_y_ızgara_görünür {
                 self.birincil_y_ızgara_çizgisini_ekle(
@@ -4000,6 +4026,7 @@ impl Grafik {
                 let y = piksele_hizala(
                     alt - self.y_konumu(&ölçek.anahtar, aralık, değer, 0.0, yükseklik),
                     self.seçenekler.piksel_hizası,
+                    self.cihaz_piksel_oranı,
                 );
                 if ölçek.ızgara {
                     sahne.ekle(Komut::Çizgi {
@@ -4111,6 +4138,7 @@ impl Grafik {
                 let y = piksele_hizala(
                     alt - self.x_konumu(x_aralığı, x_değeri, 0.0, yükseklik),
                     self.seçenekler.piksel_hizası,
+                    self.cihaz_piksel_oranı,
                 );
                 if self.seçenekler.x_ızgara_görünür {
                     sahne.ekle(Komut::Çizgi {
@@ -4139,6 +4167,7 @@ impl Grafik {
                 let x = piksele_hizala(
                     self.x_konumu(x_aralığı, x_değeri, sol, genişlik),
                     self.seçenekler.piksel_hizası,
+                    self.cihaz_piksel_oranı,
                 );
                 if self.seçenekler.x_ızgara_görünür {
                     sahne.ekle(Komut::Çizgi {
@@ -4217,6 +4246,7 @@ impl Grafik {
                 let x = piksele_hizala(
                     self.x_konumu(x_aralığı, x_değeri, sol, genişlik),
                     self.seçenekler.piksel_hizası,
+                    self.cihaz_piksel_oranı,
                 );
                 let birim = if self.seçenekler.x_zaman_milisaniye {
                     1_000.0
@@ -4485,8 +4515,8 @@ impl Grafik {
                             Nokta::yeni(ham_x, ham_y)
                         } else {
                             Nokta::yeni(
-                                piksele_hizala(ham_x, piksel_hizası),
-                                piksele_hizala(ham_y, piksel_hizası),
+                                piksele_hizala(ham_x, piksel_hizası, self.cihaz_piksel_oranı),
+                                piksele_hizala(ham_y, piksel_hizası, self.cihaz_piksel_oranı),
                             )
                         };
                         if seri.çizim_türü == crate::SeriÇizimTürü::BasamakÖnce
@@ -4524,8 +4554,8 @@ impl Grafik {
                         }
                         parça.push(yol_noktası);
                         let işaret_noktası = Nokta::yeni(
-                            piksele_hizala(ham_x, piksel_hizası),
-                            piksele_hizala(ham_y, piksel_hizası),
+                            piksele_hizala(ham_x, piksel_hizası, self.cihaz_piksel_oranı),
+                            piksele_hizala(ham_y, piksel_hizası, self.cihaz_piksel_oranı),
                         );
                         if nokta_dikdörtgende(işaret_noktası, sol, sağ, üst, alt) {
                             görünür_noktalar.push((indeks, işaret_noktası, *x_değeri, *y_değeri));
@@ -4735,6 +4765,7 @@ impl Grafik {
                             sol,
                             genişlik,
                             piksel_hizası,
+                            self.cihaz_piksel_oranı,
                         )
                     });
                 let mut toplu_kareler = Vec::new();
@@ -5713,8 +5744,11 @@ impl Grafik {
                         // `pxRound` sonucu üzerinden ince vuruşu düşürür. Vektör
                         // sahnesinde de aynı sınır kararını CSS pikseline hizalanmış
                         // bar genişliğiyle vermek 800/1000 px kaynak eşiğini korur.
-                        let eşik_genişliği =
-                            piksele_hizala(grup_genişliği, self.seçenekler.piksel_hizası);
+                        let eşik_genişliği = piksele_hizala(
+                            grup_genişliği,
+                            self.seçenekler.piksel_hizası,
+                            self.cihaz_piksel_oranı,
+                        );
                         let vuruş = if istenen_vuruş >= eşik_genişliği / 2.0 {
                             0.0
                         } else {
@@ -6471,30 +6505,33 @@ impl Grafik {
             };
             let y_konumu = |değer| alt - y_aralığı.konum(değer, 0.0, çizim_y);
             let piksel = self.seçenekler.piksel_hizası;
-            let yüksek_y = piksele_hizala(y_konumu(yüksek).clamp(üst, alt), piksel);
-            let düşük_y = piksele_hizala(y_konumu(düşük).clamp(üst, alt), piksel);
-            let açılış_y = piksele_hizala(y_konumu(açılış).clamp(üst, alt), piksel);
-            let kapanış_y = piksele_hizala(y_konumu(kapanış).clamp(üst, alt), piksel);
-            let merkez = piksele_hizala(merkez, piksel);
-            let gövde_genişliği = piksele_hizala(gövde_genişliği, piksel).max(0.0);
+            let oran = self.cihaz_piksel_oranı;
+            let yüksek_y = piksele_hizala(y_konumu(yüksek).clamp(üst, alt), piksel, oran);
+            let düşük_y = piksele_hizala(y_konumu(düşük).clamp(üst, alt), piksel, oran);
+            let açılış_y = piksele_hizala(y_konumu(açılış).clamp(üst, alt), piksel, oran);
+            let kapanış_y = piksele_hizala(y_konumu(kapanış).clamp(üst, alt), piksel, oran);
+            let merkez = piksele_hizala(merkez, piksel, oran);
+            let gövde_genişliği = piksele_hizala(gövde_genişliği, piksel, oran).max(0.0);
             let renk = if açılış > kapanış {
                 &düzen.düşüş_rengi
             } else {
                 &düzen.yükseliş_rengi
             };
             let fitil_y = yüksek_y.min(düşük_y);
-            let fitil_yüksekliği = piksele_hizala((düşük_y - yüksek_y).abs(), piksel).max(0.0);
+            let fitil_yüksekliği =
+                piksele_hizala((düşük_y - yüksek_y).abs(), piksel, oran).max(0.0);
             sahne.ekle(Komut::Dikdörtgen {
-                konum: Nokta::yeni(piksele_hizala(merkez - 1.0, piksel), fitil_y),
+                konum: Nokta::yeni(piksele_hizala(merkez - 1.0, piksel, oran), fitil_y),
                 genişlik: 2.0,
                 yükseklik: fitil_yüksekliği,
                 dolgu: "#000000".to_string(),
                 çizgi: "#000000".to_string(),
                 kalınlık: 0.0,
             });
-            let gövde_x = piksele_hizala(merkez - gövde_genişliği / 2.0, piksel);
+            let gövde_x = piksele_hizala(merkez - gövde_genişliği / 2.0, piksel, oran);
             let gövde_y = açılış_y.min(kapanış_y);
-            let gövde_yüksekliği = piksele_hizala((kapanış_y - açılış_y).abs(), piksel).max(0.0);
+            let gövde_yüksekliği =
+                piksele_hizala((kapanış_y - açılış_y).abs(), piksel, oran).max(0.0);
             sahne.ekle(Komut::Dikdörtgen {
                 konum: Nokta::yeni(gövde_x, gövde_y),
                 genişlik: gövde_genişliği,
@@ -6516,11 +6553,12 @@ impl Grafik {
             let hacim_y = piksele_hizala(
                 alt - (hacim / 2_000.0).clamp(0.0, 1.0) as f32 * çizim_y,
                 piksel,
+                oran,
             );
             sahne.ekle(Komut::Dikdörtgen {
                 konum: Nokta::yeni(gövde_x, hacim_y),
                 genişlik: gövde_genişliği,
-                yükseklik: piksele_hizala(alt - hacim_y, piksel).max(0.0),
+                yükseklik: piksele_hizala(alt - hacim_y, piksel, oran).max(0.0),
                 dolgu: renk.clone(),
                 çizgi: "none".to_string(),
                 kalınlık: 0.0,
@@ -8215,9 +8253,15 @@ fn yıldız_çokgeni(merkez: Nokta, uçlar: usize, dış: f32, iç: f32) -> Vec<
     noktalar
 }
 
-fn piksele_hizala(değer: f32, adım: f32) -> f32 {
-    if adım > 0.0 && adım.is_finite() && değer.is_finite() {
-        (değer / adım).round() * adım
+fn piksele_hizala(değer: f32, adım: f32, cihaz_piksel_oranı: f32) -> f32 {
+    if adım > 0.0
+        && adım.is_finite()
+        && değer.is_finite()
+        && cihaz_piksel_oranı > 0.0
+        && cihaz_piksel_oranı.is_finite()
+    {
+        let mantıksal_adım = adım / cihaz_piksel_oranı;
+        (değer / mantıksal_adım).round() * mantıksal_adım
     } else {
         değer
     }
@@ -8233,6 +8277,7 @@ fn boşluk_tekil_indeksleri(
     sol: f32,
     genişlik: f32,
     piksel_hizası: f32,
+    cihaz_piksel_oranı: f32,
 ) -> Vec<usize> {
     if x.is_empty() || y.is_empty() || görünür_başlangıç >= görünür_bitiş {
         return Vec::new();
@@ -8242,7 +8287,11 @@ fn boşluk_tekil_indeksleri(
     let son_görünür = görünür_bitiş.saturating_sub(1).min(son_indeks);
     let piksel = |indeks: usize| {
         x.get(indeks).map_or(sol, |değer| {
-            piksele_hizala(sol + x_aralığı.konum(*değer, 0.0, genişlik), piksel_hizası)
+            piksele_hizala(
+                sol + x_aralığı.konum(*değer, 0.0, genişlik),
+                piksel_hizası,
+                cihaz_piksel_oranı,
+            )
         })
     };
 
@@ -8388,10 +8437,27 @@ mod eksen_testleri {
         let x = [0.0, 1.0, 2.0, 3.0, 4.0];
         let y = [Some(1.0), None, Some(2.0), None, Some(3.0)];
         assert_eq!(
-            boşluk_tekil_indeksleri(&x, &y, 0, x.len(), Aralık::yeni(0.0, 4.0)?, 0.0, 2.0, 1.0,),
+            boşluk_tekil_indeksleri(
+                &x,
+                &y,
+                0,
+                x.len(),
+                Aralık::yeni(0.0, 4.0)?,
+                0.0,
+                2.0,
+                1.0,
+                1.0,
+            ),
             vec![0, 2, 4]
         );
         Ok(())
+    }
+
+    #[test]
+    fn piksel_hizası_fiziksel_gpui_ölçeğine_göre_hesaplanır() {
+        assert_eq!(piksele_hizala(10.26, 1.0, 1.0), 10.0);
+        assert_eq!(piksele_hizala(10.26, 1.0, 2.0), 10.5);
+        assert_eq!(piksele_hizala(10.26, 0.0, 2.0), 10.26);
     }
 
     #[test]
