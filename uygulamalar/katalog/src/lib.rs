@@ -7792,6 +7792,31 @@ impl Render for ChartListesi {
                     )
                     .child("Grafiği kaydırdıktan sonra imleç ve seçim aynı görsel noktada kalır. Kaynak parity için doğal kapsayıcı kaydırması varsayılandır; wheel/touch yakınlaştırma ortak API'den isteğe bağlı açılır."),
                 )
+        } else if let KartKimliği::MultiBars(örnek) = aktif_kart {
+            let (genişlik, yükseklik) = match örnek {
+                MultiBarsÖrneği::KitaplıklarDikey => (2_300.0, 800.0),
+                MultiBarsÖrneği::KitaplıklarYatay => (800.0, 2_300.0),
+                MultiBarsÖrneği::DeğişkenRenkler | MultiBarsÖrneği::HizasızÇubuklar => {
+                    (800.0, 400.0)
+                }
+            };
+            çizim_tabanı
+                .flex_none()
+                .h(px(620.0))
+                .overflow_hidden()
+                .child(
+                    div()
+                        .id("multi-bars-kaydirma")
+                        .w_full()
+                        .h_full()
+                        .overflow_scroll()
+                        .child(
+                            div()
+                                .w(px(genişlik))
+                                .h(px(yükseklik))
+                                .when_some(self.grafik.clone(), |öğe, grafik| öğe.child(grafik)),
+                        ),
+                )
         } else {
             çizim_tabanı
                 .overflow_hidden()
