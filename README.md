@@ -20,9 +20,9 @@ Kütüphanenin tek interaktif renderer'ı GPUI'dir. Native uygulamalar ve web
 hedefi aynı `GpuiGrafik` bileşenini kullanır; web yüzeyi `gpui_web` + WebGPU
 üzerinde çalışır. SVG ikinci bir runtime renderer değildir, yalnız istendiğinde
 retained GPUI grafik yüzeyinden üretilen vektör dışa aktarımdır. Yalnız GitHub
-Pages katalog uygulaması, GPUI çizicisinin zorunlu `VERTEX_STORAGE` yeteneğini
-sunmayan WebGL2/Linux tarayıcılarında ayrı derlenen SVG demo uygulamasına
-otomatik geçer; bu paket `uplot-rs` kullanıcılarının bağımlılıklarına girmez.
+Pages katalog uygulaması da aynı GPUI Web renderer'ını çalıştırır. WebGPU
+adaptörü yoksa renderer kararını ve tanıyı GPUI verir; uPlot.rs ayrı bir
+SVG/DOM çalışma zamanına otomatik geçmez.
 
 Portun ortak altyapısı şunları içerir:
 
@@ -218,6 +218,8 @@ Ayrıntılı yol haritası için
 [Tam GPUI geçiş faz planına](GPUI_GECIS_FAZ_PLANI.md) bakın.
 Tamamlanan fazların commit, test ve release kanıtları
 [GPUI geçişi son doğrulama kaydında](GPUI_GECIS_DOGRULAMA.md) tutulur.
+Yerel GPUI yetenekleriyle yapılan dosya/satır kapsamlı sorumluluk denetimi
+[GPUI yetenek devir denetiminde](GPUI_YETENEK_DEVIR_DENETIMI.md) bulunur.
 
 ## Atıf ve teşekkür
 

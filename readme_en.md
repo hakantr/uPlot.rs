@@ -20,10 +20,9 @@ GPUI is the library's only interactive renderer. Native applications and the
 web target run the same `GpuiGrafik` component; the web surface uses
 `gpui_web` and WebGPU. SVG is not a second runtime renderer. It is an optional
 vector export generated from the retained GPUI chart surface on demand. The
-GitHub Pages catalogue alone automatically switches to a separately compiled
-SVG demo application on WebGL2/Linux browsers that cannot provide the
-`VERTEX_STORAGE` capability required by GPUI. This package never enters the
-dependency graph of `uplot-rs` consumers.
+GitHub Pages catalogue runs that same GPUI Web renderer. When a WebGPU adapter
+is unavailable, GPUI owns renderer selection and diagnostics; uPlot.rs does
+not silently switch to a separate SVG/DOM runtime.
 
 The shared foundation contains:
 
@@ -222,6 +221,8 @@ phase commits, test matrix, and release evidence.
 
 See the [complete GPUI migration phase plan](GPUI_GECIS_FAZ_PLANI.md) for the
 detailed roadmap.
+The file-by-file ownership audit against the local GPUI worktree is recorded in
+the [GPUI capability delegation audit](GPUI_YETENEK_DEVIR_DENETIMI.md).
 
 ## Attribution and thanks
 

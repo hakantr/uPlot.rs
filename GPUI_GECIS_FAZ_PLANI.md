@@ -200,16 +200,14 @@ Tamamlandı. `main` başlangıç durumu
 1. `../gpui` sürümünde `gpui`, `gpui_wgpu`, `gpui_web` ve
    `gpui_platform` API'lerini sabitle.
 2. Root crate'in `gpui` feature olmadan derlenmesi ihtiyacını kaldır.
-3. Web uygulamasında `gpui_platform::application()` kullanma; tek iş
-   parçacıklı stable yol için doğrudan:
-   - `gpui_web::init_logging()`;
-   - `gpui_web::WebPlatform::new(false)`;
-   - `Application::with_platform(...)`
+3. Web uygulamasında renderer/platform seçimini tekrar kurma; tek iş
+   parçacıklı stable yol için yerel GPUI'nin
+   `gpui_platform::web_init()` ve `single_threaded_web()` sarmalayıcılarını
    kullan.
 4. `gpui_web` bağımlılığını `default-features = false` tanımlayarak
    `wasm_thread` nightly zorunluluğunu kaldır.
-5. WebGPU bulunamadığında boş canvas yerine okunabilir başlatma hatası üret.
-6. DPR, `ResizeObserver`, requestAnimationFrame ve canvas boyut akışını smoke
+5. WebGPU bulunamadığında GPUI'nin tipli başlatma hatasını kaybetmeden göster.
+6. DPR, resize, frame ve canvas boyut akışını GPUI Web'e devret ve smoke
    testlerle doğrula.
 7. GPUI Web pointer olaylarında pointer kimliği, çoklu temas,
    `TouchEvent`/`PinchEvent` ve gesture bitiş akışını doğrula; eksikse
