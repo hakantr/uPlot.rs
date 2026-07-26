@@ -50,15 +50,17 @@ jobs:
         uses: actions/checkout@v6
         with:
           path: uPlot.rs
-      - name: Güncel GPUI
+      - name: Kilitli GPUI
         uses: actions/checkout@v6
         with:
           repository: hakantr/gpui
+          ref: 1b8f324169f7cdf81d3567650fb6704327d4d2f4
           path: gpui
-      - name: Güncel GPUI bileşen kütüphanesi
+      - name: Kilitli GPUI bileşen kütüphanesi
         uses: actions/checkout@v6
         with:
           repository: hakantr/gpui_kutuphanesi
+          ref: c97926c3c15ab99091b51f7ed88bd98f357de409
           path: gpui_kutuphanesi
       - name: Linux sistem bağımlılıkları
         if: runner.os == 'Linux'
@@ -125,15 +127,17 @@ jobs:
         uses: actions/checkout@v6
         with:
           path: uPlot.rs
-      - name: Güncel GPUI
+      - name: Kilitli GPUI
         uses: actions/checkout@v6
         with:
           repository: hakantr/gpui
+          ref: 1b8f324169f7cdf81d3567650fb6704327d4d2f4
           path: gpui
-      - name: Güncel GPUI bileşen kütüphanesi
+      - name: Kilitli GPUI bileşen kütüphanesi
         uses: actions/checkout@v6
         with:
           repository: hakantr/gpui_kutuphanesi
+          ref: c97926c3c15ab99091b51f7ed88bd98f357de409
           path: gpui_kutuphanesi
       - name: Rust ve GPUI Web hedefi
         uses: dtolnay/rust-toolchain@1.95

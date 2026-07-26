@@ -23,15 +23,17 @@ jobs:
           repository: leeoniya/uPlot
           ref: 0e5812c504430f5c804e0f993376d8999b26cc34
           path: uPlot
-      - name: Güncel GPUI
+      - name: Kilitli GPUI
         uses: actions/checkout@v4
         with:
           repository: hakantr/gpui
+          ref: 1b8f324169f7cdf81d3567650fb6704327d4d2f4
           path: gpui
-      - name: Güncel GPUI bileşen kütüphanesi
+      - name: Kilitli GPUI bileşen kütüphanesi
         uses: actions/checkout@v4
         with:
           repository: hakantr/gpui_kutuphanesi
+          ref: c97926c3c15ab99091b51f7ed88bd98f357de409
           path: gpui_kutuphanesi
       - uses: dtolnay/rust-toolchain@1.95
         with:
@@ -60,6 +62,7 @@ jobs:
           cargo check -p uplot-rs --lib --all-features
           cargo check -p uplot-rs-gpui-katalog
           cargo check -p uplot-rs-gpui-web --target wasm32-unknown-unknown
+          cargo check --target wasm32-unknown-unknown --workspace
       - name: Clippy
         working-directory: uPlot.rs
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
@@ -75,3 +78,41 @@ jobs:
         run: >-
           cargo test --release -p uplot-rs --test performance_budgets
           --all-features -- --test-threads=1 --nocapture
+
+  native-platformlar:
+    name: native-${{ matrix.ad }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ad: macos-arm64
+            os: macos-14
+            hedef: aarch64-apple-darwin
+          - ad: windows-x86_64
+            os: windows-2025
+            hedef: x86_64-pc-windows-msvc
+    steps:
+      - name: uPlot.rs
+        uses: actions/checkout@v4
+        with:
+          path: uPlot.rs
+      - name: Kilitli GPUI
+        uses: actions/checkout@v4
+        with:
+          repository: hakantr/gpui
+          ref: 1b8f324169f7cdf81d3567650fb6704327d4d2f4
+          path: gpui
+      - name: Kilitli GPUI bileşen kütüphanesi
+        uses: actions/checkout@v4
+        with:
+          repository: hakantr/gpui_kutuphanesi
+          ref: c97926c3c15ab99091b51f7ed88bd98f357de409
+          path: gpui_kutuphanesi
+      - name: Rust 1.95
+        uses: dtolnay/rust-toolchain@1.95
+        with:
+          targets: ${{ matrix.hedef }}
+      - name: Native GPUI kataloğunu doğrula
+        working-directory: uPlot.rs
+        run: cargo check -p uplot-rs-chart-listesi --target ${{ matrix.hedef }}

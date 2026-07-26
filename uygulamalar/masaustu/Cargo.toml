@@ -9,7 +9,7 @@ publish = false
 name = "chart_listesi"
 path = "src/main.rs"
 
-[dependencies]
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
 gpui = { path = "../../../gpui/crates/gpui" }
 gpui_platform = { path = "../../../gpui/crates/gpui_platform", features = ["font-kit", "wayland", "x11"] }
 image = { version = "0.25.1", default-features = false, features = ["png"] }

@@ -1,12 +1,18 @@
 #![allow(confusable_idents)]
 
+#[cfg(not(target_family = "wasm"))]
 use std::sync::Arc;
 
+#[cfg(not(target_family = "wasm"))]
 use gpui::{App, AppContext, Bounds, px, size};
+#[cfg(not(target_family = "wasm"))]
 use gpui_platform::application;
+#[cfg(not(target_family = "wasm"))]
 use ortak_bilesenler::{OrtakBilesenAyarlari, PencereKurulumAyarlari, baslat, pencere_secenekleri};
+#[cfg(not(target_family = "wasm"))]
 use uplot_rs_gpui_katalog::ChartListesi;
 
+#[cfg(not(target_family = "wasm"))]
 fn main() {
     application().run(|cx: &mut App| {
         if let Err(hata) = baslat(OrtakBilesenAyarlari::default(), cx) {
@@ -35,6 +41,10 @@ fn main() {
     });
 }
 
+#[cfg(target_family = "wasm")]
+fn main() {}
+
+#[cfg(not(target_family = "wasm"))]
 fn uygulama_ikonu() -> Result<Arc<image::RgbaImage>, image::ImageError> {
     image::load_from_memory_with_format(
         include_bytes!("../../../assets/icons/uplot-rs.png"),
