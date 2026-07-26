@@ -29,11 +29,13 @@ mod web {
             return;
         }
 
-        if cx
-            .open_window(WindowOptions::default(), |_, cx| cx.new(ChartListesi::yeni))
-            .is_err()
+        if let Err(hata) =
+            cx.open_window(WindowOptions::default(), |_, cx| cx.new(ChartListesi::yeni))
         {
-            web_hatası("GPUI Web/WebGPU penceresi açılamadı");
+            web_hatası(&format!(
+                "GPUI Web/WebGPU penceresi açılamadı: {hata:#}. {}",
+                tarayıcı_tanısı()
+            ));
             return;
         }
         cx.activate(true);
@@ -43,6 +45,34 @@ mod web {
     fn web_hatası(mesaj: &str) {
         log::error!("{mesaj}");
         web_durumunu_yaz("failed", &format!("GPUI Web başlatılamadı: {mesaj}"));
+    }
+
+    fn tarayıcı_tanısı() -> String {
+        let Some(kök) = web_sys::window()
+            .and_then(|pencere| pencere.document())
+            .and_then(|belge| belge.document_element())
+        else {
+            return "Tarayıcı yetenekleri okunamadı.".to_string();
+        };
+        let özellik = |ad: &str| {
+            kök.get_attribute(ad)
+                .unwrap_or_else(|| "unknown".to_string())
+        };
+        let güvenli = özellik("data-secure-context");
+        let webgpu = özellik("data-webgpu");
+        let webgl2 = özellik("data-webgl2");
+        let öneri = if güvenli != "true" {
+            "WebGPU için HTTPS veya aynı cihazdaki localhost adresini kullanın."
+        } else if webgpu != "true" && webgl2 != "true" {
+            "Bu tarayıcı WebGPU veya WebGL2 sunmuyor; güncel Chrome/Edge ya da WebGPU destekli Safari kullanın."
+        } else if webgpu != "true" {
+            "WebGPU sunulmuyor; WebGL2 mevcut olsa da GPUI adaptörü kurulamadı."
+        } else {
+            "WebGPU sunuluyor fakat GPU adaptörü veya aygıtı oluşturulamadı; donanım hızlandırmasını ve tarayıcı GPU engel listesini denetleyin."
+        };
+        format!(
+            "Tarayıcı tanısı: secureContext={güvenli}, WebGPU={webgpu}, WebGL2={webgl2}. {öneri}"
+        )
     }
 
     fn web_durumunu_yaz(durum: &str, mesaj: &str) {

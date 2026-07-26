@@ -8,6 +8,15 @@
     />
     <meta name="color-scheme" content="dark light" />
     <title>uPlot.rs · GPUI Web</title>
+    <script>
+      (() => {
+        const root = document.documentElement;
+        root.dataset.secureContext = String(window.isSecureContext);
+        root.dataset.webgpu = String("gpu" in navigator);
+        const probe = document.createElement("canvas");
+        root.dataset.webgl2 = String(Boolean(probe.getContext("webgl2")));
+      })();
+    </script>
     <link data-trunk rel="rust" data-bin="uplot-rs-gpui-web" data-bindgen-target="web" />
     <style>
       * { box-sizing: border-box; }
