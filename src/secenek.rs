@@ -13,7 +13,7 @@ mod zaman;
 pub use dagilim::{DağılımDüzeni, DağılımNoktası, DağılımSerisi};
 pub use gradyan::{GradyanDurağı, GradyanEkseni, GradyanKonumu, ÖlçekGradyanı};
 pub use isi_haritasi::{IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu};
-pub use seri::{NoktaFiltreKipi, NoktaŞekli, SeriSeçenekleri, SeriÇizimTürü};
+pub use seri::{NoktaFiltreKipi, NoktaGösterimi, NoktaŞekli, SeriSeçenekleri, SeriÇizimTürü};
 pub use timeline::{TimelineDüzeni, TimelineHücresi};
 pub use y_olcek::{
     GüzelÖlçekDüzeni, YÖlçekDağılımı, YÖlçekDönüşümFn, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri,
@@ -1171,6 +1171,11 @@ pub struct GrafikSeçenekleri {
     pub timeline_düzeni: Option<TimelineDüzeni>,
     pub dağılım_düzeni: Option<DağılımDüzeni>,
     pub bantlar: Vec<SeriBandı>,
+    /// Standart seri noktaları için grafik genelindeki görünüm tercihi.
+    ///
+    /// `Kaynak`, uPlot uyumlu seri ayarlarını korur; katalog gibi tüketiciler
+    /// çalışma anında içi boş, dolu veya gizli kiplerinden birini seçebilir.
+    pub nokta_gösterimi: NoktaGösterimi,
     pub nokta_katmanları: Vec<NoktaKatmanı>,
     pub açıklama_düzeni: Option<AçıklamaDüzeni>,
     pub ölçüm_datumları: bool,
@@ -1268,6 +1273,7 @@ impl GrafikSeçenekleri {
             timeline_düzeni: None,
             dağılım_düzeni: None,
             bantlar: Vec::new(),
+            nokta_gösterimi: NoktaGösterimi::Kaynak,
             nokta_katmanları: Vec::new(),
             açıklama_düzeni: None,
             ölçüm_datumları: false,
@@ -1471,6 +1477,11 @@ impl GrafikSeçenekleri {
 
     pub fn nokta_katmanı(mut self, katman: NoktaKatmanı) -> Self {
         self.nokta_katmanları.push(katman);
+        self
+    }
+
+    pub fn nokta_gösterimi(mut self, gösterim: NoktaGösterimi) -> Self {
+        self.nokta_gösterimi = gösterim;
         self
     }
 

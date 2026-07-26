@@ -2068,6 +2068,21 @@ impl Grafik {
         &self.seçenekler.seriler
     }
 
+    /// Standart seri işaretçilerinin grafik genelindeki gösterim tercihi.
+    pub const fn nokta_gösterimi(&self) -> crate::NoktaGösterimi {
+        self.seçenekler.nokta_gösterimi
+    }
+
+    /// Standart seri işaretçilerinin görünümünü veri ve ölçekleri yeniden
+    /// kurmadan değiştirir.
+    pub fn nokta_gösterimini_ayarla(&mut self, gösterim: crate::NoktaGösterimi) -> bool {
+        if self.seçenekler.nokta_gösterimi == gösterim {
+            return false;
+        }
+        self.seçenekler.nokta_gösterimi = gösterim;
+        true
+    }
+
     pub fn hizalı_veri(&self) -> &HizalıVeri {
         &self.veri
     }
@@ -4748,12 +4763,16 @@ impl Grafik {
                     });
                 }
             } else {
-                let noktalar_görünür = seri.noktaları_göster.unwrap_or_else(|| {
-                    seri.nokta_boşluğu <= 0.0
-                        || görünür_indeks_sayısı.saturating_sub(1) as f32
-                            <= nokta_piksel_açıklığı / seri.nokta_boşluğu.max(f32::EPSILON)
-                });
-                let filtreli_indeksler = (!noktalar_görünür
+                let noktalar_gizli =
+                    self.seçenekler.nokta_gösterimi == crate::NoktaGösterimi::Gizli;
+                let noktalar_görünür = !noktalar_gizli
+                    && seri.noktaları_göster.unwrap_or_else(|| {
+                        seri.nokta_boşluğu <= 0.0
+                            || görünür_indeks_sayısı.saturating_sub(1) as f32
+                                <= nokta_piksel_açıklığı / seri.nokta_boşluğu.max(f32::EPSILON)
+                    });
+                let filtreli_indeksler = (!noktalar_gizli
+                    && !noktalar_görünür
                     && seri.nokta_filtresi == crate::NoktaFiltreKipi::BoşlukArasındakiTekiller)
                     .then(|| {
                         boşluk_tekil_indeksleri(
@@ -4787,10 +4806,19 @@ impl Grafik {
                     let nokta_rengi = self
                         .seri_imleç_rengi(seri_indeksi, *x_değeri, *y_değeri)
                         .unwrap_or_else(|| seri_rengi.clone());
-                    let dolgu = seri
-                        .nokta_dolgusu
-                        .clone()
-                        .unwrap_or_else(|| "#ffffff".to_string());
+                    let dolgu = match self.seçenekler.nokta_gösterimi {
+                        crate::NoktaGösterimi::Kaynak => seri
+                            .nokta_dolgusu
+                            .clone()
+                            .unwrap_or_else(|| "#ffffff".to_string()),
+                        crate::NoktaGösterimi::İçiBoş => self
+                            .seçenekler
+                            .çizim_alanı_arka_plan_rengi
+                            .clone()
+                            .unwrap_or_else(|| self.seçenekler.arka_plan_rengi.clone()),
+                        crate::NoktaGösterimi::Dolu => nokta_rengi.clone(),
+                        crate::NoktaGösterimi::Gizli => continue,
+                    };
                     match seri.nokta_şekli {
                         crate::NoktaŞekli::Daire => {
                             if let Some((_, _, merkezler)) =
@@ -5803,16 +5831,28 @@ impl Grafik {
                                                 / seri.nokta_boşluğu.max(f32::EPSILON)
                                 })
                             })
-                            .map(|seri| Komut::Daire {
-                                merkez: Nokta::yeni(merkez, y1.clamp(üst, alt)),
-                                yarıçap: ((seri.nokta_boyutu - seri.nokta_kalınlığı) / 2.0)
-                                    .max(0.0),
-                                dolgu: seri
-                                    .nokta_dolgusu
-                                    .clone()
-                                    .unwrap_or_else(|| "#ffffff".to_string()),
-                                çizgi: seri.renk.clone(),
-                                kalınlık: seri.nokta_kalınlığı,
+                            .and_then(|seri| {
+                                let dolgu = match self.seçenekler.nokta_gösterimi {
+                                    crate::NoktaGösterimi::Kaynak => seri
+                                        .nokta_dolgusu
+                                        .clone()
+                                        .unwrap_or_else(|| "#ffffff".to_string()),
+                                    crate::NoktaGösterimi::İçiBoş => self
+                                        .seçenekler
+                                        .çizim_alanı_arka_plan_rengi
+                                        .clone()
+                                        .unwrap_or_else(|| self.seçenekler.arka_plan_rengi.clone()),
+                                    crate::NoktaGösterimi::Dolu => seri.renk.clone(),
+                                    crate::NoktaGösterimi::Gizli => return None,
+                                };
+                                Some(Komut::Daire {
+                                    merkez: Nokta::yeni(merkez, y1.clamp(üst, alt)),
+                                    yarıçap: ((seri.nokta_boyutu - seri.nokta_kalınlığı) / 2.0)
+                                        .max(0.0),
+                                    dolgu,
+                                    çizgi: seri.renk.clone(),
+                                    kalınlık: seri.nokta_kalınlığı,
+                                })
                             });
                         if (tepe - taban).abs() <= f64::EPSILON {
                             if let Some(komut) = nokta_komutu {
@@ -8430,6 +8470,49 @@ fn boşluk_tekil_indeksleri(
 #[cfg(test)]
 mod eksen_testleri {
     use super::*;
+
+    fn standart_nokta_dolguları(grafik: &Grafik) -> Vec<String> {
+        grafik
+            .çiz()
+            .komutlar()
+            .iter()
+            .filter_map(|komut| match komut {
+                Komut::Daireler { dolgu, çizgi, .. } if çizgi == "#123456" => Some(dolgu.clone()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn grafik_geneli_nokta_gösterimi_kaynak_içi_boş_dolu_ve_gizli_kiplerini_uygular()
+    -> Result<(), UplotHatası> {
+        let seçenekler = GrafikSeçenekleri::yeni(400, 240)?
+            .x_zaman(false)
+            .arka_plan_rengi("#abcdef")
+            .seri(
+                crate::SeriSeçenekleri::yeni("seri")
+                    .renk("#123456")
+                    .noktaları_göster(true),
+            );
+        assert_eq!(seçenekler.nokta_gösterimi, crate::NoktaGösterimi::Kaynak);
+        let veri = HizalıVeri::yeni(
+            vec![0.0, 1.0, 2.0],
+            vec![vec![Some(1.0), Some(2.0), Some(1.5)]],
+        )?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+
+        assert_eq!(standart_nokta_dolguları(&grafik), ["#ffffff"]);
+        assert!(grafik.nokta_gösterimini_ayarla(crate::NoktaGösterimi::İçiBoş));
+        assert!(!grafik.nokta_gösterimini_ayarla(crate::NoktaGösterimi::İçiBoş));
+        assert_eq!(standart_nokta_dolguları(&grafik), ["#abcdef"]);
+
+        assert!(grafik.nokta_gösterimini_ayarla(crate::NoktaGösterimi::Dolu));
+        assert_eq!(standart_nokta_dolguları(&grafik), ["#123456"]);
+
+        assert!(grafik.nokta_gösterimini_ayarla(crate::NoktaGösterimi::Gizli));
+        assert!(standart_nokta_dolguları(&grafik).is_empty());
+        Ok(())
+    }
 
     #[test]
     fn nokta_filtresi_aynı_pikselde_buluşan_boşlukların_tekilini_seçer() -> Result<(), UplotHatası>

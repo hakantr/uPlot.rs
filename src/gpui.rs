@@ -637,6 +637,13 @@ impl GpuiGrafik {
     }
 
     pub fn grafiği_ayarla(&mut self, grafik: Grafik, cx: &mut Context<Self>) {
+        let korunmuş_nokta_gösterimi = self.grafik.nokta_gösterimi();
+        let mut grafik = grafik;
+        if grafik.nokta_gösterimi() == crate::NoktaGösterimi::Kaynak
+            && korunmuş_nokta_gösterimi != crate::NoktaGösterimi::Kaynak
+        {
+            grafik.nokta_gösterimini_ayarla(korunmuş_nokta_gösterimi);
+        }
         let imleci_koru = self
             .grafik
             .tooltip_düzeni()
@@ -951,6 +958,18 @@ impl GpuiGrafik {
     pub fn tekerlek_etkileşimi_ayarla(&mut self, etkin: bool, cx: &mut Context<Self>) {
         self.grafik.tekerlek_etkileşimi_ayarla(etkin);
         Self::bildir(cx);
+    }
+
+    pub fn nokta_gösterimini_ayarla(
+        &mut self,
+        gösterim: crate::NoktaGösterimi,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let değişti = self.grafik.nokta_gösterimini_ayarla(gösterim);
+        if değişti {
+            self.grafik_bildir(cx);
+        }
+        değişti
     }
 
     pub fn y_arcsinh_eşiği_ayarla(
