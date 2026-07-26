@@ -3084,20 +3084,35 @@ mod testler {
             ikincil_yollar: vec![None],
             ..Default::default()
         };
-        let ilk = önbellek
-            .yol(0, 2.0, || Some(Path::new(point(px(1.0), px(2.0)))))
-            .expect("ilk yol");
-        let aynı_ölçek = önbellek
-            .yol(0, 2.0, || panic!("mantıksal yol yeniden oluşturulmamalı"))
-            .expect("önbellekli yol");
+        let ilk = önbellek.yol(0, 2.0, || Some(Path::new(point(px(1.0), px(2.0)))));
+        assert!(ilk.is_some());
+        let Some(ilk) = ilk else {
+            return;
+        };
+        let yeniden_oluşturuldu = Cell::new(false);
+        let aynı_ölçek = önbellek.yol(0, 2.0, || {
+            yeniden_oluşturuldu.set(true);
+            None
+        });
+        assert!(!yeniden_oluşturuldu.get());
+        assert!(aynı_ölçek.is_some());
+        let Some(aynı_ölçek) = aynı_ölçek else {
+            return;
+        };
         assert!(std::sync::Arc::ptr_eq(
             &ilk.fiziksel.vertices,
             &aynı_ölçek.fiziksel.vertices
         ));
 
-        let yeni_ölçek = önbellek
-            .yol(0, 1.5, || panic!("DPI değişiminde mantıksal yol korunmalı"))
-            .expect("yeniden ölçekli yol");
+        let yeni_ölçek = önbellek.yol(0, 1.5, || {
+            yeniden_oluşturuldu.set(true);
+            None
+        });
+        assert!(!yeniden_oluşturuldu.get());
+        assert!(yeni_ölçek.is_some());
+        let Some(yeni_ölçek) = yeni_ölçek else {
+            return;
+        };
         assert!(!std::sync::Arc::ptr_eq(
             &aynı_ölçek.fiziksel.vertices,
             &yeni_ölçek.fiziksel.vertices

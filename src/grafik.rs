@@ -2859,7 +2859,15 @@ impl Grafik {
                 if self.kutu_bıyık_grafiği() {
                     self.kutu_bıyık_y_aralığı()
                 } else {
-                    self.y_aralığı(self.görünür_x_aralığı())
+                    let x_aralığı = self.görünür_x_aralığı();
+                    let çizim_yüksekliği =
+                        self.seçenekler.yükseklik.saturating_sub(96).max(1) as f32;
+                    self.güzel_ölçek_aralığı(
+                        &self.seçenekler.birincil_y_ölçeği,
+                        x_aralığı,
+                        çizim_yüksekliği,
+                    )
+                    .map_or_else(|| self.y_aralığı(x_aralığı), |(aralık, _)| aralık)
                 }
             })
     }
