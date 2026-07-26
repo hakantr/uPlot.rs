@@ -214,6 +214,22 @@ impl Sahne {
         (self.genişlik, self.yükseklik)
     }
 
+    /// Bu sahnenin o anki retained komutlarını bağımsız bir SVG belgesine
+    /// dönüştürür.
+    ///
+    /// Normal GPUI paint yolunda çağrılmaz; serileştirme maliyeti yalnız
+    /// geliştirici açıkça SVG çıktısı istediğinde oluşur.
+    #[cfg(feature = "gpui-svg")]
+    pub fn svg(&self) -> String {
+        let mut çıktı = format!(
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}\" height=\"{}\" viewBox=\"0 0 {} {}\">\n",
+            self.genişlik, self.yükseklik, self.genişlik, self.yükseklik
+        );
+        çıktı.push_str(&self.svg_içeriği(""));
+        çıktı.push_str("</svg>\n");
+        çıktı
+    }
+
     #[cfg(test)]
     pub(crate) fn test_svg(&self) -> String {
         let mut çıktı = format!(

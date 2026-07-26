@@ -19,7 +19,7 @@ uplot-rs-gpui-katalog = { path = "../katalog" }
 console_error_panic_hook = "0.1.7"
 gpui_web = { path = "../../../gpui/crates/gpui_web", default-features = false }
 log = "0.4"
-web-sys = { version = "0.3", features = ["Document", "Element", "Window"] }
+web-sys = { version = "0.3", features = ["Document", "Element", "Location", "Window"] }
 
 [lints]
 workspace = true

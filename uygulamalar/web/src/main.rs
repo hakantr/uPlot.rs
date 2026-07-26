@@ -14,6 +14,10 @@ mod web {
             console_error_panic_hook::hook(bilgi);
         }));
         gpui_web::init_logging();
+        if svg_yedeği_zorlandı() {
+            svg_yedeğine_geç("SVG çizici URL üzerinden istendi.");
+            return;
+        }
         web_durumunu_yaz("booting", "GPUI Web ve WebGPU hazırlanıyor…");
 
         let uygulama = Application::with_platform(Rc::new(gpui_web::WebPlatform::new(false)))
@@ -32,10 +36,12 @@ mod web {
         if let Err(hata) =
             cx.open_window(WindowOptions::default(), |_, cx| cx.new(ChartListesi::yeni))
         {
-            web_hatası(&format!(
-                "GPUI Web/WebGPU penceresi açılamadı: {hata:#}. {}",
+            let mesaj = format!(
+                "GPUI Web GPU penceresi açılamadı: {hata:#}. {}",
                 tarayıcı_tanısı()
-            ));
+            );
+            web_hatası(&mesaj);
+            svg_yedeğine_geç(&mesaj);
             return;
         }
         cx.activate(true);
@@ -45,6 +51,40 @@ mod web {
     fn web_hatası(mesaj: &str) {
         log::error!("{mesaj}");
         web_durumunu_yaz("failed", &format!("GPUI Web başlatılamadı: {mesaj}"));
+    }
+
+    /// GPUI'nin WebGPU gereksinimini karşılamayan tarayıcılarda katalog
+    /// erişilebilir kalır. Bu yol üretim çekirdeğini veya GPUI paint akışını
+    /// değiştirmez; ayrı derlenen, yayınlanmayan SVG demo uygulamasına geçer.
+    fn svg_yedeğine_geç(neden: &str) {
+        let Some(pencere) = web_sys::window() else {
+            return;
+        };
+        let konum = pencere.location();
+        let sorgu = konum.search().unwrap_or_default();
+        let parça = konum.hash().unwrap_or_default();
+        let hedef = format!("./svg/www/{sorgu}{parça}");
+        log::warn!("SVG katalog yedeğine geçiliyor: {neden}");
+        web_durumunu_yaz(
+            "fallback",
+            "WebGPU kullanılamıyor; SVG katalog yedeğine geçiliyor…",
+        );
+        if let Err(hata) = konum.replace(&hedef) {
+            web_hatası(&format!(
+                "SVG katalog yedeğine yönlendirme başarısız: {hata:?}"
+            ));
+        }
+    }
+
+    fn svg_yedeği_zorlandı() -> bool {
+        web_sys::window()
+            .and_then(|pencere| pencere.location().search().ok())
+            .is_some_and(|sorgu| {
+                sorgu
+                    .trim_start_matches('?')
+                    .split('&')
+                    .any(|parça| parça == "renderer=svg")
+            })
     }
 
     fn tarayıcı_tanısı() -> String {

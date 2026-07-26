@@ -19,7 +19,11 @@ uPlot source is commit-locked.
 GPUI is the library's only interactive renderer. Native applications and the
 web target run the same `GpuiGrafik` component; the web surface uses
 `gpui_web` and WebGPU. SVG is not a second runtime renderer. It is an optional
-vector export generated from the retained GPUI chart surface on demand.
+vector export generated from the retained GPUI chart surface on demand. The
+GitHub Pages catalogue alone automatically switches to a separately compiled
+SVG demo application on WebGL2/Linux browsers that cannot provide the
+`VERTEX_STORAGE` capability required by GPUI. This package never enters the
+dependency graph of `uplot-rs` consumers.
 
 The shared foundation contains:
 
@@ -130,7 +134,9 @@ The interactive GPUI Web chart list is published with GitHub Pages:
 **[Open the live uPlot.rs GPUI Web demo](https://hakantr.github.io/uPlot.rs/)**
 
 Every day at 18:00 UTC (21:00 in Türkiye), the GPUI Web package is rebuilt and
-deployed to Pages together with the following downloadable workflow artifacts:
+deployed to Pages. When a browser cannot create a WebGPU adapter, the same URL
+preserves its query and deep link while switching to the SVG catalogue
+fallback. The workflow also produces these downloadable artifacts:
 
 - macOS ARM64;
 - Linux ARM64;
@@ -204,6 +210,8 @@ phase commits, test matrix, and release evidence.
   and explanation UI shared by native and web
 - `uygulamalar/masaustu/`: native GPUI entry opening the shared catalogue
 - `uygulamalar/web/`: `gpui_web`/WebGPU entry opening the shared catalogue
+- `wasm/`: unpublished SVG catalogue fallback built only by Pages for browsers
+  without usable WebGPU
 - `uyum/`: machine-readable source and evidence inventory
 - `tools/uyum/`: reproducibility and verification tooling
 - `RESMI_DEPO_FARKLILIKLARI.md`: direct-port versus uPlot.rs-extension inventory

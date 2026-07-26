@@ -19,7 +19,10 @@ varsayılan dallarını kullanır. Yalnız normatif uPlot kaynağı commit kilit
 Kütüphanenin tek interaktif renderer'ı GPUI'dir. Native uygulamalar ve web
 hedefi aynı `GpuiGrafik` bileşenini kullanır; web yüzeyi `gpui_web` + WebGPU
 üzerinde çalışır. SVG ikinci bir runtime renderer değildir, yalnız istendiğinde
-retained GPUI grafik yüzeyinden üretilen vektör dışa aktarımdır.
+retained GPUI grafik yüzeyinden üretilen vektör dışa aktarımdır. Yalnız GitHub
+Pages katalog uygulaması, GPUI çizicisinin zorunlu `VERTEX_STORAGE` yeteneğini
+sunmayan WebGL2/Linux tarayıcılarında ayrı derlenen SVG demo uygulamasına
+otomatik geçer; bu paket `uplot-rs` kullanıcılarının bağımlılıklarına girmez.
 
 Portun ortak altyapısı şunları içerir:
 
@@ -132,7 +135,9 @@ Etkileşimli GPUI Web chart listesi GitHub Pages üzerinde yayınlanır:
 **[uPlot.rs canlı GPUI Web örneğini aç](https://hakantr.github.io/uPlot.rs/)**
 
 Her gün Türkiye saatiyle 21:00'de GPUI Web paketi yeniden derlenip Pages ortamına
-yayınlanır ve şu indirilebilir workflow artefaktları oluşturulur:
+yayınlanır. WebGPU adaptörü oluşturulamayan tarayıcılarda aynı adres, sorgu ve
+derin bağlantıyı koruyarak SVG katalog yedeğine geçer. Ayrıca şu indirilebilir
+workflow artefaktları oluşturulur:
 
 - macOS ARM64;
 - Linux ARM64;
@@ -199,6 +204,8 @@ hash kilidini doğrular. Tarayıcı kataloğu `uygulamalar/web/Trunk.toml`
   defteri, ilişkili yüzey grupları ve açıklama UI'si
 - `uygulamalar/masaustu/`: ortak kataloğu native GPUI penceresinde açan giriş
 - `uygulamalar/web/`: ortak kataloğu `gpui_web`/WebGPU üzerinde açan giriş
+- `wasm/`: yalnız Pages'in WebGPU bulunmayan tarayıcılar için derlediği,
+  yayınlanmayan SVG katalog yedeği
 - `uyum/`: makine-okunur kaynak ve kanıt envanteri
 - `tools/uyum/`: yeniden üretim/denetim araçları
 - `RESMI_DEPO_FARKLILIKLARI.md`: resmî port ile uPlot.rs uzantılarının ayrımı
