@@ -21,7 +21,6 @@ members = [
     "uygulamalar/katalog",
     "uygulamalar/masaustu",
     "uygulamalar/web",
-    "wasm",
 ]
 resolver = "3"
 

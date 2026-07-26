@@ -135,9 +135,9 @@ Etkileşimli GPUI Web chart listesi GitHub Pages üzerinde yayınlanır:
 **[uPlot.rs canlı GPUI Web örneğini aç](https://hakantr.github.io/uPlot.rs/)**
 
 Her gün Türkiye saatiyle 21:00'de GPUI Web paketi yeniden derlenip Pages ortamına
-yayınlanır. WebGPU adaptörü oluşturulamayan tarayıcılarda aynı adres, sorgu ve
-derin bağlantıyı koruyarak SVG katalog yedeğine geçer. Ayrıca şu indirilebilir
-workflow artefaktları oluşturulur:
+yayınlanır. Renderer ve platform seçimini güncel GPUI Web katmanı yapar; uPlot.rs
+ikinci bir tarayıcı runtime'ı çalıştırmaz. Ayrıca şu indirilebilir workflow
+artefaktları oluşturulur:
 
 - macOS ARM64;
 - Linux ARM64;
@@ -204,8 +204,6 @@ hash kilidini doğrular. Tarayıcı kataloğu `uygulamalar/web/Trunk.toml`
   defteri, ilişkili yüzey grupları ve açıklama UI'si
 - `uygulamalar/masaustu/`: ortak kataloğu native GPUI penceresinde açan giriş
 - `uygulamalar/web/`: ortak kataloğu `gpui_web`/WebGPU üzerinde açan giriş
-- `wasm/`: yalnız Pages'in WebGPU bulunmayan tarayıcılar için derlediği,
-  yayınlanmayan SVG katalog yedeği
 - `uyum/`: makine-okunur kaynak ve kanıt envanteri
 - `tools/uyum/`: yeniden üretim/denetim araçları
 - `RESMI_DEPO_FARKLILIKLARI.md`: resmî port ile uPlot.rs uzantılarının ayrımı

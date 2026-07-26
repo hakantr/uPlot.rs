@@ -9,10 +9,6 @@ mod web {
 
     pub fn başlat() {
         web_init();
-        if svg_yedeği_zorlandı() {
-            svg_yedeğine_geç("SVG çizici URL üzerinden istendi.");
-            return;
-        }
         gpui_uygulamasını_başlat();
     }
 
@@ -33,12 +29,8 @@ mod web {
         if let Err(hata) =
             cx.open_window(WindowOptions::default(), |_, cx| cx.new(ChartListesi::yeni))
         {
-            let mesaj = format!(
-                "GPUI Web GPU penceresi açılamadı: {hata:#}. {}",
-                tarayıcı_tanısı()
-            );
+            let mesaj = format!("GPUI Web penceresi açılamadı: {hata:#}");
             web_hatası(&mesaj);
-            svg_yedeğine_geç(&mesaj);
             return;
         }
         cx.activate(true);
@@ -48,68 +40,6 @@ mod web {
     fn web_hatası(mesaj: &str) {
         log::error!("{mesaj}");
         web_durumunu_yaz("failed", &format!("GPUI Web başlatılamadı: {mesaj}"));
-    }
-
-    /// GPUI'nin WebGPU gereksinimini karşılamayan tarayıcılarda katalog
-    /// erişilebilir kalır. Bu yol üretim çekirdeğini veya GPUI paint akışını
-    /// değiştirmez; ayrı derlenen, yayınlanmayan SVG demo uygulamasına geçer.
-    fn svg_yedeğine_geç(neden: &str) {
-        let Some(pencere) = web_sys::window() else {
-            return;
-        };
-        let konum = pencere.location();
-        let sorgu = konum.search().unwrap_or_default();
-        let parça = konum.hash().unwrap_or_default();
-        let hedef = format!("./svg/www/{sorgu}{parça}");
-        log::warn!("SVG katalog yedeğine geçiliyor: {neden}");
-        web_durumunu_yaz(
-            "fallback",
-            "WebGPU kullanılamıyor; SVG katalog yedeğine geçiliyor…",
-        );
-        if let Err(hata) = konum.replace(&hedef) {
-            web_hatası(&format!(
-                "SVG katalog yedeğine yönlendirme başarısız: {hata:?}"
-            ));
-        }
-    }
-
-    fn svg_yedeği_zorlandı() -> bool {
-        web_sys::window()
-            .and_then(|pencere| pencere.location().search().ok())
-            .is_some_and(|sorgu| {
-                sorgu
-                    .trim_start_matches('?')
-                    .split('&')
-                    .any(|parça| parça == "renderer=svg")
-            })
-    }
-
-    fn tarayıcı_tanısı() -> String {
-        let Some(kök) = web_sys::window()
-            .and_then(|pencere| pencere.document())
-            .and_then(|belge| belge.document_element())
-        else {
-            return "Tarayıcı yetenekleri okunamadı.".to_string();
-        };
-        let özellik = |ad: &str| {
-            kök.get_attribute(ad)
-                .unwrap_or_else(|| "unknown".to_string())
-        };
-        let güvenli = özellik("data-secure-context");
-        let webgpu = özellik("data-webgpu");
-        let webgl2 = özellik("data-webgl2");
-        let öneri = if güvenli != "true" {
-            "WebGPU için HTTPS veya aynı cihazdaki localhost adresini kullanın."
-        } else if webgpu != "true" && webgl2 != "true" {
-            "Bu tarayıcı WebGPU veya WebGL2 sunmuyor; güncel Chrome/Edge ya da WebGPU destekli Safari kullanın."
-        } else if webgpu != "true" {
-            "WebGPU sunulmuyor; WebGL2 mevcut olsa da GPUI adaptörü kurulamadı."
-        } else {
-            "WebGPU sunuluyor fakat GPU adaptörü veya aygıtı oluşturulamadı; donanım hızlandırmasını ve tarayıcı GPU engel listesini denetleyin."
-        };
-        format!(
-            "Tarayıcı tanısı: secureContext={güvenli}, WebGPU={webgpu}, WebGL2={webgl2}. {öneri}"
-        )
     }
 
     fn web_durumunu_yaz(durum: &str, mesaj: &str) {

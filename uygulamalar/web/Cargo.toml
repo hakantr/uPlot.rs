@@ -18,7 +18,7 @@ uplot-rs-gpui-katalog = { path = "../katalog" }
 [target.'cfg(target_family = "wasm")'.dependencies]
 gpui_platform = { path = "../../../gpui/crates/gpui_platform" }
 log = "0.4"
-web-sys = { version = "0.3", features = ["Document", "Element", "Location", "Window"] }
+web-sys = { version = "0.3", features = ["Document", "Element", "Window"] }
 
 [lints]
 workspace = true

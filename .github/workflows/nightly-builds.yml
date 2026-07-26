@@ -158,24 +158,9 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: trunk
-      - name: wasm-bindgen
-        uses: taiki-e/install-action@v2
-        with:
-          tool: wasm-bindgen-cli@0.2.120
       - name: GPUI Web release derlemesi
         working-directory: uPlot.rs/uygulamalar/web
         run: NO_COLOR=false trunk build --release --public-url /uPlot.rs/
-      - name: WebGPU bulunmayan tarayıcılar için SVG katalog yedeği
-        working-directory: uPlot.rs
-        run: |
-          cargo build -p uplot-rs-wasm --release --target wasm32-unknown-unknown
-          mkdir -p uygulamalar/web/dist/svg/pkg uygulamalar/web/dist/svg/www \
-            uygulamalar/web/dist/assets
-          wasm-bindgen --target web \
-            --out-dir uygulamalar/web/dist/svg/pkg \
-            target/wasm32-unknown-unknown/release/uplot_rs_wasm.wasm
-          cp wasm/www/index.html uygulamalar/web/dist/svg/www/index.html
-          cp assets/app-icon.svg uygulamalar/web/dist/assets/app-icon.svg
       - name: Pages paketini hazırla
         working-directory: uPlot.rs/uygulamalar/web
         run: |
