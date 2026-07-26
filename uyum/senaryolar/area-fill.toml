@@ -37,6 +37,6 @@ tekerlek_girdi_kipi = "otomatik_satır_ve_hassas_piksel"
 "ortak_davranış_profili" = "resize-temeli-v1"
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/area-fill.svg"

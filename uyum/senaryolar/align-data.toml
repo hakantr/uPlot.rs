@@ -30,6 +30,6 @@ union_indeksleme = "tek HashMap; kaynak hücre yerleştirme ortalama O(1)"
 null_expand = "seri başına boşluk koşularında doğrusal tek geçiş"
 
 [kanit]
-masaustu = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+masaustu = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/align-data.svg"

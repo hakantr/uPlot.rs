@@ -27,6 +27,6 @@ two = [18.0, 24.0, 37.0, 55.0, 55.0, 60.0, 63.0]
 
 ["kanıt"]
 "ortak_çekirdek" = "src/kart/zoom_touch.rs#zoom_touch_kartı"
-wasm_testi = "wasm/src/lib.rs#zoom_touch_wasm_kıstırmayı_çekirdekte_uygular"
+wasm_testi = "src/gpui.rs#zoom_touch_wasm_kıstırmayı_çekirdekte_uygular"
 svg = "target/zoom-touch.svg"
 sunum = "Tüm kartlarda ortak touch davranışı; ayrı katalog kartı yok"

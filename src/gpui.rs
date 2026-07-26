@@ -3391,8 +3391,8 @@ mod testler {
         };
 
         assert_eq!(önbellek.sahneyi_değiştir(&eski, &yeni), 1);
-        assert!(önbellek.yollar[0].is_some());
-        assert!(önbellek.yollar[1].is_none());
+        assert!(önbellek.yollar.first().is_some_and(Option::is_some));
+        assert!(önbellek.yollar.get(1).is_some_and(Option::is_none));
     }
 
     #[test]

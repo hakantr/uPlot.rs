@@ -41,5 +41,5 @@ durum = "altı_seri_60fps_kayan_pencere"
 
 ["kanıt"]
 "svg_dizini" = "target/sine-stream"
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-"wasm" = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+"wasm" = "uygulamalar/web/src/main.rs"

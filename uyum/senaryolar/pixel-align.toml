@@ -47,5 +47,5 @@ oturumu_yeniden_kurmaz = true
 
 ["kanıt"]
 svg_dizini = "target/pixel-align"
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"

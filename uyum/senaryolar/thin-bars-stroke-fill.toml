@@ -32,5 +32,5 @@ ince_vurusta_vurus_rengi_dolguya_duser = true
 
 ["kanıt"]
 "örnek" = "examples/thin_bars_stroke_fill.rs"
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"

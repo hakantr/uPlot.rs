@@ -46,5 +46,5 @@ fixture = "src/kart/stacked_series.rs#stacked_series_kartları"
   "negY=-7..12", "percent=-1.2..1.2", "groups=0..56", "joined=0..12",
 ]
 "rehber_varsayılanı" = "kapalı"
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-"wasm" = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+"wasm" = "uygulamalar/web/src/main.rs"

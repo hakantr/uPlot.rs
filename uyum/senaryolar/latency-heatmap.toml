@@ -29,6 +29,6 @@ aggregated_x_pikseli_zoomda_sabit = 10
 aggregated_y_veri_boyutu = 5
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/latency-heatmap/latency-heatmap-mode2.svg"

@@ -16,5 +16,5 @@ durum_renkleri = ["#33BB55", "orange", "red"]
 
 ["kanıt"]
 "örnek" = "examples/multi_bars.rs"
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"

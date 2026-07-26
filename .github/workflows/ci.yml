@@ -58,16 +58,11 @@ jobs:
           cargo check -p uplot-rs --lib --no-default-features
           cargo check -p uplot-rs --lib --no-default-features --features gpui-svg
           cargo check -p uplot-rs --lib --all-features
+          cargo check -p uplot-rs-gpui-katalog
           cargo check -p uplot-rs-gpui-web --target wasm32-unknown-unknown
       - name: Clippy
         working-directory: uPlot.rs
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: Testler
         working-directory: uPlot.rs
-        run: cargo test --workspace --all-targets
-      - name: İlk kart smoke testi
-        working-directory: uPlot.rs
-        run: cargo run --example ilk_kart
-      - name: WASM çekirdeği
-        working-directory: uPlot.rs
-        run: cargo check -p uplot-rs-wasm --target wasm32-unknown-unknown
+        run: cargo test --workspace --all-targets --all-features

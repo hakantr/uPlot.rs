@@ -22,6 +22,6 @@ eksen_etiketleri = "#000000"
 dolgular = ["#E57373", "#66BB6A", "#42A5F5"]
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/grid-over-series/grid-over-series.svg"

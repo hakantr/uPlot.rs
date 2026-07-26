@@ -15,5 +15,5 @@ cursor_ayrimi = "dataIdx-noktayi-snapler_move-cursor-ve-noktayi-snapler"
 
 ["kanıt"]
 "örnek" = "examples/nearest_non_null.rs"
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"

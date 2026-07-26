@@ -40,5 +40,5 @@ lejant_set_series = true
 
 ["kanıt"]
 "örnek" = "examples/y_scale_drag.rs"
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"

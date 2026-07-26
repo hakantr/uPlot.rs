@@ -23,6 +23,6 @@ log_etiket_filtresi = ["all", "12357", "125", "1", "magnitude-skip"]
 "y_eksen_asgari_etiket_boşluğu" = 15
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/log-scales/log-scales-log-y.svg"

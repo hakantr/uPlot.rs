@@ -54,6 +54,6 @@ device_pixel_ratio = 1
 "kontrol_odağı" = "korunur"
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/add-del-series.svg"

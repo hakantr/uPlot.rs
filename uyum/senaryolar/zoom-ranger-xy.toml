@@ -14,5 +14,5 @@ yeniden_kullanilabilir_opsiyon = "ZoomRangerSeçenekleri"
 ayri_katalog_karti = false
 "örnek" = "examples/zoom_wheel.rs"
 "ortak_çekirdek" = "src/kart/zoom_wheel.rs#zoom_ranger_xy_grafiği"
-wasm = "wasm/src/lib.rs#zoom_wheel_wasm_kaynak_serilerini_üretir"
+wasm = "src/gpui.rs#zoom_wheel_wasm_kaynak_serilerini_üretir"
 svg = "target/zoom-ranger-xy.svg"

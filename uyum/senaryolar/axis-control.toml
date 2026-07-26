@@ -45,6 +45,6 @@ set_series = true
 "sabit_y_tam_görünüm" = [-50.0, 50.0]
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/axis-control.svg"

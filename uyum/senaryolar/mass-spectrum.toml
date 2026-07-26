@@ -20,5 +20,5 @@ y_etiketi = "relative abundance (%)"
 
 ["kanıt"]
 "örnek" = "examples/mass_spectrum.rs"
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"

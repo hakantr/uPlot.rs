@@ -39,7 +39,7 @@ durum = "tek_grupta_beş_soft_minmax_yüzeyi"
 
 ["kanıt"]
 "svg_dizini" = "target/soft-minmax"
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-"wasm" = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+"wasm" = "uygulamalar/web/src/main.rs"
 "resmi_eşik_testi" = "canlı_data_max_eşikleri_resmi_range_num_altın_matrisiyle_eşleşir"
 "grup_testi" = "dört_canlı_yüzey_veriyi_paylaşır_ama_görünümler_bağımsızdır"

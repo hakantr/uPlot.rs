@@ -23,15 +23,15 @@
       "kanıt_dosyaları": ["src/etkilesim.rs", "src/grafik.rs"]
     },
     {
-      "id": "gpui-wasm-yuzey-esdegerligi",
-      "başlık": "GPUI ve WASM yüzey eşdeğerliği",
+      "id": "gpui-platform-yuzey-esdegerligi",
+      "başlık": "GPUI masaüstü ve web yüzey eşdeğerliği",
       "tür": "mimari_kural",
-      "açıklama": "İki katalog aynı Rust kartını ve ortak sahne semantiğini kullanır. Kataloglardan biri için istenen sunum veya etkileşim değişikliği, platform destekliyorsa aynı çalışma kapsamında diğerine de uygulanır; gerçek platform istisnası açıkça belgelenir.",
+      "açıklama": "Masaüstü ve web hedefleri aynı GPUI katalog bileşenini, Rust kartını ve sahne semantiğini kullanır. Bir hedef için istenen sunum veya etkileşim değişikliği, platform destekliyorsa aynı çalışma kapsamında diğerine de uygulanır; gerçek platform istisnası açıkça belgelenir.",
       "kanıt_dosyaları": [
         "src/gpui.rs",
-        "wasm/src/lib.rs",
-        "uygulamalar/masaustu/src/masaustu.rs",
-        "wasm/www/index.html",
+        "uygulamalar/katalog/src/lib.rs",
+        "uygulamalar/masaustu/src/main.rs",
+        "uygulamalar/web/src/main.rs",
         "tools/uyum/denetle.mjs"
       ]
     },
@@ -40,7 +40,7 @@
       "başlık": "Duyarlı boyutlandırma",
       "tür": "dogrudan_port",
       "açıklama": "Grafik görünür yüzeye yeniden yerleşir ve sahne yeni boyutta yeniden üretilir.",
-      "kanıt_dosyaları": ["src/gpui.rs", "wasm/www/index.html"]
+      "kanıt_dosyaları": ["src/gpui.rs", "uygulamalar/katalog/src/lib.rs"]
     },
     {
       "id": "cizim-alani-kirpmasi",
@@ -61,14 +61,14 @@
       "başlık": "Kesintisiz cursor izleme",
       "tür": "dogrudan_port",
       "açıklama": "Kesikli eksen çizgileri yalnız veri noktalarında atlamaz; yüzey içindeki gerçek fare konumunu izler.",
-      "kanıt_dosyaları": ["src/gpui.rs", "wasm/www/index.html"]
+      "kanıt_dosyaları": ["src/gpui.rs", "uygulamalar/katalog/src/lib.rs"]
     },
     {
       "id": "canli-coklu-seri-lejanti",
       "başlık": "Canlı çoklu seri lejantı",
       "tür": "dogrudan_port",
       "açıklama": "Ortak X konumundaki bütün seri değerleri cursor ile birlikte güncellenir.",
-      "kanıt_dosyaları": ["src/grafik.rs", "src/gpui.rs", "wasm/src/lib.rs"]
+      "kanıt_dosyaları": ["src/grafik.rs", "src/gpui.rs", "uygulamalar/katalog/src/lib.rs"]
     },
     {
       "id": "kosullu-bos-ve-dolu-noktalar",
@@ -89,7 +89,7 @@
       "başlık": "Çift tıklamayla tam görünüme dönüş",
       "tür": "dogrudan_port",
       "açıklama": "Yakın görünüm çift tıklamayla tam veri aralığına döner ve kart seçeneğiyle kapatılabilir.",
-      "kanıt_dosyaları": ["src/etkilesim.rs", "src/gpui.rs", "wasm/www/index.html"]
+      "kanıt_dosyaları": ["src/etkilesim.rs", "src/gpui.rs", "uygulamalar/katalog/src/lib.rs"]
     },
     {
       "id": "tekerlek-yakinlastirma",
@@ -110,14 +110,14 @@
       "başlık": "Dokunma ile yakınlaştırma ve taşıma",
       "tür": "resmi_eklenti_portu",
       "açıklama": "Açıldığında iki parmakla X/Y yakınlaştırma ve tek parmakla taşıma çekirdekte uygulanır.",
-      "kanıt_dosyaları": ["src/etkilesim.rs", "wasm/src/lib.rs", "tests/resize.rs"]
+      "kanıt_dosyaları": ["src/etkilesim.rs", "src/gpui.rs", "tests/resize.rs"]
     },
     {
       "id": "bosluk-sol-surukleme-tasima",
       "başlık": "Boşluk ve sol sürüklemeyle taşıma",
       "tür": "giris_uyarlaması",
       "açıklama": "Yakınlaştırılmış masaüstü/web görünümü boşluk basılıyken sol sürüklemeyle X/Y yönünde taşınır; boşluğa basma ile grafik alanına girme sırası davranışı değiştirmez ve başarılı zoom grafik yüzeyini odaklar.",
-      "kanıt_dosyaları": ["src/etkilesim.rs", "src/gpui.rs", "wasm/www/index.html"]
+      "kanıt_dosyaları": ["src/etkilesim.rs", "src/gpui.rs", "uygulamalar/katalog/src/lib.rs"]
     },
     {
       "id": "gorunum-gecmisi",
@@ -131,14 +131,14 @@
       "başlık": "Görünür Geri ve Tam görünüm kontrolleri",
       "tür": "sunum_uyarlaması",
       "açıklama": "Kataloglar desteklenen görünüm durumlarında keşfedilebilir geri dönüş kontrolleri gösterir.",
-      "kanıt_dosyaları": ["uygulamalar/masaustu/src/masaustu.rs", "wasm/www/index.html"]
+      "kanıt_dosyaları": ["uygulamalar/katalog/src/lib.rs"]
     },
     {
       "id": "kart-bilgi-ve-tanim-yerlesimi",
       "başlık": "Kart bilgisi ve kapalı tanım kutusu",
       "tür": "sunum_kuralı",
       "açıklama": "Bilgi satırı başlık altında ve çizim sınırının üstündedir; Rust tanımı kart altında varsayılan kapalıdır.",
-      "kanıt_dosyaları": ["uygulamalar/masaustu/src/masaustu.rs", "wasm/www/index.html"]
+      "kanıt_dosyaları": ["uygulamalar/katalog/src/lib.rs"]
     },
     {
       "id": "paniksiz-hata-bildirimi",

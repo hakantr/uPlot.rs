@@ -751,7 +751,7 @@
       "kaynak_yolu": "plot same-position click opens perf compare start/end/stat URL; tooltip is pointer-transparent",
       "rust_karşılığı": "EnYakınTooltipBilgisi::karşılaştırma_url / GPUI ve WASM plot olay bağdaştırıcıları",
       "durum": "tam_kanıtlı",
-      "test": "wasm/src/lib.rs"
+      "test": "src/gpui.rs"
     },
     {
       "kaynak_yolu": "tooltips data [1..7] / One / hidden Two",
@@ -775,25 +775,25 @@
       "kaynak_yolu": "default legend label click / setSeries toggles hidden Two",
       "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla / GPUI ve WASM lejant düğmeleri",
       "durum": "tam_kanıtlı",
-      "test": "wasm/src/lib.rs"
+      "test": "src/gpui.rs"
     },
     {
       "kaynak_yolu": "tooltip DOM nodes created once in init; setCursor updates text and position",
       "rust_karşılığı": "GpuiGrafik hafif overlay katmanı / WASM çokluTooltipKatmanınıKur",
       "durum": "tam_kanıtlı",
-      "test": "wasm/src/lib.rs"
+      "test": "src/gpui.rs"
     },
     {
       "kaynak_yolu": "cursor mouseenter/mouseleave tooltip visibility",
       "rust_karşılığı": "GpuiGrafik ve WASM pointer yaşam döngüsü",
       "durum": "tam_kanıtlı",
-      "test": "wasm/src/lib.rs"
+      "test": "src/gpui.rs"
     },
     {
       "kaynak_yolu": "destroy/recreate every 2000ms with cursor state memo",
       "rust_karşılığı": "TooltipDüzeni yeniden kurma ve imleç durumu koruma",
       "durum": "tam_kanıtlı",
-      "test": "wasm/src/lib.rs"
+      "test": "src/gpui.rs"
     },
     {
       "kaynak_yolu": "trendlines aligned data x=0..99 and two 100-value series",
@@ -829,7 +829,7 @@
       "kaynak_yolu": "default points.space=ptDia(1)*2=10 and legend setSeries visibility",
       "rust_karşılığı": "SeriSeçenekleri varsayılan nokta boşluğu ve GPUI/WASM seri görünürlüğü",
       "durum": "tam_kanıtlı",
-      "test": "wasm/src/lib.rs"
+      "test": "src/gpui.rs"
     },
     {
       "kaynak_yolu": "scales.x.range valToIdx min/max data snap",
@@ -847,19 +847,19 @@
       "kaynak_yolu": "_setSize cursor.left/top proportional scaling",
       "rust_karşılığı": "BoyutSenkronDüzeni + GPUI/WASM kalıcı imleç overlay'i",
       "durum": "tam_kanıtlı",
-      "test": "src/gpui.rs + wasm/src/lib.rs"
+      "test": "src/gpui.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "_setSize select left/top/width/height proportional scaling",
       "rust_karşılığı": "BoyutSenkronDüzeni + GPUI/WASM kalıcı seçim overlay'i",
       "durum": "tam_kanıtlı",
-      "test": "src/gpui.rs + wasm/src/lib.rs"
+      "test": "src/gpui.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "_setSize cursorPts left/top proportional scaling",
       "rust_karşılığı": "BoyutSenkronDüzeni + GPUI/WASM kalıcı hover overlay'i",
       "durum": "tam_kanıtlı",
-      "test": "src/gpui.rs + wasm/src/lib.rs"
+      "test": "src/gpui.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "update-cursor-select-resize 100ms 800..400 size loop",
@@ -871,7 +871,7 @@
       "kaynak_yolu": "setSize redraws canvas while cursor/select/cursorPts DOM nodes are retained",
       "rust_karşılığı": "GPUI ayrı etkileşim canvası + WASM kararlı #etkileşim düğümleri",
       "durum": "tam_kanıtlı",
-      "test": "src/gpui.rs + wasm/src/lib.rs"
+      "test": "src/gpui.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "series.auto: false",
@@ -907,13 +907,13 @@
       "kaynak_yolu": "single beginPath() + stroke() for all wind vectors",
       "rust_karşılığı": "tek Komut::Yol içinde iki noktalı vektör parçaları",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/wind_direction.rs + wasm/src/lib.rs"
+      "test": "src/kart/wind_direction.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "setSeries show gates custom paths and autoscale",
       "rust_karşılığı": "seri_görünürlüğünü_ayarla + görünür seri autoscale filtresi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/wind_direction.rs + wasm/src/lib.rs"
+      "test": "src/kart/wind_direction.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "hooks.ready: .u-axis mousedown",
@@ -949,13 +949,13 @@
       "kaynak_yolu": "document mousemove/mouseup keeps drag alive outside axis",
       "rust_karşılığı": "WASM pointer capture + GPUI on_mouse_up_out",
       "durum": "tam_kanıtlı",
-      "test": "wasm/src/lib.rs + src/gpui.rs"
+      "test": "src/gpui.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "setSeries invalidates auto scale after manual setScale",
       "rust_karşılığı": "seri_görünürlüğünü_ayarla elle ölçek aralığını temizler",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_scale_drag.rs + wasm/src/lib.rs"
+      "test": "src/kart/y_scale_drag.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "mode.data(data)",
@@ -985,37 +985,37 @@
       "kaynak_yolu": "setInterval setData(mode.data(data), 2000)",
       "rust_karşılığı": "YShiftedSeriesAkışı::ilerlet_güncellemesi + Grafik::veriyi_y_sunumunda_ayarla",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs + wasm/src/lib.rs"
+      "test": "src/kart/y_shifted_series.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "uPlot.paths.bars() fillTo baseline and single Path2D",
       "rust_karşılığı": "dolgu_tabanı + toplu_çubuk_yolu tek Alan/tek Yol",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs + wasm/src/lib.rs"
+      "test": "src/kart/y_shifted_series.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "series.value changes legend only; cursor point uses shifted data",
       "rust_karşılığı": "ham lejant kanalı ile İmleçÇözümü geometri kanalının ayrılması",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs + src/gpui.rs + wasm/src/lib.rs"
+      "test": "src/kart/y_shifted_series.rs + src/gpui.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "setData preserves series.show and re-resolves cursor on same instance",
       "rust_karşılığı": "atomik Y sunumu güncellemesi + GPUI canlı cursor yenileme",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/y_shifted_series.rs + wasm/src/lib.rs"
+      "test": "src/kart/y_shifted_series.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "cursor.move rounds left/top to a 10 CSS pixel grid",
       "rust_karşılığı": "Grafik::imleç_oranlarını_uyarla + responsive GPUI/WASM piksel dönüşümü",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/cursor_snap.rs + wasm/src/lib.rs"
+      "test": "src/kart/cursor_snap.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "cursor.move transformed mousedown/mousemove drives select rectangle",
       "rust_karşılığı": "GPUI ve WASM snap edilmiş seçim başlangıç/bitiş koordinatları",
       "durum": "tam_kanıtlı",
-      "test": "src/gpui.rs + wasm/src/lib.rs"
+      "test": "src/gpui.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "cursor points resolve nearest data index after move transform",
@@ -1027,25 +1027,25 @@
       "kaynak_yolu": "setSeries show from standard legend",
       "rust_karşılığı": "Cursor Snap GPUI/WASM değiştirilebilir seri lejantı",
       "durum": "tam_kanıtlı",
-      "test": "uygulamalar/masaustu/src/masaustu.rs + wasm/src/lib.rs"
+      "test": "uygulamalar/masaustu/src/main.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "missing-data.html creates two independent uPlot instances",
       "rust_karşılığı": "missing_data_kartları + tek katalog kartında iki bağımsız GPUI/WASM yüzeyi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/missing_data.rs + wasm/src/lib.rs"
+      "test": "src/kart/missing_data.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "series.value CPU/RAM percent and TCP MB formatting",
       "rust_karşılığı": "bitişik % eksen etiketi + yüzey lejantında bir ondalık %/MB biçimi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/missing_data.rs + wasm/src/lib.rs"
+      "test": "src/kart/missing_data.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "standard legend setSeries show per independent plot",
       "rust_karşılığı": "Missing Data yüzeyine ait GPUI/WASM seri anahtarları",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/missing_data.rs + wasm/src/lib.rs"
+      "test": "src/kart/missing_data.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "series.gaps scans original adjacent data indices before path building",
@@ -1081,7 +1081,7 @@
       "kaynak_yolu": "dependent-scale standard legend setSeries show",
       "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla + GPUI/WASM değiştirilebilir lejant",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/dependent_scale.rs + wasm/src/lib.rs"
+      "test": "src/kart/dependent_scale.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "Scale.distr=4 / Scale.asinh / rangeAsinh",
@@ -1093,7 +1093,7 @@
       "kaynak_yolu": "asinhAxisSplits + log10AxisValsFilt",
       "rust_karşılığı": "grafik::arcsinh_bölmeleri + ArcSinh magnitude etiket filtresi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/arcsinh_scales.rs + wasm/src/lib.rs"
+      "test": "src/kart/arcsinh_scales.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "valToPos / posToVal for nonlinear Y interactions",
@@ -1105,13 +1105,13 @@
       "kaynak_yolu": "runtime Scale.asinh mutation + redraw(true,true)",
       "rust_karşılığı": "Grafik::y_arcsinh_eşiği_ayarla + GPUI/WASM eşik kontrolleri",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/arcsinh_scales.rs + wasm/src/lib.rs"
+      "test": "src/kart/arcsinh_scales.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "axis-autosize setInterval(500) + u.setData(getData(...))",
       "rust_karşılığı": "AxisAutosizeAkışı + Grafik::canlı_veriyi_x_etiket_çarpanında_ayarla",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_autosize.rs + wasm/src/lib.rs + uygulamalar/masaustu/src/masaustu.rs"
+      "test": "src/kart/axis_autosize.rs + src/gpui.rs + uygulamalar/masaustu/src/main.rs"
     },
     {
       "kaynak_yolu": "axis-autosize autoPadRight cycleNum / last split label edge",
@@ -1123,7 +1123,7 @@
       "kaynak_yolu": "axis-autosize axes[1].size measureText + labelGap/labelSize",
       "rust_karşılığı": "yaklaşık_metin_genişliği + otomatik_y_eksen_genişliği + DöndürülmüşMetin",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_autosize.rs + wasm/src/lib.rs"
+      "test": "src/kart/axis_autosize.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "axis-autosize .uplot / .u-under backgrounds",
@@ -1141,7 +1141,7 @@
       "kaynak_yolu": "axis-control axis label rotation + fixed -50..50 ticks",
       "rust_karşılığı": "Komut::DöndürülmüşMetin + GrafikSeçenekleri::y_sabit_bölmeler",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_control.rs + wasm/src/lib.rs"
+      "test": "src/kart/axis_control.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "linear path decimation _drawAcc first/min/max/out",
@@ -1159,19 +1159,19 @@
       "kaynak_yolu": "axis-control standard legend setSeries show with fixed scale",
       "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla + GPUI/WASM değiştirilebilir lejant",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_control.rs + wasm/src/lib.rs"
+      "test": "src/kart/axis_control.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "axis-indicators Axis.size/border/ticks/stroke",
       "rust_karşılığı": "YÖlçekSeçenekleri::eksen_genişliği + renkli eksen sınır/bölme komutları",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_indicators.rs + wasm/src/lib.rs"
+      "test": "src/kart/axis_indicators.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "axisIndicsPlugin init/setLegend + cursor.y=false",
       "rust_karşılığı": "GrafikSeçenekleri::eksen_göstergeleri + GPUI/WASM hafif gösterge katmanı",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/axis_indicators.rs + wasm/src/lib.rs"
+      "test": "src/kart/axis_indicators.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "axis-indicators setSeries/null badge visibility",

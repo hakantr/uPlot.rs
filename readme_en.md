@@ -176,8 +176,8 @@ command regenerates the source/API/demo
 inventories, and the verification command checks the commit, version, and file
 hashes in a local checkout of the
 [uPlot source repository](https://github.com/leeoniya/uPlot), cloned as `uPlot`
-beside this repository. See
-[wasm/README.md](wasm/README.md) for browser instructions.
+beside this repository. The browser catalogue opens the same shared GPUI entity
+through `uygulamalar/web/Trunk.toml`.
 
 ## Source layout
 

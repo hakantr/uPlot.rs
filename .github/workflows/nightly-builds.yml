@@ -118,7 +118,7 @@ jobs:
           retention-days: 1
 
   wasm:
-    name: uplot-rs-wasm
+    name: uplot-rs-gpui-web
     runs-on: ubuntu-24.04
     steps:
       - name: uPlot.rs
@@ -139,33 +139,25 @@ jobs:
         uses: dtolnay/rust-toolchain@1.95
         with:
           targets: wasm32-unknown-unknown
-      - name: wasm-bindgen CLI
-        run: cargo install wasm-bindgen-cli --version 0.2.120 --locked
-      - name: WASM release derlemesi
-        working-directory: uPlot.rs
-        run: cargo build -p uplot-rs-wasm --release --target wasm32-unknown-unknown
-      - name: Tarayıcı bağlarını üret
-        working-directory: uPlot.rs
-        run: >-
-          wasm-bindgen --target web --out-dir wasm/pkg
-          target/wasm32-unknown-unknown/release/uplot_rs_wasm.wasm
+      - name: Trunk
+        uses: taiki-e/install-action@v2
+        with:
+          tool: trunk
+      - name: GPUI Web release derlemesi
+        working-directory: uPlot.rs/uygulamalar/web
+        run: NO_COLOR=false trunk build --release --public-url /uPlot.rs/
       - name: Pages paketini hazırla
-        working-directory: uPlot.rs
+        working-directory: uPlot.rs/uygulamalar/web
         run: |
-          mkdir -p _site/wasm/www _site/wasm/pkg _site/assets
-          cp -R wasm/www/. _site/wasm/www/
-          cp -R wasm/pkg/. _site/wasm/pkg/
-          cp assets/app-icon.svg _site/assets/app-icon.svg
-          cp wasm/pages/index.html _site/index.html
-          touch _site/.nojekyll
-      - name: WASM artefaktını yükle
+          touch dist/.nojekyll
+      - name: GPUI Web artefaktını yükle
         uses: actions/upload-artifact@v5
         with:
-          name: uplot-rs-wasm
+          name: uplot-rs-gpui-web
           path: |
-            uPlot.rs/wasm/pkg
-            uPlot.rs/wasm/www
-            uPlot.rs/wasm/README.md
+            uPlot.rs/uygulamalar/web/dist
+            uPlot.rs/README.md
+            uPlot.rs/readme_en.md
           if-no-files-found: error
           retention-days: 1
       - name: Pages yapılandırması
@@ -173,7 +165,7 @@ jobs:
       - name: Pages artefaktını yükle
         uses: actions/upload-pages-artifact@v4
         with:
-          path: uPlot.rs/_site
+          path: uPlot.rs/uygulamalar/web/dist
           retention-days: 1
 
   deploy:

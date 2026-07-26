@@ -52,6 +52,6 @@ set_size = "yeni bbox ile draw yaşam döngüsünü yeniden çalıştır"
 "yüzey_yeniden_kurulmaz" = true
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg_dizini = "target/bars-values-autosize"

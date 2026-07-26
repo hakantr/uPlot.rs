@@ -18,6 +18,6 @@ selection_zoom = "surface-local"
 shared_immutable_data = true
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/line-paths/line-paths-monotone-cubic.svg"

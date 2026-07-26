@@ -46,5 +46,5 @@ yerel_tarih_bicimlendirme_yuzey_adaptorunde = true
 
 ["kanıt"]
 "örnek" = "examples/time_periods.rs"
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"

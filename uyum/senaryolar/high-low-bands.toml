@@ -29,6 +29,6 @@ milisaniye_zaman_ekseni = true
 "bant_çokgenleri_koşu_başına_birleştirilir" = true
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/high-low-bands/high-low-bands-differing-paths.svg"

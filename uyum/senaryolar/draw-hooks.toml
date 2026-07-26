@@ -19,7 +19,7 @@ axis_ticks = "x/y siyah · 10px"
 grid_blur = "kaynakta yorumlu · uygulanmaz"
 
 [kanit]
-masaustu = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+masaustu = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/draw-hooks.svg"
 set_data_cache = "src/kart/draw_hooks.rs#set_data_medyan_önbelleğini_yeniler"

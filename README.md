@@ -175,8 +175,8 @@ workspace lintleri ve CI Clippy adımıyla her değişiklikte denetlenir.
 komutu GPUI Web/WGPU uygulamasını açar. Envanter komutu kaynak/API/demo dökümlerini
 yeniden üretir; denetim komutu [uPlot kaynak deposunun](https://github.com/leeoniya/uPlot)
 aynı üst dizine `uPlot` adıyla klonlanmış yerel kopyasında commit/sürüm/dosya
-hash kilidini doğrular. Tarayıcı listesi için
-[wasm/README.md](wasm/README.md) yönergelerini kullanın.
+hash kilidini doğrular. Tarayıcı kataloğu `uygulamalar/web/Trunk.toml`
+üzerinden aynı ortak GPUI entity'sini açar.
 
 ## Kaynak düzeni
 

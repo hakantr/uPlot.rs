@@ -68,29 +68,29 @@ if (senaryoKimlikleri.size !== 73) {
   hata(`senaryo envanteri 73 kayıt içermiyor: ${senaryoKimlikleri.size}`);
 }
 
-const masaüstüKataloğu = readFileSync(
-  resolve(kok, "uygulamalar/masaustu/src/masaustu.rs"),
+const ortakKatalog = readFileSync(
+  resolve(kok, "uygulamalar/katalog/src/lib.rs"),
   "utf8",
 );
-const wasmKataloğu = readFileSync(resolve(kok, "wasm/www/index.html"), "utf8");
+const webGirişi = readFileSync(
+  resolve(kok, "uygulamalar/web/src/main.rs"),
+  "utf8",
+);
 if (
-  !masaüstüKataloğu.includes('.id("kart-listesi")') ||
-  !masaüstüKataloğu.includes(".min_h_0()") ||
-  !masaüstüKataloğu.includes(".overflow_y_scroll()")
+  !ortakKatalog.includes('.id("kart-listesi")') ||
+  !ortakKatalog.includes(".min_h_0()") ||
+  !ortakKatalog.includes(".overflow_y_scroll()")
 ) {
-  hata("masaüstü kart listesi dikey kaydırma sözleşmesini uygulamıyor");
+  hata("ortak GPUI kart listesi dikey kaydırma sözleşmesini uygulamıyor");
 }
 if (
-  !wasmKataloğu.includes("overflow-y: auto") ||
-  !wasmKataloğu.includes("overscroll-behavior: contain")
+  !webGirişi.includes("uplot_rs_gpui_katalog::ChartListesi") ||
+  !webGirişi.includes("cx.new(ChartListesi::yeni)")
 ) {
-  hata("WASM kart listesi dikey kaydırma sözleşmesini uygulamıyor");
+  hata("GPUI Web girişi ortak Rust kart kataloğunu kullanmıyor");
 }
 for (const kimlik of ["zoom-wheel", "zoom-touch"]) {
-  if (
-    masaüstüKataloğu.includes(`.id("kart-${kimlik}")`) ||
-    wasmKataloğu.includes(`data-kart="${kimlik}"`)
-  ) {
+  if (ortakKatalog.includes(`.id("kart-${kimlik}")`)) {
     hata(`${kimlik} ortak profil varken ayrı katalog kartı olarak gösteriliyor`);
   }
 }
@@ -99,7 +99,7 @@ for (const kontrolKimliği of [
   "zoom-ranger-proof",
   "zoom-variation",
 ]) {
-  if (wasmKataloğu.includes(`id="${kontrolKimliği}"`)) {
+  if (ortakKatalog.includes(`id="${kontrolKimliği}"`)) {
     hata(`${kontrolKimliği} katalogda gereksiz zoom tekrar yüzeyi üretiyor`);
   }
 }

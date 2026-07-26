@@ -25,5 +25,5 @@ etiket_konumu = "başlangıç_çizgisi"
 
 ["kanıt"]
 "örnek" = "examples/annotations.rs"
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"

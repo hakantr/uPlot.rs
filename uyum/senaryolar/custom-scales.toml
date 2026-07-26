@@ -34,6 +34,6 @@ pointer = "requestAnimationFrame + yalnız etkin hafif katman"
 ana_yol_pointerda_yeniden_cizilir = false
 
 [kanit]
-masaustu = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+masaustu = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/custom-scales.svg"

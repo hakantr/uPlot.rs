@@ -20,6 +20,6 @@ stiller = ["opacity", "unfocused-black", "focused-magenta", "opacity"]
 pointer_guncellemesi = "retained stroke/fill/width; path d sabit"
 
 [kanit]
-masaustu = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+masaustu = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/focus-cursor/focus-cursor.svg"

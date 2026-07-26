@@ -31,6 +31,6 @@ bilimsel_etiket = true
 "geniş_y_ekseni_boyutu" = 80
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/log-scales2/log-scales2-log10-wide.svg"

@@ -37,6 +37,6 @@ initialization_only = true
 pointer_main_path_redraw = false
 
 [evidence]
-desktop = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+desktop = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/data-smoothing.svg"

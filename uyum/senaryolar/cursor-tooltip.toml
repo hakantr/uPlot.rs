@@ -27,6 +27,6 @@ pointer_birlestirme = "requestAnimationFrame"
 ana_sahne_yeniden_cizimi = false
 
 [kanit]
-masaustu = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+masaustu = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/cursor-tooltip.svg"

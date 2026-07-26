@@ -14,4 +14,4 @@ durum = "çekirdek_akışı_ayrı_katalog_yüzeyi_yok"
 ["kanıt"]
 "örnek" = "examples/zoom_wheel.rs"
 "ortak_çekirdek" = "src/kart/zoom_wheel.rs#ZoomFetchAkışı"
-wasm = "wasm/src/lib.rs#zoom_fetch_kaniti"
+wasm = "src/gpui.rs#zoom_fetch_kaniti"

@@ -68,6 +68,6 @@ hover_dizini = "Quadtree"
 "yeniden_çizim" = "drawClear sırasında path ve quadtree yeniden kurulur"
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg_dizini = "target/bars-grouped-stacked"

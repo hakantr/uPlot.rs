@@ -37,6 +37,6 @@ set_series = true
 "pointer_ana_yolu_yeniden_çizmez" = true
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/arcsinh-scales.svg"

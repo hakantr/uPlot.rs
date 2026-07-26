@@ -42,6 +42,6 @@ uzun_aylar = "ruNames.MMMM"
 "boşluk_sol_sürükleme_taşıma" = true
 
 ["kanıt"]
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
 svg = "target/months/russian.svg"

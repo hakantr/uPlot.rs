@@ -36,5 +36,5 @@ undefined = "önceki_durumu_sürdür"
 
 ["kanıt"]
 "örnek" = "examples/timeline_discrete.rs"
-"masaüstü" = "uygulamalar/masaustu/src/masaustu.rs"
-wasm = "wasm/www/index.html"
+"masaüstü" = "uygulamalar/masaustu/src/main.rs"
+wasm = "uygulamalar/web/src/main.rs"
