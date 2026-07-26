@@ -87,7 +87,7 @@ pub struct GpuiGrafik {
     ana_sahne: Rc<Sahne>,
     ana_yüzey: Option<Entity<GpuiAnaYüzey>>,
     etkileşim_sahnesi: Rc<Sahne>,
-    etkileşim_yüzeyi: Option<Entity<GpuiEtkileşimYüzeyi>>,
+    etkileşim_yol_önbelleği: Rc<RefCell<GpuiYolÖnbelleği>>,
     ana_sahne_revizyonu: u64,
     etkileşim_sahne_revizyonu: u64,
     imleç: Option<İmleçDurumu>,
@@ -112,20 +112,6 @@ struct GpuiAnaYüzey {
     çizim_sınırları: Rc<Cell<Option<Bounds<Pixels>>>>,
     yol_önbelleği: Rc<RefCell<GpuiYolÖnbelleği>>,
     duyarlı_grafik: Option<WeakEntity<GpuiGrafik>>,
-}
-
-struct GpuiEtkileşimYüzeyi {
-    sahne: Rc<Sahne>,
-    yol_önbelleği: Rc<RefCell<GpuiYolÖnbelleği>>,
-}
-
-impl GpuiEtkileşimYüzeyi {
-    fn sahneyi_ayarla(&mut self, sahne: Rc<Sahne>) {
-        self.yol_önbelleği
-            .borrow_mut()
-            .sahneyi_değiştir(&self.sahne, &sahne);
-        self.sahne = sahne;
-    }
 }
 
 impl GpuiAnaYüzey {
@@ -306,27 +292,6 @@ impl Render for GpuiAnaYüzey {
     }
 }
 
-impl Render for GpuiEtkileşimYüzeyi {
-    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        let sahne = self.sahne.clone();
-        let yol_önbelleği = self.yol_önbelleği.clone();
-        canvas(
-            |_, _, _| {},
-            move |sınırlar, _, pencere, uygulama| {
-                sahneyi_önbellekli_boya(
-                    &sahne,
-                    sınırlar,
-                    &mut yol_önbelleği.borrow_mut(),
-                    pencere,
-                    uygulama,
-                );
-            },
-        )
-        .absolute()
-        .size_full()
-    }
-}
-
 impl GpuiGrafik {
     pub fn yeni(grafik: Grafik) -> Self {
         let boyut_senkron_katmanı = grafik.boyut_senkron_düzeni();
@@ -336,7 +301,7 @@ impl GpuiGrafik {
             ana_sahne,
             ana_yüzey: None,
             etkileşim_sahnesi: Rc::new(Sahne::yeni(1, 1)),
-            etkileşim_yüzeyi: None,
+            etkileşim_yol_önbelleği: Rc::new(RefCell::new(GpuiYolÖnbelleği::default())),
             ana_sahne_revizyonu: 1,
             etkileşim_sahne_revizyonu: 0,
             imleç: None,
@@ -1402,6 +1367,9 @@ impl GpuiGrafik {
         if *yeni == *self.etkileşim_sahnesi {
             return false;
         }
+        self.etkileşim_yol_önbelleği
+            .borrow_mut()
+            .sahneyi_değiştir(&self.etkileşim_sahnesi, &yeni);
         self.etkileşim_sahnesi = yeni;
         self.etkileşim_sahne_revizyonu = self.etkileşim_sahne_revizyonu.saturating_add(1);
         true
@@ -1808,23 +1776,8 @@ impl Render for GpuiGrafik {
             })
             .clone();
         self.etkileşim_sahnesini_yenile();
-        let etkileşim_yüzeyi = self
-            .etkileşim_yüzeyi
-            .get_or_insert_with(|| {
-                let sahne = self.etkileşim_sahnesi.clone();
-                cx.new(|_| GpuiEtkileşimYüzeyi {
-                    sahne,
-                    yol_önbelleği: Rc::new(RefCell::new(GpuiYolÖnbelleği::default())),
-                })
-            })
-            .clone();
         let etkileşim_sahnesi = self.etkileşim_sahnesi.clone();
-        etkileşim_yüzeyi.update(cx, |yüzey, yüzey_cx| {
-            if !Rc::ptr_eq(&yüzey.sahne, &etkileşim_sahnesi) {
-                yüzey.sahneyi_ayarla(etkileşim_sahnesi);
-                yüzey_cx.notify();
-            }
-        });
+        let etkileşim_yol_önbelleği = self.etkileşim_yol_önbelleği.clone();
         let taşıyor = self.taşıma_başlangıcı.is_some();
         let taşımaya_hazır = self.boşluk_basılı && self.grafik.yakınlaştırılmış();
         let eksen_sürükleniyor = self.grafik.eksen_sürükleniyor();
@@ -2332,7 +2285,22 @@ impl Render for GpuiGrafik {
                 }),
             )
             .child(ana_yüzey.cached(StyleRefinement::default().size_full()))
-            .child(etkileşim_yüzeyi.cached(StyleRefinement::default().size_full()))
+            .child(
+                canvas(
+                    |_, _, _| {},
+                    move |sınırlar, _, pencere, uygulama| {
+                        sahneyi_önbellekli_boya(
+                            &etkileşim_sahnesi,
+                            sınırlar,
+                            &mut etkileşim_yol_önbelleği.borrow_mut(),
+                            pencere,
+                            uygulama,
+                        );
+                    },
+                )
+                .absolute()
+                .size_full(),
+            )
             .when_some(
                 bilgi_kutusu,
                 |yüzey, (sol, üst, metin, kenarlık, bağlantı, azami_genişlik)| {
