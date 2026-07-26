@@ -65,7 +65,7 @@ alt çizgiye çevrilmesi nedeniyle `uplot_rs` olur. Kaynak depo
 Kullanımda açık GPUI ad alanı korunur:
 
 ```rust
-use uplot_rs::gpui::GpuiGrafik;
+use uplot_rs::{Grafik, gpui::GpuiGrafik};
 
 let grafik = Grafik::yeni(seçenekler, veri)?;
 let yüzey = cx.new(|_| GpuiGrafik::yeni(grafik));
@@ -74,6 +74,10 @@ let yüzey = cx.new(|_| GpuiGrafik::yeni(grafik));
 GPUI katalog uygulaması bu bileşeni kullanır fakat kütüphane paketine girmez.
 Retained sahne modeli GPUI'nin GPU hızlandırmasını kaldırmaz; komutlar
 GPUI'nin GPU destekli `paint_path`/`paint_quad` hattına verilir.
+Retained komut listesi genel amaçlı ikinci bir renderer backend'i değildir.
+Normal entegrasyon `Grafik` + `gpui::GpuiGrafik` API'sini kullanır; test,
+profil ve özel doğrulama araçlarının inceleme ihtiyacı için
+`diagnostics::{Komut, Sahne}` ad alanında ayrılır.
 
 ### İsteğe bağlı GPUI → SVG kaydı
 
@@ -182,7 +186,8 @@ hash kilidini doğrular. Tarayıcı kataloğu `uygulamalar/web/Trunk.toml`
 
 - `src/veri.rs`: uPlot hizalı sütun veri sözleşmesi
 - `src/olcek.rs`: ölçek ve aralık matematiği
-- `src/cizim.rs` + `src/cizim/`: retained GPUI çizim komutları ve kırpma
+- `src/cizim.rs` + `src/cizim/`: crate içi retained GPUI çizim komutları ve kırpma;
+  yalnız tanılama görünümü `diagnostics` ad alanından açılır
 - `src/grafik.rs`: ilk çizim hattı
 - `src/etkilesim.rs`: kartın etkileşim durumu, yakınlaştırma ve görünüm geçmişi
 - `src/gpui.rs`: her normal build'de bulunan hazır GPUI grafik bileşeni

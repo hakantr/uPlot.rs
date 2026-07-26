@@ -13,14 +13,12 @@ fn resize_kartı_belirlenimci_gpui_sahnesi_üretir() -> Result<(), UplotHatası>
     assert_eq!(ilk, ikinci);
     assert!(
         ilk.komutlar().iter().any(
-            |komut| matches!(komut, uplot_rs::Komut::Metin { içerik, .. } if içerik == "Resize")
+            |komut| matches!(komut, uplot_rs::diagnostics::Komut::Metin { içerik, .. } if içerik == "Resize")
         )
     );
-    assert!(
-        ilk.komutlar()
-            .iter()
-            .any(|komut| matches!(komut, uplot_rs::Komut::Yol { renk, .. } if renk == "red"))
-    );
+    assert!(ilk.komutlar().iter().any(
+        |komut| matches!(komut, uplot_rs::diagnostics::Komut::Yol { renk, .. } if renk == "red")
+    ));
     assert_eq!(ilk.komutlar().len(), 43);
     Ok(())
 }

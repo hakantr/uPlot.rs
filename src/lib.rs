@@ -6,7 +6,7 @@
 
 #![allow(confusable_idents)]
 
-pub mod cizim;
+mod cizim;
 mod etkilesim;
 pub mod gpui;
 pub mod grafik;
@@ -18,9 +18,8 @@ pub mod veri;
 pub mod yuzey;
 mod zaman;
 
-pub use cizim::{
-    DoğrusalGradyan, GradyanRenkDurağı, Komut, KöşeYarıçapları, MetinHizası, Nokta, Sahne,
-};
+pub use cizim::{DoğrusalGradyan, GradyanRenkDurağı, KöşeYarıçapları, MetinHizası, Nokta};
+pub(crate) use cizim::{Komut, Sahne};
 #[cfg(feature = "gpui-svg")]
 pub use gpui::{GpuiSvgKaydı, GpuiSvgKayıtAyarları};
 pub use grafik::{
@@ -131,3 +130,17 @@ pub use veri::{BoşlukKipi, HizalıDeğer, HizalıVeri, hizalı_verileri_birleş
 pub use yuzey::{
     BilgiKutusuTarafı, BilgiKutusuYerleşimi, YüzeyDikdörtgeni, bilgi_kutusunu_yerleştir,
 };
+
+/// Tanılama, doğrulama ve özel dışa aktarım araçları için retained sahne görünümü.
+///
+/// [`Komut`] ve [`Sahne`] GPUI'ye alternatif, kararlı bir renderer backend API'si
+/// değildir. Uygulamalar grafikleri [`Grafik`] ve [`gpui::GpuiGrafik`] üzerinden
+/// oluşturmalıdır. Bu türler; testlerin üretilen geometriyi incelemesi, performans
+/// ölçümlerinin retained listeyi sayması ve özel tanılama araçlarının sahne
+/// dökümü alması için açıkça ayrılmıştır.
+///
+/// Komutların varyantları ve alanları semver kapsamındaki yüksek seviye grafik
+/// seçeneklerinden daha sık değişebilir.
+pub mod diagnostics {
+    pub use crate::cizim::{Komut, Sahne};
+}

@@ -64,7 +64,7 @@ The Cargo package name is the lowercase `uplot-rs`; Rust exposes it in code as
 The ready component remains in an explicit GPUI namespace:
 
 ```rust
-use uplot_rs::gpui::GpuiGrafik;
+use uplot_rs::{Grafik, gpui::GpuiGrafik};
 
 let chart = Grafik::yeni(options, data)?;
 let surface = cx.new(|_| GpuiGrafik::yeni(chart));
@@ -73,6 +73,10 @@ let surface = cx.new(|_| GpuiGrafik::yeni(chart));
 The GPUI catalog uses this component but is not included in the library package.
 The retained scene model does not disable GPUI GPU acceleration: commands are
 submitted through GPUI's GPU-backed `paint_path`/`paint_quad` pipeline.
+The retained command list is not a general-purpose second renderer backend.
+Normal integrations use `Grafik` + `gpui::GpuiGrafik`; inspection for tests,
+profiling, and custom verification tools is separated under
+`diagnostics::{Komut, Sahne}`.
 
 ### Optional GPUI → SVG export
 
@@ -187,7 +191,8 @@ phase commits, test matrix, and release evidence.
 
 - `src/veri.rs`: uPlot-compatible aligned column data contract
 - `src/olcek.rs`: scale and range mathematics
-- `src/cizim.rs` + `src/cizim/`: retained GPUI drawing commands and clipping
+- `src/cizim.rs` + `src/cizim/`: crate-internal retained GPUI drawing commands
+  and clipping; only the diagnostics view is exposed under `diagnostics`
 - `src/grafik.rs`: initial rendering pipeline
 - `src/etkilesim.rs`: chart interaction state, zooming, and view history
 - `src/gpui.rs`: ready GPUI chart component included in every normal build
