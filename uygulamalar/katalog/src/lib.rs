@@ -3,9 +3,9 @@
 #[cfg(not(target_family = "wasm"))]
 use gpui::ClipboardItem;
 use gpui::{
-    ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement, Render, ScrollStrategy,
-    SharedString, Task, UniformListScrollHandle, Window, div, prelude::*, px, rgb, rgba,
-    uniform_list,
+    AccessibleAction, ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement, KeyBinding,
+    Render, Role, ScrollStrategy, SharedString, Task, UniformListScrollHandle, Window, div,
+    prelude::*, px, rgb, rgba, uniform_list,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
@@ -83,6 +83,8 @@ use web_time::Instant;
 
 #[path = "web_koprusu.rs"]
 mod web_köprüsü;
+
+gpui::actions!(uplot_katalog, [KartıEtkinleştir]);
 
 const PERFORMANS_KARE_SAYISI: usize = 180;
 const KARE_P95_BÜTÇESİ_MS: f64 = 16.7;
@@ -1809,6 +1811,10 @@ impl ChartListesi {
     }
 
     pub fn yeni(cx: &mut Context<Self>) -> Self {
+        cx.bind_keys([
+            KeyBinding::new("enter", KartıEtkinleştir, Some("uplot_katalog_kartı")),
+            KeyBinding::new("space", KartıEtkinleştir, Some("uplot_katalog_kartı")),
+        ]);
         let başlangıç_kartı = web_köprüsü::başlangıç_kartı().unwrap_or(KartKimliği::Resize);
         let etkileşimler = ortak_kart_etkileşimleri();
         let açıklama_metni = cx.new(|cx| MetinAlani::yeni("Annotation Text", cx));
@@ -5999,10 +6005,16 @@ impl Render for ChartListesi {
                     KATALOG_KARTLARI.len(),
                     cx.processor(move |bu, aralık: Range<usize>, _pencere, cx| {
                         aralık
-                            .filter_map(|indeks| KATALOG_KARTLARI.get(indeks).copied())
-                            .map(|tanım| {
+                            .filter_map(|indeks| {
+                                KATALOG_KARTLARI
+                                    .get(indeks)
+                                    .copied()
+                                    .map(|tanım| (indeks, tanım))
+                            })
+                            .map(|(indeks, tanım)| {
                                 let kart = tanım.kimlik;
                                 let aktif = bu.aktif_kart.ana_kart() == tanım.kimlik;
+                                let erişilebilir_tetikleyici = cx.weak_entity();
                                 let grup_etiketi = match (tanım.grup, tanım.varyant_grubu) {
                                     (KatalogKartGrubu::Tek, _) => SharedString::from(tanım.slug),
                                     (KatalogKartGrubu::İlişkiliYüzeyler, Some(varyant)) => {
@@ -6027,6 +6039,23 @@ impl Render for ChartListesi {
                                     panel,
                                     vurgu,
                                 )
+                                .tab_index(0)
+                                .key_context("uplot_katalog_kartı")
+                                .role(Role::Button)
+                                .aria_label(format!("{}. Kaynak: {}", tanım.başlık, tanım.kaynak))
+                                .aria_selected(aktif)
+                                .aria_position_in_set(indeks + 1)
+                                .aria_size_of_set(KATALOG_KARTLARI.len())
+                                .aria_keyshortcuts("Enter Space")
+                                .focus_visible(|stil| stil.border_color(vurgu))
+                                .on_action(cx.listener(move |bu, _: &KartıEtkinleştir, _, cx| {
+                                    bu.kartı_seç(kart, cx);
+                                }))
+                                .on_a11y_action(AccessibleAction::Click, move |_, _, cx| {
+                                    erişilebilir_tetikleyici
+                                        .update(cx, |bu, cx| bu.kartı_seç(kart, cx))
+                                        .ok();
+                                })
                                 .on_click(cx.listener(
                                     move |bu, _: &ClickEvent, _, cx| {
                                         bu.kartı_seç(kart, cx);

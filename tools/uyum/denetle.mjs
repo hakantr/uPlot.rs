@@ -104,9 +104,14 @@ if (
   !ortakKatalog.includes('.id("kart-listesi")') ||
   !ortakKatalog.includes(".min_h_0()") ||
   !ortakKatalog.includes("uniform_list(") ||
-  !ortakKatalog.includes(".track_scroll(&self.kart_listesi_kaydırma)")
+  !ortakKatalog.includes(".track_scroll(&self.kart_listesi_kaydırma)") ||
+  !ortakKatalog.includes('.key_context("uplot_katalog_kartı")') ||
+  !ortakKatalog.includes(".role(Role::Button)") ||
+  !ortakKatalog.includes(".on_a11y_action(")
 ) {
-  hata("ortak GPUI kart listesi sanallaştırılmış kaydırma sözleşmesini uygulamıyor");
+  hata(
+    "ortak GPUI kart listesi sanallaştırma, klavye veya erişilebilirlik sözleşmesini uygulamıyor",
+  );
 }
 if (
   !webGirişi.includes("uplot_rs_gpui_katalog::ChartListesi") ||
