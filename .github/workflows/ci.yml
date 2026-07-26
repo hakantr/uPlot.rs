@@ -66,3 +66,12 @@ jobs:
       - name: Testler
         working-directory: uPlot.rs
         run: cargo test --workspace --all-targets --all-features
+      - name: Phase 12 release performans kapıları
+        working-directory: uPlot.rs
+        env:
+          # Üretim kodu unsafe yasağını korur. Sayan GlobalAlloc yalnız bu
+          # izole entegrasyon testi için cfg ile derlenir.
+          RUSTFLAGS: "--cfg phase12_allocator --cap-lints allow"
+        run: >-
+          cargo test --release -p uplot-rs --test performance_budgets
+          --all-features -- --test-threads=1 --nocapture
