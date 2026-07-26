@@ -149,7 +149,7 @@ fn kare_istatistiği(örnekler_ms: &[f64]) -> Option<Kareİstatistiği> {
     })
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum KartKimliği {
     AddDelSeries,
     AlignDataCost,
@@ -219,8 +219,136 @@ enum KartKimliği {
     Candlestick,
 }
 
+/// Katalog arayüzünün, derin bağlantıların ve açıklama panelinin paylaştığı tek
+/// kart metadata görünümü. Varyant seçimi `KartKimliği` üzerinde kalır; ana kart
+/// kaydı ise varyanttan bağımsız ve tektir.
+#[derive(Clone, Copy)]
+struct KatalogKartTanımı {
+    kimlik: KartKimliği,
+    slug: &'static str,
+    başlık: &'static str,
+    kaynak: &'static str,
+    tanım: &'static str,
+    tanım_yolu: &'static str,
+}
+
+/// Yan menüde gösterilen ana kartların tek kayıt defteri.
+///
+/// Bir kaynak sayfasındaki ilişkili yüzeyler ve yalnız girdiye göre değişen
+/// varyantlar burada bir kez yer alır. Sayfa içi varyant düğmeleri, seçili
+/// `KartKimliği` değerini değiştirir.
+const KATALOG_KARTLARI: &[KartKimliği] = &[
+    KartKimliği::AddDelSeries,
+    KartKimliği::HighLowBands,
+    KartKimliği::LatencyHeatmap,
+    KartKimliği::LinePaths,
+    KartKimliği::LogScales,
+    KartKimliği::LogScales2,
+    KartKimliği::MassSpectrum,
+    KartKimliği::MeasureDatums,
+    KartKimliği::MultiBars(MultiBarsÖrneği::KitaplıklarDikey),
+    KartKimliği::NearestNonNull,
+    KartKimliği::FocusCursor,
+    KartKimliği::Gradients,
+    KartKimliği::GridOverSeries,
+    KartKimliği::TimezonesDst,
+    KartKimliği::TooltipsClosest,
+    KartKimliği::Tooltips,
+    KartKimliği::Trendlines,
+    KartKimliği::UpdateCursorSelectResize,
+    KartKimliği::WindDirection,
+    KartKimliği::YScaleDrag,
+    KartKimliği::YShiftedSeries,
+    KartKimliği::AlignDataCost,
+    KartKimliği::Resize,
+    KartKimliği::Annotations,
+    KartKimliği::AreaFill,
+    KartKimliği::ScalePadding,
+    KartKimliği::Months,
+    KartKimliği::MonthsRussian,
+    KartKimliği::NiceScale,
+    KartKimliği::NoData,
+    KartKimliği::PathGapClip,
+    KartKimliği::PixelAlign,
+    KartKimliği::Points,
+    KartKimliği::ScalesDirOri,
+    KartKimliği::Scatter,
+    KartKimliği::ScrollSync,
+    KartKimliği::SineStream,
+    KartKimliği::SoftMinMax(SoftMinMaxÖrneği::MinKip0),
+    KartKimliği::SparklinesBars(SparklinesBarsÖrneği::GradyanÇubuklar),
+    KartKimliği::Sparklines(SparklineÖrneği::İLK),
+    KartKimliği::Sparse(SparseÖrneği::YerleşikDoğrusal),
+    KartKimliği::StackedSeries(StackedSeriesÖrneği::Stacked1),
+    KartKimliği::StreamData(StreamDataÖrneği::SabitUzunluk),
+    KartKimliği::GpuiSvgExport,
+    KartKimliği::SyncCursor,
+    KartKimliği::SyncYZero(SyncYZeroAşaması::Ham),
+    KartKimliği::ThinBars(ThinBarsÖrneği::Yoğunluk(
+        uplot_rs::ThinBarsYoğunluk::Normal30,
+    )),
+    KartKimliği::TimePeriods(TimePeriodsÖrneği::SaatlikKullanıcılar),
+    KartKimliği::TimelineDiscrete(TimelineDiscreteÖrneği::DurumZamanÇizelgesi),
+    KartKimliği::TimeseriesDiscrete,
+    KartKimliği::CursorSnap,
+    KartKimliği::CursorTooltip,
+    KartKimliği::CustomScales,
+    KartKimliği::DataSmoothing,
+    KartKimliği::DrawHooks,
+    KartKimliği::MissingData,
+    KartKimliği::DependentScale,
+    KartKimliği::ArcSinhScales,
+    KartKimliği::AxisControl,
+    KartKimliği::AxisAutosize,
+    KartKimliği::AxisIndicators,
+    KartKimliği::Bars(ÇubukÖrneği::ÇokGrupÇokSeriDikeyGruplu),
+    KartKimliği::BarsValuesAutosize(ÇubukYönü::Dikey),
+    KartKimliği::BoxWhisker("01_run1k"),
+    KartKimliği::Candlestick,
+    KartKimliği::CursorBind,
+];
+
 impl KartKimliği {
-    #[cfg(any(target_family = "wasm", test))]
+    fn ana_kart(self) -> Self {
+        match self {
+            Self::SoftMinMax(_) => Self::SoftMinMax(SoftMinMaxÖrneği::MinKip0),
+            Self::SparklinesBars(_) => Self::SparklinesBars(SparklinesBarsÖrneği::GradyanÇubuklar),
+            Self::Sparklines(_) => Self::Sparklines(SparklineÖrneği::İLK),
+            Self::Sparse(_) => Self::Sparse(SparseÖrneği::YerleşikDoğrusal),
+            Self::StackedSeries(_) => Self::StackedSeries(StackedSeriesÖrneği::Stacked1),
+            Self::StreamData(_) => Self::StreamData(StreamDataÖrneği::SabitUzunluk),
+            Self::SyncYZero(_) => Self::SyncYZero(SyncYZeroAşaması::Ham),
+            Self::ThinBars(_) => Self::ThinBars(ThinBarsÖrneği::Yoğunluk(
+                uplot_rs::ThinBarsYoğunluk::Normal30,
+            )),
+            Self::TimePeriods(_) => Self::TimePeriods(TimePeriodsÖrneği::SaatlikKullanıcılar),
+            Self::TimelineDiscrete(_) => {
+                Self::TimelineDiscrete(TimelineDiscreteÖrneği::DurumZamanÇizelgesi)
+            }
+            Self::MultiBars(_) => Self::MultiBars(MultiBarsÖrneği::KitaplıklarDikey),
+            Self::Bars(_) => Self::Bars(ÇubukÖrneği::ÇokGrupÇokSeriDikeyGruplu),
+            Self::BarsValuesAutosize(_) => Self::BarsValuesAutosize(ÇubukYönü::Dikey),
+            Self::BoxWhisker(_) => Self::BoxWhisker("01_run1k"),
+            kart => kart,
+        }
+    }
+
+    fn tanımlayıcı(self) -> KatalogKartTanımı {
+        let kimlik = self.ana_kart();
+        KatalogKartTanımı {
+            kimlik,
+            slug: kimlik.slug(),
+            başlık: if matches!(kimlik, Self::MultiBars(_)) {
+                "Multi Bars · 4 varyant"
+            } else {
+                kimlik.başlık()
+            },
+            kaynak: kimlik.kaynak(),
+            tanım: kimlik.tanım(),
+            tanım_yolu: kimlik.tanım_yolu(),
+        }
+    }
+
     fn slug(self) -> &'static str {
         match self {
             Self::AddDelSeries => "add-del-series",
@@ -277,7 +405,7 @@ impl KartKimliği {
             Self::LogScales2 => "log-scales2",
             Self::MassSpectrum => "mass-spectrum",
             Self::MeasureDatums => "measure-datums",
-            Self::MultiBars(örnek) => örnek.kimlik(),
+            Self::MultiBars(_) => "multi-bars",
             Self::NearestNonNull => "nearest-non-null",
             Self::MissingData => "missing-data",
             Self::DependentScale => "dependent-scale",
@@ -353,6 +481,7 @@ impl KartKimliği {
             "log-scales2" => Self::LogScales2,
             "mass-spectrum" => Self::MassSpectrum,
             "measure-datums" => Self::MeasureDatums,
+            "multi-bars" => Self::MultiBars(MultiBarsÖrneği::KitaplıklarDikey),
             "nearest-non-null" => Self::NearestNonNull,
             "missing-data" => Self::MissingData,
             "dependent-scale" => Self::DependentScale,
@@ -869,9 +998,10 @@ impl ChartListesi {
         let svg = kayıt.stringe_dönüştür();
         self.svg_kayıt_baytı = Some(svg.len());
         #[cfg(target_family = "wasm")]
-        if let Err(hata) =
-            web_köprüsü::svg_indir(&svg, &format!("uplot-rs-{}.svg", self.aktif_kart.slug()))
-        {
+        if let Err(hata) = web_köprüsü::svg_indir(
+            &svg,
+            &format!("uplot-rs-{}.svg", self.aktif_kart.tanımlayıcı().slug),
+        ) {
             self.hata = Some(hata);
             cx.notify();
             return;
@@ -3206,6 +3336,10 @@ impl ChartListesi {
     }
 
     fn kartı_seç(&mut self, kart: KartKimliği, cx: &mut Context<Self>) {
+        debug_assert!(
+            KATALOG_KARTLARI.contains(&kart.tanımlayıcı().kimlik),
+            "kayıt defterinde bulunmayan kart seçildi"
+        );
         if self.aktif_kart == kart {
             return;
         }
@@ -4404,6 +4538,7 @@ impl Render for ChartListesi {
         let soluk = rgb(0x6b7280);
         let vurgu = rgb(0xdc2626);
         let aktif_kart = self.aktif_kart;
+        let aktif_kart_tanımı = aktif_kart.tanımlayıcı();
         let kare_ölçüm_yazısı = if self.kare_ölçer.çalışıyor {
             format!(
                 "Kare ölçümü: {}/{}",
@@ -4681,7 +4816,7 @@ impl Render for ChartListesi {
         let kart_tanımı_etiketi = SharedString::from(format!(
             "{} Kart tanımı · {}",
             if kart_tanımı_açık { "▾" } else { "▸" },
-            aktif_kart.tanım_yolu()
+            aktif_kart_tanımı.tanım_yolu
         ));
         let tekerlek_anahtarı = self.tekerlek_anahtarı.clone();
         let (mut geri_var, mut yakınlaştırılmış, etkileşimler, lejant, bileşen_hatası) =
@@ -5137,1036 +5272,26 @@ impl Render for ChartListesi {
                     .text_color(soluk)
                     .child("Canlı masaüstü doğrulaması"),
             )
-            .child(
+            .children(KATALOG_KARTLARI.iter().copied().map(|kart| {
+                let tanım = kart.tanımlayıcı();
+                let aktif = aktif_kart_tanımı.kimlik == tanım.kimlik;
                 katalog_kartı(
-                    "add-del-series",
-                    "Add/Delete Series",
-                    "add-del-series",
-                    aktif_kart == KartKimliği::AddDelSeries,
-                    "Dinamik addSeries / delSeries / setData",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::AddDelSeries, cx);
-                })),
-            )
-            .child({
-                let kart = KartKimliği::HighLowBands;
-                katalog_kartı(
-                    "high-low-bands",
-                    "High/Low Bands · 12 related surfaces",
-                    "high-low-bands",
-                    aktif_kart == kart,
-                    "Ortak veri çiftleri · line/step/spline/bar · null/kesişim",
+                    tanım.slug,
+                    tanım.başlık,
+                    tanım.slug,
+                    aktif,
+                    tanım.kaynak,
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
                     bu.kartı_seç(kart, cx);
                 }))
-            })
-            .child({
-                let kart = KartKimliği::LatencyHeatmap;
-                katalog_kartı(
-                    "latency-heatmap",
-                    "Latency Heatmap · 5 related surfaces",
-                    "latency-heatmap",
-                    aktif_kart == kart,
-                    "Ortak ham veri · raw/aggregate/mode2 · histogram align/gap",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::LinePaths;
-                katalog_kartı(
-                    "line-paths",
-                    "Line Paths · 8 synced surfaces",
-                    "line-paths",
-                    aktif_kart == kart,
-                    "Ortak 101 nokta · 8 yol · senkron cursor · bağımsız zoom",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::LogScales;
-                katalog_kartı(
-                    "log-scales",
-                    "Log Scales · 2 independent surfaces",
-                    "log-scales",
-                    aktif_kart == kart,
-                    "Ortak Arc veri · log10/linear · bağımsız cursor ve zoom",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::LogScales2;
-                katalog_kartı(
-                    "log-scales2",
-                    "Log Scales 2 · 12 source surfaces",
-                    "log-scales2",
-                    aktif_kart == kart,
-                    "Ortak veri · senkron In/Out · skip ticks · kısmi büyüklük",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child(
-                katalog_kartı(
-                    "mass-spectrum",
-                    "Mass Spectrum",
-                    "mass-spectrum",
-                    aktif_kart == KartKimliği::MassSpectrum,
-                    "41.986 CSV noktası · özel Y aralığı",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::MassSpectrum, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "measure-datums",
-                    "Measure / Datums",
-                    "measure-datums",
-                    aktif_kart == KartKimliği::MeasureDatums,
-                    "1/2: datum · Esc: temizle",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::MeasureDatums, cx);
-                })),
-            )
-            .children(MultiBarsÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                let kart = KartKimliği::MultiBars(örnek);
-                katalog_kartı(
-                    örnek.kimlik(),
-                    örnek.başlık(),
-                    "multi-bars",
-                    aktif_kart == kart,
-                    "Gruplu benchmark · nokta başına renk",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            }))
-            .child(
-                katalog_kartı(
-                    "nearest-non-null",
-                    "Nearest Non-Null",
-                    "nearest-non-null.html",
-                    aktif_kart == KartKimliği::NearestNonNull,
-                    "5 yüzey · null/proximity/cursor karşılaştırması",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::NearestNonNull, cx);
-                })),
-            )
-            .child({
-                let kart = KartKimliği::FocusCursor;
-                katalog_kartı(
-                    "focus-cursor",
-                    "Focus Cursor · 4 related surfaces",
-                    "focus-cursor",
-                    aktif_kart == kart,
-                    "Ortak 130K veri · prox/bias · setSeries · 300 seri",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::Gradients;
-                katalog_kartı(
-                    "gradients",
-                    "Gradients · 5 related surfaces",
-                    "gradients",
-                    aktif_kart == kart,
-                    "Ayrık stroke · ArcSinh · ortak data4 dolguları",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child(
-                katalog_kartı(
-                    "grid-over-series",
-                    "Grid Over Series",
-                    "grid-over-series",
-                    aktif_kart == KartKimliği::GridOverSeries,
-                    "Izgara ve eksenler seri katmanının üstünde",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::GridOverSeries, cx);
-                })),
-            )
-            .child({
-                let kart = KartKimliği::TimezonesDst;
-                katalog_kartı(
-                    "timezones-dst",
-                    "Timezones & DST",
-                    "timezones-dst",
-                    aktif_kart == kart,
-                    "11 bölüm · 51 adet 600×200 yüzey",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child(
-                katalog_kartı(
-                    "tooltips-closest",
-                    "Summary-opt",
-                    "tooltips-closest",
-                    aktif_kart == KartKimliği::TooltipsClosest,
-                    "234 commit · en yakın seri tooltip'i",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::TooltipsClosest, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "tooltips",
-                    "Tooltips",
-                    "tooltips",
-                    aktif_kart == KartKimliği::Tooltips,
-                    "7 nokta · ham imleç + görünür seri kutuları",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::Tooltips, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "trendlines",
-                    "Trendlines",
-                    "trendlines",
-                    aktif_kart == KartKimliği::Trendlines,
-                    "100 nokta × 2 seri · görünür uç trendleri",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::Trendlines, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "update-cursor-select-resize",
-                    "Maintain loc of cursor/select/hoverPts",
-                    "update-cursor-select-resize",
-                    aktif_kart == KartKimliği::UpdateCursorSelectResize,
-                    "800↔400 px · kalıcı imleç/seçim oranı",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::UpdateCursorSelectResize, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "wind-direction",
-                    "Wind Direction",
-                    "wind-direction",
-                    aktif_kart == KartKimliği::WindDirection,
-                    "143 saat · sıcaklık, hız ve yön vektörleri",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::WindDirection, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "y-scale-drag",
-                    "Draggable x & y scales",
-                    "y-scale-drag",
-                    aktif_kart == KartKimliği::YScaleDrag,
-                    "X/Y eksen sürükleme · Shift ile ölçekleme",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::YScaleDrag, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "y-shifted-series",
-                    "Y-shifted Series",
-                    "y-shifted-series",
-                    aktif_kart == KartKimliği::YShiftedSeries,
-                    "30×3 · her 2 sn normal / kaydırılmış",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::YShiftedSeries, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "align-data-cost",
-                    "Align Data · 2 related surfaces",
-                    "align-data",
-                    aktif_kart == KartKimliği::AlignDataCost,
-                    "6 warmup + join · line + bars",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::AlignDataCost, cx);
-                })),
-            )
-            .child(
-                div()
-                    .id("kart-line-resize")
-                    .cursor_pointer()
-                    .p_3()
-                    .rounded_lg()
-                    .border_1()
-                    .border_color(if aktif_kart == KartKimliği::Resize {
-                        vurgu
-                    } else {
-                        rgb(0xd1d5db)
-                    })
-                    .bg(if aktif_kart == KartKimliği::Resize {
-                        rgb(0xfef2f2)
-                    } else {
-                        panel
-                    })
-                    .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                        bu.kartı_seç(KartKimliği::Resize, cx);
-                    }))
-                    .child(
-                        div()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .text_color(metin)
-                            .child("Resize"),
-                    )
-                    .child(
-                        div()
-                            .mt_1()
-                            .text_xs()
-                            .text_color(soluk)
-                            .child("line-resize"),
-                    )
-                    .child(
-                        div()
-                            .mt_2()
-                            .text_xs()
-                            .text_color(vurgu)
-                            .child("uplot-rs/gpui feature bileşeni"),
-                    ),
-            )
-            .child(
-                katalog_kartı(
-                    "annotations",
-                    "Annotations",
-                    "annotations",
-                    aktif_kart == KartKimliği::Annotations,
-                    "2 seri · X çizgisi ve aralık işaretleri",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::Annotations, cx);
-                })),
-            )
-            .child(
-                div()
-                    .id("kart-area-fill")
-                    .cursor_pointer()
-                    .mt_2()
-                    .p_3()
-                    .rounded_lg()
-                    .border_1()
-                    .border_color(if aktif_kart == KartKimliği::AreaFill {
-                        vurgu
-                    } else {
-                        rgb(0xd1d5db)
-                    })
-                    .bg(if aktif_kart == KartKimliği::AreaFill {
-                        rgb(0xfef2f2)
-                    } else {
-                        panel
-                    })
-                    .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                        bu.kartı_seç(KartKimliği::AreaFill, cx);
-                    }))
-                    .child(
-                        div()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .text_color(metin)
-                            .child("Area Fill"),
-                    )
-                    .child(div().mt_1().text_xs().text_color(soluk).child("area-fill"))
-                    .child(
-                        div()
-                            .mt_2()
-                            .text_xs()
-                            .text_color(vurgu)
-                            .child("3 alan serisi · kaynak veri üreteci"),
-                    ),
-            )
-            .child(
-                div()
-                    .id("kart-scale-padding")
-                    .cursor_pointer()
-                    .mt_2()
-                    .p_3()
-                    .rounded_lg()
-                    .border_1()
-                    .border_color(if aktif_kart == KartKimliği::ScalePadding {
-                        vurgu
-                    } else {
-                        rgb(0xd1d5db)
-                    })
-                    .bg(if aktif_kart == KartKimliği::ScalePadding {
-                        rgb(0xfef2f2)
-                    } else {
-                        panel
-                    })
-                    .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                        bu.kartı_seç(KartKimliği::ScalePadding, cx);
-                    }))
-                    .child(
-                        div()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .text_color(metin)
-                            .child("Scale Padding"),
-                    )
-                    .child(
-                        div()
-                            .mt_1()
-                            .text_xs()
-                            .text_color(soluk)
-                            .child("scale-padding"),
-                    )
-                    .child(
-                        div()
-                            .mt_2()
-                            .text_xs()
-                            .text_color(vurgu)
-                            .child("13 düz seri · otomatik Y payı"),
-                    ),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-months",
-                    "Months · calendar ticks",
-                    "months",
-                    aktif_kart == KartKimliği::Months,
-                    "2 kaynak yüzeyi · normal ve artık yıl",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::Months, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-months-ru",
-                    "Months · Russian locale",
-                    "months-ru",
-                    aktif_kart == KartKimliği::MonthsRussian,
-                    "tek 1920×600 yüzey · UTC ayları + ruNames",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::MonthsRussian, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-nice-scale",
-                    "Nice Scale & Ticks",
-                    "nice-scale",
-                    aktif_kart == KartKimliği::NiceScale,
-                    "Boyuta bağlı Y aralığı ve ızgara",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::NiceScale, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-no-data",
-                    "No Data · 33 seçenek",
-                    "no-data",
-                    aktif_kart == KartKimliği::NoData,
-                    "Tek kart · seçilebilir 33 kaynak rangeNum durumu",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::NoData, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-path-gap-clip",
-                    "Path & Gap Clipping",
-                    "path-gap-clip",
-                    aktif_kart == KartKimliği::PathGapClip,
-                    "15 ilişkili yüzey · 4 ortak spanGaps animasyonu",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::PathGapClip, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-pixel-align",
-                    "Pixel Align · canlı A/B",
-                    "pixel-align",
-                    aktif_kart == KartKimliği::PixelAlign,
-                    "Boş başlayan 2 ortak veri yüzeyi · frame düzeyinde kayan pencere",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::PixelAlign, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-points",
-                    "Points · 4 yüzey",
-                    "points",
-                    aktif_kart == KartKimliği::Points,
-                    "Aynı sayfada yoğunluk · paths:null · piksel-gap filtresi",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::Points, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-scales-dir-ori",
-                    "Scales Direction & Orientation · 16 yüzey",
-                    "scales-dir-ori",
-                    aktif_kart == KartKimliği::ScalesDirOri,
-                    "Direction Inversion · Orientation Inversion",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::ScalesDirOri, cx);
-                })),
-            )
-            .child({
-                let kart = KartKimliği::Scatter;
-                katalog_kartı(
-                    "kart-scatter",
-                    "Scatter & Bubble · 2 yüzey",
-                    "scatter",
-                    aktif_kart == kart,
-                    "Bağımsız mode:2 facet · toplu yol + uzamsal hover",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child(
-                katalog_kartı(
-                    "kart-scroll-sync",
-                    "Scroll syncRect()",
-                    "scroll-sync",
-                    aktif_kart == KartKimliği::ScrollSync,
-                    "kaydırmada istemci → sahne eşlemesi",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::ScrollSync, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-sine-stream",
-                    "Sine Stream",
-                    "sine-stream",
-                    aktif_kart == KartKimliği::SineStream,
-                    "600 nokta × 6 seri · 60 FPS",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::SineStream, cx);
-                })),
-            )
-            .child({
-                let kart = KartKimliği::SoftMinMax(SoftMinMaxÖrneği::MinKip0);
-                katalog_kartı(
-                    "soft-minmax",
-                    "Soft Min/Max · 5 yüzey",
-                    "soft-minmax",
-                    matches!(aktif_kart, KartKimliği::SoftMinMax(_)),
-                    "4 ortak canlı kip + düz sıfır",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::SparklinesBars(SparklinesBarsÖrneği::GradyanÇubuklar);
-                katalog_kartı(
-                    "sparklines-bars",
-                    "Sparkline + Floating Bars · 2 yüzey",
-                    "sparklines-bars",
-                    matches!(aktif_kart, KartKimliği::SparklinesBars(_)),
-                    "aynı veri · dinamik gradyan / açık renk A/B",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::Sparklines(SparklineÖrneği::İLK);
-                katalog_kartı(
-                    "sparklines",
-                    "Sparklines · 10×2 tablo",
-                    "sparklines",
-                    matches!(aktif_kart, KartKimliği::Sparklines(_)),
-                    "10 hisse × hacim/kapanış · 20 yüzey",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::Sparse(SparseÖrneği::YerleşikDoğrusal);
-                katalog_kartı(
-                    "sparse",
-                    "Sparse · 3 pathBuilder",
-                    "sparse",
-                    matches!(aktif_kart, KartKimliği::Sparse(_)),
-                    "aynı 13.608 X · native / points / naive",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::StackedSeries(StackedSeriesÖrneği::Stacked1);
-                katalog_kartı(
-                    "stacked-series",
-                    "Stacked Series · 16 yüzey",
-                    "stacked-series",
-                    matches!(aktif_kart, KartKimliği::StackedSeries(_)),
-                    "aynı kaynak · yığma, null/undefined, yüzde ve grup matrisi",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::StreamData(StreamDataÖrneği::SabitUzunluk);
-                katalog_kartı(
-                    "stream-data",
-                    "Data Stream · 3 yüzey",
-                    "stream-data",
-                    matches!(aktif_kart, KartKimliği::StreamData(_)),
-                    "55.550 ortak satır · 100 ms/10 satır",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child(
-                katalog_kartı(
-                    "gpui-svg-export",
-                    "GPUI SVG Export",
-                    "gpui-svg-export",
-                    aktif_kart == KartKimliği::GpuiSvgExport,
-                    "normal paint maliyeti yok · düğmeyle 800×400 vektör kayıt",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::GpuiSvgExport, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "sync-cursor",
-                    "Sync Cursor",
-                    "sync-cursor",
-                    aktif_kart == KartKimliği::SyncCursor,
-                    "5 yüzey · cursor.pub/sub · seri etiketi eşleme",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::SyncCursor, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "sync-y-zero",
-                    "Sync Y Zero",
-                    "sync-y-zero",
-                    matches!(aktif_kart, KartKimliği::SyncYZero(_)),
-                    "3 aşama · 3 sol Y ekseni · ortak sıfır pikseli",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::SyncYZero(SyncYZeroAşaması::Ham), cx);
-                })),
-            )
-            .child({
-                let örnek = ThinBarsÖrneği::Yoğunluk(uplot_rs::ThinBarsYoğunluk::Normal30);
-                let kart = KartKimliği::ThinBars(örnek);
-                katalog_kartı(
-                    "thin-bars-stroke-fill",
-                    "Thin bar stroke & fill",
-                    "thin-bars-stroke-fill",
-                    matches!(aktif_kart, KartKimliği::ThinBars(_)),
-                    "55 bağımsız yüzey · 7 yoğunluk + 48 geometri",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::TimePeriods(TimePeriodsÖrneği::SaatlikKullanıcılar);
-                katalog_kartı(
-                    "time-periods",
-                    "Time Periods",
-                    "time-periods",
-                    matches!(aktif_kart, KartKimliği::TimePeriods(_)),
-                    "3 bağımsız yüzey · tek traffic.json kaynağı",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart =
-                    KartKimliği::TimelineDiscrete(TimelineDiscreteÖrneği::DurumZamanÇizelgesi);
-                katalog_kartı(
-                    "timeline-discrete",
-                    "Timeline / Discrete",
-                    "timeline-discrete",
-                    matches!(aktif_kart, KartKimliği::TimelineDiscrete(_)),
-                    "4 bağımsız yüzey · semantic/matrix karşılaştırması",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child(
-                katalog_kartı(
-                    "timeseries-discrete",
-                    "TimeSeries + Discrete",
-                    "timeseries-discrete",
-                    aktif_kart == KartKimliği::TimeseriesDiscrete,
-                    "2 eşzamanlı yüzey · 50 ortak X · birleşik lejant",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::TimeseriesDiscrete, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-cursor-snap",
-                    "Cursor Snap",
-                    "cursor-snap",
-                    aktif_kart == KartKimliği::CursorSnap,
-                    "10×10 piksel çekirdek ızgarası",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::CursorSnap, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-cursor-tooltip",
-                    "Cursor Tooltip w/placement.js",
-                    "cursor-tooltip",
-                    aktif_kart == KartKimliği::CursorTooltip,
-                    "Sınırlara duyarlı canlı bilgi kutusu",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::CursorTooltip, cx);
-                })),
-            )
-            .child({
-                let kart = KartKimliği::CustomScales;
-                katalog_kartı(
-                    "kart-custom-scales",
-                    "Custom Scales · 3 independent surfaces",
-                    "custom-scales",
-                    aktif_kart == kart,
-                    "3×800×800 · aynı veri, bağımsız linear/log/Weibull ölçekleri",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::DataSmoothing;
-                katalog_kartı(
-                    "kart-data-smoothing",
-                    "Data Smoothing · 4 independent surfaces",
-                    "data-smoothing",
-                    aktif_kart == kart,
-                    "4×1920×300 · raw, SGG, ASAP FFT, Moving Avg",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child(
-                katalog_kartı(
-                    "kart-draw-hooks",
-                    "Draw Hooks",
-                    "draw-hooks",
-                    aktif_kart == KartKimliği::DrawHooks,
-                    "Gradyan · seri medyanı · 6 uçlu yıldız",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::DrawHooks, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-missing-data",
-                    "Missing Data · 2 surfaces",
-                    "missing-data",
-                    aktif_kart == KartKimliği::MissingData,
-                    "Aynı kaynak sayfası · null ve komşu X gap",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::MissingData, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-dependent-scale",
-                    "Derived Scale",
-                    "dependent-scale",
-                    aktif_kart == KartKimliği::DependentScale,
-                    "Fahrenheit → Celsius sağ ekseni",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::DependentScale, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-arcsinh-scales",
-                    "ArcSinh Y Scale",
-                    "arcsinh-scales",
-                    aktif_kart == KartKimliği::ArcSinhScales,
-                    "Doğrusal eşik: 10⁻³…10³",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::ArcSinhScales, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-axis-control",
-                    "Axis Control",
-                    "axis-control",
-                    aktif_kart == KartKimliği::AxisControl,
-                    "500.001 nokta · sağ Y ekseni",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::AxisControl, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-axis-autosize",
-                    "Axis AutoSize",
-                    "axis-autosize",
-                    aktif_kart == KartKimliği::AxisAutosize,
-                    "501 nokta · dinamik eksen ölçümü",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::AxisAutosize, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "kart-axis-indicators",
-                    "Axis indicators",
-                    "axis-indicators",
-                    aktif_kart == KartKimliği::AxisIndicators,
-                    "3 renkli eksen · canlı değer rozetleri",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::AxisIndicators, cx);
-                })),
-            )
-            .child({
-                let örnek = ÇubukÖrneği::ÇokGrupÇokSeriDikeyGruplu;
-                katalog_kartı(
-                    "kart-bars-grouped-stacked",
-                    "Bars · Grouped / Stacked",
-                    "bars-grouped-stacked",
-                    matches!(aktif_kart, KartKimliği::Bars(_)),
-                    "10 bağımsız yüzey · grouped/stacked",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::Bars(örnek), cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::BarsValuesAutosize(ÇubukYönü::Dikey);
-                katalog_kartı(
-                    "kart-bars-values-autosize",
-                    "Bars Values AutoSize",
-                    "bars-values-autosize",
-                    matches!(aktif_kart, KartKimliği::BarsValuesAutosize(_)),
-                    "2 bağımsız yüzey · 10…25 px etiket",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child({
-                let kart = KartKimliği::BoxWhisker("01_run1k");
-                katalog_kartı(
-                    "kart-box-whisker",
-                    "Box & Whisker",
-                    "box-whisker",
-                    matches!(aktif_kart, KartKimliği::BoxWhisker(_)),
-                    "17 bağımsız yüzey · hareketli tooltip",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(kart, cx);
-                }))
-            })
-            .child(
-                katalog_kartı(
-                    "candlestick-ohlc",
-                    "Candlestick Chart · Gold",
-                    "candlestick-ohlc",
-                    aktif_kart == KartKimliği::Candlestick,
-                    "218 gün · OHLC + hacim",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::Candlestick, cx);
-                })),
-            )
-            .child(
-                katalog_kartı(
-                    "cursor-bind",
-                    "Cursor Bind",
-                    "cursor-bind",
-                    aktif_kart == KartKimliği::CursorBind,
-                    "Ctrl+sürükle · sarı açıklama seçimi",
-                    panel,
-                    vurgu,
-                )
-                .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::CursorBind, cx);
-                })),
-            );
+            }));
 
         let araçlar = div()
             .flex()
+            .flex_wrap()
             .items_center()
             .gap_2()
             .mb_3()
@@ -6178,6 +5303,24 @@ impl Render for ChartListesi {
                     .child(nokta_yazısı),
             )
             .child(tekerlek_anahtarı)
+            .when(matches!(aktif_kart, KartKimliği::MultiBars(_)), |öğe| {
+                öğe.children(MultiBarsÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                    let seçili = aktif_kart == KartKimliği::MultiBars(örnek);
+                    Dugme::yeni(
+                        SharedString::from(format!("multi-bars-varyant-{}", örnek.kimlik())),
+                        örnek.başlık(),
+                    )
+                    .boyutu(DugmeBoyutu::Kucuk)
+                    .turu(if seçili {
+                        DugmeTuru::Birincil
+                    } else {
+                        DugmeTuru::Ikincil
+                    })
+                    .tiklaninca(cx.listener(move |bu, _, _, cx| {
+                        bu.kartı_seç(KartKimliği::MultiBars(örnek), cx);
+                    }))
+                }))
+            })
             .child(
                 Dugme::yeni(
                     "performans-kare-olc",
@@ -9433,9 +8576,14 @@ impl Render for ChartListesi {
                             .text_lg()
                             .font_weight(FontWeight::BOLD)
                             .text_color(metin)
-                            .child(aktif_kart.başlık()),
+                            .child(aktif_kart_tanımı.başlık),
                     )
-                    .child(div().text_sm().text_color(soluk).child(aktif_kart.kaynak())),
+                    .child(
+                        div()
+                            .text_sm()
+                            .text_color(soluk)
+                            .child(aktif_kart_tanımı.kaynak),
+                    ),
             )
             .child(araçlar)
             .when(aktif_kart == KartKimliği::NoData, |öğe| {
@@ -9604,7 +8752,7 @@ impl Render for ChartListesi {
                                 .text_xs()
                                 .font_family("SF Mono")
                                 .text_color(rgb(0xe5e7eb))
-                                .child(aktif_kart.tanım()),
+                                .child(aktif_kart_tanımı.tanım),
                         )
                     }),
             );
@@ -9731,4 +8879,68 @@ fn katalog_kartı(
                 .child(alt_kimlik),
         )
         .child(div().mt_2().text_xs().text_color(vurgu).child(durum))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashSet;
+
+    use super::*;
+
+    #[test]
+    fn yan_menü_ana_kart_sayısı_sabittir() {
+        assert_eq!(KATALOG_KARTLARI.len(), 66);
+    }
+
+    #[test]
+    fn ana_kart_slugları_benzersiz_ve_metadata_tamdır() {
+        let mut sluglar = HashSet::with_capacity(KATALOG_KARTLARI.len());
+        for &kart in KATALOG_KARTLARI {
+            let tanım = kart.tanımlayıcı();
+            assert_eq!(tanım.kimlik, kart);
+            assert!(!tanım.slug.is_empty());
+            assert!(!tanım.başlık.is_empty());
+            assert!(!tanım.kaynak.is_empty());
+            assert!(!tanım.tanım.is_empty());
+            assert!(!tanım.tanım_yolu.is_empty());
+            assert!(
+                sluglar.insert(tanım.slug),
+                "yinelenen ana kart slugı: {}",
+                tanım.slug
+            );
+        }
+    }
+
+    #[test]
+    fn multi_bars_tek_ana_kart_ve_dört_sayfa_içi_varyanttır() {
+        let multi_bars_kayıtları = KATALOG_KARTLARI
+            .iter()
+            .filter(|kart| matches!(kart, KartKimliği::MultiBars(_)))
+            .count();
+        assert_eq!(multi_bars_kayıtları, 1);
+        assert_eq!(MultiBarsÖrneği::TÜMÜ.len(), 4);
+
+        for örnek in MultiBarsÖrneği::TÜMÜ {
+            let kart = KartKimliği::MultiBars(örnek);
+            assert_eq!(kart.slug(), "multi-bars");
+            assert_eq!(
+                kart.tanımlayıcı().kimlik,
+                KartKimliği::MultiBars(MultiBarsÖrneği::KitaplıklarDikey)
+            );
+        }
+    }
+
+    #[test]
+    fn eski_multi_bars_derin_bağlantıları_varyantı_korur() {
+        for örnek in MultiBarsÖrneği::TÜMÜ {
+            assert_eq!(
+                KartKimliği::slugdan(örnek.kimlik()),
+                Some(KartKimliği::MultiBars(örnek))
+            );
+        }
+        assert_eq!(
+            KartKimliği::slugdan("multi-bars"),
+            Some(KartKimliği::MultiBars(MultiBarsÖrneği::KitaplıklarDikey))
+        );
+    }
 }
