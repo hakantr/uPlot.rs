@@ -11,7 +11,7 @@ use std::rc::Rc;
 use ::gpui::{
     App, BorderStyle, Bounds, ContentMask, Context, Corners, Entity, EventEmitter, FocusHandle,
     Hsla, IntoElement, KeyDownEvent, KeyUpEvent, MouseButton, MouseDownEvent, MouseExitEvent,
-    MouseMoveEvent, MouseUpEvent, Path, PathBuilder, PinchEvent, Pixels, Render, ScrollDelta,
+    MouseMoveEvent, MouseUpEvent, Path, PathBuilder, PinchEvent, Pixels, Render, Role, ScrollDelta,
     ScrollWheelEvent, SharedString, StyleRefinement, TextAlign, TextRun, TouchPhase, WeakEntity,
     Window, canvas, div, linear_color_stop, linear_gradient, point, prelude::*, px, quad, rgb,
     rgba, size,
@@ -1503,11 +1503,7 @@ impl GpuiGrafik {
                 }
             };
         }
-        let eksen = match (olay.modifiers.shift, olay.modifiers.control) {
-            (true, false) => TekerlekEkseni::X,
-            (false, true) => TekerlekEkseni::Y,
-            _ => TekerlekEkseni::İkisi,
-        };
+        let eksen = Self::tekerlek_ekseni(olay.modifiers.shift, olay.modifiers.control);
         let (delta, hassas) = match olay.delta {
             ScrollDelta::Pixels(delta) => {
                 let x = f64::from(f32::from(delta.x));
@@ -1552,6 +1548,14 @@ impl GpuiGrafik {
         }
     }
 
+    fn tekerlek_ekseni(shift: bool, control: bool) -> TekerlekEkseni {
+        match (shift, control) {
+            (true, false) => TekerlekEkseni::X,
+            (false, true) => TekerlekEkseni::Y,
+            _ => TekerlekEkseni::İkisi,
+        }
+    }
+
     fn dokunma_yakınlaştır(&mut self, olay: &PinchEvent) -> bool {
         if matches!(olay.phase, TouchPhase::Ended | TouchPhase::Cancelled) {
             self.grafik.dokunmayı_bitir();
@@ -1577,6 +1581,77 @@ impl GpuiGrafik {
             }
             Err(hata) => {
                 self.hata = Some(format!("Dokunma yakınlaştırması uygulanamadı: {hata}"));
+                false
+            }
+        }
+    }
+
+    fn seçimi_tamamla(&mut self, cx: &mut Context<Self>) -> bool {
+        let açıklama_seçimi = std::mem::take(&mut self.açıklama_seçimi);
+        let Some((başlangıç, bitiş)) = self.seçim.take() else {
+            return false;
+        };
+        let ayarlar = self.grafik.etkileşim_seçenekleri();
+        let x_farkı = (bitiş.x - başlangıç.x).abs();
+        let y_farkı = (bitiş.y - başlangıç.y).abs();
+        let kaynak_sıfır_eşik = ayarlar.imleç_bağları.ctrl_seçim_ölçeğini_durdur
+            || ayarlar.imleç_bağları.tıklamayı_ilet;
+        let eşik = if kaynak_sıfır_eşik {
+            f64::from(f32::EPSILON)
+        } else {
+            4.0
+        };
+        let (yatay_etkin, dikey_etkin) =
+            self.grafik
+                .fiziksel_seçim_eksenleri(f64::from(x_farkı), f64::from(y_farkı), eşik);
+        if !yatay_etkin && !dikey_etkin {
+            cx.emit(GpuiGrafikOlayı::FareBırakıldı);
+            return false;
+        }
+        let (sol, sağ, üst, alt) = self.çizim_alanı();
+        let sonuç = if ayarlar.seçim_xy_yakınlaştır {
+            self.grafik
+                .fiziksel_seçim_yakınlaştır_eksenlerde(
+                    f64::from((başlangıç.x - sol) / (sağ - sol)),
+                    f64::from((başlangıç.y - üst) / (alt - üst)),
+                    f64::from((bitiş.x - sol) / (sağ - sol)),
+                    f64::from((bitiş.y - üst) / (alt - üst)),
+                    yatay_etkin,
+                    dikey_etkin,
+                )
+                .map(|değişti| değişti.then_some(SeçimEylemi::Yakınlaştırıldı))
+        } else {
+            let (başlangıç_oranı, bitiş_oranı) = if self.grafik.x_dikey_mi() {
+                (
+                    f64::from((alt - başlangıç.y) / (alt - üst)),
+                    f64::from((alt - bitiş.y) / (alt - üst)),
+                )
+            } else {
+                (
+                    f64::from((başlangıç.x - sol) / (sağ - sol)),
+                    f64::from((bitiş.x - sol) / (sağ - sol)),
+                )
+            };
+            self.grafik
+                .seçimi_bitir(başlangıç_oranı, bitiş_oranı, açıklama_seçimi)
+                .map(Some)
+        };
+        match sonuç {
+            Ok(Some(SeçimEylemi::Açıklamaİstendi)) => {
+                self.hata = None;
+                cx.emit(GpuiGrafikOlayı::Açıklamaİstendi);
+                false
+            }
+            Ok(Some(_)) => {
+                self.hata = None;
+                true
+            }
+            Ok(None) => {
+                self.hata = None;
+                false
+            }
+            Err(hata) => {
+                self.hata = Some(format!("Seçilen aralık uygulanamadı: {hata}"));
                 false
             }
         }
@@ -1845,6 +1920,8 @@ impl Render for GpuiGrafik {
         div()
             .id("uplot-rs-gpui-grafik")
             .relative()
+            .role(Role::Group)
+            .aria_label("Etkileşimli uPlot.rs grafiği")
             .track_focus(&odak)
             .size_full()
             .min_h(px(120.0))
@@ -2111,80 +2188,7 @@ impl Render for GpuiGrafik {
                         GpuiGrafik::bildir(cx);
                         return;
                     }
-                    let açıklama_seçimi = std::mem::take(&mut bu.açıklama_seçimi);
-                    let mut ana_sahne_değişti = false;
-                    if let Some((başlangıç, bitiş)) = bu.seçim.take() {
-                        let ayarlar = bu.grafik.etkileşim_seçenekleri();
-                        let x_farkı = (bitiş.x - başlangıç.x).abs();
-                        let y_farkı = (bitiş.y - başlangıç.y).abs();
-                        let kaynak_sıfır_eşik = ayarlar.imleç_bağları.ctrl_seçim_ölçeğini_durdur
-                            || ayarlar.imleç_bağları.tıklamayı_ilet;
-                        let eşik = if kaynak_sıfır_eşik {
-                            f64::from(f32::EPSILON)
-                        } else {
-                            4.0
-                        };
-                        let (yatay_etkin, dikey_etkin) = bu.grafik.fiziksel_seçim_eksenleri(
-                            f64::from(x_farkı),
-                            f64::from(y_farkı),
-                            eşik,
-                        );
-                        let yeterli = yatay_etkin || dikey_etkin;
-                        if yeterli {
-                            let (sol, sağ, üst, alt) = bu.çizim_alanı();
-                            if ayarlar.seçim_xy_yakınlaştır {
-                                match bu.grafik.fiziksel_seçim_yakınlaştır_eksenlerde(
-                                    f64::from((başlangıç.x - sol) / (sağ - sol)),
-                                    f64::from((başlangıç.y - üst) / (alt - üst)),
-                                    f64::from((bitiş.x - sol) / (sağ - sol)),
-                                    f64::from((bitiş.y - üst) / (alt - üst)),
-                                    yatay_etkin,
-                                    dikey_etkin,
-                                ) {
-                                    Ok(değişti) => {
-                                        bu.hata = None;
-                                        ana_sahne_değişti = değişti;
-                                    }
-                                    Err(hata) => {
-                                        bu.hata =
-                                            Some(format!("Seçilen aralık uygulanamadı: {hata}"));
-                                    }
-                                }
-                            } else {
-                                let (başlangıç_oranı, bitiş_oranı) = if bu.grafik.x_dikey_mi() {
-                                    (
-                                        f64::from((alt - başlangıç.y) / (alt - üst)),
-                                        f64::from((alt - bitiş.y) / (alt - üst)),
-                                    )
-                                } else {
-                                    (
-                                        f64::from((başlangıç.x - sol) / (sağ - sol)),
-                                        f64::from((bitiş.x - sol) / (sağ - sol)),
-                                    )
-                                };
-                                match bu.grafik.seçimi_bitir(
-                                    başlangıç_oranı,
-                                    bitiş_oranı,
-                                    açıklama_seçimi,
-                                ) {
-                                    Ok(SeçimEylemi::Açıklamaİstendi) => {
-                                        bu.hata = None;
-                                        cx.emit(GpuiGrafikOlayı::Açıklamaİstendi);
-                                    }
-                                    Ok(_) => {
-                                        bu.hata = None;
-                                        ana_sahne_değişti = true;
-                                    }
-                                    Err(hata) => {
-                                        bu.hata =
-                                            Some(format!("Seçilen aralık uygulanamadı: {hata}"));
-                                    }
-                                }
-                            }
-                        } else {
-                            cx.emit(GpuiGrafikOlayı::FareBırakıldı);
-                        }
-                    }
+                    let ana_sahne_değişti = bu.seçimi_tamamla(cx);
                     if ana_sahne_değişti {
                         bu.görünüm_bildir(true, cx);
                     } else {
@@ -2198,9 +2202,23 @@ impl Render for GpuiGrafik {
             .on_mouse_up_out(
                 MouseButton::Left,
                 cx.listener(|bu, _: &MouseUpEvent, _, cx| {
+                    bu.tooltip_tıklama_başlangıcı = None;
+                    bu.tooltip_tıklaması_sürüklendi = false;
+                    let mut durum_değişti = false;
                     if bu.grafik.eksen_sürükleniyor() {
                         bu.grafik.eksen_sürüklemeyi_bitir();
                         bu.eksen_üzerinde = false;
+                        durum_değişti = true;
+                    }
+                    if bu.taşıma_başlangıcı.take().is_some() {
+                        bu.grafik.taşımayı_bitir();
+                        durum_değişti = true;
+                    }
+                    let seçim_vardı = bu.seçim.is_some();
+                    let görünüm_değişti = bu.seçimi_tamamla(cx);
+                    if görünüm_değişti {
+                        bu.görünüm_bildir(true, cx);
+                    } else if durum_değişti || seçim_vardı {
                         GpuiGrafik::bildir(cx);
                     }
                 }),
@@ -3426,5 +3444,19 @@ mod testler {
         önbellek.yüzeyi_hazırla(&sahne, yeni_sınırlar);
 
         assert!(önbellek.yollar.first().is_some_and(Option::is_none));
+    }
+
+    #[test]
+    fn wheel_modifierları_platformdan_ortak_eksenlere_eşlenir() {
+        assert_eq!(
+            GpuiGrafik::tekerlek_ekseni(false, false),
+            TekerlekEkseni::İkisi
+        );
+        assert_eq!(GpuiGrafik::tekerlek_ekseni(true, false), TekerlekEkseni::X);
+        assert_eq!(GpuiGrafik::tekerlek_ekseni(false, true), TekerlekEkseni::Y);
+        assert_eq!(
+            GpuiGrafik::tekerlek_ekseni(true, true),
+            TekerlekEkseni::İkisi
+        );
     }
 }
