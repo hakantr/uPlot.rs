@@ -80,6 +80,11 @@ application can remap those actions in its own GPUI keymap layer.
 The GPUI catalog uses this component but is not included in the library package.
 The retained scene model does not disable GPUI GPU acceleration: commands are
 submitted through GPUI's GPU-backed `paint_path`/`paint_quad` pipeline.
+Zoom and pan do not rebuild the full-scale data layer: GPUI applies a late GPU
+transformation matrix to the same shared path vertices and clips the result to
+the plot mask. Only the small axis/grid/label layer is regenerated for the
+visible range. `setData`, `setSeries`, and resize still invalidate retained
+geometry because they actually change it.
 The retained command list is not a general-purpose second renderer backend.
 Normal integrations use `Grafik` + `gpui::GpuiGrafik`; inspection for tests,
 profiling, and custom verification tools is separated under

@@ -87,6 +87,11 @@ aynı eylemleri kendi GPUI keymap katmanında yeniden bağlayabilir.
 GPUI katalog uygulaması bu bileşeni kullanır fakat kütüphane paketine girmez.
 Retained sahne modeli GPUI'nin GPU hızlandırmasını kaldırmaz; komutlar
 GPUI'nin GPU destekli `paint_path`/`paint_quad` hattına verilir.
+Zoom ve pan sırasında tam ölçekli veri katmanı yeniden kurulmaz: GPUI aynı
+paylaşılan path köşelerine geç bir GPU dönüşüm matrisi uygular ve sonucu çizim
+alanı maskesiyle kırpar. Yalnız eksen/grid/etiketlerden oluşan küçük katman
+görünür aralığa göre yenilenir. `setData`, `setSeries` ve resize ise veri
+geometrisini gerçekten değiştirdiği için retained katmanı geçersizleştirir.
 Retained komut listesi genel amaçlı ikinci bir renderer backend'i değildir.
 Normal entegrasyon `Grafik` + `gpui::GpuiGrafik` API'sini kullanır; test,
 profil ve özel doğrulama araçlarının inceleme ihtiyacı için

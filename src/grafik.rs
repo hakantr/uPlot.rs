@@ -18,6 +18,7 @@ use crate::cizim::kirpma::{
 };
 use crate::cizim::{
     DoğrusalGradyan, GradyanRenkDurağı, Komut, KöşeYarıçapları, MetinHizası, Nokta, Sahne,
+    SahneKatmanı,
 };
 use crate::etkilesim::{
     EtkileşimDenetleyicisi, x_aralığını_dönüştür, x_aralığını_geri_dönüştür, y_aralığını_dönüştür,
@@ -83,6 +84,30 @@ pub struct İmleçÇözümü {
     pub ortak_x: f64,
     /// Her görünür seri için bağımsız hover örneği.
     pub seriler: Vec<Option<İmleçSeriÖrneği>>,
+}
+
+/// GPUI retained veri yüzeyinden görünür pencereye yapılan fiziksel kırpma.
+///
+/// Değerler tam çizim alanının normalize koordinatlarındadır. Yakınlaştırma
+/// yalnız bu pencereyi GPUI tarafında büyütür; veri noktaları yeniden
+/// örneklenmez veya yeniden konumlandırılmaz.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) struct GpuiGörünümPenceresi {
+    pub sol: f32,
+    pub sağ: f32,
+    pub üst: f32,
+    pub alt: f32,
+}
+
+impl Default for GpuiGörünümPenceresi {
+    fn default() -> Self {
+        Self {
+            sol: 0.0,
+            sağ: 1.0,
+            üst: 0.0,
+            alt: 1.0,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -878,7 +903,100 @@ impl Grafik {
                 .get(&self.seçenekler.birincil_y_ölçeği)
                 .copied()
                 .or_else(|| self.etkileşim.görünür_y()),
+            false,
         )
+    }
+
+    /// GPUI'nin retained veri katmanı için tam ölçek geometrisini üretir.
+    ///
+    /// Bu sahne yalnız veri, seri veya boyut değiştiğinde yenilenir. Zoom ve
+    /// pan sırasında aynı geometri GPUI dönüşüm matrisiyle yeniden kullanılır.
+    pub(crate) fn gpui_tam_sahneyi_çiz(&self) -> Sahne {
+        self.çiz_boyutta_aralıklarla(
+            self.seçenekler.genişlik,
+            self.seçenekler.yükseklik,
+            Some(self.etkileşim.tam_x()),
+            Some(self.etkileşim.tam_y()),
+            false,
+        )
+        .katmanı_süz(SahneKatmanı::Veri)
+    }
+
+    /// Güncel görünümün yalnız hafif eksen/grid katmanını üretir.
+    pub(crate) fn gpui_eksen_sahnesini_çiz(&self) -> Sahne {
+        self.çiz_boyutta_aralıklarla(
+            self.seçenekler.genişlik,
+            self.seçenekler.yükseklik,
+            Some(self.görünür_x_aralığı()),
+            Some(self.gpui_görünür_y_aralığı()),
+            true,
+        )
+        .katmanı_süz(SahneKatmanı::Eksen)
+    }
+
+    /// GPUI zoomunda görünür X dilimini taramadan kullanılan Y penceresi.
+    ///
+    /// Otomatik Y aralığı tam retained yüzeyde sabit kalır. Yalnız geliştirici
+    /// veya kullanıcı açıkça bir Y görünümü tanımladığında bu pencere değişir.
+    fn gpui_görünür_y_aralığı(&self) -> Aralık {
+        self.elle_y_aralıkları
+            .get(&self.seçenekler.birincil_y_ölçeği)
+            .copied()
+            .or_else(|| self.etkileşim.görünür_y())
+            .unwrap_or_else(|| self.etkileşim.tam_y())
+    }
+
+    /// Geçerli görünümün tam retained sahnedeki fiziksel kaynak penceresini
+    /// döndürür. Logaritmik, ters ve dikey ölçekler burada bir kez çözülür.
+    pub(crate) fn gpui_görünüm_penceresi(&self) -> GpuiGörünümPenceresi {
+        let tam_x = self.etkileşim.tam_x();
+        let görünür_x = self.görünür_x_aralığı();
+        let tam_y = self.etkileşim.tam_y();
+        let görünür_y = self.gpui_görünür_y_aralığı();
+
+        let x0 = self.x_konumu(tam_x, görünür_x.en_az, 0.0, 1.0);
+        let x1 = self.x_konumu(tam_x, görünür_x.en_çok, 0.0, 1.0);
+        let y0 = self.y_konumu(
+            &self.seçenekler.birincil_y_ölçeği,
+            tam_y,
+            görünür_y.en_az,
+            0.0,
+            1.0,
+        );
+        let y1 = self.y_konumu(
+            &self.seçenekler.birincil_y_ölçeği,
+            tam_y,
+            görünür_y.en_çok,
+            0.0,
+            1.0,
+        );
+
+        let (x_sol, x_sağ) = (x0.min(x1), x0.max(x1));
+        // Y veri konumu çizimde alttan yukarı çevrilir.
+        let (y_üst, y_alt) = ((1.0 - y0).min(1.0 - y1), (1.0 - y0).max(1.0 - y1));
+        let mut pencere = if self.seçenekler.x_dikey {
+            GpuiGörünümPenceresi {
+                sol: y_üst,
+                sağ: y_alt,
+                üst: 1.0 - x_sağ,
+                alt: 1.0 - x_sol,
+            }
+        } else {
+            GpuiGörünümPenceresi {
+                sol: x_sol,
+                sağ: x_sağ,
+                üst: y_üst,
+                alt: y_alt,
+            }
+        };
+        let sınırla = |başlangıç: f32, bitiş: f32| {
+            let başlangıç = başlangıç.clamp(0.0, 1.0 - f32::EPSILON);
+            let bitiş = bitiş.clamp(başlangıç + f32::EPSILON, 1.0);
+            (başlangıç, bitiş)
+        };
+        (pencere.sol, pencere.sağ) = sınırla(pencere.sol, pencere.sağ);
+        (pencere.üst, pencere.alt) = sınırla(pencere.üst, pencere.alt);
+        pencere
     }
 
     /// Raster ölçeğini platform adaptöründen alır.
@@ -3635,6 +3753,7 @@ impl Grafik {
                 .get(&self.seçenekler.birincil_y_ölçeği)
                 .copied()
                 .or_else(|| self.etkileşim.görünür_y()),
+            false,
         )
     }
 
@@ -3645,7 +3764,7 @@ impl Grafik {
         yükseklik_px: u32,
         görünür_x: Option<Aralık>,
     ) -> Sahne {
-        self.çiz_boyutta_aralıklarla(genişlik_px, yükseklik_px, görünür_x, None)
+        self.çiz_boyutta_aralıklarla(genişlik_px, yükseklik_px, görünür_x, None, false)
     }
 
     fn çiz_boyutta_aralıklarla(
@@ -3654,6 +3773,7 @@ impl Grafik {
         yükseklik_px: u32,
         görünür_x: Option<Aralık>,
         görünür_y: Option<Aralık>,
+        yalnız_eksen: bool,
     ) -> Sahne {
         let çizim_başlangıcı = self
             .seçenekler
@@ -3743,6 +3863,13 @@ impl Grafik {
             return sahne;
         }
 
+        if yalnız_eksen
+            && (self.seçenekler.çubuk_düzeni.is_some()
+                || self.seçenekler.kutu_bıyık_düzeni.is_some()
+                || self.seçenekler.mum_düzeni.is_some())
+        {
+            return sahne;
+        }
         if let Some(düzen) = self.seçenekler.çubuk_düzeni {
             self.çubukları_çiz(
                 &mut sahne,
@@ -3821,6 +3948,7 @@ impl Grafik {
             birincil_ölçek.map_or(30.0, |ölçek| ölçek.eksen_en_az_etiket_boşluğu);
 
         let eksen_komutları_başlangıcı = sahne.komutlar().len();
+        sahne.katmanı_ayarla(SahneKatmanı::Eksen);
         let y_boyutu = if self.seçenekler.x_dikey {
             genişlik
         } else {
@@ -4350,6 +4478,10 @@ impl Grafik {
             });
         }
         let eksen_komutları_bitişi = sahne.komutlar().len();
+        sahne.katmanı_ayarla(SahneKatmanı::Veri);
+        if yalnız_eksen {
+            return sahne;
+        }
 
         if let Some(düzen) = &self.seçenekler.ısı_haritası_düzeni {
             self.ısı_haritasını_çiz(

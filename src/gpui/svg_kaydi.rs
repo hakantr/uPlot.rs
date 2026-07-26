@@ -84,12 +84,13 @@ impl AsRef<str> for GpuiSvgKaydı {
 }
 
 impl GpuiGrafik {
-    /// O anki retained GPUI grafik yüzeyini gerçek vektör SVG'ye kaydeder.
+    /// O anki GPUI grafik görünümünü gerçek vektör SVG'ye kaydeder.
     ///
-    /// Bu çağrı yeni grafik geometrisi üretmez ve GPUI paint/frame yoluna
-    /// kayıtçı eklemez. Ana sahne yalnız bu yöntem çağrıldığında okunur.
+    /// SVG'ye özgü vektör komutları yalnız bu yöntem çağrıldığında üretilir;
+    /// normal GPUI paint/frame yolu kayıt maliyeti taşımaz.
     pub fn svg_kaydı(&self, ayarlar: GpuiSvgKayıtAyarları) -> GpuiSvgKaydı {
-        let (kaynak_g, kaynak_y) = self.ana_sahne.boyut();
+        let ana_sahne = self.grafik.çiz();
+        let (kaynak_g, kaynak_y) = ana_sahne.boyut();
         let dönüşüm = GpuiYüzeyDönüşümü::hesapla(
             kaynak_g,
             kaynak_y,
@@ -118,7 +119,7 @@ impl GpuiGrafik {
             &mut çıktı,
             "ana",
             "gpui-ana-",
-            &self.ana_sahne.svg_içeriği("gpui-ana-"),
+            &ana_sahne.svg_içeriği("gpui-ana-"),
             dönüşüm,
         );
         if ayarlar.etkileşim_katmanı {

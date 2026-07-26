@@ -165,12 +165,21 @@ pub enum Komut {
     },
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub(crate) enum SahneKatmanı {
+    #[default]
+    Veri,
+    Eksen,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Sahne {
     genişlik: u32,
     yükseklik: u32,
     komutlar: Vec<Komut>,
     geometri_kimlikleri: Vec<u64>,
+    katmanlar: Vec<SahneKatmanı>,
+    etkin_katman: SahneKatmanı,
 }
 
 impl Sahne {
@@ -180,13 +189,37 @@ impl Sahne {
             yükseklik,
             komutlar: Vec::new(),
             geometri_kimlikleri: Vec::new(),
+            katmanlar: Vec::new(),
+            etkin_katman: SahneKatmanı::Veri,
         }
     }
 
     pub fn ekle(&mut self, komut: Komut) {
         self.geometri_kimlikleri
             .push(komut_geometri_kimliği(&komut));
+        self.katmanlar.push(self.etkin_katman);
         self.komutlar.push(komut);
+    }
+
+    pub(crate) fn katmanı_ayarla(&mut self, katman: SahneKatmanı) {
+        self.etkin_katman = katman;
+    }
+
+    pub(crate) fn katmanı_süz(mut self, katman: SahneKatmanı) -> Self {
+        let mut indeks = 0;
+        self.komutlar.retain(|_| {
+            let tutulacak = self.katmanlar.get(indeks).copied() == Some(katman);
+            indeks += 1;
+            tutulacak
+        });
+        let mut indeks = 0;
+        self.geometri_kimlikleri.retain(|_| {
+            let tutulacak = self.katmanlar.get(indeks).copied() == Some(katman);
+            indeks += 1;
+            tutulacak
+        });
+        self.katmanlar.retain(|değer| *değer == katman);
+        self
     }
 
     pub fn komutlar(&self) -> &[Komut] {
@@ -207,6 +240,9 @@ impl Sahne {
         }
         if let Some(kimlikler) = self.geometri_kimlikleri.get_mut(başlangıç..) {
             kimlikler.rotate_left(eksen_komutu_sayısı);
+        }
+        if let Some(katmanlar) = self.katmanlar.get_mut(başlangıç..) {
+            katmanlar.rotate_left(eksen_komutu_sayısı);
         }
     }
 
