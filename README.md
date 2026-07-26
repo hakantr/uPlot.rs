@@ -201,6 +201,8 @@ hash kilidini doğrular. Tarayıcı kataloğu `uygulamalar/web/Trunk.toml`
 
 Ayrıntılı yol haritası için
 [Tam GPUI geçiş faz planına](GPUI_GECIS_FAZ_PLANI.md) bakın.
+Tamamlanan fazların commit, test ve release kanıtları
+[GPUI geçişi son doğrulama kaydında](GPUI_GECIS_DOGRULAMA.md) tutulur.
 
 ## Atıf ve teşekkür
 

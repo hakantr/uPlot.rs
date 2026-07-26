@@ -179,6 +179,10 @@ hashes in a local checkout of the
 beside this repository. The browser catalogue opens the same shared GPUI entity
 through `uygulamalar/web/Trunk.toml`.
 
+See the [detailed GPUI transition plan](GPUI_GECIS_FAZ_PLANI.md) and the
+[final GPUI transition verification record](GPUI_GECIS_DOGRULAMA.md) for the
+phase commits, test matrix, and release evidence.
+
 ## Source layout
 
 - `src/veri.rs`: uPlot-compatible aligned column data contract
