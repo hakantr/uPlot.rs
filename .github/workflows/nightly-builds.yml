@@ -1,6 +1,16 @@
 name: nightly-artifacts
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/nightly-builds.yml"
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "rust-toolchain.toml"
+      - "src/**"
+      - "uygulamalar/**"
   schedule:
     # GitHub cron UTC kullanır: 18:00 UTC = Türkiye saatiyle 21:00.
     - cron: "0 18 * * *"
@@ -19,6 +29,7 @@ concurrency:
 
 jobs:
   desktop:
+    if: github.event_name != 'push'
     name: ${{ matrix.artifact }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -187,7 +198,7 @@ jobs:
   cleanup:
     name: eski gece kayıtlarını temizle
     runs-on: ubuntu-24.04
-    needs: [desktop, gpui-web, deploy]
+    needs: [gpui-web, deploy]
     steps:
       - name: Yalnız son iki Pages dağıtımını tut
         env:
