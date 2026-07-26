@@ -443,12 +443,18 @@ fn eşlenen_seri_indeksi(
     }
 }
 
+fn eksenler_verinin_üstünde_mi(grafik: &Grafik) -> bool {
+    grafik.çizim_sırası() == crate::ÇizimSırası::SerilerEksenler
+}
+
 /// Çekirdek [`Grafik`] durumunu GPUI canvas üzerinde gösteren hazır bileşen.
 ///
 /// Bileşen platform olaylarını çekirdeğe iletir; yakınlaştırma, seçim, geçmiş
 /// ve tekerlek normalizasyonunu uygulama kodunun tekrar etmesi gerekmez.
 pub struct GpuiGrafik {
     grafik: Grafik,
+    arka_plan_sahnesi: Rc<Sahne>,
+    arka_plan_yüzeyi: Option<Entity<GpuiEtkileşimYüzeyi>>,
     ana_sahne: Rc<Sahne>,
     ana_yüzey: Option<Entity<GpuiAnaYüzey>>,
     eksen_sahnesi: Rc<Sahne>,
@@ -753,6 +759,7 @@ impl GpuiGrafik {
 
     pub fn yeni(grafik: Grafik) -> Self {
         let boyut_senkron_katmanı = grafik.boyut_senkron_düzeni();
+        let arka_plan_sahnesi = Rc::new(grafik.gpui_arka_plan_sahnesini_çiz());
         let ana_sahne = Rc::new(grafik.gpui_tam_sahneyi_çiz());
         let eksen_sahnesi = Rc::new(grafik.gpui_eksen_sahnesini_çiz());
         let veri_görünümü = Rc::new(Cell::new(GpuiVeriGörünümü {
@@ -761,6 +768,8 @@ impl GpuiGrafik {
         }));
         Self {
             grafik,
+            arka_plan_sahnesi,
+            arka_plan_yüzeyi: None,
             ana_sahne,
             ana_yüzey: None,
             eksen_sahnesi,
@@ -2257,9 +2266,17 @@ impl GpuiGrafik {
 
     fn sahneyi_yenile(&mut self, cx: &mut Context<Self>) {
         self.açıklama_vuruşu = None;
+        self.arka_plan_sahnesi = Rc::new(self.grafik.gpui_arka_plan_sahnesini_çiz());
         self.ana_sahne = Rc::new(self.grafik.gpui_tam_sahneyi_çiz());
         self.ana_sahne_revizyonu = self.ana_sahne_revizyonu.saturating_add(1);
         self.görünümü_yenile();
+        if let Some(yüzey) = self.arka_plan_yüzeyi.as_ref() {
+            let sahne = self.arka_plan_sahnesi.clone();
+            yüzey.update(cx, |yüzey, cx| {
+                yüzey.sahneyi_ayarla(sahne);
+                cx.notify();
+            });
+        }
         let duyarlı_grafik = self.grafik.duyarlı_boyut_mu().then(|| cx.weak_entity());
         if let Some(yüzey) = self.ana_yüzey.as_ref() {
             let sahne = self.ana_sahne.clone();
@@ -2333,6 +2350,16 @@ impl Render for GpuiGrafik {
             .odak
             .get_or_insert_with(|| cx.focus_handle().tab_stop(true))
             .clone();
+        let arka_plan_yüzeyi = self
+            .arka_plan_yüzeyi
+            .get_or_insert_with(|| {
+                let sahne = self.arka_plan_sahnesi.clone();
+                cx.new(|_| GpuiEtkileşimYüzeyi {
+                    sahne,
+                    yol_önbelleği: Rc::new(RefCell::new(GpuiYolÖnbelleği::default())),
+                })
+            })
+            .clone();
         let ana_yüzey = self
             .ana_yüzey
             .get_or_insert_with(|| {
@@ -2381,6 +2408,7 @@ impl Render for GpuiGrafik {
         let taşımaya_hazır = self.boşluk_basılı && self.grafik.yakınlaştırılmış();
         let eksen_sürükleniyor = self.grafik.eksen_sürükleniyor();
         let eksen_imleci = self.eksen_üzerinde || eksen_sürükleniyor;
+        let eksenler_üstte = eksenler_verinin_üstünde_mi(&self.grafik);
         let standart_bilgi_kutusu = self
             .imleç
             .as_ref()
@@ -2895,9 +2923,8 @@ impl Render for GpuiGrafik {
                     }
                 }),
             )
-            .child(ana_yüzey.cached(StyleRefinement::default().size_full()))
             .child(
-                eksen_yüzeyi.cached(
+                arka_plan_yüzeyi.cached(
                     StyleRefinement::default()
                         .absolute()
                         .top_0()
@@ -2905,6 +2932,29 @@ impl Render for GpuiGrafik {
                         .size_full(),
                 ),
             )
+            .when(!eksenler_üstte, |yüzey| {
+                yüzey.child(
+                    eksen_yüzeyi.clone().cached(
+                        StyleRefinement::default()
+                            .absolute()
+                            .top_0()
+                            .left_0()
+                            .size_full(),
+                    ),
+                )
+            })
+            .child(ana_yüzey.cached(StyleRefinement::default().size_full()))
+            .when(eksenler_üstte, |yüzey| {
+                yüzey.child(
+                    eksen_yüzeyi.cached(
+                        StyleRefinement::default()
+                            .absolute()
+                            .top_0()
+                            .left_0()
+                            .size_full(),
+                    ),
+                )
+            })
             .child(
                 deferred(
                     etkileşim_yüzeyi.cached(
@@ -4208,6 +4258,35 @@ mod testler {
         assert!(pencere.sol > 0.0 || pencere.sağ < 1.0);
         assert!(pencere.üst.abs() <= f32::EPSILON);
         assert!((pencere.alt - 1.0).abs() <= f32::EPSILON);
+        Ok(())
+    }
+
+    #[test]
+    fn gpui_eksen_katmanı_çekirdek_çizim_sırasını_korur() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = test_çizgi_kartı(800, 600)?;
+        let varsayılan = Grafik::yeni(seçenekler.clone(), veri.clone())?;
+        let ızgara_üstte = Grafik::yeni(
+            seçenekler.çizim_sırası(crate::ÇizimSırası::SerilerEksenler),
+            veri,
+        )?;
+
+        assert!(!eksenler_verinin_üstünde_mi(&varsayılan));
+        assert!(eksenler_verinin_üstünde_mi(&ızgara_üstte));
+        let bileşen = GpuiGrafik::yeni(varsayılan);
+        assert!(
+            bileşen
+                .arka_plan_sahnesi
+                .komutlar()
+                .iter()
+                .any(|komut| matches!(komut, Komut::ArkaPlan { .. }))
+        );
+        assert!(
+            bileşen
+                .ana_sahne
+                .komutlar()
+                .iter()
+                .all(|komut| !matches!(komut, Komut::ArkaPlan { .. }))
+        );
         Ok(())
     }
 

@@ -922,6 +922,11 @@ impl Grafik {
         .katmanı_süz(SahneKatmanı::Veri)
     }
 
+    /// GPUI'nin veri ve eksen yüzeylerinin altında kalan sabit arka planı.
+    pub(crate) fn gpui_arka_plan_sahnesini_çiz(&self) -> Sahne {
+        self.arka_plan_sahnesini_boyutta(self.seçenekler.genişlik, self.seçenekler.yükseklik)
+    }
+
     /// Güncel görünümün yalnız hafif eksen/grid katmanını üretir.
     pub(crate) fn gpui_eksen_sahnesini_çiz(&self) -> Sahne {
         self.çiz_boyutta_aralıklarla(
@@ -1172,6 +1177,10 @@ impl Grafik {
 
     pub fn duyarlı_boyut_mu(&self) -> bool {
         self.seçenekler.duyarlı_boyut
+    }
+
+    pub(crate) fn çizim_sırası(&self) -> crate::ÇizimSırası {
+        self.seçenekler.çizim_sırası
     }
 
     /// `update-cursor-select-resize` kaynağının adaptör katmanında kurduğu
@@ -3851,56 +3860,11 @@ impl Grafik {
         } else {
             yükseklik_px.max(120)
         };
-        let mut sahne = Sahne::yeni(genişlik_px, yükseklik_px);
-        sahne.ekle(Komut::ArkaPlan {
-            renk: self.seçenekler.arka_plan_rengi.clone(),
-        });
-
+        let mut sahne = self.arka_plan_sahnesini_boyutta(genişlik_px, yükseklik_px);
         let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
         let genişlik = sağ - sol;
         let yükseklik = alt - üst;
-        if let Some(renk) = &self.seçenekler.çizim_alanı_arka_plan_rengi {
-            sahne.ekle(Komut::Dikdörtgen {
-                konum: Nokta::yeni(sol, üst),
-                genişlik,
-                yükseklik,
-                dolgu: renk.clone(),
-                çizgi: "#00000000".to_string(),
-                kalınlık: 0.0,
-            });
-        }
-
-        if let Some(duraklar) = self
-            .seçenekler
-            .çizim_kancaları
-            .as_ref()
-            .and_then(|düzen| düzen.gradyan_durakları.as_ref())
-        {
-            let payda = duraklar.len().saturating_sub(1).max(1) as f32;
-            sahne.ekle(Komut::GradyanAlan {
-                çokgenler: vec![vec![
-                    Nokta::yeni(sol, üst),
-                    Nokta::yeni(sağ, üst),
-                    Nokta::yeni(sağ, alt),
-                    Nokta::yeni(sol, alt),
-                ]],
-                // Resmî eklenti gradyanı `bbox.top` yerine global y=0'dan
-                // `bbox.height` değerine kurup yalnız bbox dikdörtgenini doldurur.
-                gradyan: DoğrusalGradyan {
-                    başlangıç: Nokta::yeni(0.0, 0.0),
-                    bitiş: Nokta::yeni(0.0, yükseklik),
-                    duraklar: duraklar
-                        .iter()
-                        .enumerate()
-                        .map(|(indeks, renk)| GradyanRenkDurağı {
-                            oran: indeks as f32 / payda,
-                            renk: renk.clone(),
-                        })
-                        .collect(),
-                },
-            });
-        }
-
+        sahne.katmanı_ayarla(SahneKatmanı::Veri);
         if !self.seçenekler.başlık.is_empty() {
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(genişlik_px as f32 / 2.0, 26.0),
@@ -5398,6 +5362,70 @@ impl Grafik {
             );
         }
 
+        sahne
+    }
+
+    fn arka_plan_sahnesini_boyutta(&self, genişlik_px: u32, yükseklik_px: u32) -> Sahne {
+        let genişlik_px = if self.seçenekler.kompakt_yüzey {
+            genişlik_px.max(2)
+        } else {
+            genişlik_px.max(160)
+        };
+        let yükseklik_px = if self.seçenekler.kompakt_yüzey {
+            yükseklik_px.max(2)
+        } else {
+            yükseklik_px.max(120)
+        };
+        let mut sahne = Sahne::yeni(genişlik_px, yükseklik_px);
+        sahne.katmanı_ayarla(SahneKatmanı::ArkaPlan);
+        sahne.ekle(Komut::ArkaPlan {
+            renk: self.seçenekler.arka_plan_rengi.clone(),
+        });
+
+        let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
+        let genişlik = sağ - sol;
+        let yükseklik = alt - üst;
+        if let Some(renk) = &self.seçenekler.çizim_alanı_arka_plan_rengi {
+            sahne.ekle(Komut::Dikdörtgen {
+                konum: Nokta::yeni(sol, üst),
+                genişlik,
+                yükseklik,
+                dolgu: renk.clone(),
+                çizgi: "#00000000".to_string(),
+                kalınlık: 0.0,
+            });
+        }
+
+        if let Some(duraklar) = self
+            .seçenekler
+            .çizim_kancaları
+            .as_ref()
+            .and_then(|düzen| düzen.gradyan_durakları.as_ref())
+        {
+            let payda = duraklar.len().saturating_sub(1).max(1) as f32;
+            sahne.ekle(Komut::GradyanAlan {
+                çokgenler: vec![vec![
+                    Nokta::yeni(sol, üst),
+                    Nokta::yeni(sağ, üst),
+                    Nokta::yeni(sağ, alt),
+                    Nokta::yeni(sol, alt),
+                ]],
+                // Resmî eklenti gradyanı `bbox.top` yerine global y=0'dan
+                // `bbox.height` değerine kurup yalnız bbox dikdörtgenini doldurur.
+                gradyan: DoğrusalGradyan {
+                    başlangıç: Nokta::yeni(0.0, 0.0),
+                    bitiş: Nokta::yeni(0.0, yükseklik),
+                    duraklar: duraklar
+                        .iter()
+                        .enumerate()
+                        .map(|(indeks, renk)| GradyanRenkDurağı {
+                            oran: indeks as f32 / payda,
+                            renk: renk.clone(),
+                        })
+                        .collect(),
+                },
+            });
+        }
         sahne
     }
 

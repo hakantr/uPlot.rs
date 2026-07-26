@@ -169,6 +169,7 @@ pub enum Komut {
 pub(crate) enum SahneKatmanı {
     #[default]
     Veri,
+    ArkaPlan,
     Eksen,
 }
 
