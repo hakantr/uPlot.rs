@@ -1682,6 +1682,8 @@ pub struct ChartListesi {
     kullanım_rehberi_açık: bool,
     tekerlek_etkin: bool,
     tekerlek_anahtarı: Entity<Anahtar>,
+    tekerlek_odaksız_etkin: bool,
+    tekerlek_odaksız_anahtarı: Entity<Anahtar>,
     içi_boş_noktalar_görünür: bool,
     dolu_noktalar_görünür: bool,
     içi_boş_nokta_anahtarı: Entity<Anahtar>,
@@ -1811,6 +1813,16 @@ impl ChartListesi {
             grafik.update(cx, |grafik, cx| {
                 grafik.kırılım_noktalarını_göster(içi_boş_görünür, cx);
                 grafik.imleç_noktalarını_göster(dolu_görünür, cx);
+            });
+        }
+        cx.notify();
+    }
+
+    fn tekerlek_odaksız_etkileşimi_uygula(&mut self, etkin: bool, cx: &mut Context<Self>) {
+        self.tekerlek_odaksız_etkin = etkin;
+        for grafik in self.etkin_grafik_yüzeyleri() {
+            grafik.update(cx, |grafik, cx| {
+                grafik.tekerlek_odaksız_etkileşimi_ayarla(etkin, cx);
             });
         }
         cx.notify();
@@ -2112,6 +2124,22 @@ impl ChartListesi {
         })
         .detach();
 
+        let tekerlek_odaksız_anahtarı = cx.new(|cx| {
+            Anahtar::yeni(
+                "Odaksız tekerlek",
+                etkileşimler.tekerlek_odaksız_etkileşim,
+                cx,
+            )
+        });
+        cx.subscribe(
+            &tekerlek_odaksız_anahtarı,
+            |bu, _, olay: &AnahtarOlayi, cx| {
+                let AnahtarOlayi::Degisti(etkin) = *olay;
+                bu.tekerlek_odaksız_etkileşimi_uygula(etkin, cx);
+            },
+        )
+        .detach();
+
         let içi_boş_nokta_anahtarı = cx.new(|cx| Anahtar::yeni("İçi boş noktalar", true, cx));
         let dolu_nokta_anahtarı = cx.new(|cx| Anahtar::yeni("Dolu noktalar", true, cx));
         cx.subscribe(
@@ -2160,6 +2188,8 @@ impl ChartListesi {
             kullanım_rehberi_açık: false,
             tekerlek_etkin: etkileşimler.tekerlek_etkileşimi,
             tekerlek_anahtarı,
+            tekerlek_odaksız_etkin: etkileşimler.tekerlek_odaksız_etkileşim,
+            tekerlek_odaksız_anahtarı,
             içi_boş_noktalar_görünür: true,
             dolu_noktalar_görünür: true,
             içi_boş_nokta_anahtarı,
@@ -2235,6 +2265,7 @@ impl ChartListesi {
         if başlangıç_kartı != KartKimliği::Resize {
             bu.kartı_seç(başlangıç_kartı, cx);
         }
+        bu.tekerlek_odaksız_etkileşimi_uygula(bu.tekerlek_odaksız_etkin, cx);
         bu.nokta_gösterimlerini_uygula(true, true, cx);
         bu
     }
@@ -3988,6 +4019,7 @@ impl ChartListesi {
         match sonuç {
             Ok(mut yeni) => {
                 yeni.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+                yeni.tekerlek_odaksız_etkileşimi_ayarla(self.tekerlek_odaksız_etkin);
                 yeni.kırılım_noktalarını_göster(self.içi_boş_noktalar_görünür);
                 yeni.imleç_noktalarını_göster(self.dolu_noktalar_görünür);
                 if let Some(grafik) = &self.grafik {
@@ -4281,8 +4313,13 @@ impl ChartListesi {
         self.soft_minmax_çalışıyor = false;
         let etkileşimler = kart.etkileşimler();
         self.tekerlek_etkin = etkileşimler.tekerlek_etkileşimi;
+        self.tekerlek_odaksız_etkin = etkileşimler.tekerlek_odaksız_etkileşim;
         self.tekerlek_anahtarı.update(cx, |anahtar, cx| {
             anahtar.ayarla(etkileşimler.tekerlek_etkileşimi, cx);
+            anahtar.devre_disi_ayarla(false, cx);
+        });
+        self.tekerlek_odaksız_anahtarı.update(cx, |anahtar, cx| {
+            anahtar.ayarla(etkileşimler.tekerlek_odaksız_etkileşim, cx);
             anahtar.devre_disi_ayarla(false, cx);
         });
         self.align_data_grafikleri.clear();
@@ -4999,6 +5036,7 @@ impl ChartListesi {
             self.dolu_noktalar_görünür,
             cx,
         );
+        self.tekerlek_odaksız_etkileşimi_uygula(self.tekerlek_odaksız_etkin, cx);
     }
 
     fn soft_minmax_başlat(&mut self, cx: &mut Context<Self>) {
@@ -5644,6 +5682,7 @@ impl Render for ChartListesi {
             aktif_kart_tanımı.tanım_yolu
         ));
         let tekerlek_anahtarı = self.tekerlek_anahtarı.clone();
+        let tekerlek_odaksız_anahtarı = self.tekerlek_odaksız_anahtarı.clone();
         let içi_boş_nokta_anahtarı = self.içi_boş_nokta_anahtarı.clone();
         let dolu_nokta_anahtarı = self.dolu_nokta_anahtarı.clone();
         let (mut geri_var, mut yakınlaştırılmış, etkileşimler, lejant, bileşen_hatası) =
@@ -6185,6 +6224,7 @@ impl Render for ChartListesi {
                     .child(nokta_yazısı),
             )
             .child(tekerlek_anahtarı)
+            .child(tekerlek_odaksız_anahtarı)
             .child(içi_boş_nokta_anahtarı)
             .child(dolu_nokta_anahtarı)
             .when(matches!(aktif_kart, KartKimliği::MultiBars(_)), |öğe| {
@@ -8648,7 +8688,7 @@ impl Render for ChartListesi {
             let boyut = self
                 .boyut_senkron_akışı
                 .map_or(800, BoyutSenkronAkışı::boyut);
-            çizim_tabanı.overflow_hidden().child(
+            çizim_tabanı.overflow_scroll().child(
                 div()
                     .w(px(boyut as f32))
                     .h(px(boyut as f32))
@@ -8777,8 +8817,12 @@ impl Render for ChartListesi {
         let kullanım_rehberi = aktif_kart_tanımı.açıklama;
         let kullanım_rehberi_açık = self.kullanım_rehberi_açık;
         let ayrıntı = div()
+            .id("kart-ayrinti-kaydirma")
             .flex_1()
+            .min_w_0()
+            .min_h_0()
             .h_full()
+            .overflow_scroll()
             .p_4()
             .flex()
             .flex_col()

@@ -126,6 +126,11 @@ let etkileşimler = EtkileşimSeçenekleri::default()
 
 `dokunma_etkileşimi(true)`, `demos/zoom-touch.html` kaynaklı iki parmakla X/Y
 yakınlaştırmayı ve yakınlaştırılmış görünümde tek parmakla taşımayı açar.
+Tekerlek yakınlaştırması varsayılan olarak grafik tıklanarak veya klavyeyle
+odaklandıktan sonra çalışır; böylece taşan katalog/dashboard sayfası önce
+kaydırılabilir. Geliştirici özellikle isterse
+`.tekerlek_odaksız_etkileşim(true)` ile imleç grafik üzerindeyken odak
+gereksinimini kaldırabilir.
 Masaüstünde grafik yakınlaştırıldıktan sonra boşluk + sol sürükleme otomatik
 olarak taşıma yapar; bunun için ikinci bir kart seçeneği gerekmez. `false`
 verilen isteğe bağlı davranışlar kapanır, hiç belirtilmeyenler `Default`

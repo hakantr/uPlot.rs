@@ -953,6 +953,11 @@ impl GpuiGrafik {
         Self::bildir(cx);
     }
 
+    pub fn tekerlek_odaksız_etkileşimi_ayarla(&mut self, etkin: bool, cx: &mut Context<Self>) {
+        self.grafik.tekerlek_odaksız_etkileşimi_ayarla(etkin);
+        Self::bildir(cx);
+    }
+
     pub fn kırılım_noktalarını_göster(
         &mut self,
         görünür: bool,
@@ -1613,7 +1618,12 @@ impl GpuiGrafik {
         odak_değişti
     }
 
-    fn tekerlek_yakınlaştır(&mut self, olay: &ScrollWheelEvent, şimdi: Instant) -> bool {
+    fn tekerlek_yakınlaştır(
+        &mut self,
+        olay: &ScrollWheelEvent,
+        şimdi: Instant,
+        odaklı: bool,
+    ) -> bool {
         let Some(fare) = self.sahne_konumu(olay.position) else {
             return false;
         };
@@ -1637,6 +1647,14 @@ impl GpuiGrafik {
                 TouchPhase::Moved => {}
                 _ => return false,
             }
+        }
+        if !self
+            .grafik
+            .etkileşim_seçenekleri()
+            .tekerlek_odaksız_etkileşim
+            && !odaklı
+        {
+            return false;
         }
         let (sol, sağ, üst, alt) = self.çizim_alanı();
         if let Some((birikmiş_x, birikmiş_y)) = self.dokunma_kaydırma.as_mut() {
@@ -1710,6 +1728,10 @@ impl GpuiGrafik {
             (false, true) => TekerlekEkseni::Y,
             _ => TekerlekEkseni::İkisi,
         }
+    }
+
+    fn tekerlek_olayı_etkin(ayarlar: crate::EtkileşimSeçenekleri, grafik_odaklı: bool) -> bool {
+        ayarlar.tekerlek_etkileşimi && (ayarlar.tekerlek_odaksız_etkileşim || grafik_odaklı)
     }
 
     fn dokunma_yakınlaştır(&mut self, olay: &PinchEvent) -> bool {
@@ -2146,17 +2168,9 @@ impl Render for GpuiGrafik {
                     GpuiGrafik::bildir(cx);
                 }
             }))
-            .on_mouse_move(cx.listener(|bu, olay: &MouseMoveEvent, window, cx| {
+            .on_mouse_move(cx.listener(|bu, olay: &MouseMoveEvent, _window, cx| {
                 let mut ana_sahne_değişti = false;
                 let mut görünüm_değişti = false;
-                if let Some(odak) = bu.odak.as_ref()
-                    && !odak.is_focused(window)
-                    && bu
-                        .sahne_konumu(olay.position)
-                        .is_some_and(|konum| bu.grafik_alanında(konum))
-                {
-                    odak.focus(window, cx);
-                }
                 if bu.grafik.eksen_sürükleniyor()
                     && let Some(konum) = bu.sahne_konumu(olay.position)
                 {
@@ -2238,10 +2252,29 @@ impl Render for GpuiGrafik {
                     GpuiGrafik::imleç_bildir(cx);
                 }
             }))
-            .on_scroll_wheel(cx.listener(|bu, olay: &ScrollWheelEvent, _, cx| {
+            .on_scroll_wheel(cx.listener(|bu, olay: &ScrollWheelEvent, window, cx| {
+                let ayarlar = bu.grafik.etkileşim_seçenekleri();
+                let odaklı = bu.odak.as_ref().is_some_and(|odak| odak.is_focused(window));
+                let grafik_üzerinde = bu
+                    .sahne_konumu(olay.position)
+                    .is_some_and(|konum| bu.grafik_alanında(konum));
+                let tekerlek_kabul_edildi =
+                    grafik_üzerinde && Self::tekerlek_olayı_etkin(ayarlar, odaklı);
+                let dokunma_kabul_edildi = grafik_üzerinde
+                    && cfg!(any(target_os = "windows", target_family = "wasm"))
+                    && ayarlar.dokunma_etkileşimi
+                    && (bu.dokunma_kaydırma.is_some()
+                        || matches!(
+                            olay.touch_phase,
+                            TouchPhase::Started | TouchPhase::Ended | TouchPhase::Cancelled
+                        ));
+                if !tekerlek_kabul_edildi && !dokunma_kabul_edildi {
+                    return;
+                }
+                cx.stop_propagation();
                 let datum_değişti = bu.grafik.ölçüm_datumlarını_temizle();
                 let şimdi = cx.background_executor().now();
-                let görünüm_değişti = bu.tekerlek_yakınlaştır(olay, şimdi);
+                let görünüm_değişti = bu.tekerlek_yakınlaştır(olay, şimdi, odaklı);
                 if görünüm_değişti {
                     bu.görünüm_bildir(false, cx);
                 } else if datum_değişti {
@@ -3910,5 +3943,15 @@ mod testler {
             GpuiGrafik::tekerlek_ekseni(true, true),
             TekerlekEkseni::İkisi
         );
+    }
+
+    #[test]
+    fn tekerlek_varsayılan_olarak_odak_gerektirir_ve_isteğe_bağlı_açılır() {
+        let ayarlar = crate::EtkileşimSeçenekleri::default().tekerlek_etkileşimi(true);
+        assert!(!GpuiGrafik::tekerlek_olayı_etkin(ayarlar, false));
+        assert!(GpuiGrafik::tekerlek_olayı_etkin(ayarlar, true));
+
+        let odaksız = ayarlar.tekerlek_odaksız_etkileşim(true);
+        assert!(GpuiGrafik::tekerlek_olayı_etkin(odaksız, false));
     }
 }

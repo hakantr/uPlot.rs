@@ -2289,6 +2289,12 @@ impl Grafik {
         self.etkileşim.tekerlek_etkileşimi_ayarla(etkin);
     }
 
+    /// GPUI yüzeyinde tekerlek yakınlaştırmasının grafik odağı alınmadan da
+    /// çalışıp çalışmayacağını değiştirir.
+    pub fn tekerlek_odaksız_etkileşimi_ayarla(&mut self, etkin: bool) {
+        self.etkileşim.tekerlek_odaksız_etkileşimi_ayarla(etkin);
+    }
+
     /// Verilen yüzey koordinatında sürüklenebilir bir eksen olup olmadığını
     /// belirler. Platform bağlayıcıları eksen yerleşimini tekrar hesaplamaz.
     pub fn eksen_vuruşu_boyutta(

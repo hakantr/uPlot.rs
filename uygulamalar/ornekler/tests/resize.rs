@@ -51,16 +51,21 @@ fn tekerlek_yakınlaştırması_farenin_göreli_konumunu_korur() -> Result<(), U
 fn isteğe_bağlı_etkileşimler_kart_bazında_açılır() {
     let varsayılan = EtkileşimSeçenekleri::default();
     assert!(!varsayılan.tekerlek_etkileşimi);
+    assert!(!varsayılan.tekerlek_odaksız_etkileşim);
     assert!(!varsayılan.görünüm_geçmişi);
     assert!(!varsayılan.dokunma_etkileşimi);
 
     let ortak_profil = ortak_kart_etkileşimleri();
     assert!(ortak_profil.tekerlek_etkileşimi);
+    assert!(!ortak_profil.tekerlek_odaksız_etkileşim);
     assert!(ortak_profil.seçim_yakınlaştır);
     assert!(ortak_profil.çift_tıkla_tam_görünüm);
     assert!(ortak_profil.görünüm_geçmişi);
     assert!(ortak_profil.dokunma_etkileşimi);
     assert_eq!(ortak_profil.tekerlek_ayarları.kip, TekerlekKipi::Otomatik);
+
+    let odaksız = ortak_profil.tekerlek_odaksız_etkileşim(true);
+    assert!(odaksız.tekerlek_odaksız_etkileşim);
 }
 
 #[test]

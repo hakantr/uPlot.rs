@@ -851,6 +851,11 @@ impl İmleçBağSeçenekleri {
 pub struct EtkileşimSeçenekleri {
     /// uPlot'un resmi `wheelZoomPlugin` portunu etkinleştirir. Varsayılan: kapalı.
     pub tekerlek_etkileşimi: bool,
+    /// Tekerlek yakınlaştırmasının grafik odağı alınmadan da çalışmasına izin
+    /// verir. Varsayılan `false`; böylece taşan bir sayfada tekerlek önce
+    /// kapsayıcıyı kaydırır, grafik tıklanarak veya klavyeyle odaklandıktan
+    /// sonra yakınlaştırır.
+    pub tekerlek_odaksız_etkileşim: bool,
     /// Ayrık tekerlek ve hassas kaydırma yüzeylerinin normalizasyon ayarları.
     pub tekerlek_ayarları: TekerlekAyarları,
     /// uPlot çekirdeğinin sürükleyerek X aralığı seçme davranışı.
@@ -1000,6 +1005,7 @@ impl Default for EtkileşimSeçenekleri {
     fn default() -> Self {
         Self {
             tekerlek_etkileşimi: false,
+            tekerlek_odaksız_etkileşim: false,
             tekerlek_ayarları: TekerlekAyarları::default(),
             seçim_yakınlaştır: true,
             seçim_xy_yakınlaştır: false,
@@ -1018,6 +1024,15 @@ impl EtkileşimSeçenekleri {
     /// Resmi `wheelZoomPlugin` portunu kart için açar veya kapatır.
     pub fn tekerlek_etkileşimi(mut self, etkin: bool) -> Self {
         self.tekerlek_etkileşimi = etkin;
+        self
+    }
+
+    /// Grafik odaklanmadan tekerlek yakınlaştırmasına izin verir.
+    ///
+    /// Belirtilmezse varsayılan `false` kullanılır ve tekerlek yalnız
+    /// odaklanmış grafik üzerinde yakınlaştırma yapar.
+    pub fn tekerlek_odaksız_etkileşim(mut self, etkin: bool) -> Self {
+        self.tekerlek_odaksız_etkileşim = etkin;
         self
     }
 

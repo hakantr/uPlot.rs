@@ -118,7 +118,10 @@ let interactions = EtkileşimSeçenekleri::default()
 ```
 
 `dokunma_etkileşimi(true)` enables the two-finger X/Y zoom and single-finger
-pan ported from `demos/zoom-touch.html`. Once a desktop chart is zoomed,
+pan ported from `demos/zoom-touch.html`. Wheel zoom requires the chart to be
+focused by click or keyboard by default, allowing an overflowing dashboard or
+catalog page to scroll first. Applications can explicitly opt into hover-only
+wheel zoom with `.tekerlek_odaksız_etkileşim(true)`. Once a desktop chart is zoomed,
 Space + left drag pans automatically and requires no additional chart option.
 Optional behaviors set to `false` are disabled; omitted settings keep their
 `Default` values.

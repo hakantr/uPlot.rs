@@ -150,6 +150,11 @@ impl EtkileşimDenetleyicisi {
         self.tekerleği_sıfırla();
     }
 
+    pub(crate) fn tekerlek_odaksız_etkileşimi_ayarla(&mut self, etkin: bool) {
+        self.ayarlar.tekerlek_odaksız_etkileşim = etkin;
+        self.tekerleği_sıfırla();
+    }
+
     pub(crate) fn seçim_yakınlaştır(
         &mut self,
         başlangıç_oranı: f64,
