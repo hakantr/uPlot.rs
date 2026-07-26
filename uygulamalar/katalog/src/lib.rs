@@ -219,94 +219,1384 @@ enum KartKimliği {
     Candlestick,
 }
 
-/// Katalog arayüzünün, derin bağlantıların ve açıklama panelinin paylaştığı tek
-/// kart metadata görünümü. Varyant seçimi `KartKimliği` üzerinde kalır; ana kart
-/// kaydı ise varyanttan bağımsız ve tektir.
+/// Katalog arayüzü, derin bağlantı, açıklama paneli ve grafik fabrikasının
+/// paylaştığı tek literal kart kaydı.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum KatalogKartGrubu {
+    Tek,
+    İlişkiliYüzeyler,
+}
+
+type KatalogKartÇıktısı = Result<(uplot_rs::GrafikSeçenekleri, uplot_rs::HizalıVeri), UplotHatası>;
+type KatalogKartFabrikası = fn(KatalogFabrikaGirdisi) -> KatalogKartÇıktısı;
+type KatalogVaryantSlugÇözücü = fn(&str) -> Option<KartKimliği>;
+
 #[derive(Clone, Copy)]
 struct KatalogKartTanımı {
     kimlik: KartKimliği,
     slug: &'static str,
     başlık: &'static str,
     kaynak: &'static str,
+    açıklama: Option<&'static str>,
     tanım: &'static str,
     tanım_yolu: &'static str,
+    grup: KatalogKartGrubu,
+    varyant_grubu: Option<&'static str>,
+    eski_sluglar: &'static [&'static str],
+    varyant_slugdan: KatalogVaryantSlugÇözücü,
+    fabrika: KatalogKartFabrikası,
 }
 
-/// Yan menüde gösterilen ana kartların tek kayıt defteri.
-///
-/// Bir kaynak sayfasındaki ilişkili yüzeyler ve yalnız girdiye göre değişen
-/// varyantlar burada bir kez yer alır. Sayfa içi varyant düğmeleri, seçili
-/// `KartKimliği` değerini değiştirir.
-const KATALOG_KARTLARI: &[KartKimliği] = &[
-    KartKimliği::AddDelSeries,
-    KartKimliği::HighLowBands,
-    KartKimliği::LatencyHeatmap,
-    KartKimliği::LinePaths,
-    KartKimliği::LogScales,
-    KartKimliği::LogScales2,
-    KartKimliği::MassSpectrum,
-    KartKimliği::MeasureDatums,
-    KartKimliği::MultiBars(MultiBarsÖrneği::KitaplıklarDikey),
-    KartKimliği::NearestNonNull,
-    KartKimliği::FocusCursor,
-    KartKimliği::Gradients,
-    KartKimliği::GridOverSeries,
-    KartKimliği::TimezonesDst,
-    KartKimliği::TooltipsClosest,
-    KartKimliği::Tooltips,
-    KartKimliği::Trendlines,
-    KartKimliği::UpdateCursorSelectResize,
-    KartKimliği::WindDirection,
-    KartKimliği::YScaleDrag,
-    KartKimliği::YShiftedSeries,
-    KartKimliği::AlignDataCost,
-    KartKimliği::Resize,
-    KartKimliği::Annotations,
-    KartKimliği::AreaFill,
-    KartKimliği::ScalePadding,
-    KartKimliği::Months,
-    KartKimliği::MonthsRussian,
-    KartKimliği::NiceScale,
-    KartKimliği::NoData,
-    KartKimliği::PathGapClip,
-    KartKimliği::PixelAlign,
-    KartKimliği::Points,
-    KartKimliği::ScalesDirOri,
-    KartKimliği::Scatter,
-    KartKimliği::ScrollSync,
-    KartKimliği::SineStream,
-    KartKimliği::SoftMinMax(SoftMinMaxÖrneği::MinKip0),
-    KartKimliği::SparklinesBars(SparklinesBarsÖrneği::GradyanÇubuklar),
-    KartKimliği::Sparklines(SparklineÖrneği::İLK),
-    KartKimliği::Sparse(SparseÖrneği::YerleşikDoğrusal),
-    KartKimliği::StackedSeries(StackedSeriesÖrneği::Stacked1),
-    KartKimliği::StreamData(StreamDataÖrneği::SabitUzunluk),
-    KartKimliği::GpuiSvgExport,
-    KartKimliği::SyncCursor,
-    KartKimliği::SyncYZero(SyncYZeroAşaması::Ham),
-    KartKimliği::ThinBars(ThinBarsÖrneği::Yoğunluk(
-        uplot_rs::ThinBarsYoğunluk::Normal30,
-    )),
-    KartKimliği::TimePeriods(TimePeriodsÖrneği::SaatlikKullanıcılar),
-    KartKimliği::TimelineDiscrete(TimelineDiscreteÖrneği::DurumZamanÇizelgesi),
-    KartKimliği::TimeseriesDiscrete,
-    KartKimliği::CursorSnap,
-    KartKimliği::CursorTooltip,
-    KartKimliği::CustomScales,
-    KartKimliği::DataSmoothing,
-    KartKimliği::DrawHooks,
-    KartKimliği::MissingData,
-    KartKimliği::DependentScale,
-    KartKimliği::ArcSinhScales,
-    KartKimliği::AxisControl,
-    KartKimliği::AxisAutosize,
-    KartKimliği::AxisIndicators,
-    KartKimliği::Bars(ÇubukÖrneği::ÇokGrupÇokSeriDikeyGruplu),
-    KartKimliği::BarsValuesAutosize(ÇubukYönü::Dikey),
-    KartKimliği::BoxWhisker("01_run1k"),
-    KartKimliği::Candlestick,
-    KartKimliği::CursorBind,
+#[derive(Clone, Copy)]
+struct KatalogFabrikaGirdisi {
+    kart: KartKimliği,
+    no_data_örneği: NoDataÖrneği,
+    nokta_sayısı: usize,
+    autosize_kuvvet: i32,
+    latency_kova: u8,
+    latency_ofset: u8,
+    pixel_align_adımı: usize,
+}
+
+macro_rules! katalog_kartı {
+    (
+        $kimlik:expr,
+        $slug:expr,
+        $başlık:expr,
+        $kaynak:expr,
+        $açıklama:expr,
+        $tanım:expr,
+        $tanım_yolu:expr,
+        $grup:expr,
+        $varyant_grubu:expr,
+        $eski_sluglar:expr,
+        $varyant_slugdan:expr,
+        $fabrika:expr $(,)?
+    ) => {
+        KatalogKartTanımı {
+            kimlik: $kimlik,
+            slug: $slug,
+            başlık: $başlık,
+            kaynak: $kaynak,
+            açıklama: $açıklama,
+            tanım: $tanım,
+            tanım_yolu: $tanım_yolu,
+            grup: $grup,
+            varyant_grubu: $varyant_grubu,
+            eski_sluglar: $eski_sluglar,
+            varyant_slugdan: $varyant_slugdan,
+            fabrika: $fabrika,
+        }
+    };
+}
+
+fn yanlış_kart_fabrikası(kart: KartKimliği) -> KatalogKartÇıktısı {
+    Err(UplotHatası::BilinmeyenKart {
+        kimlik: format!("{kart:?}"),
+    })
+}
+
+fn varyant_slugı_yok(_slug: &str) -> Option<KartKimliği> {
+    None
+}
+
+fn multi_bars_slugdan(slug: &str) -> Option<KartKimliği> {
+    MultiBarsÖrneği::TÜMÜ
+        .into_iter()
+        .find(|örnek| örnek.kimlik() == slug)
+        .map(KartKimliği::MultiBars)
+}
+
+/// Yan menü, native ve web derin bağlantıları ile grafik üretiminin tek kayıt
+/// defteri. İlişkili yüzeyler ve girdi varyantları burada yalnız bir kez yer alır.
+const KATALOG_KARTLARI: &[KatalogKartTanımı] = &[
+    katalog_kartı!(
+        KartKimliği::AddDelSeries,
+        "add-del-series",
+        "Add/Delete Series",
+        "add-del-series.html · addSeries/delSeries/setData · kaynak Y indeksi 1",
+        Some(
+            "Amaç: aynı grafik örneğinde çalışma zamanında seri ekleme/silme, hizalı veri  sütunlarını koruma ve setData ölçek sıfırlamasını gösterir. API: Grafik::seri_ekle  ve seri_sil doğrulanmış işlemlerdir; SeriYaşamDöngüsüOlayı X'i sayan resmî  seriesIdx ile addSeries/delSeries olayını setData olayından önce taşır. İlk  ekleme kaynak turuncusudur; sonraki eklemeler geliştiricinin serileri ayırt  edebilmesi için belirlenimci paletten renk alır. İzleme: çalışan bir panele yeni  sensör, CPU veya metrik eklerken grafik ve etkileşim kimliğini korumak için  uygundur. Maliyet: sütun üretimi O(N), hizalı yapı doğrulaması ve yeniden çizim  O(N×S)'dir; GPUI Entity ve yüzey kimliği değişmez.",
+        ),
+        ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ,
+        "src/kart/add_del_series.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::AddDelSeries => add_del_series_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::HighLowBands,
+        "high-low-bands",
+        "High/Low Bands · 12 related surfaces",
+        "high-low-bands.html · 12 ilişkili line/step/spline/bar yüzeyi",
+        Some(
+            "Amaç: resmî high-low-bands.html sayfasındaki 12 bağımsız yüzeyi kaynak  sırasıyla birlikte gösterir; farklı path builder, yönlü/kesişen bant, null  koşusu, unaligned ve milisaniyelik ince bar farkları aynı sayfada görülebilir.  API: high_low_bands_kartları tüm yüzeyleri tek grupta döndürür; Differing  Paths/Bars, inverted lines/bars ve iki unaligned yüzey immutable HizalıVeri  depolarını paylaşır. SeriBandı yön ve dolgu sınırlarını; SeriSeçenekleri point  görünürlüğü, bar genişliği, azami genişlik ve değer ucu yarıçapını taşır.  İzleme: min/max/ortalama sıcaklık, güven aralığı ve alt-üst telemetri  sınırlarını boşlukları yanlış köprülemeden okumak içindir. Maliyet: örneklenen  eğri bant dilimleri komşu dörtgenler yerine sürekli çokgen koşularında  birleştirilir; pointer yalnız etkin yüzeyin hafif cursor/lejant katmanını  günceller, ana geometri yalnız veri/ölçek/boyut/görünürlük değişiminde çizilir.",
+        ),
+        HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/high_low_bands.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::HighLowBands => high_low_bands_kartı(HighLowBandsÖrneği::YıllıkSıcaklık),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::LatencyHeatmap,
+        "latency-heatmap",
+        "Latency Heatmap · 5 related surfaces",
+        "latency-heatmap.html · rand.js · draw hook, mode-2 ve histogram kovaları",
+        Some(
+            "Amaç: resmî latency-heatmap.html sayfasındaki ham olay yoğunluğu, 5 ms  kovalanmış yoğunluk, mode-2 facet hücreleri ve iki histogram path ayarını  kaynak sırasıyla birlikte gösterir. API: latency_heatmap_kartları beş  bağımsız Grafik döndürür; raw/aggregate aynı immutable min-max HizalıVeri  deposunu, iki histogram ilk snapshot'ı paylaşır. IsıHücresi piksel/veri  boyutunu ve kaynak piksel ofsetini; histogram seri seçeneği align=1 ile sabit  0/3 CSS piksel gap'i taşır. Slider yalnız collapsed histogramda aynı grafik  örneğine setData uygular; gapped snapshot değişmez. İzleme: istek gecikmesi,  trace süresi ve olay yoğunluğunu zaman dağılımı ile toplu histogram arasında  karşılaştırmak içindir. Maliyet: 34.110 ham hücre tek dev yol yerine en çok  1.024 hücrelik retained path parçalarında boyanır; wheel sırasında yalnız  görünür ölçek geometrisi yeniden çözülür ve pointer hafif katmanda kalır.",
+        ),
+        LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ,
+        "src/kart/latency_heatmap.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::LatencyHeatmap => latency_heatmap_kartı(
+                LatencyHeatmapÖrneği::Ham,
+                f64::from(girdi.latency_kova),
+                f64::from(girdi.latency_ofset),
+            ),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::LinePaths,
+        "line-paths",
+        "Line Paths · 8 synced surfaces",
+        "line-paths.html · 8 cursor-synced null/linear/spline/stepped/bars surfaces",
+        Some(
+            "Amaç: resmî line-paths.html sayfasındaki points-only, linear, monotone  cubic, iki stepped ve üç bar path builder sonucunu aynı veri ve aynı  etkileşim bağlamında karşılaştırır. API: line_paths_kartları sekiz Grafik  tanımını kaynak sırasıyla, tek Arc-backed immutable 101 noktalı veri deposuyla  döndürür; 22..25 arası gerçek null koşusu bütün yol türlerinde aynı girdidir.  Masaüstü grup adaptörü kaynak cursor.sync.key=0 ilişkisini veri X/Y değerleriyle  sekiz retained yüzeye taşır; seçim, wheel, pan ve görünüm geçmişi yüzey başına  bağımsız kalır. İzleme: aynı telemetri dizisinde boşluk, nokta, eğri, basamak  ve hizalı bar sunumunun operasyonel farkını tek sayfada görmeye uygundur.  Maliyet: veri sekiz kez kopyalanmaz; pointer ana yol geometrisini yeniden  üretmeden hafif cursor katmanlarını günceller. Ana sahne yalnız veri, görünür  ölçek, seri seçimi veya boyut değiştiğinde yeniden boyanır.",
+        ),
+        LINE_PATHS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/line_paths.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::LinePaths => line_paths_kartı(LinePathsÖrneği::YalnızNoktalar),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::LogScales,
+        "log-scales",
+        "Log Scales · 2 independent surfaces",
+        "log-scales.html · 12 Minecraft sunucusu · log10 ve doğrusal Y ölçeği",
+        Some(
+            "Amaç: aynı 1.440 zaman damgası ve 12 Minecraft sunucu serisini log10 ve  doğrusal Y ölçeklerinde kaynak sırasıyla karşılaştırır. API:  log_scales_kartları iki bağımsız Grafik tanımını tek Arc-backed HizalıVeri  deposuyla döndürür; kaynak sıfırları log güvenliği için bir kez 1'e çevrilir.  Y eksenleri kaynak axis.size=60 ve axis.space=15 geometrisini kullanır.  Çekirdek log10 bölmelerini her büyüklükte 1..9 üretir, yalnız etiketleri  kullanılabilir piksel alanına göre all / 12357 / 125 / 1 kümelerine  seyreltir. İzleme: yüksek dinamik aralıklı oyuncu, istek veya kaynak  telemetrisinde hem oran değişimini hem mutlak farkı yan yana okumak içindir.  Maliyet: veri iki kez çözülmez veya kopyalanmaz; cursor ve zoom kaynak gibi  bağımsızdır, pointer yalnız etkin yüzeyin hafif katmanını günceller.",
+        ),
+        LOG_SCALES_KART_TANIM_ÖRNEĞİ,
+        "src/kart/log_scales.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::LogScales => log_scales_kartı(LogScalesÖrneği::Logaritmik),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::LogScales2,
+        "log-scales2",
+        "Log Scales 2 · 12 source surfaces",
+        "log-scales2.html · log2/log10, ters yön, null ve kısmi büyüklükler",
+        Some(
+            "Amaç: resmî log-scales2.html içindeki doğrusal, log10, log2, ters  yön, pozitif filtre, skip-tick, tümü-null, çok küçük ve kısmi büyüklük  durumlarını kaynak sırasıyla tek sayfada gösterir. API:  log_scales2_kartları on iki Grafik tanımını döndürür; ilk üç yüzey aynı  127 noktalı Arc-backed veriyi, In/Out çifti aynı dört zaman noktasını  paylaşır. İlk dört geniş yüzey kaynak axis.size=80 geometrisindedir.  In/Out çifti cursor.sync.key=\"moo\" karşılığı olarak X cursor ve görünümünü  eşler; yatay cursor kapalıdır, üst X ekseni gizlidir ve iki seri birleşik  kompozisyon olarak sunulur. İzleme: çok geniş değer aralıklarının eksen  okunabilirliği, ters giriş/çıkış akışı ve eksik/null telemetri köşelerini  değerlendirmek içindir. Maliyet: ortak veriler yeniden üretilmez; log  ızgarası tüm 1..9 bölmelerini üretirken metinler piksel yoğunluğuna göre  seyreltilir. Pointer ana yolları yeniden çizmeden yalnız etkin veya bağlı  In/Out cursor katmanlarını günceller.",
+        ),
+        LOG_SCALES2_KART_TANIM_ÖRNEĞİ,
+        "src/kart/log_scales2.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::LogScales2 => log_scales2_kartı(LogScales2Örneği::GenişDoğrusal),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::MassSpectrum,
+        "mass-spectrum",
+        "Mass Spectrum",
+        "mass-spectrum.html · 41.986 kaynak CSV noktası · özel düz Y aralığı",
+        Some(
+            "41.986 kütle spektrumu örneğinde görünür X dilimini ve retained yoğun yol performansını gösterir."
+        ),
+        MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ,
+        "src/kart/mass_spectrum.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::MassSpectrum => mass_spectrum_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::MeasureDatums,
+        "measure-datums",
+        "Measure / Datums",
+        "measure-datums.html · 1/2 datum · Esc temizle",
+        Some(
+            "Bir veya iki datum seçerek ölçüm aralığı oluşturma ve Escape ile temizleme davranışını gösterir."
+        ),
+        MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/measure_datums.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::MeasureDatums => measure_datums_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::MultiBars(MultiBarsÖrneği::KitaplıklarDikey),
+        "multi-bars",
+        "Multi Bars · 4 varyant",
+        "multi-bars.html · benchmark grupları · negatif ve durum renkli çubuklar",
+        Some(
+            "Aynı kaynak sayfasındaki dört Multi Bars varyantını tek kartta; grup ölçekleri, değer etiketleri, renkler ve isteğe bağlı çizgiyle karşılaştırır."
+        ),
+        MULTI_BARS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/multi_bars.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("multi-bars"),
+        &[],
+        multi_bars_slugdan,
+        |girdi| match girdi.kart {
+            KartKimliği::MultiBars(örnek) => multi_bars_kartı(örnek),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::NearestNonNull,
+        "nearest-non-null",
+        "Nearest Non-Null · 5 davranış",
+        "nearest-non-null.html · 5 bağımsız yüzeyde null/proximity/cursor karşılaştırması",
+        Some(
+            "Null boşluklarında en yakın gerçek örneğin beş farklı proximity/cursor politikasıyla nasıl seçildiğini karşılaştırır."
+        ),
+        NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ,
+        "src/kart/nearest_non_null.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::NearestNonNull => {
+                nearest_non_null_kartı(NearestNonNullÖrneği::XDeğerineGöre)
+            }
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::FocusCursor,
+        "focus-cursor",
+        "Focus Cursor · 4 related surfaces",
+        "focus-cursor.html · cursor.focus + setSeries",
+        Some(
+            "Amaç: resmî focus-cursor.html sayfasındaki bias, 30 px proximity, dinamik  setSeries stili ve 300 seri performans yüzeylerini aynı sayfada kaynak sırasıyla  karşılaştırır. API: focus_cursor_kartları dört bağımsız Grafik döndürür; ilk iki  yüzey aynı immutable HizalıVeri Arc deposunu paylaşır. seri_odak_sunumu,  odak değiştiğinde yalnız stroke/fill/width boya sonucunu verir. İzleme: yoğun  CPU/RAM zaman serilerinde imlece en yakın seriyi ayrıntılandırıp diğerlerini  soluklaştırmak için uygundur. Maliyet: 130K veri ikinci kez tahsis edilmez; GPUI  retained ana yolları korur, pointer yalnız etkileşim katmanı ile seri boya  durumunu günceller. Ana geometri ancak veri, ölçek, resize veya zoom değişince  yeniden kurulur.",
+        ),
+        FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ,
+        "src/kart/focus_cursor.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::FocusCursor => focus_cursor_kartı(FocusÖrneği::İmleç),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::Gradients,
+        "gradients",
+        "Gradients · 5 related surfaces",
+        "gradients.html · scaleGradient + cursor point colors",
+        Some(
+            "Amaç: resmî gradients.html sayfasındaki yatay/dikey ayrık stroke, ArcSinh  koordinatı, iki basınç dolgusu ve görünür min/orta/max dolgusunu kaynak  sırasıyla tek kartta karşılaştırır. API: gradients_kartları beş bağımsız  Grafik döndürür; dikey çift aynı data2, dolgu çifti aynı data4 HizalıVeri Arc  deposunu paylaşır. ÖlçekGradyanı değer, ±sonsuz ve görünür_veri_oranı  duraklarını; seri_imleç_rengi cursor point callback sonucunu taşır. İzleme:  eşik bölgelerini çizgi/dolgu rengiyle vurgulamak ve görünür pencerenin basınç  dağılımını okumak için uygundur. Maliyet: veri kopyalanmaz; pointer yalnız  etkin yüzeyin cursor/lejant katmanını günceller. Gradyan ve ana geometri yalnız  veri, ölçek, görünürlük, zoom/pan veya boyut değişiminde yeniden çözülür.",
+        ),
+        GRADIENTS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/gradients.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::Gradients => gradients_kartı(GradientÖrneği::YatayÇizgi),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::GridOverSeries,
+        "grid-over-series",
+        "Grid Over Series",
+        "grid-over-series.html · drawOrder: series, axes",
+        Some(
+            "Amaç: üç opak dolgulu serinin kesişimlerinde ızgara, çentik ve eksen bilgisini  seri boyasının altında kaybetmeden gösterir. API:  ÇizimSırası::SerilerEksenler kaynak drawOrder dizisini taşır; ızgara, X/Y  çentik ve eksen/etiket renkleri CSS olmadan ayrı ayrı ayarlanabilir. Otomatik  Y aralığı görünür X verisinden yeniden hesaplanır. İzleme: yoğun ve üst üste  binen CPU, bellek veya ağ alanlarında ortak eşik düzlemini her serinin üzerinde  okunabilir tutmak için uygundur. Maliyet: üç 30 noktalı seri tek retained  yüzeyde çizilir. Eksen komutları geçici Vec ayırmadan yerinde rotate ile seri  katmanının arkasından önüne alınır; pointer yalnız hafif cursor/lejant  katmanını günceller.",
+        ),
+        GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ,
+        "src/kart/grid_over_series.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::GridOverSeries => grid_over_series_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::TimezonesDst,
+        "timezones-dst",
+        "Timezones & DST",
+        "timezones-dst.html · tzDate · 51 etkin UTC/London/Chicago yüzeyi",
+        Some(
+            "Aynı UTC veri aralığını farklı saat dilimleri ve DST geçişleriyle ilişkili yüzeyler halinde gösterir."
+        ),
+        TIMEZONES_DST_KART_TANIM_ÖRNEĞİ,
+        "src/kart/timezones_dst.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::TimezonesDst => {
+                let örnek =
+                    TimezonesDstÖrneği::yeni(0).ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+                timezones_dst_kartı(örnek)
+            }
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::TooltipsClosest,
+        "tooltips-closest",
+        "Summary-opt",
+        "tooltips-closest.html · rustc-perf.json · en yakın seri ve commit karşılaştırması",
+        Some(
+            "Amaç: dört rustc-perf çalışma kipinden imlece beş CSS piksel içinde en yakın  görünür seriyi bulur; commit, değer ve başlangıca göre değişimi gerçek veri  noktasına bağlı tek kutuda gösterir. API: OdakDüzeni yakınlık/alfa kararını,  EnYakınTooltipDüzeni commit dizisini, 100 interpolasyon indeksini ve perf URL  istatistiğini çekirdekte tutar; lejant setSeries, alan seçimi X+Y çalışır.  İzleme: derleyici, servis veya sürüm regresyonunda aynı commit anındaki çalışma  kiplerini karşılaştırmak için uygundur; yerinde plot tıklaması karşılaştırma  bağlantısını açar, sürükleme bağlantı açmaz. Maliyet: 234×4 çizgi noktası ve  100 dikey kılavuz vardır; kılavuzlar tek path komutunda boyanır, pointer araması  O(log N + görünür seri sayısı) ve kutu ana yolları yeniden çizmeden taşınır.  Tarih metni platformlar arası belirlenim için UTC'dir; kaynak browser-local  Date kullandığından bu bilinçli, belgeli tek sunum farkıdır.",
+        ),
+        TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ,
+        "src/kart/tooltips_closest.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::TooltipsClosest => tooltips_closest_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::Tooltips,
+        "tooltips",
+        "Tooltips",
+        "tooltips.html · imleç ve görünür seri kutuları · 2 sn imleç durum koruması",
+        Some(
+            "Amaç: ham imleç X/Y konumu ile en yakın veri indeksindeki görünür seri  noktalarını ayrı, hafif bilgi kutularında gösterir; kaynak örneğin her iki  saniyede destroy/new uPlot yaşam döngüsünde imleç konumunu koruma sınamasını  sürdürür. API: TooltipDüzeni imleç ve seri kutularını, yeniden_kurma_ms yaşam  döngüsünü ve dış cursor memo kararını tanımlar; lejant setSeries ile One ve  varsayılan gizli Two serisini aynı yüzeyde açıp kapatır. İzleme: cursor  konumu ile örneklenmiş ölçümün farklı olduğunu geliştiriciye açıkça göstermek  ve panel yeniden kurulurken inceleme bağlamının kaybolmamasını sınamak için  uygundur. Maliyet: veri yalnız 7×2'dir; ana yollar yalnız setSeries, ölçek veya  kasıtlı iki saniyelik kaynak yeniden kurulumunda boyanır. Normal pointer  hareketi önbellekli ana yüzeye dokunmaz, yalnız mevcut tooltip katmanlarını  ve cursor çizgilerini taşır.",
+        ),
+        TOOLTIPS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/tooltips.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::Tooltips => tooltips_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::Trendlines,
+        "trendlines",
+        "Trendlines",
+        "trendlines.html · drawSeries uç trendleri · veri değerlerine yapışan X aralığı",
+        Some(
+            "Amaç: her görünür serinin ekrandaki ilk ve son gerçek veri indeksini kaynak  drawSeries kancası gibi 5/5 kesik bir uç çizgisiyle bağlar; normal path'in  kırpma için görünüm dışı komşu noktaları kullanabilmesi bu i0/i1 kararını  değiştirmez. API: ÇizimKancasıDüzeni::seri_uç_trendleri kesik aralığını,  x_aralığını_veriye_yapıştır ise seçim ve wheel uçlarının valToIdx eşdeğeriyle  gerçek X değerlerine oturmasını sağlar; lejant setSeries ana yol, dolgu ve  trendi birlikte açıp kapatır. İzleme: seçili zaman penceresindeki genel  başlangıç-son eğilimini ham dalgalanmanın üzerinde okumak için uygundur;  regresyon değildir ve ara noktaları modellemez. Maliyet: iki 100 noktalı yol  ve seri başına tek ek çizgi O(görünür N)'dir. Pointer yalnız cursor/lejant  katmanını taşır; uçlar yalnız ölçek, resize veya setSeries sonrasında yeniden  hesaplanır. Kaynak points.space=10 ve tek-piksel yarım-piksel hizası korunur.",
+        ),
+        TRENDLINES_KART_TANIM_ÖRNEĞİ,
+        "src/kart/trendlines.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::Trendlines => trendlines_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::UpdateCursorSelectResize,
+        "update-cursor-select-resize",
+        "Maintain loc of cursor/select/hoverPts",
+        "update-cursor-select-resize.html · setSize sırasında seçim, kilitli imleç ve hover noktası oranları",
+        Some(
+            "Amaç: setCursor, cursor._lock ve setSelect ile kurulmuş kalıcı etkileşim  durumunun setSize sırasında çizim alanı oranlarında kalmasını gösterir. API:  BoyutSenkronDüzeni yalnız başlangıç cursor/select/hover oranlarını taşır;  Grafik::boyutu_ayarla veri ve ölçeği koruyarak ana sahneyi yeniden boyar. Native  ve web GPUI adaptörleri ana veri sahnesinden ayrı hafif etkileşim katmanında  durumu saklar. Lejant  setSeries kırmızı yolu ve hover noktasını birlikte gizler. İzleme: panel veya  pencere boyutu değişirken kullanıcının kilitli inceleme konumunu kaybetmemek  içindir. Maliyet: kaynak gibi setSize ana yolları yeniden çizer; cursor, seçim  ve hover için ikinci bir ana yol üretmez, yalnız hafif katman koordinatları  güncellenir. 100 ms zamanlayıcı karttan çıkıldığında durdurulur.",
+        ),
+        UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
+        "src/kart/update_cursor_select_resize.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::UpdateCursorSelectResize => update_cursor_select_resize_kartı(800),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::WindDirection,
+        "wind-direction",
+        "Wind Direction",
+        "wind-direction.html · 143 saatlik kaynak veri · 15 px özel yön vektörleri",
+        Some(
+            "Amaç: sıcaklık çizgisini ve sabit 0…30 m/s ölçekli rüzgâr hızını aynı hizalı  zaman dizisinde gösterir; üçüncü seri, hız konumlarından derece yönüne uzanan  15 CSS piksellik vektörleri özel path olarak üretir. API:  RüzgarYönüDüzeni::yeni hız/yön serisini ve ölçeği bağlar; stil ile vektör  uzunluğu, rengi ve kalınlığı CSS olmadan geliştirici tarafından seçilebilir.  Direction serisinin auto=false kararı dereceleri Y aralığından çıkarır;  lejant setSeries ile üç katman bağımsız açılıp kapanır. İzleme: sıcaklık,  rüzgâr hızı ve yönü gibi aynı zamanlı fakat farklı birimli telemetriyi tek  inceleme yüzeyinde ilişkilendirmek içindir. Maliyet: 139 vektör kaynak gibi  tek beginPath/stroke eşdeğeri Yol komutunda toplu boyanır; görünüm sınırındaki  dış komşular getOuterIdxs eşdeğeriyle korunur. Pointer yalnız hafif cursor  katmanını taşır; ana yollar setSeries, ölçek veya resize ile yeniden hesaplanır.",
+        ),
+        WIND_DIRECTION_KART_TANIM_ÖRNEĞİ,
+        "src/kart/wind_direction.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::WindDirection => wind_direction_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::YScaleDrag,
+        "y-scale-drag",
+        "Draggable x & y scales",
+        "y-scale-drag.html · bağımsız X/Y eksen sürükleme · Shift ile büyüt/daralt",
+        Some(
+            "Amaç: sayısal X ile meter ve km/h adlı iki bağımsız Y ölçeğini doğrudan eksen  üzerinden kaydırır; Shift basılıyken iki uç ters yönde hareket ederek aralığı  büyütür veya daraltır. API: eksen_vuruşu_boyutta gerçek çizim payından hedef  ölçeği seçer; eksen_sürüklemeyi_başlat/sürükle/bitir kaynak setScale yaşam  döngüsünü taşır. Otomatik Y ekseni hesabı kaynak callback'indeki  25 + en_uzun_etiket × 6 piksel formülünü her aralıkta yeniden uygular; lejant  setSeries ilgili elle sürüklenmiş ölçeği otomatik aralığa döndürür. İzleme:  farklı birimli metriklerin ayrıntı düzeyini paneli yeniden kurmadan ayrı ayrı  ayarlamak için uygundur. Maliyet: hareketler ekran karesiyle birleştirilir;  setScale eksen, grid ve iki kısa yolu yeniden boyar, cursor katmanı yerinde  kalır. GPUI Web pointer capture, native GPUI dışarıda mouse-up temizliğiyle sürüklemeyi  yüzey sınırının dışında da güvenle tamamlar.",
+        ),
+        Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ,
+        "src/kart/y_scale_drag.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::YScaleDrag => y_scale_drag_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::YShiftedSeries,
+        "y-shifted-series",
+        "Y-shifted Series",
+        "y-shifted-series.html · aynı ham veriyle 2 sn normal/kaydırılmış kip",
+        Some(
+            "Amaç: aynı 30×3 ham ölçümü iki saniyede bir normal 0…10 düzlemi ile  Core #1/#2/#3 için 0/+10/+20 kaydırılmış şerit düzlemi arasında değiştirir.  Kırmızı ve yeşil alanların fillTo tabanları 0/10, mavi bars Path2D tabanı  20'dir; lejant series.value gibi her zaman ham 0…10 değerini gösterirken  hover noktası gerçek kaydırılmış geometride kalır. API:  YShiftedSeriesAkışı::ilerlet_güncellemesi yalnız yeni veri, range, axis values  ve fillTo tabanlarını üretir; Grafik::veriyi_y_sunumunda_ayarla aynı Grafik  örneğinde atomik setData uygular. Lejant setSeries görünürlüğü kip geçişinde  korunur. İzleme: aynı ölçekli çekirdek, pod veya kuyruk metriklerini üst üste  binmeden ayrı şeritlerde izleyip ham değerlerini karşılaştırmak içindir.  Maliyet: seçenek ağacı, GPUI entity'si, retained sahne ve etkileşim bağları yeniden  kurulmaz; 30 mavi çubuk tek dolgu ve tek stroke yolunda toplanır. Timer karttan  çıkıldığında iptal edilir, cursor hafif katmanda aynı konumdan yeniden çözülür.",
+        ),
+        Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ,
+        "src/kart/y_shifted_series.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::YShiftedSeries => y_shifted_series_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::AlignDataCost,
+        "align-data",
+        "Align Data · 2 related surfaces",
+        "align-data.html · NULL_EXPAND maliyeti + aligned line/bars",
+        Some(
+            "Hizalama maliyeti ile aynı hizalı verinin line ve bars sunumlarını tek kaynak bağlamında karşılaştırır."
+        ),
+        ALIGN_DATA_KART_TANIM_ÖRNEĞİ,
+        "src/kart/align_data.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &["align-data-cost"],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::AlignDataCost => align_data_maliyet_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::Resize,
+        "resize",
+        "Resize · sayısal x ölçeği",
+        "resize.html + zoom-wheel.html + zoom-touch.html",
+        Some(
+            "Duyarlı GPUI yüzeyinde sayısal X ölçeği, görünür dilim ve piksel-kova çizgisinin boyut değişiminde korunmasını gösterir."
+        ),
+        RESIZE_KART_TANIM_ÖRNEĞİ,
+        "src/kart/resize.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &["line-resize"],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::Resize => resize_kartı(girdi.nokta_sayısı),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::Annotations,
+        "annotations",
+        "Annotations",
+        "annotations.html · X çizgisi/aralığı · üst/alt etiket · görünürlük kırpması",
+        Some(
+            "X çizgisi ve aralık annotationlarının etiket, kırpma ve görünürlük davranışını gösterir."
+        ),
+        ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/annotations.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::Annotations => annotations_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::AreaFill,
+        "area-fill",
+        "Area Fill",
+        "area-fill.html · kaynakla aynı veri üreteci · ortak Resize etkileşim profili",
+        Some(
+            "Üç serinin kaynakla aynı veri üretimi, çizgi ve alan dolgularını ortak ölçekte gösterir."
+        ),
+        AREA_FILL_KART_TANIM_ÖRNEĞİ,
+        "src/kart/area_fill.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::AreaFill => area_fill_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::ScalePadding,
+        "scale-padding",
+        "Scale Padding · Flat",
+        "scale-padding.html · 13 düz seri · kaynakla aynı değer düzeyleri",
+        Some(
+            "Amaç: farklı büyüklüklerdeki düz eşik ve taban çizgilerini tek Y ölçeğinde  uçlara değmeden gösterir; kaynak rangeNum hesabı %10 payı dışa doğru uygun  artıma yapıştırarak −13000…13000 üretir. API: YÖlçekSeçenekleri::sayısal_aralık  alt/üst payı ve soft sınır kipini tanımlar; okunabilirliği ayrılması gereken  metrik aileleri adlandırılmış farklı ölçeklere atanabilir. İzleme: alarm ve  kapasite eşikleri için uygundur; ±0.1 ile ±10500 aynı ölçekteyse küçük değerlerin  sıfıra yakın görünmesi doğrudur. Maliyet: 13×10 hizalı nokta O(S×N), imleç  O(log N + S); cursor ve lejant ana yolları yeniden üretmeden güncellenir.",
+        ),
+        SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
+        "src/kart/scale_padding.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::ScalePadding => scale_padding_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::Months,
+        "months",
+        "Months · calendar ticks",
+        "months.html · 2 kaynak yüzeyi · UTC ayları ve artık yıl · sabit kanıt tohumu",
+        Some(
+            "Amaç: gerçek UTC ay sınırlarını normal ve artık yıllarda karşılaştırır. API:  x tarih ölçeği ve kaynak 28 günlük axes.space karşılığı takvim-ay bölmelerini  belirler. İzleme:  aylık faturalama, SLO ve kapasite raporlarında sabit 30 gün yerine gerçek ay  sınırlarını kullanın. Maliyet: iki bağımsız yüzeyde toplam 72 nokta; çizim  O(N+T), imleç O(log N). Resize bölmeleri yeniden hesaplar, veriyi üretmez.",
+        ),
+        MONTHS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/months.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::Months => months_artık_yılsız_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::MonthsRussian,
+        "months-ru",
+        "Months · Russian locale",
+        "months-ru.html · tek 1920×600 yüzey · UTC ayları ve Rusça fmtDate",
+        Some(
+            "Amaç: 36 UTC ay başlangıcını veri saat dilimini değiştirmeden Rusça eksen  adlarıyla sunar. API: months_rusça_kartı tek 1920×600 Grafik tanımını ve  TarihAdları::rusça formatter sözlüğünü döndürür; Y aralığı gelen değerlerden  otomatik türetilir. İzleme: aylık telemetri ve kapasite panellerinde depolama  zamanını UTC tutup locale'i yalnız sunum katmanında uygulayın. Maliyet: tek  yüzey 36 nokta taşır; çizim O(N+T), imleç O(log N).",
+        ),
+        MONTHS_RU_KART_TANIM_ÖRNEĞİ,
+        "src/kart/months.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::MonthsRussian => months_rusça_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::NiceScale,
+        "nice-scale",
+        "Nice Scale & Ticks",
+        "nice-scale.html · pencere/panel boyutuna bağlı niceScale/niceNum Y aralığı ve artımı",
+        Some(
+            "Amaç: panel yüksekliğine sığan okunabilir Y bölmelerini ve bu bölmelere tam  oturan yuvarlak sınırları otomatik seçer. API: GüzelÖlçekDüzeni::yeni(30.0),  kaynak niceNum eşiklerini (1/2/2,5/5/10), uçlarda %2 payı ve ArtımaGöre  etiket biçimini birleştirir. İzleme: pencere veya panel boyutu değiştiğinde  sabit tick sayısı yerine en az 30 piksel aralık korunur. Maliyet: altı X  noktası ve üç seri değişmeden kalır; yalnız ölçek, ızgara ve yollar  O(S×N+T) maliyetle yeniden boyanır.",
+        ),
+        NICE_SCALE_KART_TANIM_ÖRNEĞİ,
+        "src/kart/nice_scale.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::NiceScale => nice_scale_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::NoData,
+        "no-data",
+        "No Data · 33 seçenek",
+        "no-data.html · tek kartta 33 boş, tek noktalı, düz ve hassas ölçek seçeneği",
+        Some(
+            "Amaç: boş veri, tek nokta, neredeyse düz ve tam düz serilerde otomatik  sayısal aralığın kararlı kalmasını karşılaştırır. API: NoDataÖrneği::TÜMÜ  kaynak 33 durumu tipli seçenekler olarak sunar; no_data_kartı seçili durumun  zaman kipini, özel boş aralıklarını ve rangeNum eşdeğerini kurar. İzleme:  veri gelmeden önce anlamlı bir aralık; tek veya sabit değer geldiğinde sıfır  genişlikli olmayan güvenli bir ölçek gösterin. Maliyet: 33 eşzamanlı yüzey  yerine seçili tanım aynı GPUI yüzeyinde değiştirilir ve yalnız eksenlerle en  fazla iki nokta yeniden kurulur.",
+        ),
+        NO_DATA_KART_TANIM_ÖRNEĞİ,
+        "src/kart/no_data.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::NoData => no_data_kartı(girdi.no_data_örneği),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::PathGapClip,
+        "path-gap-clip",
+        "Path & Gap Clipping · 15 yüzey",
+        "path-gap-clip.html · 15 null/undefined, band, stepped ve piksel yüzeyi",
+        Some(
+            "Amaç: gerçek null, join sırasında oluşan undefined/hizalama eksiği, band kırpması,  stepped before/after ve tek-piksel gap sınırlarını kaynak sayfadaki 15 yüzeyle  karşılaştırır. API: HizalıDeğer::{Değer, Boş, Tanımsız}, NULL_RETAIN/NULL_EXPAND  join kipleri, linear/stepped/spline yolları ve spanGaps mutasyonu çekirdekte  tanımlıdır; kaynakta setData/setScale yoktur. İzleme: scrape eksiğini gerçek  ölçüm null'u gibi boyamayın; bridge açıldığında çizginin yalnız görsel olarak  bağlandığını kullanıcıya belirtin. Maliyet: path/gap taraması O(N), sıralı imleç  O(log N); pointer yalnız hafif overlay'i günceller, bir saniyelik animasyon yalnız  dört kaynak yüzeyin ana yollarını yeniden kurar.",
+        ),
+        PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
+        "src/kart/path_gap_clip.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::PathGapClip =>
+                path_gap_clip_kartı(PathGapClipÖrneği::VeriDışınaTaşanÖlçek),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::PixelAlign,
+        "pixel-align",
+        "Pixel Align · canlı A/B",
+        "pixel-align.html · boş başlayan 2 yüzey · tek 1 Hz halka veri + animation-frame X saati",
+        Some(
+            "Amaç: aynı canlı telemetriyi aynı kayan 120 saniyelik pencerede tam piksel ve  alt-piksel rasterizasyonuyla A/B karşılaştırır. API: grafik piksel_hizası eksen  ve grid varsayılanını, seri piksel_hizası path/point override'ını belirler;  PixelAlignAkışı 1 Hz örnek eklerken frame saati yalnız X ölçeğini ilerletir.  İzleme: hizalama veriyi değiştirmez; pxAlign=1 keskin ve hızlı fakat tırtıllı,  pxAlign=0 daha yumuşak fakat 1 px çizgilerde daha bulanık olabilir. Maliyet:  halka ekleme O(1), her frame çizim O(görünür N×S); grafik örnekleri yeniden  kurulmaz, yakınlaştırılmış görünüm canlı tam aralık ilerlerken sabit kalır.",
+        ),
+        PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
+        "src/kart/pixel_align.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::PixelAlign => {
+                pixel_align_kartı(PixelAlignÖrneği::Varsayılan, girdi.pixel_align_adımı)
+            }
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::Points,
+        "points",
+        "Points · 4 yüzey",
+        "points.html · 4 eşzamanlı yüzey · randomWalk.js · points.space, paths:null ve points.filter",
+        Some(
+            "Amaç: varsayılan nokta yoğunluğu, space=0 zorlaması, yalnız-nokta yolu ve  gerçek boşluklar arasındaki tekil ölçümleri tek kaynak sayfasında karşılaştırır.  API: points.space görünür piksel kapasitesini, paths:null yalnız marker çizimini,  NoktaFiltreKipi::BoşlukArasındakiTekiller ise path gap sınırlarından seçilen  indeksleri tanımlar. İzleme: seyrek olayları çizgiyle birleştirip süreklilik  izlenimi vermeden gösterin; yoğun telemetride marker'ları otomatik gizleyerek  ana eğriyi okunur tutun. Maliyet: dört statik yüzey toplam 3.321 X konumu tarar;  yoğunluk testi O(1), gap filtresi O(N+G×99), çizilen marker sayısı O(k).  Yakınlaştırma ve boyut değişimi filtreyi görünür piksel düzleminde yeniden hesaplar.",
+        ),
+        POINTS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/points.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::Points => points_kartı(PointsÖrneği::Karma),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::ScalesDirOri,
+        "scales-dir-ori",
+        "Scales Direction & Orientation · 16 yüzey",
+        "scales-dir-ori.html · 16 eşzamanlı yüzey · scale.dir, scale.ori ve axis.side",
+        Some(
+            "Amaç: aynı iki serinin dört yön kombinasyonunu, karşı eksen taraflarını ve X/Y  yönelim değişimini tek matriste karşılaştırır. API: scale.dir veri yönünü,  scale.ori fiziksel eksen yönelimini, axis.side eksenin top/right/bottom/left  tarafını belirler. Direction Inversion sekiz 600×300; Orientation Inversion  sekiz 320×600 yüzeydir. İzleme: ters akan süreçleri veya dikey zaman eksenini  sunarken veri değerlerini dönüştürmeden fiziksel okumayı değiştirin. Maliyet:  16 statik yüzeyin her biri aynı 10 X konumu ve iki seriyi O(S×N) çizer; timer  yoktur. Cursor yalnız hafif etkileşim katmanlarını taşır; ölçek değişiminde  senkron grubun 16 ana yüzeyi birlikte yeniden boyanır.",
+        ),
+        SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
+        "src/kart/scales_dir_ori.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::ScalesDirOri =>
+                scales_dir_ori_kartı(ScalesDirOriÖrneği::XArtıAltYArtıSol),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::Scatter,
+        "scatter",
+        "Scatter & Bubble · 2 bağımsız yüzey",
+        "scatter.html · 2 bağımsız mode:2 yüzey · toplu scatter yolu ve uzamsal bubble vuruşu",
+        Some(
+            "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble  yaklaşımını aynı kaynak bağlamında karşılaştırır. API: mode:2 facet serileri  bağımsız X/Y dizileri taşır; bubble size/label facet'leri ve Region A için sağ  y2 ölçeği ekler. İki yüzey veri, cursor ve ölçek bakımından bağımsızdır. İzleme:  korelasyon kümeleri, kapasite/gelir ve nüfus yoğunluğu gibi çok boyutlu  telemetri için uygundur. Maliyet: 40.000 scatter noktası seri başına tek toplu  çizim komutuna iner; bubble hover yalnız ölçek veya boyut değişince yenilenen  uzamsal dizinin aday hücresini sorgular ve ana sahneyi yeniden boyamaz.",
+        ),
+        SCATTER_KART_TANIM_ÖRNEĞİ,
+        "src/kart/scatter.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::Scatter => scatter_kartı(ScatterÖrneği::Scatter),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::ScrollSync,
+        "scroll-sync",
+        "Scroll syncRect()",
+        "scroll-sync.html · syncRect() · kaydırmada istemci/sahne eşlemesi",
+        Some(
+            "Amaç: kaydırılabilir panel içinde grafiğin pencere konumu değiştiğinde cursor,  seçim ve zoom koordinatlarının görsel noktadan kopmamasını gösterir. API:  adaptör güncel yüzey sınırını iletir; YüzeyDikdörtgeni istemci koordinatını  aspect-fit sahneye dönüştürür. İzleme: sanallaştırılmış liste, kayan dashboard,  sabit başlık veya yeniden yerleşen widget içindeki grafikler için gereklidir.  Maliyet: sınır yenileme tek yerleşim ölçümü ve O(1) dönüşümdür; kaydırma ana  veri sahnesini yeniden çizmez. Kaynak davranışını korumak için doğal kapsayıcı  kaydırması varsayılandır; wheel/touch eklentileri ortak API'den açılabilir.",
+        ),
+        SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
+        "src/kart/scroll_sync.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::ScrollSync => scroll_sync_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::SineStream,
+        "sine-stream",
+        "6 series x 600 points @ 60fps",
+        "sine-stream.html · Box–Muller yürüyüşü · requestAnimationFrame",
+        Some(
+            "Amaç: tek grafik yüzeyinde 600 örnekli altı seriyi ekranın boya ritminde  kaydırarak canlı izleme yükünü gösterir. API: SineAkışı::ilerlet yalnız bir  örnek ilerletir; Grafik::veriyi_ayarla aynı Grafik ve GpuiGrafik örneğinde  uPlot setData ölçek sıfırlamasını uygular. İzleme: telemetri, log oranı ve  kaynak ölçümleri gibi sabit uzunluklu canlı pencereler için uygundur.  Başlıktaki 60 FPS kaynak adıdır; gerçek hız ekran yenileme hızıdır. Maliyet:  VecDeque pencere kaydırması O(1), veri aktarımı ve altı yolun çizimi  O(seri×600); sabit eksen/grid yolları önbellekte, cursor/seçim katmanı  güncellemeler arasında korunur.",
+        ),
+        SINE_STREAM_KART_TANIM_ÖRNEĞİ,
+        "src/kart/sine_stream.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::SineStream => sine_stream_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::SoftMinMax(SoftMinMaxÖrneği::MinKip0),
+        "soft-minmax",
+        "Soft Min/Max · 5 ilişkili yüzey",
+        "soft-minmax.html · rangeNum soft/hard/pad/mode · kaynak dataMax++",
+        Some(
+            "Amaç: aynı iki noktalı verinin soft min mode 0/1/2/3 kararlarını yan yana  karşılaştırır; beşinci yüzey düz sıfır veride iki taraflı −1…1 soft sınırını  gösterir. API: soft_minmax_kartları tek kaynak sayfasının beş yüzeyini kaynak  sırasıyla kurar; SayısalAralıkParçası pad, soft ve mode alanlarını tipli  tanımlar. İzleme: sıfır tabanını sabit tutan oranlar ile küçük değişimlerde  dikey çözünürlüğü koruyan telemetri politikalarını seçmek için uygundur.  Maliyet: tek dataMax adımı yalnız ikişer noktalı dört grafiğe atomik setData  uygular; düz-sıfır yüzeyi değişmez. Tekrarlanan başlatmalar engellenir; bu,  kaynak örnekteki üst üste interval açabilme durumuna karşı kasıtlı güvenliktir.",
+        ),
+        SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
+        "src/kart/soft_minmax.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("soft-minmax"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::SoftMinMax(örnek) => soft_minmax_kartı(örnek, 12.0),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::SparklinesBars(SparklinesBarsÖrneği::GradyanÇubuklar),
+        "sparklines-bars",
+        "Sparkline + Floating Bars · 2 ilişkili yüzey",
+        "sparklines-bars.html · sparkline + yüzen çubuklar + ölçek gradyanı",
+        Some(
+            "Amaç: aynı sparkline ve yüzen low/high çubuklarını yalnız renk stratejisini  değiştirerek kontrollü A/B karşılaştırır. API: sparklines_bars_kartları iki  yüzeyi birlikte kurar; Floating Bars low değerlerini,  yüzen_çubuk_üst_serisi özel high veri taşıyıcısını kullanır ve bu taşıyıcı  otomatik ölçeğe katılmaz. İzleme: pozitif/negatif bölgeleri kesen sapma ve  bütçe aralıklarında gradyan; kategorik eşiklerde açık nokta renkleri uygundur.  Kaynak cursor/select/legend kapalıdır; ortak wheel/touch/drag yalnız geliştirici  etkinleştirirse adaptör uzantısıdır. Maliyet: her yüzey 16 noktayı O(N) tarar;  gradyan tek toplu alan komutudur, açık renk yolu 16 dikdörtgen üretir.",
+        ),
+        SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/sparklines_bars.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("sparklines-bars"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::SparklinesBars(örnek) => sparklines_bars_kartı(örnek),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::Sparklines(SparklineÖrneği::İLK),
+        "sparklines",
+        "Sparklines · 10×2 tablo",
+        "sparklines.html · kaynak CSV · 150×30 eksensiz kompakt yüzey",
+        Some(
+            "Amaç: yoğun bir izleme tablosunda 10 varlığın iki küçük zaman serisini tek  bakışta karşılaştırır; kaynak sayfanın ilişkili 20 yüzeyi ayrı katalog  kartlarına bölünmez. API: sparklines_kartları kaynak satır sırasıyla 20  (örnek, seçenekler, veri) üçlüsü döndürür; SparklineÖrneği::SATIRLAR  Hacim/Kapanış çiftlerini tanımlar ve her yüzey bağımsız  rangeNum(min,max,.1,true) Y aralığı kullanır. İzleme: hisse yerine servis,  pod veya sensör; sütunlara trafik, hata, gecikme ya da son değer konabilir.  Maliyet: kaynak Promise.all ile 10 CSV ve 20 canvas kurar; port doğrulanmış  440 değeri binary içine gömerek fetch/parser yaşam döngüsünü kaldırır.  Kaynak cursor/select/legend kapalıdır; ortak wheel/touch/drag yalnız  geliştirici etkinleştirirse çekirdek uzantısıdır.",
+        ),
+        SPARKLINES_KART_TANIM_ÖRNEĞİ,
+        "src/kart/sparklines.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("sparklines"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::Sparklines(örnek) => sparklines_kartı(örnek),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::Sparse(SparseÖrneği::YerleşikDoğrusal),
+        "sparse",
+        "Sparse · 3 pathBuilder",
+        "sparse.html · sparse.json · yerleşik/özel nokta/saf moveTo yolları",
+        Some(
+            "Amaç: aynı seyrek telemetride optimize native linear, tek toplu özel kare  noktalar ve naif moveTo/lineTo yolunun görünüm ve maliyet farkını karşılaştırır.  API: sparse_kartları tek decode sonrası üç yüzeyi kaynak sırasıyla üretir;  saf_doğrusal_yol native piksel kovasını atlar, kare points tek Alan/Path2D  komutunda batch edilir. İzleme: uzun null koşularında native yol genel  seçimdir; olay yoğunluğunda points, algoritma kıyasında naive kullanılır.  Maliyet: native piksel başına giriş/min/max/çıkışı koruyup null koşularını  tek kırılmaya indirir; points 4.430 kareyi tek fill path'te taşır; naive  13.608 girdiyi tarayıp dolu noktalarla sınır kırpma kesişimlerini çizer.",
+        ),
+        SPARSE_KART_TANIM_ÖRNEĞİ,
+        "src/kart/sparse.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("sparse"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::Sparse(örnek) => sparse_kartı(örnek),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::StackedSeries(StackedSeriesÖrneği::Stacked1),
+        "stacked-series",
+        "Stacked Series · 16 yüzey",
+        "stacked-series.html · stack.js · yığma, yüzde, grup ve karma veri",
+        Some(
+            "Amaç: tek kaynak sayfasındaki 16 bağımsız yüzeyi birlikte göstererek seri  sırasının algıya etkisini, normal/yüzde/gruplu yığmayı ve null/undefined/zero  ayrımını karşılaştırır. API: stacked_series_kartları kaynak DOM sırasıyla 16  (örnek, seçenekler, veri) üçlüsü döndürür; yalnız ilk dört yüzeyin lejant  görünürlüğü kaynak setSeries hook'u gibi bantları yeniden kurup aynı grafik  örneğinde setData uygular, kalan 12 yüzey yalnız görünürlüğü değiştirir.  İzleme: toplam kapasite bileşenleri, pozitif/negatif bütçeler ve eksik örnek  semantiğinin karşılaştırılması için uygundur; ilişkili varyasyonlar ayrı  katalog kartlarına bölünmez. Maliyet: başlangıç aralıkları kaynak  rangeNum(min,max,.1,true) ile sabittir; lejant güncellemesi yüzeyi yeniden  yaratmaz. Kaynak yüzeyler arasında cursor/ölçek senkronu yoktur ve port da  onları bağımsız tutar. Rastgele çubuk verisi tekrarlanabilir test için  belgelenmiş tohuma bağlanır.",
+        ),
+        STACKED_SERIES_KART_TANIM_ÖRNEĞİ,
+        "src/kart/stacked_series.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("stacked-series"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::StackedSeries(örnek) => stacked_series_kartı(örnek),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::StreamData(StreamDataÖrneği::SabitUzunluk),
+        "stream-data",
+        "Data Stream · 3 yüzey",
+        "stream-data.html · bench/data.json · setData canlı akışı",
+        Some(
+            "Amaç: sabit uzunlukta kayan pencere, sürekli büyüyen veri ve sabit ölçekli  büyüyen veri akışlarını aynı kaynak bağlamında karşılaştırır. API:  StreamDataGrubu tek decode edilmiş Arc kaynağı paylaşır; kartları() üç  bağımsız Grafik üretir, canlı_veriyi_ayarla seçenek ve yüzey ağacını koruyan  setData karşılığıdır. İzleme: CPU/RAM/ağ yerine servis telemetrisi, log oranı  veya sensör değerleri geçirilebilir. Maliyet: kaynak üç ayrı 100 ms timer  kullanır; port aynı tikte tek scheduler ile üç yüzeyi günceller ve veri  sonunda gereksiz kopya/çizimi durdurur. Cursor ve ölçekler yüzeyler arasında  senkronlanmaz; wheel/touch/drag kaynak dışı isteğe bağlı çekirdek uzantısıdır.",
+        ),
+        STREAM_DATA_KART_TANIM_ÖRNEĞİ,
+        "src/kart/stream_data.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("stream-data"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::StreamData(örnek) => stream_data_kartı(örnek),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::GpuiSvgExport,
+        "gpui-svg-export",
+        "GPUI SVG Export · isteğe bağlı kayıt",
+        "svg-image.html · GPUI retained yüzey → açık istekle gerçek vektör kayıt",
+        Some(
+            "Amaç: canlı grafik ile rapor veya olay eki olarak saklanabilen bağımsız  vektör anlık görüntüsünü ayırır. API: GpuiGrafik::svg_kaydı yalnız açıkça  çağrıldığında retained ana sahneyi ve istenirse etkileşim katmanını SVG  komutlarına kaydeder; native hedefte svg_dosyasına_yaz da bulunur. İzleme:  dashboard panelini rapora, olay ekine veya panoya taşımak için uygundur.  Normal GPUI paint/frame yolunda kayıt bayrağı, String, Blob veya komut başına  dal yoktur. Bu karttaki düğme dışa aktarımı o anda çalıştırır ve gerçek vektör  metnini panoya kopyalar; grafik ekranda GPUI ile boyanmaya devam eder.",
+        ),
+        GPUI_SVG_EXPORT_KART_TANIM_ÖRNEĞİ,
+        "src/kart/gpui_svg_export.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::GpuiSvgExport => gpui_svg_export_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::SyncCursor,
+        "sync-cursor",
+        "Sync Cursor",
+        "sync-cursor.html · sync.js · bench/data.json · 5 eşzamanlı yüzey",
+        Some(
+            "Amaç: ayrı CPU, RAM ve TCP yüzeyleriyle farklı seri sıralı iki karşılaştırma  yüzeyini gerçek pub/sub ilişkileri içinde gösterir. API: SyncCursorGrubu  cursor, etiket bazlı setSeries, mouseup/down filtresi ve görünür X hedeflerini  çözer; CPU/RAM dikey cursor'ı ekran oranıyla değil aynı Y veri değerini hedef  ölçeğe yeniden projekte ederek paylaşır, TCP yalnız X'i izler. İzleme: farklı  birim ve aralıklardaki servis telemetrisinde aynı olay anını birlikte incelemek  için uygundur. Sync kapatmak yerel cursor/kilit durumunu silmez; ikinci grup  kaynak gibi cursor kilidi kullanmaz. Maliyet: beş ana canvas bağımsızdır;  pointer yalnız hafif etkileşim katmanını günceller. Ana yollar setSeries,  seçim, wheel/touch/drag veya boyut değişiminde yenilenir ve görünür X aralığı  yalnız abone yüzeylere taşınır.",
+        ),
+        SYNC_CURSOR_KART_TANIM_ÖRNEĞİ,
+        "src/kart/sync_cursor.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::SyncCursor => sync_cursor_kartı(SyncCursorÖrneği::Cpu),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::SyncYZero(SyncYZeroAşaması::Ham),
+        "sync-y-zero",
+        "Sync Y Zero",
+        "sync-y-zero.html · ham → simetrik → ortak sıfır pikseli · 3 sol Y ekseni",
+        Some(
+            "Amaç: farklı büyüklüklerdeki üç Y ölçeğinin sıfırını ham değer sınırlarını  kaybetmeden aynı fiziksel piksele hizalar. API: sync_y_zero_aralıkları ham,  simetrik ve valToPos/posToVal eşdeğeri final aralıklarını üretir;  Grafik::y_ölçek_aralıklarını_ayarla üç adlandırılmış scale.range sonucunu  atomik uygular. İzleme: pozitif/negatif sapmaları farklı birimlerle tek ortak  X ekseninde karşılaştırmak için uygundur. Kaynak zaman çizelgesi seçimden  3 saniye sonra simetrik, 6 saniye sonra 1/11 ortak sıfır oranına geçer.  Maliyet: her aşama O(3) dönüşüm ve tek sahne boyamasıdır; veri, seçenek ağacı,  Grafik ve GPUI entity yeniden kurulmaz. Cursor, legend, X zoom ve ortak  wheel/touch uzantılarının görünüm durumu korunur.",
+        ),
+        SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
+        "src/kart/sync_y_zero.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("sync-y-zero"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::SyncYZero(aşama) => sync_y_zero_kartı(aşama),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::ThinBars(ThinBarsÖrneği::Yoğunluk(
+            uplot_rs::ThinBarsYoğunluk::Normal30,
+        )),
+        "thin-bars-stroke-fill",
+        "Thin bar stroke & fill",
+        "thin-bars-stroke-fill.html · paths/bars.js · 55 vuruş/dolgu geometrisi",
+        Some(
+            "Amaç: ince çubuklarda vuruşun ne zaman dolguya düştüğünü ve align, width,  gap, dir, stroke birleşimlerinin geometriyi nasıl değiştirdiğini yan yana  karşılaştırır. API: thin_bars_stroke_fill_kartları kaynak sırasıyla 7  yoğunluk ve 48 geometri yüzeyini tek grup olarak döndürür; her Grafik kendi  cursor, seçim ve geçmişini bağımsız tutar. İzleme: yoğun histogram veya  sütun telemetrisinde panel genişliğine göre okunabilir vuruş/dolgu seçmek ve  ters X/hizalama kararlarını doğrulamak için uygundur. Maliyet: kaynak gibi  55 yüzey ve toplam 1.422 çubuk kurulur; bar başına element ağı kurulmaz.  Pointer yalnız ilgili GpuiGrafik etkileşim katmanını, zoom yalnız ilgili  sahneyi günceller. Noktalar görünür X piksel açıklığı yeterli olduğunda  otomatik açılır; wheel/touch/drag isteğe bağlı çekirdek uzantısıdır.",
+        ),
+        THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ,
+        "src/kart/thin_bars_stroke_fill.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("thin-bars-stroke-fill"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::ThinBars(örnek) => thin_bars_stroke_fill_kartı(örnek),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::TimePeriods(TimePeriodsÖrneği::SaatlikKullanıcılar),
+        "time-periods",
+        "Time Periods",
+        "time-periods.html · traffic.json · saatlik/aylık/günlük dönem karşılaştırması",
+        Some(
+            "Amaç: aynı trafik kaynağını saatlik yıllar, iki ay ve günlük toplamlar  biçiminde yan yana karşılaştırır. API: time_periods_kartları üç bağımsız  Grafik döndürür; Hourly seri bazlı geçmiş-yıl lejant tarihleri, Feb–Jan  görünür birincil ölçekten türetilen ikinci X ekseni ve Daily ortak UTC  tarihini kullanır. İzleme: aynı ölçümün dönem ve çözünürlük farklarını  Grafana benzeri panellerde karşılaştırmak için uygundur. Maliyet: traffic.json  bir kez ayrıştırılır; her yüzey kendi cursor, seçim, wheel/touch/drag ve  görünüm geçmişini tutar; etkileşim yalnız ilgili GpuiGrafik sahnesini yeniler.",
+        ),
+        TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/time_periods.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("time-periods"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::TimePeriods(örnek) => time_periods_kartı(örnek),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::TimelineDiscrete(TimelineDiscreteÖrneği::DurumZamanÇizelgesi),
+        "timeline-discrete",
+        "Timeline / Discrete",
+        "timeline-discrete.html · distr.js · quadtree.js · null/undefined şeritleri",
+        Some(
+            "Amaç: gerçek süreli durum geçişlerini, sabit örnek hücrelerini ve yinelenen  değer birleştirmesini aynı kaynak bağlamında karşılaştırır. API:  timeline_discrete_kartları dört bağımsız Grafik döndürür; null/undefined  ayrımı, şerit dağılımı, renk/etiket, sağ kenara uzanan son durum ve 100px  sınırlı matrix vuruşu çekirdektedir. timeline_verisini_ayarla setData ile  hücre dizinini atomik yeniler; setSeries görünürlüğü özel timeline katmanını  değiştirir. İzleme: cihaz duty-cycle ve servis durum geçmişi için uygundur.  Maliyet: hücreler element ağı değil tek sahne boyamasıdır; hover yalnız gerçek  boyalı hücreyi ve hafif vurgu katmanını günceller.",
+        ),
+        TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,
+        "src/kart/timeline_discrete.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("timeline-discrete"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::TimelineDiscrete(örnek) => timeline_discrete_kartı(örnek),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::TimeseriesDiscrete,
+        "timeseries-discrete",
+        "TimeSeries + Discrete",
+        "timeseries-discrete.html · iki yüzey · ortak X imleci · birleşik lejant",
+        Some(
+            "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını  iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API:  timeseries_discrete_kartları üst float ve alt stepped yüzeyi birlikte döndürür;  TimeseriesDiscreteGrubu ortak X imlecini, seçim/zoom görünümünü ve birleşik  lejantı koordine eder, setSeries yalnız sahibi olan yüzeyi değiştirir. İzleme:  CPU/yük gibi sürekli ölçümlerle servis, alarm veya cihaz açık-kapalı durumlarını  aynı zaman noktasında okumak için uygundur. Maliyet: iki ana yüzey yalnız veri  ya da ölçek değiştiğinde boyanır; cursor çizgileri ve birleşik lejant hafif  katmanda güncellenir, veri yolları pointer hareketinde yeniden kurulmaz.",
+        ),
+        TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
+        "src/kart/timeseries_discrete.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::TimeseriesDiscrete => {
+                timeseries_discrete_kartı(TimeseriesDiscreteÖrneği::ZamanSerisi)
+            }
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::CursorSnap,
+        "cursor-snap",
+        "Cursor Snap · 10×10 grid",
+        "cursor-snap.html · çekirdek 10×10 piksel imleç ızgarası",
+        Some(
+            "Amaç: cursor çizgilerini ve alan seçiminin iki ucunu kaynak cursor.move  callback'i gibi aynı 10×10 CSS piksel ızgarasına oturtur; hover noktaları  dönüştürülmüş X'e en yakın gerçek veri örneğinde kalır. API:  GrafikSeçenekleri::imleç_ızgara_adımı dönüşüm sahipliğini çekirdeğe taşır;  native ve web GPUI cursor, seçim başlangıcı ve seçim bitişinde aynı sonucu kullanır.  Lejant setSeries ile üç dolu çizgi serisini ayrı açıp kapatır. İzleme:  gürültülü zaman serilerinde tekrarlanabilir piksel adımlarıyla karşılaştırma  ve zoom penceresi seçmek içindir. Maliyet: snap O(1), hizalı en yakın X  araması O(log N)'dir; normal pointer hareketi ana üç yolu yeniden çizmez,  yalnız hafif cursor/hover/lejant katmanını günceller.",
+        ),
+        CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
+        "src/kart/cursor_snap.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::CursorSnap => cursor_snap_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::CursorTooltip,
+        "cursor-tooltip",
+        "Cursor Tooltip w/placement.js",
+        "cursor-tooltip.html · sınırlara duyarlı canlı bilgi kutusu",
+        Some(
+            "Amaç: tek yeşil serideki en yakın X/Y örneğini ve plot alanına göre CSS  piksel cursor konumunu hafif bir bilgi kutusunda gösterir. API:  bilgi_kutusunu_yerleştir kaynak placement.js right/start kuralını gerçek  biçimlendirilmiş metin genişliği, plot sınırı ve 12 piksellik boşlukla  çekirdekte hesaplar; sağ alan yetmezse kutu imlecin soluna döner. İzleme:  bir telemetri örneğinin zaman ve değerini ana çizimi değiştirmeden hızlıca  okumak içindir. Maliyet: en yakın X araması O(log N), yerleşim O(1)'dir;  GPUI ana yol önbelleğini korur ve yalnız hafif etkileşim katmanı ile overlay'i  yeniler; GPUI Web pointer olaylarını aynı retained sahne durumuna uygular.",
+        ),
+        CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
+        "src/kart/cursor_tooltip.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::CustomScales,
+        "custom-scales",
+        "Custom Scales · 3 independent surfaces",
+        "custom-scales.html · aynı sayfada doğrusal, log-log ve özel Weibull ölçeği",
+        Some(
+            "Amaç: aynı 199×4 kaynak veriyi ve 20 siyah draw noktasını resmî sayfadaki  sırayla üç bağımsız 800×800 yüzeyde karşılaştırır: doğrusal, log10/log10 ve  log10 X + özel Weibull Y. API: custom_scales_kartları aynı veri/seri/bant  tanımından üç Grafik üretir; YÖlçekSeçenekleri::özel adlandırılmış fwd/bwd  fonksiyonlarını, y_sabit_bölmeler ile y_özel_etiketler kaynak axis callback  sonuçlarını taşır. İzleme: olasılık ve güven aralığı verisinde ham, log ve  dağılıma özgü görünümün aynı örnekleri nasıl ayırdığını kıyaslamak içindir.  Üç yüzeyin cursor, zoom, pan ve geçmiş durumları paylaşılmaz. Maliyet: ilk  kurulum üç retained sahnede O(3N)'dir; pointer yalnız hafif etkileşim katmanını  günceller, ana band/path yalnız ölçek, resize veya görünürlük değişiminde  yeniden üretilir.",
+        ),
+        CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ,
+        "src/kart/custom_scales.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::CustomScales => custom_scales_kartı(CustomScaleÖrneği::Doğrusal),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::DataSmoothing,
+        "data-smoothing",
+        "Data Smoothing · 4 independent surfaces",
+        "data-smoothing.html · taxi-trips + SGG + ASAP FFT + Moving Avg 300",
+        Some(
+            "Amaç: resmî Taxi Trips verisinin ham halini Savitzky–Golay, ASAP FFT ve  300 örneklik hareketli ortalama sonuçlarıyla aynı sayfada, kaynak sırasıyla  karşılaştırır. Dört 1920×300 yüzey bağımsız Grafik örnekleridir; cursor, zoom,  pan ve geçmiş durumlarını paylaşmaz. API: data_smoothing_kartları dört yüzeyi  tek grupta döndürür; savitzky_golay, asap_yumuşat ve hareketli_ortalama sabit  demo parametrelerinin hesaplama API'leridir. Y aralıkları kaynak gibi sabit,  sol eksen 60 pikseldir. İzleme: yoğun zaman serisindeki genel eğilimi korurken  gürültünün farklı yöntemlerle ne ölçüde bastırıldığını ve tepe davranışını  kıyaslamak içindir. Maliyet: algoritmalar yalnız grup kurulurken bir kez  çalıştırılır ve süreleri ayrı ölçülür; toplam 10.937 çizgi örneği retained  sahnelere alınır. Pointer en yakın X'i bulup yalnız etkin yüzeyin hafif  cursor/lejant katmanını günceller; yumuşatma ve ana yollar yeniden hesaplanmaz.",
+        ),
+        DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
+        "src/kart/data_smoothing.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::DataSmoothing => data_smoothing_kartı(SmoothingÖrneği::Ham),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::DrawHooks,
+        "draw-hooks",
+        "Draw Hooks",
+        "draw-hooks.html · drawClear/drawSeries/draw plugin hooks",
+        Some(
+            "Amaç: uPlot yaşam döngüsünün drawClear, drawSeries, özel points.show ve draw  aşamalarının tek yüzeyde hangi sırayla birleştiğini gösterir. API:  ÇizimKancasıDüzeni çok duraklı sürekli arka plan gradyanı, setData sırasında  önbelleklenen seri medyanları, altı uçlu yıldız geometrisi ve gerçek sahne  kurulum süresi stilini tanımlar. Siyah 10px eksen çentikleri ve kaynak veri  birebir korunur; yorum satırındaki grid blur eklentisi bilinçli olarak etkin  değildir. İzleme: Grafana benzeri zaman serilerinde eşik/medyan vurgusu, özel  veri işareti ve çizim maliyeti telemetrisi eklemek için uygundur. Maliyet:  medyan sıralaması yalnız ilk kurulum ve setData sırasında O(S·N logN) çalışır;  drawSeries önbelleği O(S) tüketir. Pointer ana yolları, yıldızları, gradyanı  veya medyanları yeniden üretmeden yalnız cursor/lejant katmanını taşır.",
+        ),
+        DRAW_HOOKS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/draw_hooks.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::DrawHooks => draw_hooks_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::MissingData,
+        "missing-data",
+        "Missing Data · 2 related surfaces",
+        "missing-data.html · resmî veri ve iki kaynak alt grafiği",
+        Some(
+            "Amaç: aynı resmî sayfadaki iki bağımsız yüzeyi birlikte karşılaştırır. İlk  yüzey gerçek null CPU/RAM örneklerinin yolu nasıl böldüğünü ve TCP Out'un  bağımsız MB ölçeğini; ikinci yüzey dolu değerlerde komşu X farkı 1'i aşınca  series.gaps ile oluşan boşluğu gösterir. API: missing_data_kartları iki ayrı  Grafik örneğini tek kaynak grubunda döndürür; görünüm ve cursor durumları  bilinçli olarak senkronlanmaz. Seri anahtarları setSeries görünürlüğünü ve  autoscale'ı yüzeyinde günceller. İzleme: veri gerçekten yokken oluşan null  kesintisini, örnekleme zamanındaki büyük aralıktan ayırmak içindir. Maliyet:  yollar yalnız setSeries, ölçek veya resize sırasında O(N) yeniden kurulur;  pointer yalnız hafif cursor/lejant katmanını günceller.",
+        ),
+        MISSING_DATA_KART_TANIM_ÖRNEĞİ,
+        "src/kart/missing_data.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::MissingData => missing_data_null_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::DependentScale,
+        "dependent-scale",
+        "Derived Scale · °F / °C",
+        "dependent-scale.html · Fahrenheit'tan türetilen Celsius ekseni",
+        Some(
+            "Amaç: tek Fahrenheit veri yolunu iki birimde okumayı sağlar; Celsius ekseni  ikinci bir seri veya ikinci çizim yolu değildir. API:  YÖlçekSeçenekleri::sayısal_aralık resmî rangeNum(40,80,.1,true) sonucunu,  kaynak_dönüşümü z.from=y ilişkisini ve eksen_en_az_etiket_boşluğu sağ  axis.space=20 davranışını taşır. Lejant setSeries ile aynı Grafik örneğindeki  blah serisini açıp kapatır. İzleme: sıcaklık, hız veya kapasite gibi doğrusal  dönüştürülebilen aynı telemetriyi iki birim sisteminde gösterin; X ya da Y  görünümü değiştiğinde türetilmiş eksen kaynak ölçeğin min/max dönüşümünü  korur. Maliyet: yalnız bir 7 noktalı çizgi O(N) üretilir; ikinci eksen  dönüşümü ve bölmeleri O(1) ek maliyettir. Pointer yalnız hafif cursor/lejant  katmanını taşır; ana yol setSeries, görünüm veya boyut değişiminde yenilenir.",
+        ),
+        DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
+        "src/kart/dependent_scale.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::DependentScale => dependent_scale_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::ArcSinhScales,
+        "arcsinh-scales",
+        "ArcSinh Y Scale",
+        "arcsinh-scales.html · değiştirilebilir doğrusal merkez eşiği",
+        Some(
+            "Amaç: sıfır çevresindeki küçük değişimleri doğrusal, büyük pozitif ve negatif  büyüklükleri logaritmik okunabilirlikle aynı eksende gösterir. API:  YÖlçekSeçenekleri::arcsinh doğrusal merkez eşiğini tanımlar;  y_arcsinh_eşiği_ayarla aynı Grafik örneğinde ham aralığı ve görünüm geçmişini  koruyarak geometriyi yeniler. Lejant setSeries ile Value serisini açıp  kapatır. İzleme: artı ve eksi yönde birkaç mertebeye yayılan sapma, gecikme  farkı veya bilanço telemetrisi için uygundur; wheel, seçim, pan ve touch ters  ArcSinh dönüşümünü çekirdekte uygular. Maliyet: 111 noktalı tek yol ve  decade/multiple ızgarası yalnız eşik, veri, görünüm veya boyut değişiminde  O(N + tick) yenilenir; pointer ana yolu yeniden üretmez.",
+        ),
+        ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
+        "src/kart/arcsinh_scales.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::ArcSinhScales => arcsinh_scales_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::AxisControl,
+        "axis-control",
+        "Axis Control",
+        "axis-control.html · 500.001 nokta ve sağ Y ekseni",
+        Some(
+            "Amaç: yarım milyon örnekte eksen yerleşimi ve sabit −50…50 Y düzlemini kaynak  sinyal ayrıntısını kaybetmeden doğrular. API:  YÖlçekSeçenekleri::eksen_en_az_etiket_boşluğu axis.space=50'yi;  birincil_y_sağda, eksen rengi/genişliği ve X/Y etiketleri resmî eksen  yapılandırmasını taşır. Lejant setSeries ile sin(x) yolunu açıp kapatır.  İzleme: yoğun ve sabit sınırla karşılaştırılması gereken telemetri içindir;  wheel/seçim görünür X dilimini daralttığında kovalar yalnız o dilimde kurulur.  Maliyet: 500.001 değer bellekte korunur; her piksel kovasında ilk/min/maks/son  adaylarıyla sahne O(plot width) noktaya iner, pointer ana yolu yeniden kurmaz.",
+        ),
+        AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
+        "src/kart/axis_control.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::AxisControl => axis_control_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::AxisAutosize,
+        "axis-autosize",
+        "Axis AutoSize",
+        "axis-autosize.html · 501 nokta ve 1…10⁹ dinamik eksen ölçümü",
+        Some(
+            "Amaç: aynı 501 noktalı sinyal 500 ms aralıklarla 10 kat büyürken X son etiketi  ile Y değerleri için gereken eksen payının kendini yeniden ölçmesini gösterir.  API: AxisAutosizeAkışı kaynak 1…10⁹ yaşam döngüsünü yürütür;  Grafik::canlı_veriyi_x_etiket_çarpanında_ayarla aynı Grafik örneğinde setData  ve X values çarpanını atomik yeniler. Lejant setSeries görünürlüğü tikler  boyunca korunur. İzleme: büyüklüğü çalışma anında birkaç mertebe değişebilen  sayaç, kapasite ve finans telemetrisinde etiket kırpılmasını önlemek içindir;  ortak wheel, seçim, pan ve touch görünümü veri güncellenirken kaybolmaz.  Maliyet: her tikte 501 yeni değer O(N) üretilir; grafik, olay katmanları ve  seçenek ağacı yeniden kurulmaz. Y etiketi genişliği ölçülür, sağ pay son gerçek  X split'inde en fazla üç çevrimde yakınsar; görev 10⁹'da veya karttan çıkışta  bırakılır.",
+        ),
+        AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
+        "src/kart/axis_autosize.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::AxisAutosize => axis_autosize_kartı(10_f64.powi(girdi.autosize_kuvvet)),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::AxisIndicators,
+        "axis-indicators",
+        "Axis indicators",
+        "axis-indicators.html · üç renkli eksen ve imleç göstergeleri",
+        Some(
+            "Amaç: aynı X örneğindeki üç bağımsız Y ölçeğini, ana grafik yollarını yeniden  çizmeden renkli eksen rozetleri ve kılavuzlarla birlikte okumayı sağlar. API:  her YÖlçekSeçenekleri kendi 50 px eksen dilimini, rengini ve aralığını taşır;  axisIndicsPlugin karşılığı genel yatay cursor çizgisini kapatır ve yalnız  görünür/dolu serilerin rozetlerini günceller. Lejant setSeries ile seri yolunu,  noktasını ve rozetini birlikte açıp kapatır. İzleme: aynı zaman noktasındaki  farklı birim veya büyüklüklerdeki CPU, bellek ve ağ metriklerini bağımsız  ölçeklerde karşılaştırın; kırmızı serinin null aralığında yalnız kırmızı  gösterge gizlenir. Maliyet: 30×3 ana yol yalnız veri, görünüm, boyut veya  setSeries değişiminde üretilir; pointer dört hafif rozeti ve üç kılavuzu  O(seri) konumlandırır, karta özel zamanlayıcı bırakılmaz.",
+        ),
+        AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
+        "src/kart/axis_indicators.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::AxisIndicators => axis_indicators_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::Bars(ÇubukÖrneği::ÇokGrupÇokSeriDikeyGruplu),
+        "bars-grouped-stacked",
+        "Bars · Grouped / Stacked · 10 yüzey",
+        "bars-grouped-stacked.html · 10 bağımsız grouped/stacked yüzey ve setSeries",
+        Some(
+            "Amaç: kaynak sayfanın grouped/stacked, dikey/yatay ve tek grup/tek seri sınır  durumlarını on bağımsız yüzeyde birlikte karşılaştırır. API:  bars_grouped_stacked_kartları yüzeyleri kaynak DOM sırasında döndürür;  ÇubukDüzeni yön, yığma ve ters ekseni tanımlar. setSeries grouped serinin  yuvasını, önceden yığılmış serinin kümülatif boşluğunu korur; yeniden yığma  yapmaz. Hover yalnız vurulan barı vurgular ve stacked değerini kümülatif tepe  olarak verir. İzleme: kategorik kapasite, sürüm ya da bölge metriklerini  karşılaştırırken düzen sınırlarını tek sayfada doğrulamak için uygundur.  Maliyet: her yüzey yalnız kendi barlarını tek sahne geçişinde O(grup×seri)  çizer; on Grafik veri ve görünüm geçmişi bakımından bağımsızdır. Kaynak seçim  ve wheel kapalıdır; ortak wheel/touch/drag profili geliştiricinin açabildiği  port uzantısıdır.",
+        ),
+        BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ,
+        "src/kart/bars_grouped_stacked.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("bars-grouped-stacked"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::Bars(örnek) => bars_grouped_stacked_kartı(örnek),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::BarsValuesAutosize(ÇubukYönü::Dikey),
+        "bars-values-autosize",
+        "Bars Values AutoSize · 2 yüzey",
+        "bars-values-autosize.html · dikey/yatay otomatik kompakt değer yazısı",
+        Some(
+            "Amaç: aynı rastgele değer dizisini dikey ve yatay çubuk yönünde gösterirken  değer yazısının bar ucuyla grafik kenarı arasındaki kullanılabilir alana  otomatik sığmasını karşılaştırır. API: bars_values_autosize_kartları kaynak  sırasıyla iki bağımsız Grafik döndürür; değer_etiketi_otomatik tek çizim  geçişinde kompakt metinleri, bar dikdörtgenlerini ve boşlukları ölçer. Dikey  yüzey metin genişliği, yüksekliği ve bar genişliğinin %80'inden; yatay yüzey  en dar bar yüksekliğinin %80'inden bütün etiketler için ortak 10–25 px boyut  seçer. 10 px altına düşerse etiketlerin tamamı gizlenir. İzleme: dinamik  pozitif/negatif kapasite veya fark metriklerinde etiket taşmasını engellemek  için uygundur. Maliyet: kompakt metin ölçüleri setData'da O(N), kullanılabilir  alan ve çizim O(N) hesaplanır; yüzey yeniden kurulmaz. Kaynakta yorumlu  setData/setSize akışları aynı önbellek ve yeniden ölçüm yaşam döngüsünü  kanıtlar; ortak wheel/touch/drag port uzantısıdır.",
+        ),
+        BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
+        "src/kart/bars_values_autosize.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("bars-values-autosize"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::BarsValuesAutosize(yön) => bars_values_autosize_kartı(yön),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::BoxWhisker("01_run1k"),
+        "box-whisker",
+        "Box & Whisker · 17 yüzey",
+        "box-whisker.html · 17 bağımsız yüzey · results.json ve stats.js",
+        Some(
+            "Amaç: 17 benchmarkın framework dağılımlarını kaynak sayfadaki aynı bağlamda  karşılaştırır. API: box_whisker_kartları kaynak sırasıyla 17 bağımsız Grafik  döndürür; results.json yalnız bir kez ayrıştırılıp özetlenir. stats.js  medyan/q1/q3 değerlerini iki ondalığa yuvarladıktan sonra 1,5×IQR ile bıyık ve  ayrık değer sınıflaması yapılır; rangeNum bütün ayrık değerlerin global  sınırını kapsar. Tam framework adları -90° eksende korunur. Hover ana sahneyi  yeniden çizmeden mavi sütun vurgusunu ve sarı Lib/Median/q1/q3/min/max bilgi  kutusunu hafif katmanda taşır. İzleme: gecikme, bellek ve başlangıç  ölçümlerinde merkezi eğilim kadar varyansı ve kararsız koşuları görmek için  uygundur. Maliyet: ilk özetleme toplam ölçüm sayısıyla O(N), her yüzey çizimi  en çok 30 kutu ve ayrık değer sayısıyla O(N)'dir; ortak wheel/touch/drag ürün  uzantısıdır.",
+        ),
+        BOX_WHISKER_KART_TANIM_ÖRNEĞİ,
+        "src/kart/box_whisker.rs",
+        KatalogKartGrubu::İlişkiliYüzeyler,
+        Some("box-whisker"),
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::BoxWhisker(benchmark) => box_whisker_kartı(benchmark),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::Candlestick,
+        "candlestick-ohlc",
+        "Candlestick Chart · Gold",
+        "candlestick-ohlc.html · Gold OHLC ve hacim",
+        Some(
+            "Amaç: Gold için tek hizalı tarih sütunundaki Open/High/Low/Close ve hacmi  kaynak demodaki aynı mum + hacim yüzeyinde gösterir. API: MumDüzeni UTC  zamanlarını OHLC sütunlarından ayrı yan veri olarak taşır. Beş seri bağımsız  çizgiler değil tek mum geometrisinin zorunlu alanlarıdır; kaynak özel çizicisi  setSeries/legend toggle sunmaz. Hover ana sahneyi yeniden çizmeden mavi sütun  vurgusunu ve sarı Date/Open/High/Low/Close/Volume bilgi kutusunu hafif katmanda  taşır. Fiyatlar kaynak fmtUSD biçiminde, tarih UTC YYYY-MM-DD olarak gösterilir.  İzleme: piyasa fiyatı veya OHLC pencere özetlerinde yönü, aralığı ve hacmi aynı  zaman sütununda incelemek için uygundur. Maliyet: 218 kaynak satırı gömülüdür;  ana sahne yalnız görünür mum aralığını O(V) çizer, sütun vuruşu sıralı X üzerinde  O(log N)'dir. Ortak wheel/touch/drag davranışları ürün uzantısıdır.",
+        ),
+        CANDLESTICK_KART_TANIM_ÖRNEĞİ,
+        "src/kart/candlestick_ohlc.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::Candlestick => candlestick_ohlc_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
+    katalog_kartı!(
+        KartKimliği::CursorBind,
+        "cursor-bind",
+        "Cursor Bind (try Ctrl + drag)",
+        "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok",
+        Some(
+            "Amaç: bir grafik olayının varsayılan işleyicisini koruyup çevresine uygulama  politikası eklemeyi gösterir; normal sürükleme zoom, Ctrl sürükleme açıklama  istemidir. API: İmleçBağSeçenekleri birincil tuş filtresi, Ctrl sırasında  setScale durdurma, gerçek Annotation Text istemi ve sürüklemesiz click  iletimini tek deklaratif sözleşmede tanımlar. Kaynaktaki gibi sarı seçim yalnız  dolgu taşır; metin İptal/Tamam/Enter sonrasında kalıcı çizime eklenmez. İzleme:  Grafana benzeri yüzeylerde seçim zoomunu korurken Ctrl ile olay/incident notu  istemek veya normal tıklamayı üst uygulamaya iletmek için uygundur. Maliyet:  30×3 kaynak seri O(N) çizilir; bind kararı ve click iletimi O(1), Ctrl seçiminde  yalnız hafif seçim katmanı ve modal güncellenir.",
+        ),
+        CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
+        "src/kart/cursor_bind.rs",
+        KatalogKartGrubu::Tek,
+        None,
+        &[],
+        varyant_slugı_yok,
+        |girdi| match girdi.kart {
+            KartKimliği::CursorBind => cursor_bind_kartı(),
+            _ => yanlış_kart_fabrikası(girdi.kart),
+        }
+    ),
 ];
+
+impl KatalogKartTanımı {
+    fn slugdan(&self, slug: &str) -> Option<KartKimliği> {
+        if self.slug == slug || self.eski_sluglar.contains(&slug) {
+            Some(self.kimlik)
+        } else {
+            (self.varyant_slugdan)(slug)
+        }
+    }
+
+    fn grafiği_oluştur(&self, girdi: KatalogFabrikaGirdisi) -> KatalogKartÇıktısı {
+        (self.fabrika)(girdi)
+    }
+}
 
 impl KartKimliği {
     fn ana_kart(self) -> Self {
@@ -333,546 +1623,22 @@ impl KartKimliği {
         }
     }
 
-    fn tanımlayıcı(self) -> KatalogKartTanımı {
-        let kimlik = self.ana_kart();
-        KatalogKartTanımı {
-            kimlik,
-            slug: kimlik.slug(),
-            başlık: if matches!(kimlik, Self::MultiBars(_)) {
-                "Multi Bars · 4 varyant"
-            } else {
-                kimlik.başlık()
-            },
-            kaynak: kimlik.kaynak(),
-            tanım: kimlik.tanım(),
-            tanım_yolu: kimlik.tanım_yolu(),
-        }
+    fn tanımlayıcı(self) -> &'static KatalogKartTanımı {
+        let ana_kart = self.ana_kart();
+        KATALOG_KARTLARI
+            .iter()
+            .find(|tanım| tanım.kimlik == ana_kart)
+            .unwrap_or_else(|| std::process::abort())
     }
 
     fn slug(self) -> &'static str {
-        match self {
-            Self::AddDelSeries => "add-del-series",
-            Self::AlignDataCost => "align-data",
-            Self::Resize => "resize",
-            Self::Annotations => "annotations",
-            Self::AreaFill => "area-fill",
-            Self::ScalePadding => "scale-padding",
-            Self::Months => "months",
-            Self::MonthsRussian => "months-ru",
-            Self::NiceScale => "nice-scale",
-            Self::NoData => "no-data",
-            Self::PathGapClip => "path-gap-clip",
-            Self::PixelAlign => "pixel-align",
-            Self::Points => "points",
-            Self::ScalesDirOri => "scales-dir-ori",
-            Self::Scatter => "scatter",
-            Self::ScrollSync => "scroll-sync",
-            Self::SineStream => "sine-stream",
-            Self::SoftMinMax(_) => "soft-minmax",
-            Self::SparklinesBars(_) => "sparklines-bars",
-            Self::Sparklines(_) => "sparklines",
-            Self::Sparse(_) => "sparse",
-            Self::StackedSeries(_) => "stacked-series",
-            Self::StreamData(_) => "stream-data",
-            Self::GpuiSvgExport => "gpui-svg-export",
-            Self::SyncCursor => "sync-cursor",
-            Self::SyncYZero(_) => "sync-y-zero",
-            Self::ThinBars(_) => "thin-bars-stroke-fill",
-            Self::TimePeriods(_) => "time-periods",
-            Self::TimelineDiscrete(_) => "timeline-discrete",
-            Self::TimeseriesDiscrete => "timeseries-discrete",
-            Self::TimezonesDst => "timezones-dst",
-            Self::TooltipsClosest => "tooltips-closest",
-            Self::Tooltips => "tooltips",
-            Self::Trendlines => "trendlines",
-            Self::UpdateCursorSelectResize => "update-cursor-select-resize",
-            Self::WindDirection => "wind-direction",
-            Self::YScaleDrag => "y-scale-drag",
-            Self::YShiftedSeries => "y-shifted-series",
-            Self::CursorBind => "cursor-bind",
-            Self::CursorSnap => "cursor-snap",
-            Self::CursorTooltip => "cursor-tooltip",
-            Self::CustomScales => "custom-scales",
-            Self::DataSmoothing => "data-smoothing",
-            Self::DrawHooks => "draw-hooks",
-            Self::FocusCursor => "focus-cursor",
-            Self::Gradients => "gradients",
-            Self::GridOverSeries => "grid-over-series",
-            Self::HighLowBands => "high-low-bands",
-            Self::LatencyHeatmap => "latency-heatmap",
-            Self::LinePaths => "line-paths",
-            Self::LogScales => "log-scales",
-            Self::LogScales2 => "log-scales2",
-            Self::MassSpectrum => "mass-spectrum",
-            Self::MeasureDatums => "measure-datums",
-            Self::MultiBars(_) => "multi-bars",
-            Self::NearestNonNull => "nearest-non-null",
-            Self::MissingData => "missing-data",
-            Self::DependentScale => "dependent-scale",
-            Self::ArcSinhScales => "arcsinh-scales",
-            Self::AxisControl => "axis-control",
-            Self::AxisAutosize => "axis-autosize",
-            Self::AxisIndicators => "axis-indicators",
-            Self::Bars(_) => "bars-grouped-stacked",
-            Self::BarsValuesAutosize(_) => "bars-values-autosize",
-            Self::BoxWhisker(_) => "box-whisker",
-            Self::Candlestick => "candlestick-ohlc",
-        }
+        self.tanımlayıcı().slug
     }
 
-    #[cfg(any(target_family = "wasm", test))]
     fn slugdan(slug: &str) -> Option<Self> {
-        let kart = match slug {
-            "add-del-series" => Self::AddDelSeries,
-            "align-data" | "align-data-cost" => Self::AlignDataCost,
-            "resize" | "line-resize" => Self::Resize,
-            "annotations" => Self::Annotations,
-            "area-fill" => Self::AreaFill,
-            "scale-padding" => Self::ScalePadding,
-            "months" => Self::Months,
-            "months-ru" => Self::MonthsRussian,
-            "nice-scale" => Self::NiceScale,
-            "no-data" => Self::NoData,
-            "path-gap-clip" => Self::PathGapClip,
-            "pixel-align" => Self::PixelAlign,
-            "points" => Self::Points,
-            "scales-dir-ori" => Self::ScalesDirOri,
-            "scatter" => Self::Scatter,
-            "scroll-sync" => Self::ScrollSync,
-            "sine-stream" => Self::SineStream,
-            "soft-minmax" => Self::SoftMinMax(SoftMinMaxÖrneği::MinKip0),
-            "sparklines-bars" => Self::SparklinesBars(SparklinesBarsÖrneği::GradyanÇubuklar),
-            "sparklines" => Self::Sparklines(SparklineÖrneği::İLK),
-            "sparse" => Self::Sparse(SparseÖrneği::YerleşikDoğrusal),
-            "stacked-series" => Self::StackedSeries(StackedSeriesÖrneği::Stacked1),
-            "stream-data" => Self::StreamData(StreamDataÖrneği::SabitUzunluk),
-            "gpui-svg-export" => Self::GpuiSvgExport,
-            "sync-cursor" => Self::SyncCursor,
-            "sync-y-zero" => Self::SyncYZero(SyncYZeroAşaması::Ham),
-            "thin-bars-stroke-fill" => Self::ThinBars(ThinBarsÖrneği::Yoğunluk(
-                uplot_rs::ThinBarsYoğunluk::Normal30,
-            )),
-            "time-periods" => Self::TimePeriods(TimePeriodsÖrneği::SaatlikKullanıcılar),
-            "timeline-discrete" => {
-                Self::TimelineDiscrete(TimelineDiscreteÖrneği::DurumZamanÇizelgesi)
-            }
-            "timeseries-discrete" => Self::TimeseriesDiscrete,
-            "timezones-dst" => Self::TimezonesDst,
-            "tooltips-closest" => Self::TooltipsClosest,
-            "tooltips" => Self::Tooltips,
-            "trendlines" => Self::Trendlines,
-            "update-cursor-select-resize" => Self::UpdateCursorSelectResize,
-            "wind-direction" => Self::WindDirection,
-            "y-scale-drag" => Self::YScaleDrag,
-            "y-shifted-series" => Self::YShiftedSeries,
-            "cursor-bind" => Self::CursorBind,
-            "cursor-snap" => Self::CursorSnap,
-            "cursor-tooltip" => Self::CursorTooltip,
-            "custom-scales" => Self::CustomScales,
-            "data-smoothing" => Self::DataSmoothing,
-            "draw-hooks" => Self::DrawHooks,
-            "focus-cursor" => Self::FocusCursor,
-            "gradients" => Self::Gradients,
-            "grid-over-series" => Self::GridOverSeries,
-            "high-low-bands" => Self::HighLowBands,
-            "latency-heatmap" => Self::LatencyHeatmap,
-            "line-paths" => Self::LinePaths,
-            "log-scales" => Self::LogScales,
-            "log-scales2" => Self::LogScales2,
-            "mass-spectrum" => Self::MassSpectrum,
-            "measure-datums" => Self::MeasureDatums,
-            "multi-bars" => Self::MultiBars(MultiBarsÖrneği::KitaplıklarDikey),
-            "nearest-non-null" => Self::NearestNonNull,
-            "missing-data" => Self::MissingData,
-            "dependent-scale" => Self::DependentScale,
-            "arcsinh-scales" => Self::ArcSinhScales,
-            "axis-control" => Self::AxisControl,
-            "axis-autosize" => Self::AxisAutosize,
-            "axis-indicators" => Self::AxisIndicators,
-            "bars-grouped-stacked" => Self::Bars(ÇubukÖrneği::ÇokGrupÇokSeriDikeyGruplu),
-            "bars-values-autosize" => Self::BarsValuesAutosize(ÇubukYönü::Dikey),
-            "box-whisker" => Self::BoxWhisker("01_run1k"),
-            "candlestick-ohlc" => Self::Candlestick,
-            _ => {
-                return MultiBarsÖrneği::TÜMÜ
-                    .into_iter()
-                    .find(|örnek| örnek.kimlik() == slug)
-                    .map(Self::MultiBars);
-            }
-        };
-        Some(kart)
-    }
-
-    fn başlık(self) -> &'static str {
-        match self {
-            Self::AddDelSeries => "Add/Delete Series",
-            Self::AlignDataCost => "Align Data · 2 related surfaces",
-            Self::Resize => "Resize · sayısal x ölçeği",
-            Self::Annotations => "Annotations",
-            Self::AreaFill => "Area Fill",
-            Self::ScalePadding => "Scale Padding · Flat",
-            Self::Months => "Months · calendar ticks",
-            Self::MonthsRussian => "Months · Russian locale",
-            Self::NiceScale => "Nice Scale & Ticks",
-            Self::NoData => "No Data · 33 seçenek",
-            Self::PathGapClip => "Path & Gap Clipping · 15 yüzey",
-            Self::PixelAlign => "Pixel Align · canlı A/B",
-            Self::Points => "Points · 4 yüzey",
-            Self::ScalesDirOri => "Scales Direction & Orientation · 16 yüzey",
-            Self::Scatter => "Scatter & Bubble · 2 bağımsız yüzey",
-            Self::ScrollSync => "Scroll syncRect()",
-            Self::SineStream => "6 series x 600 points @ 60fps",
-            Self::SoftMinMax(_) => "Soft Min/Max · 5 ilişkili yüzey",
-            Self::SparklinesBars(_) => "Sparkline + Floating Bars · 2 ilişkili yüzey",
-            Self::Sparklines(_) => "Sparklines · 10×2 tablo",
-            Self::Sparse(_) => "Sparse · 3 pathBuilder",
-            Self::StackedSeries(_) => "Stacked Series · 16 yüzey",
-            Self::StreamData(_) => "Data Stream · 3 yüzey",
-            Self::GpuiSvgExport => "GPUI SVG Export · isteğe bağlı kayıt",
-            Self::SyncCursor => "Sync Cursor",
-            Self::SyncYZero(_) => "Sync Y Zero",
-            Self::ThinBars(_) => "Thin bar stroke & fill",
-            Self::TimePeriods(_) => "Time Periods",
-            Self::TimelineDiscrete(_) => "Timeline / Discrete",
-            Self::TimeseriesDiscrete => "TimeSeries + Discrete",
-            Self::TimezonesDst => "Timezones & DST",
-            Self::TooltipsClosest => "Summary-opt",
-            Self::Tooltips => "Tooltips",
-            Self::Trendlines => "Trendlines",
-            Self::UpdateCursorSelectResize => "Maintain loc of cursor/select/hoverPts",
-            Self::WindDirection => "Wind Direction",
-            Self::YScaleDrag => "Draggable x & y scales",
-            Self::YShiftedSeries => "Y-shifted Series",
-            Self::CursorBind => "Cursor Bind (try Ctrl + drag)",
-            Self::CursorSnap => "Cursor Snap · 10×10 grid",
-            Self::CursorTooltip => "Cursor Tooltip w/placement.js",
-            Self::CustomScales => "Custom Scales · 3 independent surfaces",
-            Self::DataSmoothing => "Data Smoothing · 4 independent surfaces",
-            Self::DrawHooks => "Draw Hooks",
-            Self::FocusCursor => "Focus Cursor · 4 related surfaces",
-            Self::Gradients => "Gradients · 5 related surfaces",
-            Self::GridOverSeries => "Grid Over Series",
-            Self::HighLowBands => "High/Low Bands · 12 related surfaces",
-            Self::LatencyHeatmap => "Latency Heatmap · 5 related surfaces",
-            Self::LinePaths => "Line Paths · 8 synced surfaces",
-            Self::LogScales => "Log Scales · 2 independent surfaces",
-            Self::LogScales2 => "Log Scales 2 · 12 source surfaces",
-            Self::MassSpectrum => "Mass Spectrum",
-            Self::MeasureDatums => "Measure / Datums",
-            Self::MultiBars(örnek) => örnek.başlık(),
-            Self::NearestNonNull => "Nearest Non-Null · 5 davranış",
-            Self::MissingData => "Missing Data · 2 related surfaces",
-            Self::DependentScale => "Derived Scale · °F / °C",
-            Self::ArcSinhScales => "ArcSinh Y Scale",
-            Self::AxisControl => "Axis Control",
-            Self::AxisAutosize => "Axis AutoSize",
-            Self::AxisIndicators => "Axis indicators",
-            Self::Bars(_) => "Bars · Grouped / Stacked · 10 yüzey",
-            Self::BarsValuesAutosize(_) => "Bars Values AutoSize · 2 yüzey",
-            Self::BoxWhisker(_) => "Box & Whisker · 17 yüzey",
-            Self::Candlestick => "Candlestick Chart · Gold",
-        }
-    }
-
-    fn kaynak(self) -> &'static str {
-        match self {
-            Self::AddDelSeries => {
-                "add-del-series.html · addSeries/delSeries/setData · kaynak Y indeksi 1"
-            }
-            Self::AlignDataCost => "align-data.html · NULL_EXPAND maliyeti + aligned line/bars",
-            Self::Resize => "resize.html + zoom-wheel.html + zoom-touch.html",
-            Self::Annotations => {
-                "annotations.html · X çizgisi/aralığı · üst/alt etiket · görünürlük kırpması"
-            }
-            Self::AreaFill => {
-                "area-fill.html · kaynakla aynı veri üreteci · ortak Resize etkileşim profili"
-            }
-            Self::ScalePadding => {
-                "scale-padding.html · 13 düz seri · kaynakla aynı değer düzeyleri"
-            }
-            Self::Months => {
-                "months.html · 2 kaynak yüzeyi · UTC ayları ve artık yıl · sabit kanıt tohumu"
-            }
-            Self::MonthsRussian => {
-                "months-ru.html · tek 1920×600 yüzey · UTC ayları ve Rusça fmtDate"
-            }
-            Self::NiceScale => {
-                "nice-scale.html · pencere/panel boyutuna bağlı niceScale/niceNum Y aralığı ve artımı"
-            }
-            Self::NoData => {
-                "no-data.html · tek kartta 33 boş, tek noktalı, düz ve hassas ölçek seçeneği"
-            }
-            Self::PathGapClip => {
-                "path-gap-clip.html · 15 null/undefined, band, stepped ve piksel yüzeyi"
-            }
-            Self::PixelAlign => {
-                "pixel-align.html · boş başlayan 2 yüzey · tek 1 Hz halka veri + animation-frame X saati"
-            }
-            Self::Points => {
-                "points.html · 4 eşzamanlı yüzey · randomWalk.js · points.space, paths:null ve points.filter"
-            }
-            Self::ScalesDirOri => {
-                "scales-dir-ori.html · 16 eşzamanlı yüzey · scale.dir, scale.ori ve axis.side"
-            }
-            Self::Scatter => {
-                "scatter.html · 2 bağımsız mode:2 yüzey · toplu scatter yolu ve uzamsal bubble vuruşu"
-            }
-            Self::ScrollSync => "scroll-sync.html · syncRect() · kaydırmada istemci/sahne eşlemesi",
-            Self::SineStream => "sine-stream.html · Box–Muller yürüyüşü · requestAnimationFrame",
-            Self::SoftMinMax(_) => {
-                "soft-minmax.html · rangeNum soft/hard/pad/mode · kaynak dataMax++"
-            }
-            Self::SparklinesBars(_) => {
-                "sparklines-bars.html · sparkline + yüzen çubuklar + ölçek gradyanı"
-            }
-            Self::Sparklines(_) => "sparklines.html · kaynak CSV · 150×30 eksensiz kompakt yüzey",
-            Self::Sparse(_) => "sparse.html · sparse.json · yerleşik/özel nokta/saf moveTo yolları",
-            Self::StackedSeries(_) => {
-                "stacked-series.html · stack.js · yığma, yüzde, grup ve karma veri"
-            }
-            Self::StreamData(_) => "stream-data.html · bench/data.json · setData canlı akışı",
-            Self::GpuiSvgExport => {
-                "svg-image.html · GPUI retained yüzey → açık istekle gerçek vektör kayıt"
-            }
-            Self::SyncCursor => "sync-cursor.html · sync.js · bench/data.json · 5 eşzamanlı yüzey",
-            Self::SyncYZero(_) => {
-                "sync-y-zero.html · ham → simetrik → ortak sıfır pikseli · 3 sol Y ekseni"
-            }
-            Self::ThinBars(_) => {
-                "thin-bars-stroke-fill.html · paths/bars.js · 55 vuruş/dolgu geometrisi"
-            }
-            Self::TimePeriods(_) => {
-                "time-periods.html · traffic.json · saatlik/aylık/günlük dönem karşılaştırması"
-            }
-            Self::TimelineDiscrete(_) => {
-                "timeline-discrete.html · distr.js · quadtree.js · null/undefined şeritleri"
-            }
-            Self::TimeseriesDiscrete => {
-                "timeseries-discrete.html · iki yüzey · ortak X imleci · birleşik lejant"
-            }
-            Self::TimezonesDst => {
-                "timezones-dst.html · tzDate · 51 etkin UTC/London/Chicago yüzeyi"
-            }
-            Self::TooltipsClosest => {
-                "tooltips-closest.html · rustc-perf.json · en yakın seri ve commit karşılaştırması"
-            }
-            Self::Tooltips => {
-                "tooltips.html · imleç ve görünür seri kutuları · 2 sn imleç durum koruması"
-            }
-            Self::Trendlines => {
-                "trendlines.html · drawSeries uç trendleri · veri değerlerine yapışan X aralığı"
-            }
-            Self::UpdateCursorSelectResize => {
-                "update-cursor-select-resize.html · setSize sırasında seçim, kilitli imleç ve hover noktası oranları"
-            }
-            Self::WindDirection => {
-                "wind-direction.html · 143 saatlik kaynak veri · 15 px özel yön vektörleri"
-            }
-            Self::YScaleDrag => {
-                "y-scale-drag.html · bağımsız X/Y eksen sürükleme · Shift ile büyüt/daralt"
-            }
-            Self::YShiftedSeries => {
-                "y-shifted-series.html · aynı ham veriyle 2 sn normal/kaydırılmış kip"
-            }
-            Self::CursorBind => {
-                "cursor-bind.html · Ctrl+sürükle sarı açıklama seçimi · yakınlaştırma yok"
-            }
-            Self::CursorSnap => "cursor-snap.html · çekirdek 10×10 piksel imleç ızgarası",
-            Self::CursorTooltip => "cursor-tooltip.html · sınırlara duyarlı canlı bilgi kutusu",
-            Self::CustomScales => {
-                "custom-scales.html · aynı sayfada doğrusal, log-log ve özel Weibull ölçeği"
-            }
-            Self::DataSmoothing => {
-                "data-smoothing.html · taxi-trips + SGG + ASAP FFT + Moving Avg 300"
-            }
-            Self::DrawHooks => "draw-hooks.html · drawClear/drawSeries/draw plugin hooks",
-            Self::FocusCursor => "focus-cursor.html · cursor.focus + setSeries",
-            Self::Gradients => "gradients.html · scaleGradient + cursor point colors",
-            Self::GridOverSeries => "grid-over-series.html · drawOrder: series, axes",
-            Self::HighLowBands => "high-low-bands.html · 12 ilişkili line/step/spline/bar yüzeyi",
-            Self::LatencyHeatmap => {
-                "latency-heatmap.html · rand.js · draw hook, mode-2 ve histogram kovaları"
-            }
-            Self::LinePaths => {
-                "line-paths.html · 8 cursor-synced null/linear/spline/stepped/bars surfaces"
-            }
-            Self::LogScales => {
-                "log-scales.html · 12 Minecraft sunucusu · log10 ve doğrusal Y ölçeği"
-            }
-            Self::LogScales2 => {
-                "log-scales2.html · log2/log10, ters yön, null ve kısmi büyüklükler"
-            }
-            Self::MassSpectrum => {
-                "mass-spectrum.html · 41.986 kaynak CSV noktası · özel düz Y aralığı"
-            }
-            Self::MeasureDatums => "measure-datums.html · 1/2 datum · Esc temizle",
-            Self::MultiBars(_) => {
-                "multi-bars.html · benchmark grupları · negatif ve durum renkli çubuklar"
-            }
-            Self::NearestNonNull => {
-                "nearest-non-null.html · 5 bağımsız yüzeyde null/proximity/cursor karşılaştırması"
-            }
-            Self::MissingData => "missing-data.html · resmî veri ve iki kaynak alt grafiği",
-            Self::DependentScale => {
-                "dependent-scale.html · Fahrenheit'tan türetilen Celsius ekseni"
-            }
-            Self::ArcSinhScales => "arcsinh-scales.html · değiştirilebilir doğrusal merkez eşiği",
-            Self::AxisControl => "axis-control.html · 500.001 nokta ve sağ Y ekseni",
-            Self::AxisAutosize => "axis-autosize.html · 501 nokta ve 1…10⁹ dinamik eksen ölçümü",
-            Self::AxisIndicators => "axis-indicators.html · üç renkli eksen ve imleç göstergeleri",
-            Self::Bars(_) => {
-                "bars-grouped-stacked.html · 10 bağımsız grouped/stacked yüzey ve setSeries"
-            }
-            Self::BarsValuesAutosize(_) => {
-                "bars-values-autosize.html · dikey/yatay otomatik kompakt değer yazısı"
-            }
-            Self::BoxWhisker(_) => {
-                "box-whisker.html · 17 bağımsız yüzey · results.json ve stats.js"
-            }
-            Self::Candlestick => "candlestick-ohlc.html · Gold OHLC ve hacim",
-        }
-    }
-
-    fn tanım(self) -> &'static str {
-        match self {
-            Self::AddDelSeries => ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ,
-            Self::AlignDataCost => ALIGN_DATA_KART_TANIM_ÖRNEĞİ,
-            Self::Resize => RESIZE_KART_TANIM_ÖRNEĞİ,
-            Self::Annotations => ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
-            Self::AreaFill => AREA_FILL_KART_TANIM_ÖRNEĞİ,
-            Self::ScalePadding => SCALE_PADDING_KART_TANIM_ÖRNEĞİ,
-            Self::Months => MONTHS_KART_TANIM_ÖRNEĞİ,
-            Self::MonthsRussian => MONTHS_RU_KART_TANIM_ÖRNEĞİ,
-            Self::NiceScale => NICE_SCALE_KART_TANIM_ÖRNEĞİ,
-            Self::NoData => NO_DATA_KART_TANIM_ÖRNEĞİ,
-            Self::PathGapClip => PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
-            Self::PixelAlign => PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ,
-            Self::Points => POINTS_KART_TANIM_ÖRNEĞİ,
-            Self::ScalesDirOri => SCALES_DIR_ORI_KART_TANIM_ÖRNEĞİ,
-            Self::Scatter => SCATTER_KART_TANIM_ÖRNEĞİ,
-            Self::ScrollSync => SCROLL_SYNC_KART_TANIM_ÖRNEĞİ,
-            Self::SineStream => SINE_STREAM_KART_TANIM_ÖRNEĞİ,
-            Self::SoftMinMax(_) => SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
-            Self::SparklinesBars(_) => SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ,
-            Self::Sparklines(_) => SPARKLINES_KART_TANIM_ÖRNEĞİ,
-            Self::Sparse(_) => SPARSE_KART_TANIM_ÖRNEĞİ,
-            Self::StackedSeries(_) => STACKED_SERIES_KART_TANIM_ÖRNEĞİ,
-            Self::StreamData(_) => STREAM_DATA_KART_TANIM_ÖRNEĞİ,
-            Self::GpuiSvgExport => GPUI_SVG_EXPORT_KART_TANIM_ÖRNEĞİ,
-            Self::SyncCursor => SYNC_CURSOR_KART_TANIM_ÖRNEĞİ,
-            Self::SyncYZero(_) => SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
-            Self::ThinBars(_) => THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ,
-            Self::TimePeriods(_) => TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
-            Self::TimelineDiscrete(_) => TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ,
-            Self::TimeseriesDiscrete => TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
-            Self::TimezonesDst => TIMEZONES_DST_KART_TANIM_ÖRNEĞİ,
-            Self::TooltipsClosest => TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ,
-            Self::Tooltips => TOOLTIPS_KART_TANIM_ÖRNEĞİ,
-            Self::Trendlines => TRENDLINES_KART_TANIM_ÖRNEĞİ,
-            Self::UpdateCursorSelectResize => UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ,
-            Self::WindDirection => WIND_DIRECTION_KART_TANIM_ÖRNEĞİ,
-            Self::YScaleDrag => Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ,
-            Self::YShiftedSeries => Y_SHIFTED_SERIES_KART_TANIM_ÖRNEĞİ,
-            Self::CursorBind => CURSOR_BIND_KART_TANIM_ÖRNEĞİ,
-            Self::CursorSnap => CURSOR_SNAP_KART_TANIM_ÖRNEĞİ,
-            Self::CursorTooltip => CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
-            Self::CustomScales => CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ,
-            Self::DataSmoothing => DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
-            Self::DrawHooks => DRAW_HOOKS_KART_TANIM_ÖRNEĞİ,
-            Self::FocusCursor => FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ,
-            Self::Gradients => GRADIENTS_KART_TANIM_ÖRNEĞİ,
-            Self::GridOverSeries => GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ,
-            Self::HighLowBands => HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
-            Self::LatencyHeatmap => LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ,
-            Self::LinePaths => LINE_PATHS_KART_TANIM_ÖRNEĞİ,
-            Self::LogScales => LOG_SCALES_KART_TANIM_ÖRNEĞİ,
-            Self::LogScales2 => LOG_SCALES2_KART_TANIM_ÖRNEĞİ,
-            Self::MassSpectrum => MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ,
-            Self::MeasureDatums => MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
-            Self::MultiBars(_) => MULTI_BARS_KART_TANIM_ÖRNEĞİ,
-            Self::NearestNonNull => NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ,
-            Self::MissingData => MISSING_DATA_KART_TANIM_ÖRNEĞİ,
-            Self::DependentScale => DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ,
-            Self::ArcSinhScales => ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ,
-            Self::AxisControl => AXIS_CONTROL_KART_TANIM_ÖRNEĞİ,
-            Self::AxisAutosize => AXIS_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-            Self::AxisIndicators => AXIS_INDICATORS_KART_TANIM_ÖRNEĞİ,
-            Self::Bars(_) => BARS_GROUPED_STACKED_KART_TANIM_ÖRNEĞİ,
-            Self::BarsValuesAutosize(_) => BARS_VALUES_AUTOSIZE_KART_TANIM_ÖRNEĞİ,
-            Self::BoxWhisker(_) => BOX_WHISKER_KART_TANIM_ÖRNEĞİ,
-            Self::Candlestick => CANDLESTICK_KART_TANIM_ÖRNEĞİ,
-        }
-    }
-
-    fn tanım_yolu(self) -> &'static str {
-        match self {
-            Self::AddDelSeries => "src/kart/add_del_series.rs",
-            Self::AlignDataCost => "src/kart/align_data.rs",
-            Self::Resize => "src/kart/resize.rs",
-            Self::Annotations => "src/kart/annotations.rs",
-            Self::AreaFill => "src/kart/area_fill.rs",
-            Self::ScalePadding => "src/kart/scale_padding.rs",
-            Self::Months => "src/kart/months.rs",
-            Self::MonthsRussian => "src/kart/months.rs",
-            Self::NiceScale => "src/kart/nice_scale.rs",
-            Self::NoData => "src/kart/no_data.rs",
-            Self::PathGapClip => "src/kart/path_gap_clip.rs",
-            Self::PixelAlign => "src/kart/pixel_align.rs",
-            Self::Points => "src/kart/points.rs",
-            Self::ScalesDirOri => "src/kart/scales_dir_ori.rs",
-            Self::Scatter => "src/kart/scatter.rs",
-            Self::ScrollSync => "src/kart/scroll_sync.rs",
-            Self::SineStream => "src/kart/sine_stream.rs",
-            Self::SoftMinMax(_) => "src/kart/soft_minmax.rs",
-            Self::SparklinesBars(_) => "src/kart/sparklines_bars.rs",
-            Self::Sparklines(_) => "src/kart/sparklines.rs",
-            Self::Sparse(_) => "src/kart/sparse.rs",
-            Self::StackedSeries(_) => "src/kart/stacked_series.rs",
-            Self::StreamData(_) => "src/kart/stream_data.rs",
-            Self::GpuiSvgExport => "src/kart/gpui_svg_export.rs",
-            Self::SyncCursor => "src/kart/sync_cursor.rs",
-            Self::SyncYZero(_) => "src/kart/sync_y_zero.rs",
-            Self::ThinBars(_) => "src/kart/thin_bars_stroke_fill.rs",
-            Self::TimePeriods(_) => "src/kart/time_periods.rs",
-            Self::TimelineDiscrete(_) => "src/kart/timeline_discrete.rs",
-            Self::TimeseriesDiscrete => "src/kart/timeseries_discrete.rs",
-            Self::TimezonesDst => "src/kart/timezones_dst.rs",
-            Self::TooltipsClosest => "src/kart/tooltips_closest.rs",
-            Self::Tooltips => "src/kart/tooltips.rs",
-            Self::Trendlines => "src/kart/trendlines.rs",
-            Self::UpdateCursorSelectResize => "src/kart/update_cursor_select_resize.rs",
-            Self::WindDirection => "src/kart/wind_direction.rs",
-            Self::YScaleDrag => "src/kart/y_scale_drag.rs",
-            Self::YShiftedSeries => "src/kart/y_shifted_series.rs",
-            Self::CursorBind => "src/kart/cursor_bind.rs",
-            Self::CursorSnap => "src/kart/cursor_snap.rs",
-            Self::CursorTooltip => "src/kart/cursor_tooltip.rs",
-            Self::CustomScales => "src/kart/custom_scales.rs",
-            Self::DataSmoothing => "src/kart/data_smoothing.rs",
-            Self::DrawHooks => "src/kart/draw_hooks.rs",
-            Self::FocusCursor => "src/kart/focus_cursor.rs",
-            Self::Gradients => "src/kart/gradients.rs",
-            Self::GridOverSeries => "src/kart/grid_over_series.rs",
-            Self::HighLowBands => "src/kart/high_low_bands.rs",
-            Self::LatencyHeatmap => "src/kart/latency_heatmap.rs",
-            Self::LinePaths => "src/kart/line_paths.rs",
-            Self::LogScales => "src/kart/log_scales.rs",
-            Self::LogScales2 => "src/kart/log_scales2.rs",
-            Self::MassSpectrum => "src/kart/mass_spectrum.rs",
-            Self::MeasureDatums => "src/kart/measure_datums.rs",
-            Self::MultiBars(_) => "src/kart/multi_bars.rs",
-            Self::NearestNonNull => "src/kart/nearest_non_null.rs",
-            Self::MissingData => "src/kart/missing_data.rs",
-            Self::DependentScale => "src/kart/dependent_scale.rs",
-            Self::ArcSinhScales => "src/kart/arcsinh_scales.rs",
-            Self::AxisControl => "src/kart/axis_control.rs",
-            Self::AxisAutosize => "src/kart/axis_autosize.rs",
-            Self::AxisIndicators => "src/kart/axis_indicators.rs",
-            Self::Bars(_) => "src/kart/bars_grouped_stacked.rs",
-            Self::BarsValuesAutosize(_) => "src/kart/bars_values_autosize.rs",
-            Self::BoxWhisker(_) => "src/kart/box_whisker.rs",
-            Self::Candlestick => "src/kart/candlestick_ohlc.rs",
-        }
+        KATALOG_KARTLARI
+            .iter()
+            .find_map(|tanım| tanım.slugdan(slug))
     }
 
     fn etkileşimler(self) -> EtkileşimSeçenekleri {
@@ -3337,8 +4103,15 @@ impl ChartListesi {
 
     fn kartı_seç(&mut self, kart: KartKimliği, cx: &mut Context<Self>) {
         debug_assert!(
-            KATALOG_KARTLARI.contains(&kart.tanımlayıcı().kimlik),
+            KATALOG_KARTLARI
+                .iter()
+                .any(|tanım| tanım.kimlik == kart.ana_kart()),
             "kayıt defterinde bulunmayan kart seçildi"
+        );
+        debug_assert_eq!(
+            KartKimliği::slugdan(kart.slug()),
+            Some(kart.ana_kart()),
+            "canonical slug kayıt defterindeki ana karta dönmelidir"
         );
         if self.aktif_kart == kart {
             return;
@@ -4398,88 +5171,16 @@ fn grafik_oluştur(
     latency_ofset: u8,
     pixel_align_adımı: usize,
 ) -> Result<Grafik, UplotHatası> {
-    let (seçenekler, veri) = match kart {
-        KartKimliği::AddDelSeries => add_del_series_kartı(),
-        KartKimliği::AlignDataCost => align_data_maliyet_kartı(),
-        KartKimliği::Resize => resize_kartı(nokta_sayısı),
-        KartKimliği::Annotations => annotations_kartı(),
-        KartKimliği::AreaFill => area_fill_kartı(),
-        KartKimliği::ScalePadding => scale_padding_kartı(),
-        KartKimliği::Months => months_artık_yılsız_kartı(),
-        KartKimliği::MonthsRussian => months_rusça_kartı(),
-        KartKimliği::NiceScale => nice_scale_kartı(),
-        KartKimliği::NoData => no_data_kartı(no_data_örneği),
-        KartKimliği::PathGapClip => path_gap_clip_kartı(PathGapClipÖrneği::VeriDışınaTaşanÖlçek),
-        KartKimliği::PixelAlign => {
-            pixel_align_kartı(PixelAlignÖrneği::Varsayılan, pixel_align_adımı)
-        }
-        KartKimliği::Points => points_kartı(PointsÖrneği::Karma),
-        KartKimliği::ScalesDirOri => scales_dir_ori_kartı(ScalesDirOriÖrneği::XArtıAltYArtıSol),
-        KartKimliği::Scatter => scatter_kartı(ScatterÖrneği::Scatter),
-        KartKimliği::ScrollSync => scroll_sync_kartı(),
-        KartKimliği::SineStream => sine_stream_kartı(),
-        KartKimliği::SoftMinMax(örnek) => soft_minmax_kartı(örnek, 12.0),
-        KartKimliği::SparklinesBars(örnek) => sparklines_bars_kartı(örnek),
-        KartKimliği::Sparklines(örnek) => sparklines_kartı(örnek),
-        KartKimliği::Sparse(örnek) => sparse_kartı(örnek),
-        KartKimliği::StackedSeries(örnek) => stacked_series_kartı(örnek),
-        KartKimliği::StreamData(örnek) => stream_data_kartı(örnek),
-        KartKimliği::GpuiSvgExport => gpui_svg_export_kartı(),
-        KartKimliği::SyncCursor => sync_cursor_kartı(SyncCursorÖrneği::Cpu),
-        KartKimliği::SyncYZero(aşama) => sync_y_zero_kartı(aşama),
-        KartKimliği::ThinBars(örnek) => thin_bars_stroke_fill_kartı(örnek),
-        KartKimliği::TimePeriods(örnek) => time_periods_kartı(örnek),
-        KartKimliği::TimelineDiscrete(örnek) => timeline_discrete_kartı(örnek),
-        KartKimliği::TimeseriesDiscrete => {
-            timeseries_discrete_kartı(TimeseriesDiscreteÖrneği::ZamanSerisi)
-        }
-        KartKimliği::TimezonesDst => {
-            let örnek =
-                TimezonesDstÖrneği::yeni(0).ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
-            timezones_dst_kartı(örnek)
-        }
-        KartKimliği::TooltipsClosest => tooltips_closest_kartı(),
-        KartKimliği::Tooltips => tooltips_kartı(),
-        KartKimliği::Trendlines => trendlines_kartı(),
-        KartKimliği::UpdateCursorSelectResize => update_cursor_select_resize_kartı(800),
-        KartKimliği::WindDirection => wind_direction_kartı(),
-        KartKimliği::YScaleDrag => y_scale_drag_kartı(),
-        KartKimliği::YShiftedSeries => y_shifted_series_kartı(),
-        KartKimliği::CursorBind => cursor_bind_kartı(),
-        KartKimliği::CursorSnap => cursor_snap_kartı(),
-        KartKimliği::CursorTooltip => cursor_tooltip_kartı(),
-        KartKimliği::CustomScales => custom_scales_kartı(CustomScaleÖrneği::Doğrusal),
-        KartKimliği::DataSmoothing => data_smoothing_kartı(SmoothingÖrneği::Ham),
-        KartKimliği::DrawHooks => draw_hooks_kartı(),
-        KartKimliği::FocusCursor => focus_cursor_kartı(FocusÖrneği::İmleç),
-        KartKimliği::Gradients => gradients_kartı(GradientÖrneği::YatayÇizgi),
-        KartKimliği::GridOverSeries => grid_over_series_kartı(),
-        KartKimliği::HighLowBands => high_low_bands_kartı(HighLowBandsÖrneği::YıllıkSıcaklık),
-        KartKimliği::LatencyHeatmap => latency_heatmap_kartı(
-            LatencyHeatmapÖrneği::Ham,
-            f64::from(latency_kova),
-            f64::from(latency_ofset),
-        ),
-        KartKimliği::LinePaths => line_paths_kartı(LinePathsÖrneği::YalnızNoktalar),
-        KartKimliği::LogScales => log_scales_kartı(LogScalesÖrneği::Logaritmik),
-        KartKimliği::LogScales2 => log_scales2_kartı(LogScales2Örneği::GenişDoğrusal),
-        KartKimliği::MassSpectrum => mass_spectrum_kartı(),
-        KartKimliği::MeasureDatums => measure_datums_kartı(),
-        KartKimliği::MultiBars(örnek) => multi_bars_kartı(örnek),
-        KartKimliği::NearestNonNull => {
-            nearest_non_null_kartı(NearestNonNullÖrneği::XDeğerineGöre)
-        }
-        KartKimliği::MissingData => missing_data_null_kartı(),
-        KartKimliği::DependentScale => dependent_scale_kartı(),
-        KartKimliği::ArcSinhScales => arcsinh_scales_kartı(),
-        KartKimliği::AxisControl => axis_control_kartı(),
-        KartKimliği::AxisAutosize => axis_autosize_kartı(10_f64.powi(autosize_kuvvet)),
-        KartKimliği::AxisIndicators => axis_indicators_kartı(),
-        KartKimliği::Bars(örnek) => bars_grouped_stacked_kartı(örnek),
-        KartKimliği::BarsValuesAutosize(yön) => bars_values_autosize_kartı(yön),
-        KartKimliği::BoxWhisker(benchmark) => box_whisker_kartı(benchmark),
-        KartKimliği::Candlestick => candlestick_ohlc_kartı(),
-    }?;
+    let girdi = KatalogFabrikaGirdisi {
+        kart,
+        no_data_örneği,
+        nokta_sayısı,
+        autosize_kuvvet,
+        latency_kova,
+        latency_ofset,
+        pixel_align_adımı,
+    };
+    let (seçenekler, veri) = kart.tanımlayıcı().grafiği_oluştur(girdi)?;
     Grafik::yeni(seçenekler, veri)
 }
 
@@ -5272,13 +5973,22 @@ impl Render for ChartListesi {
                     .text_color(soluk)
                     .child("Canlı masaüstü doğrulaması"),
             )
-            .children(KATALOG_KARTLARI.iter().copied().map(|kart| {
-                let tanım = kart.tanımlayıcı();
+            .children(KATALOG_KARTLARI.iter().copied().map(|tanım| {
+                let kart = tanım.kimlik;
                 let aktif = aktif_kart_tanımı.kimlik == tanım.kimlik;
+                let grup_etiketi = match (tanım.grup, tanım.varyant_grubu) {
+                    (KatalogKartGrubu::Tek, _) => SharedString::from(tanım.slug),
+                    (KatalogKartGrubu::İlişkiliYüzeyler, Some(varyant)) => {
+                        SharedString::from(format!("{} · varyant grubu: {varyant}", tanım.slug))
+                    }
+                    (KatalogKartGrubu::İlişkiliYüzeyler, None) => {
+                        SharedString::from(format!("{} · ilişkili yüzeyler", tanım.slug))
+                    }
+                };
                 katalog_kartı(
                     tanım.slug,
                     tanım.başlık,
-                    tanım.slug,
+                    grup_etiketi,
                     aktif,
                     tanım.kaynak,
                     panel,
@@ -7890,702 +8600,7 @@ impl Render for ChartListesi {
                     bu.no_data_örneğini_seç(örnek, cx);
                 }))
             }));
-        let kullanım_rehberi = match aktif_kart {
-            KartKimliği::TooltipsClosest => Some(
-                "Amaç: dört rustc-perf çalışma kipinden imlece beş CSS piksel içinde en yakın \
-                 görünür seriyi bulur; commit, değer ve başlangıca göre değişimi gerçek veri \
-                 noktasına bağlı tek kutuda gösterir. API: OdakDüzeni yakınlık/alfa kararını, \
-                 EnYakınTooltipDüzeni commit dizisini, 100 interpolasyon indeksini ve perf URL \
-                 istatistiğini çekirdekte tutar; lejant setSeries, alan seçimi X+Y çalışır. \
-                 İzleme: derleyici, servis veya sürüm regresyonunda aynı commit anındaki çalışma \
-                 kiplerini karşılaştırmak için uygundur; yerinde plot tıklaması karşılaştırma \
-                 bağlantısını açar, sürükleme bağlantı açmaz. Maliyet: 234×4 çizgi noktası ve \
-                 100 dikey kılavuz vardır; kılavuzlar tek path komutunda boyanır, pointer araması \
-                 O(log N + görünür seri sayısı) ve kutu ana yolları yeniden çizmeden taşınır. \
-                 Tarih metni platformlar arası belirlenim için UTC'dir; kaynak browser-local \
-                 Date kullandığından bu bilinçli, belgeli tek sunum farkıdır.",
-            ),
-            KartKimliği::Tooltips => Some(
-                "Amaç: ham imleç X/Y konumu ile en yakın veri indeksindeki görünür seri \
-                 noktalarını ayrı, hafif bilgi kutularında gösterir; kaynak örneğin her iki \
-                 saniyede destroy/new uPlot yaşam döngüsünde imleç konumunu koruma sınamasını \
-                 sürdürür. API: TooltipDüzeni imleç ve seri kutularını, yeniden_kurma_ms yaşam \
-                 döngüsünü ve dış cursor memo kararını tanımlar; lejant setSeries ile One ve \
-                 varsayılan gizli Two serisini aynı yüzeyde açıp kapatır. İzleme: cursor \
-                 konumu ile örneklenmiş ölçümün farklı olduğunu geliştiriciye açıkça göstermek \
-                 ve panel yeniden kurulurken inceleme bağlamının kaybolmamasını sınamak için \
-                 uygundur. Maliyet: veri yalnız 7×2'dir; ana yollar yalnız setSeries, ölçek veya \
-                 kasıtlı iki saniyelik kaynak yeniden kurulumunda boyanır. Normal pointer \
-                 hareketi önbellekli ana yüzeye dokunmaz, yalnız mevcut tooltip katmanlarını \
-                 ve cursor çizgilerini taşır.",
-            ),
-            KartKimliği::Trendlines => Some(
-                "Amaç: her görünür serinin ekrandaki ilk ve son gerçek veri indeksini kaynak \
-                 drawSeries kancası gibi 5/5 kesik bir uç çizgisiyle bağlar; normal path'in \
-                 kırpma için görünüm dışı komşu noktaları kullanabilmesi bu i0/i1 kararını \
-                 değiştirmez. API: ÇizimKancasıDüzeni::seri_uç_trendleri kesik aralığını, \
-                 x_aralığını_veriye_yapıştır ise seçim ve wheel uçlarının valToIdx eşdeğeriyle \
-                 gerçek X değerlerine oturmasını sağlar; lejant setSeries ana yol, dolgu ve \
-                 trendi birlikte açıp kapatır. İzleme: seçili zaman penceresindeki genel \
-                 başlangıç-son eğilimini ham dalgalanmanın üzerinde okumak için uygundur; \
-                 regresyon değildir ve ara noktaları modellemez. Maliyet: iki 100 noktalı yol \
-                 ve seri başına tek ek çizgi O(görünür N)'dir. Pointer yalnız cursor/lejant \
-                 katmanını taşır; uçlar yalnız ölçek, resize veya setSeries sonrasında yeniden \
-                 hesaplanır. Kaynak points.space=10 ve tek-piksel yarım-piksel hizası korunur.",
-            ),
-            KartKimliği::CursorSnap => Some(
-                "Amaç: cursor çizgilerini ve alan seçiminin iki ucunu kaynak cursor.move \
-                 callback'i gibi aynı 10×10 CSS piksel ızgarasına oturtur; hover noktaları \
-                 dönüştürülmüş X'e en yakın gerçek veri örneğinde kalır. API: \
-                 GrafikSeçenekleri::imleç_ızgara_adımı dönüşüm sahipliğini çekirdeğe taşır; \
-                 native ve web GPUI cursor, seçim başlangıcı ve seçim bitişinde aynı sonucu kullanır. \
-                 Lejant setSeries ile üç dolu çizgi serisini ayrı açıp kapatır. İzleme: \
-                 gürültülü zaman serilerinde tekrarlanabilir piksel adımlarıyla karşılaştırma \
-                 ve zoom penceresi seçmek içindir. Maliyet: snap O(1), hizalı en yakın X \
-                 araması O(log N)'dir; normal pointer hareketi ana üç yolu yeniden çizmez, \
-                 yalnız hafif cursor/hover/lejant katmanını günceller.",
-            ),
-            KartKimliği::CursorTooltip => Some(
-                "Amaç: tek yeşil serideki en yakın X/Y örneğini ve plot alanına göre CSS \
-                 piksel cursor konumunu hafif bir bilgi kutusunda gösterir. API: \
-                 bilgi_kutusunu_yerleştir kaynak placement.js right/start kuralını gerçek \
-                 biçimlendirilmiş metin genişliği, plot sınırı ve 12 piksellik boşlukla \
-                 çekirdekte hesaplar; sağ alan yetmezse kutu imlecin soluna döner. İzleme: \
-                 bir telemetri örneğinin zaman ve değerini ana çizimi değiştirmeden hızlıca \
-                 okumak içindir. Maliyet: en yakın X araması O(log N), yerleşim O(1)'dir; \
-                 GPUI ana yol önbelleğini korur ve yalnız hafif etkileşim katmanı ile overlay'i \
-                 yeniler; GPUI Web pointer olaylarını aynı retained sahne durumuna uygular.",
-            ),
-            KartKimliği::CustomScales => Some(
-                "Amaç: aynı 199×4 kaynak veriyi ve 20 siyah draw noktasını resmî sayfadaki \
-                 sırayla üç bağımsız 800×800 yüzeyde karşılaştırır: doğrusal, log10/log10 ve \
-                 log10 X + özel Weibull Y. API: custom_scales_kartları aynı veri/seri/bant \
-                 tanımından üç Grafik üretir; YÖlçekSeçenekleri::özel adlandırılmış fwd/bwd \
-                 fonksiyonlarını, y_sabit_bölmeler ile y_özel_etiketler kaynak axis callback \
-                 sonuçlarını taşır. İzleme: olasılık ve güven aralığı verisinde ham, log ve \
-                 dağılıma özgü görünümün aynı örnekleri nasıl ayırdığını kıyaslamak içindir. \
-                 Üç yüzeyin cursor, zoom, pan ve geçmiş durumları paylaşılmaz. Maliyet: ilk \
-                 kurulum üç retained sahnede O(3N)'dir; pointer yalnız hafif etkileşim katmanını \
-                 günceller, ana band/path yalnız ölçek, resize veya görünürlük değişiminde \
-                 yeniden üretilir.",
-            ),
-            KartKimliği::DataSmoothing => Some(
-                "Amaç: resmî Taxi Trips verisinin ham halini Savitzky–Golay, ASAP FFT ve \
-                 300 örneklik hareketli ortalama sonuçlarıyla aynı sayfada, kaynak sırasıyla \
-                 karşılaştırır. Dört 1920×300 yüzey bağımsız Grafik örnekleridir; cursor, zoom, \
-                 pan ve geçmiş durumlarını paylaşmaz. API: data_smoothing_kartları dört yüzeyi \
-                 tek grupta döndürür; savitzky_golay, asap_yumuşat ve hareketli_ortalama sabit \
-                 demo parametrelerinin hesaplama API'leridir. Y aralıkları kaynak gibi sabit, \
-                 sol eksen 60 pikseldir. İzleme: yoğun zaman serisindeki genel eğilimi korurken \
-                 gürültünün farklı yöntemlerle ne ölçüde bastırıldığını ve tepe davranışını \
-                 kıyaslamak içindir. Maliyet: algoritmalar yalnız grup kurulurken bir kez \
-                 çalıştırılır ve süreleri ayrı ölçülür; toplam 10.937 çizgi örneği retained \
-                 sahnelere alınır. Pointer en yakın X'i bulup yalnız etkin yüzeyin hafif \
-                 cursor/lejant katmanını günceller; yumuşatma ve ana yollar yeniden hesaplanmaz.",
-            ),
-            KartKimliği::FocusCursor => Some(
-                "Amaç: resmî focus-cursor.html sayfasındaki bias, 30 px proximity, dinamik \
-                 setSeries stili ve 300 seri performans yüzeylerini aynı sayfada kaynak sırasıyla \
-                 karşılaştırır. API: focus_cursor_kartları dört bağımsız Grafik döndürür; ilk iki \
-                 yüzey aynı immutable HizalıVeri Arc deposunu paylaşır. seri_odak_sunumu, \
-                 odak değiştiğinde yalnız stroke/fill/width boya sonucunu verir. İzleme: yoğun \
-                 CPU/RAM zaman serilerinde imlece en yakın seriyi ayrıntılandırıp diğerlerini \
-                 soluklaştırmak için uygundur. Maliyet: 130K veri ikinci kez tahsis edilmez; GPUI \
-                 retained ana yolları korur, pointer yalnız etkileşim katmanı ile seri boya \
-                 durumunu günceller. Ana geometri ancak veri, ölçek, resize veya zoom değişince \
-                 yeniden kurulur.",
-            ),
-            KartKimliği::Gradients => Some(
-                "Amaç: resmî gradients.html sayfasındaki yatay/dikey ayrık stroke, ArcSinh \
-                 koordinatı, iki basınç dolgusu ve görünür min/orta/max dolgusunu kaynak \
-                 sırasıyla tek kartta karşılaştırır. API: gradients_kartları beş bağımsız \
-                 Grafik döndürür; dikey çift aynı data2, dolgu çifti aynı data4 HizalıVeri Arc \
-                 deposunu paylaşır. ÖlçekGradyanı değer, ±sonsuz ve görünür_veri_oranı \
-                 duraklarını; seri_imleç_rengi cursor point callback sonucunu taşır. İzleme: \
-                 eşik bölgelerini çizgi/dolgu rengiyle vurgulamak ve görünür pencerenin basınç \
-                 dağılımını okumak için uygundur. Maliyet: veri kopyalanmaz; pointer yalnız \
-                 etkin yüzeyin cursor/lejant katmanını günceller. Gradyan ve ana geometri yalnız \
-                 veri, ölçek, görünürlük, zoom/pan veya boyut değişiminde yeniden çözülür.",
-            ),
-            KartKimliği::GridOverSeries => Some(
-                "Amaç: üç opak dolgulu serinin kesişimlerinde ızgara, çentik ve eksen bilgisini \
-                 seri boyasının altında kaybetmeden gösterir. API: \
-                 ÇizimSırası::SerilerEksenler kaynak drawOrder dizisini taşır; ızgara, X/Y \
-                 çentik ve eksen/etiket renkleri CSS olmadan ayrı ayrı ayarlanabilir. Otomatik \
-                 Y aralığı görünür X verisinden yeniden hesaplanır. İzleme: yoğun ve üst üste \
-                 binen CPU, bellek veya ağ alanlarında ortak eşik düzlemini her serinin üzerinde \
-                 okunabilir tutmak için uygundur. Maliyet: üç 30 noktalı seri tek retained \
-                 yüzeyde çizilir. Eksen komutları geçici Vec ayırmadan yerinde rotate ile seri \
-                 katmanının arkasından önüne alınır; pointer yalnız hafif cursor/lejant \
-                 katmanını günceller.",
-            ),
-            KartKimliği::HighLowBands => Some(
-                "Amaç: resmî high-low-bands.html sayfasındaki 12 bağımsız yüzeyi kaynak \
-                 sırasıyla birlikte gösterir; farklı path builder, yönlü/kesişen bant, null \
-                 koşusu, unaligned ve milisaniyelik ince bar farkları aynı sayfada görülebilir. \
-                 API: high_low_bands_kartları tüm yüzeyleri tek grupta döndürür; Differing \
-                 Paths/Bars, inverted lines/bars ve iki unaligned yüzey immutable HizalıVeri \
-                 depolarını paylaşır. SeriBandı yön ve dolgu sınırlarını; SeriSeçenekleri point \
-                 görünürlüğü, bar genişliği, azami genişlik ve değer ucu yarıçapını taşır. \
-                 İzleme: min/max/ortalama sıcaklık, güven aralığı ve alt-üst telemetri \
-                 sınırlarını boşlukları yanlış köprülemeden okumak içindir. Maliyet: örneklenen \
-                 eğri bant dilimleri komşu dörtgenler yerine sürekli çokgen koşularında \
-                 birleştirilir; pointer yalnız etkin yüzeyin hafif cursor/lejant katmanını \
-                 günceller, ana geometri yalnız veri/ölçek/boyut/görünürlük değişiminde çizilir.",
-            ),
-            KartKimliği::LatencyHeatmap => Some(
-                "Amaç: resmî latency-heatmap.html sayfasındaki ham olay yoğunluğu, 5 ms \
-                 kovalanmış yoğunluk, mode-2 facet hücreleri ve iki histogram path ayarını \
-                 kaynak sırasıyla birlikte gösterir. API: latency_heatmap_kartları beş \
-                 bağımsız Grafik döndürür; raw/aggregate aynı immutable min-max HizalıVeri \
-                 deposunu, iki histogram ilk snapshot'ı paylaşır. IsıHücresi piksel/veri \
-                 boyutunu ve kaynak piksel ofsetini; histogram seri seçeneği align=1 ile sabit \
-                 0/3 CSS piksel gap'i taşır. Slider yalnız collapsed histogramda aynı grafik \
-                 örneğine setData uygular; gapped snapshot değişmez. İzleme: istek gecikmesi, \
-                 trace süresi ve olay yoğunluğunu zaman dağılımı ile toplu histogram arasında \
-                 karşılaştırmak içindir. Maliyet: 34.110 ham hücre tek dev yol yerine en çok \
-                 1.024 hücrelik retained path parçalarında boyanır; wheel sırasında yalnız \
-                 görünür ölçek geometrisi yeniden çözülür ve pointer hafif katmanda kalır.",
-            ),
-            KartKimliği::LinePaths => Some(
-                "Amaç: resmî line-paths.html sayfasındaki points-only, linear, monotone \
-                 cubic, iki stepped ve üç bar path builder sonucunu aynı veri ve aynı \
-                 etkileşim bağlamında karşılaştırır. API: line_paths_kartları sekiz Grafik \
-                 tanımını kaynak sırasıyla, tek Arc-backed immutable 101 noktalı veri deposuyla \
-                 döndürür; 22..25 arası gerçek null koşusu bütün yol türlerinde aynı girdidir. \
-                 Masaüstü grup adaptörü kaynak cursor.sync.key=0 ilişkisini veri X/Y değerleriyle \
-                 sekiz retained yüzeye taşır; seçim, wheel, pan ve görünüm geçmişi yüzey başına \
-                 bağımsız kalır. İzleme: aynı telemetri dizisinde boşluk, nokta, eğri, basamak \
-                 ve hizalı bar sunumunun operasyonel farkını tek sayfada görmeye uygundur. \
-                 Maliyet: veri sekiz kez kopyalanmaz; pointer ana yol geometrisini yeniden \
-                 üretmeden hafif cursor katmanlarını günceller. Ana sahne yalnız veri, görünür \
-                 ölçek, seri seçimi veya boyut değiştiğinde yeniden boyanır.",
-            ),
-            KartKimliği::LogScales => Some(
-                "Amaç: aynı 1.440 zaman damgası ve 12 Minecraft sunucu serisini log10 ve \
-                 doğrusal Y ölçeklerinde kaynak sırasıyla karşılaştırır. API: \
-                 log_scales_kartları iki bağımsız Grafik tanımını tek Arc-backed HizalıVeri \
-                 deposuyla döndürür; kaynak sıfırları log güvenliği için bir kez 1'e çevrilir. \
-                 Y eksenleri kaynak axis.size=60 ve axis.space=15 geometrisini kullanır. \
-                 Çekirdek log10 bölmelerini her büyüklükte 1..9 üretir, yalnız etiketleri \
-                 kullanılabilir piksel alanına göre all / 12357 / 125 / 1 kümelerine \
-                 seyreltir. İzleme: yüksek dinamik aralıklı oyuncu, istek veya kaynak \
-                 telemetrisinde hem oran değişimini hem mutlak farkı yan yana okumak içindir. \
-                 Maliyet: veri iki kez çözülmez veya kopyalanmaz; cursor ve zoom kaynak gibi \
-                 bağımsızdır, pointer yalnız etkin yüzeyin hafif katmanını günceller.",
-            ),
-            KartKimliği::LogScales2 => Some(
-                "Amaç: resmî log-scales2.html içindeki doğrusal, log10, log2, ters \
-                 yön, pozitif filtre, skip-tick, tümü-null, çok küçük ve kısmi büyüklük \
-                 durumlarını kaynak sırasıyla tek sayfada gösterir. API: \
-                 log_scales2_kartları on iki Grafik tanımını döndürür; ilk üç yüzey aynı \
-                 127 noktalı Arc-backed veriyi, In/Out çifti aynı dört zaman noktasını \
-                 paylaşır. İlk dört geniş yüzey kaynak axis.size=80 geometrisindedir. \
-                 In/Out çifti cursor.sync.key=\"moo\" karşılığı olarak X cursor ve görünümünü \
-                 eşler; yatay cursor kapalıdır, üst X ekseni gizlidir ve iki seri birleşik \
-                 kompozisyon olarak sunulur. İzleme: çok geniş değer aralıklarının eksen \
-                 okunabilirliği, ters giriş/çıkış akışı ve eksik/null telemetri köşelerini \
-                 değerlendirmek içindir. Maliyet: ortak veriler yeniden üretilmez; log \
-                 ızgarası tüm 1..9 bölmelerini üretirken metinler piksel yoğunluğuna göre \
-                 seyreltilir. Pointer ana yolları yeniden çizmeden yalnız etkin veya bağlı \
-                 In/Out cursor katmanlarını günceller.",
-            ),
-            KartKimliği::DrawHooks => Some(
-                "Amaç: uPlot yaşam döngüsünün drawClear, drawSeries, özel points.show ve draw \
-                 aşamalarının tek yüzeyde hangi sırayla birleştiğini gösterir. API: \
-                 ÇizimKancasıDüzeni çok duraklı sürekli arka plan gradyanı, setData sırasında \
-                 önbelleklenen seri medyanları, altı uçlu yıldız geometrisi ve gerçek sahne \
-                 kurulum süresi stilini tanımlar. Siyah 10px eksen çentikleri ve kaynak veri \
-                 birebir korunur; yorum satırındaki grid blur eklentisi bilinçli olarak etkin \
-                 değildir. İzleme: Grafana benzeri zaman serilerinde eşik/medyan vurgusu, özel \
-                 veri işareti ve çizim maliyeti telemetrisi eklemek için uygundur. Maliyet: \
-                 medyan sıralaması yalnız ilk kurulum ve setData sırasında O(S·N logN) çalışır; \
-                 drawSeries önbelleği O(S) tüketir. Pointer ana yolları, yıldızları, gradyanı \
-                 veya medyanları yeniden üretmeden yalnız cursor/lejant katmanını taşır.",
-            ),
-            KartKimliği::MissingData => Some(
-                "Amaç: aynı resmî sayfadaki iki bağımsız yüzeyi birlikte karşılaştırır. İlk \
-                 yüzey gerçek null CPU/RAM örneklerinin yolu nasıl böldüğünü ve TCP Out'un \
-                 bağımsız MB ölçeğini; ikinci yüzey dolu değerlerde komşu X farkı 1'i aşınca \
-                 series.gaps ile oluşan boşluğu gösterir. API: missing_data_kartları iki ayrı \
-                 Grafik örneğini tek kaynak grubunda döndürür; görünüm ve cursor durumları \
-                 bilinçli olarak senkronlanmaz. Seri anahtarları setSeries görünürlüğünü ve \
-                 autoscale'ı yüzeyinde günceller. İzleme: veri gerçekten yokken oluşan null \
-                 kesintisini, örnekleme zamanındaki büyük aralıktan ayırmak içindir. Maliyet: \
-                 yollar yalnız setSeries, ölçek veya resize sırasında O(N) yeniden kurulur; \
-                 pointer yalnız hafif cursor/lejant katmanını günceller.",
-            ),
-            KartKimliği::UpdateCursorSelectResize => Some(
-                "Amaç: setCursor, cursor._lock ve setSelect ile kurulmuş kalıcı etkileşim \
-                 durumunun setSize sırasında çizim alanı oranlarında kalmasını gösterir. API: \
-                 BoyutSenkronDüzeni yalnız başlangıç cursor/select/hover oranlarını taşır; \
-                 Grafik::boyutu_ayarla veri ve ölçeği koruyarak ana sahneyi yeniden boyar. Native \
-                 ve web GPUI adaptörleri ana veri sahnesinden ayrı hafif etkileşim katmanında \
-                 durumu saklar. Lejant \
-                 setSeries kırmızı yolu ve hover noktasını birlikte gizler. İzleme: panel veya \
-                 pencere boyutu değişirken kullanıcının kilitli inceleme konumunu kaybetmemek \
-                 içindir. Maliyet: kaynak gibi setSize ana yolları yeniden çizer; cursor, seçim \
-                 ve hover için ikinci bir ana yol üretmez, yalnız hafif katman koordinatları \
-                 güncellenir. 100 ms zamanlayıcı karttan çıkıldığında durdurulur.",
-            ),
-            KartKimliği::WindDirection => Some(
-                "Amaç: sıcaklık çizgisini ve sabit 0…30 m/s ölçekli rüzgâr hızını aynı hizalı \
-                 zaman dizisinde gösterir; üçüncü seri, hız konumlarından derece yönüne uzanan \
-                 15 CSS piksellik vektörleri özel path olarak üretir. API: \
-                 RüzgarYönüDüzeni::yeni hız/yön serisini ve ölçeği bağlar; stil ile vektör \
-                 uzunluğu, rengi ve kalınlığı CSS olmadan geliştirici tarafından seçilebilir. \
-                 Direction serisinin auto=false kararı dereceleri Y aralığından çıkarır; \
-                 lejant setSeries ile üç katman bağımsız açılıp kapanır. İzleme: sıcaklık, \
-                 rüzgâr hızı ve yönü gibi aynı zamanlı fakat farklı birimli telemetriyi tek \
-                 inceleme yüzeyinde ilişkilendirmek içindir. Maliyet: 139 vektör kaynak gibi \
-                 tek beginPath/stroke eşdeğeri Yol komutunda toplu boyanır; görünüm sınırındaki \
-                 dış komşular getOuterIdxs eşdeğeriyle korunur. Pointer yalnız hafif cursor \
-                 katmanını taşır; ana yollar setSeries, ölçek veya resize ile yeniden hesaplanır.",
-            ),
-            KartKimliği::YScaleDrag => Some(
-                "Amaç: sayısal X ile meter ve km/h adlı iki bağımsız Y ölçeğini doğrudan eksen \
-                 üzerinden kaydırır; Shift basılıyken iki uç ters yönde hareket ederek aralığı \
-                 büyütür veya daraltır. API: eksen_vuruşu_boyutta gerçek çizim payından hedef \
-                 ölçeği seçer; eksen_sürüklemeyi_başlat/sürükle/bitir kaynak setScale yaşam \
-                 döngüsünü taşır. Otomatik Y ekseni hesabı kaynak callback'indeki \
-                 25 + en_uzun_etiket × 6 piksel formülünü her aralıkta yeniden uygular; lejant \
-                 setSeries ilgili elle sürüklenmiş ölçeği otomatik aralığa döndürür. İzleme: \
-                 farklı birimli metriklerin ayrıntı düzeyini paneli yeniden kurmadan ayrı ayrı \
-                 ayarlamak için uygundur. Maliyet: hareketler ekran karesiyle birleştirilir; \
-                 setScale eksen, grid ve iki kısa yolu yeniden boyar, cursor katmanı yerinde \
-                 kalır. GPUI Web pointer capture, native GPUI dışarıda mouse-up temizliğiyle sürüklemeyi \
-                 yüzey sınırının dışında da güvenle tamamlar.",
-            ),
-            KartKimliği::YShiftedSeries => Some(
-                "Amaç: aynı 30×3 ham ölçümü iki saniyede bir normal 0…10 düzlemi ile \
-                 Core #1/#2/#3 için 0/+10/+20 kaydırılmış şerit düzlemi arasında değiştirir. \
-                 Kırmızı ve yeşil alanların fillTo tabanları 0/10, mavi bars Path2D tabanı \
-                 20'dir; lejant series.value gibi her zaman ham 0…10 değerini gösterirken \
-                 hover noktası gerçek kaydırılmış geometride kalır. API: \
-                 YShiftedSeriesAkışı::ilerlet_güncellemesi yalnız yeni veri, range, axis values \
-                 ve fillTo tabanlarını üretir; Grafik::veriyi_y_sunumunda_ayarla aynı Grafik \
-                 örneğinde atomik setData uygular. Lejant setSeries görünürlüğü kip geçişinde \
-                 korunur. İzleme: aynı ölçekli çekirdek, pod veya kuyruk metriklerini üst üste \
-                 binmeden ayrı şeritlerde izleyip ham değerlerini karşılaştırmak içindir. \
-                 Maliyet: seçenek ağacı, GPUI entity'si, retained sahne ve etkileşim bağları yeniden \
-                 kurulmaz; 30 mavi çubuk tek dolgu ve tek stroke yolunda toplanır. Timer karttan \
-                 çıkıldığında iptal edilir, cursor hafif katmanda aynı konumdan yeniden çözülür.",
-            ),
-            KartKimliği::DependentScale => Some(
-                "Amaç: tek Fahrenheit veri yolunu iki birimde okumayı sağlar; Celsius ekseni \
-                 ikinci bir seri veya ikinci çizim yolu değildir. API: \
-                 YÖlçekSeçenekleri::sayısal_aralık resmî rangeNum(40,80,.1,true) sonucunu, \
-                 kaynak_dönüşümü z.from=y ilişkisini ve eksen_en_az_etiket_boşluğu sağ \
-                 axis.space=20 davranışını taşır. Lejant setSeries ile aynı Grafik örneğindeki \
-                 blah serisini açıp kapatır. İzleme: sıcaklık, hız veya kapasite gibi doğrusal \
-                 dönüştürülebilen aynı telemetriyi iki birim sisteminde gösterin; X ya da Y \
-                 görünümü değiştiğinde türetilmiş eksen kaynak ölçeğin min/max dönüşümünü \
-                 korur. Maliyet: yalnız bir 7 noktalı çizgi O(N) üretilir; ikinci eksen \
-                 dönüşümü ve bölmeleri O(1) ek maliyettir. Pointer yalnız hafif cursor/lejant \
-                 katmanını taşır; ana yol setSeries, görünüm veya boyut değişiminde yenilenir.",
-            ),
-            KartKimliği::ArcSinhScales => Some(
-                "Amaç: sıfır çevresindeki küçük değişimleri doğrusal, büyük pozitif ve negatif \
-                 büyüklükleri logaritmik okunabilirlikle aynı eksende gösterir. API: \
-                 YÖlçekSeçenekleri::arcsinh doğrusal merkez eşiğini tanımlar; \
-                 y_arcsinh_eşiği_ayarla aynı Grafik örneğinde ham aralığı ve görünüm geçmişini \
-                 koruyarak geometriyi yeniler. Lejant setSeries ile Value serisini açıp \
-                 kapatır. İzleme: artı ve eksi yönde birkaç mertebeye yayılan sapma, gecikme \
-                 farkı veya bilanço telemetrisi için uygundur; wheel, seçim, pan ve touch ters \
-                 ArcSinh dönüşümünü çekirdekte uygular. Maliyet: 111 noktalı tek yol ve \
-                 decade/multiple ızgarası yalnız eşik, veri, görünüm veya boyut değişiminde \
-                 O(N + tick) yenilenir; pointer ana yolu yeniden üretmez.",
-            ),
-            KartKimliği::AxisControl => Some(
-                "Amaç: yarım milyon örnekte eksen yerleşimi ve sabit −50…50 Y düzlemini kaynak \
-                 sinyal ayrıntısını kaybetmeden doğrular. API: \
-                 YÖlçekSeçenekleri::eksen_en_az_etiket_boşluğu axis.space=50'yi; \
-                 birincil_y_sağda, eksen rengi/genişliği ve X/Y etiketleri resmî eksen \
-                 yapılandırmasını taşır. Lejant setSeries ile sin(x) yolunu açıp kapatır. \
-                 İzleme: yoğun ve sabit sınırla karşılaştırılması gereken telemetri içindir; \
-                 wheel/seçim görünür X dilimini daralttığında kovalar yalnız o dilimde kurulur. \
-                 Maliyet: 500.001 değer bellekte korunur; her piksel kovasında ilk/min/maks/son \
-                 adaylarıyla sahne O(plot width) noktaya iner, pointer ana yolu yeniden kurmaz.",
-            ),
-            KartKimliği::AxisAutosize => Some(
-                "Amaç: aynı 501 noktalı sinyal 500 ms aralıklarla 10 kat büyürken X son etiketi \
-                 ile Y değerleri için gereken eksen payının kendini yeniden ölçmesini gösterir. \
-                 API: AxisAutosizeAkışı kaynak 1…10⁹ yaşam döngüsünü yürütür; \
-                 Grafik::canlı_veriyi_x_etiket_çarpanında_ayarla aynı Grafik örneğinde setData \
-                 ve X values çarpanını atomik yeniler. Lejant setSeries görünürlüğü tikler \
-                 boyunca korunur. İzleme: büyüklüğü çalışma anında birkaç mertebe değişebilen \
-                 sayaç, kapasite ve finans telemetrisinde etiket kırpılmasını önlemek içindir; \
-                 ortak wheel, seçim, pan ve touch görünümü veri güncellenirken kaybolmaz. \
-                 Maliyet: her tikte 501 yeni değer O(N) üretilir; grafik, olay katmanları ve \
-                 seçenek ağacı yeniden kurulmaz. Y etiketi genişliği ölçülür, sağ pay son gerçek \
-                 X split'inde en fazla üç çevrimde yakınsar; görev 10⁹'da veya karttan çıkışta \
-                 bırakılır.",
-            ),
-            KartKimliği::AxisIndicators => Some(
-                "Amaç: aynı X örneğindeki üç bağımsız Y ölçeğini, ana grafik yollarını yeniden \
-                 çizmeden renkli eksen rozetleri ve kılavuzlarla birlikte okumayı sağlar. API: \
-                 her YÖlçekSeçenekleri kendi 50 px eksen dilimini, rengini ve aralığını taşır; \
-                 axisIndicsPlugin karşılığı genel yatay cursor çizgisini kapatır ve yalnız \
-                 görünür/dolu serilerin rozetlerini günceller. Lejant setSeries ile seri yolunu, \
-                 noktasını ve rozetini birlikte açıp kapatır. İzleme: aynı zaman noktasındaki \
-                 farklı birim veya büyüklüklerdeki CPU, bellek ve ağ metriklerini bağımsız \
-                 ölçeklerde karşılaştırın; kırmızı serinin null aralığında yalnız kırmızı \
-                 gösterge gizlenir. Maliyet: 30×3 ana yol yalnız veri, görünüm, boyut veya \
-                 setSeries değişiminde üretilir; pointer dört hafif rozeti ve üç kılavuzu \
-                 O(seri) konumlandırır, karta özel zamanlayıcı bırakılmaz.",
-            ),
-            KartKimliği::TimeseriesDiscrete => Some(
-                "Amaç: aynı zaman eksenindeki sürekli telemetriyi ve ayrık cihaz durumlarını \
-                 iki yükseklikte fakat tek etkileşim bağlamında karşılaştırır. API: \
-                 timeseries_discrete_kartları üst float ve alt stepped yüzeyi birlikte döndürür; \
-                 TimeseriesDiscreteGrubu ortak X imlecini, seçim/zoom görünümünü ve birleşik \
-                 lejantı koordine eder, setSeries yalnız sahibi olan yüzeyi değiştirir. İzleme: \
-                 CPU/yük gibi sürekli ölçümlerle servis, alarm veya cihaz açık-kapalı durumlarını \
-                 aynı zaman noktasında okumak için uygundur. Maliyet: iki ana yüzey yalnız veri \
-                 ya da ölçek değiştiğinde boyanır; cursor çizgileri ve birleşik lejant hafif \
-                 katmanda güncellenir, veri yolları pointer hareketinde yeniden kurulmaz.",
-            ),
-            KartKimliği::ScalePadding => Some(
-                "Amaç: farklı büyüklüklerdeki düz eşik ve taban çizgilerini tek Y ölçeğinde \
-                 uçlara değmeden gösterir; kaynak rangeNum hesabı %10 payı dışa doğru uygun \
-                 artıma yapıştırarak −13000…13000 üretir. API: YÖlçekSeçenekleri::sayısal_aralık \
-                 alt/üst payı ve soft sınır kipini tanımlar; okunabilirliği ayrılması gereken \
-                 metrik aileleri adlandırılmış farklı ölçeklere atanabilir. İzleme: alarm ve \
-                 kapasite eşikleri için uygundur; ±0.1 ile ±10500 aynı ölçekteyse küçük değerlerin \
-                 sıfıra yakın görünmesi doğrudur. Maliyet: 13×10 hizalı nokta O(S×N), imleç \
-                 O(log N + S); cursor ve lejant ana yolları yeniden üretmeden güncellenir.",
-            ),
-            KartKimliği::Months => Some(
-                "Amaç: gerçek UTC ay sınırlarını normal ve artık yıllarda karşılaştırır. API: \
-                 x tarih ölçeği ve kaynak 28 günlük axes.space karşılığı takvim-ay bölmelerini \
-                 belirler. İzleme: \
-                 aylık faturalama, SLO ve kapasite raporlarında sabit 30 gün yerine gerçek ay \
-                 sınırlarını kullanın. Maliyet: iki bağımsız yüzeyde toplam 72 nokta; çizim \
-                 O(N+T), imleç O(log N). Resize bölmeleri yeniden hesaplar, veriyi üretmez.",
-            ),
-            KartKimliği::MonthsRussian => Some(
-                "Amaç: 36 UTC ay başlangıcını veri saat dilimini değiştirmeden Rusça eksen \
-                 adlarıyla sunar. API: months_rusça_kartı tek 1920×600 Grafik tanımını ve \
-                 TarihAdları::rusça formatter sözlüğünü döndürür; Y aralığı gelen değerlerden \
-                 otomatik türetilir. İzleme: aylık telemetri ve kapasite panellerinde depolama \
-                 zamanını UTC tutup locale'i yalnız sunum katmanında uygulayın. Maliyet: tek \
-                 yüzey 36 nokta taşır; çizim O(N+T), imleç O(log N).",
-            ),
-            KartKimliği::NiceScale => Some(
-                "Amaç: panel yüksekliğine sığan okunabilir Y bölmelerini ve bu bölmelere tam \
-                 oturan yuvarlak sınırları otomatik seçer. API: GüzelÖlçekDüzeni::yeni(30.0), \
-                 kaynak niceNum eşiklerini (1/2/2,5/5/10), uçlarda %2 payı ve ArtımaGöre \
-                 etiket biçimini birleştirir. İzleme: pencere veya panel boyutu değiştiğinde \
-                 sabit tick sayısı yerine en az 30 piksel aralık korunur. Maliyet: altı X \
-                 noktası ve üç seri değişmeden kalır; yalnız ölçek, ızgara ve yollar \
-                 O(S×N+T) maliyetle yeniden boyanır.",
-            ),
-            KartKimliği::NoData => Some(
-                "Amaç: boş veri, tek nokta, neredeyse düz ve tam düz serilerde otomatik \
-                 sayısal aralığın kararlı kalmasını karşılaştırır. API: NoDataÖrneği::TÜMÜ \
-                 kaynak 33 durumu tipli seçenekler olarak sunar; no_data_kartı seçili durumun \
-                 zaman kipini, özel boş aralıklarını ve rangeNum eşdeğerini kurar. İzleme: \
-                 veri gelmeden önce anlamlı bir aralık; tek veya sabit değer geldiğinde sıfır \
-                 genişlikli olmayan güvenli bir ölçek gösterin. Maliyet: 33 eşzamanlı yüzey \
-                 yerine seçili tanım aynı GPUI yüzeyinde değiştirilir ve yalnız eksenlerle en \
-                 fazla iki nokta yeniden kurulur.",
-            ),
-            KartKimliği::PathGapClip => Some(
-                "Amaç: gerçek null, join sırasında oluşan undefined/hizalama eksiği, band kırpması, \
-                 stepped before/after ve tek-piksel gap sınırlarını kaynak sayfadaki 15 yüzeyle \
-                 karşılaştırır. API: HizalıDeğer::{Değer, Boş, Tanımsız}, NULL_RETAIN/NULL_EXPAND \
-                 join kipleri, linear/stepped/spline yolları ve spanGaps mutasyonu çekirdekte \
-                 tanımlıdır; kaynakta setData/setScale yoktur. İzleme: scrape eksiğini gerçek \
-                 ölçüm null'u gibi boyamayın; bridge açıldığında çizginin yalnız görsel olarak \
-                 bağlandığını kullanıcıya belirtin. Maliyet: path/gap taraması O(N), sıralı imleç \
-                 O(log N); pointer yalnız hafif overlay'i günceller, bir saniyelik animasyon yalnız \
-                 dört kaynak yüzeyin ana yollarını yeniden kurar.",
-            ),
-            KartKimliği::PixelAlign => Some(
-                "Amaç: aynı canlı telemetriyi aynı kayan 120 saniyelik pencerede tam piksel ve \
-                 alt-piksel rasterizasyonuyla A/B karşılaştırır. API: grafik piksel_hizası eksen \
-                 ve grid varsayılanını, seri piksel_hizası path/point override'ını belirler; \
-                 PixelAlignAkışı 1 Hz örnek eklerken frame saati yalnız X ölçeğini ilerletir. \
-                 İzleme: hizalama veriyi değiştirmez; pxAlign=1 keskin ve hızlı fakat tırtıllı, \
-                 pxAlign=0 daha yumuşak fakat 1 px çizgilerde daha bulanık olabilir. Maliyet: \
-                 halka ekleme O(1), her frame çizim O(görünür N×S); grafik örnekleri yeniden \
-                 kurulmaz, yakınlaştırılmış görünüm canlı tam aralık ilerlerken sabit kalır.",
-            ),
-            KartKimliği::Points => Some(
-                "Amaç: varsayılan nokta yoğunluğu, space=0 zorlaması, yalnız-nokta yolu ve \
-                 gerçek boşluklar arasındaki tekil ölçümleri tek kaynak sayfasında karşılaştırır. \
-                 API: points.space görünür piksel kapasitesini, paths:null yalnız marker çizimini, \
-                 NoktaFiltreKipi::BoşlukArasındakiTekiller ise path gap sınırlarından seçilen \
-                 indeksleri tanımlar. İzleme: seyrek olayları çizgiyle birleştirip süreklilik \
-                 izlenimi vermeden gösterin; yoğun telemetride marker'ları otomatik gizleyerek \
-                 ana eğriyi okunur tutun. Maliyet: dört statik yüzey toplam 3.321 X konumu tarar; \
-                 yoğunluk testi O(1), gap filtresi O(N+G×99), çizilen marker sayısı O(k). \
-                 Yakınlaştırma ve boyut değişimi filtreyi görünür piksel düzleminde yeniden hesaplar.",
-            ),
-            KartKimliği::ScalesDirOri => Some(
-                "Amaç: aynı iki serinin dört yön kombinasyonunu, karşı eksen taraflarını ve X/Y \
-                 yönelim değişimini tek matriste karşılaştırır. API: scale.dir veri yönünü, \
-                 scale.ori fiziksel eksen yönelimini, axis.side eksenin top/right/bottom/left \
-                 tarafını belirler. Direction Inversion sekiz 600×300; Orientation Inversion \
-                 sekiz 320×600 yüzeydir. İzleme: ters akan süreçleri veya dikey zaman eksenini \
-                 sunarken veri değerlerini dönüştürmeden fiziksel okumayı değiştirin. Maliyet: \
-                 16 statik yüzeyin her biri aynı 10 X konumu ve iki seriyi O(S×N) çizer; timer \
-                 yoktur. Cursor yalnız hafif etkileşim katmanlarını taşır; ölçek değişiminde \
-                 senkron grubun 16 ana yüzeyi birlikte yeniden boyanır.",
-            ),
-            KartKimliği::ScrollSync => Some(
-                "Amaç: kaydırılabilir panel içinde grafiğin pencere konumu değiştiğinde cursor, \
-                 seçim ve zoom koordinatlarının görsel noktadan kopmamasını gösterir. API: \
-                 adaptör güncel yüzey sınırını iletir; YüzeyDikdörtgeni istemci koordinatını \
-                 aspect-fit sahneye dönüştürür. İzleme: sanallaştırılmış liste, kayan dashboard, \
-                 sabit başlık veya yeniden yerleşen widget içindeki grafikler için gereklidir. \
-                 Maliyet: sınır yenileme tek yerleşim ölçümü ve O(1) dönüşümdür; kaydırma ana \
-                 veri sahnesini yeniden çizmez. Kaynak davranışını korumak için doğal kapsayıcı \
-                 kaydırması varsayılandır; wheel/touch eklentileri ortak API'den açılabilir.",
-            ),
-            KartKimliği::SineStream => Some(
-                "Amaç: tek grafik yüzeyinde 600 örnekli altı seriyi ekranın boya ritminde \
-                 kaydırarak canlı izleme yükünü gösterir. API: SineAkışı::ilerlet yalnız bir \
-                 örnek ilerletir; Grafik::veriyi_ayarla aynı Grafik ve GpuiGrafik örneğinde \
-                 uPlot setData ölçek sıfırlamasını uygular. İzleme: telemetri, log oranı ve \
-                 kaynak ölçümleri gibi sabit uzunluklu canlı pencereler için uygundur. \
-                 Başlıktaki 60 FPS kaynak adıdır; gerçek hız ekran yenileme hızıdır. Maliyet: \
-                 VecDeque pencere kaydırması O(1), veri aktarımı ve altı yolun çizimi \
-                 O(seri×600); sabit eksen/grid yolları önbellekte, cursor/seçim katmanı \
-                 güncellemeler arasında korunur.",
-            ),
-            KartKimliği::SoftMinMax(_) => Some(
-                "Amaç: aynı iki noktalı verinin soft min mode 0/1/2/3 kararlarını yan yana \
-                 karşılaştırır; beşinci yüzey düz sıfır veride iki taraflı −1…1 soft sınırını \
-                 gösterir. API: soft_minmax_kartları tek kaynak sayfasının beş yüzeyini kaynak \
-                 sırasıyla kurar; SayısalAralıkParçası pad, soft ve mode alanlarını tipli \
-                 tanımlar. İzleme: sıfır tabanını sabit tutan oranlar ile küçük değişimlerde \
-                 dikey çözünürlüğü koruyan telemetri politikalarını seçmek için uygundur. \
-                 Maliyet: tek dataMax adımı yalnız ikişer noktalı dört grafiğe atomik setData \
-                 uygular; düz-sıfır yüzeyi değişmez. Tekrarlanan başlatmalar engellenir; bu, \
-                 kaynak örnekteki üst üste interval açabilme durumuna karşı kasıtlı güvenliktir.",
-            ),
-            KartKimliği::SparklinesBars(_) => Some(
-                "Amaç: aynı sparkline ve yüzen low/high çubuklarını yalnız renk stratejisini \
-                 değiştirerek kontrollü A/B karşılaştırır. API: sparklines_bars_kartları iki \
-                 yüzeyi birlikte kurar; Floating Bars low değerlerini, \
-                 yüzen_çubuk_üst_serisi özel high veri taşıyıcısını kullanır ve bu taşıyıcı \
-                 otomatik ölçeğe katılmaz. İzleme: pozitif/negatif bölgeleri kesen sapma ve \
-                 bütçe aralıklarında gradyan; kategorik eşiklerde açık nokta renkleri uygundur. \
-                 Kaynak cursor/select/legend kapalıdır; ortak wheel/touch/drag yalnız geliştirici \
-                 etkinleştirirse adaptör uzantısıdır. Maliyet: her yüzey 16 noktayı O(N) tarar; \
-                 gradyan tek toplu alan komutudur, açık renk yolu 16 dikdörtgen üretir.",
-            ),
-            KartKimliği::Sparklines(_) => Some(
-                "Amaç: yoğun bir izleme tablosunda 10 varlığın iki küçük zaman serisini tek \
-                 bakışta karşılaştırır; kaynak sayfanın ilişkili 20 yüzeyi ayrı katalog \
-                 kartlarına bölünmez. API: sparklines_kartları kaynak satır sırasıyla 20 \
-                 (örnek, seçenekler, veri) üçlüsü döndürür; SparklineÖrneği::SATIRLAR \
-                 Hacim/Kapanış çiftlerini tanımlar ve her yüzey bağımsız \
-                 rangeNum(min,max,.1,true) Y aralığı kullanır. İzleme: hisse yerine servis, \
-                 pod veya sensör; sütunlara trafik, hata, gecikme ya da son değer konabilir. \
-                 Maliyet: kaynak Promise.all ile 10 CSV ve 20 canvas kurar; port doğrulanmış \
-                 440 değeri binary içine gömerek fetch/parser yaşam döngüsünü kaldırır. \
-                 Kaynak cursor/select/legend kapalıdır; ortak wheel/touch/drag yalnız \
-                 geliştirici etkinleştirirse çekirdek uzantısıdır.",
-            ),
-            KartKimliği::Sparse(_) => Some(
-                "Amaç: aynı seyrek telemetride optimize native linear, tek toplu özel kare \
-                 noktalar ve naif moveTo/lineTo yolunun görünüm ve maliyet farkını karşılaştırır. \
-                 API: sparse_kartları tek decode sonrası üç yüzeyi kaynak sırasıyla üretir; \
-                 saf_doğrusal_yol native piksel kovasını atlar, kare points tek Alan/Path2D \
-                 komutunda batch edilir. İzleme: uzun null koşularında native yol genel \
-                 seçimdir; olay yoğunluğunda points, algoritma kıyasında naive kullanılır. \
-                 Maliyet: native piksel başına giriş/min/max/çıkışı koruyup null koşularını \
-                 tek kırılmaya indirir; points 4.430 kareyi tek fill path'te taşır; naive \
-                 13.608 girdiyi tarayıp dolu noktalarla sınır kırpma kesişimlerini çizer.",
-            ),
-            KartKimliği::StackedSeries(_) => Some(
-                "Amaç: tek kaynak sayfasındaki 16 bağımsız yüzeyi birlikte göstererek seri \
-                 sırasının algıya etkisini, normal/yüzde/gruplu yığmayı ve null/undefined/zero \
-                 ayrımını karşılaştırır. API: stacked_series_kartları kaynak DOM sırasıyla 16 \
-                 (örnek, seçenekler, veri) üçlüsü döndürür; yalnız ilk dört yüzeyin lejant \
-                 görünürlüğü kaynak setSeries hook'u gibi bantları yeniden kurup aynı grafik \
-                 örneğinde setData uygular, kalan 12 yüzey yalnız görünürlüğü değiştirir. \
-                 İzleme: toplam kapasite bileşenleri, pozitif/negatif bütçeler ve eksik örnek \
-                 semantiğinin karşılaştırılması için uygundur; ilişkili varyasyonlar ayrı \
-                 katalog kartlarına bölünmez. Maliyet: başlangıç aralıkları kaynak \
-                 rangeNum(min,max,.1,true) ile sabittir; lejant güncellemesi yüzeyi yeniden \
-                 yaratmaz. Kaynak yüzeyler arasında cursor/ölçek senkronu yoktur ve port da \
-                 onları bağımsız tutar. Rastgele çubuk verisi tekrarlanabilir test için \
-                 belgelenmiş tohuma bağlanır.",
-            ),
-            KartKimliği::StreamData(_) => Some(
-                "Amaç: sabit uzunlukta kayan pencere, sürekli büyüyen veri ve sabit ölçekli \
-                 büyüyen veri akışlarını aynı kaynak bağlamında karşılaştırır. API: \
-                 StreamDataGrubu tek decode edilmiş Arc kaynağı paylaşır; kartları() üç \
-                 bağımsız Grafik üretir, canlı_veriyi_ayarla seçenek ve yüzey ağacını koruyan \
-                 setData karşılığıdır. İzleme: CPU/RAM/ağ yerine servis telemetrisi, log oranı \
-                 veya sensör değerleri geçirilebilir. Maliyet: kaynak üç ayrı 100 ms timer \
-                 kullanır; port aynı tikte tek scheduler ile üç yüzeyi günceller ve veri \
-                 sonunda gereksiz kopya/çizimi durdurur. Cursor ve ölçekler yüzeyler arasında \
-                 senkronlanmaz; wheel/touch/drag kaynak dışı isteğe bağlı çekirdek uzantısıdır.",
-            ),
-            KartKimliği::GpuiSvgExport => Some(
-                "Amaç: canlı grafik ile rapor veya olay eki olarak saklanabilen bağımsız \
-                 vektör anlık görüntüsünü ayırır. API: GpuiGrafik::svg_kaydı yalnız açıkça \
-                 çağrıldığında retained ana sahneyi ve istenirse etkileşim katmanını SVG \
-                 komutlarına kaydeder; native hedefte svg_dosyasına_yaz da bulunur. İzleme: \
-                 dashboard panelini rapora, olay ekine veya panoya taşımak için uygundur. \
-                 Normal GPUI paint/frame yolunda kayıt bayrağı, String, Blob veya komut başına \
-                 dal yoktur. Bu karttaki düğme dışa aktarımı o anda çalıştırır ve gerçek vektör \
-                 metnini panoya kopyalar; grafik ekranda GPUI ile boyanmaya devam eder.",
-            ),
-            KartKimliği::SyncCursor => Some(
-                "Amaç: ayrı CPU, RAM ve TCP yüzeyleriyle farklı seri sıralı iki karşılaştırma \
-                 yüzeyini gerçek pub/sub ilişkileri içinde gösterir. API: SyncCursorGrubu \
-                 cursor, etiket bazlı setSeries, mouseup/down filtresi ve görünür X hedeflerini \
-                 çözer; CPU/RAM dikey cursor'ı ekran oranıyla değil aynı Y veri değerini hedef \
-                 ölçeğe yeniden projekte ederek paylaşır, TCP yalnız X'i izler. İzleme: farklı \
-                 birim ve aralıklardaki servis telemetrisinde aynı olay anını birlikte incelemek \
-                 için uygundur. Sync kapatmak yerel cursor/kilit durumunu silmez; ikinci grup \
-                 kaynak gibi cursor kilidi kullanmaz. Maliyet: beş ana canvas bağımsızdır; \
-                 pointer yalnız hafif etkileşim katmanını günceller. Ana yollar setSeries, \
-                 seçim, wheel/touch/drag veya boyut değişiminde yenilenir ve görünür X aralığı \
-                 yalnız abone yüzeylere taşınır.",
-            ),
-            KartKimliği::SyncYZero(_) => Some(
-                "Amaç: farklı büyüklüklerdeki üç Y ölçeğinin sıfırını ham değer sınırlarını \
-                 kaybetmeden aynı fiziksel piksele hizalar. API: sync_y_zero_aralıkları ham, \
-                 simetrik ve valToPos/posToVal eşdeğeri final aralıklarını üretir; \
-                 Grafik::y_ölçek_aralıklarını_ayarla üç adlandırılmış scale.range sonucunu \
-                 atomik uygular. İzleme: pozitif/negatif sapmaları farklı birimlerle tek ortak \
-                 X ekseninde karşılaştırmak için uygundur. Kaynak zaman çizelgesi seçimden \
-                 3 saniye sonra simetrik, 6 saniye sonra 1/11 ortak sıfır oranına geçer. \
-                 Maliyet: her aşama O(3) dönüşüm ve tek sahne boyamasıdır; veri, seçenek ağacı, \
-                 Grafik ve GPUI entity yeniden kurulmaz. Cursor, legend, X zoom ve ortak \
-                 wheel/touch uzantılarının görünüm durumu korunur.",
-            ),
-            KartKimliği::ThinBars(_) => Some(
-                "Amaç: ince çubuklarda vuruşun ne zaman dolguya düştüğünü ve align, width, \
-                 gap, dir, stroke birleşimlerinin geometriyi nasıl değiştirdiğini yan yana \
-                 karşılaştırır. API: thin_bars_stroke_fill_kartları kaynak sırasıyla 7 \
-                 yoğunluk ve 48 geometri yüzeyini tek grup olarak döndürür; her Grafik kendi \
-                 cursor, seçim ve geçmişini bağımsız tutar. İzleme: yoğun histogram veya \
-                 sütun telemetrisinde panel genişliğine göre okunabilir vuruş/dolgu seçmek ve \
-                 ters X/hizalama kararlarını doğrulamak için uygundur. Maliyet: kaynak gibi \
-                 55 yüzey ve toplam 1.422 çubuk kurulur; bar başına element ağı kurulmaz. \
-                 Pointer yalnız ilgili GpuiGrafik etkileşim katmanını, zoom yalnız ilgili \
-                 sahneyi günceller. Noktalar görünür X piksel açıklığı yeterli olduğunda \
-                 otomatik açılır; wheel/touch/drag isteğe bağlı çekirdek uzantısıdır.",
-            ),
-            KartKimliği::TimePeriods(_) => Some(
-                "Amaç: aynı trafik kaynağını saatlik yıllar, iki ay ve günlük toplamlar \
-                 biçiminde yan yana karşılaştırır. API: time_periods_kartları üç bağımsız \
-                 Grafik döndürür; Hourly seri bazlı geçmiş-yıl lejant tarihleri, Feb–Jan \
-                 görünür birincil ölçekten türetilen ikinci X ekseni ve Daily ortak UTC \
-                 tarihini kullanır. İzleme: aynı ölçümün dönem ve çözünürlük farklarını \
-                 Grafana benzeri panellerde karşılaştırmak için uygundur. Maliyet: traffic.json \
-                 bir kez ayrıştırılır; her yüzey kendi cursor, seçim, wheel/touch/drag ve \
-                 görünüm geçmişini tutar; etkileşim yalnız ilgili GpuiGrafik sahnesini yeniler.",
-            ),
-            KartKimliği::TimelineDiscrete(_) => Some(
-                "Amaç: gerçek süreli durum geçişlerini, sabit örnek hücrelerini ve yinelenen \
-                 değer birleştirmesini aynı kaynak bağlamında karşılaştırır. API: \
-                 timeline_discrete_kartları dört bağımsız Grafik döndürür; null/undefined \
-                 ayrımı, şerit dağılımı, renk/etiket, sağ kenara uzanan son durum ve 100px \
-                 sınırlı matrix vuruşu çekirdektedir. timeline_verisini_ayarla setData ile \
-                 hücre dizinini atomik yeniler; setSeries görünürlüğü özel timeline katmanını \
-                 değiştirir. İzleme: cihaz duty-cycle ve servis durum geçmişi için uygundur. \
-                 Maliyet: hücreler element ağı değil tek sahne boyamasıdır; hover yalnız gerçek \
-                 boyalı hücreyi ve hafif vurgu katmanını günceller.",
-            ),
-            KartKimliği::Scatter => Some(
-                "Amaç: sabit boyutlu yoğun scatter ile üçüncü metriği alanla anlatan bubble \
-                 yaklaşımını aynı kaynak bağlamında karşılaştırır. API: mode:2 facet serileri \
-                 bağımsız X/Y dizileri taşır; bubble size/label facet'leri ve Region A için sağ \
-                 y2 ölçeği ekler. İki yüzey veri, cursor ve ölçek bakımından bağımsızdır. İzleme: \
-                 korelasyon kümeleri, kapasite/gelir ve nüfus yoğunluğu gibi çok boyutlu \
-                 telemetri için uygundur. Maliyet: 40.000 scatter noktası seri başına tek toplu \
-                 çizim komutuna iner; bubble hover yalnız ölçek veya boyut değişince yenilenen \
-                 uzamsal dizinin aday hücresini sorgular ve ana sahneyi yeniden boyamaz.",
-            ),
-            KartKimliği::Bars(_) => Some(
-                "Amaç: kaynak sayfanın grouped/stacked, dikey/yatay ve tek grup/tek seri sınır \
-                 durumlarını on bağımsız yüzeyde birlikte karşılaştırır. API: \
-                 bars_grouped_stacked_kartları yüzeyleri kaynak DOM sırasında döndürür; \
-                 ÇubukDüzeni yön, yığma ve ters ekseni tanımlar. setSeries grouped serinin \
-                 yuvasını, önceden yığılmış serinin kümülatif boşluğunu korur; yeniden yığma \
-                 yapmaz. Hover yalnız vurulan barı vurgular ve stacked değerini kümülatif tepe \
-                 olarak verir. İzleme: kategorik kapasite, sürüm ya da bölge metriklerini \
-                 karşılaştırırken düzen sınırlarını tek sayfada doğrulamak için uygundur. \
-                 Maliyet: her yüzey yalnız kendi barlarını tek sahne geçişinde O(grup×seri) \
-                 çizer; on Grafik veri ve görünüm geçmişi bakımından bağımsızdır. Kaynak seçim \
-                 ve wheel kapalıdır; ortak wheel/touch/drag profili geliştiricinin açabildiği \
-                 port uzantısıdır.",
-            ),
-            KartKimliği::BarsValuesAutosize(_) => Some(
-                "Amaç: aynı rastgele değer dizisini dikey ve yatay çubuk yönünde gösterirken \
-                 değer yazısının bar ucuyla grafik kenarı arasındaki kullanılabilir alana \
-                 otomatik sığmasını karşılaştırır. API: bars_values_autosize_kartları kaynak \
-                 sırasıyla iki bağımsız Grafik döndürür; değer_etiketi_otomatik tek çizim \
-                 geçişinde kompakt metinleri, bar dikdörtgenlerini ve boşlukları ölçer. Dikey \
-                 yüzey metin genişliği, yüksekliği ve bar genişliğinin %80'inden; yatay yüzey \
-                 en dar bar yüksekliğinin %80'inden bütün etiketler için ortak 10–25 px boyut \
-                 seçer. 10 px altına düşerse etiketlerin tamamı gizlenir. İzleme: dinamik \
-                 pozitif/negatif kapasite veya fark metriklerinde etiket taşmasını engellemek \
-                 için uygundur. Maliyet: kompakt metin ölçüleri setData'da O(N), kullanılabilir \
-                 alan ve çizim O(N) hesaplanır; yüzey yeniden kurulmaz. Kaynakta yorumlu \
-                 setData/setSize akışları aynı önbellek ve yeniden ölçüm yaşam döngüsünü \
-                 kanıtlar; ortak wheel/touch/drag port uzantısıdır.",
-            ),
-            KartKimliği::BoxWhisker(_) => Some(
-                "Amaç: 17 benchmarkın framework dağılımlarını kaynak sayfadaki aynı bağlamda \
-                 karşılaştırır. API: box_whisker_kartları kaynak sırasıyla 17 bağımsız Grafik \
-                 döndürür; results.json yalnız bir kez ayrıştırılıp özetlenir. stats.js \
-                 medyan/q1/q3 değerlerini iki ondalığa yuvarladıktan sonra 1,5×IQR ile bıyık ve \
-                 ayrık değer sınıflaması yapılır; rangeNum bütün ayrık değerlerin global \
-                 sınırını kapsar. Tam framework adları -90° eksende korunur. Hover ana sahneyi \
-                 yeniden çizmeden mavi sütun vurgusunu ve sarı Lib/Median/q1/q3/min/max bilgi \
-                 kutusunu hafif katmanda taşır. İzleme: gecikme, bellek ve başlangıç \
-                 ölçümlerinde merkezi eğilim kadar varyansı ve kararsız koşuları görmek için \
-                 uygundur. Maliyet: ilk özetleme toplam ölçüm sayısıyla O(N), her yüzey çizimi \
-                 en çok 30 kutu ve ayrık değer sayısıyla O(N)'dir; ortak wheel/touch/drag ürün \
-                 uzantısıdır.",
-            ),
-            KartKimliği::Candlestick => Some(
-                "Amaç: Gold için tek hizalı tarih sütunundaki Open/High/Low/Close ve hacmi \
-                 kaynak demodaki aynı mum + hacim yüzeyinde gösterir. API: MumDüzeni UTC \
-                 zamanlarını OHLC sütunlarından ayrı yan veri olarak taşır. Beş seri bağımsız \
-                 çizgiler değil tek mum geometrisinin zorunlu alanlarıdır; kaynak özel çizicisi \
-                 setSeries/legend toggle sunmaz. Hover ana sahneyi yeniden çizmeden mavi sütun \
-                 vurgusunu ve sarı Date/Open/High/Low/Close/Volume bilgi kutusunu hafif katmanda \
-                 taşır. Fiyatlar kaynak fmtUSD biçiminde, tarih UTC YYYY-MM-DD olarak gösterilir. \
-                 İzleme: piyasa fiyatı veya OHLC pencere özetlerinde yönü, aralığı ve hacmi aynı \
-                 zaman sütununda incelemek için uygundur. Maliyet: 218 kaynak satırı gömülüdür; \
-                 ana sahne yalnız görünür mum aralığını O(V) çizer, sütun vuruşu sıralı X üzerinde \
-                 O(log N)'dir. Ortak wheel/touch/drag davranışları ürün uzantısıdır.",
-            ),
-            KartKimliği::CursorBind => Some(
-                "Amaç: bir grafik olayının varsayılan işleyicisini koruyup çevresine uygulama \
-                 politikası eklemeyi gösterir; normal sürükleme zoom, Ctrl sürükleme açıklama \
-                 istemidir. API: İmleçBağSeçenekleri birincil tuş filtresi, Ctrl sırasında \
-                 setScale durdurma, gerçek Annotation Text istemi ve sürüklemesiz click \
-                 iletimini tek deklaratif sözleşmede tanımlar. Kaynaktaki gibi sarı seçim yalnız \
-                 dolgu taşır; metin İptal/Tamam/Enter sonrasında kalıcı çizime eklenmez. İzleme: \
-                 Grafana benzeri yüzeylerde seçim zoomunu korurken Ctrl ile olay/incident notu \
-                 istemek veya normal tıklamayı üst uygulamaya iletmek için uygundur. Maliyet: \
-                 30×3 kaynak seri O(N) çizilir; bind kararı ve click iletimi O(1), Ctrl seçiminde \
-                 yalnız hafif seçim katmanı ve modal güncellenir.",
-            ),
-            KartKimliği::AddDelSeries => Some(
-                "Amaç: aynı grafik örneğinde çalışma zamanında seri ekleme/silme, hizalı veri \
-                 sütunlarını koruma ve setData ölçek sıfırlamasını gösterir. API: Grafik::seri_ekle \
-                 ve seri_sil doğrulanmış işlemlerdir; SeriYaşamDöngüsüOlayı X'i sayan resmî \
-                 seriesIdx ile addSeries/delSeries olayını setData olayından önce taşır. İlk \
-                 ekleme kaynak turuncusudur; sonraki eklemeler geliştiricinin serileri ayırt \
-                 edebilmesi için belirlenimci paletten renk alır. İzleme: çalışan bir panele yeni \
-                 sensör, CPU veya metrik eklerken grafik ve etkileşim kimliğini korumak için \
-                 uygundur. Maliyet: sütun üretimi O(N), hizalı yapı doğrulaması ve yeniden çizim \
-                 O(N×S)'dir; GPUI Entity ve yüzey kimliği değişmez.",
-            ),
-            _ => None,
-        };
+        let kullanım_rehberi = aktif_kart_tanımı.açıklama;
         let kullanım_rehberi_açık = self.kullanım_rehberi_açık;
         let ayrıntı = div()
             .flex_1()
@@ -8920,14 +8935,15 @@ mod tests {
     #[test]
     fn ana_kart_slugları_benzersiz_ve_metadata_tamdır() {
         let mut sluglar = HashSet::with_capacity(KATALOG_KARTLARI.len());
-        for &kart in KATALOG_KARTLARI {
-            let tanım = kart.tanımlayıcı();
-            assert_eq!(tanım.kimlik, kart);
+        for tanım in KATALOG_KARTLARI {
+            assert_eq!(tanım.kimlik.tanımlayıcı().slug, tanım.slug);
             assert!(!tanım.slug.is_empty());
             assert!(!tanım.başlık.is_empty());
             assert!(!tanım.kaynak.is_empty());
+            assert!(tanım.açıklama.is_some_and(|açıklama| !açıklama.is_empty()));
             assert!(!tanım.tanım.is_empty());
             assert!(!tanım.tanım_yolu.is_empty());
+            assert_eq!(KartKimliği::slugdan(tanım.slug), Some(tanım.kimlik));
             assert!(
                 sluglar.insert(tanım.slug),
                 "yinelenen ana kart slugı: {}",
@@ -8940,11 +8956,14 @@ mod tests {
     fn multi_bars_tek_ana_kart_ve_dört_sayfa_içi_varyanttır() {
         let multi_bars_kayıtları = KATALOG_KARTLARI
             .iter()
-            .filter(|kart| matches!(kart, KartKimliği::MultiBars(_)))
+            .filter(|tanım| matches!(tanım.kimlik, KartKimliği::MultiBars(_)))
             .count();
         assert_eq!(multi_bars_kayıtları, 1);
         assert_eq!(MultiBarsÖrneği::TÜMÜ.len(), 4);
 
+        let tanım = KartKimliği::MultiBars(MultiBarsÖrneği::KitaplıklarDikey).tanımlayıcı();
+        assert_eq!(tanım.grup, KatalogKartGrubu::İlişkiliYüzeyler);
+        assert_eq!(tanım.varyant_grubu, Some("multi-bars"));
         for örnek in MultiBarsÖrneği::TÜMÜ {
             let kart = KartKimliği::MultiBars(örnek);
             assert_eq!(kart.slug(), "multi-bars");
@@ -8967,5 +8986,44 @@ mod tests {
             KartKimliği::slugdan("multi-bars"),
             Some(KartKimliği::MultiBars(MultiBarsÖrneği::KitaplıklarDikey))
         );
+    }
+
+    #[test]
+    fn eski_canonical_aliaslar_aynı_registry_kaydına_döner() {
+        for (slug, beklenen) in [
+            ("align-data-cost", KartKimliği::AlignDataCost),
+            ("line-resize", KartKimliği::Resize),
+        ] {
+            assert_eq!(KartKimliği::slugdan(slug), Some(beklenen));
+            assert_eq!(beklenen.tanımlayıcı().kimlik, beklenen);
+        }
+    }
+
+    #[test]
+    fn multi_bars_varyantları_tek_registry_fabrikasını_kullanır() -> Result<(), UplotHatası> {
+        let tanım = KartKimliği::MultiBars(MultiBarsÖrneği::KitaplıklarDikey).tanımlayıcı();
+        for örnek in MultiBarsÖrneği::TÜMÜ {
+            let girdi = KatalogFabrikaGirdisi {
+                kart: KartKimliği::MultiBars(örnek),
+                no_data_örneği: NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
+                nokta_sayısı: 100,
+                autosize_kuvvet: 0,
+                latency_kova: 5,
+                latency_ofset: 0,
+                pixel_align_adımı: 0,
+            };
+            let (registry_seçenekleri, registry_verisi) = tanım.grafiği_oluştur(girdi)?;
+            let (doğrudan_seçenekler, doğrudan_veri) = multi_bars_kartı(örnek)?;
+            assert_eq!(
+                (
+                    registry_seçenekleri.genişlik,
+                    registry_seçenekleri.yükseklik
+                ),
+                (doğrudan_seçenekler.genişlik, doğrudan_seçenekler.yükseklik)
+            );
+            assert_eq!(registry_verisi.x(), doğrudan_veri.x());
+            assert_eq!(registry_verisi.seriler(), doğrudan_veri.seriler());
+        }
+        Ok(())
     }
 }
