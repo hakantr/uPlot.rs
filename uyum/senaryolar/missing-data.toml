@@ -55,5 +55,5 @@ tcp_rengi = "#008000"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg_dizini = "target/missing-data"

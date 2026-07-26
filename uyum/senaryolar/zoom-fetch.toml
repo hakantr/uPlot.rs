@@ -12,6 +12,6 @@ durum = "çekirdek_akışı_ayrı_katalog_yüzeyi_yok"
 "tam_aralık" = "çift tıkta kaynak veriyi yeniden yükle"
 
 ["kanıt"]
-"örnek" = "examples/zoom_wheel.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "ortak_çekirdek" = "src/kart/zoom_wheel.rs#ZoomFetchAkışı"
-wasm = "src/gpui.rs#zoom_fetch_kaniti"
+gpui_web = "src/gpui.rs#zoom_fetch_kaniti"

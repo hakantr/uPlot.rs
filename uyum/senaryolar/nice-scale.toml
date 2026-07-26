@@ -10,10 +10,10 @@ durum = "yeniden_boyutlandirilabilir_etkilesimli"
 "yeniden_boyutlandırma" = "iki_yönlü"
 "asgari_genişlik" = 100
 "asgari_yükseklik" = 100
-wasm_tetikleme = "ResizeObserver + requestAnimationFrame"
+gpui_web_tetikleme = "ResizeObserver + requestAnimationFrame"
 "masaüstü_tetikleme" = "GPUI pencere/panel yerleşim boyutu"
-"wasm_boyut_kaynağı" = "ResizeObserver.contentRect"
-"wasm_burst_birleştirme" = "son boyut tek requestAnimationFrame"
+"gpui_web_boyut_kaynağı" = "ResizeObserver.contentRect"
+"gpui_web_burst_birleştirme" = "son boyut tek requestAnimationFrame"
 "svg_düğümü" = "yerinde güncellenir"
 zoom_cursor_durumu = "resize sırasında korunur"
 
@@ -43,5 +43,5 @@ algoritma = "niceScale/niceNum"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/nice-scale.svg"

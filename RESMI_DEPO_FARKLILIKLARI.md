@@ -12,7 +12,7 @@ uyarlama ve uzantıların birbirine karışmaması için tutulur.
 | Alan | Resmî uPlot | uPlot.rs | Tür |
 |---|---|---|---|
 | Dil ve API | JavaScript seçenek nesneleri | Rust 2024 tipleri ve oluşturucu zincirleri | Zorunlu port uyarlaması |
-| Çizim yüzeyi | Canvas tabanlı tarayıcı çizimi | Ortak sahne komutlarından SVG/WASM ve GPUI çizimi | Zorunlu port uyarlaması |
+| Çizim yüzeyi | Canvas tabanlı tarayıcı çizimi | Native ve web hedeflerinde ortak GPUI paint; yalnız açık istekte vektör SVG kaydı | Zorunlu port uyarlaması |
 | Hata modeli | JavaScript çalışma zamanı davranışı | Tipli `UplotHatası`; üretim kodunda panic yasakları | uPlot.rs güvenlik ilkesi |
 | Etkileşim tanımı | Bazı cursor davranışları örtük varsayılandır; eklentiler ayrıca kurulur | Etkileşimler kart başına açık `true`/`false` seçenekleridir | API uyarlaması |
 | Tekerlek yakınlaştırma | `demos/zoom-wheel.html` içindeki isteğe bağlı `wheelZoomPlugin` | Aynı eklentinin kart seçeneğiyle açılan portu ve canlı anahtarı | Resmî eklenti portu + kontrol uyarlaması |
@@ -21,7 +21,7 @@ uyarlama ve uzantıların birbirine karışmaması için tutulur.
 | Hassas tekerlek girdisi | Her `wheel` olayına sabit katsayı uygular | Ayrık mouse tekerleği ile Magic Mouse/trackpad piksel akışını otomatik ayırır | uPlot.rs uzantısı |
 | Tam görünüme dönüş | Çekirdekte çift tıklama `autoScaleX()` çağırır | Çift tıklamaya ek olarak görünür “Tam görünüm” düğmesi sunar | Keşfedilebilirlik uyarlaması |
 | Görünüm geçmişi | Adımlı geri alma geçmişi bulunmaz | Hareket başına kayıt tutan “Geri” kontrolü vardır | uPlot.rs uzantısı |
-| Örnek kataloğu | Bağımsız HTML demoları | Aynı kart tanımını kullanan masaüstü ve WASM chart listeleri | Port sunumu |
+| Örnek kataloğu | Bağımsız HTML demoları | Aynı kart tanımını kullanan GPUI masaüstü ve web chart listeleri | Port sunumu |
 | Örnek/çekirdek sınırı | Demolar dağıtımdan ayrı HTML girişleridir | GPUI kataloğu ayrı ve yayınlanmayan workspace uygulamasıdır; bütün davranış çekirdektedir | Rust paket uyarlaması |
 | Yüzey seçimi | Canvas tarayıcı ortamına gömülüdür | Tek interaktif renderer GPUI'dir; `gpui-svg` yalnız isteğe bağlı vektör dışa aktarımı açar | GPUI odaklı Rust paket uyarlaması |
 | Ortak kart profili | Her demo yalnız kendi kurduğu çekirdek/eklenti davranışlarını taşır | Port kartları kaynak çizimini korurken Resize ile olgunlaştırılan isteğe bağlı wheel/touch, taşıma ve geçmiş profilini kullanabilir; manifest bunu açıkça kaydeder | uPlot.rs katalog/API uyarlaması |
@@ -33,7 +33,7 @@ uyarlama ve uzantıların birbirine karışmaması için tutulur.
 - satır tabanlı klasik mouse tekerleğinde resmî `0.75` adımı korunur;
 - piksel tabanlı girdide 100 piksel toplam hareket bir resmî adıma eşlenir;
 - 1.5 piksel altındaki küçük hareketler ölü bölgede tutulur;
-- masaüstü ve WASM aynı çekirdek denetleyicisine yalnız normalize olay girdisi iletir;
+- GPUI masaüstü ve web aynı çekirdek denetleyicisine yalnız normalize olay girdisi iletir;
 - tekerlek geçmişi olay başına değil, 140 ms ile gruplanan hareket başına yazılır.
 
 Bu normalizasyon resmî `wheelZoomPlugin`in parçası değildir. Eklentinin fare
@@ -91,7 +91,7 @@ This inventory separates direct ports from uPlot.rs-specific adaptations.
 | Area | Official uPlot | uPlot.rs | Classification |
 |---|---|---|---|
 | Language and API | JavaScript option objects | Rust 2024 types and builder chains | Required port adaptation |
-| Rendering surface | Browser Canvas rendering | Shared scene commands rendered by SVG/WASM and GPUI | Required port adaptation |
+| Rendering surface | Browser Canvas rendering | Shared GPUI paint on native and web; vector SVG recording only on explicit request | Required port adaptation |
 | Error model | JavaScript runtime behavior | Typed `UplotHatası` and production panic prohibitions | uPlot.rs safety policy |
 | Interaction declaration | Some cursor behaviors are implicit defaults; plugins are installed separately | Explicit per-card `true`/`false` interaction options | API adaptation |
 | Wheel zoom | Optional `wheelZoomPlugin` in `demos/zoom-wheel.html` | Port enabled per card, with a live switch | Official plugin port plus control adaptation |
@@ -100,7 +100,7 @@ This inventory separates direct ports from uPlot.rs-specific adaptations.
 | Precise wheel input | Fixed factor per `wheel` event | Automatic separation of discrete wheels and Magic Mouse/trackpad pixel streams | uPlot.rs extension |
 | Full-range reset | Core double-click calls `autoScaleX()` | Also exposes a visible Full view button | Discoverability adaptation |
 | View history | No stepwise view undo | Gesture-level Back history | uPlot.rs extension |
-| Demo catalog | Independent HTML demos | Desktop and WASM chart lists sharing one card definition | Port presentation |
+| Demo catalog | Independent HTML demos | GPUI desktop and web chart lists sharing one card definition | Port presentation |
 | Demo/core boundary | Demos are separate HTML entry points | The GPUI catalog is a separate unpublished workspace app; all behavior lives in core | Rust packaging adaptation |
 | Surface selection | Canvas is built into the browser runtime | GPUI is the only interactive renderer; `gpui-svg` enables on-demand vector export only | GPUI-focused Rust packaging adaptation |
 | Shared card profile | Each demo only has the core/plugin behavior it installs | Port cards preserve source rendering while optionally enabling the wheel/touch, pan, and history profile matured with Resize; the manifest records this explicitly | uPlot.rs catalog/API adaptation |
@@ -108,7 +108,7 @@ This inventory separates direct ports from uPlot.rs-specific adaptations.
 In automatic wheel mode, traditional line-based wheels keep the official
 `0.75` step. Precise input maps 100 pixels to one official step, applies a
 1.5-pixel dead zone, and stores one history entry per 140 ms gesture. Desktop
-and WASM pass only normalized event input to the same core controller. This normalization is not part of the
+and GPUI Web pass only normalized event input to the same core controller. This normalization is not part of the
 official plugin; cursor anchoring and full-range clamping remain ported
 behavior.
 

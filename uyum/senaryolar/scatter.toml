@@ -31,4 +31,4 @@ durum = "tek_kart_iki_bağımsız_mode2_yüzeyi"
 ["kanıt"]
 "svg_dizini" = "target/scatter"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

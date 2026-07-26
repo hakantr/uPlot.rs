@@ -24,7 +24,7 @@ yapılmadan yeni kart eklenemez.
 
 1. Resmî demonun sabit verisi, üretici algoritması, seri sırası ve kaynakta sabitse boyutu korunur.
 2. Veri, ölçek, yakınlaştırma, taşıma ve diğer kart davranışları çekirdekte çözülür; kataloglar bunları yeniden yazmaz.
-3. GPUI ve WASM aynı Rust kart tanımını ve aynı sahne semantiğini kullanır.
+3. GPUI masaüstü ve web aynı Rust kart tanımını ve aynı sahne semantiğini kullanır.
    Kataloglardan biri için istenen sunum/etkileşim değişikliği platformca
    destekleniyorsa aynı çalışma kapsamında diğerine de uygulanır; yalnız gerçek
    platform kısıtları açıkça belgelenmiş istisna olabilir.
@@ -58,11 +58,12 @@ Kartlar, veri miktarından bağımsız olarak aynı çizim yaşam döngüsünü 
   üretmez.
 - GPUI ana yüzeyi önbellekli bir alt görünüm olarak saklar; yalnız etkileşim
   katmanındaki değişiklik bu önbelleği geçersiz kılmaz.
-- WASM adaptörü yüksek frekanslı pointer akışını
-  `requestAnimationFrame` başına en fazla bir güncellemeye birleştirir.
-- WASM yeniden çiziminde kartın yardım, lejant ve tooltip kabuğu korunur;
-  yalnız grafik SVG yüzeyi değiştirilir. Seri yapısı değişirse kabuk bir kez
-  yeniden kurulur.
+- GPUI Web pointer capture kullanır; seçim veya taşıma canvas sınırını geçse
+  bile bırakma olayı kaybolmaz. Native ve web aynı `GpuiGrafik` olay akışını
+  çalıştırır.
+- Lejant, tooltip, cursor ve seçim ana grafik geometrisinden ayrı GPUI
+  katmanlarında güncellenir; seri yolları sıradan pointer hareketinde yeniden
+  üretilmez.
 - Düz çizgi ve görünür alan içinde kalan kırpma yolları sahipli geometri
   tamponlarını yeniden kullanır; kartların bu sıcak yolu özel kopyalarla
   yeniden uygulaması kabul edilmez.
@@ -70,7 +71,7 @@ Kartlar, veri miktarından bağımsız olarak aynı çizim yaşam döngüsünü 
 ## Yeni kart kabul kapısı
 
 Bir kart ancak kaynak/veri hash'i, sözleşmedeki 19 karar, sayısal test, GPUI ve
-WASM yüzey kaydı, statik görünüm kanıtı ve varsa etkileşim kanıtı tamamlandığında
+GPUI Web yüzey kaydı, statik görünüm kanıtı ve varsa etkileşim kanıtı tamamlandığında
 `uygulandı_kanıtlı` durumuna getirilebilir. Ortak davranış için yeni kod
 gerekiyorsa önce çekirdeğe eklenir; kart veya katalog içinde özel bir kopya
 oluşturulmaz.

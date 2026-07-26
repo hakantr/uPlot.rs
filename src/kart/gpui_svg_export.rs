@@ -1,23 +1,25 @@
 use super::ortak_kart_etkileşimleri;
 #[cfg(feature = "gpui-svg")]
-use crate::Grafik;
+use crate::{GpuiSvgKayıtAyarları, Grafik, gpui::GpuiGrafik};
 use crate::{
     GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, YÖlçekEtiketBiçimi,
     YÖlçekSeçenekleri,
 };
 
-pub const SVG_IMAGE_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = svg_image_kartı()?;
-let grafik = Grafik::yeni(seçenekler, veri)?;
-let bağımsız_svg = grafik.çiz().svg();
-// Başlık, eksenler, arka plan ve seri tek bir taşınabilir SVG belgesindedir.
-// WASM örneği bu belgeyi kaynak PoC gibi DPR boyutlu ikinci canvas'a bir kez rasterler.
+pub const GPUI_SVG_EXPORT_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = gpui_svg_export_kartı()?;
+let yüzey = GpuiGrafik::yeni(Grafik::yeni(seçenekler, veri)?);
+let ayarlar = GpuiSvgKayıtAyarları::yeni(800, 400)?;
+let vektör_kaydı = yüzey.svg_kaydı(ayarlar);
+// Kayıtçı yalnız bu açık çağrıda çalışır; normal GPUI paint yolunda maliyet oluşturmaz.
 "##;
 
-/// `demos/svg-image.html` içindeki 400×200 "test chart" yüzeyini kurar.
+/// `demos/svg-image.html` içindeki 400×200 "test chart" verisini GPUI yüzeyi
+/// ve isteğe bağlı vektör kayıt akışı için kurar.
 ///
-/// Kaynak demo canvas ile DOM katmanlarını sonradan bir görüntüde birleştirir.
-/// Rust portunda aynı içerik zaten tek bir bağımsız SVG sahnesi olarak üretilir.
-pub fn svg_image_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
+/// Kaynak demo canvas ve DOM katmanlarını sonradan bir görüntüde birleştirir.
+/// GPUI portu özel Scene iç alanlarını tersine çevirmek yerine aynı retained
+/// komutları yalnız dışa aktarım istendiğinde gerçek vektör SVG'ye kaydeder.
+pub fn gpui_svg_export_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {
     let seçenekler = GrafikSeçenekleri::yeni(400, 200)?
         .başlık("test chart")
         .x_zaman(false)
@@ -35,9 +37,11 @@ pub fn svg_image_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHata
 }
 
 #[cfg(feature = "gpui-svg")]
-pub fn svg_image_belgesi() -> Result<String, UplotHatası> {
-    let (seçenekler, veri) = svg_image_kartı()?;
-    Ok(Grafik::yeni(seçenekler, veri)?.çiz().svg())
+pub fn gpui_svg_export_belgesi() -> Result<String, UplotHatası> {
+    let (seçenekler, veri) = gpui_svg_export_kartı()?;
+    let yüzey = GpuiGrafik::yeni(Grafik::yeni(seçenekler, veri)?);
+    let ayarlar = GpuiSvgKayıtAyarları::yeni(400, 200)?;
+    Ok(yüzey.svg_kaydı(ayarlar).stringe_dönüştür())
 }
 
 #[cfg(all(test, feature = "gpui-svg"))]
@@ -45,8 +49,8 @@ mod testler {
     use super::*;
 
     #[test]
-    fn kaynak_grafik_ve_bağımsız_svg_belgesi_korunur() -> Result<(), UplotHatası> {
-        let (seçenekler, veri) = svg_image_kartı()?;
+    fn kaynak_grafik_isteğe_bağlı_gpui_vektör_kaydına_dönüşür() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = gpui_svg_export_kartı()?;
         assert_eq!((seçenekler.genişlik, seçenekler.yükseklik), (400, 200));
         assert_eq!(seçenekler.başlık, "test chart");
         assert!(!seçenekler.x_zaman);
@@ -64,9 +68,10 @@ mod testler {
             veri.seriler().first().map(Vec::as_slice),
             Some([Some(4.0), Some(5.0), Some(6.0)].as_slice())
         );
-        let svg = svg_image_belgesi()?;
+        let svg = gpui_svg_export_belgesi()?;
         assert!(svg.starts_with("<svg"));
         assert!(svg.contains("width=\"400\" height=\"200\""));
+        assert!(svg.contains("data-gpui-layer=\"ana\""));
         assert!(svg.contains("test chart"));
         assert!(svg.contains("fill=\"pink\""));
         assert!(svg.contains("stroke=\"blue\""));
@@ -74,7 +79,7 @@ mod testler {
         assert_eq!(svg.matches("a2.00 2.00 0 1 0").count(), 6);
         assert!(!svg.contains("<canvas"));
         assert!(!svg.contains("<foreignObject"));
-        assert_eq!(svg, svg_image_belgesi()?);
+        assert_eq!(svg, gpui_svg_export_belgesi()?);
         Ok(())
     }
 }

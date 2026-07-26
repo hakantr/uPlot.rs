@@ -1,8 +1,8 @@
 //! Native ve GPUI Web'in paylaştığı tek Rust grafik kataloğu.
 
 use gpui::{
-    ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement, Render, SharedString, Task,
-    Window, div, prelude::*, px, rgb, rgba,
+    ClickEvent, ClipboardItem, Context, Entity, Focusable, FontWeight, IntoElement, Render,
+    SharedString, Task, Window, div, prelude::*, px, rgb, rgba,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
@@ -20,13 +20,14 @@ use uplot_rs::{
     CURSOR_BIND_KART_TANIM_ÖRNEĞİ, CURSOR_SNAP_KART_TANIM_ÖRNEĞİ, CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ,
     CUSTOM_SCALES_KART_TANIM_ÖRNEĞİ, CustomScaleÖrneği, DATA_SMOOTHING_KART_TANIM_ÖRNEĞİ,
     DEPENDENT_SCALE_KART_TANIM_ÖRNEĞİ, DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, EtkileşimSeçenekleri,
-    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GRADIENTS_KART_TANIM_ÖRNEĞİ,
-    GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GradientÖrneği, Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ,
-    HighLowBandsÖrneği, LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ,
-    LOG_SCALES_KART_TANIM_ÖRNEĞİ, LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği,
-    LinePathsÖrneği, LogScales2Örneği, LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ,
-    MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ, MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ,
-    MONTHS_RU_KART_TANIM_ÖRNEĞİ, MULTI_BARS_KART_TANIM_ÖRNEĞİ, MissingDataÖrneği, MultiBarsÖrneği,
+    FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, GPUI_SVG_EXPORT_KART_TANIM_ÖRNEĞİ,
+    GRADIENTS_KART_TANIM_ÖRNEĞİ, GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ, GpuiSvgKayıtAyarları,
+    GradientÖrneği, Grafik, HIGH_LOW_BANDS_KART_TANIM_ÖRNEĞİ, HighLowBandsÖrneği,
+    LATENCY_HEATMAP_KART_TANIM_ÖRNEĞİ, LINE_PATHS_KART_TANIM_ÖRNEĞİ, LOG_SCALES_KART_TANIM_ÖRNEĞİ,
+    LOG_SCALES2_KART_TANIM_ÖRNEĞİ, LatencyHeatmapÖrneği, LinePathsÖrneği, LogScales2Örneği,
+    LogScalesÖrneği, MASS_SPECTRUM_KART_TANIM_ÖRNEĞİ, MEASURE_DATUMS_KART_TANIM_ÖRNEĞİ,
+    MISSING_DATA_KART_TANIM_ÖRNEĞİ, MONTHS_KART_TANIM_ÖRNEĞİ, MONTHS_RU_KART_TANIM_ÖRNEĞİ,
+    MULTI_BARS_KART_TANIM_ÖRNEĞİ, MissingDataÖrneği, MultiBarsÖrneği,
     NEAREST_NON_NULL_KART_TANIM_ÖRNEĞİ, NICE_SCALE_KART_TANIM_ÖRNEĞİ, NO_DATA_KART_TANIM_ÖRNEĞİ,
     NearestNonNullÖrneği, NoDataÖrneği, PATH_GAP_CLIP_KART_TANIM_ÖRNEĞİ,
     PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ, POINTS_KART_TANIM_ÖRNEĞİ, PathGapClipÖrneği, PixelAlignAkışı,
@@ -35,10 +36,10 @@ use uplot_rs::{
     SINE_STREAM_KART_TANIM_ÖRNEĞİ, SOFT_MINMAX_KART_TANIM_ÖRNEĞİ,
     SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ, SPARKLINES_KART_TANIM_ÖRNEĞİ, SPARSE_KART_TANIM_ÖRNEĞİ,
     STACKED_SERIES_KART_TANIM_ÖRNEĞİ, STREAM_DATA_ARALIK_MS, STREAM_DATA_KART_TANIM_ÖRNEĞİ,
-    SVG_IMAGE_KART_TANIM_ÖRNEĞİ, SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
-    ScalesDirOriÖrneği, ScatterÖrneği, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı,
-    SoftMinMaxÖrneği, SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği,
-    StreamDataGrubu, StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği, SyncYZeroAşaması,
+    SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ, ScalesDirOriÖrneği,
+    ScatterÖrneği, SineAkışı, SmoothingÖrneği, SoftMinMaxAkışı, SoftMinMaxÖrneği,
+    SparklinesBarsÖrneği, SparklineÖrneği, SparseÖrneği, StackedSeriesÖrneği, StreamDataGrubu,
+    StreamDataÖrneği, SyncCursorGrubu, SyncCursorÖrneği, SyncYZeroAşaması,
     THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ, TIME_PERIODS_KART_TANIM_ÖRNEĞİ,
     TIMELINE_DISCRETE_KART_TANIM_ÖRNEĞİ, TIMESERIES_DISCRETE_KART_TANIM_ÖRNEĞİ,
     TIMEZONES_DST_KART_TANIM_ÖRNEĞİ, TOOLTIPS_CLOSEST_KART_TANIM_ÖRNEĞİ,
@@ -54,8 +55,8 @@ use uplot_rs::{
     bars_values_autosize_kartı, box_whisker_kartları, box_whisker_kartı, candlestick_ohlc_kartı,
     cursor_bind_kartı, cursor_snap_kartı, cursor_tooltip_kartı, custom_scales_kartları,
     custom_scales_kartı, data_smoothing_kartı, dependent_scale_kartı, draw_hooks_kartı,
-    focus_cursor_kartları, focus_cursor_kartı, gradients_kartları, gradients_kartı,
-    grid_over_series_kartı, high_low_bands_kartları, high_low_bands_kartı,
+    focus_cursor_kartları, focus_cursor_kartı, gpui_svg_export_kartı, gradients_kartları,
+    gradients_kartı, grid_over_series_kartı, high_low_bands_kartları, high_low_bands_kartı,
     latency_heatmap_kartları, latency_heatmap_kartı, line_paths_kartları, line_paths_kartı,
     log_scales_kartları, log_scales_kartı, log_scales2_kartları, log_scales2_kartı,
     mass_spectrum_kartı, measure_datums_kartı, missing_data_kartları, missing_data_null_kartı,
@@ -66,8 +67,8 @@ use uplot_rs::{
     scales_dir_ori_kartı, scatter_kartı, scroll_sync_kartı, sine_stream_kartı,
     soft_minmax_kartları, soft_minmax_kartı, sparklines_bars_kartları, sparklines_bars_kartı,
     sparklines_kartları, sparklines_kartı, sparse_kartları, sparse_kartı, stacked_series_kartları,
-    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, svg_image_kartı,
-    sync_cursor_kartı, sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
+    stacked_series_kartı, stacked_series_kartı_görünür, stream_data_kartı, sync_cursor_kartı,
+    sync_y_zero_aralıkları, sync_y_zero_kartı, thin_bars_stroke_fill_kartları,
     thin_bars_stroke_fill_kartı, time_periods_kartları, time_periods_kartı,
     timeline_discrete_kartları, timeline_discrete_kartı, timeseries_discrete_kartları,
     timeseries_discrete_kartı, timezones_dst_kartları, timezones_dst_kartı, tooltips_closest_kartı,
@@ -101,7 +102,7 @@ enum KartKimliği {
     Sparse(SparseÖrneği),
     StackedSeries(StackedSeriesÖrneği),
     StreamData(StreamDataÖrneği),
-    SvgImage,
+    GpuiSvgExport,
     SyncCursor,
     SyncYZero(SyncYZeroAşaması),
     ThinBars(ThinBarsÖrneği),
@@ -172,7 +173,7 @@ impl KartKimliği {
             Self::Sparse(_) => "Sparse · 3 pathBuilder",
             Self::StackedSeries(_) => "Stacked Series · 16 yüzey",
             Self::StreamData(_) => "Data Stream · 3 yüzey",
-            Self::SvgImage => "uPlot to image PoC",
+            Self::GpuiSvgExport => "GPUI SVG Export · isteğe bağlı kayıt",
             Self::SyncCursor => "Sync Cursor",
             Self::SyncYZero(_) => "Sync Y Zero",
             Self::ThinBars(_) => "Thin bar stroke & fill",
@@ -275,7 +276,9 @@ impl KartKimliği {
                 "stacked-series.html · stack.js · yığma, yüzde, grup ve karma veri"
             }
             Self::StreamData(_) => "stream-data.html · bench/data.json · setData canlı akışı",
-            Self::SvgImage => "svg-image.html · canvas + DOM → bağımsız görüntü PoC",
+            Self::GpuiSvgExport => {
+                "svg-image.html · GPUI retained yüzey → açık istekle gerçek vektör kayıt"
+            }
             Self::SyncCursor => "sync-cursor.html · sync.js · bench/data.json · 5 eşzamanlı yüzey",
             Self::SyncYZero(_) => {
                 "sync-y-zero.html · ham → simetrik → ortak sıfır pikseli · 3 sol Y ekseni"
@@ -400,7 +403,7 @@ impl KartKimliği {
             Self::Sparse(_) => SPARSE_KART_TANIM_ÖRNEĞİ,
             Self::StackedSeries(_) => STACKED_SERIES_KART_TANIM_ÖRNEĞİ,
             Self::StreamData(_) => STREAM_DATA_KART_TANIM_ÖRNEĞİ,
-            Self::SvgImage => SVG_IMAGE_KART_TANIM_ÖRNEĞİ,
+            Self::GpuiSvgExport => GPUI_SVG_EXPORT_KART_TANIM_ÖRNEĞİ,
             Self::SyncCursor => SYNC_CURSOR_KART_TANIM_ÖRNEĞİ,
             Self::SyncYZero(_) => SYNC_Y_ZERO_KART_TANIM_ÖRNEĞİ,
             Self::ThinBars(_) => THIN_BARS_STROKE_FILL_KART_TANIM_ÖRNEĞİ,
@@ -471,7 +474,7 @@ impl KartKimliği {
             Self::Sparse(_) => "src/kart/sparse.rs",
             Self::StackedSeries(_) => "src/kart/stacked_series.rs",
             Self::StreamData(_) => "src/kart/stream_data.rs",
-            Self::SvgImage => "src/kart/svg_image.rs",
+            Self::GpuiSvgExport => "src/kart/gpui_svg_export.rs",
             Self::SyncCursor => "src/kart/sync_cursor.rs",
             Self::SyncYZero(_) => "src/kart/sync_y_zero.rs",
             Self::ThinBars(_) => "src/kart/thin_bars_stroke_fill.rs",
@@ -607,9 +610,31 @@ pub struct ChartListesi {
     scales_dir_ori_senkronlanıyor: bool,
     scales_dir_ori_kilitli: bool,
     no_data_örneği: NoDataÖrneği,
+    svg_kayıt_baytı: Option<usize>,
 }
 
 impl ChartListesi {
+    fn svg_kaydını_panoya_kopyala(&mut self, cx: &mut Context<Self>) {
+        let Some(grafik) = self.grafik.as_ref() else {
+            self.hata = Some("SVG kaydı için etkin GPUI yüzeyi bulunamadı".to_string());
+            cx.notify();
+            return;
+        };
+        let ayarlar = match GpuiSvgKayıtAyarları::yeni(800, 400) {
+            Ok(ayarlar) => ayarlar,
+            Err(hata) => {
+                self.hata = Some(format!("SVG kayıt ayarları oluşturulamadı: {hata}"));
+                cx.notify();
+                return;
+            }
+        };
+        let kayıt = grafik.read(cx).svg_kaydı(ayarlar);
+        self.svg_kayıt_baytı = Some(kayıt.byte_değeri().len());
+        cx.write_to_clipboard(ClipboardItem::new_string(kayıt.stringe_dönüştür()));
+        self.hata = None;
+        cx.notify();
+    }
+
     fn açıklama_istemini_aç(&mut self, cx: &mut Context<Self>) {
         self.açıklama_metni
             .update(cx, |alan, cx| alan.metni_ayarla("", cx));
@@ -956,6 +981,7 @@ impl ChartListesi {
             scales_dir_ori_senkronlanıyor: false,
             scales_dir_ori_kilitli: false,
             no_data_örneği: NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
+            svg_kayıt_baytı: None,
         }
     }
 
@@ -2930,6 +2956,7 @@ impl ChartListesi {
             return;
         }
         self.aktif_kart = kart;
+        self.svg_kayıt_baytı = None;
         self.kart_tanımı_açık = false;
         self.kullanım_rehberi_açık = false;
         self.arcsinh_kuvvet = 0;
@@ -4006,7 +4033,7 @@ fn grafik_oluştur(
         KartKimliği::Sparse(örnek) => sparse_kartı(örnek),
         KartKimliği::StackedSeries(örnek) => stacked_series_kartı(örnek),
         KartKimliği::StreamData(örnek) => stream_data_kartı(örnek),
-        KartKimliği::SvgImage => svg_image_kartı(),
+        KartKimliği::GpuiSvgExport => gpui_svg_export_kartı(),
         KartKimliği::SyncCursor => sync_cursor_kartı(SyncCursorÖrneği::Cpu),
         KartKimliği::SyncYZero(aşama) => sync_y_zero_kartı(aşama),
         KartKimliği::ThinBars(örnek) => thin_bars_stroke_fill_kartı(örnek),
@@ -4207,9 +4234,10 @@ impl Render for ChartListesi {
                      artan {artan_uzunluk} · sabit X {sabit_x_uzunluk} · 100 ms/10 satır setData"
                 )
             }
-            KartKimliği::SvgImage => {
-                "3 nokta × 1 seri · 400×200 canlı sahne · bağımsız SVG API".to_string()
-            }
+            KartKimliği::GpuiSvgExport => self.svg_kayıt_baytı.map_or_else(
+                || "3 nokta × 1 seri · kayıt yalnız düğmeye basıldığında çalışır".to_string(),
+                |bayt| format!("800×400 gerçek vektör SVG · {bayt} bayt panoya kopyalandı"),
+            ),
             KartKimliği::SyncCursor => {
                 "5 yüzey · 3.004 nokta · iki cursor eşleme grubu".to_string()
             }
@@ -5490,16 +5518,16 @@ impl Render for ChartListesi {
             })
             .child(
                 katalog_kartı(
-                    "svg-image",
-                    "uPlot to image PoC",
-                    "svg-image",
-                    aktif_kart == KartKimliği::SvgImage,
-                    "400×200 canlı · tek bağımsız SVG belgesi",
+                    "gpui-svg-export",
+                    "GPUI SVG Export",
+                    "gpui-svg-export",
+                    aktif_kart == KartKimliği::GpuiSvgExport,
+                    "normal paint maliyeti yok · düğmeyle 800×400 vektör kayıt",
                     panel,
                     vurgu,
                 )
                 .on_click(cx.listener(|bu, _: &ClickEvent, _, cx| {
-                    bu.kartı_seç(KartKimliği::SvgImage, cx);
+                    bu.kartı_seç(KartKimliği::GpuiSvgExport, cx);
                 })),
             )
             .child(
@@ -5890,6 +5918,16 @@ impl Render for ChartListesi {
                             .turu(DugmeTuru::Ikincil)
                             .tiklaninca(cx.listener(|bu, _, _, cx| bu.dinamik_seri_sil(cx))),
                     )
+            })
+            .when(aktif_kart == KartKimliği::GpuiSvgExport, |öğe| {
+                öğe.child(
+                    Dugme::yeni("gpui-svg-kaydet", "SVG’yi panoya kopyala")
+                        .boyutu(DugmeBoyutu::Kucuk)
+                        .turu(DugmeTuru::Ikincil)
+                        .tiklaninca(cx.listener(|bu, _, _, cx| {
+                            bu.svg_kaydını_panoya_kopyala(cx);
+                        })),
+                )
             })
             .when(aktif_kart == KartKimliği::ArcSinhScales, |öğe| {
                 öğe
@@ -8882,16 +8920,15 @@ impl Render for ChartListesi {
                  sonunda gereksiz kopya/çizimi durdurur. Cursor ve ölçekler yüzeyler arasında \
                  senkronlanmaz; wheel/touch/drag kaynak dışı isteğe bağlı çekirdek uzantısıdır.",
             ),
-            KartKimliği::SvgImage => Some(
+            KartKimliği::GpuiSvgExport => Some(
                 "Amaç: canlı grafik ile rapor veya olay eki olarak saklanabilen bağımsız \
-                 görüntü anlık görüntüsünü ayırır. API: svg_image_belgesi() başlık, eksen, pink \
-                 arka plan ve mavi seriyi tek belirlenimci SVG belgesinde üretir; CLI örneği \
-                 bunu dosyaya yazar. İzleme: dashboard panelini etkileşim durumundan bağımsız \
-                 paylaşmak için uygundur. Maliyet: kaynak DOM outerHTML, CSS kuralları, \
-                 foreignObject, Blob/Image ve iki DPR raster draw yapar; native port aynı \
-                 içeriği tek sahne yürüyüşünde CSS/DOM bağımlılığı olmadan üretir. WASM kaynak \
-                 eşliği için başlangıç SVG'sini bir kez DPR canvas'a rasterler; GPUI normal \
-                 görünümünde ek string/Blob üretmez.",
+                 vektör anlık görüntüsünü ayırır. API: GpuiGrafik::svg_kaydı yalnız açıkça \
+                 çağrıldığında retained ana sahneyi ve istenirse etkileşim katmanını SVG \
+                 komutlarına kaydeder; native hedefte svg_dosyasına_yaz da bulunur. İzleme: \
+                 dashboard panelini rapora, olay ekine veya panoya taşımak için uygundur. \
+                 Normal GPUI paint/frame yolunda kayıt bayrağı, String, Blob veya komut başına \
+                 dal yoktur. Bu karttaki düğme dışa aktarımı o anda çalıştırır ve gerçek vektör \
+                 metnini panoya kopyalar; grafik ekranda GPUI ile boyanmaya devam eder.",
             ),
             KartKimliği::SyncCursor => Some(
                 "Amaç: ayrı CPU, RAM ve TCP yüzeyleriyle farklı seri sıralı iki karşılaştırma \

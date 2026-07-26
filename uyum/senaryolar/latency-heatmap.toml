@@ -19,7 +19,7 @@ device_pixel_ratio = 1
 toplu_kova_boyutu = 5
 "histogram_kova_aralığı" = [1, 25]
 "histogram_ofset_aralığı" = [0, 25]
-histogram_kontrolleri = ["masaüstü", "wasm"]
+histogram_kontrolleri = ["masaüstü", "gpui_web"]
 "histogram_canlı_hedef" = "collapsed-only"
 "histogram_hizası" = 1
 "histogram_sabit_piksel_boşlukları" = [0, 3]
@@ -30,5 +30,5 @@ aggregated_y_veri_boyutu = 5
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/latency-heatmap/latency-heatmap-mode2.svg"

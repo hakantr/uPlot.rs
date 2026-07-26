@@ -123,18 +123,18 @@ okuyun.
 
 ## Canlı örnek ve otomatik derlemeler
 
-Etkileşimli WASM chart listesi GitHub Pages üzerinde yayınlanır:
+Etkileşimli GPUI Web chart listesi GitHub Pages üzerinde yayınlanır:
 
-**[uPlot.rs canlı WASM örneğini aç](https://hakantr.github.io/uPlot.rs/)**
+**[uPlot.rs canlı GPUI Web örneğini aç](https://hakantr.github.io/uPlot.rs/)**
 
-Her gün Türkiye saatiyle 21:00'de WASM paketi yeniden derlenip Pages ortamına
+Her gün Türkiye saatiyle 21:00'de GPUI Web paketi yeniden derlenip Pages ortamına
 yayınlanır ve şu indirilebilir workflow artefaktları oluşturulur:
 
 - macOS ARM64;
 - Linux ARM64;
 - Linux x86_64;
 - Windows x86_64;
-- WASM web paketi.
+- GPUI Web/WebGPU paketi.
 
 Gece derlemeleri ve elle çalıştırma için
 [nightly-artifacts workflow'una](https://github.com/hakantr/uPlot.rs/actions/workflows/nightly-builds.yml)
@@ -167,7 +167,7 @@ npm --prefix tools/uyum run denetle
 
 Üretim Rust kodunda `panic!`, `unwrap`, `expect`, kontrolsüz dilim indeksleme,
 `todo!`, `unimplemented!` ve `unreachable!` yasaktır. Doğrulama hataları tipli
-`UplotHatası` değerleriyle çağırana döner; masaüstü ve WASM doğrulama
+`UplotHatası` değerleriyle çağırana döner; GPUI masaüstü ve web doğrulama
 arayüzleri hatayı kart üzerinde kullanıcıya bildirir. Bu kural
 workspace lintleri ve CI Clippy adımıyla her değişiklikte denetlenir.
 

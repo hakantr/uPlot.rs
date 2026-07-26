@@ -34,7 +34,7 @@ set_size = "Grafik::boyutu_ayarla"
 
 ["adaptör"]
 "gpui_ayrı_etkileşim_canvası" = true
-"wasm_kararlı_svg_overlay_düğümleri" = true
+"gpui_web_kararlı_svg_overlay_düğümleri" = true
 "resize_ana_yolu_yeniden_çizer" = true
 "resize_overlay_düğümlerini_yeniden_kurmaz" = true
 
@@ -44,6 +44,6 @@ set_size = "Grafik::boyutu_ayarla"
 "lejant_set_series_hover_noktasını_da_gizler" = true
 
 ["kanıt"]
-"örnek" = "examples/update_cursor_select_resize.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

@@ -36,6 +36,6 @@ chicago = "America/Chicago"
 "dinleyici_yaşam_döngüsü" = "yeniden_çizimde_önceki_AbortController_iptal_edilir"
 
 ["kanıt"]
-"örnek" = "examples/timezones_dst.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

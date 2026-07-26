@@ -24,22 +24,22 @@ durum = "altı_seri_60fps_kayan_pencere"
 "yeniden_giriş" = "tek_yeni_akış_ve_tek_raf_zinciri"
 
 ["etkileşim"]
-"wasm_güncelleme" = "requestAnimationFrame_to_SineAkışı::ilerlet"
+"gpui_web_güncelleme" = "requestAnimationFrame_to_SineAkışı::ilerlet"
 "gpui_güncelleme" = "Window::on_next_frame_to_SineAkışı::ilerlet"
 "set_data" = "aynı_Grafik_ve_yüzeyde_Grafik::veriyi_ayarla"
 "set_data_ölçek_kuralı" = "kaynak_varsayılanı_gibi_her_karede_tam_X_ve_sabit_Y"
 "cursor" = "sabit_farede_yeni_veriden_yeniden_çöz"
-"wasm_dom" = "svg_düğümlerini_yerinde_güncelle_etkileşim_katmanını_koru"
+"gpui_web_dom" = "svg_düğümlerini_yerinde_güncelle_etkileşim_katmanını_koru"
 "ortak_davranış_profili" = "resize-temeli-v1"
 
 ["performans"]
 "pencere_güncelleme" = "VecDeque_drop_append_O1"
 "veri_aktarımı" = "O(seri_x_nokta)"
 "gpui" = "aynı_widget_ve_yol_önbelleği"
-"wasm" = "aynı_svg_kabuğunda_yerinde_düğüm_güncelleme"
+"gpui_web" = "aynı_svg_kabuğunda_yerinde_düğüm_güncelleme"
 "kanıt_düzeyi" = "kısmi_frame_bütçesi_benchmarkı_yok"
 
 ["kanıt"]
 "svg_dizini" = "target/sine-stream"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-"wasm" = "uygulamalar/web/src/main.rs"
+"gpui_web" = "uygulamalar/web/src/main.rs"

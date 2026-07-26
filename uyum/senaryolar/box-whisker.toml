@@ -47,6 +47,6 @@ durum = "tek-kartta-on-yedi-bagimsiz-yuzey"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-"wasm" = "uygulamalar/web/src/main.rs"
+"gpui_web" = "uygulamalar/web/src/main.rs"
 "svg_dizini" = "target/box-whisker"
 "sayısal_fixture" = ["01_run1k", "34_startup-totalbytes"]

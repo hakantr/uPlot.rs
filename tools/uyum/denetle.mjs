@@ -184,8 +184,8 @@ for (const kart of manifest.kartlar) {
   }
   for (const yerelYol of [
     kart.örnek,
-    kart.masaüstü_örneği,
-    kart.wasm_örneği,
+    kart.native_örneği,
+    kart.web_örneği,
     kart.senaryo,
   ]) {
     readFileSync(resolve(kok, yerelYol));

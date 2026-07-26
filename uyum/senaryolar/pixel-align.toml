@@ -21,7 +21,7 @@ pencere_ms = 120000
 "seri_sayısı" = 3
 "kanıt_tohumu" = "0x50495845"
 geciken_timer = "tek gerçek-zaman örneği; aradaki süre X gap olarak korunur"
-wasm_ortak_depo = true
+gpui_web_ortak_depo = true
 
 [yollar]
 "doğrusal" = true
@@ -48,4 +48,4 @@ oturumu_yeniden_kurmaz = true
 ["kanıt"]
 svg_dizini = "target/pixel-align"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

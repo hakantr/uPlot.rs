@@ -24,6 +24,6 @@ deprem_etiketi = "eqk_01"
 etiket_konumu = "başlangıç_çizgisi"
 
 ["kanıt"]
-"örnek" = "examples/annotations.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

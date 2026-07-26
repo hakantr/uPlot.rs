@@ -27,6 +27,6 @@ ortak_x_imleci = true
 "ortak_davranış_profili" = "resize-temeli-v1"
 
 ["kanıt"]
-"örnek" = "examples/timeseries_discrete.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

@@ -31,6 +31,6 @@ ince_vurusta_vurus_rengi_dolguya_duser = true
 "ortak_davranış_profili" = "resize-temeli-v1"
 
 ["kanıt"]
-"örnek" = "examples/thin_bars_stroke_fill.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

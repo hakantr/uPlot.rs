@@ -196,9 +196,8 @@ impl Sahne {
         (self.genişlik, self.yükseklik)
     }
 
-    /// Sahneyi bağımlılıksız ve belirlenimci bir SVG belgesine dönüştürür.
-    #[cfg(any(feature = "gpui-svg", test))]
-    pub fn svg(&self) -> String {
+    #[cfg(test)]
+    pub(crate) fn test_svg(&self) -> String {
         let mut çıktı = format!(
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{}\" height=\"{}\" viewBox=\"0 0 {} {}\">\n",
             self.genişlik, self.yükseklik, self.genişlik, self.yükseklik

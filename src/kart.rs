@@ -18,6 +18,7 @@ mod data_smoothing;
 mod dependent_scale;
 mod draw_hooks;
 mod focus_cursor;
+mod gpui_svg_export;
 mod gradients;
 mod grid_over_series;
 mod high_low_bands;
@@ -49,7 +50,6 @@ mod sparklines_bars;
 mod sparse;
 mod stacked_series;
 mod stream_data;
-mod svg_image;
 mod sync_cursor;
 mod sync_y_zero;
 mod thin_bars_stroke_fill;
@@ -126,6 +126,9 @@ pub use draw_hooks::{DRAW_HOOKS_KART_TANIM_ÖRNEĞİ, draw_hooks_kartı};
 pub use focus_cursor::{
     FOCUS_CURSOR_KART_TANIM_ÖRNEĞİ, FocusÖrneği, focus_cursor_kartları, focus_cursor_kartı,
 };
+#[cfg(feature = "gpui-svg")]
+pub use gpui_svg_export::gpui_svg_export_belgesi;
+pub use gpui_svg_export::{GPUI_SVG_EXPORT_KART_TANIM_ÖRNEĞİ, gpui_svg_export_kartı};
 pub use gradients::{
     GRADIENTS_KART_TANIM_ÖRNEĞİ, GradientÖrneği, gradients_kartları, gradients_kartı,
 };
@@ -218,9 +221,6 @@ pub use stream_data::{
     STREAM_DATA_ADIMI, STREAM_DATA_ARALIK_MS, STREAM_DATA_KART_TANIM_ÖRNEĞİ, STREAM_DATA_PENCERESİ,
     StreamDataAkışı, StreamDataGrubu, StreamDataÖrneği, stream_data_kartları, stream_data_kartı,
 };
-#[cfg(feature = "gpui-svg")]
-pub use svg_image::svg_image_belgesi;
-pub use svg_image::{SVG_IMAGE_KART_TANIM_ÖRNEĞİ, svg_image_kartı};
 pub use sync_cursor::{
     SYNC_CURSOR_KART_TANIM_ÖRNEĞİ, SyncCursorGrubu, SyncCursorÖrneği, sync_cursor_kartı,
 };

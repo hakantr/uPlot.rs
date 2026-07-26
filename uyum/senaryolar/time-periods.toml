@@ -45,6 +45,6 @@ yerel_tarih_bicimlendirme_yuzey_adaptorunde = true
 "ortak_davranış_profili" = "resize-temeli-v1"
 
 ["kanıt"]
-"örnek" = "examples/time_periods.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

@@ -14,6 +14,6 @@ joined_hucreler = "null_ile_alignment-missing-ayri"
 cursor_ayrimi = "dataIdx-noktayi-snapler_move-cursor-ve-noktayi-snapler"
 
 ["kanıt"]
-"örnek" = "examples/nearest_non_null.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

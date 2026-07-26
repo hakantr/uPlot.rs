@@ -345,7 +345,7 @@ mod testler {
             assert!(
                 Grafik::yeni(seçenekler, veri)?
                     .çiz()
-                    .svg()
+                    .test_svg()
                     .contains(örnek.başlık())
             );
         }

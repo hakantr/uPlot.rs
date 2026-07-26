@@ -27,7 +27,7 @@ sol_renk = "red"
 "kesin_plot_yüksekliği_px" = 504
 "örnek_y_sürükleme_px" = 40
 "örnek_x_sürükleme_px" = 100
-pointer_capture_wasm = true
+pointer_capture_gpui_web = true
 mouse_up_out_gpui = true
 "cursor_katmanı_korunur" = true
 lejant_set_series = true
@@ -39,6 +39,6 @@ lejant_set_series = true
 "set_scale_ana_yolları_ve_eksenleri_yeniler" = true
 
 ["kanıt"]
-"örnek" = "examples/y_scale_drag.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

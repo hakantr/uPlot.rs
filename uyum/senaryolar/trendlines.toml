@@ -33,6 +33,6 @@ lejant_set_series = true
 "pointer_ana_yolu_yeniden_çizmez" = true
 
 ["kanıt"]
-"örnek" = "examples/trendlines.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

@@ -35,5 +35,5 @@ ana_yol_pointerda_yeniden_cizilir = false
 
 [kanit]
 masaustu = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/custom-scales.svg"

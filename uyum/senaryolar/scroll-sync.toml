@@ -35,4 +35,4 @@ durum = "kaydırmada_yüzey_dikdörtgeni_yenilenir"
 ["kanıt"]
 "svg_dizini" = "target/scroll-sync"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-"wasm" = "uygulamalar/web/src/main.rs"
+"gpui_web" = "uygulamalar/web/src/main.rs"

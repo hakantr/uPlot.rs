@@ -48,5 +48,5 @@ pointer = "yalnız hafif vurgu ve tooltip katmanı; ana sahne yeniden çizilmez"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/candlestick-ohlc.svg"

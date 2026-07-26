@@ -1,7 +1,7 @@
 use super::ortak_kart_etkileşimleri;
 use crate::{Aralık, GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
 
-/// Masaüstü ve WASM kataloglarında gösterilen, çalıştırılabilir Resize kartı
+/// GPUI masaüstü ve web kataloglarında gösterilen, çalıştırılabilir Resize kartı
 /// tanımıyla aynı kalan kod örneği.
 pub const RESIZE_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = resize_kartı(100)?;
 // Seçim, çift tık, tekerlek, touch, taşıma ve görünüm geçmişi

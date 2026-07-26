@@ -44,5 +44,5 @@ set_series = true
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/dependent-scale.svg"

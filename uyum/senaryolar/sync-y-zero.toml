@@ -24,6 +24,6 @@ son_asamada_sifir_pikseli_ortak = true
 "ortak_davranış_profili" = "resize-temeli-v1"
 
 ["kanıt"]
-"örnek" = "examples/sync_y_zero.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

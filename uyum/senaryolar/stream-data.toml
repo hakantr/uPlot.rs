@@ -42,4 +42,4 @@ fixture = "src/kart/stream_data.rs#stream_data_kartları"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

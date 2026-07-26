@@ -9,7 +9,7 @@ durum = "tek_katalog_karti_33_secilebilir_kaynak_yuzeyi"
 "katalog_kart_sayısı" = 1
 "seçim_türü" = "tipli_33_seçenek"
 "tek_dom_svg_kabuğunu_yeniden_kullanır" = true
-"aynı_wasm_oturumunu_yeniden_kullanır" = true
+"aynı_gpui_web_oturumunu_yeniden_kullanır" = true
 "çekirdek_grafik_varyantta_yenilenir" = true
 "varyantta_etkileşim_geçmişi_sıfırlanır" = true
 "yatay_taşma" = false
@@ -44,6 +44,6 @@ tek_zaman_x_saniye = 86400
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg_dizini = "target/no-data"
 sunum = "single-card + 33 options"

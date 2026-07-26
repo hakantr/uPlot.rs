@@ -44,6 +44,6 @@ lejant_set_series = true
 "ortak_davranış_profili" = "resize-temeli-v1"
 
 ["kanıt"]
-"örnek" = "examples/y_shifted_series.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

@@ -121,18 +121,18 @@ for details and provenance.
 
 ## Live demo and automated builds
 
-The interactive WASM chart list is published with GitHub Pages:
+The interactive GPUI Web chart list is published with GitHub Pages:
 
-**[Open the live uPlot.rs WASM demo](https://hakantr.github.io/uPlot.rs/)**
+**[Open the live uPlot.rs GPUI Web demo](https://hakantr.github.io/uPlot.rs/)**
 
-Every day at 18:00 UTC (21:00 in Türkiye), the WASM package is rebuilt and
+Every day at 18:00 UTC (21:00 in Türkiye), the GPUI Web package is rebuilt and
 deployed to Pages together with the following downloadable workflow artifacts:
 
 - macOS ARM64;
 - Linux ARM64;
 - Linux x86_64;
 - Windows x86_64;
-- WASM web package.
+- GPUI Web/WebGPU package.
 
 See the
 [nightly-artifacts workflow](https://github.com/hakantr/uPlot.rs/actions/workflows/nightly-builds.yml)
@@ -166,7 +166,7 @@ npm --prefix tools/uyum run denetle
 
 Production Rust code forbids `panic!`, `unwrap`, `expect`, unchecked slice
 indexing, `todo!`, `unimplemented!`, and `unreachable!`. Validation failures
-are returned to callers as typed `UplotHatası` values; the desktop and WASM
+are returned to callers as typed `UplotHatası` values; the GPUI desktop and web
 verification UIs show errors on the chart card. Workspace
 lints and the CI Clippy step enforce this policy on every change.
 

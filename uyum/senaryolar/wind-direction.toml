@@ -40,6 +40,6 @@ lejant_set_series = true
 "kaynak_grafik_başlığı_yok" = true
 
 ["kanıt"]
-"örnek" = "examples/wind_direction.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

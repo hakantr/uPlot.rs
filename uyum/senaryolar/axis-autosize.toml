@@ -44,7 +44,7 @@ set_series = true
 "aynı_grafik_örneği" = true
 set_data = true
 "gpui_zamanlayıcı" = true
-"wasm_zamanlayıcı" = true
+"gpui_web_zamanlayıcı" = true
 "son_aşamada_dur" = 9
 "karttan_çıkışta_iptal" = true
 
@@ -56,5 +56,5 @@ set_data = true
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/axis-autosize.svg"

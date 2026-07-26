@@ -38,5 +38,5 @@ tekerlek_girdi_kipi = "otomatik_satır_ve_hassas_piksel"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/area-fill.svg"

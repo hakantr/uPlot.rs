@@ -31,5 +31,5 @@ null_expand = "seri başına boşluk koşularında doğrusal tek geçiş"
 
 [kanit]
 masaustu = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/align-data.svg"

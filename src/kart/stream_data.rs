@@ -295,7 +295,7 @@ mod testler {
                     })?;
             assert!(son_x.is_finite());
             assert_eq!(son_değerler.len(), 3);
-            assert!(grafik.çiz().svg().contains(örnek.başlık()));
+            assert!(grafik.çiz().test_svg().contains(örnek.başlık()));
         }
         Ok(())
     }

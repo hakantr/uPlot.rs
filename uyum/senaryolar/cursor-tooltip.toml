@@ -19,7 +19,7 @@ sinir = "plot-over"
 sagda_yer_yoksa_sola_don = true
 gercek_kutu_olcusu = true
 cursor_koordinati = "plot-local CSS pixels"
-sahiplik = "hazir GPUI/WASM yuzeyi"
+sahiplik = "hazir GPUI masaüstü/web yuzeyi"
 
 [performans]
 yerlesim = "O(1)"
@@ -28,5 +28,5 @@ ana_sahne_yeniden_cizimi = false
 
 [kanit]
 masaustu = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/cursor-tooltip.svg"

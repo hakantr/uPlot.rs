@@ -42,5 +42,5 @@ eksen_space = "plotDim / rangeDays * 28"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg_dizini = "target/months"

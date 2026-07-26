@@ -13,7 +13,7 @@ const PIXEL_ALIGN_HALKA_UZUNLUĞU: usize = 1_000;
 
 pub const PIXEL_ALIGN_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in pixel_align_kartları(121)? {
     // İki uPlot yüzeyi aynı veri örneğini paylaşır; yalnız pxAlign/pxSnap
-    // geometrisi değişir. GPUI, SVG ve WASM aynı çekirdek sahnesini tüketir.
+    // geometrisi değişir. GPUI masaüstü ve web aynı çekirdek sahnesini tüketir.
     let grafik = Grafik::yeni(seçenekler, veri)?;
 }"##;
 

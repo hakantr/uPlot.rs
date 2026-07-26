@@ -509,7 +509,7 @@
     },
     {
       "kaynak_yolu": "Hooks.setSeries restack on visibility toggle",
-      "rust_karşılığı": "stacked_series_kartı_görünür / GPUI ve WASM seri görünürlük kontrolleri",
+      "rust_karşılığı": "stacked_series_kartı_görünür / GPUI masaüstü ve web seri görünürlük kontrolleri",
       "durum": "tam_kanıtlı",
       "test": "src/kart/stacked_series.rs"
     },
@@ -533,15 +533,15 @@
     },
     {
       "kaynak_yolu": "Series.value latest value when cursor index is null",
-      "rust_karşılığı": "Grafik::son_değerler / GPUI ve WASM lejant köprüleri",
+      "rust_karşılığı": "Grafik::son_değerler / GPUI masaüstü ve web lejant köprüleri",
       "durum": "tam_kanıtlı",
       "test": "src/kart/stream_data.rs"
     },
     {
       "kaynak_yolu": "u.root.outerHTML + canvas drawImage image export PoC",
-      "rust_karşılığı": "Grafik::çiz().svg / svg_image_belgesi / WASM tek-seferlik DPR canvas rasteri",
+      "rust_karşılığı": "GpuiGrafik::svg_kaydı / svg_dosyasına_yaz; yalnız açık istekte retained vektör kayıt geçişi",
       "durum": "tam_kanıtlı",
-      "test": "src/kart/svg_image.rs"
+      "test": "src/gpui/svg_kaydi.rs + src/kart/gpui_svg_export.rs"
     },
     {
       "kaynak_yolu": "uPlot.sync(key) / _sync",
@@ -551,7 +551,7 @@
     },
     {
       "kaynak_yolu": "src/sync.js sub / unsub / pub",
-      "rust_karşılığı": "SyncCursorGrubu + GPUI GpuiGrafikOlayı + WASM SyncCursorKoprusu",
+      "rust_karşılığı": "SyncCursorGrubu + GPUI GpuiGrafikOlayı + GPUI Web SyncCursorKoprusu",
       "durum": "tam_kanıtlı",
       "test": "src/kart/sync_cursor.rs"
     },
@@ -749,7 +749,7 @@
     },
     {
       "kaynak_yolu": "plot same-position click opens perf compare start/end/stat URL; tooltip is pointer-transparent",
-      "rust_karşılığı": "EnYakınTooltipBilgisi::karşılaştırma_url / GPUI ve WASM plot olay bağdaştırıcıları",
+      "rust_karşılığı": "EnYakınTooltipBilgisi::karşılaştırma_url / GPUI masaüstü ve web plot olay bağdaştırıcıları",
       "durum": "tam_kanıtlı",
       "test": "src/gpui.rs"
     },
@@ -773,19 +773,19 @@
     },
     {
       "kaynak_yolu": "default legend label click / setSeries toggles hidden Two",
-      "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla / GPUI ve WASM lejant düğmeleri",
+      "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla / GPUI masaüstü ve web lejant düğmeleri",
       "durum": "tam_kanıtlı",
       "test": "src/gpui.rs"
     },
     {
       "kaynak_yolu": "tooltip DOM nodes created once in init; setCursor updates text and position",
-      "rust_karşılığı": "GpuiGrafik hafif overlay katmanı / WASM çokluTooltipKatmanınıKur",
+      "rust_karşılığı": "GpuiGrafik hafif overlay katmanı / GPUI Web çokluTooltipKatmanınıKur",
       "durum": "tam_kanıtlı",
       "test": "src/gpui.rs"
     },
     {
       "kaynak_yolu": "cursor mouseenter/mouseleave tooltip visibility",
-      "rust_karşılığı": "GpuiGrafik ve WASM pointer yaşam döngüsü",
+      "rust_karşılığı": "GpuiGrafik ve GPUI Web pointer yaşam döngüsü",
       "durum": "tam_kanıtlı",
       "test": "src/gpui.rs"
     },
@@ -827,7 +827,7 @@
     },
     {
       "kaynak_yolu": "default points.space=ptDia(1)*2=10 and legend setSeries visibility",
-      "rust_karşılığı": "SeriSeçenekleri varsayılan nokta boşluğu ve GPUI/WASM seri görünürlüğü",
+      "rust_karşılığı": "SeriSeçenekleri varsayılan nokta boşluğu ve GPUI masaüstü/web seri görünürlüğü",
       "durum": "tam_kanıtlı",
       "test": "src/gpui.rs"
     },
@@ -845,19 +845,19 @@
     },
     {
       "kaynak_yolu": "_setSize cursor.left/top proportional scaling",
-      "rust_karşılığı": "BoyutSenkronDüzeni + GPUI/WASM kalıcı imleç overlay'i",
+      "rust_karşılığı": "BoyutSenkronDüzeni + GPUI masaüstü/web kalıcı imleç overlay'i",
       "durum": "tam_kanıtlı",
       "test": "src/gpui.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "_setSize select left/top/width/height proportional scaling",
-      "rust_karşılığı": "BoyutSenkronDüzeni + GPUI/WASM kalıcı seçim overlay'i",
+      "rust_karşılığı": "BoyutSenkronDüzeni + GPUI masaüstü/web kalıcı seçim overlay'i",
       "durum": "tam_kanıtlı",
       "test": "src/gpui.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "_setSize cursorPts left/top proportional scaling",
-      "rust_karşılığı": "BoyutSenkronDüzeni + GPUI/WASM kalıcı hover overlay'i",
+      "rust_karşılığı": "BoyutSenkronDüzeni + GPUI masaüstü/web kalıcı hover overlay'i",
       "durum": "tam_kanıtlı",
       "test": "src/gpui.rs + src/gpui.rs"
     },
@@ -869,7 +869,7 @@
     },
     {
       "kaynak_yolu": "setSize redraws canvas while cursor/select/cursorPts DOM nodes are retained",
-      "rust_karşılığı": "GPUI ayrı etkileşim canvası + WASM kararlı #etkileşim düğümleri",
+      "rust_karşılığı": "GPUI ayrı etkileşim canvası + GPUI Web kararlı #etkileşim düğümleri",
       "durum": "tam_kanıtlı",
       "test": "src/gpui.rs + src/gpui.rs"
     },
@@ -947,7 +947,7 @@
     },
     {
       "kaynak_yolu": "document mousemove/mouseup keeps drag alive outside axis",
-      "rust_karşılığı": "WASM pointer capture + GPUI on_mouse_up_out",
+      "rust_karşılığı": "GPUI Web pointer capture + GPUI on_mouse_up_out",
       "durum": "tam_kanıtlı",
       "test": "src/gpui.rs + src/gpui.rs"
     },
@@ -1007,13 +1007,13 @@
     },
     {
       "kaynak_yolu": "cursor.move rounds left/top to a 10 CSS pixel grid",
-      "rust_karşılığı": "Grafik::imleç_oranlarını_uyarla + responsive GPUI/WASM piksel dönüşümü",
+      "rust_karşılığı": "Grafik::imleç_oranlarını_uyarla + responsive GPUI masaüstü/web piksel dönüşümü",
       "durum": "tam_kanıtlı",
       "test": "src/kart/cursor_snap.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "cursor.move transformed mousedown/mousemove drives select rectangle",
-      "rust_karşılığı": "GPUI ve WASM snap edilmiş seçim başlangıç/bitiş koordinatları",
+      "rust_karşılığı": "GPUI masaüstü ve web snap edilmiş seçim başlangıç/bitiş koordinatları",
       "durum": "tam_kanıtlı",
       "test": "src/gpui.rs + src/gpui.rs"
     },
@@ -1025,13 +1025,13 @@
     },
     {
       "kaynak_yolu": "setSeries show from standard legend",
-      "rust_karşılığı": "Cursor Snap GPUI/WASM değiştirilebilir seri lejantı",
+      "rust_karşılığı": "Cursor Snap GPUI masaüstü/web değiştirilebilir seri lejantı",
       "durum": "tam_kanıtlı",
       "test": "uygulamalar/masaustu/src/main.rs + src/gpui.rs"
     },
     {
       "kaynak_yolu": "missing-data.html creates two independent uPlot instances",
-      "rust_karşılığı": "missing_data_kartları + tek katalog kartında iki bağımsız GPUI/WASM yüzeyi",
+      "rust_karşılığı": "missing_data_kartları + tek katalog kartında iki bağımsız GPUI masaüstü/web yüzeyi",
       "durum": "tam_kanıtlı",
       "test": "src/kart/missing_data.rs + src/gpui.rs"
     },
@@ -1043,7 +1043,7 @@
     },
     {
       "kaynak_yolu": "standard legend setSeries show per independent plot",
-      "rust_karşılığı": "Missing Data yüzeyine ait GPUI/WASM seri anahtarları",
+      "rust_karşılığı": "Missing Data yüzeyine ait GPUI masaüstü/web seri anahtarları",
       "durum": "tam_kanıtlı",
       "test": "src/kart/missing_data.rs + src/gpui.rs"
     },
@@ -1079,7 +1079,7 @@
     },
     {
       "kaynak_yolu": "dependent-scale standard legend setSeries show",
-      "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla + GPUI/WASM değiştirilebilir lejant",
+      "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla + GPUI masaüstü/web değiştirilebilir lejant",
       "durum": "tam_kanıtlı",
       "test": "src/kart/dependent_scale.rs + src/gpui.rs"
     },
@@ -1103,7 +1103,7 @@
     },
     {
       "kaynak_yolu": "runtime Scale.asinh mutation + redraw(true,true)",
-      "rust_karşılığı": "Grafik::y_arcsinh_eşiği_ayarla + GPUI/WASM eşik kontrolleri",
+      "rust_karşılığı": "Grafik::y_arcsinh_eşiği_ayarla + GPUI masaüstü/web eşik kontrolleri",
       "durum": "tam_kanıtlı",
       "test": "src/kart/arcsinh_scales.rs + src/gpui.rs"
     },
@@ -1157,7 +1157,7 @@
     },
     {
       "kaynak_yolu": "axis-control standard legend setSeries show with fixed scale",
-      "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla + GPUI/WASM değiştirilebilir lejant",
+      "rust_karşılığı": "Grafik::seri_görünürlüğünü_ayarla + GPUI masaüstü/web değiştirilebilir lejant",
       "durum": "tam_kanıtlı",
       "test": "src/kart/axis_control.rs + src/gpui.rs"
     },
@@ -1169,7 +1169,7 @@
     },
     {
       "kaynak_yolu": "axisIndicsPlugin init/setLegend + cursor.y=false",
-      "rust_karşılığı": "GrafikSeçenekleri::eksen_göstergeleri + GPUI/WASM hafif gösterge katmanı",
+      "rust_karşılığı": "GrafikSeçenekleri::eksen_göstergeleri + GPUI masaüstü/web hafif gösterge katmanı",
       "durum": "tam_kanıtlı",
       "test": "src/kart/axis_indicators.rs + src/gpui.rs"
     },

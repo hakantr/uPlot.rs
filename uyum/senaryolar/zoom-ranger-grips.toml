@@ -13,6 +13,6 @@ sol_grip = "sağ sınırı geçmeden resize"
 senkron = "ranger ↔ ana görünüm"
 
 ["kanıt"]
-"örnek" = "examples/zoom_wheel.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "ortak_çekirdek" = "src/grafik.rs#ZoomRangerDurumu"
-wasm = "src/gpui.rs#zoom_wheel_wasm_kaynak_serilerini_üretir"
+gpui_web = "src/gpui.rs#zoom_wheel_gpui_web_kaynak_serilerini_üretir"

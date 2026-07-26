@@ -15,6 +15,6 @@ benchmark_serisi = 6
 durum_renkleri = ["#33BB55", "orange", "red"]
 
 ["kanıt"]
-"örnek" = "examples/multi_bars.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

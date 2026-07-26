@@ -130,7 +130,7 @@ mod testler {
                 SeriYaşamDöngüsüOlayı::VeriAyarlandı { seri_sayısı: 5 },
             ]
         );
-        assert!(grafik.çiz().svg().contains("#ffa500"));
+        assert!(grafik.çiz().test_svg().contains("#ffa500"));
         grafik.seri_sil(1)?;
         assert_eq!(grafik.kimlik(), kimlik);
         assert_eq!(grafik.seri_seçenekleri().len(), 3);

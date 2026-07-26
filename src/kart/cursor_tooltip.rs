@@ -3,7 +3,7 @@ use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
 
 pub const CURSOR_TOOLTIP_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = cursor_tooltip_kartı()?;
 let grafik = Grafik::yeni(seçenekler, veri)?;
-// GpuiGrafik/WASM, ölçülen kutuyu plot sınırında right/start yerleştirir;
+// GpuiGrafik masaüstü/web, ölçülen kutuyu plot sınırında right/start yerleştirir;
 // sağda yer yoksa bilgi_kutusunu_yerleştir() kutuyu sola çevirir."##;
 
 pub fn cursor_tooltip_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHatası> {

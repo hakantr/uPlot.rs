@@ -6,7 +6,7 @@ pub const SCROLL_SYNC_KANIT_TOHUMU: u32 = 0x5C20_1144;
 pub const SCROLL_SYNC_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = scroll_sync_kartı()?;
 let grafik = Grafik::yeni(seçenekler, veri)?;
 
-// GPUI/WASM adaptörü kaydırma veya yerleşim değiştiğinde yüzey
+// GPUI masaüstü/web adaptörü kaydırma veya yerleşim değiştiğinde yüzey
 // dikdörtgenini yeniler; istemci → sahne dönüşümü çekirdekte çözülür."##;
 
 /// `demos/scroll-sync.html` içindeki `.syncRect()` örneğini aynı 30 x değeri,
@@ -72,7 +72,7 @@ mod testler {
         assert!(seçenekler.seriler.iter().all(|seri| seri.etiket == "Value"));
         assert!(!seçenekler.etkileşimler.tekerlek_etkileşimi);
         assert!(!seçenekler.etkileşimler.dokunma_etkileşimi);
-        let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();
+        let svg = Grafik::yeni(seçenekler, veri)?.çiz().test_svg();
         assert!(svg.contains(".syncRect()"));
         assert!(svg.contains("rgba(255,0,0,0.1)"));
         Ok(())

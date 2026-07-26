@@ -30,5 +30,5 @@ milisaniye_zaman_ekseni = true
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/high-low-bands/high-low-bands-differing-paths.svg"

@@ -30,7 +30,7 @@ api = "İmleçBağSeçenekleri"
 "ctrl_seçim_kenarlığı" = false
 "istem" = "Annotation Text"
 "gpui_modal" = true
-"wasm_modal" = true
+"gpui_web_modal" = true
 "iptal_tamam_enter" = "metin kalıcı çizime eklenmeden kapanır"
 
 ["etkileşim"]
@@ -50,5 +50,5 @@ api = "İmleçBağSeçenekleri"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/cursor-bind.svg"

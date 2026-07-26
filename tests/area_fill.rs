@@ -25,11 +25,15 @@ fn area_fill_kaynak_verisini_ve_dolgularını_korur() -> Result<(), UplotHatası
         3
     );
 
-    let svg = sahne.svg();
-    assert_eq!(svg.matches("stroke=\"none\"").count(), 3);
-    assert!(svg.contains("fill=\"#ff00001a\""));
-    assert!(svg.contains("fill=\"#00ff001a\""));
-    assert!(svg.contains("fill=\"#0000ff1a\""));
+    let dolgular = sahne
+        .komutlar()
+        .iter()
+        .filter_map(|komut| match komut {
+            Komut::Alan { dolgu, .. } => Some(dolgu.as_str()),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(dolgular, ["#ff00001a", "#00ff001a", "#0000ff1a"]);
     Ok(())
 }
 

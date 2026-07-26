@@ -54,5 +54,5 @@ kok_yuzey_rengi = "#ffffff"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg_dizini = "target/path-gap-clip"

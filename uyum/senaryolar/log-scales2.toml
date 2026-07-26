@@ -32,5 +32,5 @@ bilimsel_etiket = true
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/log-scales2/log-scales2-log10-wide.svg"

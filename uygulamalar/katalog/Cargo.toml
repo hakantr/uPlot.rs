@@ -9,7 +9,7 @@ description = "Native ve GPUI Web için ortak uPlot.rs kart kayıt defteri"
 [dependencies]
 gpui = { path = "../../../gpui/crates/gpui" }
 ortak_bilesenler = { path = "../../../gpui_kutuphanesi/kutuphaneler/ortak_bilesenler", features = ["varsayilan_tema", "web"] }
-uplot-rs = { path = "../..", default-features = false }
+uplot-rs = { path = "../..", default-features = false, features = ["gpui-svg"] }
 web-time = "1.1.0"
 
 [lints]

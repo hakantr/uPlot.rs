@@ -69,5 +69,5 @@ hover_dizini = "Quadtree"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg_dizini = "target/bars-grouped-stacked"

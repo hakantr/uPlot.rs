@@ -984,7 +984,7 @@ impl Grafik {
     /// `update-cursor-select-resize` kaynağının adaptör katmanında kurduğu
     /// kalıcı cursor/select/hover durumunun başlangıç oranlarını döndürür.
     ///
-    /// Bu durum ana veri sahnesine çizilmez; GPUI ve WASM katmanları uPlot'un
+    /// Bu durum ana veri sahnesine çizilmez; GPUI masaüstü ve web katmanları uPlot'un
     /// DOM overlay mimarisi gibi ayrı ve hafif bir etkileşim yüzeyi kullanır.
     pub fn boyut_senkron_düzeni(&self) -> Option<crate::BoyutSenkronDüzeni> {
         self.seçenekler.boyut_senkron_düzeni
@@ -1409,7 +1409,7 @@ impl Grafik {
     /// Seri sayısı değişmeyen akışlarda yalnız veri, tam ölçekler ve veriye
     /// bağlı vuruş dizinleri yenilenir. Kullanıcı yakınlaştırılmışsa görünür
     /// aralık ve geçmiş korunur; tam görünümdeyse yeni tam ölçek izlenir.
-    /// Böylece native/WASM yüzeyleri 100 ms gibi sık tiklerde aynı grafik ve
+    /// Böylece native/GPUI Web yüzeyleri 100 ms gibi sık tiklerde aynı grafik ve
     /// etkileşim katmanlarını korur.
     pub fn canlı_veriyi_ayarla(&mut self, veri: HizalıVeri) -> Result<(), UplotHatası> {
         if self.seçenekler.seriler.len() != veri.seriler().len() {
@@ -2546,7 +2546,7 @@ impl Grafik {
     ///
     /// `drag.x` ve `drag.y` birlikte açık, `drag.uni` ise `null` olduğunda
     /// uPlot eksenlerden yalnız biri eşiği geçse bile iki ekseni birlikte
-    /// seçer. Bu yöntem GPUI ve WASM yüzeylerinin aynı kararı vermesini sağlar.
+    /// seçer. Bu yöntem GPUI masaüstü ve web yüzeylerinin aynı kararı vermesini sağlar.
     pub fn fiziksel_seçim_eksenleri(
         &self,
         yatay_fark: f64,

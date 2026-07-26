@@ -19,5 +19,5 @@ shared_immutable_data = true
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/line-paths/line-paths-monotone-cubic.svg"

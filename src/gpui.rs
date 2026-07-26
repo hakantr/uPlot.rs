@@ -3170,7 +3170,7 @@ mod testler {
         let grafik = Grafik::yeni(seçenekler, veri)?;
         let mut bileşen = GpuiGrafik::yeni(grafik);
         assert!(bileşen.imleç_kilitli);
-        assert!(!bileşen.ana_sahne.svg().contains("#607d8b"));
+        assert!(!bileşen.ana_sahne.test_svg().contains("#607d8b"));
 
         let oranları_oku = |bileşen: &GpuiGrafik| {
             let sahne = bileşen.etkileşim_sahnesi();

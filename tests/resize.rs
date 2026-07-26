@@ -4,18 +4,24 @@ use uplot_rs::{
 };
 
 #[test]
-fn resize_kartı_belirlenimci_svg_üretir() -> Result<(), UplotHatası> {
-    let (seçenekler, veri) = resize_kartı(100)?;
-    let sahne = Grafik::yeni(seçenekler, veri)?.çiz();
-    let ilk = sahne.svg();
-    let ikinci = sahne.svg();
+fn resize_kartı_belirlenimci_gpui_sahnesi_üretir() -> Result<(), UplotHatası> {
+    let (ilk_seçenekler, ilk_veri) = resize_kartı(100)?;
+    let (ikinci_seçenekler, ikinci_veri) = resize_kartı(100)?;
+    let ilk = Grafik::yeni(ilk_seçenekler, ilk_veri)?.çiz();
+    let ikinci = Grafik::yeni(ikinci_seçenekler, ikinci_veri)?.çiz();
 
     assert_eq!(ilk, ikinci);
-    assert_eq!(ilk, uplot_rs::svg::çiz(&sahne));
-    assert!(ilk.starts_with("<svg"));
-    assert!(ilk.contains("Resize"));
-    assert!(ilk.contains("stroke=\"red\""));
-    assert_eq!(sahne.komutlar().len(), 43);
+    assert!(
+        ilk.komutlar().iter().any(
+            |komut| matches!(komut, uplot_rs::Komut::Metin { içerik, .. } if içerik == "Resize")
+        )
+    );
+    assert!(
+        ilk.komutlar()
+            .iter()
+            .any(|komut| matches!(komut, uplot_rs::Komut::Yol { renk, .. } if renk == "red"))
+    );
+    assert_eq!(ilk.komutlar().len(), 43);
     Ok(())
 }
 

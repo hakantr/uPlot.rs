@@ -119,7 +119,7 @@ mod testler {
     #[test]
     fn kaynak_çizgi_ve_eksen_etiketleri_sahneye_çıkar() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = mass_spectrum_kartı()?;
-        let svg = Grafik::yeni(seçenekler, veri)?.çiz().svg();
+        let svg = Grafik::yeni(seçenekler, veri)?.çiz().test_svg();
         assert!(svg.contains("Mass spectrum"));
         assert!(svg.contains("m/z"));
         assert!(svg.contains("relative abundance (%)"));

@@ -19,7 +19,7 @@ kaynak_callback = "cursor.move"
 "ızgara_y_piksel" = 10.0
 sahiplik = "çekirdek"
 "gpui_adaptörü" = true
-"wasm_adaptörü" = true
+"gpui_web_adaptörü" = true
 "css_pikseline_duyarlı" = true
 "sınır_sonrası_tekrar_kırpma" = false
 "hover_noktası" = "snap edilmiş cursor X'ine en yakın gerçek veri örneği"
@@ -45,5 +45,5 @@ snap = "O(1)"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/cursor-snap.svg"

@@ -5,7 +5,7 @@ use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası};
 pub const CURSOR_SNAP_KANIT_TOHUMU: u32 = 0x534E_4150;
 
 pub const CURSOR_SNAP_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = cursor_snap_kartı()?;
-// 10×10 piksel imleç ızgarası çekirdekte tanımlıdır; GPUI ve WASM
+// 10×10 piksel imleç ızgarası çekirdekte tanımlıdır; GPUI masaüstü ve web
 // yüzeylerinin ayrıca yuvarlama kodu yazması gerekmez. cursor.move dönüşümü
 // hem hafif cursor katmanına hem de seçim başlangıç/bitiş uçlarına uygulanır.
 let grafik = Grafik::yeni(seçenekler, veri)?;"##;

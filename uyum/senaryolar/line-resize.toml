@@ -55,7 +55,7 @@ tekerlek_girdi_normalizasyonu = "uplot_rs_uyarlaması"
 
 [web]
 port = 8081
-"kanıt" = "target/wasm-resize-etkilesim.png"
+"kanıt" = "target/gpui_web-resize-etkilesim.png"
 
 [beklenti]
 "seri_sayısı" = 1

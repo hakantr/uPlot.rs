@@ -43,5 +43,5 @@ uzun_aylar = "ruNames.MMMM"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/months/russian.svg"

@@ -37,6 +37,6 @@ fixture = "src/kart/sync_cursor.rs#sync_cursor_kartı"
 "pointer_backpressure" = "yüzey_başına_tek_requestAnimationFrame"
 
 ["kanıt"]
-"örnek" = "examples/sync_cursor.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

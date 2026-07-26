@@ -47,4 +47,4 @@ fixture = "src/kart/stacked_series.rs#stacked_series_kartları"
 ]
 "rehber_varsayılanı" = "kapalı"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-"wasm" = "uygulamalar/web/src/main.rs"
+"gpui_web" = "uygulamalar/web/src/main.rs"

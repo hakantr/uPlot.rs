@@ -19,6 +19,6 @@ y_etiketi = "relative abundance (%)"
 "düz_diğer_kuralı" = "0..2v"
 
 ["kanıt"]
-"örnek" = "examples/mass_spectrum.rs"
+"örnek" = "uygulamalar/katalog/src/lib.rs"
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"

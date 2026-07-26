@@ -26,9 +26,9 @@
         }
       ],
       "fixture": "src/kart/resize.rs#resize_kartı",
-      "örnek": "examples/resize.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/line-resize.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -107,9 +107,9 @@
         }
       ],
       "fixture": "src/kart/area_fill.rs#area_fill_kartı",
-      "örnek": "examples/area_fill.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/area-fill.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -182,9 +182,9 @@
         }
       ],
       "fixture": "src/kart/scale_padding.rs#scale_padding_kartı",
-      "örnek": "examples/scale_padding.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/scale-padding.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -251,9 +251,9 @@
         }
       ],
       "fixture": "src/kart/zoom_wheel.rs#zoom_wheel_kartı",
-      "örnek": "examples/zoom_wheel.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/zoom-wheel.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -319,9 +319,9 @@
         }
       ],
       "fixture": "src/kart/zoom_touch.rs#zoom_touch_kartı",
-      "örnek": "examples/zoom_touch.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/zoom-touch.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -393,9 +393,9 @@
         "src/kart/months.rs#months_artık_yılsız_kartı",
         "src/kart/months.rs#months_artık_yıllı_kartı"
       ],
-      "örnek": "examples/months.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/months.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -460,9 +460,9 @@
         }
       ],
       "fixture": "src/kart/cursor_snap.rs#cursor_snap_kartı",
-      "örnek": "examples/cursor_snap.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/cursor-snap.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -505,7 +505,7 @@
         "raw-data-hover-after-snapped-cursor",
         "set-series-legend-controls",
         "lightweight-cursor-layer",
-        "gpui-wasm-cursor-equivalence",
+        "gpui-native-web-cursor-equivalence",
         "common-interaction-profile"
       ],
       "kanıt": {
@@ -544,9 +544,9 @@
         "src/kart/missing_data.rs#missing_data_null_kartı",
         "src/kart/missing_data.rs#missing_data_x_boşluğu_kartı"
       ],
-      "örnek": "examples/missing_data.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/missing-data.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -611,9 +611,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/dependent_scale.rs#dependent_scale_kartı",
-      "örnek": "examples/dependent_scale.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/dependent-scale.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -675,9 +675,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/arcsinh_scales.rs#arcsinh_scales_kartı",
-      "örnek": "examples/arcsinh_scales.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/arcsinh-scales.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -718,7 +718,7 @@
         "nonlinear-wheel-selection-pan-touch-inverse-mapping",
         "threshold-preserves-view-and-history",
         "standard-legend-set-series",
-        "gpui-wasm-threshold-controls",
+        "gpui-native-web-threshold-controls",
         "single-path-o-n-threshold-redraw",
         "collapsed-usage-cost-guide",
         "common-interaction-profile"
@@ -741,9 +741,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/axis_control.rs#axis_control_kartı",
-      "örnek": "examples/axis_control.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/axis-control.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -809,9 +809,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/axis_autosize.rs#axis_autosize_kartı",
-      "örnek": "examples/axis_autosize.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/axis-autosize.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -843,7 +843,7 @@
       "kapsam_durumu": "tam_kanıtlı",
       "özellikler": [
         "source-equivalent-501-point-generator",
-        "source-500ms-power-of-ten-lifecycle-on-gpui-and-wasm",
+        "source-500ms-power-of-ten-lifecycle-on-gpui-and-gpui-web",
         "fresh-seeded-random-geometry-on-every-update",
         "same-instance-set-data-update",
         "set-series-and-view-state-preservation",
@@ -855,7 +855,7 @@
         "timer-stop-at-1e9-and-card-exit",
         "standard-legend-set-series",
         "collapsed-usage-cost-guide",
-        "gpui-wasm-dynamic-controls",
+        "gpui-native-web-dynamic-controls",
         "common-interaction-profile"
       ],
       "kanıt": {
@@ -876,9 +876,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/axis_indicators.rs#axis_indicators_kartı",
-      "örnek": "examples/axis_indicators.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/axis-indicators.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -915,7 +915,7 @@
         "exact-50px-axis-slices-with-colored-border-ticks",
         "axis-indicator-plugin-port",
         "set-series-hides-path-point-and-indicator",
-        "gpui-wasm-live-axis-badges",
+        "gpui-native-web-live-axis-badges",
         "common-interaction-profile"
       ],
       "kanıt": {
@@ -940,9 +940,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/bars_grouped_stacked.rs#bars_grouped_stacked_kartı",
-      "örnek": "examples/bars_grouped_stacked.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/bars-grouped-stacked.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -992,7 +992,7 @@
         "stacked-cumulative-label-and-hover-values",
         "source-quadtree-bbox-hover-rectangle",
         "core-bar-hit-testing",
-        "gpui-wasm-hover-rectangle",
+        "gpui-native-web-hover-rectangle",
         "optional-common-interaction-extension-not-source-parity"
       ],
       "kanıt": {
@@ -1013,9 +1013,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/bars_values_autosize.rs#bars_values_autosize_kartları",
-      "örnek": "examples/bars_values_autosize.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/bars-values-autosize.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1086,9 +1086,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/box_whisker.rs#box_whisker_kartları",
-      "örnek": "examples/box_whisker.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/box-whisker.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1137,7 +1137,7 @@
         "column-highlight-hit-testing",
         "moving-lib-statistics-tooltip",
         "interaction-overlay-without-main-scene-redraw",
-        "gpui-wasm-catalog-parity",
+        "gpui-native-web-catalog-parity",
         "common-interaction-profile"
       ],
       "kanıt": {
@@ -1158,9 +1158,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/candlestick_ohlc.rs#candlestick_ohlc_kartı",
-      "örnek": "examples/candlestick_ohlc.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/candlestick-ohlc.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1207,7 +1207,7 @@
         "logarithmic-column-hit-testing",
         "interaction-overlay-without-main-scene-redraw",
         "column-highlight-hit-testing",
-        "gpui-wasm-catalog-parity",
+        "gpui-native-web-catalog-parity",
         "common-interaction-profile"
       ],
       "kanıt": {
@@ -1228,9 +1228,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/cursor_bind.rs#cursor_bind_kartı",
-      "örnek": "examples/cursor_bind.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/cursor-bind.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1275,8 +1275,8 @@
         "source-zero-distance-drag-threshold",
         "ctrl-selection-suppresses-scale-change",
         "annotation-text-request-without-persistence",
-        "real-annotation-text-dialog-in-gpui-and-wasm",
-        "gpui-wasm-catalog-parity",
+        "real-annotation-text-dialog-in-gpui-and-gpui-web",
+        "gpui-native-web-catalog-parity",
         "common-interaction-profile"
       ],
       "kanıt": {
@@ -1298,9 +1298,9 @@
         { "yol": "dist/uPlot.d.ts", "sha256": "c9fb5d1fe8f2084b44690c841e84ab63402549d9420535a6081b389a461fefe5" }
       ],
       "fixture": "src/kart/add_del_series.rs#add_del_series_kartı",
-      "örnek": "examples/add_del_series.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/add-del-series.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1345,9 +1345,9 @@
         "source-orange-first-dynamic-series",
         "deterministic-distinct-dynamic-series-palette-extension",
         "typed-invalid-series-index-error",
-        "retained-wasm-shell-svg-root-and-control-focus",
+        "retained-gpui-web-canvas-and-control-focus",
         "dynamic-multi-series-cursor-legend",
-        "gpui-wasm-catalog-parity",
+        "gpui-native-web-catalog-parity",
         "common-interaction-profile"
       ],
       "kanıt": {
@@ -1369,9 +1369,9 @@
         { "yol": "src/paths/bars.js", "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56" }
       ],
       "fixture": "src/kart/align_data.rs#align_data_kartları",
-      "örnek": "examples/align_data.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/align-data.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1416,7 +1416,7 @@
         "explicit-null-versus-alignment-artifact",
         "source-one-second-span-gaps-toggle",
         "per-series-line-and-bars-paths",
-        "gpui-wasm-catalog-parity",
+        "gpui-native-web-catalog-parity",
         "common-interaction-profile"
       ],
       "kanıt": {
@@ -1437,9 +1437,9 @@
         { "yol": "demos/lib/placement.min.js", "sha256": "f74af88ebe70db955a9b1785b8c5f00f617d4484baf237f0c52ddc5f435da4f5" }
       ],
       "fixture": "src/kart/cursor_tooltip.rs#cursor_tooltip_kartı",
-      "örnek": "examples/cursor_tooltip.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/cursor-tooltip.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1480,7 +1480,7 @@
         "plot-bounded-overflow-prevention",
         "mouseenter-show-mouseleave-hide",
         "core-configured-ready-surface-behavior",
-        "gpui-wasm-catalog-parity",
+        "gpui-native-web-catalog-parity",
         "common-interaction-profile"
       ],
       "kanıt": {
@@ -1501,9 +1501,9 @@
         { "yol": "dist/uPlot.d.ts", "sha256": "c9fb5d1fe8f2084b44690c841e84ab63402549d9420535a6081b389a461fefe5" }
       ],
       "fixture": "src/kart/custom_scales.rs#custom_scales_kartları",
-      "örnek": "examples/custom_scales.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/custom-scales.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1535,7 +1535,7 @@
         "weibull-exponential-axis-splits-and-labels",
         "independent-cursor-zoom-pan-history",
         "stable-main-path-on-pointer",
-        "gpui-wasm-catalog-parity", "common-interaction-profile"
+        "gpui-native-web-catalog-parity", "common-interaction-profile"
       ],
       "kanıt": { "api": "uygulandı_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "uygulandı_kanıtlı" }
     },
@@ -1551,9 +1551,9 @@
         { "yol": "demos/lib/ASAP-optimized.js", "sha256": "b01779c308e9a12bb3ea2d430038bacb84480de998874f77706fa9cf8b09933e" }
       ],
       "fixture": "src/kart/data_smoothing.rs#data_smoothing_kartları",
-      "örnek": "examples/data_smoothing.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/data-smoothing.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1582,7 +1582,7 @@
         "one-card-four-independent-source-surfaces", "source-order-and-50px-spacing",
         "fixed-source-y-ranges", "source-60px-y-axis", "full-source-and-output-digests",
         "named-initialization-timings", "retained-pointer-overlay",
-        "gpui-wasm-catalog-parity", "common-interaction-profile", "panic-free-typed-errors"
+        "gpui-native-web-catalog-parity", "common-interaction-profile", "panic-free-typed-errors"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "tam_kanıtlı", "davranış": "tam_kanıtlı", "performans": "uygulandı_kanıtlı" }
     },
@@ -1597,9 +1597,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/draw_hooks.rs#draw_hooks_kartı",
-      "örnek": "examples/draw_hooks.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/draw-hooks.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1628,7 +1628,7 @@
         "real-draw-render-stats", "source-draw-order", "source-black-ten-pixel-axis-ticks",
         "source-cursor-points-hidden", "source-commented-grid-blur-remains-disabled",
         "retained-pointer-overlay",
-        "gpui-wasm-catalog-parity", "common-interaction-profile", "panic-free-scene-layers"
+        "gpui-native-web-catalog-parity", "common-interaction-profile", "panic-free-scene-layers"
       ],
       "kanıt": { "api": "uygulandı_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "tam_kanıtlı", "davranış": "tam_kanıtlı", "performans": "uygulandı_kanıtlı" }
     },
@@ -1643,9 +1643,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/focus_cursor.rs#focus_cursor_kartları",
-      "örnek": "examples/focus_cursor.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/focus-cursor.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1672,7 +1672,7 @@
         "one-card-four-independent-source-surfaces", "cursor-y-distance-focus", "prox-and-bias",
         "defocused-alpha", "dynamic-unfocused-black", "focused-magenta-and-width",
         "source-300-series-performance-surface", "retained-focus-style-with-stable-path-geometry",
-        "gpui-wasm-catalog-parity",
+        "gpui-native-web-catalog-parity",
         "common-interaction-profile", "panic-free-core-focus"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "uygulandı_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "uygulandı_kanıtlı" }
@@ -1688,9 +1688,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/gradients.rs#gradients_kartları",
-      "örnek": "examples/gradients.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/gradients.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1715,7 +1715,7 @@
         "shared-immutable-data2-and-data4", "scale-aligned-gradient-strokes",
         "scale-aligned-gradient-fills", "discrete-color-stops", "continuous-color-stops",
         "arcsinh-gradient-coordinates", "visible-data-relative-stops", "gradient-cursor-colors",
-        "svg-gpui-gradient-renderers", "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "svg-gpui-gradient-renderers", "gpui-native-web-catalog-parity", "common-interaction-profile",
         "panic-free-gradient-validation"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
@@ -1731,9 +1731,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/grid_over_series.rs#grid_over_series_kartı",
-      "örnek": "examples/grid_over_series.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/grid-over-series.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1758,7 +1758,7 @@
         "visible-x-auto-y-range", "source-series-colors",
         "source-opaque-fills", "series-before-axes-draw-order", "grid-over-series",
         "independent-grid-tick-axis-colors", "allocation-free-in-place-layer-reorder",
-        "core-owned-layer-order", "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "core-owned-layer-order", "gpui-native-web-catalog-parity", "common-interaction-profile",
         "panic-free-layer-reordering"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
@@ -1777,9 +1777,9 @@
         { "yol": "src/paths/bars.js", "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56" }
       ],
       "fixture": "src/kart/high_low_bands.rs#high_low_bands_kartları",
-      "örnek": "examples/high_low_bands.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/high-low-bands.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1807,7 +1807,7 @@
         "source-point-visibility", "source-value-end-bar-radius",
         "merged-continuous-band-polygons",
         "unaligned-and-very-thin-bar-regressions", "milliseconds-time-axis",
-        "gpui-wasm-catalog-parity", "common-interaction-profile", "panic-free-source-parser"
+        "gpui-native-web-catalog-parity", "common-interaction-profile", "panic-free-source-parser"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
     },
@@ -1823,9 +1823,9 @@
         { "yol": "src/paths/bars.js", "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56" }
       ],
       "fixture": "src/kart/latency_heatmap.rs#latency_heatmap_kartları",
-      "örnek": "examples/latency_heatmap.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/latency-heatmap.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1851,7 +1851,7 @@
         "raw-pixel-heat-cells", "aggregated-density-colors", "mode2-faceted-heat-cells",
         "source-metal-palette", "histogram-aggregation", "histogram-bucket-size-offset-controls",
         "collapsed-only-live-setdata", "histogram-align-one-fixed-pixel-gap",
-        "chunked-color-polygons-1024", "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "chunked-color-polygons-1024", "gpui-native-web-catalog-parity", "common-interaction-profile",
         "panic-free-data-generation"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "kısmi", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
@@ -1871,9 +1871,9 @@
         { "yol": "src/paths/bars.js", "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56" }
       ],
       "fixture": "src/kart/line_paths.rs#line_paths_kartları",
-      "örnek": "examples/line_paths.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/line-paths.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1900,7 +1900,7 @@
         "points-only-null-path", "linear", "monotone-cubic", "step-before-step-after",
         "bars-center-left-right-align", "dark-source-theme", "commented-spline2-source-capability",
         "catmull-rom-centripetal-core", "source-cursor-point-presentation",
-        "gpui-wasm-catalog-parity", "common-interaction-profile", "panic-free-path-generation"
+        "gpui-native-web-catalog-parity", "common-interaction-profile", "panic-free-path-generation"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "kısmi", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
     },
@@ -1916,9 +1916,9 @@
         { "yol": "src/utils.js", "sha256": "8df33192e0ab7b4f4cf64fae9829fc0dc0300a618668699f43c5881ed8a0553c" }
       ],
       "fixture": "src/kart/log_scales.rs#log_scales_kartları",
-      "örnek": "examples/log_scales.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/log-scales.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1946,7 +1946,7 @@
         "log-axis-1-through-9-splits", "source-pixel-density-label-filter",
         "source-axis-size-60-space-15", "independent-cursor-zoom-history",
         "clock-aligned-time-splits", "midnight-date-label",
-        "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "gpui-native-web-catalog-parity", "common-interaction-profile",
         "panic-free-source-decoder"
       ],
       "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "tam_kanıtlı" }
@@ -1963,9 +1963,9 @@
         { "yol": "src/utils.js", "sha256": "8df33192e0ab7b4f4cf64fae9829fc0dc0300a618668699f43c5881ed8a0553c" }
       ],
       "fixture": "src/kart/log_scales2.rs#log_scales2_kartları",
-      "örnek": "examples/log_scales2.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/log-scales2.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -1998,7 +1998,7 @@
         "explicit-wide-log-ranges", "all-null-series-range-exclusion",
         "tiny-value-log-range", "range-log-partial-magnitudes", "dual-independent-log-axes",
         "pixel-density-log-tick-filter", "arc-backed-source-data",
-        "gpui-wasm-catalog-parity", "common-interaction-profile", "panic-free-shuffle"
+        "gpui-native-web-catalog-parity", "common-interaction-profile", "panic-free-shuffle"
       ],
       "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "tam_kanıtlı", "performans": "tam_kanıtlı" }
     },
@@ -2014,9 +2014,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/months.rs#months_rusça_kartı",
-      "örnek": "examples/months.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/months-ru.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2042,7 +2042,7 @@
         "source-russian-short-month-names", "source-russian-long-weekday-names",
         "source-russian-short-weekday-names", "localized-axis-labels",
         "single-source-surface-card", "source-auto-y-range",
-        "source-1920x600-surface", "gpui-wasm-catalog-parity",
+        "source-1920x600-surface", "gpui-native-web-catalog-parity",
         "common-interaction-profile", "panic-free-calendar-conversion"
       ],
       "kanıt": { "api": "kısmi", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
@@ -2059,9 +2059,9 @@
         { "yol": "src/utils.js", "sha256": "8df33192e0ab7b4f4cf64fae9829fc0dc0300a618668699f43c5881ed8a0553c" }
       ],
       "fixture": "src/kart/nice_scale.rs#nice_scale_kartı",
-      "örnek": "examples/nice_scale.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/nice-scale.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2090,7 +2090,7 @@
         "retained-svg-node-on-resize", "resize-preserves-zoom-cursor-layers",
         "source-height-matrix-golden-proof",
         "one-two-two-point-five-five-ten-increments", "translucent-series-fills",
-        "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "gpui-native-web-catalog-parity", "common-interaction-profile",
         "panic-free-invalid-layout-feedback"
       ],
       "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "tam_kanıtlı", "davranış": "tam_kanıtlı", "performans": "tam_kanıtlı" }
@@ -2107,9 +2107,9 @@
         { "yol": "src/utils.js", "sha256": "8df33192e0ab7b4f4cf64fae9829fc0dc0300a618668699f43c5881ed8a0553c" }
       ],
       "fixture": "src/kart/no_data.rs#no_data_kartı",
-      "örnek": "examples/no_data.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/no-data.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2131,13 +2131,13 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "source-exact-33-active-canvases", "single-catalog-card-33-options",
-        "same-dom-svg-shell-and-wasm-session-option-replacement",
+        "shared-gpui-entity-session-option-replacement",
         "variant-change-resets-chart-interaction-state", "responsive-contained-option-selector",
         "legacy-no-data-id-aliases", "null-and-empty-aligned-data",
         "custom-empty-x-y-range", "undefined-empty-scale-surface",
         "single-time-point-one-day-x-range", "single-numeric-point-range",
         "source-range-num-algorithm", "source-floating-point-flatness-thresholds",
-        "positive-negative-and-zero-flat-series", "gpui-wasm-catalog-parity",
+        "positive-negative-and-zero-flat-series", "gpui-native-web-catalog-parity",
         "common-interaction-profile", "panic-free-empty-data-feedback"
       ],
       "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
@@ -2157,9 +2157,9 @@
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" }
       ],
       "fixture": "src/kart/path_gap_clip.rs#path_gap_clip_kartları",
-      "örnek": "examples/path_gap_clip.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/path-gap-clip.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2189,7 +2189,7 @@
         "joined-stepped-align-gaps-plus-minus-one",
         "gap-aware-series-fill", "gap-aware-band-fill", "plot-rectangle-clipping",
         "single-null-pixel-intro-outro-regressions", "reverse-x-scale",
-        "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "gpui-native-web-catalog-parity", "common-interaction-profile",
         "panic-free-source-data-feedback"
       ],
       "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
@@ -2209,9 +2209,9 @@
         { "yol": "src/paths/stepped.js", "sha256": "7a11e94e31462f173d25810b371ced0c30652e39df5fbd23668a0a4059f2e2a7" }
       ],
       "fixture": "src/kart/pixel_align.rs#pixel_align_kartları",
-      "örnek": "examples/pixel_align.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/pixel-align.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2233,13 +2233,13 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "single-catalog-family-two-live-surfaces", "shared-data-and-animation-clock",
-        "source-empty-start-first-sample-at-1000ms", "single-wasm-flow-shared-arc-buffer",
+        "source-empty-start-first-sample-at-1000ms", "single-gpui-web-flow-shared-arc-buffer",
         "animation-frame-x-window-progress", "stateful-no-rebuild-stream-update",
         "delayed-frame-wall-clock-gap-preserved", "zoom-pauses-live-follow-extension",
         "source-window-120000ms", "source-interval-1000ms",
         "unbounded-lifecycle-1000-point-ring", "deterministic-random-proof-seed",
         "graph-and-series-px-align", "linear-spline-stepped-paths",
-        "explicit-points-show", "gpui-wasm-live-update-parity",
+        "explicit-points-show", "gpui-native-web-live-update-parity",
         "common-interaction-profile", "panic-free-update-feedback"
       ],
       "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
@@ -2259,9 +2259,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/points.rs#points_kartları",
-      "örnek": "examples/points.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/points.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2291,7 +2291,7 @@
         "batched-path2d-style-point-commands", "shared-arc-default-too-dense-data",
         "too-dense-points-reappear-on-x-zoom", "sparse-fixed-zoom-golden-count",
         "viewport-edge-and-nearest-index-gap-scan",
-        "gpui-wasm-catalog-parity", "common-interaction-profile",
+        "gpui-native-web-catalog-parity", "common-interaction-profile",
         "panic-free-source-data-feedback"
       ],
       "kanıt": { "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı", "statik_görsel": "uygulandı_kanıtlı", "davranış": "uygulandı_kanıtlı", "performans": "kısmi" }
@@ -2316,9 +2316,9 @@
         }
       ],
       "fixture": "src/kart/scales_dir_ori.rs#scales_dir_ori_kartları",
-      "örnek": "examples/scales_dir_ori.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/scales-dir-ori.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2358,7 +2358,7 @@
         "shared-arc-data-snapshot",
         "orientation-aware-grid-fill-points",
         "orientation-aware-wheel-touch-pan",
-        "gpui-wasm-catalog-parity",
+        "gpui-native-web-catalog-parity",
         "common-interaction-profile"
       ],
       "kanıt": {
@@ -2381,9 +2381,9 @@
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" }
       ],
       "fixture": "src/kart/scatter.rs#scatter_kartı",
-      "örnek": "examples/scatter.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/scatter.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2406,7 +2406,7 @@
       "özellikler": [
         "source-mode2-two-independent-surfaces", "deterministic-proof-40000-scatter-points",
         "deterministic-proof-200-bubbles", "area-scaled-bubble-size", "facet-y2-region",
-        "smallest-overlap-hit-selection", "bubble-live-values", "gpui-wasm-catalog-parity",
+        "smallest-overlap-hit-selection", "bubble-live-values", "gpui-native-web-catalog-parity",
         "batched-scatter-path", "batched-variable-radius-bubble-path",
         "clipped-bubble-fill-and-stroke", "scatter-center-only-zoom-filter",
         "independent-mode2-view-history", "cached-bubble-spatial-index",
@@ -2429,9 +2429,9 @@
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" }
       ],
       "fixture": "src/kart/scroll_sync.rs#scroll_sync_kartı",
-      "örnek": "examples/scroll_sync.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/scroll-sync.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2454,7 +2454,7 @@
       "özellikler": [
         "source-exact-400x200-chart", "deterministic-proof-three-series",
         "surface-rect-resync-after-scroll", "client-to-scene-core-mapping",
-        "mouseenter-layout-resync", "gpui-wasm-scroll-surface-parity",
+        "mouseenter-layout-resync", "gpui-native-web-scroll-surface-parity",
         "natural-scroll-default", "optional-common-interaction-profile",
         "single-passive-scroll-listener", "invalid-measurement-keeps-last-valid-rect",
         "surface-only-sync-without-scene-redraw"
@@ -2476,9 +2476,9 @@
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" }
       ],
       "fixture": "src/kart/sine_stream.rs#sine_stream_kartı",
-      "örnek": "examples/sine_stream.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/sine-stream.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2503,7 +2503,7 @@
         "source-box-muller-bounded-random-walks", "fixed-minus6-plus6-y-range",
         "source-initial-duplicate-x-lifecycle", "runtime-current-epoch",
         "single-stream-state-from-first-paint-through-raf",
-        "wasm-request-animation-frame", "gpui-next-frame-live-set-data",
+        "gpui-web-request-animation-frame", "gpui-next-frame-live-set-data",
         "same-graph-widget-svg-surface", "in-place-svg-node-update",
         "persistent-cursor-selection-overlay", "source-set-data-resets-scales",
         "common-interaction-profile"
@@ -2526,9 +2526,9 @@
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" }
       ],
       "fixture": "src/kart/soft_minmax.rs#soft_minmax_kartları",
-      "örnek": "examples/soft_minmax.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/soft-minmax.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2555,7 +2555,7 @@
         "source-button-50ms-data-max-increment", "core-owned-live-set-data",
         "single-shared-data-max-for-four-live-surfaces",
         "independent-per-surface-view-state", "in-place-surface-update", "guarded-single-run-timer",
-        "flat-zero-skips-live-tick-redraw", "gpui-wasm-live-parity", "common-interaction-profile",
+        "flat-zero-skips-live-tick-redraw", "gpui-native-web-live-parity", "common-interaction-profile",
         "default-closed-usage-guide"
       ],
       "kanıt": {
@@ -2577,9 +2577,9 @@
         { "yol": "src/opts.js", "sha256": "2d874e631d6446eb106b84271cbb996cf6ff0d1394441d748d595f483739b5ba" }
       ],
       "fixture": "src/kart/sparklines_bars.rs#sparklines_bars_kartları",
-      "örnek": "examples/sparklines_bars.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/sparklines-bars.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2609,7 +2609,7 @@
         "per-point-red-green-bar-fills", "hidden-axes-single-dashed-zero-grid",
         "source-cursor-select-legend-off-documented", "default-closed-usage-guide",
         "independent-ab-view-state", "source-static-no-setdata-setseries-timer",
-        "gpui-wasm-parity", "optional-common-interaction-profile"
+        "gpui-native-web-parity", "optional-common-interaction-profile"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
@@ -2637,9 +2637,9 @@
         { "yol": "demos/data/ZNGA.csv", "sha256": "895f534a58e2e533945a3a534b324a571c2e76e784a8f373774281ef0b6d3c10" }
       ],
       "fixture": "src/kart/sparklines.rs#sparklines_kartları",
-      "örnek": "examples/sparklines.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/sparklines.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2668,7 +2668,7 @@
         "full-440-value-source-snapshot-hash", "source-exact-twenty-range-num-matrix",
         "independent-per-cell-view-state", "single-active-cell-redraw",
         "nineteen-inactive-svg-nodes-retained", "source-static-no-timer-setdata-setseries",
-        "collapsible-usage-guide", "gpui-wasm-parity", "optional-common-interaction-profile"
+        "collapsible-usage-guide", "gpui-native-web-parity", "optional-common-interaction-profile"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
@@ -2687,9 +2687,9 @@
         { "yol": "src/paths/linear.js", "sha256": "8f5002721c15f9a965b0e56522c58378c5b412856356c85188c74066ffba6749" }
       ],
       "fixture": "src/kart/sparse.rs#sparse_kartları",
-      "örnek": "examples/sparse.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/sparse.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2722,7 +2722,7 @@
         "full-decoded-source-snapshot-hash", "source-622-null-runs",
         "single-arc-backed-data-store", "source-three-surface-cursor-sync-key-zero",
         "source-three-surface-group", "collapsible-usage-guide",
-        "gpui-wasm-parity", "optional-common-interaction-profile"
+        "gpui-native-web-parity", "optional-common-interaction-profile"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
@@ -2741,9 +2741,9 @@
         { "yol": "src/paths/bars.js", "sha256": "92712ea55839f56b9b3a9f060f56f2d84dc8c70c85af8db47378f5a95968bd56" }
       ],
       "fixture": "src/kart/stacked_series.rs#stacked_series_kartları",
-      "örnek": "examples/stacked_series.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/stacked-series.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2775,7 +2775,7 @@
         "independent-stacking-groups", "joined-line-and-stacked-bars",
         "source-series-band-colors", "independent-cross-surface-interactions",
         "single-active-surface-interaction-redraw", "fifteen-inactive-svg-nodes-retained",
-        "collapsible-usage-guide", "gpui-wasm-parity",
+        "collapsible-usage-guide", "gpui-native-web-parity",
         "common-interaction-profile", "panic-free-stacking"
       ],
       "kanıt": {
@@ -2795,9 +2795,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/stream_data.rs#stream_data_kartları",
-      "örnek": "examples/stream_data.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/stream-data.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2833,7 +2833,7 @@
         "coalesced-100ms-three-surface-scheduler", "single-pending-animation-frame-backpressure",
         "bounded-terminal-stop",
         "no-cross-surface-cursor-or-scale-sync", "collapsed-usage-guide",
-        "source-selection-disabled", "gpui-wasm-parity",
+        "source-selection-disabled", "gpui-native-web-parity",
         "common-interaction-profile", "panic-free-source-decoding"
       ],
       "kanıt": {
@@ -2845,18 +2845,18 @@
     {
       "sıra": 49,
       "id": "svg-image",
-      "başlık": { "en": "uPlot to image PoC", "tr": "uPlot Görüntü PoC" },
+      "başlık": { "en": "GPUI SVG Export", "tr": "GPUI SVG Dışa Aktarım" },
       "kaynak": "demos/svg-image.html",
       "kaynak_sha256": "059ea753395d1302b1441badc1fea075b6eb59f82b0ae2228904f5f7403612c0",
       "ek_kaynaklar": [],
-      "fixture": "src/kart/svg_image.rs#svg_image_kartı",
-      "örnek": "examples/svg_image.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "fixture": "src/kart/gpui_svg_export.rs#gpui_svg_export_kartı",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/svg-image.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
-        "uygulama": "src/kart/svg_image.rs#ortak_kart_etkileşimleri",
+        "uygulama": "src/kart/gpui_svg_export.rs#ortak_kart_etkileşimleri",
         "kararlar": {
           "kaynak-veri-esligi": "kartta_etkin", "cekirdek-davranis-sahipligi": "kartta_etkin",
           "gpui-platform-yuzey-esdegerligi": "kartta_etkin", "duyarli-boyutlandirma": "kartta_etkin",
@@ -2877,14 +2877,13 @@
       "kapsam_durumu": "uygulandı_kanıtlı",
       "özellikler": [
         "source-exact-400x200-chart", "source-exact-three-point-data",
-        "source-blue-series", "source-pink-background", "live-and-exported-visual-pair",
-        "standalone-svg-document", "deterministic-svg-export",
-        "title-axes-series-background-single-document",
-        "source-once-after-render-snapshot-lifecycle",
-        "wasm-dpr-raster-canvas-preview", "wasm-current-svg-download-extension",
-        "blob-url-revoke-on-load-and-error",
+        "source-blue-series", "source-pink-background", "gpui-live-vector-surface",
+        "on-demand-standalone-svg-document", "deterministic-vector-export",
+        "title-axes-series-background-single-document", "zero-normal-paint-recording-overhead",
+        "retained-main-and-optional-interaction-layers", "native-file-and-cross-platform-byte-api",
+        "catalog-clipboard-export-control",
         "collapsed-usage-guide",
-        "gpui-wasm-parity", "common-interaction-profile", "panic-free-export"
+        "gpui-native-web-parity", "common-interaction-profile", "panic-free-export"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
@@ -2904,9 +2903,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/sync_cursor.rs#sync_cursor_kartı",
-      "örnek": "examples/sync_cursor.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/sync-cursor.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2936,7 +2935,7 @@
         "scale-key-aware-vertical-cursor", "x-only-cpu-ram-to-tcp-sync",
         "series-label-focus-mapping", "mismatched-series-order",
         "retained-focus-style-patch", "single-animation-frame-pointer-backpressure",
-        "active-sync-group-view-history", "gpui-wasm-parity",
+        "active-sync-group-view-history", "gpui-native-web-parity",
         "common-interaction-profile", "panic-free-pub-sub"
       ],
       "kanıt": {
@@ -2955,9 +2954,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/sync_y_zero.rs#sync_y_zero_kartı",
-      "örnek": "examples/sync_y_zero.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/sync-y-zero.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -2985,7 +2984,7 @@
         "three-left-color-coded-axes", "source-grid-disabled",
         "raw-range-phase-at-zero-seconds", "symmetric-range-phase-at-three-seconds",
         "shared-zero-pixel-phase-at-six-seconds", "source-val-to-pos-pos-to-val-intersection",
-        "gpui-wasm-timed-parity", "common-interaction-profile", "panic-free-range-sync"
+        "gpui-native-web-timed-parity", "common-interaction-profile", "panic-free-range-sync"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
@@ -3004,9 +3003,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/thin_bars_stroke_fill.rs#thin_bars_stroke_fill_kartı",
-      "örnek": "examples/thin_bars_stroke_fill.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/thin-bars-stroke-fill.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3032,7 +3031,7 @@
         "paths-bars-size-align-gap", "forward-and-reverse-direction",
         "stroke-width-one-and-four", "minimum-one-pixel-bar",
         "thin-stroke-color-fallback", "zero-value-bar-suppression",
-        "gpui-wasm-parity", "common-interaction-profile", "panic-free-bar-geometry"
+        "gpui-native-web-parity", "common-interaction-profile", "panic-free-bar-geometry"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
@@ -3053,9 +3052,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/time_periods.rs#time_periods_kartı",
-      "örnek": "examples/time_periods.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/time-periods.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3081,7 +3080,7 @@
         "source-exact-363-daily-aggregates", "february-zero-padding",
         "secondary-shifted-time-axis", "per-series-time-mapping",
         "utc-daily-normalization", "source-rgba-series-styles",
-        "gpui-wasm-parity", "common-interaction-profile", "panic-free-time-aggregation"
+        "gpui-native-web-parity", "common-interaction-profile", "panic-free-time-aggregation"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
@@ -3101,9 +3100,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/timeline_discrete.rs#timeline_discrete_kartı",
-      "örnek": "examples/timeline_discrete.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/timeline-discrete.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3130,7 +3129,7 @@
         "source-exact-four-surfaces", "deterministic-time-anchor-and-generator",
         "space-between-three-lane-layout", "semantic-span-width", "periodic-cell-width",
         "null-undefined-semantics", "consecutive-state-merge", "per-state-fill-and-stroke",
-        "whole-cell-cursor-highlight", "source-axis-and-grid-modes", "gpui-wasm-parity",
+        "whole-cell-cursor-highlight", "source-axis-and-grid-modes", "gpui-native-web-parity",
         "common-interaction-profile", "panic-free-timeline-geometry"
       ],
       "kanıt": {
@@ -3150,9 +3149,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/timeseries_discrete.rs#timeseries_discrete_kartı",
-      "örnek": "examples/timeseries_discrete.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/timeseries-discrete.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3178,7 +3177,7 @@
       "özellikler": [
         "source-exact-two-surfaces", "shared-fifty-step-time-axis", "deterministic-source-generator-order",
         "shifted-discrete-step-series", "raw-zero-one-legend-values", "fixed-device-axis-labels",
-        "shared-x-cursor", "combined-four-series-legend", "gpui-wasm-parity",
+        "shared-x-cursor", "combined-four-series-legend", "gpui-native-web-parity",
         "common-interaction-profile", "panic-free-multi-surface-session"
       ],
       "kanıt": {
@@ -3198,9 +3197,9 @@
         { "yol": "src/fmtDate.js", "sha256": "e7867482a11abe4cd9e015d3610b7e8b6ab1d55409e06acd7550dd57348f9d3b" }
       ],
       "fixture": "src/kart/timezones_dst.rs#timezones_dst_kartları",
-      "örnek": "examples/timezones_dst.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/timezones-dst.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3230,7 +3229,7 @@
         "eleven-source-sections", "four-cursor-view-setseries-sync-groups",
         "thirty-nine-independent-surfaces", "single-catalog-card",
         "abortable-single-generation-surface-listeners",
-        "gpui-wasm-parity", "common-interaction-profile",
+        "gpui-native-web-parity", "common-interaction-profile",
         "panic-free-timezone-axis"
       ],
       "kanıt": {
@@ -3250,9 +3249,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/tooltips_closest.rs#tooltips_closest_kartı",
-      "örnek": "examples/tooltips_closest.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/tooltips-closest.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3277,7 +3276,7 @@
         "duplicate-x-timestamps", "closest-visible-series-focus", "source-tooltip-format",
         "percent-since-start", "plot-in-place-click-perf-url", "data-point-tooltip-anchor",
         "single-path-interpolation-guides", "xy-selection-zoom", "legend-set-series",
-        "gpui-wasm-parity", "common-interaction-profile", "panic-free-tooltip-resolution"
+        "gpui-native-web-parity", "common-interaction-profile", "panic-free-tooltip-resolution"
       ],
       "kanıt": {
         "api": "tam_kanıtlı", "sayısal": "tam_kanıtlı",
@@ -3295,9 +3294,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/tooltips.rs#tooltips_kartı",
-      "örnek": "examples/tooltips.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/tooltips.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3326,7 +3325,7 @@
         "legend-set-series", "stable-pointer-transparent-tooltip-overlays",
         "exact-zero-offset-tooltip-anchor", "no-main-redraw-on-cursor",
         "mouseenter-mouseleave-visibility", "two-second-chart-recreation",
-        "cursor-state-preserved-across-recreation", "gpui-wasm-parity",
+        "cursor-state-preserved-across-recreation", "gpui-native-web-parity",
         "common-interaction-profile", "panic-free-tooltip-resolution"
       ],
       "kanıt": {
@@ -3345,9 +3344,9 @@
         { "yol": "src/uPlot.js", "sha256": "8a627b2dc344bcbcea6038fc03f8c2321686cbe41ba5d4e94c82ed78829d1645" }
       ],
       "fixture": "src/kart/trendlines.rs#trendlines_kartı",
-      "örnek": "examples/trendlines.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/trendlines.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3373,7 +3372,7 @@
         "series-color-and-width-reuse", "odd-width-half-pixel-offset",
         "default-points-space-ten", "legend-set-series-visibility",
         "pointer-does-not-redraw-main-path", "val-to-idx-x-range-snap",
-        "zoom-recomputes-visible-trend", "gpui-wasm-parity",
+        "zoom-recomputes-visible-trend", "gpui-native-web-parity",
         "common-interaction-profile", "panic-free-draw-hook"
       ],
       "kanıt": {
@@ -3402,9 +3401,9 @@
         }
       ],
       "fixture": "src/kart/update_cursor_select_resize.rs#update_cursor_select_resize_kartı",
-      "örnek": "examples/update_cursor_select_resize.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/update-cursor-select-resize.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3432,8 +3431,8 @@
         "source-exact-eight-hundred-square", "source-exact-hundred-ms-size-loop",
         "cursor-lock-preserved-across-resize", "selection-ratios-preserved-across-resize",
         "hover-point-ratio-preserved-across-resize", "core-owned-set-size-state",
-        "interaction-overlay-separated-from-main-scene", "stable-wasm-overlay-nodes",
-        "legend-set-series-hides-hover-point", "gpui-wasm-parity",
+        "interaction-overlay-separated-from-main-scene", "stable-gpui-web-overlay-layer",
+        "legend-set-series-hides-hover-point", "gpui-native-web-parity",
         "common-interaction-profile", "panic-free-resize-flow"
       ],
       "kanıt": {
@@ -3454,9 +3453,9 @@
         }
       ],
       "fixture": "src/kart/wind_direction.rs#wind_direction_kartı",
-      "örnek": "examples/wind_direction.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/wind-direction.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3502,7 +3501,7 @@
         "legend-set-series-controls-custom-path",
         "developer-configurable-vector-style",
         "pointer-overlay-does-not-redraw-main-path",
-        "gpui-wasm-parity",
+        "gpui-native-web-parity",
         "common-interaction-profile",
         "panic-free-custom-path"
       ],
@@ -3526,9 +3525,9 @@
         }
       ],
       "fixture": "src/kart/y_scale_drag.rs#y_scale_drag_kartı",
-      "örnek": "examples/y_scale_drag.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/y-scale-drag.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3573,7 +3572,7 @@
         "legend-set-series-resets-manual-auto-scale",
         "request-animation-frame-pointer-coalescing",
         "core-owned-axis-hit-testing",
-        "gpui-wasm-parity",
+        "gpui-native-web-parity",
         "common-interaction-profile",
         "panic-free-axis-drag"
       ],
@@ -3597,9 +3596,9 @@
         }
       ],
       "fixture": "src/kart/y_shifted_series.rs#y_shifted_series_kartı",
-      "örnek": "examples/y_shifted_series.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/y-shifted-series.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3646,7 +3645,7 @@
         "cursor-overlay-re-resolved-across-mode-toggle",
         "timer-cleanup-on-card-exit",
         "legend-set-series-controls",
-        "gpui-wasm-parity",
+        "gpui-native-web-parity",
         "common-interaction-profile",
         "panic-free-mode-flow"
       ],
@@ -3670,9 +3669,9 @@
         }
       ],
       "fixture": "src/kart/annotations.rs#annotations_kartı",
-      "örnek": "examples/annotations.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/annotations.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3711,7 +3710,7 @@
         "source-exact-top-and-bottom-label-alignment",
         "source-exact-visible-range-filter",
         "source-exact-plot-area-clipping",
-        "gpui-wasm-parity",
+        "gpui-native-web-parity",
         "common-interaction-profile",
         "panic-free-annotation-rendering"
       ],
@@ -3739,9 +3738,9 @@
         }
       ],
       "fixture": "src/kart/mass_spectrum.rs#mass_spectrum_kartı",
-      "örnek": "examples/mass_spectrum.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/mass-spectrum.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3780,7 +3779,7 @@
         "source-exact-axis-labels",
         "source-exact-flat-y-range-callback",
         "source-exact-series-stroke",
-        "gpui-wasm-parity",
+        "gpui-native-web-parity",
         "common-interaction-profile",
         "panic-free-csv-parsing"
       ],
@@ -3798,9 +3797,9 @@
       "kaynak": "demos/measure-datums.html",
       "kaynak_sha256": "786a15ef41df4aad0c5ca5ee3630f7088d906fd2feb75706ab8d1868d15d89a2",
       "fixture": "src/kart/measure_datums.rs#measure_datums_kartı",
-      "örnek": "examples/measure_datums.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/measure-datums.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3839,7 +3838,7 @@
         "source-exact-crosshair-circles",
         "source-exact-delta-label",
         "source-exact-clear-events",
-        "gpui-wasm-parity",
+        "gpui-native-web-parity",
         "common-interaction-profile",
         "panic-free-datum-state"
       ],
@@ -3867,9 +3866,9 @@
         }
       ],
       "fixture": "src/kart/multi_bars.rs#multi_bars_kartı",
-      "örnek": "examples/multi_bars.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/multi-bars.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3905,7 +3904,7 @@
         "source-horizontal-reverse-orientation",
         "source-per-datum-status-colors",
         "source-negative-bars",
-        "gpui-wasm-parity",
+        "gpui-native-web-parity",
         "common-interaction-profile"
       ],
       "kanıt": {
@@ -3922,9 +3921,9 @@
       "kaynak": "demos/nearest-non-null.html",
       "kaynak_sha256": "25b26de2abf98dff1583259d06e766da1dace15806d1ff7921a6fab044b26359",
       "fixture": "src/kart/nearest_non_null.rs#nearest_non_null_kartı",
-      "örnek": "examples/nearest_non_null.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/nearest-non-null.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -3966,7 +3965,7 @@
         "source-previous-non-null-bias",
         "source-dataIdx-vs-cursor-move",
         "hover-overlay-without-main-path-redraw",
-        "gpui-wasm-parity"
+        "gpui-native-web-parity"
       ],
       "kanıt": {
         "api": "tam_kanıtlı",
@@ -3982,9 +3981,9 @@
       "kaynak": "demos/zoom-fetch.html",
       "kaynak_sha256": "42481654ab45eddabc8a9030862faac90036dce5cb65e34651043f49e203c92c",
       "fixture": "src/kart/zoom_wheel.rs#ZoomFetchAkışı",
-      "örnek": "examples/zoom_wheel.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/zoom-fetch.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -4011,7 +4010,7 @@
           "paniksiz-hata-bildirimi": "kartta_etkin"
         },
         "gerekçeler": {
-          "gpui-platform-yuzey-esdegerligi": "Fetch akışı platformdan bağımsız çekirdek API'si ve WASM kanıt fonksiyonuyla doğrulanır; ayrı GPUI kontrolü üretilmez.",
+          "gpui-platform-yuzey-esdegerligi": "Fetch akışı platformdan bağımsız çekirdek API'si ve GPUI Web kanıt fonksiyonuyla doğrulanır; ayrı GPUI kontrolü üretilmez.",
           "kart-bilgi-ve-tanim-yerlesimi": "Fetch akışı çekirdek kanıtında tutulur; ayrı katalog kartı veya Resize içinde tekrar kontrolü üretilmez.",
           "kosullu-bos-ve-dolu-noktalar": "Kaynak veri null örnek içermez."
         }
@@ -4024,7 +4023,7 @@
         "atomic-data-and-x-range-update",
         "full-range-refetch-reset",
         "core-zoom-flow-proof",
-        "shared-core-wasm-proof"
+        "shared-core-gpui-web-proof"
       ],
       "kanıt": {
         "api": "tam_kanıtlı",
@@ -4040,9 +4039,9 @@
       "kaynak": "demos/zoom-ranger-grips.html",
       "kaynak_sha256": "e2b3e0d5fd28d51dfabe7787b9fa07e5226c63b74c2897543eddcb5fe5d4d2ed",
       "fixture": "src/grafik.rs#ZoomRangerDurumu",
-      "örnek": "examples/zoom_wheel.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/zoom-ranger-grips.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -4069,7 +4068,7 @@
           "paniksiz-hata-bildirimi": "kartta_etkin"
         },
         "gerekçeler": {
-          "gpui-platform-yuzey-esdegerligi": "Ranger durum makinesi ortak çekirdekte ve WASM testinde doğrulanır; platform kataloglarında yinelenen kontrol üretilmez.",
+          "gpui-platform-yuzey-esdegerligi": "Ranger durum makinesi ortak çekirdekte ve GPUI Web testinde doğrulanır; platform kataloglarında yinelenen kontrol üretilmez.",
           "kart-bilgi-ve-tanim-yerlesimi": "Ranger ayrı kart veya başka bir kart içinde tekrar yüzeyi oluşturmadan çekirdek API olarak korunur.",
           "kosullu-bos-ve-dolu-noktalar": "Sinüs kaynağı null içermez."
         }
@@ -4082,7 +4081,7 @@
         "whole-window-drag",
         "left-right-grip-resize",
         "bidirectional-main-view-sync",
-        "core-wasm-test-proof"
+        "core-gpui-web-test-proof"
       ],
       "kanıt": {
         "api": "tam_kanıtlı",
@@ -4098,9 +4097,9 @@
       "kaynak": "demos/zoom-ranger-xy.html",
       "kaynak_sha256": "1f3551db91cdc3dd07f147c62ec96addf1a08c31e994cfa7ad215f1cc52ca83a",
       "fixture": "src/kart/zoom_wheel.rs#zoom_ranger_xy_grafiği",
-      "örnek": "examples/zoom_wheel.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/zoom-ranger-xy.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -4127,7 +4126,7 @@
           "paniksiz-hata-bildirimi": "kartta_etkin"
         },
         "gerekçeler": {
-          "gpui-platform-yuzey-esdegerligi": "X/Y ranger ortak çekirdek API'si ve WASM testiyle doğrulanır; katalog kontrolü üretilmez.",
+          "gpui-platform-yuzey-esdegerligi": "X/Y ranger ortak çekirdek API'si ve GPUI Web testiyle doğrulanır; katalog kontrolü üretilmez.",
           "kart-bilgi-ve-tanim-yerlesimi": "Ayrı katalog kartı veya Resize içinde tekrarlı kontrol üretilmez.",
           "kosullu-bos-ve-dolu-noktalar": "Sinüs kaynağı null içermez."
         }
@@ -4141,7 +4140,7 @@
         "source-uni-10-adaptive-axis",
         "bidirectional-xy-sync",
         "reusable-ranger-option",
-        "shared-core-wasm-proof"
+        "shared-core-gpui-web-proof"
       ],
       "kanıt": {
         "api": "tam_kanıtlı",
@@ -4157,9 +4156,9 @@
       "kaynak": "demos/zoom-ranger.html",
       "kaynak_sha256": "bb2d35b4f0d5818510294514373e8858fb46641a9f659f3683ee8526429d7f24",
       "fixture": "src/kart/zoom_wheel.rs#zoom_ranger_xy_grafiği",
-      "örnek": "examples/zoom_wheel.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/zoom-ranger.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -4187,7 +4186,7 @@
         },
         "gerekçeler": {
           "kart-bilgi-ve-tanim-yerlesimi": "Temel X ranger, mevcut grips ve XY ortak API'sinin alt kümesidir; yeni katalog kartı veya tekrar yüzey üretilmez.",
-          "gpui-platform-yuzey-esdegerligi": "Ortak çekirdek ranger API'si ve WASM testi aynen devralınır.",
+          "gpui-platform-yuzey-esdegerligi": "Ortak çekirdek ranger API'si ve GPUI Web testi aynen devralınır.",
           "kosullu-bos-ve-dolu-noktalar": "Kaynak sinüs verisi null içermez."
         }
       },
@@ -4200,7 +4199,7 @@
         "source-init-x-1-to-4.5",
         "overview-selection-to-main-x-sync",
         "main-x-to-overview-selection-sync",
-        "inherited-core-wasm-web-proof"
+        "inherited-core-gpui-web-proof"
       ],
       "kanıt": {
         "api": "tam_kanıtlı",
@@ -4216,9 +4215,9 @@
       "kaynak": "demos/zoom-variations.html",
       "kaynak_sha256": "f48090f461832dec31788f26cd92413784d2ff02393ee0bb7ad82c450eda5f50",
       "fixture": "src/secenek.rs#ZoomSürüklemeKipi",
-      "örnek": "examples/zoom_wheel.rs",
-      "masaüstü_örneği": "uygulamalar/masaustu/src/main.rs",
-      "wasm_örneği": "uygulamalar/web/src/main.rs",
+      "örnek": "uygulamalar/katalog/src/lib.rs",
+      "native_örneği": "uygulamalar/masaustu/src/main.rs",
+      "web_örneği": "uygulamalar/web/src/main.rs",
       "senaryo": "uyum/senaryolar/zoom-variations.toml",
       "ortak_davranış_sözleşmesi": {
         "sürüm": 1,
@@ -4245,7 +4244,7 @@
           "paniksiz-hata-bildirimi": "kartta_etkin"
         },
         "gerekçeler": {
-          "gpui-platform-yuzey-esdegerligi": "Drag kipleri ortak çekirdek seçenekleri ve WASM testiyle doğrulanır; katalog kontrolü üretilmez.",
+          "gpui-platform-yuzey-esdegerligi": "Drag kipleri ortak çekirdek seçenekleri ve GPUI Web testiyle doğrulanır; katalog kontrolü üretilmez.",
           "kart-bilgi-ve-tanim-yerlesimi": "On kaynak varyasyonu ayrı kartlar veya başka kart içinde görsel tekrar üretmeden tipli seçenek olarak korunur.",
           "kosullu-bos-ve-dolu-noktalar": "Kaynak veri null içermez."
         }
@@ -4262,8 +4261,8 @@
         "adaptive-omni-uni-50",
         "all-five-with-default-distance",
         "all-five-with-min-distance-10",
-        "wasm-test-proof",
-        "shared-core-wasm-proof"
+        "gpui-web-test-proof",
+        "shared-core-gpui-web-proof"
       ],
       "kanıt": {
         "api": "tam_kanıtlı",

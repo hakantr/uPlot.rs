@@ -32,7 +32,7 @@ device_pixel_ratio = 1
 "ekleme_olay_sırası" = ["addSeries 2", "setData"]
 "silme_olay_sırası" = ["delSeries 2", "setData"]
 "yüzey_kimliği_korunur" = true
-"wasm_svg_kökü_yerinde_güncellenir" = true
+"gpui_web_svg_kökü_yerinde_güncellenir" = true
 "geçersiz_indeks" = "UplotHatası::GeçersizSeriİndeksi"
 "sahiplik" = "çekirdek"
 
@@ -49,11 +49,11 @@ device_pixel_ratio = 1
 "hizalı_yapı_doğrulama" = "O(N×S)"
 "yeniden_çizim" = "O(N×S)"
 "gpui_entity" = "korunur"
-"wasm_dış_kabuk" = "korunur"
+"gpui_web_dış_kabuk" = "korunur"
 "svg_kökü" = "yerinde güncellenir"
 "kontrol_odağı" = "korunur"
 
 ["kanıt"]
 "masaüstü" = "uygulamalar/masaustu/src/main.rs"
-wasm = "uygulamalar/web/src/main.rs"
+gpui_web = "uygulamalar/web/src/main.rs"
 svg = "target/add-del-series.svg"
