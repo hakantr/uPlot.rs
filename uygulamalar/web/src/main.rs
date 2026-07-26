@@ -5,7 +5,8 @@ mod web {
     use std::rc::Rc;
 
     use gpui::{App, AppContext as _, Application, WindowOptions};
-    use uplot_rs::{Grafik, gpui::GpuiGrafik, resize_kartı};
+    use ortak_bilesenler::{OrtakBilesenAyarlari, baslat};
+    use uplot_rs_gpui_katalog::ChartListesi;
 
     pub fn başlat() {
         console_error_panic_hook::set_once();
@@ -19,17 +20,13 @@ mod web {
     }
 
     fn uygulamayı_kur(cx: &mut App) {
-        let grafik =
-            resize_kartı(100).and_then(|(seçenekler, veri)| Grafik::yeni(seçenekler, veri));
-        let Ok(grafik) = grafik else {
-            web_hatası("Resize GPUI grafiği oluşturulamadı");
+        if let Err(hata) = baslat(OrtakBilesenAyarlari::default(), cx) {
+            web_hatası(&format!("Ortak GPUI bileşenleri başlatılamadı: {hata}"));
             return;
-        };
+        }
 
         if cx
-            .open_window(WindowOptions::default(), move |_, cx| {
-                cx.new(|_| GpuiGrafik::yeni(grafik))
-            })
+            .open_window(WindowOptions::default(), |_, cx| cx.new(ChartListesi::yeni))
             .is_err()
         {
             web_hatası("GPUI Web penceresi açılamadı");

@@ -5745,7 +5745,17 @@ dependencies = [
  "gpui_platform",
  "image",
  "ortak_bilesenler",
+ "uplot-rs-gpui-katalog",
+]
+
+[[package]]
+name = "uplot-rs-gpui-katalog"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+ "ortak_bilesenler",
  "uplot-rs",
+ "web-time",
 ]
 
 [[package]]
@@ -5756,7 +5766,8 @@ dependencies = [
  "gpui",
  "gpui_web",
  "log",
- "uplot-rs",
+ "ortak_bilesenler",
+ "uplot-rs-gpui-katalog",
 ]
 
 [[package]]

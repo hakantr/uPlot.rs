@@ -1,4 +1,4 @@
-//! GPUI masaüstü chart kataloğu; dağıtılan bileşeni kullanan örnek uygulama.
+//! Native ve GPUI Web'in paylaştığı tek Rust grafik kataloğu.
 
 use gpui::{
     ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement, Render, SharedString, Task,
@@ -8,7 +8,7 @@ use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
     MetinAlaniOlayi, PlatformPencere,
 };
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs::{
     ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
@@ -74,6 +74,7 @@ use uplot_rs::{
     tooltips_kartı, trendlines_kartı, update_cursor_select_resize_kartı, wind_direction_kartı,
     y_scale_drag_kartı, y_shifted_series_kartı, ÇubukYönü, ÇubukÖrneği, İmleçBağSeçenekleri,
 };
+use web_time::Instant;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum KartKimliği {

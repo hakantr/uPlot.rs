@@ -29,7 +29,7 @@ Portun ortak altyapısı şunları içerir:
   komutları;
 - `../gpui_kutuphanesi` title bar/düğmelerini kullanan GPUI masaüstü chart listesi;
 - `gpui_web` ile WebGPU canvas üzerinde çalışan GPUI Web uygulaması;
-- masaüstü ve WASM'de ortak Rust kart tanımı örneği;
+- native ve GPUI Web'de aynı Rust katalog kaynağından üretilen bütün kartlar;
 - 18 kaynak dosyası, 304 genel API üyesi, 28 veri varlığı ve 73 demonun
   hash-kilitli envanteri;
 - `Resize` kartı: `demos/resize.html` tabanlı 100 noktalı `sin(x)` çizgisi.
@@ -40,8 +40,9 @@ Portun ortak altyapısı şunları içerir:
 lejantını, görünür aralığa göre yeniden hizalanan sayısal ızgarasını ve X
 ekseninde sürükle-bırak yakınlaştırmasını da taşır.
 
-GPUI chart listesi dağıtılan `uplot-rs` kütüphanesinin parçası değildir;
-`uygulamalar/masaustu` altındaki ayrı, yayınlanmayan bir doğrulama uygulamasıdır.
+GPUI chart listesi dağıtılan `uplot-rs` kütüphanesinin parçası değildir.
+`uygulamalar/katalog` içindeki tek yayınlanmayan Rust entity'si hem
+`uygulamalar/masaustu` hem `uygulamalar/web` girişleri tarafından kullanılır.
 Kartın seçim, tekerlek, dokunma, taşıma, tam görünüm ve geçmiş davranışları çekirdekte çözülür.
 Kütüphane kullanıcısı yalnız veriyi, renk düzenini ve açık/kapalı özellikleri
 tanımlar; belirtilmeyen özellikler çekirdek varsayılanlarını kullanır.
@@ -188,8 +189,10 @@ hash kilidini doğrular. Tarayıcı listesi için
 - `src/gpui/svg_kaydi.rs`: yalnız `gpui-svg` ile derlenen vektör dışa aktarım
 - `src/kart.rs` + `src/kart/`: kaynak verisini koruyan kart fixture'ları
 - `src/secenek.rs` + `src/secenek/`: ilişkili seçenek türleri
-- `uygulamalar/masaustu/`: dağıtıma girmeyen GPUI doğrulama uygulaması
-- `uygulamalar/web/`: aynı GPUI bileşenini WebGPU üzerinde açan web girişi
+- `uygulamalar/katalog/`: native ve web'in paylaştığı tek GPUI kart kayıt
+  defteri, ilişkili yüzey grupları ve açıklama UI'si
+- `uygulamalar/masaustu/`: ortak kataloğu native GPUI penceresinde açan giriş
+- `uygulamalar/web/`: ortak kataloğu `gpui_web`/WebGPU üzerinde açan giriş
 - `uyum/`: makine-okunur kaynak ve kanıt envanteri
 - `tools/uyum/`: yeniden üretim/denetim araçları
 - `RESMI_DEPO_FARKLILIKLARI.md`: resmî port ile uPlot.rs uzantılarının ayrımı

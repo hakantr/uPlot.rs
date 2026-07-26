@@ -2,12 +2,10 @@
 
 use std::sync::Arc;
 
-mod masaustu;
-
 use gpui::{App, AppContext, Bounds, px, size};
 use gpui_platform::application;
-use masaustu::ChartListesi;
 use ortak_bilesenler::{OrtakBilesenAyarlari, PencereKurulumAyarlari, baslat, pencere_secenekleri};
+use uplot_rs_gpui_katalog::ChartListesi;
 
 fn main() {
     application().run(|cx: &mut App| {

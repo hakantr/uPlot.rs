@@ -28,7 +28,7 @@ The shared foundation contains:
 - retained drawing commands consumed by GPUI paint and optional SVG export;
 - GPUI desktop chart list using the `../gpui_kutuphanesi` title bar and buttons;
 - a GPUI Web application drawing to a WebGPU canvas through `gpui_web`;
-- one shared Rust card-definition example shown in desktop and WASM UIs;
+- every card produced from the same Rust catalogue source on native and GPUI Web;
 - hash-locked inventories for 18 source files, 304 public API members, 28 data
   assets, and all 73 demos;
 - `Resize` card: a 100-point `sin(x)` line based on `demos/resize.html`.
@@ -39,8 +39,9 @@ The `Resize` card also ports the source demo's conditional hollow points, filled
 hover marker, live legend, numeric grid aligned to the visible range, and
 drag-to-zoom interaction on the X axis.
 
-The GPUI chart list is not part of the distributed `uplot-rs` library. It is a
-separate, unpublished verification application under `uygulamalar/masaustu`.
+The GPUI chart list is not part of the distributed `uplot-rs` library. A single
+unpublished Rust entity under `uygulamalar/katalog` is consumed by both the
+`uygulamalar/masaustu` and `uygulamalar/web` entry points.
 Selection, wheel zoom, touch zoom/pan, desktop pan, full-view reset, and view history are implemented in
 the core. Library users only provide data, colors, and feature switches;
 unspecified features retain their core defaults.
@@ -189,8 +190,10 @@ beside this repository. See
 - `src/gpui/svg_kaydi.rs`: vector export compiled only with `gpui-svg`
 - `src/kart.rs` + `src/kart/`: card fixtures preserving upstream data
 - `src/secenek.rs` + `src/secenek/`: grouped option types
-- `uygulamalar/masaustu/`: GPUI verification app excluded from distribution
-- `uygulamalar/web/`: web entry running the same GPUI component on WebGPU
+- `uygulamalar/katalog/`: the single GPUI card registry, related-surface groups,
+  and explanation UI shared by native and web
+- `uygulamalar/masaustu/`: native GPUI entry opening the shared catalogue
+- `uygulamalar/web/`: `gpui_web`/WebGPU entry opening the shared catalogue
 - `uyum/`: machine-readable source and evidence inventory
 - `tools/uyum/`: reproducibility and verification tooling
 - `RESMI_DEPO_FARKLILIKLARI.md`: direct-port versus uPlot.rs-extension inventory

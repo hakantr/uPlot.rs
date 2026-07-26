@@ -1,0 +1,16 @@
+[package]
+name = "uplot-rs-gpui-katalog"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+description = "Native ve GPUI Web için ortak uPlot.rs kart kayıt defteri"
+
+[dependencies]
+gpui = { path = "../../../gpui/crates/gpui" }
+ortak_bilesenler = { path = "../../../gpui_kutuphanesi/kutuphaneler/ortak_bilesenler", features = ["varsayilan_tema", "web"] }
+uplot-rs = { path = "../..", default-features = false }
+web-time = "1.1.0"
+
+[lints]
+workspace = true
