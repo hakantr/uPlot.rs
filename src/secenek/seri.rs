@@ -18,21 +18,6 @@ pub enum NoktaFiltreKipi {
     BoşlukArasındakiTekiller,
 }
 
-/// Standart seri noktalarının grafik genelindeki gösterim tercihi.
-///
-/// `Kaynak`, seri düzeyindeki `points`/`nokta_stili` ayarlarını aynen
-/// korur. Diğer kipler yalnız uygun yoğunlukta gösterilecek standart seri
-/// işaretçilerinin dolgusunu veya görünürlüğünü değiştirir; scatter, ısı
-/// haritası ve açıklama gibi özel veri katmanlarını etkilemez.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum NoktaGösterimi {
-    #[default]
-    Kaynak,
-    İçiBoş,
-    Dolu,
-    Gizli,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum NoktaŞekli {
     #[default]

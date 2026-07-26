@@ -13,7 +13,6 @@ use ortak_bilesenler::{
 };
 use std::ops::Range;
 use std::time::Duration;
-use uplot_rs::NoktaGösterimi;
 use uplot_rs::gpui::{GpuiGrafik, GpuiGrafikOlayı};
 use uplot_rs_gpui_ornekler::{
     ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
@@ -1672,16 +1671,6 @@ impl KartKimliği {
     }
 }
 
-fn nokta_gösterimini_çöz(içi_boş: bool, dolu: bool) -> NoktaGösterimi {
-    if içi_boş {
-        NoktaGösterimi::İçiBoş
-    } else if dolu {
-        NoktaGösterimi::Dolu
-    } else {
-        NoktaGösterimi::Gizli
-    }
-}
-
 pub struct ChartListesi {
     aktif_kart: KartKimliği,
     kart_listesi_kaydırma: UniformListScrollHandle,
@@ -1693,7 +1682,8 @@ pub struct ChartListesi {
     kullanım_rehberi_açık: bool,
     tekerlek_etkin: bool,
     tekerlek_anahtarı: Entity<Anahtar>,
-    nokta_gösterimi: NoktaGösterimi,
+    içi_boş_noktalar_görünür: bool,
+    dolu_noktalar_görünür: bool,
     içi_boş_nokta_anahtarı: Entity<Anahtar>,
     dolu_nokta_anahtarı: Entity<Anahtar>,
     arcsinh_kuvvet: i32,
@@ -1809,11 +1799,18 @@ impl ChartListesi {
         grafikler
     }
 
-    fn nokta_gösterimini_uygula(&mut self, gösterim: NoktaGösterimi, cx: &mut Context<Self>) {
-        self.nokta_gösterimi = gösterim;
+    fn nokta_gösterimlerini_uygula(
+        &mut self,
+        içi_boş_görünür: bool,
+        dolu_görünür: bool,
+        cx: &mut Context<Self>,
+    ) {
+        self.içi_boş_noktalar_görünür = içi_boş_görünür;
+        self.dolu_noktalar_görünür = dolu_görünür;
         for grafik in self.etkin_grafik_yüzeyleri() {
             grafik.update(cx, |grafik, cx| {
-                grafik.nokta_gösterimini_ayarla(gösterim, cx);
+                grafik.kırılım_noktalarını_göster(içi_boş_görünür, cx);
+                grafik.imleç_noktalarını_göster(dolu_görünür, cx);
             });
         }
         cx.notify();
@@ -2116,27 +2113,20 @@ impl ChartListesi {
         .detach();
 
         let içi_boş_nokta_anahtarı = cx.new(|cx| Anahtar::yeni("İçi boş noktalar", true, cx));
-        let dolu_nokta_anahtarı = cx.new(|cx| {
-            let mut anahtar = Anahtar::yeni("Dolu noktalar", false, cx);
-            anahtar.devre_disi_ayarla(true, cx);
-            anahtar
-        });
+        let dolu_nokta_anahtarı = cx.new(|cx| Anahtar::yeni("Dolu noktalar", true, cx));
         cx.subscribe(
             &içi_boş_nokta_anahtarı,
             |bu, _, olay: &AnahtarOlayi, cx| {
                 let AnahtarOlayi::Degisti(içi_boş) = *olay;
-                bu.dolu_nokta_anahtarı.update(cx, |anahtar, cx| {
-                    anahtar.devre_disi_ayarla(içi_boş, cx);
-                });
                 let dolu = bu.dolu_nokta_anahtarı.read(cx).acik();
-                bu.nokta_gösterimini_uygula(nokta_gösterimini_çöz(içi_boş, dolu), cx);
+                bu.nokta_gösterimlerini_uygula(içi_boş, dolu, cx);
             },
         )
         .detach();
         cx.subscribe(&dolu_nokta_anahtarı, |bu, _, olay: &AnahtarOlayi, cx| {
             let AnahtarOlayi::Degisti(dolu) = *olay;
             let içi_boş = bu.içi_boş_nokta_anahtarı.read(cx).acik();
-            bu.nokta_gösterimini_uygula(nokta_gösterimini_çöz(içi_boş, dolu), cx);
+            bu.nokta_gösterimlerini_uygula(içi_boş, dolu, cx);
         })
         .detach();
 
@@ -2170,7 +2160,8 @@ impl ChartListesi {
             kullanım_rehberi_açık: false,
             tekerlek_etkin: etkileşimler.tekerlek_etkileşimi,
             tekerlek_anahtarı,
-            nokta_gösterimi: NoktaGösterimi::İçiBoş,
+            içi_boş_noktalar_görünür: true,
+            dolu_noktalar_görünür: true,
             içi_boş_nokta_anahtarı,
             dolu_nokta_anahtarı,
             arcsinh_kuvvet: 0,
@@ -2244,7 +2235,7 @@ impl ChartListesi {
         if başlangıç_kartı != KartKimliği::Resize {
             bu.kartı_seç(başlangıç_kartı, cx);
         }
-        bu.nokta_gösterimini_uygula(NoktaGösterimi::İçiBoş, cx);
+        bu.nokta_gösterimlerini_uygula(true, true, cx);
         bu
     }
 
@@ -3997,6 +3988,8 @@ impl ChartListesi {
         match sonuç {
             Ok(mut yeni) => {
                 yeni.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
+                yeni.kırılım_noktalarını_göster(self.içi_boş_noktalar_görünür);
+                yeni.imleç_noktalarını_göster(self.dolu_noktalar_görünür);
                 if let Some(grafik) = &self.grafik {
                     grafik.update(cx, |grafik, cx| grafik.grafiği_ayarla(yeni, cx));
                 } else {
@@ -5001,7 +4994,11 @@ impl ChartListesi {
                 }
             }));
         }
-        self.nokta_gösterimini_uygula(self.nokta_gösterimi, cx);
+        self.nokta_gösterimlerini_uygula(
+            self.içi_boş_noktalar_görünür,
+            self.dolu_noktalar_görünür,
+            cx,
+        );
     }
 
     fn soft_minmax_başlat(&mut self, cx: &mut Context<Self>) {
@@ -9105,14 +9102,6 @@ mod tests {
     use std::collections::HashSet;
 
     use super::*;
-
-    #[test]
-    fn ortak_nokta_anahtarları_üç_gösterim_kipini_çözer() {
-        assert_eq!(nokta_gösterimini_çöz(true, false), NoktaGösterimi::İçiBoş);
-        assert_eq!(nokta_gösterimini_çöz(true, true), NoktaGösterimi::İçiBoş);
-        assert_eq!(nokta_gösterimini_çöz(false, true), NoktaGösterimi::Dolu);
-        assert_eq!(nokta_gösterimini_çöz(false, false), NoktaGösterimi::Gizli);
-    }
 
     #[test]
     fn yan_menü_ana_kart_sayısı_sabittir() {

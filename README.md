@@ -43,12 +43,11 @@ Portun ortak altyapısı şunları içerir:
 lejantını, görünür aralığa göre yeniden hizalanan sayısal ızgarasını ve X
 ekseninde sürükle-bırak yakınlaştırmasını da taşır.
 
-Standart seri işaretçileri çekirdekte `NoktaGösterimi::{Kaynak, İçiBoş, Dolu,
-Gizli}` ile yönetilir. `Kaynak` seri düzeyindeki uPlot uyumlu ayarları korur;
-diğer kipler aynı grafik örneğinde veri ve ölçekleri yeniden kurmadan
-değiştirilebilir. Katalog bu yeteneği bütün kartlarda ortak “İçi boş noktalar” ve
-“Dolu noktalar” anahtarlarıyla gösterir; içi boş kip açıkken dolu anahtarı devre
-dışıdır, ikisi de kapalıyken standart seri noktaları gizlenir.
+Standart seri kırılım noktaları ile dolu imleç noktaları çekirdekte birbirinden
+bağımsızdır. Her ikisi de varsayılan olarak görünür; geliştiricinin
+`kırılım_noktalarını_göster(bool)` veya `imleç_noktalarını_göster(bool)`
+çağrılarını vermesi zorunlu değildir. Katalog bu iki tercihi bütün kartlarda
+bağımsız “İçi boş noktalar” ve “Dolu noktalar” anahtarlarıyla gösterir.
 
 GPUI chart listesi dağıtılan `uplot-rs` kütüphanesinin parçası değildir.
 `uygulamalar/katalog` içindeki tek yayınlanmayan Rust entity'si hem

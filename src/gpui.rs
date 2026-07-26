@@ -637,13 +637,6 @@ impl GpuiGrafik {
     }
 
     pub fn grafiği_ayarla(&mut self, grafik: Grafik, cx: &mut Context<Self>) {
-        let korunmuş_nokta_gösterimi = self.grafik.nokta_gösterimi();
-        let mut grafik = grafik;
-        if grafik.nokta_gösterimi() == crate::NoktaGösterimi::Kaynak
-            && korunmuş_nokta_gösterimi != crate::NoktaGösterimi::Kaynak
-        {
-            grafik.nokta_gösterimini_ayarla(korunmuş_nokta_gösterimi);
-        }
         let imleci_koru = self
             .grafik
             .tooltip_düzeni()
@@ -960,12 +953,22 @@ impl GpuiGrafik {
         Self::bildir(cx);
     }
 
-    pub fn nokta_gösterimini_ayarla(
+    pub fn kırılım_noktalarını_göster(
         &mut self,
-        gösterim: crate::NoktaGösterimi,
+        görünür: bool,
         cx: &mut Context<Self>,
     ) -> bool {
-        let değişti = self.grafik.nokta_gösterimini_ayarla(gösterim);
+        let değişti = self.grafik.kırılım_noktalarını_göster(görünür);
+        if değişti {
+            self.grafik_bildir(cx);
+        }
+        değişti
+    }
+
+    pub fn imleç_noktalarını_göster(
+        &mut self, görünür: bool, cx: &mut Context<Self>
+    ) -> bool {
+        let değişti = self.grafik.imleç_noktalarını_göster(görünür);
         if değişti {
             self.grafik_bildir(cx);
         }

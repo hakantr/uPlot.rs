@@ -13,7 +13,7 @@ mod zaman;
 pub use dagilim::{DağılımDüzeni, DağılımNoktası, DağılımSerisi};
 pub use gradyan::{GradyanDurağı, GradyanEkseni, GradyanKonumu, ÖlçekGradyanı};
 pub use isi_haritasi::{IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu};
-pub use seri::{NoktaFiltreKipi, NoktaGösterimi, NoktaŞekli, SeriSeçenekleri, SeriÇizimTürü};
+pub use seri::{NoktaFiltreKipi, NoktaŞekli, SeriSeçenekleri, SeriÇizimTürü};
 pub use timeline::{TimelineDüzeni, TimelineHücresi};
 pub use y_olcek::{
     GüzelÖlçekDüzeni, YÖlçekDağılımı, YÖlçekDönüşümFn, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri,
@@ -1171,11 +1171,9 @@ pub struct GrafikSeçenekleri {
     pub timeline_düzeni: Option<TimelineDüzeni>,
     pub dağılım_düzeni: Option<DağılımDüzeni>,
     pub bantlar: Vec<SeriBandı>,
-    /// Standart seri noktaları için grafik genelindeki görünüm tercihi.
-    ///
-    /// `Kaynak`, uPlot uyumlu seri ayarlarını korur; katalog gibi tüketiciler
-    /// çalışma anında içi boş, dolu veya gizli kiplerinden birini seçebilir.
-    pub nokta_gösterimi: NoktaGösterimi,
+    /// Yoğunluk ve seri ayarları uygun olduğunda standart, içi boş kırılım
+    /// noktalarının çizilip çizilmeyeceği. Varsayılan olarak açıktır.
+    pub kırılım_noktaları_görünür: bool,
     pub nokta_katmanları: Vec<NoktaKatmanı>,
     pub açıklama_düzeni: Option<AçıklamaDüzeni>,
     pub ölçüm_datumları: bool,
@@ -1273,7 +1271,7 @@ impl GrafikSeçenekleri {
             timeline_düzeni: None,
             dağılım_düzeni: None,
             bantlar: Vec::new(),
-            nokta_gösterimi: NoktaGösterimi::Kaynak,
+            kırılım_noktaları_görünür: true,
             nokta_katmanları: Vec::new(),
             açıklama_düzeni: None,
             ölçüm_datumları: false,
@@ -1480,8 +1478,11 @@ impl GrafikSeçenekleri {
         self
     }
 
-    pub fn nokta_gösterimi(mut self, gösterim: NoktaGösterimi) -> Self {
-        self.nokta_gösterimi = gösterim;
+    /// Standart, içi boş kırılım noktalarının görünürlüğünü ayarlar.
+    ///
+    /// Bu seçenek belirtilmezse noktalar varsayılan olarak görünürdür.
+    pub fn kırılım_noktalarını_göster(mut self, görünür: bool) -> Self {
+        self.kırılım_noktaları_görünür = görünür;
         self
     }
 
