@@ -4,9 +4,9 @@
 
 **Normatif uPlot kaynağı:** `0e5812c504430f5c804e0f993376d8999b26cc34`
 
-**Doğrulanan uygulama tabanı:** `87bd9e3`
+**Doğrulanan uygulama tabanı:** `af7fc90`
 
-**Kilitli GPUI:** `1b8f324169f7cdf81d3567650fb6704327d4d2f4`
+**Kilitli GPUI:** `bd1265677712f8c8e4c240899cb69415f32ded35`
 
 **Kilitli ortak bileşenler:** `c97926c3c15ab99091b51f7ed88bd98f357de409`
 
@@ -24,6 +24,9 @@ defterini ve aynı etkileşim durum makinelerini kullanır.
 - Web çizimi `gpui_web → gpui_wgpu → HTMLCanvasElement/WebGPU` hattındadır.
   Seri veya path başına DOM/SVG düğümü ve davranışları kopyalayan JavaScript
   registry yoktur.
+- GPUI Web adaptör veya aygıt oluşturma hatasını kaybetmez; katalog başlangıç
+  ekranı gerçek wgpu hatasıyla birlikte secure-context, WebGPU ve WebGL2
+  yeteneklerini raporlar.
 - Ana grafik ve cursor/seçim/hover ayrı retained GPUI yüzeyleridir. İkisinin
   kalıcı revizyonu ve GPUI yol önbelleği vardır.
 - Komut geometrisi oluşturulurken bir kez kimliklendirilir. Sahne geçişinde
@@ -43,10 +46,10 @@ defterini ve aynı etkileşim durum makinelerini kullanır.
 | 1 | Stable GPUI Web, touch/pinch ve platform önkoşulları | `c7b8d85`, `17a6bb1` |
 | 2 | GPUI-first root API ve diagnostics sınırı | `dcc9dae`, `567befa`, `f6d9545`, `87bd9e3` |
 | 3 | İsteğe bağlı gerçek GPUI → SVG vektör kaydı | `cc8631e`, `86a2ec6`, `f6d9545` |
-| 4 | Retained ana/etkileşim katmanları ve DPI path cache | `caa5438`, `7499cca`, `f6d9545`, `87bd9e3`; GPUI `1b8f324` |
+| 4 | Retained ana/etkileşim katmanları ve DPI path cache | `caa5438`, `7499cca`, `f6d9545`, `87bd9e3`; GPUI `bd12656` |
 | 5 | Tek literal Rust kart kayıt defteri | `f0ee0a0`, `e48cda4` |
 | 6 | Native/web ortak GPUI katalog uygulaması | `b6206d0` |
-| 7 | Native uygulama ve GPU backend/fallback tanısı | `3e95b90`, `7ae95ba` |
+| 7 | Native uygulama ve GPU backend/fallback tanısı | `3e95b90`, `7ae95ba`, `af7fc90`; GPUI `bd12656` |
 | 8 | GPUI Web/WASM, deep-link ve Blob SVG indirme | `7a133d2`, `66b7773` |
 | 9 | Ortak wheel/drag/touch/sync etkileşimleri | `b52dc0c`, `8baed24` |
 | 10 | Eski runtime, örnek ve not temizliği | `a31df4a` |

@@ -163,7 +163,7 @@ toplam ilerleme yüzdesi bildirilir.
 | 1 | Tamamlandı | `c7b8d85`, `17a6bb1` |
 | 2 | Tamamlandı | `dcc9dae`, `567befa`, `87bd9e3` |
 | 3 | Tamamlandı | `86a2ec6`, `f6d9545` |
-| 4 | Tamamlandı | `7499cca`, `f6d9545`, `87bd9e3`; GPUI `1b8f324` |
+| 4 | Tamamlandı | `7499cca`, `f6d9545`, `87bd9e3`; GPUI `bd12656` |
 | 5 | Tamamlandı | `e48cda4` |
 | 6 | Tamamlandı | `b6206d0` |
 | 7 | Tamamlandı | `3e95b90`, `7ae95ba` |
