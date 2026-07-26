@@ -78,11 +78,9 @@ mod testler {
                 |komut| matches!(komut, Komut::Metin { içerik, .. } if içerik == ".syncRect()")
             )
         );
-        assert!(
-            sahne.komutlar().iter().any(
-                |komut| matches!(komut, Komut::Alan { dolgu, .. } if dolgu == "rgba(255,0,0,0.1)")
-            )
-        );
+        assert!(sahne.komutlar().iter().any(
+            |komut| matches!(komut, Komut::Alan { dolgu, .. } if dolgu == "rgba(255,0,0,0.1)")
+        ));
         Ok(())
     }
 
