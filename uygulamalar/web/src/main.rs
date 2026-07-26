@@ -2,39 +2,23 @@
 
 #[cfg(target_family = "wasm")]
 mod web {
-    use std::rc::Rc;
-
-    use gpui::{App, AppContext as _, Application, WindowOptions};
-    use js_sys::{Function, Promise, Reflect};
+    use gpui::{App, AppContext as _, WindowOptions};
+    use gpui_platform::{single_threaded_web, web_init};
     use ortak_bilesenler::{OrtakBilesenAyarlari, baslat};
     use uplot_rs_gpui_katalog::ChartListesi;
-    use wasm_bindgen::{JsCast as _, JsValue};
-    use wasm_bindgen_futures::JsFuture;
 
     pub fn başlat() {
-        std::panic::set_hook(Box::new(|bilgi| {
-            web_hatası(&format!("GPUI Web/WebGPU paniği: {bilgi}"));
-            console_error_panic_hook::hook(bilgi);
-        }));
-        gpui_web::init_logging();
+        web_init();
         if svg_yedeği_zorlandı() {
             svg_yedeğine_geç("SVG çizici URL üzerinden istendi.");
             return;
         }
-        web_durumunu_yaz("booting", "WebGPU adaptörü denetleniyor…");
-        wasm_bindgen_futures::spawn_local(async {
-            if !webgpu_adaptörü_var_mı().await {
-                svg_yedeğine_geç("Tarayıcı kullanılabilir bir WebGPU adaptörü döndürmedi.");
-                return;
-            }
-            gpui_uygulamasını_başlat();
-        });
+        gpui_uygulamasını_başlat();
     }
 
     fn gpui_uygulamasını_başlat() {
         web_durumunu_yaz("booting", "GPUI Web ve WebGPU hazırlanıyor…");
-        let uygulama = Application::with_platform(Rc::new(gpui_web::WebPlatform::new(false)))
-            .run_embedded(uygulamayı_kur);
+        let uygulama = single_threaded_web().run_embedded(uygulamayı_kur);
         // WebPlatform olay döngüsünü tarayıcı yönetir. Uygulama handle'ı sayfa
         // yaşamı boyunca korunmalıdır.
         std::mem::forget(uygulama);
@@ -98,37 +82,6 @@ mod web {
                     .split('&')
                     .any(|parça| parça == "renderer=svg")
             })
-    }
-
-    /// `navigator.gpu` nesnesinin bulunması kullanılabilir adaptör bulunduğu
-    /// anlamına gelmez. Özellikle Linux'ta tarayıcı nesneyi sunup
-    /// `requestAdapter()` çağrısından `null` döndürebilir. Bu sessiz ön sınama,
-    /// WGPU hata günlüğünü üretmeden önce demo yedeğine geçmemizi sağlar.
-    async fn webgpu_adaptörü_var_mı() -> bool {
-        let Some(pencere) = web_sys::window() else {
-            return false;
-        };
-        let navigator = pencere.navigator();
-        let Ok(gpu) = Reflect::get(navigator.as_ref(), &JsValue::from_str("gpu")) else {
-            return false;
-        };
-        if gpu.is_null() || gpu.is_undefined() {
-            return false;
-        }
-        let Ok(istek) = Reflect::get(&gpu, &JsValue::from_str("requestAdapter"))
-            .and_then(|değer| değer.dyn_into::<Function>())
-        else {
-            return false;
-        };
-        let Ok(söz) = istek
-            .call0(&gpu)
-            .and_then(|değer| değer.dyn_into::<Promise>())
-        else {
-            return false;
-        };
-        JsFuture::from(söz)
-            .await
-            .is_ok_and(|adaptör| !adaptör.is_null() && !adaptör.is_undefined())
     }
 
     fn tarayıcı_tanısı() -> String {
