@@ -4,7 +4,7 @@
 
 **Normatif uPlot kaynağı:** `0e5812c504430f5c804e0f993376d8999b26cc34`
 
-**Doğrulanan uygulama tabanı:** `e48cda4`
+**Doğrulanan uygulama tabanı:** `87bd9e3`
 
 **Kilitli GPUI:** `1b8f324169f7cdf81d3567650fb6704327d4d2f4`
 
@@ -41,9 +41,9 @@ defterini ve aynı etkileşim durum makinelerini kullanır.
 |---:|---|---|
 | 0 | Başlangıç arşivi ve envanter | `codex/pre-gpui-primary-archive` → `5c60cb5` |
 | 1 | Stable GPUI Web, touch/pinch ve platform önkoşulları | `c7b8d85`, `17a6bb1` |
-| 2 | GPUI-first root API ve diagnostics sınırı | `dcc9dae`, `567befa`, `f6d9545` |
+| 2 | GPUI-first root API ve diagnostics sınırı | `dcc9dae`, `567befa`, `f6d9545`, `87bd9e3` |
 | 3 | İsteğe bağlı gerçek GPUI → SVG vektör kaydı | `cc8631e`, `86a2ec6`, `f6d9545` |
-| 4 | Retained ana/etkileşim katmanları ve DPI path cache | `caa5438`, `7499cca`, `f6d9545`; GPUI `1b8f324` |
+| 4 | Retained ana/etkileşim katmanları ve DPI path cache | `caa5438`, `7499cca`, `f6d9545`, `87bd9e3`; GPUI `1b8f324` |
 | 5 | Tek literal Rust kart kayıt defteri | `f0ee0a0`, `e48cda4` |
 | 6 | Native/web ortak GPUI katalog uygulaması | `b6206d0` |
 | 7 | Native uygulama ve GPU backend/fallback tanısı | `3e95b90`, `7ae95ba` |
@@ -66,6 +66,13 @@ defterini ve aynı etkileşim durum makinelerini kullanır.
 - Wheel varsayılan olarak XY, Shift yalnız X, Ctrl yalnız Y eksenini
   yakınlaştırır. Seçim, pan, geçmiş, yüzey dışı mouse-up ve touch/pinch aynı
   çekirdeğe gider.
+- Retained etkileşim tuvali ana yüzeyin `(0, 0)` köşesine sabitlenir ve
+  ertelenmiş üst katmanda boyanır. Tarayıcı kabulünde Resize 100 üzerinde
+  düşey/yatay crosshair ile imleç noktası görünür; ana sahne revizyonu
+  değişmez.
+- Multi Bars tarayıcı kabulünde metrikler kendi ölçeklerinde çizilir, değer
+  etiketleri bar sınırlarında kalır ve hover yalnız vurulan barın rengini
+  değiştirir; seri başına renkli cursor noktaları üretilmez.
 - Açıklama ve kod panelleri GPUI bileşenidir ve varsayılan kapalıdır.
 
 ## SVG kabulü
@@ -94,18 +101,18 @@ ayrıca görünür kılınır.
 
 | Senaryo | İlk çizim | Yeniden çizim p95 | Zoom p95 |
 |---|---:|---:|---:|
-| Multi Bars | 0,06 ms | 0,03 ms | 0,03 ms |
-| Latency Heatmap ~35K | 4,10 ms | 3,93 ms | 4,07 ms |
-| Latency Heatmap ~20K | 0,47 ms | 0,51 ms | 0,45 ms |
-| Mass Spectrum 41.986 | 0,86 ms | 1,08 ms | 1,12 ms |
-| Sparse 13.608 | 0,16 ms | 0,28 ms | 0,15 ms |
-| Sync Cursor CPU | 0,14 ms | 0,14 ms | 0,36 ms |
+| Multi Bars | 0,07 ms | 0,21 ms | 0,05 ms |
+| Latency Heatmap ~35K | 3,91 ms | 4,10 ms | 4,35 ms |
+| Latency Heatmap ~20K | 0,47 ms | 0,43 ms | 0,55 ms |
+| Mass Spectrum 41.986 | 0,97 ms | 1,29 ms | 1,31 ms |
+| Sparse 13.608 | 0,15 ms | 0,14 ms | 0,26 ms |
+| Sync Cursor CPU | 0,16 ms | 0,16 ms | 0,13 ms |
 
 Ek sonuçlar:
 
 - Resize 100/1.000 ve Sine 6×600 `setData + scene` p95 süreleri kare
   bütçesinin çok altındadır.
-- Resize 1.000 SVG snapshot'ı yaklaşık 0,24 ms ve 19.947 bayttır.
+- Resize 1.000 SVG snapshot'ı yaklaşık 0,20 ms ve 19.947 bayttır.
 - 1.000 sıcak retained boya hazırlığında GPUI path tahsisi `0`dır.
 - Linux'ta aynı kapı `/proc/self/status` üzerinden mutlak ve büyüme `VmRSS`
   sınırını uygular.
@@ -129,6 +136,9 @@ RUSTFLAGS='--cfg phase12_allocator --cap-lints allow' \
 npm --prefix tools/uyum run denetle
 (cd uygulamalar/web && NO_COLOR=false trunk build --release --public-url /uPlot.rs/)
 ```
+
+Son release web çıktısı 83.473 bayt JavaScript ve 11.214.029 bayt WASM
+üretmiştir.
 
 CI her push'ta Linux test/Clippy/performance/WASM matrisini ve macOS ARM64 ile
 Windows x64 native kontrollerini çalıştırır. Nightly yayın aynı kilitli kardeş

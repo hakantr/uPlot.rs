@@ -161,9 +161,9 @@ toplam ilerleme yüzdesi bildirilir.
 |---:|---|---|
 | 0 | Tamamlandı | arşiv `5c60cb5` |
 | 1 | Tamamlandı | `c7b8d85`, `17a6bb1` |
-| 2 | Tamamlandı | `dcc9dae`, `567befa` |
+| 2 | Tamamlandı | `dcc9dae`, `567befa`, `87bd9e3` |
 | 3 | Tamamlandı | `86a2ec6`, `f6d9545` |
-| 4 | Tamamlandı | `7499cca`, `f6d9545`; GPUI `1b8f324` |
+| 4 | Tamamlandı | `7499cca`, `f6d9545`, `87bd9e3`; GPUI `1b8f324` |
 | 5 | Tamamlandı | `e48cda4` |
 | 6 | Tamamlandı | `b6206d0` |
 | 7 | Tamamlandı | `3e95b90`, `7ae95ba` |
@@ -171,7 +171,7 @@ toplam ilerleme yüzdesi bildirilir.
 | 9 | Tamamlandı | `8baed24` |
 | 10 | Tamamlandı | `a31df4a` |
 | 11 | Tamamlandı | `7ae95ba` |
-| 12 | Tamamlandı | `8cdf785`, `6036249` |
+| 12 | Tamamlandı | `8cdf785`, `6036249`, `87bd9e3` |
 
 ## 5. Faz 0 — Arşiv ve envanter
 
