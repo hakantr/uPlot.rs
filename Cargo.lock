@@ -5777,9 +5777,12 @@ dependencies = [
  "console_error_panic_hook",
  "gpui",
  "gpui_web",
+ "js-sys",
  "log",
  "ortak_bilesenler",
  "uplot-rs-gpui-katalog",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
  "web-sys",
 ]
 
