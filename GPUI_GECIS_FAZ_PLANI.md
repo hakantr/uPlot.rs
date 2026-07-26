@@ -152,6 +152,27 @@ Geçiş ancak aşağıdaki koşulların tümü sağlandığında `%100` kabul ed
 Her faz ayrı commit edilir ve `main` dalına pushlanır. Faz geçişinde kullanıcıya
 toplam ilerleme yüzdesi bildirilir.
 
+### 4.1 Uygulama durumu
+
+2026-07-26 itibarıyla Faz 0–12 tamamlanmıştır. Normatif kabul kanıtları,
+ölçümler ve commit eşlemesi `GPUI_GECIS_DOGRULAMA.md` dosyasındadır.
+
+| Faz | Durum | Son kanıt |
+|---:|---|---|
+| 0 | Tamamlandı | arşiv `5c60cb5` |
+| 1 | Tamamlandı | `c7b8d85`, `17a6bb1` |
+| 2 | Tamamlandı | `dcc9dae`, `567befa` |
+| 3 | Tamamlandı | `86a2ec6`, `f6d9545` |
+| 4 | Tamamlandı | `7499cca`, `f6d9545`; GPUI `1b8f324` |
+| 5 | Tamamlandı | `e48cda4` |
+| 6 | Tamamlandı | `b6206d0` |
+| 7 | Tamamlandı | `3e95b90`, `7ae95ba` |
+| 8 | Tamamlandı | `66b7773` |
+| 9 | Tamamlandı | `8baed24` |
+| 10 | Tamamlandı | `a31df4a` |
+| 11 | Tamamlandı | `7ae95ba` |
+| 12 | Tamamlandı | `8cdf785`, `6036249` |
+
 ## 5. Faz 0 — Arşiv ve envanter
 
 ### Durum
@@ -317,12 +338,15 @@ Nihai adlar Rust/Türkçe API düzeniyle uyumlu tutulur.
 
 ### İşler
 
-- her katmana kalıcı kimlik ve revision ver;
-- seri path cache anahtarını `(seri_id, veri_revision, ölçek_revision,
-  boyut_revision, stil_revision)` yap;
-- komutların derin `Vec` eşitliğiyle cache koruma kararını kaldır;
-- `setData`, `setSeries`, resize, zoom ve yalnız cursor değişiklikleri için
-  ayrı dirty maskeleri tanımla;
+- ana ve etkileşim yüzeyine ayrı kalıcı revision ver;
+- her retained komutun geometrisini oluşturulurken bir kez kimliklendir;
+- cache anahtarını komut geometri kimliği, yüzey sınırı ve fiziksel DPI
+  ölçeğiyle kur;
+- komutların derin `Vec` eşitliğiyle cache koruma kararını kaldır; sahne
+  geçişini sabit boyutlu kimliklerle karşılaştır;
+- `setData`, `setSeries`, resize ve zoom sonrası yalnız kimliği değişen
+  komut/path yuvalarını kirlet; yalnız cursor değişikliğini ayrı retained
+  etkileşim yüzeyine yönlendir;
 - geometri `Vec` kapasitelerini tekrar kullan;
 - görünür X dilimini ve dış komşuları path üretiminden önce belirle;
 - statik hover'da ana sahne ve path revision'ının değişmediğini test et;
