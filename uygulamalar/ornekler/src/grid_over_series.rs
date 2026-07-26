@@ -1,11 +1,11 @@
 use super::ortak_kart_etkileşimleri;
 use super::veri_uretici::KanıtRastgele;
-use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, ÇizimSırası};
+use crate::{GrafikSeçenekleri, HizalıVeri, SeriSeçenekleri, UplotHatası, ÇizimKatmanı};
 
 pub const GRID_OVER_SERIES_KANIT_TOHUMU: u32 = 0x6A12_0E51;
 
 pub const GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ: &str = r##"let (seçenekler, veri) = grid_over_series_kartı()?;
-// `drawOrder: ["series", "axes"]` çekirdekte ÇizimSırası ile çözülür.
+// Özel bir kart API'si yoktur; aynı genel katman sırası tüm grafiklerde kullanılabilir.
 let grafik = Grafik::yeni(seçenekler, veri)?;"##;
 
 /// Resmî `demos/grid-over-series.html` grafiğini taşır. Kaynaktaki
@@ -24,7 +24,12 @@ pub fn grid_over_series_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), Up
     let seçenekler = GrafikSeçenekleri::yeni(1920, 600)?
         .başlık("Grid Over Series")
         .x_zaman(false)
-        .çizim_sırası(ÇizimSırası::SerilerEksenler)
+        .katman_sırası([
+            ÇizimKatmanı::ArkaPlan,
+            ÇizimKatmanı::Veri,
+            ÇizimKatmanı::IzgaraEksen,
+            ÇizimKatmanı::Bilgi,
+        ])
         .ızgara_rengi("#00000033")
         .eksen_göstergeleri(true)
         .x_eksen_rengi("#000000")

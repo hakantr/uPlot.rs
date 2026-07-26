@@ -89,6 +89,28 @@ Use `GpuiGrafikGrubu` when multiple surfaces must behave as one. It propagates
 cursor, wheel, selection, pan, axis zoom, full-view reset, and series
 visibility using normalized surface ratios rather than raw pixels or data
 values, so members may have different dimensions, ranges, and scales.
+
+Painting is split into four independent retained layers. Without an explicit
+order, uPlot.rs uses `ArkaPlan → IzgaraEksen → Veri → Bilgi` (background,
+grid/axes, data, information). Developers can reorder all four without a
+card-specific API:
+
+```rust
+use uplot_rs::ÇizimKatmanı;
+
+let options = options.katman_sırası([
+    ÇizimKatmanı::ArkaPlan,
+    ÇizimKatmanı::Veri,
+    ÇizimKatmanı::IzgaraEksen,
+    ÇizimKatmanı::Bilgi,
+]);
+```
+
+The `Bilgi` layer contains cursor lines, selection feedback, and the optional
+cursor data bubble. The data bubble is off by default. When enabled with
+`EtkileşimSeçenekleri::imleç_bilgi_kutusu(true)`, it appears after the pointer
+rests for one second and reports the nearest data sample.
+
 The retained command list is not a general-purpose second renderer backend.
 Normal integrations use `Grafik` + `gpui::GpuiGrafik`; inspection for tests,
 profiling, and custom verification tools is separated under

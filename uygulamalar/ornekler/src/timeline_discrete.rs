@@ -1,7 +1,7 @@
 use super::{ortak_kart_etkileşimleri, veri_uretici::KanıtRastgele};
 use crate::{
     Aralık, BoşlukKipi, GrafikSeçenekleri, HizalıDeğer, HizalıVeri, SeriSeçenekleri,
-    TimelineDüzeni, TimelineHücresi, UplotHatası, hizalı_verileri_birleştir, ÇizimSırası,
+    TimelineDüzeni, TimelineHücresi, UplotHatası, hizalı_verileri_birleştir, ÇizimKatmanı,
 };
 
 pub const TIMELINE_DISCRETE_KANIT_TOHUMU: u32 = 0x5449_4D45;
@@ -95,7 +95,12 @@ pub fn timeline_discrete_kartı(
         .y_ekseni_göster(false)
         .y_ızgarası_göster(false)
         .y_aralığı(Aralık::yeni(0.0, 1.0)?)
-        .çizim_sırası(ÇizimSırası::SerilerEksenler)
+        .katman_sırası([
+            ÇizimKatmanı::ArkaPlan,
+            ÇizimKatmanı::Veri,
+            ÇizimKatmanı::IzgaraEksen,
+            ÇizimKatmanı::Bilgi,
+        ])
         .timeline_düzeni(TimelineDüzeni::yeni(
             ["Device A", "Device B", "Device C"],
             hücreler,

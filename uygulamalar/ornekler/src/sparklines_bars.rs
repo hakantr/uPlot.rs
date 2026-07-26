@@ -2,7 +2,7 @@ use super::ortak_kart_etkileşimleri;
 use crate::{
     GradyanDurağı, GradyanEkseni, GrafikSeçenekleri, HizalıVeri, SayısalAralıkAyarları,
     SayısalAralıkParçası, SeriSeçenekleri, UplotHatası, YumuşakSınırKipi, YÖlçekSeçenekleri,
-    ÇizimSırası, ÖlçekGradyanı,
+    ÇizimKatmanı, ÖlçekGradyanı,
 };
 
 pub const SPARKLINES_BARS_KART_TANIM_ÖRNEĞİ: &str = r##"for (örnek, seçenekler, veri) in sparklines_bars_kartları()? {
@@ -110,7 +110,12 @@ pub fn sparklines_bars_kartı(
         .y_sabit_bölmeler(vec![0.0])
         .y_ızgara_kesik(3.0)
         .ızgara_rengi("gray")
-        .çizim_sırası(ÇizimSırası::SerilerEksenler)
+        .katman_sırası([
+            ÇizimKatmanı::ArkaPlan,
+            ÇizimKatmanı::Veri,
+            ÇizimKatmanı::IzgaraEksen,
+            ÇizimKatmanı::Bilgi,
+        ])
         .etkileşimler(ortak_kart_etkileşimleri())
         .y_ölçeği(YÖlçekSeçenekleri::yeni("y").sayısal_aralık(tam_veri_aralığı))
         .seri(

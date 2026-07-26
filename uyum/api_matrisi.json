@@ -221,7 +221,7 @@
     },
     {
       "kaynak_yolu": "Options.drawOrder",
-      "rust_karşılığı": "ÇizimSırası / GrafikSeçenekleri::çizim_sırası",
+      "rust_karşılığı": "ÇizimKatmanı / GrafikSeçenekleri::katman_sırası",
       "durum": "tam_kanıtlı",
       "test": "uygulamalar/ornekler/src/grid_over_series.rs"
     },

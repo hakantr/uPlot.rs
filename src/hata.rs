@@ -67,6 +67,7 @@ pub enum UplotHatası {
     GeçersizGradyan {
         açıklama: String,
     },
+    GeçersizKatmanSırası,
 }
 
 impl Display for UplotHatası {
@@ -147,6 +148,10 @@ impl Display for UplotHatası {
             Self::GeçersizGradyan { açıklama } => {
                 write!(f, "geçersiz gradyan tanımı: {açıklama}")
             }
+            Self::GeçersizKatmanSırası => write!(
+                f,
+                "katman sırasında arka plan, ızgara/eksen, veri ve bilgi tam bir kez bulunmalı"
+            ),
         }
     }
 }

@@ -39,9 +39,10 @@ pub use secenek::{
     NoktaFiltreKipi, NoktaKatmanı, NoktaŞekli, NullİmleçDüzeni, OdakDüzeni, OdakStili,
     RüzgarYönüDüzeni, SeriBandı, SeriSeçenekleri, SeriÇizimTürü, TarihAdları, TekerlekAyarları,
     TekerlekEkseni, TekerlekKipi, TimelineDüzeni, TimelineHücresi, TooltipBilgisi, TooltipDüzeni,
-    XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekDönüşümFn, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri,
-    ZamanDilimi, ZoomRangerSeçenekleri, ZoomSürüklemeKipi, ÇizimKancasıDüzeni, ÇizimSırası,
-    ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı, ÖzelYÖlçekDönüşümü, İkincilXEksen, İmleçBağSeçenekleri,
+    VARSAYILAN_KATMAN_SIRASI, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekDönüşümFn, YÖlçekEtiketBiçimi,
+    YÖlçekSeçenekleri, ZamanDilimi, ZoomRangerSeçenekleri, ZoomSürüklemeKipi, ÇizimKancasıDüzeni,
+    ÇizimKatmanı, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı, ÖzelYÖlçekDönüşümü, İkincilXEksen,
+    İmleçBağSeçenekleri,
 };
 pub use veri::{BoşlukKipi, HizalıDeğer, HizalıVeri, hizalı_verileri_birleştir};
 pub use yuzey::{

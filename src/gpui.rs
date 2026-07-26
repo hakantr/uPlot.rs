@@ -8,14 +8,16 @@ pub use svg_kaydi::{GpuiSvgKaydı, GpuiSvgKayıtAyarları};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::time::Duration;
 
 use ::gpui::{
-    App, BorderStyle, Bounds, ContentMask, Context, Corners, Entity, EventEmitter, FocusHandle,
-    Hsla, IntoElement, KeyBinding, KeyDownEvent, KeyUpEvent, MouseButton, MouseDownEvent,
-    MouseExitEvent, MouseMoveEvent, MouseUpEvent, Path, PathBuilder, PinchEvent, Pixels, Render,
-    Role, ScaledPixels, ScrollDelta, ScrollWheelEvent, SharedString, StyleRefinement, TextAlign,
-    TextRun, TouchPhase, TransformationMatrix, WeakEntity, Window, canvas, deferred, div,
-    linear_color_stop, linear_gradient, point, prelude::*, px, quad, rgb, rgba, size,
+    AnyElement, App, BorderStyle, Bounds, ContentMask, Context, Corners, Entity, EventEmitter,
+    FocusHandle, Hsla, IntoElement, KeyBinding, KeyDownEvent, KeyUpEvent, MouseButton,
+    MouseDownEvent, MouseExitEvent, MouseMoveEvent, MouseUpEvent, Path, PathBuilder, PinchEvent,
+    Pixels, Render, Role, ScaledPixels, ScrollDelta, ScrollWheelEvent, SharedString,
+    StyleRefinement, Task, TextAlign, TextRun, TouchPhase, TransformationMatrix, WeakEntity,
+    Window, canvas, div, linear_color_stop, linear_gradient, point, prelude::*, px, quad, rgb,
+    rgba, size,
 };
 
 use crate::grafik::OransalGörünüm;
@@ -443,10 +445,6 @@ fn eşlenen_seri_indeksi(
     }
 }
 
-fn eksenler_verinin_üstünde_mi(grafik: &Grafik) -> bool {
-    grafik.çizim_sırası() == crate::ÇizimSırası::SerilerEksenler
-}
-
 /// Çekirdek [`Grafik`] durumunu GPUI canvas üzerinde gösteren hazır bileşen.
 ///
 /// Bileşen platform olaylarını çekirdeğe iletir; yakınlaştırma, seçim, geçmiş
@@ -480,6 +478,8 @@ pub struct GpuiGrafik {
     açıklama_vuruşu: Option<AçıklamaVuruşu>,
     tooltip_tıklama_başlangıcı: Option<(Nokta, String)>,
     tooltip_tıklaması_sürüklendi: bool,
+    bilgi_balonu_hazır: bool,
+    bilgi_balonu_beklemesi: Option<Task<()>>,
 }
 
 struct GpuiAnaYüzey {
@@ -795,6 +795,8 @@ impl GpuiGrafik {
             açıklama_vuruşu: None,
             tooltip_tıklama_başlangıcı: None,
             tooltip_tıklaması_sürüklendi: false,
+            bilgi_balonu_hazır: false,
+            bilgi_balonu_beklemesi: None,
         }
     }
 
@@ -2047,6 +2049,60 @@ impl GpuiGrafik {
         odak_değişti
     }
 
+    fn bilgi_balonu_beklemesini_yenile(&mut self, cx: &mut Context<Self>) {
+        self.bilgi_balonu_hazır = false;
+        self.bilgi_balonu_beklemesi = None;
+        if !self.grafik.etkileşim_seçenekleri().imleç_bilgi_kutusu
+            || self.imleç.is_none()
+            || self.seçim.is_some()
+            || self.taşıma_başlangıcı.is_some()
+            || self.grafik.eksen_sürükleniyor()
+        {
+            return;
+        }
+
+        self.bilgi_balonu_beklemesi = Some(cx.spawn(async move |bu, cx| {
+            cx.background_executor().timer(Duration::from_secs(1)).await;
+            let _ = bu.update(cx, |bu, cx| {
+                if bu.imleç.is_some() && bu.grafik.etkileşim_seçenekleri().imleç_bilgi_kutusu {
+                    bu.bilgi_balonu_hazır = true;
+                    cx.notify();
+                }
+            });
+        }));
+    }
+
+    fn bilgi_balonu_beklemesini_iptal_et(&mut self) {
+        self.bilgi_balonu_hazır = false;
+        self.bilgi_balonu_beklemesi = None;
+    }
+
+    fn bilgi_balonu_seri_indeksi(&self, imleç: &İmleçDurumu) -> Option<usize> {
+        self.grafik.odak_serisi().or_else(|| {
+            (!self.grafik.en_yakın_tooltip_etkin())
+                .then(|| {
+                    let (sol, sağ, üst, alt) = self.çizim_alanı();
+                    imleç
+                        .seri_değerleri
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(indeks, değer)| {
+                            let değer = (*değer)?;
+                            let oran = self.grafik.seri_y_konum_oranı(indeks, değer)? as f32;
+                            let mesafe = if self.grafik.x_dikey_mi() {
+                                (imleç.fare.x - (sol + (sağ - sol) * oran)).abs()
+                            } else {
+                                (imleç.fare.y - (alt - (alt - üst) * oran)).abs()
+                            };
+                            Some((indeks, mesafe))
+                        })
+                        .min_by(|sol, sağ| sol.1.total_cmp(&sağ.1))
+                        .map(|(indeks, _)| indeks)
+                })
+                .flatten()
+        })
+    }
+
     fn tekerlek_yakınlaştır(
         &mut self,
         olay: &ScrollWheelEvent,
@@ -2408,23 +2464,14 @@ impl Render for GpuiGrafik {
         let taşımaya_hazır = self.boşluk_basılı && self.grafik.yakınlaştırılmış();
         let eksen_sürükleniyor = self.grafik.eksen_sürükleniyor();
         let eksen_imleci = self.eksen_üzerinde || eksen_sürükleniyor;
-        let eksenler_üstte = eksenler_verinin_üstünde_mi(&self.grafik);
         let standart_bilgi_kutusu = self
             .imleç
             .as_ref()
+            .filter(|_| self.bilgi_balonu_hazır)
             .filter(|_| self.grafik.etkileşim_seçenekleri().imleç_bilgi_kutusu)
             .filter(|_| self.grafik.tooltip_düzeni().is_none())
             .and_then(|imleç| {
-                let seri_indeksi = self.grafik.odak_serisi().or_else(|| {
-                    (!self.grafik.en_yakın_tooltip_etkin())
-                        .then(|| {
-                            imleç
-                                .seri_değerleri
-                                .iter()
-                                .position(|değer| değer.is_some())
-                        })
-                        .flatten()
-                });
+                let seri_indeksi = self.bilgi_balonu_seri_indeksi(imleç);
                 let y = imleç.dağılım.as_ref().map(|vuruş| vuruş.y).or_else(|| {
                     seri_indeksi
                         .and_then(|indeks| imleç.seri_değerleri.get(indeks))
@@ -2559,6 +2606,7 @@ impl Render for GpuiGrafik {
         let tooltip_kutuları = self
             .imleç
             .as_ref()
+            .filter(|_| self.bilgi_balonu_hazır)
             .filter(|_| self.grafik.etkileşim_seçenekleri().imleç_bilgi_kutusu)
             .and_then(|imleç| {
                 let sınırlar = self.çizim_sınırları.get()?;
@@ -2605,6 +2653,88 @@ impl Render for GpuiGrafik {
                 )
             })
             .unwrap_or_default();
+        let bilgi_katmanı = div()
+            .absolute()
+            .top_0()
+            .left_0()
+            .size_full()
+            .child(
+                etkileşim_yüzeyi.cached(
+                    StyleRefinement::default()
+                        .absolute()
+                        .top_0()
+                        .left_0()
+                        .size_full(),
+                ),
+            )
+            .when_some(
+                bilgi_kutusu,
+                |yüzey, (sol, üst, metin, kenarlık, bağlantı, azami_genişlik)| {
+                    yüzey.child(
+                        div()
+                            .absolute()
+                            .left(px(sol))
+                            .top(px(üst))
+                            .max_w(px(azami_genişlik))
+                            .px_2()
+                            .py_1()
+                            .border_1()
+                            .border_color(renk_çöz(&kenarlık))
+                            .rounded_sm()
+                            .bg(if bağlantı.is_some() {
+                                rgb(0xffffff)
+                            } else {
+                                rgba(0x000000cc)
+                            })
+                            .text_color(if bağlantı.is_some() {
+                                rgb(0x111111)
+                            } else {
+                                rgb(0xffffff)
+                            })
+                            .text_xs()
+                            .child(metin),
+                    )
+                },
+            )
+            .children(tooltip_kutuları.into_iter().map(
+                |(sol, üst, metin, arka_plan, metin_rengi)| {
+                    div()
+                        .absolute()
+                        .left(px(sol))
+                        .top(px(üst))
+                        .px_2()
+                        .py_1()
+                        .rounded_sm()
+                        .bg(renk_çöz(&arka_plan))
+                        .text_color(renk_çöz(&metin_rengi))
+                        .text_xs()
+                        .child(metin)
+                },
+            ))
+            .into_any_element();
+        let yüzey_stili = || {
+            StyleRefinement::default()
+                .absolute()
+                .top_0()
+                .left_0()
+                .size_full()
+        };
+        let mut arka_plan_katmanı = Some(arka_plan_yüzeyi.cached(yüzey_stili()).into_any_element());
+        let mut eksen_katmanı = Some(eksen_yüzeyi.cached(yüzey_stili()).into_any_element());
+        let mut veri_katmanı = Some(ana_yüzey.cached(yüzey_stili()).into_any_element());
+        let mut bilgi_katmanı = Some(bilgi_katmanı);
+        let mut çizim_katmanları = Vec::<AnyElement>::with_capacity(4);
+        for katman in self.grafik.katman_sırası() {
+            let öğe = match katman {
+                crate::ÇizimKatmanı::ArkaPlan => arka_plan_katmanı.take(),
+                crate::ÇizimKatmanı::IzgaraEksen => eksen_katmanı.take(),
+                crate::ÇizimKatmanı::Veri => veri_katmanı.take(),
+                crate::ÇizimKatmanı::Bilgi => bilgi_katmanı.take(),
+            };
+            if let Some(öğe) = öğe {
+                çizim_katmanları.push(öğe);
+            }
+        }
         div()
             .id("uplot-rs-gpui-grafik")
             .relative()
@@ -2728,6 +2858,7 @@ impl Render for GpuiGrafik {
                         .eksen_vuruşu_boyutta(genişlik, yükseklik, konum.x, konum.y)
                         .is_some();
                 }
+                bu.bilgi_balonu_beklemesini_yenile(cx);
                 if ana_sahne_değişti {
                     if görünüm_değişti {
                         bu.görünüm_bildir(false, cx);
@@ -2758,6 +2889,7 @@ impl Render for GpuiGrafik {
                 if !tekerlek_kabul_edildi && !dokunma_kabul_edildi {
                     return;
                 }
+                bu.bilgi_balonu_beklemesini_iptal_et();
                 cx.stop_propagation();
                 let datum_değişti = bu.grafik.ölçüm_datumlarını_temizle();
                 let şimdi = cx.background_executor().now();
@@ -2771,6 +2903,7 @@ impl Render for GpuiGrafik {
                 }
             }))
             .on_pinch(cx.listener(|bu, olay: &PinchEvent, _, cx| {
+                bu.bilgi_balonu_beklemesini_iptal_et();
                 let datum_değişti = bu.grafik.ölçüm_datumlarını_temizle();
                 let görünüm_değişti = bu.dokunma_yakınlaştır(olay);
                 if görünüm_değişti {
@@ -2784,6 +2917,7 @@ impl Render for GpuiGrafik {
             .on_mouse_exit(cx.listener(|bu, _: &MouseExitEvent, _, cx| {
                 if !bu.imleç_kilitli && bu.seçim.is_none() && bu.taşıma_başlangıcı.is_none()
                 {
+                    bu.bilgi_balonu_beklemesini_iptal_et();
                     bu.imleç = None;
                     bu.açıklama_vuruşu = None;
                     bu.eksen_üzerinde = false;
@@ -2798,6 +2932,7 @@ impl Render for GpuiGrafik {
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(|bu, olay: &MouseDownEvent, window, cx| {
+                    bu.bilgi_balonu_beklemesini_iptal_et();
                     bu.tooltip_tıklaması_sürüklendi = false;
                     bu.tooltip_tıklama_başlangıcı =
                         bu.sahne_konumu(olay.position).and_then(|konum| {
@@ -2923,94 +3058,7 @@ impl Render for GpuiGrafik {
                     }
                 }),
             )
-            .child(
-                arka_plan_yüzeyi.cached(
-                    StyleRefinement::default()
-                        .absolute()
-                        .top_0()
-                        .left_0()
-                        .size_full(),
-                ),
-            )
-            .when(!eksenler_üstte, |yüzey| {
-                yüzey.child(
-                    eksen_yüzeyi.clone().cached(
-                        StyleRefinement::default()
-                            .absolute()
-                            .top_0()
-                            .left_0()
-                            .size_full(),
-                    ),
-                )
-            })
-            .child(ana_yüzey.cached(StyleRefinement::default().size_full()))
-            .when(eksenler_üstte, |yüzey| {
-                yüzey.child(
-                    eksen_yüzeyi.cached(
-                        StyleRefinement::default()
-                            .absolute()
-                            .top_0()
-                            .left_0()
-                            .size_full(),
-                    ),
-                )
-            })
-            .child(
-                deferred(
-                    etkileşim_yüzeyi.cached(
-                        StyleRefinement::default()
-                            .absolute()
-                            .top_0()
-                            .left_0()
-                            .size_full(),
-                    ),
-                )
-                .with_priority(1),
-            )
-            .when_some(
-                bilgi_kutusu,
-                |yüzey, (sol, üst, metin, kenarlık, bağlantı, azami_genişlik)| {
-                    yüzey.child(
-                        div()
-                            .absolute()
-                            .left(px(sol))
-                            .top(px(üst))
-                            .max_w(px(azami_genişlik))
-                            .px_2()
-                            .py_1()
-                            .border_1()
-                            .border_color(renk_çöz(&kenarlık))
-                            .rounded_sm()
-                            .bg(if bağlantı.is_some() {
-                                rgb(0xffffff)
-                            } else {
-                                rgba(0x000000cc)
-                            })
-                            .text_color(if bağlantı.is_some() {
-                                rgb(0x111111)
-                            } else {
-                                rgb(0xffffff)
-                            })
-                            .text_xs()
-                            .child(metin),
-                    )
-                },
-            )
-            .children(tooltip_kutuları.into_iter().map(
-                |(sol, üst, metin, arka_plan, metin_rengi)| {
-                    div()
-                        .absolute()
-                        .left(px(sol))
-                        .top(px(üst))
-                        .px_2()
-                        .py_1()
-                        .rounded_sm()
-                        .bg(renk_çöz(&arka_plan))
-                        .text_color(renk_çöz(&metin_rengi))
-                        .text_xs()
-                        .child(metin)
-                },
-            ))
+            .children(çizim_katmanları)
     }
 }
 
@@ -4185,6 +4233,73 @@ mod testler {
     }
 
     #[::gpui::test]
+    fn bilgi_balonu_en_yakın_imleçte_bir_saniye_sonra_hazır_olur(
+        cx: &mut ::gpui::TestAppContext,
+    ) {
+        let kart = test_çizgi_kartı(800, 600);
+        assert!(kart.is_ok());
+        let Ok((seçenekler, veri)) = kart else {
+            return;
+        };
+        let etkileşimler = seçenekler.etkileşimler.imleç_bilgi_kutusu(true);
+        let grafik = Grafik::yeni(seçenekler.etkileşimler(etkileşimler), veri);
+        assert!(grafik.is_ok());
+        let Ok(grafik) = grafik else { return };
+        let (grafik, cx) = cx.add_window_view(|_, _| GpuiGrafik::yeni(grafik));
+        let sınırlar = grafik.read_with(cx, |grafik, _| grafik.çizim_sınırları.get());
+        assert!(sınırlar.is_some());
+        let Some(sınırlar) = sınırlar else {
+            return;
+        };
+
+        cx.simulate_mouse_move(sınırlar.center(), None, ::gpui::Modifiers::none());
+        assert!(!grafik.read_with(cx, |grafik, _| grafik.bilgi_balonu_hazır));
+        cx.executor().advance_clock(Duration::from_millis(999));
+        cx.run_until_parked();
+        assert!(!grafik.read_with(cx, |grafik, _| grafik.bilgi_balonu_hazır));
+        cx.executor().advance_clock(Duration::from_millis(1));
+        cx.run_until_parked();
+        grafik.read_with(cx, |grafik, _| {
+            assert!(grafik.bilgi_balonu_hazır);
+            let imleç = grafik.imleç.as_ref();
+            assert!(imleç.is_some());
+            assert!(imleç.is_some_and(|imleç| imleç.seri_değerleri.iter().any(Option::is_some)));
+        });
+
+        cx.simulate_mouse_move(
+            ::gpui::point(sınırlar.center().x + px(1.0), sınırlar.center().y),
+            None,
+            ::gpui::Modifiers::none(),
+        );
+        assert!(!grafik.read_with(cx, |grafik, _| grafik.bilgi_balonu_hazır));
+    }
+
+    #[test]
+    fn bilgi_balonu_imlece_dikey_olarak_en_yakın_seriyi_seçer() -> Result<(), UplotHatası> {
+        let seçenekler = crate::GrafikSeçenekleri::yeni(800, 600)?
+            .x_zaman(false)
+            .y_aralığı(Aralık::yeni(0.0, 10.0)?)
+            .seri(SeriSeçenekleri::yeni("alt"))
+            .seri(SeriSeçenekleri::yeni("üst"));
+        let veri = HizalıVeri::yeni(
+            vec![0.0, 1.0],
+            vec![vec![Some(1.0), Some(1.0)], vec![Some(9.0), Some(9.0)]],
+        )?;
+        let bileşen = GpuiGrafik::yeni(Grafik::yeni(seçenekler, veri)?);
+        let (sol, sağ, üst, _) = bileşen.çizim_alanı();
+        let imleç = İmleçDurumu {
+            fare: Nokta::yeni((sol + sağ) / 2.0, üst),
+            veri_x: 1.0,
+            seri_x_değerleri: vec![Some(1.0), Some(1.0)],
+            seri_değerleri: vec![Some(1.0), Some(9.0)],
+            dağılım: None,
+        };
+
+        assert_eq!(bileşen.bilgi_balonu_seri_indeksi(&imleç), Some(1));
+        Ok(())
+    }
+
+    #[::gpui::test]
     fn tekerlek_zoom_ana_sahneyi_değil_yalnız_görünüm_matrisini_değiştirir(
         cx: &mut ::gpui::TestAppContext,
     ) {
@@ -4262,16 +4377,29 @@ mod testler {
     }
 
     #[test]
-    fn gpui_eksen_katmanı_çekirdek_çizim_sırasını_korur() -> Result<(), UplotHatası> {
+    fn gpui_dört_katmanlı_çekirdek_sırasını_korur() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = test_çizgi_kartı(800, 600)?;
         let varsayılan = Grafik::yeni(seçenekler.clone(), veri.clone())?;
         let ızgara_üstte = Grafik::yeni(
-            seçenekler.çizim_sırası(crate::ÇizimSırası::SerilerEksenler),
+            seçenekler.katman_sırası([
+                crate::ÇizimKatmanı::ArkaPlan,
+                crate::ÇizimKatmanı::Veri,
+                crate::ÇizimKatmanı::IzgaraEksen,
+                crate::ÇizimKatmanı::Bilgi,
+            ]),
             veri,
         )?;
 
-        assert!(!eksenler_verinin_üstünde_mi(&varsayılan));
-        assert!(eksenler_verinin_üstünde_mi(&ızgara_üstte));
+        assert_eq!(varsayılan.katman_sırası(), &crate::VARSAYILAN_KATMAN_SIRASI);
+        assert_eq!(
+            ızgara_üstte.katman_sırası(),
+            &[
+                crate::ÇizimKatmanı::ArkaPlan,
+                crate::ÇizimKatmanı::Veri,
+                crate::ÇizimKatmanı::IzgaraEksen,
+                crate::ÇizimKatmanı::Bilgi,
+            ]
+        );
         let bileşen = GpuiGrafik::yeni(varsayılan);
         assert!(
             bileşen

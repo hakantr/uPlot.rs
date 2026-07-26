@@ -97,6 +97,28 @@ imleç, wheel, seçim, pan, eksen zoomu, tam görünüm ve seri görünürlüğ�
 piksel veya veri değeri yerine normalize yüzey oranlarıyla paylaşır. Böylece
 farklı genişlik, yükseklik, veri aralığı ve ölçeklere sahip üyeler aynı
 oransal etkileşimi korur.
+
+Grafik boyaması dört bağımsız retained katmandan oluşur. Bir sıra
+belirtilmezse `ArkaPlan → IzgaraEksen → Veri → Bilgi` kullanılır. Geliştirici
+özel bir kart türüne ihtiyaç duymadan dört katmanın tamamını yeniden
+sıralayabilir:
+
+```rust
+use uplot_rs::ÇizimKatmanı;
+
+let seçenekler = seçenekler.katman_sırası([
+    ÇizimKatmanı::ArkaPlan,
+    ÇizimKatmanı::Veri,
+    ÇizimKatmanı::IzgaraEksen,
+    ÇizimKatmanı::Bilgi,
+]);
+```
+
+`Bilgi` katmanı imleç çizgileri, seçim yüzeyi ve isteğe bağlı veri baloncuğunu
+taşır. Veri baloncuğu varsayılan olarak kapalıdır.
+`EtkileşimSeçenekleri::imleç_bilgi_kutusu(true)` ile açıldığında imleç aynı
+konumda bir saniye kaldıktan sonra o konuma en yakın veri örneğini gösterir.
+
 Retained komut listesi genel amaçlı ikinci bir renderer backend'i değildir.
 Normal entegrasyon `Grafik` + `gpui::GpuiGrafik` API'sini kullanır; test,
 profil ve özel doğrulama araçlarının inceleme ihtiyacı için

@@ -657,6 +657,9 @@ fn oran_aralığı(
 
 impl Grafik {
     pub fn yeni(seçenekler: GrafikSeçenekleri, veri: HizalıVeri) -> Result<Self, UplotHatası> {
+        if !crate::secenek::katman_sırası_geçerli_mi(&seçenekler.katman_sırası) {
+            return Err(UplotHatası::GeçersizKatmanSırası);
+        }
         if seçenekler.seriler.len() != veri.seriler().len() {
             return Err(UplotHatası::SeriSeçeneğiEksik {
                 beklenen: veri.seriler().len(),
@@ -1179,8 +1182,8 @@ impl Grafik {
         self.seçenekler.duyarlı_boyut
     }
 
-    pub(crate) fn çizim_sırası(&self) -> crate::ÇizimSırası {
-        self.seçenekler.çizim_sırası
+    pub const fn katman_sırası(&self) -> &[crate::ÇizimKatmanı; 4] {
+        &self.seçenekler.katman_sırası
     }
 
     /// `update-cursor-select-resize` kaynağının adaptör katmanında kurduğu
@@ -3844,6 +3847,25 @@ impl Grafik {
         görünür_y: Option<Aralık>,
         yalnız_eksen: bool,
     ) -> Sahne {
+        let mut sahne = self.çiz_boyutta_aralıklarla_sırasız(
+            genişlik_px,
+            yükseklik_px,
+            görünür_x,
+            görünür_y,
+            yalnız_eksen,
+        );
+        sahne.katman_sırasını_uygula(&self.seçenekler.katman_sırası);
+        sahne
+    }
+
+    fn çiz_boyutta_aralıklarla_sırasız(
+        &self,
+        genişlik_px: u32,
+        yükseklik_px: u32,
+        görünür_x: Option<Aralık>,
+        görünür_y: Option<Aralık>,
+        yalnız_eksen: bool,
+    ) -> Sahne {
         let çizim_başlangıcı = self
             .seçenekler
             .çizim_kancaları
@@ -3864,7 +3886,7 @@ impl Grafik {
         let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
         let genişlik = sağ - sol;
         let yükseklik = alt - üst;
-        sahne.katmanı_ayarla(SahneKatmanı::Veri);
+        sahne.katmanı_ayarla(SahneKatmanı::Eksen);
         if !self.seçenekler.başlık.is_empty() {
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(genişlik_px as f32 / 2.0, 26.0),
@@ -3874,6 +3896,7 @@ impl Grafik {
                 hiza: MetinHizası::Orta,
             });
         }
+        sahne.katmanı_ayarla(SahneKatmanı::Veri);
 
         // uPlot'un ölçek `range()` sonucu `[null, null]` olan boş veri
         // yüzeyi yalnız başlığı taşır. Özel X/Y aralığı tanımlanan boş
@@ -3971,7 +3994,6 @@ impl Grafik {
         let birincil_etiket_boşluğu =
             birincil_ölçek.map_or(30.0, |ölçek| ölçek.eksen_en_az_etiket_boşluğu);
 
-        let eksen_komutları_başlangıcı = sahne.komutlar().len();
         sahne.katmanı_ayarla(SahneKatmanı::Eksen);
         let y_boyutu = if self.seçenekler.x_dikey {
             genişlik
@@ -4501,7 +4523,6 @@ impl Grafik {
                 },
             });
         }
-        let eksen_komutları_bitişi = sahne.komutlar().len();
         sahne.katmanı_ayarla(SahneKatmanı::Veri);
         if yalnız_eksen {
             return sahne;
@@ -5353,13 +5374,6 @@ impl Grafik {
                 boyut: düzen.çizim_süresi_yazı_boyutu,
                 hiza: MetinHizası::Başlangıç,
             });
-        }
-
-        if self.seçenekler.çizim_sırası == crate::ÇizimSırası::SerilerEksenler {
-            sahne.komut_aralığını_sona_taşı(
-                eksen_komutları_başlangıcı,
-                eksen_komutları_bitişi,
-            );
         }
 
         sahne
@@ -8712,6 +8726,28 @@ mod eksen_testleri {
                 _ => None,
             })
             .collect()
+    }
+
+    #[test]
+    fn katman_sırası_varsayılandır_ve_bilgi_balonu_kapalıdır() -> Result<(), UplotHatası> {
+        let seçenekler = GrafikSeçenekleri::yeni(400, 240)?;
+        assert_eq!(seçenekler.katman_sırası, crate::VARSAYILAN_KATMAN_SIRASI);
+        assert!(!seçenekler.etkileşimler.imleç_bilgi_kutusu);
+        Ok(())
+    }
+
+    #[test]
+    fn katman_sırası_tüm_katmanları_tam_bir_kez_ister() -> Result<(), UplotHatası> {
+        let seçenekler = GrafikSeçenekleri::yeni(400, 240)?
+            .x_zaman(false)
+            .katman_sırası([crate::ÇizimKatmanı::Veri; 4])
+            .seri(crate::SeriSeçenekleri::yeni("seri"));
+        let veri = HizalıVeri::yeni(vec![0.0], vec![vec![Some(1.0)]])?;
+        assert_eq!(
+            Grafik::yeni(seçenekler, veri).map(|_| ()),
+            Err(UplotHatası::GeçersizKatmanSırası)
+        );
+        Ok(())
     }
 
     #[test]

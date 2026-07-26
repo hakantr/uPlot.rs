@@ -69,11 +69,30 @@ impl İkincilXEksen {
     }
 }
 
-/// uPlot `drawOrder` içindeki iki yerleşik çizim katmanının sırası.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ÇizimSırası {
-    EksenlerSeriler,
-    SerilerEksenler,
+/// Grafiğin bağımsız retained çizim katmanları.
+///
+/// [`GrafikSeçenekleri::katman_sırası`] bu dört katmanın tamamını istenen
+/// sırada kabul eder. Sonraki katmanlar önceki katmanların üzerine boyanır.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ÇizimKatmanı {
+    ArkaPlan,
+    IzgaraEksen,
+    Veri,
+    Bilgi,
+}
+
+/// Çekirdeğin, ayrıca bir sıra verilmediğinde kullandığı katman sırası.
+pub const VARSAYILAN_KATMAN_SIRASI: [ÇizimKatmanı; 4] = [
+    ÇizimKatmanı::ArkaPlan,
+    ÇizimKatmanı::IzgaraEksen,
+    ÇizimKatmanı::Veri,
+    ÇizimKatmanı::Bilgi,
+];
+
+pub(crate) fn katman_sırası_geçerli_mi(sıra: &[ÇizimKatmanı; 4]) -> bool {
+    VARSAYILAN_KATMAN_SIRASI
+        .iter()
+        .all(|katman| sıra.iter().filter(|değer| *değer == katman).count() == 1)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -871,7 +890,9 @@ pub struct EtkileşimSeçenekleri {
     pub dokunma_etkileşimi: bool,
     /// uPlot `cursor.bind` olay sarmalayıcılarının çekirdek sözleşmesi.
     pub imleç_bağları: İmleçBağSeçenekleri,
-    /// `cursor-tooltip` demosundaki imleç bilgi kutusunu etkinleştirir.
+    /// Bilgi katmanında imlecin en yakın veri örneğini gösteren kutuyu
+    /// etkinleştirir. Varsayılan kapalıdır; açıldığında kutu imleç aynı yerde
+    /// bir saniye bekledikten sonra görünür.
     pub imleç_bilgi_kutusu: bool,
     /// `y-scale-drag` demosundaki ekseni sürükleyerek ölçeği kaydırma ve
     /// Shift ile büyütüp daraltma davranışını etkinleştirir.
@@ -1202,7 +1223,10 @@ pub struct GrafikSeçenekleri {
     /// `addSeries` / `delSeries` kancalarının kaynak sırasını tüketiciye
     /// aktarmak için yaşam döngüsü olay kuyruğunu etkinleştirir.
     pub seri_yaşam_döngüsünü_izle: bool,
-    pub çizim_sırası: ÇizimSırası,
+    /// Sonraki katman öncekinin üzerine boyanır. Dört katman da tam bir kez
+    /// bulunmalıdır; aksi sıra [`Grafik::yeni`](crate::Grafik::yeni)
+    /// tarafından reddedilir.
+    pub katman_sırası: [ÇizimKatmanı; 4],
     /// uPlot `opts.pxAlign` karşılığıdır. `1`, koordinatları tam piksele
     /// yuvarlar; `0`, canlı akışlarda alt piksel hareketini korur.
     pub piksel_hizası: f32,
@@ -1298,7 +1322,7 @@ impl GrafikSeçenekleri {
             boyut_senkron_düzeni: None,
             lejant_canlı: true,
             seri_yaşam_döngüsünü_izle: false,
-            çizim_sırası: ÇizimSırası::EksenlerSeriler,
+            katman_sırası: VARSAYILAN_KATMAN_SIRASI,
             piksel_hizası: 1.0,
             ızgara_rengi: "#e5e7eb".to_string(),
             imleç_ızgara_adımı: None,
@@ -1556,8 +1580,12 @@ impl GrafikSeçenekleri {
         self
     }
 
-    pub fn çizim_sırası(mut self, sıra: ÇizimSırası) -> Self {
-        self.çizim_sırası = sıra;
+    /// Arka plan, ızgara/eksen, veri ve bilgi katmanlarının tamamını sıralar.
+    ///
+    /// Sonraki katman öncekinin üzerine boyanır. Bir katmanın yinelenmesi veya
+    /// eksik bırakılması grafik kurulurken tipli bir hata üretir.
+    pub fn katman_sırası(mut self, sıra: [ÇizimKatmanı; 4]) -> Self {
+        self.katman_sırası = sıra;
         self
     }
 

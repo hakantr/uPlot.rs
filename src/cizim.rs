@@ -231,19 +231,58 @@ impl Sahne {
         &self.geometri_kimlikleri
     }
 
-    pub(crate) fn komut_aralığını_sona_taşı(&mut self, başlangıç: usize, bitiş: usize) {
-        if başlangıç >= bitiş || bitiş > self.komutlar.len() {
+    pub(crate) fn katman_sırasını_uygula(&mut self, sıra: &[crate::ÇizimKatmanı; 4]) {
+        let mut sahne_sırası = [SahneKatmanı::Veri; 3];
+        let mut indeks = 0;
+        for katman in sıra {
+            let katman = match katman {
+                crate::ÇizimKatmanı::ArkaPlan => SahneKatmanı::ArkaPlan,
+                crate::ÇizimKatmanı::IzgaraEksen => SahneKatmanı::Eksen,
+                crate::ÇizimKatmanı::Veri => SahneKatmanı::Veri,
+                crate::ÇizimKatmanı::Bilgi => continue,
+            };
+            let Some(hedef) = sahne_sırası.get_mut(indeks) else {
+                return;
+            };
+            *hedef = katman;
+            indeks += 1;
+        }
+        if sahne_sırası
+            == [
+                SahneKatmanı::ArkaPlan,
+                SahneKatmanı::Eksen,
+                SahneKatmanı::Veri,
+            ]
+        {
             return;
         }
-        let eksen_komutu_sayısı = bitiş - başlangıç;
-        if let Some(komutlar) = self.komutlar.get_mut(başlangıç..) {
-            komutlar.rotate_left(eksen_komutu_sayısı);
+
+        let komutlar = std::mem::take(&mut self.komutlar);
+        let kimlikler = std::mem::take(&mut self.geometri_kimlikleri);
+        let katmanlar = std::mem::take(&mut self.katmanlar);
+        let mut arka_plan = Vec::new();
+        let mut eksen = Vec::new();
+        let mut veri = Vec::new();
+
+        for ((komut, kimlik), katman) in komutlar.into_iter().zip(kimlikler).zip(katmanlar) {
+            match katman {
+                SahneKatmanı::ArkaPlan => arka_plan.push((komut, kimlik, katman)),
+                SahneKatmanı::Eksen => eksen.push((komut, kimlik, katman)),
+                SahneKatmanı::Veri => veri.push((komut, kimlik, katman)),
+            }
         }
-        if let Some(kimlikler) = self.geometri_kimlikleri.get_mut(başlangıç..) {
-            kimlikler.rotate_left(eksen_komutu_sayısı);
-        }
-        if let Some(katmanlar) = self.katmanlar.get_mut(başlangıç..) {
-            katmanlar.rotate_left(eksen_komutu_sayısı);
+
+        for katman in sahne_sırası {
+            let grup = match katman {
+                SahneKatmanı::ArkaPlan => &mut arka_plan,
+                SahneKatmanı::Eksen => &mut eksen,
+                SahneKatmanı::Veri => &mut veri,
+            };
+            for (komut, kimlik, sahne_katmanı) in grup.drain(..) {
+                self.komutlar.push(komut);
+                self.geometri_kimlikleri.push(kimlik);
+                self.katmanlar.push(sahne_katmanı);
+            }
         }
     }
 
@@ -1022,6 +1061,46 @@ fn kaçış(metin: &str) -> String {
 #[cfg(test)]
 mod svg_testleri {
     use super::*;
+
+    #[test]
+    fn dört_katmanlı_sıra_tüm_sahne_gruplarını_serbestçe_taşır() {
+        let mut sahne = Sahne::yeni(100, 100);
+        sahne.katmanı_ayarla(SahneKatmanı::ArkaPlan);
+        sahne.ekle(Komut::ArkaPlan {
+            renk: "white".to_string(),
+        });
+        sahne.katmanı_ayarla(SahneKatmanı::Eksen);
+        sahne.ekle(Komut::Çizgi {
+            başlangıç: Nokta::yeni(0.0, 0.0),
+            bitiş: Nokta::yeni(1.0, 1.0),
+            renk: "gray".to_string(),
+            kalınlık: 1.0,
+        });
+        sahne.katmanı_ayarla(SahneKatmanı::Veri);
+        sahne.ekle(Komut::Daire {
+            merkez: Nokta::yeni(1.0, 1.0),
+            yarıçap: 1.0,
+            dolgu: "red".to_string(),
+            çizgi: "red".to_string(),
+            kalınlık: 1.0,
+        });
+
+        sahne.katman_sırasını_uygula(&[
+            crate::ÇizimKatmanı::Bilgi,
+            crate::ÇizimKatmanı::Veri,
+            crate::ÇizimKatmanı::ArkaPlan,
+            crate::ÇizimKatmanı::IzgaraEksen,
+        ]);
+        assert!(matches!(
+            sahne.komutlar().first(),
+            Some(Komut::Daire { .. })
+        ));
+        assert!(matches!(
+            sahne.komutlar().get(1),
+            Some(Komut::ArkaPlan { .. })
+        ));
+        assert!(matches!(sahne.komutlar().get(2), Some(Komut::Çizgi { .. })));
+    }
 
     #[test]
     fn çok_satırlı_ve_döndürülmüş_metin_tspan_ile_korunur() {

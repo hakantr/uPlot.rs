@@ -565,7 +565,7 @@ const KATALOG_KARTLARI: &[KatalogKartTanımı] = &[
         "Grid Over Series",
         "grid-over-series.html · drawOrder: series, axes",
         Some(
-            "Amaç: üç opak dolgulu serinin kesişimlerinde ızgara, çentik ve eksen bilgisini  seri boyasının altında kaybetmeden gösterir. API:  ÇizimSırası::SerilerEksenler kaynak drawOrder dizisini taşır; ızgara, X/Y  çentik ve eksen/etiket renkleri CSS olmadan ayrı ayrı ayarlanabilir. Otomatik  Y aralığı görünür X verisinden yeniden hesaplanır. İzleme: yoğun ve üst üste  binen CPU, bellek veya ağ alanlarında ortak eşik düzlemini her serinin üzerinde  okunabilir tutmak için uygundur. Maliyet: üç 30 noktalı seri tek retained  yüzeyde çizilir. Eksen komutları geçici Vec ayırmadan yerinde rotate ile seri  katmanının arkasından önüne alınır; pointer yalnız hafif cursor/lejant  katmanını günceller.",
+            "Amaç: üç opak dolgulu serinin kesişimlerinde ızgara, çentik ve eksen bilgisini seri boyasının altında kaybetmeden gösterir. API: GrafikSeçenekleri::katman_sırası, özel bir kart tanımı olmadan arka plan, veri, ızgara/eksen ve bilgi katmanlarının tamamını geliştiricinin sıralamasını sağlar; ızgara, X/Y çentik ve eksen/etiket renkleri CSS olmadan ayrı ayrı ayarlanabilir. Otomatik Y aralığı görünür X verisinden yeniden hesaplanır. İzleme: yoğun ve üst üste binen CPU, bellek veya ağ alanlarında ortak eşik düzlemini her serinin üzerinde okunabilir tutmak için uygundur. Maliyet: üç 30 noktalı seri retained veri yüzeyinde, ızgara ise bağımsız retained katmanda çizilir; pointer yalnız hafif bilgi katmanını günceller.",
         ),
         GRID_OVER_SERIES_KART_TANIM_ÖRNEĞİ,
         "uygulamalar/ornekler/src/grid_over_series.rs",
