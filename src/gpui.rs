@@ -13,8 +13,8 @@ use ::gpui::{
     Hsla, IntoElement, KeyDownEvent, KeyUpEvent, MouseButton, MouseDownEvent, MouseExitEvent,
     MouseMoveEvent, MouseUpEvent, Path, PathBuilder, PinchEvent, Pixels, Render, Role,
     ScaledPixels, ScrollDelta, ScrollWheelEvent, SharedString, StyleRefinement, TextAlign, TextRun,
-    TouchPhase, WeakEntity, Window, canvas, div, linear_color_stop, linear_gradient, point,
-    prelude::*, px, quad, rgb, rgba, size,
+    TouchPhase, WeakEntity, Window, canvas, deferred, div, linear_color_stop, linear_gradient,
+    point, prelude::*, px, quad, rgb, rgba, size,
 };
 
 use crate::{
@@ -2286,20 +2286,25 @@ impl Render for GpuiGrafik {
             )
             .child(ana_yüzey.cached(StyleRefinement::default().size_full()))
             .child(
-                canvas(
-                    |_, _, _| {},
-                    move |sınırlar, _, pencere, uygulama| {
-                        sahneyi_önbellekli_boya(
-                            &etkileşim_sahnesi,
-                            sınırlar,
-                            &mut etkileşim_yol_önbelleği.borrow_mut(),
-                            pencere,
-                            uygulama,
-                        );
-                    },
+                deferred(
+                    canvas(
+                        |_, _, _| {},
+                        move |sınırlar, _, pencere, uygulama| {
+                            sahneyi_önbellekli_boya(
+                                &etkileşim_sahnesi,
+                                sınırlar,
+                                &mut etkileşim_yol_önbelleği.borrow_mut(),
+                                pencere,
+                                uygulama,
+                            );
+                        },
+                    )
+                    .absolute()
+                    .top_0()
+                    .left_0()
+                    .size_full(),
                 )
-                .absolute()
-                .size_full(),
+                .with_priority(1),
             )
             .when_some(
                 bilgi_kutusu,
