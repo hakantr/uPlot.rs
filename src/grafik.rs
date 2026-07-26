@@ -20,8 +20,8 @@ use crate::cizim::{
     DoğrusalGradyan, GradyanRenkDurağı, Komut, KöşeYarıçapları, MetinHizası, Nokta, Sahne,
 };
 use crate::etkilesim::{
-    EtkileşimDenetleyicisi, y_aralığını_dönüştür, y_aralığını_geri_dönüştür,
-    y_değerini_geri_dönüştür,
+    EtkileşimDenetleyicisi, x_aralığını_dönüştür, x_aralığını_geri_dönüştür, y_aralığını_dönüştür,
+    y_aralığını_geri_dönüştür, y_değerini_geri_dönüştür,
 };
 use crate::{
     Aralık, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri, HizalıVeri, NullİmleçDüzeni,
@@ -2558,6 +2558,7 @@ impl Grafik {
             delta,
             hassas,
             eksen,
+            self.seçenekler.x_dağılımı,
             y_dağılımı,
             şimdi,
         )?;
@@ -2578,9 +2579,11 @@ impl Grafik {
         } else {
             (başlangıç_oranı, bitiş_oranı)
         };
-        let değişti = self
-            .etkileşim
-            .seçim_yakınlaştır(başlangıç_oranı, bitiş_oranı)?;
+        let değişti = self.etkileşim.seçim_yakınlaştır(
+            başlangıç_oranı,
+            bitiş_oranı,
+            self.seçenekler.x_dağılımı,
+        )?;
         if değişti {
             self.x_aralığını_veriye_yapıştır();
         }
@@ -2676,7 +2679,10 @@ impl Grafik {
         let x_etkin = if x_dikey { dikey_etkin } else { yatay_etkin };
         let y_etkin = if x_dikey { yatay_etkin } else { dikey_etkin };
         let x = if x_etkin {
-            oran_aralığı(mevcut_x, x0, x1)?
+            let dağılım = self.seçenekler.x_dağılımı;
+            let dönüştürülmüş = x_aralığını_dönüştür(mevcut_x, dağılım).unwrap_or(mevcut_x);
+            let aralık = oran_aralığı(dönüştürülmüş, x0, x1)?;
+            x_aralığını_geri_dönüştür(aralık, dağılım).unwrap_or(aralık)
         } else {
             mevcut_x
         };
@@ -2778,9 +2784,12 @@ impl Grafik {
     ) -> Result<bool, UplotHatası> {
         let (x_farkı, y_farkı) =
             self.fiziksel_farkları_mantıksala(yatay_fark_oranı, dikey_fark_oranı);
-        let değişti = self
-            .etkileşim
-            .taşı(x_farkı, y_farkı, self.birincil_y_dağılımı())?;
+        let değişti = self.etkileşim.taşı(
+            x_farkı,
+            y_farkı,
+            self.seçenekler.x_dağılımı,
+            self.birincil_y_dağılımı(),
+        )?;
         if değişti {
             self.x_aralığını_veriye_yapıştır();
         }
@@ -2807,9 +2816,13 @@ impl Grafik {
         let (x_oranı, y_oranı) =
             self.fiziksel_oranları_mantıksala(yatay_odak_oranı, dikey_odak_oranı);
         let y_dağılımı = self.birincil_y_dağılımı();
-        let değişti =
-            self.etkileşim
-                .dokunma_yakınlaştır(x_oranı, y_oranı, çarpan, y_dağılımı)?;
+        let değişti = self.etkileşim.dokunma_yakınlaştır(
+            x_oranı,
+            y_oranı,
+            çarpan,
+            self.seçenekler.x_dağılımı,
+            y_dağılımı,
+        )?;
         if değişti {
             self.x_aralığını_veriye_yapıştır();
         }

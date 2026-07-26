@@ -1,6 +1,7 @@
 use uplot_rs_gpui_ornekler::{
-    Aralık, EtkileşimSeçenekleri, Grafik, HizalıVeri, TekerlekAyarları, TekerlekEkseni,
-    TekerlekKipi, UplotHatası, ortak_kart_etkileşimleri, resize_kartı,
+    Aralık, CustomScaleÖrneği, EtkileşimSeçenekleri, Grafik, HizalıVeri, TekerlekAyarları,
+    TekerlekEkseni, TekerlekKipi, UplotHatası, custom_scales_kartı, ortak_kart_etkileşimleri,
+    resize_kartı,
 };
 
 #[test]
@@ -202,5 +203,69 @@ fn zoom_touch_x_ve_y_eksenlerini_odak_çevresinde_yakınlaştırır() -> Result<
     assert!(yakın_y.en_çok - yakın_y.en_az < tam_y.en_çok - tam_y.en_az);
     assert!(grafik.önceki_görünüm());
     assert_eq!(grafik.görünür_x_aralığı(), tam_x);
+    Ok(())
+}
+
+#[test]
+fn log_x_tekerlek_seçim_taşıma_ve_dokunmayı_dönüşüm_uzayında_tutar() -> Result<(), UplotHatası> {
+    fn log_açıklığı(aralık: Aralık) -> f64 {
+        aralık.en_çok.log10() - aralık.en_az.log10()
+    }
+
+    let (seçenekler, veri) = custom_scales_kartı(CustomScaleÖrneği::LogLog)?;
+    let tam = Grafik::yeni(seçenekler.clone(), veri.clone())?.görünür_x_aralığı();
+    let tam_açıklık = log_açıklığı(tam);
+
+    let mut tekerlek = Grafik::yeni(seçenekler.clone(), veri.clone())?;
+    assert!(tekerlek.tekerlek_eksende(0.5, 0.5, 10.0, true, TekerlekEkseni::X,)?);
+    let beklenen_tekerlek_oranı = 0.75_f64.powf(0.1);
+    assert!(
+        (log_açıklığı(tekerlek.görünür_x_aralığı()) / tam_açıklık - beklenen_tekerlek_oranı).abs()
+            < 1e-12
+    );
+
+    let mut seçim = Grafik::yeni(seçenekler.clone(), veri.clone())?;
+    assert!(seçim.seçim_yakınlaştır(0.2, 0.8)?);
+    let seçim_açıklığı = log_açıklığı(seçim.görünür_x_aralığı());
+    assert!((seçim_açıklığı / tam_açıklık - 0.6).abs() < 1e-12);
+    assert!(seçim.taşımayı_başlat());
+    assert!(seçim.taşı(0.1, 0.0)?);
+    seçim.taşımayı_bitir();
+    assert!((log_açıklığı(seçim.görünür_x_aralığı()) - seçim_açıklığı).abs() < 1e-12);
+
+    let mut dokunma = Grafik::yeni(seçenekler, veri)?;
+    assert!(dokunma.dokunmayı_başlat());
+    assert!(dokunma.dokunma_yakınlaştır(0.5, 0.5, 1.05)?);
+    dokunma.dokunmayı_bitir();
+    assert!((log_açıklığı(dokunma.görünür_x_aralığı()) / tam_açıklık - 1.0 / 1.05).abs() < 1e-12);
+    Ok(())
+}
+
+#[test]
+fn çok_küçük_doğrusal_değerler_zoom_oranını_değiştirmez() -> Result<(), UplotHatası> {
+    let (seçenekler, _) = resize_kartı(3)?;
+    let veri = HizalıVeri::yeni(
+        vec![1e-30, 2e-30, 3e-30],
+        vec![vec![Some(2e-30), Some(3e-30), Some(4e-30)]],
+    )?;
+    let mut grafik = Grafik::yeni(seçenekler, veri)?;
+    let önce_x = grafik.görünür_x_aralığı();
+    let önce_y = grafik.görünür_y_aralığı();
+
+    assert!(grafik.tekerlek(0.5, 0.5, 10.0, true)?);
+    let sonra_x = grafik.görünür_x_aralığı();
+    let sonra_y = grafik.görünür_y_aralığı();
+    let beklenen = 0.75_f64.powf(0.1);
+    let x_oranı = (sonra_x.en_çok - sonra_x.en_az) / (önce_x.en_çok - önce_x.en_az);
+    let y_oranı = (sonra_y.en_çok - sonra_y.en_az) / (önce_y.en_çok - önce_y.en_az);
+    assert!((x_oranı - beklenen).abs() < 1e-12);
+    assert!((y_oranı - beklenen).abs() < 1e-12);
+    assert!(grafik.çiz().komutlar().iter().any(|komut| matches!(
+        komut,
+        uplot_rs_gpui_ornekler::diagnostics::Komut::Yol { parçalar, .. }
+            if parçalar.iter().flatten().all(|nokta| {
+                nokta.x.is_finite() && nokta.y.is_finite()
+            })
+    )));
     Ok(())
 }

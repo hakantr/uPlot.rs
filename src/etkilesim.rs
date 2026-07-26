@@ -2,7 +2,8 @@ use std::collections::VecDeque;
 use web_time::{Duration, Instant};
 
 use crate::{
-    Aralık, EtkileşimSeçenekleri, TekerlekEkseni, TekerlekKipi, UplotHatası, YÖlçekDağılımı,
+    Aralık, EtkileşimSeçenekleri, TekerlekEkseni, TekerlekKipi, UplotHatası, XÖlçekDağılımı,
+    YÖlçekDağılımı,
 };
 
 #[derive(Clone, Copy, Default, PartialEq)]
@@ -159,6 +160,7 @@ impl EtkileşimDenetleyicisi {
         &mut self,
         başlangıç_oranı: f64,
         bitiş_oranı: f64,
+        x_dağılımı: XÖlçekDağılımı,
     ) -> Result<bool, UplotHatası> {
         if !self.ayarlar.seçim_yakınlaştır {
             return Ok(false);
@@ -177,11 +179,13 @@ impl EtkileşimDenetleyicisi {
             (bitiş, başlangıç)
         };
         let mevcut = self.görünür_x();
-        let uzunluk = mevcut.en_çok - mevcut.en_az;
+        let dönüştürülmüş = x_aralığını_dönüştür(mevcut, x_dağılımı).unwrap_or(mevcut);
+        let uzunluk = dönüştürülmüş.en_çok - dönüştürülmüş.en_az;
         let yeni = Aralık::yeni(
-            mevcut.en_az + en_az_oran * uzunluk,
-            mevcut.en_az + en_çok_oran * uzunluk,
+            dönüştürülmüş.en_az + en_az_oran * uzunluk,
+            dönüştürülmüş.en_az + en_çok_oran * uzunluk,
         )?;
+        let yeni = x_aralığını_geri_dönüştür(yeni, x_dağılımı).unwrap_or(yeni);
         Ok(self.uygula(
             Görünüm {
                 x: Some(yeni),
@@ -200,6 +204,7 @@ impl EtkileşimDenetleyicisi {
         ham_delta: f64,
         platform_hassas: bool,
         eksen: TekerlekEkseni,
+        x_dağılımı: XÖlçekDağılımı,
         y_dağılımı: YÖlçekDağılımı,
         şimdi: Instant,
     ) -> Result<bool, UplotHatası> {
@@ -246,12 +251,20 @@ impl EtkileşimDenetleyicisi {
         };
 
         let mevcut_x = self.görünür_x();
-        let x_odak =
-            mevcut_x.en_az + yatay_odak_oranı.clamp(0.0, 1.0) * (mevcut_x.en_çok - mevcut_x.en_az);
         let x = if matches!(eksen, TekerlekEkseni::İkisi | TekerlekEkseni::X) {
-            mevcut_x.uyarlanabilir_tekerlek_yakınlaştır(
-                self.tam_x, x_odak, delta, hassas, tekerlek,
-            )?
+            let dönüştürülmüş = x_aralığını_dönüştür(mevcut_x, x_dağılımı).unwrap_or(mevcut_x);
+            let dönüştürülmüş_tam =
+                x_aralığını_dönüştür(self.tam_x, x_dağılımı).unwrap_or(self.tam_x);
+            let x_odak = dönüştürülmüş.en_az
+                + yatay_odak_oranı.clamp(0.0, 1.0) * (dönüştürülmüş.en_çok - dönüştürülmüş.en_az);
+            let yeni = dönüştürülmüş.uyarlanabilir_tekerlek_yakınlaştır(
+                dönüştürülmüş_tam,
+                x_odak,
+                delta,
+                hassas,
+                tekerlek,
+            )?;
+            x_aralığını_geri_dönüştür(yeni, x_dağılımı).unwrap_or(yeni)
         } else {
             mevcut_x
         };
@@ -332,6 +345,7 @@ impl EtkileşimDenetleyicisi {
         &mut self,
         yatay_fark_oranı: f64,
         dikey_fark_oranı: f64,
+        x_dağılımı: XÖlçekDağılımı,
         y_dağılımı: YÖlçekDağılımı,
     ) -> Result<bool, UplotHatası> {
         if !yatay_fark_oranı.is_finite() || !dikey_fark_oranı.is_finite() {
@@ -343,11 +357,15 @@ impl EtkileşimDenetleyicisi {
         let Some(mut başlangıç) = self.taşıma else {
             return Ok(false);
         };
+        let dönüştürülmüş_x = x_aralığını_dönüştür(başlangıç.x, x_dağılımı).unwrap_or(başlangıç.x);
+        let dönüştürülmüş_tam_x =
+            x_aralığını_dönüştür(self.tam_x, x_dağılımı).unwrap_or(self.tam_x);
         let x = kaydır(
-            başlangıç.x,
-            self.tam_x,
-            -yatay_fark_oranı * (başlangıç.x.en_çok - başlangıç.x.en_az),
+            dönüştürülmüş_x,
+            dönüştürülmüş_tam_x,
+            -yatay_fark_oranı * (dönüştürülmüş_x.en_çok - dönüştürülmüş_x.en_az),
         )?;
+        let x = x_aralığını_geri_dönüştür(x, x_dağılımı).unwrap_or(x);
         let dönüştürülmüş = y_aralığını_dönüştür(başlangıç.y, y_dağılımı).unwrap_or(başlangıç.y);
         let dönüştürülmüş_tam = y_aralığını_dönüştür(self.tam_y, y_dağılımı).unwrap_or(self.tam_y);
         let y = kaydır(
@@ -396,6 +414,7 @@ impl EtkileşimDenetleyicisi {
         yatay_odak_oranı: f64,
         dikey_odak_oranı: f64,
         çarpan: f64,
+        x_dağılımı: XÖlçekDağılımı,
         y_dağılımı: YÖlçekDağılımı,
     ) -> Result<bool, UplotHatası> {
         if !self.dokunma_sürüyor
@@ -406,7 +425,17 @@ impl EtkileşimDenetleyicisi {
         {
             return Ok(false);
         }
-        let x = odakta_yakınlaştır(self.görünür_x(), self.tam_x, yatay_odak_oranı, çarpan)?;
+        let mevcut_x = self.görünür_x();
+        let dönüştürülmüş_x = x_aralığını_dönüştür(mevcut_x, x_dağılımı).unwrap_or(mevcut_x);
+        let dönüştürülmüş_tam_x =
+            x_aralığını_dönüştür(self.tam_x, x_dağılımı).unwrap_or(self.tam_x);
+        let x = odakta_yakınlaştır(
+            dönüştürülmüş_x,
+            dönüştürülmüş_tam_x,
+            yatay_odak_oranı,
+            çarpan,
+        )?;
+        let x = x_aralığını_geri_dönüştür(x, x_dağılımı).unwrap_or(x);
         let mevcut_y = self
             .görünüm
             .y
@@ -456,6 +485,32 @@ impl EtkileşimDenetleyicisi {
         self.son_tekerlek = None;
         self.tekerlek_hareketi_kaydedildi = false;
         self.birikmiş_hassas_delta = 0.0;
+    }
+}
+
+pub(crate) fn x_aralığını_dönüştür(
+    aralık: Aralık,
+    dağılım: XÖlçekDağılımı,
+) -> Option<Aralık> {
+    match dağılım {
+        XÖlçekDağılımı::Doğrusal => Some(aralık),
+        XÖlçekDağılımı::Logaritmik { taban } if aralık.en_az > 0.0 && taban > 1.0 => {
+            Aralık::yeni(aralık.en_az.log(taban), aralık.en_çok.log(taban)).ok()
+        }
+        _ => None,
+    }
+}
+
+pub(crate) fn x_aralığını_geri_dönüştür(
+    aralık: Aralık,
+    dağılım: XÖlçekDağılımı,
+) -> Option<Aralık> {
+    match dağılım {
+        XÖlçekDağılımı::Doğrusal => Some(aralık),
+        XÖlçekDağılımı::Logaritmik { taban } if taban > 1.0 => {
+            Aralık::yeni(taban.powf(aralık.en_az), taban.powf(aralık.en_çok)).ok()
+        }
+        _ => None,
     }
 }
 

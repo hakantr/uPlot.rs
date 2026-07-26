@@ -9146,6 +9146,312 @@ mod tests {
     use std::collections::HashSet;
 
     use super::*;
+    use uplot_rs::diagnostics::Komut;
+    use uplot_rs::{Aralık, Nokta, TekerlekEkseni, XÖlçekDağılımı, YÖlçekDağılımı};
+
+    fn varsayılan_fabrika_girdisi(kart: KartKimliği) -> KatalogFabrikaGirdisi {
+        KatalogFabrikaGirdisi {
+            kart,
+            no_data_örneği: NoDataÖrneği::BOŞ_ÖZEL_ARALIK,
+            nokta_sayısı: 100,
+            autosize_kuvvet: 0,
+            latency_kova: 5,
+            latency_ofset: 0,
+            pixel_align_adımı: 140,
+        }
+    }
+
+    fn aralık_geçerli(aralık: Aralık) -> bool {
+        aralık.en_az.is_finite() && aralık.en_çok.is_finite() && aralık.en_az < aralık.en_çok
+    }
+
+    fn komutlar_sonlu(komutlar: &[Komut]) -> bool {
+        fn nokta_sonlu(nokta: &Nokta) -> bool {
+            nokta.x.is_finite() && nokta.y.is_finite()
+        }
+
+        fn noktalar_sonlu(parçalar: &[Vec<Nokta>]) -> bool {
+            parçalar.iter().flatten().all(nokta_sonlu)
+        }
+
+        komutlar.iter().all(|komut| match komut {
+            Komut::ArkaPlan { .. } => true,
+            Komut::Çizgi {
+                başlangıç,
+                bitiş,
+                kalınlık,
+                ..
+            } => nokta_sonlu(başlangıç) && nokta_sonlu(bitiş) && kalınlık.is_finite(),
+            Komut::KesikliÇizgi {
+                başlangıç,
+                bitiş,
+                kalınlık,
+                kesik,
+                ..
+            } => {
+                nokta_sonlu(başlangıç)
+                    && nokta_sonlu(bitiş)
+                    && kalınlık.is_finite()
+                    && kesik.is_finite()
+            }
+            Komut::Yol {
+                parçalar, kalınlık,
+            ..
+            }
+            | Komut::GradyanYol {
+                parçalar, kalınlık,
+            ..
+            } => noktalar_sonlu(parçalar) && kalınlık.is_finite(),
+            Komut::KesikliYol {
+                parçalar,
+                kalınlık,
+                çizgi,
+                boşluk,
+                ..
+            } => {
+                noktalar_sonlu(parçalar)
+                    && kalınlık.is_finite()
+                    && çizgi.is_finite()
+                    && boşluk.is_finite()
+            }
+            Komut::Alan { çokgenler, .. } | Komut::GradyanAlan { çokgenler, .. } => {
+                noktalar_sonlu(çokgenler)
+            }
+            Komut::Daire {
+                merkez,
+                yarıçap,
+                kalınlık,
+                ..
+            } => nokta_sonlu(merkez) && yarıçap.is_finite() && kalınlık.is_finite(),
+            Komut::Daireler {
+                merkezler,
+                yarıçap,
+                kalınlık,
+                kesme_sınırları,
+                ..
+            } => {
+                merkezler.iter().all(nokta_sonlu)
+                    && yarıçap.is_finite()
+                    && kalınlık.is_finite()
+                    && kesme_sınırları.as_ref().is_none_or(|(başlangıç, bitiş)| {
+                        nokta_sonlu(başlangıç) && nokta_sonlu(bitiş)
+                    })
+            }
+            Komut::DeğişkenDaireler {
+                daireler,
+                kalınlık,
+                kesme_sınırları,
+                ..
+            } => {
+                daireler
+                    .iter()
+                    .all(|(nokta, yarıçap)| nokta_sonlu(nokta) && yarıçap.is_finite())
+                    && kalınlık.is_finite()
+                    && kesme_sınırları.as_ref().is_none_or(|(başlangıç, bitiş)| {
+                        nokta_sonlu(başlangıç) && nokta_sonlu(bitiş)
+                    })
+            }
+            Komut::Dikdörtgen {
+                konum,
+                genişlik,
+                yükseklik,
+                kalınlık,
+                ..
+            } => {
+                nokta_sonlu(konum)
+                    && genişlik.is_finite()
+                    && yükseklik.is_finite()
+                    && kalınlık.is_finite()
+            }
+            Komut::YuvarlatılmışDikdörtgen {
+                konum,
+                genişlik,
+                yükseklik,
+                yarıçaplar,
+                kalınlık,
+                ..
+            } => {
+                nokta_sonlu(konum)
+                    && genişlik.is_finite()
+                    && yükseklik.is_finite()
+                    && [
+                        yarıçaplar.üst_sol,
+                        yarıçaplar.üst_sağ,
+                        yarıçaplar.alt_sağ,
+                        yarıçaplar.alt_sol,
+                        *kalınlık,
+                    ]
+                    .into_iter()
+                    .all(f32::is_finite)
+            }
+            Komut::Metin { konum, boyut, .. } | Komut::DöndürülmüşMetin { konum, boyut, .. } => {
+                nokta_sonlu(konum) && boyut.is_finite()
+            }
+        })
+    }
+
+    fn sahne_sonlu(grafik: &Grafik) -> bool {
+        komutlar_sonlu(grafik.çiz().komutlar())
+    }
+
+    fn x_dönüştür(değer: f64, dağılım: XÖlçekDağılımı) -> Option<f64> {
+        match dağılım {
+            XÖlçekDağılımı::Doğrusal => Some(değer),
+            XÖlçekDağılımı::Logaritmik { taban } if değer > 0.0 && taban > 1.0 => {
+                Some(değer.log(taban))
+            }
+            _ => None,
+        }
+    }
+
+    fn y_dönüştür(değer: f64, dağılım: YÖlçekDağılımı) -> Option<f64> {
+        match dağılım {
+            YÖlçekDağılımı::Doğrusal => Some(değer),
+            YÖlçekDağılımı::Logaritmik { taban } if değer > 0.0 && taban > 1.0 => {
+                Some(değer.log(taban))
+            }
+            YÖlçekDağılımı::Weibull if değer > 0.0 && değer < 1.0 => {
+                Some((-(-değer).ln_1p()).ln())
+            }
+            YÖlçekDağılımı::Özel(dönüşüm) => (dönüşüm.ileri)(değer),
+            YÖlçekDağılımı::ArcSinh { eşik } if eşik > 0.0 => Some((değer / eşik).asinh()),
+            _ => None,
+        }
+    }
+
+    fn yakınlaştırma_oranı(
+        önce: Aralık,
+        sonra: Aralık,
+        dönüştür: impl Fn(f64) -> Option<f64>,
+    ) -> Option<f64> {
+        let önce_alt = dönüştür(önce.en_az)?;
+        let önce_üst = dönüştür(önce.en_çok)?;
+        let sonra_alt = dönüştür(sonra.en_az)?;
+        let sonra_üst = dönüştür(sonra.en_çok)?;
+        Some((sonra_üst - sonra_alt) / (önce_üst - önce_alt))
+    }
+
+    fn kart_davranışını_doğrula(
+        ad: &str,
+        seçenekler: uplot_rs::GrafikSeçenekleri,
+        veri: uplot_rs::HizalıVeri,
+    ) -> Result<(), UplotHatası> {
+        let x_dağılımı = seçenekler.x_dağılımı;
+        let y_dağılımı = seçenekler
+            .y_ölçekleri
+            .iter()
+            .find(|ölçek| ölçek.anahtar == seçenekler.birincil_y_ölçeği)
+            .map_or(YÖlçekDağılımı::Doğrusal, |ölçek| ölçek.dağılım);
+        let mut grafik = Grafik::yeni(seçenekler.clone(), veri.clone())?;
+        grafik.tekerlek_etkileşimi_ayarla(true);
+
+        let ilk_x = grafik.görünür_x_aralığı();
+        let ilk_y = grafik.görünür_y_aralığı();
+        assert!(aralık_geçerli(ilk_x), "{ad} geçersiz ilk X: {ilk_x:?}");
+        assert!(aralık_geçerli(ilk_y), "{ad} geçersiz ilk Y: {ilk_y:?}");
+        assert!(sahne_sonlu(&grafik), "{ad} ilk sahnesi sonlu değil");
+        assert!(
+            komutlar_sonlu(grafik.çiz_görünür_boyutta(480, 320).komutlar()),
+            "{ad} küçük resize sahnesi sonlu değil"
+        );
+        assert!(
+            komutlar_sonlu(grafik.çiz_görünür_boyutta(1_280, 720).komutlar()),
+            "{ad} büyük resize sahnesi sonlu değil"
+        );
+
+        if let Some(çözüm) = grafik.imleç_çözümü(0.5, 800.0) {
+            assert!(çözüm.ortak_x.is_finite(), "{ad} cursor X sonlu değil");
+            assert!(
+                çözüm
+                    .seriler
+                    .iter()
+                    .flatten()
+                    .all(|örnek| { örnek.x.is_finite() && örnek.değer.is_finite() }),
+                "{ad} cursor seri çözümü sonlu değil"
+            );
+        }
+
+        if !grafik.seri_seçenekleri().is_empty() {
+            let görünür = grafik.seri_görünür_mü(0);
+            grafik.seri_görünürlüğünü_ayarla(0, !görünür)?;
+            assert!(sahne_sonlu(&grafik), "{ad} setSeries sonrası sonlu değil");
+            grafik.seri_görünürlüğünü_ayarla(0, görünür)?;
+        }
+
+        for eksen in [TekerlekEkseni::X, TekerlekEkseni::Y, TekerlekEkseni::İkisi] {
+            let mut zoom = Grafik::yeni(seçenekler.clone(), veri.clone())?;
+            zoom.tekerlek_etkileşimi_ayarla(true);
+            let önce_x = zoom.görünür_x_aralığı();
+            let önce_y = zoom.görünür_y_aralığı();
+            let değişti = zoom.tekerlek_eksende(0.5, 0.5, 10.0, true, eksen)?;
+            let sonra_x = zoom.görünür_x_aralığı();
+            let sonra_y = zoom.görünür_y_aralığı();
+
+            assert!(
+                aralık_geçerli(sonra_x),
+                "{ad} {eksen:?} sonrası geçersiz X: {sonra_x:?}"
+            );
+            assert!(
+                aralık_geçerli(sonra_y),
+                "{ad} {eksen:?} sonrası geçersiz Y: {sonra_y:?}"
+            );
+            assert!(
+                sahne_sonlu(&zoom),
+                "{ad} {eksen:?} sonrası sahne sonlu değil"
+            );
+
+            if değişti && matches!(eksen, TekerlekEkseni::X | TekerlekEkseni::İkisi) {
+                let oran = yakınlaştırma_oranı(önce_x, sonra_x, |değer| {
+                    x_dönüştür(değer, x_dağılımı)
+                })
+                .unwrap_or(f64::NAN);
+                assert!(
+                    (0.90..1.0).contains(&oran),
+                    "{ad} {eksen:?} X zoom oranı doğal değil: {oran}"
+                );
+            }
+            if değişti && matches!(eksen, TekerlekEkseni::Y | TekerlekEkseni::İkisi) {
+                let oran = yakınlaştırma_oranı(önce_y, sonra_y, |değer| {
+                    y_dönüştür(değer, y_dağılımı)
+                })
+                .unwrap_or(f64::NAN);
+                assert!(
+                    (0.90..1.0).contains(&oran),
+                    "{ad} {eksen:?} Y zoom oranı doğal değil: {oran}"
+                );
+            }
+
+            let _ = zoom.tekerlek_eksende(0.5, 0.5, -10.0, true, eksen)?;
+            assert!(
+                aralık_geçerli(zoom.görünür_x_aralığı())
+                    && aralık_geçerli(zoom.görünür_y_aralığı())
+                    && sahne_sonlu(&zoom),
+                "{ad} {eksen:?} ters zoom sonrası geçersiz"
+            );
+        }
+
+        let mut seçim = Grafik::yeni(seçenekler.clone(), veri.clone())?;
+        let _ = seçim.fiziksel_seçim_yakınlaştır_eksenlerde(0.2, 0.2, 0.8, 0.8, true, true)?;
+        assert!(sahne_sonlu(&seçim), "{ad} seçim sonrası sonlu değil");
+        if seçim.taşımayı_başlat() {
+            let _ = seçim.taşı(0.05, -0.05)?;
+            seçim.taşımayı_bitir();
+            assert!(sahne_sonlu(&seçim), "{ad} taşıma sonrası sonlu değil");
+        }
+
+        let mut dokunma = Grafik::yeni(seçenekler, veri)?;
+        if dokunma.dokunmayı_başlat() {
+            let _ = dokunma.dokunma_yakınlaştır(0.5, 0.5, 1.05)?;
+            dokunma.dokunmayı_bitir();
+            assert!(
+                aralık_geçerli(dokunma.görünür_x_aralığı())
+                    && aralık_geçerli(dokunma.görünür_y_aralığı())
+                    && sahne_sonlu(&dokunma),
+                "{ad} dokunma zoomu sonrası geçersiz"
+            );
+        }
+        Ok(())
+    }
 
     #[test]
     fn yan_menü_ana_kart_sayısı_sabittir() {
@@ -9170,6 +9476,100 @@ mod tests {
                 tanım.slug
             );
         }
+    }
+
+    #[test]
+    fn tüm_ana_kartlar_sonlu_çizilir_ve_uyarlanabilir_zoom_oranını_korur() -> Result<(), UplotHatası>
+    {
+        for tanım in KATALOG_KARTLARI {
+            let (seçenekler, veri) =
+                tanım.grafiği_oluştur(varsayılan_fabrika_girdisi(tanım.kimlik))?;
+            kart_davranışını_doğrula(tanım.slug, seçenekler, veri)?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn tüm_ilişkili_yüzeyler_ortak_davranış_sözleşmesini_korur() -> Result<(), UplotHatası> {
+        let mut doğrulanan = 0_usize;
+        macro_rules! grubu_doğrula {
+            ($ad:literal, $kartlar:expr) => {
+                for (indeks, (_, seçenekler, veri)) in $kartlar?.into_iter().enumerate() {
+                    kart_davranışını_doğrula(&format!("{}/{indeks}", $ad), seçenekler, veri)?;
+                    doğrulanan += 1;
+                }
+            };
+        }
+
+        grubu_doğrula!("align-data", align_data_kartları());
+        grubu_doğrula!("custom-scales", custom_scales_kartları());
+        grubu_doğrula!(
+            "data-smoothing",
+            uplot_rs_gpui_ornekler::data_smoothing_kartları()
+        );
+        grubu_doğrula!("focus-cursor", focus_cursor_kartları());
+        grubu_doğrula!("gradients", gradients_kartları());
+        grubu_doğrula!("high-low-bands", high_low_bands_kartları());
+        grubu_doğrula!("latency-heatmap", latency_heatmap_kartları(5.0, 0.0));
+        grubu_doğrula!("line-paths", line_paths_kartları());
+        grubu_doğrula!("log-scales", log_scales_kartları());
+        grubu_doğrula!("log-scales2", log_scales2_kartları());
+        grubu_doğrula!("missing-data", missing_data_kartları());
+        grubu_doğrula!("path-gap-clip", path_gap_clip_kartları());
+        grubu_doğrula!("pixel-align", pixel_align_kartları(140));
+        grubu_doğrula!("points", points_kartları());
+        grubu_doğrula!("scales-dir-ori", scales_dir_ori_kartları());
+        grubu_doğrula!("bars", bars_grouped_stacked_kartları());
+        grubu_doğrula!("bars-values-autosize", bars_values_autosize_kartları());
+        grubu_doğrula!("box-whisker", box_whisker_kartları());
+        grubu_doğrula!("soft-minmax", soft_minmax_kartları(12.0));
+        grubu_doğrula!("sparklines-bars", sparklines_bars_kartları());
+        grubu_doğrula!("sparklines", sparklines_kartları());
+        grubu_doğrula!("sparse", sparse_kartları());
+        grubu_doğrula!("stacked-series", stacked_series_kartları());
+        grubu_doğrula!("thin-bars", thin_bars_stroke_fill_kartları());
+        grubu_doğrula!("time-periods", time_periods_kartları());
+        grubu_doğrula!("timeline-discrete", timeline_discrete_kartları());
+        grubu_doğrula!("timeseries-discrete", timeseries_discrete_kartları());
+        grubu_doğrula!("timezones-dst", timezones_dst_kartları());
+        grubu_doğrula!("stream-data", StreamDataGrubu::yeni()?.kartları());
+
+        for (indeks, (seçenekler, veri)) in months_kartları()?.into_iter().enumerate() {
+            kart_davranışını_doğrula(&format!("months/{indeks}"), seçenekler, veri)?;
+            doğrulanan += 1;
+        }
+        for (ad, örnek) in NoDataÖrneği::TÜMÜ.into_iter().enumerate() {
+            let (seçenekler, veri) = no_data_kartı(örnek)?;
+            kart_davranışını_doğrula(&format!("no-data/{ad}"), seçenekler, veri)?;
+            doğrulanan += 1;
+        }
+        for (indeks, örnek) in NearestNonNullÖrneği::TÜMÜ.into_iter().enumerate() {
+            let (seçenekler, veri) = nearest_non_null_kartı(örnek)?;
+            kart_davranışını_doğrula(&format!("nearest-non-null/{indeks}"), seçenekler, veri)?;
+            doğrulanan += 1;
+        }
+        for (indeks, örnek) in MultiBarsÖrneği::TÜMÜ.into_iter().enumerate() {
+            let (seçenekler, veri) = multi_bars_kartı(örnek)?;
+            kart_davranışını_doğrula(&format!("multi-bars/{indeks}"), seçenekler, veri)?;
+            doğrulanan += 1;
+        }
+        for (indeks, örnek) in ScatterÖrneği::TÜMÜ.into_iter().enumerate() {
+            let (seçenekler, veri) = scatter_kartı(örnek)?;
+            kart_davranışını_doğrula(&format!("scatter/{indeks}"), seçenekler, veri)?;
+            doğrulanan += 1;
+        }
+        for (indeks, örnek) in SyncCursorÖrneği::TÜMÜ.into_iter().enumerate() {
+            let (seçenekler, veri) = sync_cursor_kartı(örnek)?;
+            kart_davranışını_doğrula(&format!("sync-cursor/{indeks}"), seçenekler, veri)?;
+            doğrulanan += 1;
+        }
+        for (indeks, aşama) in SyncYZeroAşaması::TÜMÜ.into_iter().enumerate() {
+            let (seçenekler, veri) = sync_y_zero_kartı(aşama)?;
+            kart_davranışını_doğrula(&format!("sync-y-zero/{indeks}"), seçenekler, veri)?;
+            doğrulanan += 1;
+        }
+        assert_eq!(doğrulanan, 343);
+        Ok(())
     }
 
     #[test]
