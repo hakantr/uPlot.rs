@@ -170,7 +170,12 @@ fn katmanı_yaz(
 }
 
 fn sayı(değer: f32) -> String {
-    let yuvarlanmış = (değer * 100.0).round() / 100.0;
+    let güvenli = if değer.is_finite() {
+        f64::from(değer)
+    } else {
+        0.0
+    };
+    let yuvarlanmış = (güvenli * 100.0).round() / 100.0;
     let yuvarlanmış = if yuvarlanmış == 0.0 {
         0.0
     } else {
@@ -185,8 +190,9 @@ mod testler {
     use crate::{
         Grafik,
         kart::{
-            GradientÖrneği, MultiBarsÖrneği, ScatterÖrneği, gradients_kartı, multi_bars_kartı,
-            resize_kartı, scatter_kartı,
+            GradientÖrneği, MultiBarsÖrneği, ScatterÖrneği, TimezonesDstÖrneği, area_fill_kartı,
+            box_whisker_kartı, cursor_snap_kartı, gradients_kartı, multi_bars_kartı, resize_kartı,
+            scatter_kartı, timezones_dst_kartı,
         },
     };
 
@@ -299,6 +305,95 @@ mod testler {
         assert!(svg.contains(" Q"));
         assert!(!svg.contains("<foreignObject"));
         assert!(!svg.contains("<image"));
+        Ok(())
+    }
+
+    #[test]
+    fn area_fill_üç_serinin_çizgi_ve_dolgularını_korur() -> Result<(), UplotHatası> {
+        let bileşen = kart_bileşeni(area_fill_kartı())?;
+        let kayıt = bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(1_920, 600)?);
+        let svg = kayıt.içerik();
+
+        for dolgu in ["#ff00001a", "#00ff001a", "#0000ff1a"] {
+            assert!(svg.contains(&format!("fill=\"{dolgu}\"")));
+        }
+        for çizgi in ["#ff0000", "#008000", "#0000ff"] {
+            assert!(svg.contains(&format!("stroke=\"{çizgi}\"")));
+        }
+        assert!(svg.matches("stroke=\"none\"").count() >= 3);
+        Ok(())
+    }
+
+    #[test]
+    fn timezone_çok_satırlı_etiketi_tspan_olarak_kaydeder() -> Result<(), UplotHatası> {
+        let örnek = TimezonesDstÖrneği::yeni(12).ok_or(UplotHatası::BilinmeyenKart {
+            kimlik: "timezones-dst-13".to_string(),
+        })?;
+        let bileşen = kart_bileşeni(timezones_dst_kartı(örnek))?;
+        let kayıt = bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(600, 200)?);
+        let svg = kayıt.içerik();
+
+        assert!(svg.contains(">12am</tspan>"));
+        assert!(svg.contains("dy=\"1.2em\">3/31/24</tspan>"));
+        assert!(!svg.contains("12am\n3/31/24"));
+        Ok(())
+    }
+
+    #[test]
+    fn döndürülmüş_kategori_etiketleri_vektör_dönüşümü_kullanır() -> Result<(), UplotHatası> {
+        let bileşen = kart_bileşeni(box_whisker_kartı("01_run1k"))?;
+        let kayıt = bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(800, 400)?);
+        let svg = kayıt.içerik();
+
+        assert!(svg.contains("transform=\"rotate(-90.00 "));
+        assert!(!svg.contains("<foreignObject"));
+        Ok(())
+    }
+
+    #[test]
+    fn cursor_snap_kaydı_etkileşim_ve_bileşen_durumunu_korur() -> Result<(), UplotHatası> {
+        let mut bileşen = kart_bileşeni(cursor_snap_kartı())?;
+        let ham = crate::Nokta::yeni(123.4, 234.5);
+        let oturmuş =
+            bileşen
+                .imleç_ızgarasına_oturt(ham)
+                .ok_or(UplotHatası::GeçersizKaynakVeri {
+                    varlık: "cursor-snap",
+                    açıklama: "10x10 imleç ızgarası uygulanamadı".to_string(),
+                })?;
+        assert_ne!(oturmuş, ham);
+        bileşen.canlı_imleci_yenile(oturmuş);
+        bileşen.seçim = Some((
+            crate::Nokta::yeni(120.0, 140.0),
+            crate::Nokta::yeni(360.0, 280.0),
+        ));
+        bileşen.taşıma_başlangıcı = Some(crate::Nokta::yeni(200.0, 200.0));
+        bileşen.boşluk_basılı = true;
+
+        let ana_sahne = bileşen.ana_sahne.clone();
+        let imleç_öncesi = bileşen
+            .imleç
+            .as_ref()
+            .map(|imleç| (imleç.fare, imleç.veri_x, imleç.seri_değerleri.clone()));
+        let seçim_öncesi = bileşen.seçim;
+        let taşıma_öncesi = bileşen.taşıma_başlangıcı;
+        let kayıt =
+            bileşen.svg_kaydı(GpuiSvgKayıtAyarları::yeni(1_920, 600)?.etkileşim_katmanı(true));
+
+        assert!(kayıt.içerik().contains("data-gpui-layer=\"etkilesim\""));
+        assert!(kayıt.içerik().contains("stroke-dasharray="));
+        assert_eq!(
+            bileşen.imleç.as_ref().map(|imleç| (
+                imleç.fare,
+                imleç.veri_x,
+                imleç.seri_değerleri.clone()
+            )),
+            imleç_öncesi
+        );
+        assert_eq!(bileşen.seçim, seçim_öncesi);
+        assert_eq!(bileşen.taşıma_başlangıcı, taşıma_öncesi);
+        assert!(bileşen.boşluk_basılı);
+        assert!(std::rc::Rc::ptr_eq(&bileşen.ana_sahne, &ana_sahne));
         Ok(())
     }
 

@@ -523,21 +523,7 @@ impl Sahne {
                     boyut,
                     hiza,
                 } => {
-                    let çapa = match hiza {
-                        MetinHizası::Başlangıç => "start",
-                        MetinHizası::Orta => "middle",
-                        MetinHizası::Bitiş => "end",
-                    };
-                    let _ = writeln!(
-                        çıktı,
-                        "  <text x=\"{}\" y=\"{}\" fill=\"{}\" font-family=\"Arial, sans-serif\" font-size=\"{}\" text-anchor=\"{}\">{}</text>",
-                        sayı(konum.x),
-                        sayı(konum.y),
-                        kaçış(renk),
-                        sayı(*boyut),
-                        çapa,
-                        kaçış(içerik)
-                    );
+                    svg_metnini_yaz(&mut çıktı, *konum, içerik, renk, *boyut, *hiza, None);
                 }
                 Komut::DöndürülmüşMetin {
                     konum,
@@ -547,24 +533,7 @@ impl Sahne {
                     hiza,
                     açı,
                 } => {
-                    let çapa = match hiza {
-                        MetinHizası::Başlangıç => "start",
-                        MetinHizası::Orta => "middle",
-                        MetinHizası::Bitiş => "end",
-                    };
-                    let _ = writeln!(
-                        çıktı,
-                        "  <text x=\"{}\" y=\"{}\" fill=\"{}\" font-family=\"Arial, sans-serif\" font-size=\"{}\" text-anchor=\"{}\" transform=\"rotate({} {} {})\">{}</text>",
-                        sayı(konum.x),
-                        sayı(konum.y),
-                        kaçış(renk),
-                        sayı(*boyut),
-                        çapa,
-                        sayı(*açı),
-                        sayı(konum.x),
-                        sayı(konum.y),
-                        kaçış(içerik)
-                    );
+                    svg_metnini_yaz(&mut çıktı, *konum, içerik, renk, *boyut, *hiza, Some(*açı));
                 }
             }
         }
@@ -896,8 +865,69 @@ fn gradyan_tanımını_yaz(çıktı: &mut String, kimlik: &str, gradyan: &Doğru
 }
 
 #[cfg(any(feature = "gpui-svg", test))]
+fn svg_metnini_yaz(
+    çıktı: &mut String,
+    konum: Nokta,
+    içerik: &str,
+    renk: &str,
+    boyut: f32,
+    hiza: MetinHizası,
+    açı: Option<f32>,
+) {
+    let çapa = match hiza {
+        MetinHizası::Başlangıç => "start",
+        MetinHizası::Orta => "middle",
+        MetinHizası::Bitiş => "end",
+    };
+    let x = sayı(konum.x);
+    let y = sayı(konum.y);
+    let dönüşüm = açı.map_or_else(String::new, |açı| {
+        format!(" transform=\"rotate({} {} {})\"", sayı(açı), x, y)
+    });
+    let normalleştirilmiş = içerik.replace("\r\n", "\n").replace('\r', "\n");
+    let satırlar = normalleştirilmiş.split('\n').collect::<Vec<_>>();
+
+    let _ = write!(
+        çıktı,
+        "  <text x=\"{}\" y=\"{}\" fill=\"{}\" font-family=\"Arial, sans-serif\" font-size=\"{}\" text-anchor=\"{}\"{}",
+        x,
+        y,
+        kaçış(renk),
+        sayı(boyut),
+        çapa,
+        dönüşüm,
+    );
+    if satırlar.len() == 1 {
+        let _ = writeln!(
+            çıktı,
+            ">{}</text>",
+            kaçış(satırlar.first().copied().unwrap_or_default())
+        );
+        return;
+    }
+
+    çıktı.push_str(" xml:space=\"preserve\">\n");
+    for (indeks, satır) in satırlar.iter().enumerate() {
+        let dikey_adım = if indeks == 0 { "0" } else { "1.2em" };
+        let _ = writeln!(
+            çıktı,
+            "    <tspan x=\"{}\" dy=\"{}\">{}</tspan>",
+            x,
+            dikey_adım,
+            kaçış(satır)
+        );
+    }
+    çıktı.push_str("  </text>\n");
+}
+
+#[cfg(any(feature = "gpui-svg", test))]
 fn sayı(değer: f32) -> String {
-    let yuvarlanmış = (değer * 100.0).round() / 100.0;
+    let güvenli = if değer.is_finite() {
+        f64::from(değer)
+    } else {
+        0.0
+    };
+    let yuvarlanmış = (güvenli * 100.0).round() / 100.0;
     let yuvarlanmış = if yuvarlanmış == 0.0 {
         0.0
     } else {
@@ -913,4 +943,64 @@ fn kaçış(metin: &str) -> String {
         .replace('<', "&lt;")
         .replace('>', "&gt;")
         .replace('"', "&quot;")
+}
+
+#[cfg(test)]
+mod svg_testleri {
+    use super::*;
+
+    #[test]
+    fn çok_satırlı_ve_döndürülmüş_metin_tspan_ile_korunur() {
+        let mut sahne = Sahne::yeni(320, 180);
+        sahne.ekle(Komut::Metin {
+            konum: Nokta::yeni(20.0, 30.0),
+            içerik: "ilk & satır\r\nikinci <satır>\n".to_string(),
+            renk: "#123456".to_string(),
+            boyut: 12.0,
+            hiza: MetinHizası::Başlangıç,
+        });
+        sahne.ekle(Komut::DöndürülmüşMetin {
+            konum: Nokta::yeni(100.0, 120.0),
+            içerik: "sol\nsağ".to_string(),
+            renk: "#654321".to_string(),
+            boyut: 14.0,
+            hiza: MetinHizası::Orta,
+            açı: -90.0,
+        });
+
+        let svg = sahne.test_svg();
+        assert!(svg.contains("xml:space=\"preserve\""));
+        assert!(svg.contains("<tspan x=\"20.00\" dy=\"0\">ilk &amp; satır</tspan>"));
+        assert!(svg.contains("<tspan x=\"20.00\" dy=\"1.2em\">ikinci &lt;satır&gt;</tspan>"));
+        assert!(svg.contains("<tspan x=\"20.00\" dy=\"1.2em\"></tspan>"));
+        assert!(svg.contains("transform=\"rotate(-90.00 100.00 120.00)\""));
+        assert!(svg.contains("<tspan x=\"100.00\" dy=\"0\">sol</tspan>"));
+        assert!(svg.contains("<tspan x=\"100.00\" dy=\"1.2em\">sağ</tspan>"));
+    }
+
+    #[test]
+    fn sonlu_olmayan_sayılar_svg_sözdizimine_sızmaz() {
+        let mut sahne = Sahne::yeni(320, 180);
+        sahne.ekle(Komut::Çizgi {
+            başlangıç: Nokta::yeni(f32::NAN, f32::INFINITY),
+            bitiş: Nokta::yeni(f32::NEG_INFINITY, f32::MAX),
+            renk: "#123456".to_string(),
+            kalınlık: f32::NAN,
+        });
+        sahne.ekle(Komut::DöndürülmüşMetin {
+            konum: Nokta::yeni(f32::INFINITY, f32::NEG_INFINITY),
+            içerik: "güvenli".to_string(),
+            renk: "#654321".to_string(),
+            boyut: f32::INFINITY,
+            hiza: MetinHizası::Orta,
+            açı: f32::NAN,
+        });
+
+        let svg = sahne.test_svg();
+        assert!(!svg.contains("NaN"));
+        assert!(!svg.contains("inf"));
+        assert!(!svg.contains("INF"));
+        assert!(svg.contains("x1=\"0.00\" y1=\"0.00\""));
+        assert!(svg.contains("rotate(0.00 0.00 0.00)"));
+    }
 }
