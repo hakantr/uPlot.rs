@@ -168,6 +168,16 @@ ikonu gömülü `uplot-rs.exe` içerir.
 
 ## Çalıştırma
 
+Depoları aynı üst dizinde tutun; `uPlot.rs`, güncel yerel GPUI yeteneklerini
+doğrudan kardeş `gpui` ve `gpui_kutuphanesi` çalışma ağaçlarından kullanır:
+
+```sh
+git clone https://github.com/hakantr/gpui.git
+git clone https://github.com/hakantr/gpui_kutuphanesi.git
+git clone https://github.com/hakantr/uPlot.rs.git
+cd uPlot.rs
+```
+
 ```sh
 cargo test
 cargo run -p uplot-rs-chart-listesi
@@ -175,6 +185,12 @@ cd uygulamalar/web && NO_COLOR=false trunk serve
 npm --prefix tools/uyum run envanter
 npm --prefix tools/uyum run denetle
 ```
+
+Linux tarayıcısında WebGPU adaptörü oluşturulamıyorsa Pages kataloğu ikinci bir
+renderer'a geçmez. `vulkaninfo --summary` ve `glxinfo -B` ile GPU/Vulkan
+zincirini doğrulayın, tarayıcı donanım hızlandırmasını denetleyin veya yukarıdaki
+`cargo run -p uplot-rs-chart-listesi --release` komutuyla native GPUI
+uygulamasını çalıştırın.
 
 ## Hata yönetimi
 

@@ -53,11 +53,12 @@ mod web {
         if let Some(durum_öğesi) = belge.get_element_by_id("boot-status") {
             if durum == "started" {
                 durum_öğesi.remove();
-            } else {
-                durum_öğesi.set_text_content(Some(mesaj));
-                let _ = durum_öğesi
-                    .set_attribute("role", if durum == "failed" { "alert" } else { "status" });
             }
+        }
+        if let Some(mesaj_öğesi) = belge.get_element_by_id("boot-message") {
+            mesaj_öğesi.set_text_content(Some(mesaj));
+            let _ = mesaj_öğesi
+                .set_attribute("role", if durum == "failed" { "alert" } else { "status" });
         }
     }
 }
@@ -70,4 +71,25 @@ fn main() {
 #[cfg(not(target_family = "wasm"))]
 fn main() {
     eprintln!("Bu uygulama wasm32-unknown-unknown hedefi için hazırlanmıştır.");
+}
+
+#[cfg(test)]
+mod testler {
+    const WEB_KABUĞU: &str = include_str!("../index.html");
+
+    #[test]
+    fn linux_hatası_gpui_çözümünü_ve_yerel_uygulamayı_gösterir() {
+        assert!(WEB_KABUĞU.contains(r#"id="boot-solutions""#));
+        assert!(WEB_KABUĞU.contains("cargo run -p uplot-rs-chart-listesi --release"));
+        assert!(WEB_KABUĞU.contains("actions/workflows/nightly-builds.yml"));
+        assert!(WEB_KABUĞU.contains("vulkaninfo --summary"));
+        assert!(WEB_KABUĞU.contains("glxinfo -B"));
+    }
+
+    #[test]
+    fn web_kabuğu_ikinci_renderer_veya_svg_yedeği_sunmaz() {
+        assert!(!WEB_KABUĞU.contains("svg-fallback"));
+        assert!(!WEB_KABUĞU.contains("renderer=svg"));
+        assert!(!WEB_KABUĞU.contains("GPU’suz SVG"));
+    }
 }

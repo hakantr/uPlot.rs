@@ -167,6 +167,17 @@ Windows `uplot-rs.exe` with the icon embedded.
 
 ## Running locally
 
+Keep the repositories under the same parent directory. `uPlot.rs` consumes the
+current local GPUI capabilities directly from the sibling `gpui` and
+`gpui_kutuphanesi` worktrees:
+
+```sh
+git clone https://github.com/hakantr/gpui.git
+git clone https://github.com/hakantr/gpui_kutuphanesi.git
+git clone https://github.com/hakantr/uPlot.rs.git
+cd uPlot.rs
+```
+
 ```sh
 cargo test
 cargo run -p uplot-rs-chart-listesi
@@ -174,6 +185,12 @@ cd uygulamalar/web && NO_COLOR=false trunk serve
 npm --prefix tools/uyum run envanter
 npm --prefix tools/uyum run denetle
 ```
+
+If a Linux browser cannot create a WebGPU adapter, the Pages catalogue does not
+switch to another renderer. Verify the GPU/Vulkan chain with
+`vulkaninfo --summary` and `glxinfo -B`, check browser hardware acceleration,
+or run the native GPUI app with
+`cargo run -p uplot-rs-chart-listesi --release`.
 
 ## Error handling
 

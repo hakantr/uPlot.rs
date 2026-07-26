@@ -100,6 +100,10 @@ const webGirişi = readFileSync(
   resolve(kok, "uygulamalar/web/src/main.rs"),
   "utf8",
 );
+const webKabuğu = readFileSync(
+  resolve(kok, "uygulamalar/web/index.html"),
+  "utf8",
+);
 if (
   !ortakKatalog.includes('.id("kart-listesi")') ||
   !ortakKatalog.includes(".min_h_0()") ||
@@ -120,6 +124,17 @@ if (
   !webGirişi.includes("katalog_başlat(cx)")
 ) {
   hata("GPUI Web girişi ortak Rust kart kataloğunu ve eylemlerini kullanmıyor");
+}
+if (
+  !webGirişi.includes('get_element_by_id("boot-message")') ||
+  !webKabuğu.includes('id="boot-solutions"') ||
+  !webKabuğu.includes("cargo run -p uplot-rs-chart-listesi --release") ||
+  !webKabuğu.includes("vulkaninfo --summary") ||
+  webKabuğu.includes("svg-fallback")
+) {
+  hata(
+    "GPUI Web hata yüzeyi yerel GPUI/WebGPU çözümünü göstermiyor veya ikinci renderer sunuyor",
+  );
 }
 for (const kimlik of ["zoom-wheel", "zoom-touch"]) {
   if (ortakKatalog.includes(`.id("kart-${kimlik}")`)) {
