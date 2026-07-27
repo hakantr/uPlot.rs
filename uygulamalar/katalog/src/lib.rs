@@ -7065,38 +7065,43 @@ impl Render for ChartListesi {
                         )
                 }))
         } else if aktif_kart == KartKimliği::LatencyHeatmap {
-            let yüzey = |örnek| {
-                self.latency_heatmap_grafikleri
-                    .iter()
-                    .find(|(kimlik, _)| *kimlik == örnek)
-                    .map(|(_, grafik)| grafik.clone())
-            };
-            çizim_tabanı.flex_none().h(px(3_250.0)).p_2().children(
-                LatencyHeatmapÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                    div()
-                        .id(SharedString::from(format!(
-                            "latency-heatmap-{}-surface",
-                            örnek.kimlik()
-                        )))
-                        .flex_none()
-                        .w_full()
-                        .h(px(630.0))
-                        .mb_3()
-                        .overflow_x_scroll()
-                        .yalnız_tekerlek_ekseninde_kaydır()
-                        .child(
-                            div()
-                                .text_sm()
-                                .font_weight(FontWeight::SEMIBOLD)
-                                .child(örnek.başlık()),
-                        )
-                        .child(
-                            div()
-                                .w(px(1_800.0))
-                                .h(px(600.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
-                        )
-                }),
+            çizim_tabanı.flex_none().h(px(670.0)).p_2().child(
+                uniform_list(
+                    "latency-heatmap-yuzey-listesi",
+                    LatencyHeatmapÖrneği::TÜMÜ.len(),
+                    cx.processor(|bu, aralık: Range<usize>, _pencere, _cx| {
+                        aralık
+                            .filter_map(|indeks| {
+                                let örnek = LatencyHeatmapÖrneği::TÜMÜ.get(indeks).copied()?;
+                                let grafik = bu
+                                    .latency_heatmap_grafikleri
+                                    .iter()
+                                    .find(|(kimlik, _)| *kimlik == örnek)
+                                    .map(|(_, grafik)| grafik.clone())?;
+                                Some(
+                                    div()
+                                        .id(SharedString::from(format!(
+                                            "latency-heatmap-{}-surface",
+                                            örnek.kimlik()
+                                        )))
+                                        .flex_none()
+                                        .w_full()
+                                        .h(px(630.0))
+                                        .overflow_x_scroll()
+                                        .yalnız_tekerlek_ekseninde_kaydır()
+                                        .child(
+                                            div()
+                                                .text_sm()
+                                                .font_weight(FontWeight::SEMIBOLD)
+                                                .child(örnek.başlık()),
+                                        )
+                                        .child(div().w(px(1_800.0)).h(px(600.0)).child(grafik)),
+                                )
+                            })
+                            .collect::<Vec<_>>()
+                    }),
+                )
+                .h_full(),
             )
         } else if aktif_kart == KartKimliği::LinePaths {
             let yüzey = |örnek| {

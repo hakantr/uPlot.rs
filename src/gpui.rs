@@ -3383,6 +3383,16 @@ fn sahneyi_önbellekli_boya(
     pencere: &mut Window,
     uygulama: &mut App,
 ) {
+    // GPUI cached-view anahtarı kaydırma sırasında bounds/content-mask ile
+    // değişebilir. Yüzey bütünüyle görünür alanın dışındaysa retained komutları
+    // yeniden sahneye eklemek hiçbir piksel üretemez; özellikle aynı sayfadaki
+    // çok yüzeyli örneklerde bu kısa devre off-screen grafik maliyetini kaldırır.
+    if sınırlar
+        .intersect(&pencere.content_mask().bounds)
+        .is_empty()
+    {
+        return;
+    }
     yol_önbelleği.yüzeyi_hazırla(sahne, sınırlar);
     let fiziksel_ölçek = pencere.scale_factor();
     let (kaynak_g, kaynak_y) = sahne.boyut();

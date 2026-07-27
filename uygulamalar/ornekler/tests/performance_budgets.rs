@@ -9,8 +9,8 @@ use uplot_rs_gpui_ornekler::{
     GpuiGrafik, GpuiSvgKayıtAyarları, Grafik, LatencyHeatmapÖrneği, MultiBarsÖrneği, SineAkışı,
     SparseÖrneği, SyncCursorÖrneği, TekerlekEkseni, UplotHatası,
     diagnostics::{GpuiRetainedBoyaÖlçer, Komut},
-    latency_heatmap_kartı, mass_spectrum_kartı, multi_bars_kartı, resize_kartı, sparse_kartı,
-    sync_cursor_kartı,
+    latency_heatmap_kartları, latency_heatmap_kartı, mass_spectrum_kartı, multi_bars_kartı,
+    resize_kartı, sparse_kartı, sync_cursor_kartı,
 };
 
 const ÖLÇÜM_TURU: usize = 180;
@@ -475,5 +475,27 @@ fn phase_12_release_performans_kapıları() -> Result<(), UplotHatası> {
         svg.byte_değeri().len()
     );
     eprintln!("Phase 12 retained 1000 tur | alloc={retained_tahsis:?}");
+    Ok(())
+}
+
+#[test]
+fn latency_heatmap_beş_yüzey_kurulum_bütçesi() -> Result<(), UplotHatası> {
+    if cfg!(debug_assertions) {
+        return Ok(());
+    }
+
+    let başlangıç = Instant::now();
+    let yüzeyler = latency_heatmap_kartları(5.0, 0.0)?
+        .into_iter()
+        .map(|(_, seçenekler, veri)| Grafik::yeni(seçenekler, veri).map(GpuiGrafik::yeni))
+        .collect::<Result<Vec<_>, _>>()?;
+    let süre = başlangıç.elapsed();
+
+    assert_eq!(yüzeyler.len(), 5);
+    eprintln!("Latency Heatmap 5 yüzey GpuiGrafik kurulumu: {süre:?}");
+    assert!(
+        süre <= Duration::from_millis(250),
+        "Latency Heatmap ailesi kurulumu {süre:?}"
+    );
     Ok(())
 }
