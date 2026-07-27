@@ -2482,14 +2482,14 @@ impl Grafik {
         Some((x, y))
     }
 
-    pub fn tekerlek_etkileşimi_ayarla(&mut self, etkin: bool) {
-        self.etkileşim.tekerlek_etkileşimi_ayarla(etkin);
+    pub fn tekerlek_etkileşimi_ayarla(&mut self, etkin: bool) -> bool {
+        self.etkileşim.tekerlek_etkileşimi_ayarla(etkin)
     }
 
     /// GPUI yüzeyinde tekerlek yakınlaştırmasının grafik odağı alınmadan da
     /// çalışıp çalışmayacağını değiştirir.
-    pub fn tekerlek_odaksız_etkileşimi_ayarla(&mut self, etkin: bool) {
-        self.etkileşim.tekerlek_odaksız_etkileşimi_ayarla(etkin);
+    pub fn tekerlek_odaksız_etkileşimi_ayarla(&mut self, etkin: bool) -> bool {
+        self.etkileşim.tekerlek_odaksız_etkileşimi_ayarla(etkin)
     }
 
     /// Verilen yüzey koordinatında sürüklenebilir bir eksen olup olmadığını
@@ -3716,11 +3716,8 @@ impl Grafik {
         dikey_oran: f64,
         çizim_boyutu: f64,
     ) -> bool {
-        let Some(düzen) = self.seçenekler.odak else {
+        if self.seçenekler.odak.is_none() {
             return false;
-        };
-        if düzen.yakınlık < 0.0 || !çizim_boyutu.is_finite() || çizim_boyutu <= 0.0 {
-            return self.odağı_ayarla(None);
         }
         let x_oranı = if self.seçenekler.x_dikey {
             1.0 - dikey_oran
@@ -3730,6 +3727,42 @@ impl Grafik {
         let Some((_, değerler)) = self.en_yakın_noktalar(x_oranı) else {
             return self.odağı_ayarla(None);
         };
+        self.imleç_odağını_değerlerle_güncelle(yatay_oran, dikey_oran, çizim_boyutu, değerler)
+    }
+
+    /// Hazır cursor çözümündeki değerleri kullanarak ikinci bir en-yakın-X
+    /// araması ve seri vektörü tahsisi yapmadan focus durumunu günceller.
+    pub(crate) fn imleç_odağını_çözümle_güncelle(
+        &mut self,
+        yatay_oran: f64,
+        dikey_oran: f64,
+        çizim_boyutu: f64,
+        çözüm: &İmleçÇözümü,
+    ) -> bool {
+        self.imleç_odağını_değerlerle_güncelle(
+            yatay_oran,
+            dikey_oran,
+            çizim_boyutu,
+            çözüm
+                .seriler
+                .iter()
+                .map(|örnek| örnek.map(|örnek| örnek.değer)),
+        )
+    }
+
+    fn imleç_odağını_değerlerle_güncelle(
+        &mut self,
+        yatay_oran: f64,
+        dikey_oran: f64,
+        çizim_boyutu: f64,
+        değerler: impl IntoIterator<Item = Option<f64>>,
+    ) -> bool {
+        let Some(düzen) = self.seçenekler.odak else {
+            return false;
+        };
+        if düzen.yakınlık < 0.0 || !çizim_boyutu.is_finite() || çizim_boyutu <= 0.0 {
+            return self.odağı_ayarla(None);
+        }
         let x_aralığı = self.görünür_x_aralığı();
         let fare_y = if self.seçenekler.x_dikey {
             yatay_oran.clamp(0.0, 1.0) * çizim_boyutu

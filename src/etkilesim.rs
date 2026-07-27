@@ -164,14 +164,22 @@ impl EtkileşimDenetleyicisi {
         self.ayarlar
     }
 
-    pub(crate) fn tekerlek_etkileşimi_ayarla(&mut self, etkin: bool) {
+    pub(crate) fn tekerlek_etkileşimi_ayarla(&mut self, etkin: bool) -> bool {
+        if self.ayarlar.tekerlek_etkileşimi == etkin {
+            return false;
+        }
         self.ayarlar.tekerlek_etkileşimi = etkin;
         self.tekerleği_sıfırla();
+        true
     }
 
-    pub(crate) fn tekerlek_odaksız_etkileşimi_ayarla(&mut self, etkin: bool) {
+    pub(crate) fn tekerlek_odaksız_etkileşimi_ayarla(&mut self, etkin: bool) -> bool {
+        if self.ayarlar.tekerlek_odaksız_etkileşim == etkin {
+            return false;
+        }
         self.ayarlar.tekerlek_odaksız_etkileşim = etkin;
         self.tekerleği_sıfırla();
+        true
     }
 
     pub(crate) fn seçim_yakınlaştır(

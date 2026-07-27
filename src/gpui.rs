@@ -184,6 +184,10 @@ fn imleç_lejant_verisi_aynı(sol: Option<&İmleçDurumu>, sağ: Option<&İmleç
 #[derive(Clone, Copy, Debug)]
 pub enum GpuiGrafikOlayı {
     DurumDeğişti,
+    /// İmlecin görsel konumu değişti. Senkron yüzeyler bu yüksek frekanslı
+    /// olayı kullanır; dış lejantlar yalnız örnek değeri değiştiğinde yayılan
+    /// [`GpuiGrafikOlayı::İmleçDeğişti`] olayını dinleyebilir.
+    İmleçKonumuDeğişti,
     /// Görünür ölçek değişti. `fare_basma_bırakma` uPlot sync filtresinin
     /// seçim yakınlaştırmasına uygulanabilmesi için olay nedenini korur.
     GörünümDeğişti {
@@ -346,7 +350,7 @@ impl GpuiGrafikGrubu {
             .collect::<Vec<_>>();
         self.yayılıyor = true;
         match olay {
-            GpuiGrafikOlayı::İmleçDeğişti if self.ayarlar.imleç => {
+            GpuiGrafikOlayı::İmleçKonumuDeğişti if self.ayarlar.imleç => {
                 let yayın = {
                     let kaynak = kaynak.read(cx);
                     kaynak.oransal_imleç_yayını().map(|(x, y, seri)| {
@@ -507,6 +511,8 @@ pub struct GpuiGrafik {
     bilgi_balonu_hazır: bool,
     bilgi_balonu_beklemesi: Option<Task<()>>,
     bilgi_balonu_son_hareket: Option<Instant>,
+    #[cfg(test)]
+    etkileşim_sahne_hazırlama_sayısı: u64,
 }
 
 struct GpuiAnaYüzey {
@@ -841,6 +847,8 @@ impl GpuiGrafik {
             bilgi_balonu_hazır: false,
             bilgi_balonu_beklemesi: None,
             bilgi_balonu_son_hareket: None,
+            #[cfg(test)]
+            etkileşim_sahne_hazırlama_sayısı: 0,
         }
     }
 
@@ -1438,14 +1446,24 @@ impl GpuiGrafik {
         değişti
     }
 
-    pub fn tekerlek_etkileşimi_ayarla(&mut self, etkin: bool, cx: &mut Context<Self>) {
-        self.grafik.tekerlek_etkileşimi_ayarla(etkin);
-        Self::bildir(cx);
+    pub fn tekerlek_etkileşimi_ayarla(&mut self, etkin: bool, cx: &mut Context<Self>) -> bool {
+        let değişti = self.grafik.tekerlek_etkileşimi_ayarla(etkin);
+        if değişti {
+            cx.notify();
+        }
+        değişti
     }
 
-    pub fn tekerlek_odaksız_etkileşimi_ayarla(&mut self, etkin: bool, cx: &mut Context<Self>) {
-        self.grafik.tekerlek_odaksız_etkileşimi_ayarla(etkin);
-        Self::bildir(cx);
+    pub fn tekerlek_odaksız_etkileşimi_ayarla(
+        &mut self,
+        etkin: bool,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let değişti = self.grafik.tekerlek_odaksız_etkileşimi_ayarla(etkin);
+        if değişti {
+            cx.notify();
+        }
+        değişti
     }
 
     pub fn kırılım_noktalarını_göster(
@@ -1465,7 +1483,8 @@ impl GpuiGrafik {
     ) -> bool {
         let değişti = self.grafik.imleç_noktalarını_göster(görünür);
         if değişti {
-            self.grafik_bildir(cx);
+            self.etkileşim_yüzeyini_yenile(cx);
+            cx.notify();
         }
         değişti
     }
@@ -1965,6 +1984,11 @@ impl GpuiGrafik {
     }
 
     fn etkileşim_sahnesini_hazırla(&mut self) -> Option<Rc<Sahne>> {
+        #[cfg(test)]
+        {
+            self.etkileşim_sahne_hazırlama_sayısı =
+                self.etkileşim_sahne_hazırlama_sayısı.saturating_add(1);
+        }
         let mut yeni = self
             .etkileşim_sahne_tamponu
             .take()
@@ -2004,8 +2028,6 @@ impl GpuiGrafik {
                 yüzey.sahneyi_ayarla(sahne);
                 cx.notify();
             });
-        } else {
-            cx.notify();
         }
         self.etkileşim_sahne_tamponunu_geri_al(eski);
         true
@@ -2105,7 +2127,13 @@ impl GpuiGrafik {
         let yatay = f64::from((fare.x - sol) / (sağ - sol));
         let dikey = f64::from((fare.y - üst) / (alt - üst));
         let x_dikey = self.grafik.x_dikey_mi();
-        let odak_değişti = self.grafik.imleç_odağını_güncelle(
+        let x_oranı = if x_dikey { 1.0 - dikey } else { yatay };
+        let x_uzunluğu = if x_dikey { alt - üst } else { sağ - sol };
+        let Some(çözüm) = self.grafik.imleç_çözümü(x_oranı, f64::from(x_uzunluğu)) else {
+            self.imleç = None;
+            return self.grafik.imleç_odağını_temizle();
+        };
+        let odak_değişti = self.grafik.imleç_odağını_çözümle_güncelle(
             yatay,
             dikey,
             if x_dikey {
@@ -2113,13 +2141,8 @@ impl GpuiGrafik {
             } else {
                 f64::from(alt - üst)
             },
+            &çözüm,
         );
-        let x_oranı = if x_dikey { 1.0 - dikey } else { yatay };
-        let x_uzunluğu = if x_dikey { alt - üst } else { sağ - sol };
-        let Some(çözüm) = self.grafik.imleç_çözümü(x_oranı, f64::from(x_uzunluğu)) else {
-            self.imleç = None;
-            return self.grafik.imleç_odağını_temizle() || odak_değişti;
-        };
         let seri_x_değerleri = çözüm
             .seriler
             .iter()
@@ -2212,10 +2235,12 @@ impl GpuiGrafik {
         }));
     }
 
-    fn bilgi_balonu_beklemesini_iptal_et(&mut self) {
+    fn bilgi_balonu_beklemesini_iptal_et(&mut self) -> bool {
+        let görünürdü = self.bilgi_balonu_hazır;
         self.bilgi_balonu_hazır = false;
         self.bilgi_balonu_beklemesi = None;
         self.bilgi_balonu_son_hareket = None;
+        görünürdü
     }
 
     fn bilgi_balonu_seri_indeksi(&self, imleç: &İmleçDurumu) -> Option<usize> {
@@ -2483,6 +2508,7 @@ impl GpuiGrafik {
             });
         }
         self.eksen_sahnesini_yenile(cx);
+        self.etkileşim_yüzeyini_yenile(cx);
     }
 
     /// Odak yalnız seri sunumunu değiştirir. Sabit arka planı ve eksen/grid
@@ -2544,7 +2570,7 @@ impl GpuiGrafik {
 
     #[cfg(test)]
     fn imleç_bildir(cx: &mut Context<Self>) {
-        cx.emit(GpuiGrafikOlayı::İmleçDeğişti);
+        cx.emit(GpuiGrafikOlayı::İmleçKonumuDeğişti);
         cx.notify();
     }
 }
@@ -2589,7 +2615,15 @@ impl Render for GpuiGrafik {
                 })
             })
             .clone();
-        self.etkileşim_yüzeyini_yenile(cx);
+        // İlk yerleşimde etkileşim yüzeyi henüz yoktur. Sahneyi bir kez
+        // hazırlayıp yüzeye doğrudan veriyoruz; `cx.notify()` ile ikinci bir
+        // ilk-frame renderı üretmiyoruz. Sonraki etkileşimler yüzeyi olay
+        // işleyicilerinden, yalnız durum gerçekten değiştiğinde günceller.
+        if self.etkileşim_yüzeyi.is_none()
+            && let Some(eski) = self.etkileşim_sahnesini_hazırla()
+        {
+            self.etkileşim_sahne_tamponunu_geri_al(eski);
+        }
         let etkileşim_yüzeyi = self
             .etkileşim_yüzeyi
             .get_or_insert_with(|| {
@@ -2917,32 +2951,38 @@ impl Render for GpuiGrafik {
             }))
             .on_key_down(cx.listener(|bu, olay: &KeyDownEvent, _, cx| {
                 let tuş = olay.keystroke.key.as_str();
-                if tuş == "space" {
+                if tuş == "space" && !bu.boşluk_basılı {
                     bu.boşluk_basılı = true;
                     bu.seçim = None;
                     bu.açıklama_seçimi = false;
                     cx.stop_propagation();
-                    GpuiGrafik::bildir(cx);
+                    bu.etkileşim_yüzeyini_yenile(cx);
+                    cx.notify();
                 }
             }))
             .on_key_up(cx.listener(|bu, olay: &KeyUpEvent, _, cx| {
-                if olay.keystroke.key.as_str() == "space" {
+                if olay.keystroke.key.as_str() == "space" && bu.boşluk_basılı {
                     bu.boşluk_basılı = false;
                     bu.taşıma_başlangıcı = None;
                     bu.grafik.taşımayı_bitir();
                     cx.stop_propagation();
-                    GpuiGrafik::bildir(cx);
+                    bu.etkileşim_yüzeyini_yenile(cx);
+                    cx.notify();
                 }
             }))
             .on_mouse_move(cx.listener(|bu, olay: &MouseMoveEvent, _window, cx| {
-                let önceki_imleç = bu.imleç.clone();
-                let önceki_açıklama = bu.açıklama_vuruşu.clone();
+                // Önceki seri vektörlerini her pointer olayında deep-clone
+                // etmeyiz. Durumu geçici olarak sahiplenmek karşılaştırmayı
+                // tahsissiz tutar; aşağıdaki dallar yeni durumu yerleştirir.
+                let mut önceki_imleç = bu.imleç.take();
+                let mut önceki_açıklama = bu.açıklama_vuruşu.take();
                 let önceki_seçim = bu.seçim;
                 let önceki_eksen = bu.eksen_üzerinde;
                 let önceki_hata = bu.hata.clone();
                 let bilgi_balonu_görünürdü = bu.bilgi_balonu_hazır;
                 let mut ana_sahne_değişti = false;
                 let mut görünüm_değişti = false;
+                let mut imleç_korundu = false;
                 if bu.grafik.eksen_sürükleniyor()
                     && let Some(konum) = bu.sahne_konumu(olay.position)
                 {
@@ -2959,6 +2999,8 @@ impl Render for GpuiGrafik {
                             bu.hata = Some(format!("Eksen ölçeği sürüklenemedi: {hata}"));
                         }
                     }
+                    bu.imleç = None;
+                    bu.açıklama_vuruşu = None;
                 } else if let Some(başlangıç) = bu.taşıma_başlangıcı
                     && let Some(konum) = bu.sahne_konumu(olay.position)
                 {
@@ -2977,6 +3019,13 @@ impl Render for GpuiGrafik {
                     }
                     bu.imleç = None;
                     bu.açıklama_vuruşu = None;
+                } else if bu.imleç_kilitli {
+                    // Kilitli imleç dışarıdan gelen senkron konumunu korur.
+                    // Yukarıdaki `take`, normal akışta pahalı vektör
+                    // klonlarını önler; bu dalda sahipliği geri veriyoruz.
+                    bu.imleç = önceki_imleç.take();
+                    bu.açıklama_vuruşu = önceki_açıklama.take();
+                    imleç_korundu = true;
                 } else {
                     ana_sahne_değişti = bu.imleci_güncelle(olay.position);
                 }
@@ -3014,10 +3063,14 @@ impl Render for GpuiGrafik {
                         .eksen_vuruşu_boyutta(genişlik, yükseklik, konum.x, konum.y)
                         .is_some();
                 }
-                let imleç_değişti = bu.imleç != önceki_imleç;
-                let lejant_değişti =
-                    !imleç_lejant_verisi_aynı(önceki_imleç.as_ref(), bu.imleç.as_ref());
-                let açıklama_değişti = bu.açıklama_vuruşu != önceki_açıklama;
+                let imleç_değişti = !imleç_korundu && bu.imleç != önceki_imleç;
+                let lejant_değişti = !imleç_korundu
+                    && !imleç_lejant_verisi_aynı(
+                        önceki_imleç.as_ref(),
+                        bu.imleç.as_ref(),
+                    );
+                let açıklama_değişti =
+                    !imleç_korundu && bu.açıklama_vuruşu != önceki_açıklama;
                 let seçim_değişti = bu.seçim != önceki_seçim;
                 let etkileşim_değişti = imleç_değişti || açıklama_değişti || seçim_değişti;
                 if imleç_değişti {
@@ -3032,6 +3085,9 @@ impl Render for GpuiGrafik {
                 }
                 if etkileşim_değişti {
                     bu.etkileşim_yüzeyini_yenile(cx);
+                }
+                if imleç_değişti {
+                    cx.emit(GpuiGrafikOlayı::İmleçKonumuDeğişti);
                 }
                 if lejant_değişti || (ana_sahne_değişti && !görünüm_değişti) {
                     cx.emit(GpuiGrafikOlayı::İmleçDeğişti);
@@ -3063,7 +3119,7 @@ impl Render for GpuiGrafik {
                 if !tekerlek_kabul_edildi && !dokunma_kabul_edildi {
                     return;
                 }
-                bu.bilgi_balonu_beklemesini_iptal_et();
+                let bilgi_balonu_görünürdü = bu.bilgi_balonu_beklemesini_iptal_et();
                 cx.stop_propagation();
                 let datum_değişti = bu.grafik.ölçüm_datumlarını_temizle();
                 let şimdi = cx.background_executor().now();
@@ -3072,18 +3128,20 @@ impl Render for GpuiGrafik {
                     bu.görünüm_bildir(false, cx);
                 } else if datum_değişti {
                     bu.grafik_bildir(cx);
+                } else if bilgi_balonu_görünürdü {
+                    cx.notify();
                 }
             }))
             .on_pinch(cx.listener(|bu, olay: &PinchEvent, _, cx| {
-                bu.bilgi_balonu_beklemesini_iptal_et();
+                let bilgi_balonu_görünürdü = bu.bilgi_balonu_beklemesini_iptal_et();
                 let datum_değişti = bu.grafik.ölçüm_datumlarını_temizle();
                 let görünüm_değişti = bu.dokunma_yakınlaştır(olay);
                 if görünüm_değişti {
                     bu.görünüm_bildir(false, cx);
                 } else if datum_değişti {
                     bu.grafik_bildir(cx);
-                } else {
-                    GpuiGrafik::bildir(cx);
+                } else if bilgi_balonu_görünürdü {
+                    cx.notify();
                 }
             }))
             .on_mouse_exit(cx.listener(|bu, _: &MouseExitEvent, _, cx| {
@@ -3097,6 +3155,7 @@ impl Render for GpuiGrafik {
                         bu.veri_sahnesini_yenile(cx);
                     }
                     bu.etkileşim_yüzeyini_yenile(cx);
+                    cx.emit(GpuiGrafikOlayı::İmleçKonumuDeğişti);
                     cx.emit(GpuiGrafikOlayı::İmleçDeğişti);
                     cx.notify();
                 }
@@ -3104,7 +3163,10 @@ impl Render for GpuiGrafik {
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(|bu, olay: &MouseDownEvent, window, cx| {
-                    bu.bilgi_balonu_beklemesini_iptal_et();
+                    let bilgi_balonu_görünürdü = bu.bilgi_balonu_beklemesini_iptal_et();
+                    let önceki_seçim = bu.seçim;
+                    let önceki_taşıma = bu.taşıma_başlangıcı;
+                    let önceki_eksen_sürükleniyordu = bu.grafik.eksen_sürükleniyor();
                     bu.tooltip_tıklaması_sürüklendi = false;
                     bu.tooltip_tıklama_başlangıcı =
                         bu.sahne_konumu(olay.position).and_then(|konum| {
@@ -3161,8 +3223,13 @@ impl Render for GpuiGrafik {
                         } else {
                             bu.grafik_bildir(cx);
                         }
-                    } else {
-                        GpuiGrafik::bildir(cx);
+                    } else if önceki_seçim != bu.seçim
+                        || önceki_taşıma != bu.taşıma_başlangıcı
+                        || önceki_eksen_sürükleniyordu != bu.grafik.eksen_sürükleniyor()
+                        || bilgi_balonu_görünürdü
+                    {
+                        bu.etkileşim_yüzeyini_yenile(cx);
+                        cx.notify();
                     }
                 }),
             )
@@ -3187,19 +3254,23 @@ impl Render for GpuiGrafik {
                     };
                     if bu.grafik.eksen_sürükleniyor() {
                         bu.grafik.eksen_sürüklemeyi_bitir();
-                        GpuiGrafik::bildir(cx);
+                        cx.notify();
                         return;
                     }
                     if bu.taşıma_başlangıcı.take().is_some() {
                         bu.grafik.taşımayı_bitir();
-                        GpuiGrafik::bildir(cx);
+                        cx.notify();
                         return;
                     }
+                    let seçim_vardı = bu.seçim.is_some();
                     let ana_sahne_değişti = bu.seçimi_tamamla(cx);
+                    if seçim_vardı {
+                        bu.etkileşim_yüzeyini_yenile(cx);
+                    }
                     if ana_sahne_değişti {
                         bu.görünüm_bildir(true, cx);
-                    } else {
-                        GpuiGrafik::bildir(cx);
+                    } else if seçim_vardı {
+                        cx.notify();
                     }
                     if let Some(url) = tooltip_tıklaması {
                         cx.open_url(&url);
@@ -3224,9 +3295,11 @@ impl Render for GpuiGrafik {
                     let seçim_vardı = bu.seçim.is_some();
                     let görünüm_değişti = bu.seçimi_tamamla(cx);
                     if görünüm_değişti {
+                        bu.etkileşim_yüzeyini_yenile(cx);
                         bu.görünüm_bildir(true, cx);
                     } else if durum_değişti || seçim_vardı {
-                        GpuiGrafik::bildir(cx);
+                        bu.etkileşim_yüzeyini_yenile(cx);
+                        cx.notify();
                     }
                 }),
             )
@@ -4080,11 +4153,10 @@ fn sahneyi_önbellekli_boya(
                 // GPUI 0.2 metin primitifinde dönüşüm yoktur. Glifleri tek tek
                 // dikey bir satırda boyamak, eksen etiketini ayrı bir DOM/öğe
                 // ağına çevirmeden aynı hafif sahne katmanında tutar.
-                let karakterler = içerik.chars().rev().collect::<Vec<_>>();
+                let karakter_sayısı = içerik.chars().count();
                 let adım = *boyut * 0.9;
-                let başlangıç_y =
-                    konum.y - (karakterler.len().saturating_sub(1) as f32 * adım) / 2.0;
-                for (indeks, karakter) in karakterler.into_iter().enumerate() {
+                let başlangıç_y = konum.y - (karakter_sayısı.saturating_sub(1) as f32 * adım) / 2.0;
+                for (indeks, karakter) in içerik.chars().rev().enumerate() {
                     let mut hasher = DefaultHasher::new();
                     karakter.hash(&mut hasher);
                     let metin_kimliği = hasher.finish();
@@ -4536,6 +4608,29 @@ mod testler {
     }
 
     #[::gpui::test]
+    fn değişmeyen_entity_renderı_etkileşim_sahnesini_tekrar_kurmaz(
+        cx: &mut ::gpui::TestAppContext,
+    ) {
+        let kart = test_çizgi_kartı(800, 600);
+        assert!(kart.is_ok());
+        let Ok((seçenekler, veri)) = kart else {
+            return;
+        };
+        let grafik = Grafik::yeni(seçenekler, veri);
+        assert!(grafik.is_ok());
+        let Ok(grafik) = grafik else { return };
+        let (grafik, cx) = cx.add_window_view(|_, _| GpuiGrafik::yeni(grafik));
+        let ilk = grafik.read_with(cx, |grafik, _| grafik.etkileşim_sahne_hazırlama_sayısı);
+
+        grafik.update(cx, |_, cx| cx.notify());
+        cx.run_until_parked();
+
+        grafik.read_with(cx, |grafik, _| {
+            assert_eq!(grafik.etkileşim_sahne_hazırlama_sayısı, ilk);
+        });
+    }
+
+    #[::gpui::test]
     fn bilgi_balonu_en_yakın_imleçte_bir_saniye_sonra_hazır_olur(
         cx: &mut ::gpui::TestAppContext,
     ) {
@@ -4876,6 +4971,57 @@ mod testler {
             assert_eq!(sonuç, Ok(true));
         });
         assert!(!hedef.read_with(cx, |hedef, _| hedef.grafik().seri_görünür_mü(0)));
+    }
+
+    #[::gpui::test]
+    fn grup_imleci_aynı_veri_indeksinde_de_oransal_konumu_izler(cx: &mut ::gpui::TestAppContext) {
+        let kaynak = test_grup_kartı(
+            800,
+            400,
+            vec![0.0, 1.0, 2.0],
+            vec![Some(0.0), Some(1.0), Some(2.0)],
+            "Kaynak",
+        );
+        let hedef = test_grup_kartı(
+            600,
+            240,
+            vec![10.0, 20.0, 30.0],
+            vec![Some(5.0), Some(6.0), Some(7.0)],
+            "Hedef",
+        );
+        assert!(kaynak.is_ok() && hedef.is_ok());
+        let (Ok(kaynak), Ok(hedef)) = (kaynak, hedef) else {
+            return;
+        };
+        let (kaynak, cx) = cx.add_window_view(|_, _| GpuiGrafik::yeni(kaynak));
+        let (hedef, _grup) = cx.update(|_, cx| {
+            let hedef = cx.new(|_| GpuiGrafik::yeni(hedef));
+            let grup = cx.new(|_| GpuiGrafikGrubu::yeni(GpuiGrafikGrupAyarları::default()));
+            grup.update(cx, |grup, cx| {
+                assert!(grup.grafik_ekle("kaynak", kaynak.clone(), cx));
+                assert!(grup.grafik_ekle("hedef", hedef.clone(), cx));
+            });
+            (hedef, grup)
+        });
+        let sınırlar = kaynak.read_with(cx, |grafik, _| grafik.çizim_sınırları.get());
+        assert!(sınırlar.is_some());
+        let Some(sınırlar) = sınırlar else {
+            return;
+        };
+        let ilk = point(sınırlar.center().x, sınırlar.center().y - px(12.0));
+        let ikinci = point(sınırlar.center().x, sınırlar.center().y + px(12.0));
+
+        cx.simulate_mouse_move(ilk, None, ::gpui::Modifiers::none());
+        let ilk_y = hedef
+            .read_with(cx, |grafik, _| grafik.oransal_imleç_yayını())
+            .map(|(_, y, _)| y);
+        cx.simulate_mouse_move(ikinci, None, ::gpui::Modifiers::none());
+        let ikinci_y = hedef
+            .read_with(cx, |grafik, _| grafik.oransal_imleç_yayını())
+            .map(|(_, y, _)| y);
+
+        assert!(ilk_y.is_some() && ikinci_y.is_some());
+        assert_ne!(ilk_y.map(f64::to_bits), ikinci_y.map(f64::to_bits));
     }
 
     #[test]

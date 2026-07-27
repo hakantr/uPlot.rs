@@ -4,13 +4,14 @@
 use gpui::ClipboardItem;
 use gpui::{
     AccessibleAction, App, ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement,
-    KeyBinding, Render, Role, ScrollStrategy, SharedString, Task, UniformListScrollHandle, Window,
-    div, prelude::*, px, rgb, rgba, uniform_list,
+    KeyBinding, Render, Role, ScrollStrategy, SharedString, StyleRefinement, Task,
+    UniformListScrollHandle, Window, div, prelude::*, px, rgb, rgba, uniform_list,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
     MetinAlaniOlayi, PlatformPencere,
 };
+use std::collections::HashSet;
 use std::ops::Range;
 use std::time::Duration;
 use uplot_rs::gpui::{
@@ -87,6 +88,13 @@ use web_time::Instant;
 mod web_köprüsü;
 
 gpui::actions!(uplot_katalog, [KartıEtkinleştir]);
+
+/// Katalog kökü lejant veya denetim metni için yenilendiğinde değişmemiş
+/// grafik alt ağaçlarını tekrar render etmez. Grafik varlığının kendi
+/// `notify()` çağrısı bu önbelleği gerektiğinde geçersiz kılar.
+fn önbellekli_grafik(grafik: Entity<GpuiGrafik>) -> impl IntoElement {
+    grafik.cached(StyleRefinement::default().size_full())
+}
 
 trait KatalogKaydırmaUzantısı: Styled {
     /// Dikey katalog içinde yatay yüzeyin normal wheel hareketini çalmasını
@@ -1811,6 +1819,8 @@ impl ChartListesi {
         yüzeyleri_ekle!(self.bars_grouped_stacked_grafikleri);
         yüzeyleri_ekle!(self.bars_values_autosize_grafikleri);
         yüzeyleri_ekle!(self.box_whisker_grafikleri);
+        let mut görülenler = HashSet::with_capacity(grafikler.len());
+        grafikler.retain(|grafik| görülenler.insert(grafik.entity_id()));
         grafikler
     }
 
@@ -1820,25 +1830,35 @@ impl ChartListesi {
         dolu_görünür: bool,
         cx: &mut Context<Self>,
     ) {
+        let arayüz_değişti = self.içi_boş_noktalar_görünür != içi_boş_görünür
+            || self.dolu_noktalar_görünür != dolu_görünür;
         self.içi_boş_noktalar_görünür = içi_boş_görünür;
         self.dolu_noktalar_görünür = dolu_görünür;
+        let mut grafik_değişti = false;
         for grafik in self.etkin_grafik_yüzeyleri() {
-            grafik.update(cx, |grafik, cx| {
-                grafik.kırılım_noktalarını_göster(içi_boş_görünür, cx);
-                grafik.imleç_noktalarını_göster(dolu_görünür, cx);
+            grafik_değişti |= grafik.update(cx, |grafik, cx| {
+                let içi_boş_değişti = grafik.kırılım_noktalarını_göster(içi_boş_görünür, cx);
+                let dolu_değişti = grafik.imleç_noktalarını_göster(dolu_görünür, cx);
+                içi_boş_değişti || dolu_değişti
             });
         }
-        cx.notify();
+        if arayüz_değişti || grafik_değişti {
+            cx.notify();
+        }
     }
 
     fn tekerlek_odaksız_etkileşimi_uygula(&mut self, etkin: bool, cx: &mut Context<Self>) {
+        let arayüz_değişti = self.tekerlek_odaksız_etkin != etkin;
         self.tekerlek_odaksız_etkin = etkin;
+        let mut grafik_değişti = false;
         for grafik in self.etkin_grafik_yüzeyleri() {
-            grafik.update(cx, |grafik, cx| {
-                grafik.tekerlek_odaksız_etkileşimi_ayarla(etkin, cx);
+            grafik_değişti |= grafik.update(cx, |grafik, cx| {
+                grafik.tekerlek_odaksız_etkileşimi_ayarla(etkin, cx)
             });
         }
-        cx.notify();
+        if arayüz_değişti || grafik_değişti {
+            cx.notify();
+        }
     }
 
     fn kare_ölçümünü_başlat(&mut self, cx: &mut Context<Self>) {
@@ -1911,9 +1931,9 @@ impl ChartListesi {
             // düğmelerini değiştirir. Görünüm olayı grafik alt yüzeylerinde
             // zaten işlendiğinden 3.700+ satırlık katalog kökünü yenilemez.
             GpuiGrafikOlayı::İmleçDeğişti | GpuiGrafikOlayı::DurumDeğişti => true,
-            GpuiGrafikOlayı::GörünümDeğişti { .. } | GpuiGrafikOlayı::FareBırakıldı => {
-                false
-            }
+            GpuiGrafikOlayı::İmleçKonumuDeğişti
+            | GpuiGrafikOlayı::GörünümDeğişti { .. }
+            | GpuiGrafikOlayı::FareBırakıldı => false,
         };
         if arayüz_değişti {
             cx.notify();
@@ -1939,213 +1959,17 @@ impl ChartListesi {
         });
         cx.subscribe(&tekerlek_anahtarı, |bu, _, olay: &AnahtarOlayi, cx| {
             let AnahtarOlayi::Degisti(etkin) = *olay;
-            if bu.aktif_kart == KartKimliği::AlignDataCost {
-                for (_, grafik) in &bu.align_data_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::CustomScales {
-                for (_, grafik) in &bu.custom_scales_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::DataSmoothing {
-                for (_, grafik) in &bu.data_smoothing_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::FocusCursor {
-                for (_, grafik) in &bu.focus_cursor_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::Gradients {
-                for (_, grafik) in &bu.gradients_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::HighLowBands {
-                for (_, grafik) in &bu.high_low_bands_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::LatencyHeatmap {
-                for (_, grafik) in &bu.latency_heatmap_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::LinePaths {
-                for (_, grafik) in &bu.line_paths_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::LogScales {
-                for (_, grafik) in &bu.log_scales_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::LogScales2 {
-                for (_, grafik) in &bu.log_scales2_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::SyncCursor {
-                for (_, grafik) in &bu.sync_cursor_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::TimeseriesDiscrete {
-                for (_, grafik) in &bu.timeseries_discrete_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::TimezonesDst {
-                for (_, grafik) in &bu.timezones_dst_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::NearestNonNull {
-                for (_, grafik) in &bu.nearest_non_null_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::MissingData {
-                for (_, grafik) in &bu.missing_data_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::Months {
-                for grafik in &bu.months_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::PathGapClip {
-                for (_, grafik) in &bu.path_gap_clip_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::PixelAlign {
-                for (_, grafik) in &bu.pixel_align_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::Points {
-                for (_, grafik) in &bu.points_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if bu.aktif_kart == KartKimliği::ScalesDirOri {
-                bu.scales_dir_ori_senkronlanıyor = true;
-                for (_, grafik) in &bu.scales_dir_ori_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-                bu.scales_dir_ori_senkronlanıyor = false;
-            } else if bu.aktif_kart == KartKimliği::Scatter {
-                for (_, grafik) in &bu.scatter_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if matches!(bu.aktif_kart, KartKimliği::Bars(_)) {
-                for (_, grafik) in &bu.bars_grouped_stacked_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if matches!(bu.aktif_kart, KartKimliği::BarsValuesAutosize(_)) {
-                for (_, grafik) in &bu.bars_values_autosize_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if matches!(bu.aktif_kart, KartKimliği::BoxWhisker(_)) {
-                for (_, grafik) in &bu.box_whisker_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if matches!(bu.aktif_kart, KartKimliği::SoftMinMax(_)) {
-                for (_, grafik) in &bu.soft_minmax_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if matches!(bu.aktif_kart, KartKimliği::SparklinesBars(_)) {
-                for (_, grafik) in &bu.sparklines_bars_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if matches!(bu.aktif_kart, KartKimliği::Sparklines(_)) {
-                for (_, grafik) in &bu.sparklines_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if matches!(bu.aktif_kart, KartKimliği::Sparse(_)) {
-                for (_, grafik) in &bu.sparse_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if matches!(bu.aktif_kart, KartKimliği::StackedSeries(_)) {
-                for (_, grafik) in &bu.stacked_series_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if matches!(bu.aktif_kart, KartKimliği::StreamData(_)) {
-                for (_, grafik) in &bu.stream_data_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if matches!(bu.aktif_kart, KartKimliği::ThinBars(_)) {
-                for (_, grafik) in &bu.thin_bars_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if matches!(bu.aktif_kart, KartKimliği::TimePeriods(_)) {
-                for (_, grafik) in &bu.time_periods_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if matches!(bu.aktif_kart, KartKimliği::TimelineDiscrete(_)) {
-                for (_, grafik) in &bu.timeline_discrete_grafikleri {
-                    grafik.update(cx, |grafik, cx| {
-                        grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
-                    });
-                }
-            } else if let Some(grafik) = &bu.grafik {
-                grafik.update(cx, |grafik, cx| {
-                    grafik.tekerlek_etkileşimi_ayarla(etkin, cx);
+            let arayüz_değişti = bu.tekerlek_etkin != etkin;
+            bu.tekerlek_etkin = etkin;
+            let mut grafik_değişti = false;
+            for grafik in bu.etkin_grafik_yüzeyleri() {
+                grafik_değişti |= grafik.update(cx, |grafik, cx| {
+                    grafik.tekerlek_etkileşimi_ayarla(etkin, cx)
                 });
             }
-            bu.tekerlek_etkin = etkin;
-            cx.notify();
+            if arayüz_değişti || grafik_değişti {
+                cx.notify();
+            }
         })
         .detach();
 
@@ -2326,7 +2150,7 @@ impl ChartListesi {
             cx.subscribe(&grafik, move |bu, _, olay: &GpuiGrafikOlayı, cx| {
                 match olay {
                     GpuiGrafikOlayı::Açıklamaİstendi => bu.açıklama_istendi = true,
-                    GpuiGrafikOlayı::İmleçDeğişti => {
+                    GpuiGrafikOlayı::İmleçKonumuDeğişti => {
                         let yayın = bu
                             .timeseries_discrete_grafikleri
                             .iter()
@@ -2348,7 +2172,9 @@ impl ChartListesi {
                             }
                         }
                     }
-                    GpuiGrafikOlayı::FareBırakıldı | GpuiGrafikOlayı::DurumDeğişti => {}
+                    GpuiGrafikOlayı::İmleçDeğişti
+                    | GpuiGrafikOlayı::FareBırakıldı
+                    | GpuiGrafikOlayı::DurumDeğişti => {}
                     GpuiGrafikOlayı::GörünümDeğişti { .. } => {
                         if bu.timeseries_discrete_senkronlanıyor {
                             return;
@@ -2372,7 +2198,7 @@ impl ChartListesi {
                         }
                     }
                 }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -2461,10 +2287,7 @@ impl ChartListesi {
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, move |bu, _, olay: &GpuiGrafikOlayı, cx| {
                 let Some(grup) = örnek.senkron_grubu() else {
-                    if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                        bu.açıklama_istendi = true;
-                    }
-                    cx.notify();
+                    bu.standart_grafik_olayını_işle(olay, cx);
                     return;
                 };
                 if bu.timezones_dst_senkronlanıyor {
@@ -2477,7 +2300,7 @@ impl ChartListesi {
                     .map(|(_, grafik)| grafik.clone());
                 match olay {
                     GpuiGrafikOlayı::Açıklamaİstendi => bu.açıklama_istendi = true,
-                    GpuiGrafikOlayı::İmleçDeğişti => {
+                    GpuiGrafikOlayı::İmleçKonumuDeğişti => {
                         let yayın = kaynak
                             .as_ref()
                             .and_then(|grafik| grafik.read(cx).senkron_yayını());
@@ -2528,9 +2351,9 @@ impl ChartListesi {
                         }
                         bu.timezones_dst_senkronlanıyor = false;
                     }
-                    GpuiGrafikOlayı::FareBırakıldı => {}
+                    GpuiGrafikOlayı::İmleçDeğişti | GpuiGrafikOlayı::FareBırakıldı => {}
                 }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -2566,10 +2389,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -2886,7 +2706,7 @@ impl ChartListesi {
                     return;
                 }
                 match olay {
-                    GpuiGrafikOlayı::İmleçDeğişti => {
+                    GpuiGrafikOlayı::İmleçKonumuDeğişti => {
                         let yayın = bu
                             .line_paths_grafikleri
                             .iter()
@@ -2913,9 +2733,10 @@ impl ChartListesi {
                     GpuiGrafikOlayı::Açıklamaİstendi => bu.açıklama_istendi = true,
                     GpuiGrafikOlayı::DurumDeğişti
                     | GpuiGrafikOlayı::GörünümDeğişti { .. }
+                    | GpuiGrafikOlayı::İmleçDeğişti
                     | GpuiGrafikOlayı::FareBırakıldı => {}
                 }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -2997,7 +2818,7 @@ impl ChartListesi {
                     return;
                 }
                 match olay {
-                    GpuiGrafikOlayı::İmleçDeğişti if ters_çift => {
+                    GpuiGrafikOlayı::İmleçKonumuDeğişti if ters_çift => {
                         let yayın = bu
                             .log_scales2_grafikleri
                             .iter()
@@ -3056,9 +2877,10 @@ impl ChartListesi {
                     GpuiGrafikOlayı::DurumDeğişti
                     | GpuiGrafikOlayı::GörünümDeğişti { .. }
                     | GpuiGrafikOlayı::İmleçDeğişti
+                    | GpuiGrafikOlayı::İmleçKonumuDeğişti
                     | GpuiGrafikOlayı::FareBırakıldı => {}
                 }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -3181,10 +3003,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -3242,10 +3061,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -3320,7 +3136,7 @@ impl ChartListesi {
                     return;
                 }
                 match olay {
-                    GpuiGrafikOlayı::İmleçDeğişti => {
+                    GpuiGrafikOlayı::İmleçKonumuDeğişti => {
                         let yayın = bu
                             .scales_dir_ori_grafikleri
                             .iter()
@@ -3385,8 +3201,9 @@ impl ChartListesi {
                     GpuiGrafikOlayı::Açıklamaİstendi => {
                         bu.açıklama_istendi = true;
                     }
+                    GpuiGrafikOlayı::İmleçDeğişti => {}
                 }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -3417,10 +3234,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -3457,10 +3271,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -3527,10 +3338,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((yön, grafik));
@@ -3584,10 +3392,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((benchmark, grafik));
@@ -3624,10 +3429,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -3732,7 +3534,7 @@ impl ChartListesi {
                     return;
                 }
                 match olay {
-                    GpuiGrafikOlayı::İmleçDeğişti => {
+                    GpuiGrafikOlayı::İmleçKonumuDeğişti => {
                         let yayın = bu
                             .sparse_grafikleri
                             .iter()
@@ -3783,9 +3585,9 @@ impl ChartListesi {
                         }
                     }
                     GpuiGrafikOlayı::Açıklamaİstendi => bu.açıklama_istendi = true,
-                    GpuiGrafikOlayı::FareBırakıldı => {}
+                    GpuiGrafikOlayı::İmleçDeğişti | GpuiGrafikOlayı::FareBırakıldı => {}
                 }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -3822,10 +3624,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -3875,10 +3674,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -3919,10 +3715,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -3962,10 +3755,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -4005,10 +3795,7 @@ impl ChartListesi {
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
             let grafik = cx.new(|_| GpuiGrafik::yeni(grafik));
             cx.subscribe(&grafik, |bu, _, olay: &GpuiGrafikOlayı, cx| {
-                if matches!(olay, GpuiGrafikOlayı::Açıklamaİstendi) {
-                    bu.açıklama_istendi = true;
-                }
-                cx.notify();
+                bu.standart_grafik_olayını_işle(olay, cx);
             })
             .detach();
             yüzeyler.push((örnek, grafik));
@@ -5663,303 +5450,18 @@ impl Render for ChartListesi {
                     )
                 },
             );
-        if aktif_kart == KartKimliği::AlignDataCost {
-            geri_var = self
-                .align_data_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .align_data_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::CustomScales {
-            geri_var = self
-                .custom_scales_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .custom_scales_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::DataSmoothing {
-            geri_var = self
-                .data_smoothing_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .data_smoothing_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::FocusCursor {
-            geri_var = self
-                .focus_cursor_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .focus_cursor_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::Gradients {
-            geri_var = self
-                .gradients_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .gradients_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::HighLowBands {
-            geri_var = self
-                .high_low_bands_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .high_low_bands_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::LatencyHeatmap {
-            geri_var = self
-                .latency_heatmap_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .latency_heatmap_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::LinePaths {
-            geri_var = self
-                .line_paths_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .line_paths_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::LogScales {
-            geri_var = self
-                .log_scales_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .log_scales_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::LogScales2 {
-            geri_var = self
-                .log_scales2_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .log_scales2_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::SyncCursor {
-            geri_var = self
-                .sync_cursor_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .sync_cursor_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::TimeseriesDiscrete {
-            geri_var = self
-                .timeseries_discrete_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .timeseries_discrete_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::TimezonesDst {
-            geri_var = self
-                .timezones_dst_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .timezones_dst_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::NearestNonNull {
-            geri_var = self
-                .nearest_non_null_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .nearest_non_null_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::MissingData {
-            geri_var = self
-                .missing_data_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .missing_data_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::Months {
-            geri_var = self
-                .months_grafikleri
-                .iter()
-                .any(|grafik| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .months_grafikleri
-                .iter()
-                .any(|grafik| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::PathGapClip {
-            geri_var = self
-                .path_gap_clip_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .path_gap_clip_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::PixelAlign {
-            geri_var = self
-                .pixel_align_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .pixel_align_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::Points {
-            geri_var = self
-                .points_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .points_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::ScalesDirOri {
-            geri_var = self
-                .scales_dir_ori_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .scales_dir_ori_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if aktif_kart == KartKimliği::Scatter {
-            geri_var = self
-                .scatter_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .scatter_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if matches!(aktif_kart, KartKimliği::Bars(_)) {
-            geri_var = self
-                .bars_grouped_stacked_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .bars_grouped_stacked_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if matches!(aktif_kart, KartKimliği::BarsValuesAutosize(_)) {
-            geri_var = self
-                .bars_values_autosize_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .bars_values_autosize_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if matches!(aktif_kart, KartKimliği::BoxWhisker(_)) {
-            geri_var = self
-                .box_whisker_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .box_whisker_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if matches!(aktif_kart, KartKimliği::SoftMinMax(_)) {
-            geri_var = self
-                .soft_minmax_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .soft_minmax_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if matches!(aktif_kart, KartKimliği::SparklinesBars(_)) {
-            geri_var = self
-                .sparklines_bars_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .sparklines_bars_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if matches!(aktif_kart, KartKimliği::Sparklines(_)) {
-            geri_var = self
-                .sparklines_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .sparklines_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if matches!(aktif_kart, KartKimliği::Sparse(_)) {
-            geri_var = self
-                .sparse_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .sparse_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if matches!(aktif_kart, KartKimliği::StackedSeries(_)) {
-            geri_var = self
-                .stacked_series_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .stacked_series_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if matches!(aktif_kart, KartKimliği::StreamData(_)) {
-            geri_var = self
-                .stream_data_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .stream_data_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if matches!(aktif_kart, KartKimliği::ThinBars(_)) {
-            geri_var = self
-                .thin_bars_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .thin_bars_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if matches!(aktif_kart, KartKimliği::TimePeriods(_)) {
-            geri_var = self
-                .time_periods_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .time_periods_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
-        } else if matches!(aktif_kart, KartKimliği::TimelineDiscrete(_)) {
-            geri_var = self
-                .timeline_discrete_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().geri_var());
-            yakınlaştırılmış = self
-                .timeline_discrete_grafikleri
-                .iter()
-                .any(|(_, grafik)| grafik.read(cx).grafik().yakınlaştırılmış());
+        let etkin_grafikler = self.etkin_grafik_yüzeyleri();
+        if etkin_grafikler.len() > 1 {
+            geri_var = false;
+            yakınlaştırılmış = false;
+            for grafik in etkin_grafikler {
+                let grafik = grafik.read(cx);
+                geri_var |= grafik.grafik().geri_var();
+                yakınlaştırılmış |= grafik.grafik().yakınlaştırılmış();
+                if geri_var && yakınlaştırılmış {
+                    break;
+                }
+            }
         }
         let çizim_hatası = self.hata.clone().or(bileşen_hatası);
         let seri_adları = if aktif_kart == KartKimliği::TimeseriesDiscrete {
@@ -6906,7 +6408,7 @@ impl Render for ChartListesi {
                                         .w(px(genişlik))
                                         .h(px(yükseklik))
                                         .when_some(yüzey(örnek), |öğe, grafik| {
-                                            öğe.child(grafik)
+                                            öğe.child(önbellekli_grafik(grafik))
                                         }),
                                 ),
                         )
@@ -6933,7 +6435,9 @@ impl Render for ChartListesi {
                             .flex_none()
                             .w(px(800.0))
                             .h(px(800.0))
-                            .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik))
+                            .when_some(yüzey(örnek), |öğe, grafik| {
+                                öğe.child(önbellekli_grafik(grafik))
+                            })
                     }),
                 ))
         } else if aktif_kart == KartKimliği::DataSmoothing {
@@ -6963,7 +6467,9 @@ impl Render for ChartListesi {
                             div()
                                 .w(px(1_920.0))
                                 .h(px(300.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                .when_some(yüzey(örnek), |öğe, grafik| {
+                                    öğe.child(önbellekli_grafik(grafik))
+                                }),
                         )
                 }))
         } else if aktif_kart == KartKimliği::FocusCursor {
@@ -6993,7 +6499,9 @@ impl Render for ChartListesi {
                             div()
                                 .w(px(1_920.0))
                                 .h(px(600.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                .when_some(yüzey(örnek), |öğe, grafik| {
+                                    öğe.child(önbellekli_grafik(grafik))
+                                }),
                         )
                 }))
         } else if aktif_kart == KartKimliği::Gradients {
@@ -7018,7 +6526,9 @@ impl Render for ChartListesi {
                             .flex_none()
                             .w(px(800.0))
                             .h(px(600.0))
-                            .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik))
+                            .when_some(yüzey(örnek), |öğe, grafik| {
+                                öğe.child(önbellekli_grafik(grafik))
+                            })
                     }),
                 ))
         } else if aktif_kart == KartKimliği::HighLowBands {
@@ -7061,7 +6571,9 @@ impl Render for ChartListesi {
                             div()
                                 .w(px(genişlik))
                                 .h(px(yükseklik))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                .when_some(yüzey(örnek), |öğe, grafik| {
+                                    öğe.child(önbellekli_grafik(grafik))
+                                }),
                         )
                 }))
         } else if aktif_kart == KartKimliği::LatencyHeatmap {
@@ -7095,7 +6607,12 @@ impl Render for ChartListesi {
                                                 .font_weight(FontWeight::SEMIBOLD)
                                                 .child(örnek.başlık()),
                                         )
-                                        .child(div().w(px(1_800.0)).h(px(600.0)).child(grafik)),
+                                        .child(
+                                            div()
+                                                .w(px(1_800.0))
+                                                .h(px(600.0))
+                                                .child(önbellekli_grafik(grafik)),
+                                        ),
                                 )
                             })
                             .collect::<Vec<_>>()
@@ -7134,7 +6651,9 @@ impl Render for ChartListesi {
                             div()
                                 .w(px(2_400.0))
                                 .h(px(600.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                .when_some(yüzey(örnek), |öğe, grafik| {
+                                    öğe.child(önbellekli_grafik(grafik))
+                                }),
                         )
                 }))
         } else if aktif_kart == KartKimliği::LogScales {
@@ -7168,7 +6687,9 @@ impl Render for ChartListesi {
                             div()
                                 .w(px(1_600.0))
                                 .h(px(600.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                .when_some(yüzey(örnek), |öğe, grafik| {
+                                    öğe.child(önbellekli_grafik(grafik))
+                                }),
                         )
                 }))
         } else if aktif_kart == KartKimliği::LogScales2 {
@@ -7228,7 +6749,9 @@ impl Render for ChartListesi {
                             div()
                                 .w(px(genişlik))
                                 .h(px(yükseklik))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                .when_some(yüzey(örnek), |öğe, grafik| {
+                                    öğe.child(önbellekli_grafik(grafik))
+                                }),
                         )
                 }))
         } else if aktif_kart == KartKimliği::SyncCursor {
@@ -7259,7 +6782,9 @@ impl Render for ChartListesi {
                             div()
                                 .w_full()
                                 .h(px(206.0))
-                                .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
+                                .when_some(grafik, |öğe, grafik| {
+                                    öğe.child(önbellekli_grafik(grafik))
+                                }),
                         )
                         .child(div().flex().items_center().gap_1().children(
                             seriler.into_iter().map(|(indeks, etiket, _, görünür)| {
@@ -7331,14 +6856,14 @@ impl Render for ChartListesi {
                     div()
                         .w(px(1920.0))
                         .h(px(600.0))
-                        .when_some(üst, |öğe, grafik| öğe.child(grafik)),
+                        .when_some(üst, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                 )
                 .child(
                     div()
                         .mt_2()
                         .w(px(1920.0))
                         .h(px(200.0))
-                        .when_some(alt, |öğe, grafik| öğe.child(grafik)),
+                        .when_some(alt, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                 )
                 .child(
                     div().mt_2().flex().gap_2().children(
@@ -7415,7 +6940,10 @@ impl Render for ChartListesi {
                                         .child(başlık),
                                 )
                                 .children(yüzeyler.into_iter().map(|(_, grafik)| {
-                                    div().w(px(600.0)).h(px(200.0)).child(grafik)
+                                    div()
+                                        .w(px(600.0))
+                                        .h(px(200.0))
+                                        .child(önbellekli_grafik(grafik))
                                 }))
                         })),
                 )
@@ -7466,7 +6994,7 @@ impl Render for ChartListesi {
                             div()
                                 .w_full()
                                 .h(px(300.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                         )
                 }))
                 .child(
@@ -7488,7 +7016,7 @@ impl Render for ChartListesi {
                                     div()
                                         .w_full()
                                         .h(px(250.0))
-                                        .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                        .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                                 )
                         })),
                 )
@@ -7536,7 +7064,7 @@ impl Render for ChartListesi {
                             div()
                                 .w_full()
                                 .h(px(520.0))
-                                .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
+                                .when_some(grafik, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                         )
                         .child(div().flex().flex_wrap().gap_1().children(
                             seriler.into_iter().map(|(indeks, etiket, görünür)| {
@@ -7612,7 +7140,7 @@ impl Render for ChartListesi {
                                             .w(px(1920.0))
                                             .h(px(yükseklik))
                                             .when_some(yüzey(indeks), |öğe, grafik| {
-                                                öğe.child(grafik)
+                                                öğe.child(önbellekli_grafik(grafik))
                                             }),
                                     ),
                             )
@@ -7726,7 +7254,7 @@ impl Render for ChartListesi {
                                                 div()
                                                     .w(px(genişlik as f32))
                                                     .h(px(yükseklik as f32))
-                                                    .child(grafik),
+                                                    .child(önbellekli_grafik(grafik)),
                                             ),
                                     ),
                             )
@@ -7779,7 +7307,7 @@ impl Render for ChartListesi {
                             div()
                                 .w_full()
                                 .h(px(360.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                         )
                 }))
         } else if aktif_kart == KartKimliği::Points {
@@ -7835,7 +7363,7 @@ impl Render for ChartListesi {
                                         .w(px(genişlik as f32))
                                         .h(px(yükseklik as f32))
                                         .when_some(yüzey(örnek), |öğe, grafik| {
-                                            öğe.child(grafik)
+                                            öğe.child(önbellekli_grafik(grafik))
                                         }),
                                 ),
                         )
@@ -7881,7 +7409,7 @@ impl Render for ChartListesi {
                                                 .w(px(genişlik as f32))
                                                 .h(px(yükseklik as f32))
                                                 .when_some(yüzey(örnek), |öğe, grafik| {
-                                                    öğe.child(grafik)
+                                                    öğe.child(önbellekli_grafik(grafik))
                                                 }),
                                         )
                                 }),
@@ -7959,7 +7487,7 @@ impl Render for ChartListesi {
                                         .w(px(1920.0))
                                         .h(px(600.0))
                                         .when_some(yüzey(örnek), |öğe, grafik| {
-                                            öğe.child(grafik)
+                                            öğe.child(önbellekli_grafik(grafik))
                                         }),
                                 ),
                         )
@@ -8047,7 +7575,7 @@ impl Render for ChartListesi {
                             div()
                                 .w(px(genişlik))
                                 .h(px(yükseklik))
-                                .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
+                                .when_some(grafik, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                         )
                 }))
         } else if matches!(aktif_kart, KartKimliği::BarsValuesAutosize(_)) {
@@ -8128,7 +7656,7 @@ impl Render for ChartListesi {
                             div()
                                 .w(px(1275.0))
                                 .h(px(600.0))
-                                .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
+                                .when_some(grafik, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                         )
                 }))
         } else if matches!(aktif_kart, KartKimliği::BoxWhisker(_)) {
@@ -8220,7 +7748,7 @@ impl Render for ChartListesi {
                                     div()
                                         .w(px(400.0))
                                         .h(px(400.0))
-                                        .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                        .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                                 )
                         }),
                     ),
@@ -8269,7 +7797,7 @@ impl Render for ChartListesi {
                             div()
                                 .w(px(800.0))
                                 .h(px(400.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                         )
                 }))
         } else if matches!(aktif_kart, KartKimliği::Sparklines(_)) {
@@ -8342,7 +7870,9 @@ impl Render for ChartListesi {
                                         .w(px(150.0))
                                         .h(px(30.0))
                                         .bg(rgb(0xffc0cb))
-                                        .when_some(yüzey(hacim), |öğe, grafik| öğe.child(grafik)),
+                                        .when_some(yüzey(hacim), |öğe, grafik| {
+                                            öğe.child(önbellekli_grafik(grafik))
+                                        }),
                                 )
                                 .child(
                                     div()
@@ -8350,7 +7880,7 @@ impl Render for ChartListesi {
                                         .h(px(30.0))
                                         .bg(rgb(0xffc0cb))
                                         .when_some(yüzey(kapanış), |öğe, grafik| {
-                                            öğe.child(grafik)
+                                            öğe.child(önbellekli_grafik(grafik))
                                         }),
                                 )
                         }),
@@ -8382,7 +7912,9 @@ impl Render for ChartListesi {
                                 .h(px(200.0))
                                 .border_1()
                                 .border_color(rgb(0xc0c0c0))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
+                                .when_some(yüzey(örnek), |öğe, grafik| {
+                                    öğe.child(önbellekli_grafik(grafik))
+                                }),
                         )
                 }))
         } else if matches!(aktif_kart, KartKimliği::StackedSeries(_)) {
@@ -8416,7 +7948,9 @@ impl Render for ChartListesi {
                                 .h(px(yükseklik as f32))
                                 .border_1()
                                 .border_color(rgb(0xc0c0c0))
-                                .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
+                                .when_some(grafik, |öğe, grafik| {
+                                    öğe.child(önbellekli_grafik(grafik))
+                                }),
                         )
                         .child(div().mt_1().flex().flex_wrap().gap_1().children(
                             seriler.into_iter().map(|(indeks, etiket, görünür)| {
@@ -8457,7 +7991,7 @@ impl Render for ChartListesi {
                         .h(px(600.0))
                         .border_1()
                         .border_color(rgb(0xc0c0c0))
-                        .when_some(grafik, |öğe, grafik| öğe.child(grafik))
+                        .when_some(grafik, |öğe, grafik| öğe.child(önbellekli_grafik(grafik)))
                 }))
         } else if matches!(aktif_kart, KartKimliği::ThinBars(_)) {
             let yüzey = |örnek| {
@@ -8501,7 +8035,7 @@ impl Render for ChartListesi {
                                 .h(px(yükseklik as f32))
                                 .border_1()
                                 .border_color(rgb(0xe5e7eb))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik))
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik)))
                         }),
                     ),
                 )
@@ -8519,7 +8053,7 @@ impl Render for ChartListesi {
                                 .h(px(200.0))
                                 .border_1()
                                 .border_color(rgb(0xe5e7eb))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik))
+                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik)))
                         }))
                 }))
         } else if matches!(aktif_kart, KartKimliği::TimePeriods(_)) {
@@ -8561,7 +8095,7 @@ impl Render for ChartListesi {
                                 .h(px(200.0))
                                 .border_1()
                                 .border_color(rgb(0xe5e7eb))
-                                .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
+                                .when_some(grafik, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                         )
                 }))
         } else if matches!(aktif_kart, KartKimliği::TimelineDiscrete(_)) {
@@ -8611,7 +8145,7 @@ impl Render for ChartListesi {
                                 .h(px(300.0))
                                 .border_1()
                                 .border_color(rgb(0xe5e7eb))
-                                .when_some(grafik, |öğe, grafik| öğe.child(grafik)),
+                                .when_some(grafik, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                         )
                         .child(
                             div()
@@ -8670,7 +8204,9 @@ impl Render for ChartListesi {
                 div()
                     .w(px(boyut as f32))
                     .h(px(boyut as f32))
-                    .when_some(self.grafik.clone(), |öğe, grafik| öğe.child(grafik)),
+                    .when_some(self.grafik.clone(), |öğe, grafik| {
+                        öğe.child(önbellekli_grafik(grafik))
+                    }),
             )
         } else if aktif_kart == KartKimliği::ScrollSync {
             çizim_tabanı
@@ -8690,7 +8226,7 @@ impl Render for ChartListesi {
                             .my_3()
                             .w(px(400.0))
                             .h(px(200.0))
-                            .when_some(self.grafik.clone(), |öğe, grafik| öğe.child(grafik)),
+                            .when_some(self.grafik.clone(), |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                     )
                     .child("Grafiği kaydırdıktan sonra imleç ve seçim aynı görsel noktada kalır. Kaynak parity için doğal kapsayıcı kaydırması varsayılandır; wheel/touch yakınlaştırma ortak API'den isteğe bağlı açılır."),
                 )
@@ -8716,13 +8252,17 @@ impl Render for ChartListesi {
                             div()
                                 .w(px(genişlik))
                                 .h(px(yükseklik))
-                                .when_some(self.grafik.clone(), |öğe, grafik| öğe.child(grafik)),
+                                .when_some(self.grafik.clone(), |öğe, grafik| {
+                                    öğe.child(önbellekli_grafik(grafik))
+                                }),
                         ),
                 )
         } else {
             çizim_tabanı
                 .overflow_hidden()
-                .when_some(self.grafik.clone(), |öğe, grafik| öğe.child(grafik))
+                .when_some(self.grafik.clone(), |öğe, grafik| {
+                    öğe.child(önbellekli_grafik(grafik))
+                })
         };
 
         let yardım = match aktif_kart {
