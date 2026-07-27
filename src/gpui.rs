@@ -522,6 +522,10 @@ struct GpuiEtkileşimYüzeyi {
     yol_önbelleği: Rc<RefCell<GpuiYolÖnbelleği>>,
 }
 
+fn duyarlı_boyut_güncellenmeli(önceki: Option<Bounds<Pixels>>, güncel: Bounds<Pixels>) -> bool {
+    önceki.is_none_or(|önceki| önceki.size != güncel.size)
+}
+
 impl GpuiEtkileşimYüzeyi {
     fn sahneyi_ayarla(&mut self, sahne: Rc<Sahne>) {
         self.yol_önbelleği
@@ -743,10 +747,17 @@ impl Render for GpuiAnaYüzey {
         let veri_görünümü = self.veri_görünümü.clone();
         canvas(
             move |sınırlar, _, uygulama| {
-                çizim_sınırları.set(Some(sınırlar));
+                let önceki_sınırlar = çizim_sınırları.replace(Some(sınırlar));
                 let Some(grafik) = duyarlı_grafik else {
                     return;
                 };
+                // Kaydırma yüzeyin pencere içindeki kökenini değiştirir, grafik
+                // boyutunu değiştirmez. Köken değişiminde `boyutu_ayarla` için
+                // ertelenmiş bir GPUI görevi üretmek ana sahneyi değiştirmese bile
+                // ana iş parçacığına gereksiz iş yükler.
+                if !duyarlı_boyut_güncellenmeli(önceki_sınırlar, sınırlar) {
+                    return;
+                }
                 let genişlik = f32::from(sınırlar.size.width).round().max(160.0) as u32;
                 let yükseklik = f32::from(sınırlar.size.height).round().max(120.0) as u32;
                 uygulama.defer(move |uygulama| {
@@ -3061,8 +3072,6 @@ impl Render for GpuiGrafik {
                     bu.görünüm_bildir(false, cx);
                 } else if datum_değişti {
                     bu.grafik_bildir(cx);
-                } else {
-                    GpuiGrafik::bildir(cx);
                 }
             }))
             .on_pinch(cx.listener(|bu, olay: &PinchEvent, _, cx| {
@@ -5518,6 +5527,20 @@ mod testler {
 
         önbellek.yüzeyi_hazırla(&sahne, yeniden_boyutlanmış);
         assert!(önbellek.yollar.first().is_some_and(Option::is_none));
+    }
+
+    #[test]
+    fn kaydırma_duyarlı_boyut_güncellemesi_üretmez() {
+        let ilk = Bounds::new(point(px(0.0), px(0.0)), size(px(320.0), px(180.0)));
+        let kaydırılmış = Bounds::new(point(px(0.0), px(80.0)), size(px(320.0), px(180.0)));
+        let yeniden_boyutlanmış = Bounds::new(point(px(0.0), px(80.0)), size(px(640.0), px(180.0)));
+
+        assert!(duyarlı_boyut_güncellenmeli(None, ilk));
+        assert!(!duyarlı_boyut_güncellenmeli(Some(ilk), kaydırılmış));
+        assert!(duyarlı_boyut_güncellenmeli(
+            Some(kaydırılmış),
+            yeniden_boyutlanmış
+        ));
     }
 
     #[test]
