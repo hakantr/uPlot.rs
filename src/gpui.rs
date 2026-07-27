@@ -2733,10 +2733,16 @@ impl Render for GpuiGrafik {
                     underline: None,
                     strikethrough: None,
                 };
-                let metin_çizgisi =
-                    window
-                        .text_system()
-                        .shape_line(ölçüm_metni, px(12.0), &[metin_koşusu], None);
+                let (metin_kimliği, metin_uzunluğu) =
+                    tek_satır_metin_kimliği(ölçüm_metni.as_ref());
+                let metin_çizgisi = window.text_system().shape_line_by_hash(
+                    metin_kimliği,
+                    metin_uzunluğu,
+                    px(12.0),
+                    &[metin_koşusu],
+                    None,
+                    || ölçüm_metni,
+                );
                 let kutu_genişliği = f64::from(f32::from(metin_çizgisi.width()) + 18.0);
                 let kutu_yüksekliği = 26.0;
                 let plot_sınırı = YüzeyDikdörtgeni::yeni(
@@ -3065,12 +3071,8 @@ impl Render for GpuiGrafik {
                 }
                 let imleç_değişti = !imleç_korundu && bu.imleç != önceki_imleç;
                 let lejant_değişti = !imleç_korundu
-                    && !imleç_lejant_verisi_aynı(
-                        önceki_imleç.as_ref(),
-                        bu.imleç.as_ref(),
-                    );
-                let açıklama_değişti =
-                    !imleç_korundu && bu.açıklama_vuruşu != önceki_açıklama;
+                    && !imleç_lejant_verisi_aynı(önceki_imleç.as_ref(), bu.imleç.as_ref());
+                let açıklama_değişti = !imleç_korundu && bu.açıklama_vuruşu != önceki_açıklama;
                 let seçim_değişti = bu.seçim != önceki_seçim;
                 let etkileşim_değişti = imleç_değişti || açıklama_değişti || seçim_değişti;
                 if imleç_değişti {
