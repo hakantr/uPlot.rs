@@ -1695,6 +1695,7 @@ impl KartKimliği {
 pub struct ChartListesi {
     aktif_kart: KartKimliği,
     kart_listesi_kaydırma: UniformListScrollHandle,
+    latency_heatmap_kaydırma: UniformListScrollHandle,
     kart_listesi_kaydırma_bekliyor: Option<usize>,
     nokta_sayısı: usize,
     grafik: Option<Entity<GpuiGrafik>>,
@@ -2029,6 +2030,7 @@ impl ChartListesi {
         let mut bu = Self {
             aktif_kart: KartKimliği::Resize,
             kart_listesi_kaydırma: UniformListScrollHandle::new(),
+            latency_heatmap_kaydırma: UniformListScrollHandle::new(),
             kart_listesi_kaydırma_bekliyor: None,
             nokta_sayısı: 100,
             grafik,
@@ -6577,7 +6579,7 @@ impl Render for ChartListesi {
                         )
                 }))
         } else if aktif_kart == KartKimliği::LatencyHeatmap {
-            çizim_tabanı.flex_none().h(px(670.0)).p_2().child(
+            çizim_tabanı.min_h_0().p_2().child(
                 uniform_list(
                     "latency-heatmap-yuzey-listesi",
                     LatencyHeatmapÖrneği::TÜMÜ.len(),
@@ -6618,6 +6620,7 @@ impl Render for ChartListesi {
                             .collect::<Vec<_>>()
                     }),
                 )
+                .track_scroll(&self.latency_heatmap_kaydırma)
                 .h_full(),
             )
         } else if aktif_kart == KartKimliği::LinePaths {
@@ -8341,6 +8344,9 @@ impl Render for ChartListesi {
             .min_h_0()
             .h_full()
             .overflow_scroll()
+            .when(aktif_kart == KartKimliği::LatencyHeatmap, |öğe| {
+                öğe.overflow_hidden()
+            })
             .p_4()
             .flex()
             .flex_col()
@@ -8506,6 +8512,7 @@ impl Render for ChartListesi {
             .child(çizim)
             .child(
                 div()
+                    .flex_none()
                     .mt_3()
                     .rounded_lg()
                     .border_1()
