@@ -88,6 +88,17 @@ mod web_köprüsü;
 
 gpui::actions!(uplot_katalog, [KartıEtkinleştir]);
 
+trait KatalogKaydırmaUzantısı: Styled {
+    /// Dikey katalog içinde yatay yüzeyin normal wheel hareketini çalmasını
+    /// önler; yatay hareket gerçek yatay delta veya Shift+wheel ile kalır.
+    fn yalnız_tekerlek_ekseninde_kaydır(mut self) -> Self {
+        self.style().restrict_scroll_to_axis = Some(true);
+        self
+    }
+}
+
+impl<T: Styled> KatalogKaydırmaUzantısı for T {}
+
 /// Ortak grafik ve katalog GPUI eylemlerini uygulamaya bir kez kaydeder.
 pub fn başlat(cx: &mut App) {
     uplot_rs::gpui::başlat(cx);
@@ -6889,6 +6900,7 @@ impl Render for ChartListesi {
                                 .w_full()
                                 .h(px(yükseklik))
                                 .overflow_x_scroll()
+                                .yalnız_tekerlek_ekseninde_kaydır()
                                 .child(
                                     div()
                                         .w(px(genişlik))
@@ -6946,6 +6958,7 @@ impl Render for ChartListesi {
                         .h(px(300.0))
                         .mb(px(50.0))
                         .overflow_x_scroll()
+                        .yalnız_tekerlek_ekseninde_kaydır()
                         .child(
                             div()
                                 .w(px(1_920.0))
@@ -6975,6 +6988,7 @@ impl Render for ChartListesi {
                         .h(px(600.0))
                         .mb(px(50.0))
                         .overflow_x_scroll()
+                        .yalnız_tekerlek_ekseninde_kaydır()
                         .child(
                             div()
                                 .w(px(1_920.0))
@@ -7036,6 +7050,7 @@ impl Render for ChartListesi {
                         .h(px(yükseklik + 30.0))
                         .mb_3()
                         .overflow_x_scroll()
+                        .yalnız_tekerlek_ekseninde_kaydır()
                         .child(
                             div()
                                 .text_sm()
@@ -7056,12 +7071,8 @@ impl Render for ChartListesi {
                     .find(|(kimlik, _)| *kimlik == örnek)
                     .map(|(_, grafik)| grafik.clone())
             };
-            çizim_tabanı
-                .flex_none()
-                .h(px(3_250.0))
-                .overflow_y_scroll()
-                .p_2()
-                .children(LatencyHeatmapÖrneği::TÜMÜ.into_iter().map(|örnek| {
+            çizim_tabanı.flex_none().h(px(3_250.0)).p_2().children(
+                LatencyHeatmapÖrneği::TÜMÜ.into_iter().map(|örnek| {
                     div()
                         .id(SharedString::from(format!(
                             "latency-heatmap-{}-surface",
@@ -7072,6 +7083,7 @@ impl Render for ChartListesi {
                         .h(px(630.0))
                         .mb_3()
                         .overflow_x_scroll()
+                        .yalnız_tekerlek_ekseninde_kaydır()
                         .child(
                             div()
                                 .text_sm()
@@ -7084,7 +7096,8 @@ impl Render for ChartListesi {
                                 .h(px(600.0))
                                 .when_some(yüzey(örnek), |öğe, grafik| öğe.child(grafik)),
                         )
-                }))
+                }),
+            )
         } else if aktif_kart == KartKimliği::LinePaths {
             let yüzey = |örnek| {
                 self.line_paths_grafikleri
@@ -7105,6 +7118,7 @@ impl Render for ChartListesi {
                         .h(px(630.0))
                         .mb_3()
                         .overflow_x_scroll()
+                        .yalnız_tekerlek_ekseninde_kaydır()
                         .child(
                             div()
                                 .text_sm()
@@ -7138,6 +7152,7 @@ impl Render for ChartListesi {
                         .h(px(630.0))
                         .mb_3()
                         .overflow_x_scroll()
+                        .yalnız_tekerlek_ekseninde_kaydır()
                         .child(
                             div()
                                 .text_sm()
@@ -7196,6 +7211,7 @@ impl Render for ChartListesi {
                             px(12.0)
                         })
                         .overflow_x_scroll()
+                        .yalnız_tekerlek_ekseninde_kaydır()
                         .child(div().text_sm().font_weight(FontWeight::SEMIBOLD).child(
                             if örnek == LogScales2Örneği::TersÇıkış {
                                 "Out · cursor.sync.key=\"moo\" · birleşik In/Out lejant"
@@ -7585,6 +7601,7 @@ impl Render for ChartListesi {
                                     .w_full()
                                     .h(px(yükseklik))
                                     .overflow_x_scroll()
+                                    .yalnız_tekerlek_ekseninde_kaydır()
                                     .child(
                                         div()
                                             .w(px(1920.0))
@@ -7699,6 +7716,7 @@ impl Render for ChartListesi {
                                             .w_full()
                                             .h(px(yükseklik as f32))
                                             .overflow_x_scroll()
+                                            .yalnız_tekerlek_ekseninde_kaydır()
                                             .child(
                                                 div()
                                                     .w(px(genişlik as f32))
@@ -7806,6 +7824,7 @@ impl Render for ChartListesi {
                                 .w_full()
                                 .h(px(yükseklik as f32))
                                 .overflow_x_scroll()
+                                .yalnız_tekerlek_ekseninde_kaydır()
                                 .child(
                                     div()
                                         .w(px(genişlik as f32))
@@ -7929,6 +7948,7 @@ impl Render for ChartListesi {
                                 .w_full()
                                 .h(px(600.0))
                                 .overflow_x_scroll()
+                                .yalnız_tekerlek_ekseninde_kaydır()
                                 .child(
                                     div()
                                         .w(px(1920.0))
