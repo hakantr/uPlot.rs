@@ -12,6 +12,24 @@ struct Görünüm {
     y: Option<Aralık>,
 }
 
+fn aralık_yaklaşık_eşit(sol: Aralık, sağ: Aralık) -> bool {
+    let ölçek = (sol.en_çok - sol.en_az)
+        .abs()
+        .max((sağ.en_çok - sağ.en_az).abs())
+        .max(f64::MIN_POSITIVE);
+    let tolerans = ölçek * f64::from(f32::EPSILON) * 4.0;
+    (sol.en_az - sağ.en_az).abs() <= tolerans && (sol.en_çok - sağ.en_çok).abs() <= tolerans
+}
+
+fn görünüm_yaklaşık_eşit(sol: Görünüm, sağ: Görünüm) -> bool {
+    let aralıklar_aynı = |sol: Option<Aralık>, sağ: Option<Aralık>| match (sol, sağ) {
+        (Some(sol), Some(sağ)) => aralık_yaklaşık_eşit(sol, sağ),
+        (None, None) => true,
+        _ => false,
+    };
+    aralıklar_aynı(sol.x, sağ.x) && aralıklar_aynı(sol.y, sağ.y)
+}
+
 #[derive(Clone, Copy)]
 struct TaşımaBaşlangıcı {
     görünüm: Görünüm,
@@ -467,8 +485,17 @@ impl EtkileşimDenetleyicisi {
         self.dokunma_başlangıç_y = None;
     }
 
-    fn uygula(&mut self, yeni: Görünüm, geçmişe_ekle: bool) -> bool {
-        if self.görünüm == yeni {
+    fn uygula(&mut self, mut yeni: Görünüm, geçmişe_ekle: bool) -> bool {
+        if yeni.x.is_some_and(|x| aralık_yaklaşık_eşit(x, self.tam_x)) {
+            yeni.x = None;
+        }
+        if yeni.y.is_some_and(|y| aralık_yaklaşık_eşit(y, self.tam_y)) {
+            yeni.y = None;
+        }
+        // Grup görünümü normalize f32 oranlardan geri açılır. Aynı pencerenin
+        // bu gidiş-dönüşte kazandığı alt-piksel yuvarlama farkını yeni bir
+        // etkileşim saymak sync grubunda olay yankısı ve sahte geçmiş üretir.
+        if görünüm_yaklaşık_eşit(self.görünüm, yeni) {
             return false;
         }
         if geçmişe_ekle && self.ayarlar.görünüm_geçmişi {
@@ -600,4 +627,53 @@ fn odakta_yakınlaştır(
         odak + (1.0 - oran) * yeni_uzunluk,
     )?;
     kaydır(aday, tam, 0.0)
+}
+
+#[cfg(test)]
+mod testler {
+    use super::*;
+
+    #[test]
+    fn f32_sync_gidiş_dönüşü_yeni_görünüm_ve_geçmiş_üretmez() {
+        let tam = Aralık {
+            en_az: 1_700_000_000.0,
+            en_çok: 1_700_086_400.0,
+        };
+        let mut denetleyici = EtkileşimDenetleyicisi::yeni(
+            tam,
+            Aralık {
+                en_az: 0.0,
+                en_çok: 100.0,
+            },
+            Default::default(),
+        );
+        let görünür = Aralık {
+            en_az: tam.en_az + 12_345.678,
+            en_çok: tam.en_çok - 23_456.789,
+        };
+        assert!(denetleyici.görünür_aralıkları_ayarla(
+            görünür,
+            Aralık {
+                en_az: 10.0,
+                en_çok: 90.0
+            },
+            false,
+        ));
+        let sol = ((görünür.en_az - tam.en_az) / (tam.en_çok - tam.en_az)) as f32;
+        let sağ = ((görünür.en_çok - tam.en_az) / (tam.en_çok - tam.en_az)) as f32;
+        let f32_gidiş_dönüşü = Aralık {
+            en_az: tam.en_az + f64::from(sol) * (tam.en_çok - tam.en_az),
+            en_çok: tam.en_az + f64::from(sağ) * (tam.en_çok - tam.en_az),
+        };
+
+        assert!(!denetleyici.görünür_aralıkları_ayarla(
+            f32_gidiş_dönüşü,
+            Aralık {
+                en_az: 10.0,
+                en_çok: 90.0
+            },
+            true,
+        ));
+        assert!(!denetleyici.geri_var());
+    }
 }

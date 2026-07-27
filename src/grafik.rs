@@ -5,7 +5,7 @@ mod timeline;
 
 use std::{
     cell::RefCell,
-    collections::BTreeMap,
+    collections::{BTreeMap, HashMap},
     sync::atomic::{AtomicU64, Ordering},
 };
 use web_time::Instant;
@@ -29,6 +29,9 @@ use crate::{
     SeriBandı, TekerlekEkseni, UplotHatası, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekEtiketBiçimi,
     ÖlçekGradyanı,
 };
+
+type YAralıkPenceresiAnahtarı = (u64, u64);
+type YAralıkÖnbelleği = HashMap<String, HashMap<YAralıkPenceresiAnahtarı, Aralık>>;
 
 /// Bir işaretçi seçiminin çekirdekte çözümlenen sonucu.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -560,6 +563,12 @@ pub struct Grafik {
     odak_serisi: Option<usize>,
     elle_x_aralığı: Option<Aralık>,
     elle_y_aralıkları: BTreeMap<String, Aralık>,
+    /// Veri/seri görünürlüğü değişene kadar otomatik Y ölçeği sonuçlarını
+    /// aynı X penceresi için yeniden taramadan kullanır.
+    y_aralığı_önbelleği: RefCell<YAralıkÖnbelleği>,
+    /// Çizim döngüsünde her nokta için ölçek anahtarlarını doğrusal aramayı
+    /// engeller.
+    y_ölçek_indeksleri: HashMap<String, usize>,
     eksen_sürükleme: Option<EksenSürüklemeBaşlangıcı>,
     ölçüm_datumları: [Option<(f64, f64)>; 2],
     açıklama_stil_indeksleri: Vec<Option<usize>>,
@@ -873,6 +882,12 @@ impl Grafik {
         } else {
             Vec::new()
         };
+        let y_ölçek_indeksleri = seçenekler
+            .y_ölçekleri
+            .iter()
+            .enumerate()
+            .map(|(indeks, ölçek)| (ölçek.anahtar.clone(), indeks))
+            .collect();
         Ok(Self {
             kimlik: SON_GRAFİK_KİMLİĞİ.fetch_add(1, Ordering::Relaxed),
             seçenekler,
@@ -882,6 +897,8 @@ impl Grafik {
             odak_serisi: None,
             elle_x_aralığı: None,
             elle_y_aralıkları: BTreeMap::new(),
+            y_aralığı_önbelleği: RefCell::new(HashMap::new()),
+            y_ölçek_indeksleri,
             eksen_sürükleme: None,
             ölçüm_datumları: [None, None],
             açıklama_stil_indeksleri,
@@ -1082,12 +1099,14 @@ impl Grafik {
         if seçenekleri_değiştir {
             self.seçenekler = yeni.seçenekler;
             self.açıklama_stil_indeksleri = yeni.açıklama_stil_indeksleri;
+            self.y_ölçek_indeksleri = yeni.y_ölçek_indeksleri;
         }
         self.veri = yeni.veri;
         self.etkileşim = yeni.etkileşim;
         self.odak_serisi = None;
         self.elle_x_aralığı = None;
         self.elle_y_aralıkları.clear();
+        self.y_aralığı_önbelleği.borrow_mut().clear();
         self.eksen_sürükleme = None;
         self.ölçüm_datumları = [None, None];
         self.çubuk_vuruş_dizini = RefCell::new(None);
@@ -1209,6 +1228,7 @@ impl Grafik {
         }
         self.seçenekler.genişlik = genişlik;
         self.seçenekler.yükseklik = yükseklik;
+        self.y_aralığı_önbelleği.borrow_mut().clear();
         Ok(true)
     }
 
@@ -1478,54 +1498,19 @@ impl Grafik {
                 bulunan: self.seçenekler.seriler.len(),
             });
         }
-        let birincil_sabit_y = self
-            .seçenekler
-            .y_ölçekleri
-            .iter()
-            .find(|ölçek| ölçek.anahtar == self.seçenekler.birincil_y_ölçeği)
-            .and_then(|ölçek| ölçek.aralık)
-            .or(self.seçenekler.y_aralığı);
-        if let Some(tam_y) = birincil_sabit_y {
-            // Canlı sabit-Y grafiklerinde seçenek ağacını, stil dizilerini ve
-            // eklenti yapılandırmasını her kare yeniden kurmaya gerek yoktur.
-            // uPlot `setData(data)` gibi aynı Grafik örneğinde yalnız veri,
-            // tam ölçekler ve veriye bağlı dizinler yenilenir.
-            let mut tam_x = self
-                .seçenekler
-                .x_aralığı
-                .or_else(|| tam_x_aralığı(&veri).ok())
-                .unwrap_or(Aralık {
-                    en_az: 0.0,
-                    en_çok: 1.0,
-                });
-            if (self
-                .seçenekler
-                .çubuk_düzeni
-                .is_some_and(|düzen| düzen.x_kenar_paylı)
-                || self.seçenekler.kutu_bıyık_düzeni.is_some())
-                && veri.uzunluk() > 1
-            {
-                tam_x = Aralık::yeni(tam_x.en_az - 0.5, tam_x.en_çok + 0.5)?;
-            }
-            let etkileşim_ayarları = self.etkileşim.ayarlar();
-            self.otomatik_çubuk_metinleri =
-                otomatik_çubuk_metin_önbelleği(&self.seçenekler, &veri);
-            self.çizim_kancası_medyanları = çizim_kancası_medyanları(&self.seçenekler, &veri);
-            self.veri = veri;
-            self.etkileşim = EtkileşimDenetleyicisi::yeni(tam_x, tam_y, etkileşim_ayarları);
-            self.odak_serisi = None;
-            self.elle_x_aralığı = None;
-            self.elle_y_aralıkları.clear();
-            self.eksen_sürükleme = None;
-            self.ölçüm_datumları = [None, None];
-            *self.çubuk_vuruş_dizini.borrow_mut() = None;
-            *self.dağılım_vuruş_dizini.borrow_mut() = None;
-            return Ok(());
-        }
-        let mut seçenekler = self.seçenekler.clone();
-        seçenekler.etkileşimler = self.etkileşim.ayarlar();
-        let yeni = Self::yeni(seçenekler, veri)?;
-        self.doğrulanmış_durumu_uygula(yeni, false);
+        let etkileşim_ayarları = self.etkileşim.ayarlar();
+        self.canlı_veriyi_ayarla(veri)?;
+        let tam_x = self.etkileşim.tam_x();
+        let tam_y = self.etkileşim.tam_y();
+        // uPlot `setData(data)` görünümü sıfırlar; seçenek/stil/eklenti
+        // ağacını deep-clone edip Grafik::yeni çalıştırmak yerine yalnız
+        // veriyle ilişkili önbellekleri ve etkileşim ölçeklerini yenileriz.
+        self.etkileşim = EtkileşimDenetleyicisi::yeni(tam_x, tam_y, etkileşim_ayarları);
+        self.odak_serisi = None;
+        self.elle_x_aralığı = None;
+        self.elle_y_aralıkları.clear();
+        self.eksen_sürükleme = None;
+        self.ölçüm_datumları = [None, None];
         Ok(())
     }
 
@@ -1632,6 +1617,14 @@ impl Grafik {
                 en_az: 0.0,
                 en_çok: 1.0,
             });
+        if self.seçenekler.x_aralığı.is_none()
+            && let XÖlçekDağılımı::Logaritmik { taban } = self.seçenekler.x_dağılımı
+            && let Some((en_az, en_çok)) =
+                sonlu_sınırlar(veri.x().iter().copied().filter(|değer| *değer > 0.0))
+            && let Some(log_aralığı) = logaritmik_aralık_sınırlardan(en_az, en_çok, taban, true)
+        {
+            tam_x = log_aralığı;
+        }
         if (self
             .seçenekler
             .çubuk_düzeni
@@ -1644,7 +1637,8 @@ impl Grafik {
         self.otomatik_çubuk_metinleri = otomatik_çubuk_metin_önbelleği(&self.seçenekler, &veri);
         self.çizim_kancası_medyanları = çizim_kancası_medyanları(&self.seçenekler, &veri);
         self.veri = veri;
-        let tam_y = self
+        self.y_aralığı_önbelleği.borrow_mut().clear();
+        let mut tam_y = self
             .seçenekler
             .y_ölçekleri
             .iter()
@@ -1652,6 +1646,22 @@ impl Grafik {
             .and_then(|ölçek| ölçek.aralık)
             .or(self.seçenekler.y_aralığı)
             .unwrap_or_else(|| self.y_aralığı(tam_x));
+        if let Some(düzen) = &self.seçenekler.kutu_bıyık_düzeni {
+            let değerler = self
+                .veri
+                .seriler()
+                .iter()
+                .flat_map(|seri| seri.iter().copied().flatten())
+                .chain(
+                    düzen
+                        .ayrık_değerler
+                        .iter()
+                        .flat_map(|ayrıklar| ayrıklar.iter().copied()),
+                );
+            if let Some(ham) = sonlu_aralık(değerler) {
+                tam_y = Aralık::uplot_sayısal(ham.en_az, ham.en_çok, 0.1, true)?;
+            }
+        }
         self.etkileşim.canlı_tam_x_ayarla(tam_x);
         self.etkileşim.canlı_tam_y_ayarla(tam_y);
         self.odak_serisi = None;
@@ -1711,6 +1721,7 @@ impl Grafik {
         let doğrulanmış = Self::yeni(seçenekler, veri)?;
         self.veri = doğrulanmış.veri;
         self.çizim_kancası_medyanları = doğrulanmış.çizim_kancası_medyanları;
+        self.y_aralığı_önbelleği.borrow_mut().clear();
         self.çubuk_vuruş_dizini = RefCell::new(None);
         self.dağılım_vuruş_dizini = RefCell::new(None);
         self.seçenekler.x_aralığı = Some(aralık);
@@ -1730,6 +1741,7 @@ impl Grafik {
     /// o görünüm korunur; tam görünümdeyse yeni aralık hemen görünür olur.
     pub fn canlı_y_aralığını_ayarla(&mut self, aralık: Aralık) -> bool {
         self.seçenekler.y_aralığı = Some(aralık);
+        self.y_aralığı_önbelleği.borrow_mut().clear();
         self.etkileşim.canlı_tam_y_ayarla(aralık)
     }
 
@@ -1773,6 +1785,9 @@ impl Grafik {
         }
         if let Some(aralık) = birincil {
             değişti |= self.etkileşim.canlı_tam_y_ayarla(aralık);
+        }
+        if değişti {
+            self.y_aralığı_önbelleği.borrow_mut().clear();
         }
         Ok(değişti)
     }
@@ -1889,6 +1904,7 @@ impl Grafik {
         }
         let ölçek = seri.ölçek.clone();
         seri.göster = görünür;
+        self.y_aralığı_önbelleği.borrow_mut().clear();
         // uPlot `setSeries({show})`, otomatik serinin ölçeğini yeniden
         // kuyruğa alır. Eksen sürüklemesinden kalan elle aralık bu değişim
         // sonrasında eski görünür seri kümesine bağlı kalmamalıdır.
@@ -2678,6 +2694,7 @@ impl Grafik {
             return false;
         }
         ölçek.dağılım = YÖlçekDağılımı::ArcSinh { eşik };
+        self.y_aralığı_önbelleği.borrow_mut().clear();
         true
     }
 
@@ -6886,25 +6903,21 @@ impl Grafik {
         {
             return None;
         }
-        let ham_aralık = sonlu_aralık(
-            self.veri
-                .x()
+        let etkin_seriler = self
+            .veri
+            .seriler()
+            .iter()
+            .zip(self.seçenekler.seriler.iter())
+            .filter(|(_, ayarlar)| {
+                ayarlar.göster && ayarlar.otomatik_ölçeğe_katıl && ayarlar.ölçek == anahtar
+            })
+            .map(|(seri, _)| seri)
+            .collect::<Vec<_>>();
+        let ham_aralık = sonlu_aralık(self.görünür_x_indeksleri(x_aralığı).flat_map(|indeks| {
+            etkin_seriler
                 .iter()
-                .enumerate()
-                .filter(|(_, x)| **x >= x_aralığı.en_az && **x <= x_aralığı.en_çok)
-                .flat_map(|(indeks, _)| {
-                    self.veri
-                        .seriler()
-                        .iter()
-                        .zip(self.seçenekler.seriler.iter())
-                        .filter(move |(_, ayarlar)| {
-                            ayarlar.göster
-                                && ayarlar.otomatik_ölçeğe_katıl
-                                && ayarlar.ölçek == anahtar
-                        })
-                        .filter_map(move |(seri, _)| seri.get(indeks).copied().flatten())
-                }),
-        )?;
+                .filter_map(move |seri| seri.get(indeks).copied().flatten())
+        }))?;
         güzel_ölçek(ham_aralık, çizim_yüksekliği, düzen.en_az_etiket_boşluğu)
     }
 
@@ -6913,6 +6926,26 @@ impl Grafik {
     }
 
     fn y_aralığı_ölçek(&self, anahtar: &str, x_aralığı: Aralık) -> Aralık {
+        let pencere_anahtarı = (x_aralığı.en_az.to_bits(), x_aralığı.en_çok.to_bits());
+        if let Some(aralık) = self
+            .y_aralığı_önbelleği
+            .borrow()
+            .get(anahtar)
+            .and_then(|pencereler| pencereler.get(&pencere_anahtarı))
+            .copied()
+        {
+            return aralık;
+        }
+        let aralık = self.y_aralığı_ölçek_hesapla(anahtar, x_aralığı);
+        self.y_aralığı_önbelleği
+            .borrow_mut()
+            .entry(anahtar.to_owned())
+            .or_default()
+            .insert(pencere_anahtarı, aralık);
+        aralık
+    }
+
+    fn y_aralığı_ölçek_hesapla(&self, anahtar: &str, x_aralığı: Aralık) -> Aralık {
         if let Some(ölçek) = self.ölçek_seçeneği(anahtar)
             && let Some(kaynak) = ölçek.kaynak.as_deref()
             && kaynak != anahtar
@@ -6961,24 +6994,22 @@ impl Grafik {
                 {
                     return aralık;
                 }
+                let etkin_seriler = self
+                    .veri
+                    .seriler()
+                    .iter()
+                    .zip(self.seçenekler.seriler.iter())
+                    .filter(|(_, ayarlar)| {
+                        ayarlar.göster && ayarlar.otomatik_ölçeğe_katıl && ayarlar.ölçek == anahtar
+                    })
+                    .map(|(seri, _)| seri)
+                    .collect::<Vec<_>>();
                 let görünür = || {
-                    self.veri
-                        .x()
-                        .iter()
-                        .enumerate()
-                        .filter(|(_, x)| **x >= x_aralığı.en_az && **x <= x_aralığı.en_çok)
-                        .flat_map(|(indeks, _)| {
-                            self.veri
-                                .seriler()
-                                .iter()
-                                .zip(self.seçenekler.seriler.iter())
-                                .filter(move |(_, ayarlar)| {
-                                    ayarlar.göster
-                                        && ayarlar.otomatik_ölçeğe_katıl
-                                        && ayarlar.ölçek == anahtar
-                                })
-                                .filter_map(move |(seri, _)| seri.get(indeks))
-                        })
+                    self.görünür_x_indeksleri(x_aralığı).flat_map(|indeks| {
+                        etkin_seriler
+                            .iter()
+                            .filter_map(move |seri| seri.get(indeks))
+                    })
                 };
                 match self.ölçek_seçeneği(anahtar).map(|ölçek| ölçek.dağılım) {
                     Some(YÖlçekDağılımı::Logaritmik { taban }) => {
@@ -7110,13 +7141,12 @@ impl Grafik {
             .zip(self.seçenekler.seriler.iter())
             .filter(|(_, seçenek)| seçenek.göster && seçenek.ölçek == ölçek)
         {
-            for (x, değer) in self.veri.x().iter().zip(seri.iter()) {
-                if *x < x_aralığı.en_az || *x > x_aralığı.en_çok {
+            for indeks in self.görünür_x_indeksleri(x_aralığı) {
+                let Some(değer) = seri.get(indeks).copied().flatten() else {
                     continue;
-                }
-                let Some(değer) = değer else { continue };
-                en_az = en_az.min(*değer);
-                en_çok = en_çok.max(*değer);
+                };
+                en_az = en_az.min(değer);
+                en_çok = en_çok.max(değer);
             }
         }
         (en_az.is_finite() && en_çok.is_finite()).then_some((en_az, en_çok))
@@ -7235,11 +7265,17 @@ impl Grafik {
             .or_else(|| tam_x_aralığı(&self.veri).ok())
     }
 
+    fn görünür_x_indeksleri(&self, aralık: Aralık) -> std::ops::Range<usize> {
+        let x = self.veri.x();
+        let başlangıç = x.partition_point(|değer| *değer < aralık.en_az);
+        let bitiş = x.partition_point(|değer| *değer <= aralık.en_çok);
+        başlangıç..bitiş
+    }
+
     fn ölçek_seçeneği(&self, anahtar: &str) -> Option<&crate::YÖlçekSeçenekleri> {
-        self.seçenekler
-            .y_ölçekleri
-            .iter()
-            .find(|ölçek| ölçek.anahtar == anahtar)
+        self.y_ölçek_indeksleri
+            .get(anahtar)
+            .and_then(|indeks| self.seçenekler.y_ölçekleri.get(*indeks))
     }
 
     fn y_konumu(
@@ -8746,6 +8782,48 @@ mod eksen_testleri {
         assert_eq!(
             Grafik::yeni(seçenekler, veri).map(|_| ()),
             Err(UplotHatası::GeçersizKatmanSırası)
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn otomatik_y_aralığı_aynı_pencerede_önbelleklenir_ve_set_data_ile_silinir()
+    -> Result<(), UplotHatası> {
+        let seçenekler = GrafikSeçenekleri::yeni(400, 240)?
+            .x_zaman(false)
+            .seri(crate::SeriSeçenekleri::yeni("seri"));
+        let veri = HizalıVeri::yeni(
+            vec![0.0, 1.0, 2.0],
+            vec![vec![Some(1.0), Some(2.0), Some(3.0)]],
+        )?;
+        let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        let x = grafik.görünür_x_aralığı();
+
+        let ilk = grafik.y_aralığı_ölçek("y", x);
+        let ikinci = grafik.y_aralığı_ölçek("y", x);
+        assert_eq!(ilk, ikinci);
+        assert_eq!(
+            grafik
+                .y_aralığı_önbelleği
+                .borrow()
+                .get("y")
+                .map(HashMap::len),
+            Some(1)
+        );
+
+        grafik.veriyi_ayarla(HizalıVeri::yeni(
+            vec![0.0, 1.0, 2.0],
+            vec![vec![Some(10.0), Some(20.0), Some(30.0)]],
+        )?)?;
+        let yeni = grafik.y_aralığı_ölçek("y", x);
+        assert_ne!(yeni, ilk);
+        assert_eq!(
+            grafik
+                .y_aralığı_önbelleği
+                .borrow()
+                .get("y")
+                .map(HashMap::len),
+            Some(1)
         );
         Ok(())
     }

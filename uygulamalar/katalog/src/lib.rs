@@ -1887,14 +1887,26 @@ impl ChartListesi {
     }
 
     fn standart_grafik_olayını_işle(&mut self, olay: &GpuiGrafikOlayı, cx: &mut Context<Self>) {
-        match olay {
-            GpuiGrafikOlayı::Açıklamaİstendi => self.açıklama_istemini_aç(cx),
+        let arayüz_değişti = match olay {
+            GpuiGrafikOlayı::Açıklamaİstendi => {
+                self.açıklama_istemini_aç(cx);
+                true
+            }
             GpuiGrafikOlayı::FareBırakıldı if self.aktif_kart == KartKimliği::CursorBind => {
                 self.cursor_bind_tıklama_sayısı = self.cursor_bind_tıklama_sayısı.saturating_add(1);
+                true
             }
-            _ => {}
+            // Lejant imleç değerlerini, durum olayı da görünür seri
+            // düğmelerini değiştirir. Görünüm olayı grafik alt yüzeylerinde
+            // zaten işlendiğinden 3.700+ satırlık katalog kökünü yenilemez.
+            GpuiGrafikOlayı::İmleçDeğişti | GpuiGrafikOlayı::DurumDeğişti => true,
+            GpuiGrafikOlayı::GörünümDeğişti { .. } | GpuiGrafikOlayı::FareBırakıldı => {
+                false
+            }
+        };
+        if arayüz_değişti {
+            cx.notify();
         }
-        cx.notify();
     }
 
     pub fn yeni(cx: &mut Context<Self>) -> Self {

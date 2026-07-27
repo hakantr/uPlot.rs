@@ -195,6 +195,15 @@ impl Sahne {
         }
     }
 
+    pub(crate) fn yeniden_kullan(&mut self, genişlik: u32, yükseklik: u32) {
+        self.genişlik = genişlik;
+        self.yükseklik = yükseklik;
+        self.komutlar.clear();
+        self.geometri_kimlikleri.clear();
+        self.katmanlar.clear();
+        self.etkin_katman = SahneKatmanı::Veri;
+    }
+
     pub fn ekle(&mut self, komut: Komut) {
         self.geometri_kimlikleri
             .push(komut_geometri_kimliği(&komut));
