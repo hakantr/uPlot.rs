@@ -5557,6 +5557,7 @@ name = "uplot-rs"
 version = "0.1.0"
 dependencies = [
  "gpui",
+ "image",
  "web-time",
 ]
 
@@ -5567,6 +5568,7 @@ dependencies = [
  "gpui",
  "js-sys",
  "ortak_bilesenler",
+ "ortak_tema",
  "uplot-rs",
  "uplot-rs-gpui-ornekler",
  "wasm-bindgen",
