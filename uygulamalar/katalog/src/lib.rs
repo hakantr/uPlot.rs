@@ -8117,16 +8117,12 @@ impl Render for ChartListesi {
                     .find(|(kimlik, _)| *kimlik == örnek)
                     .map(|(_, grafik)| grafik.clone())
             };
+            // Kaynak sayfa ilk 7 yoğunluk yüzeyini, ardından dörderli 12
+            // geometri satırını gösterir. Bölme dilimler üzerinden yapılır;
+            // eskiden her render'da 15 ara `Vec` üretiliyordu.
             let örnekler = ThinBarsÖrneği::tümü();
-            let yoğunluklar = örnekler.iter().take(7).copied().collect::<Vec<_>>();
-            let geometri_grupları = örnekler
-                .iter()
-                .skip(7)
-                .copied()
-                .collect::<Vec<_>>()
-                .chunks(4)
-                .map(|grup| grup.to_vec())
-                .collect::<Vec<_>>();
+            let (yoğunluklar, geometriler) = örnekler.split_at(örnekler.len().min(7));
+            let geometri_grupları = geometriler.chunks(4);
             çizim_tabanı
                 .flex_none()
                 .h(px(2100.0))
@@ -8144,7 +8140,7 @@ impl Render for ChartListesi {
                 )
                 .child(
                     div().w(px(1600.0)).flex().flex_wrap().gap_2().children(
-                        yoğunluklar.into_iter().map(|örnek| {
+                        yoğunluklar.iter().copied().map(|örnek| {
                             let (genişlik, yükseklik) = örnek.boyut();
                             div()
                                 .flex_none()
@@ -8156,14 +8152,14 @@ impl Render for ChartListesi {
                         }),
                     ),
                 )
-                .children(geometri_grupları.into_iter().map(|grup| {
+                .children(geometri_grupları.map(|grup| {
                     div()
                         .w(px(1600.0))
                         .flex()
                         .border_t_1()
                         .border_color(rgb(0xd1d5db))
                         .pt_2()
-                        .children(grup.into_iter().map(|örnek| {
+                        .children(grup.iter().copied().map(|örnek| {
                             div()
                                 .flex_none()
                                 .w(px(400.0))
