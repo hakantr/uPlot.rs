@@ -49,11 +49,11 @@ jobs:
         uses: actions/checkout@v6
         with:
           path: uPlot.rs
-      - name: Kilitli GPUI
+      # GPUI ayrı bir depoda takip edilir; sabit commit'e kilitlenmez.
+      - name: GPUI
         uses: actions/checkout@v6
         with:
           repository: hakantr/gpui
-          ref: 18b9b8b4d6f5f8a6397e273f5b0fdbac51581192
           path: gpui
       - name: Kilitli GPUI bileşen kütüphanesi
         uses: actions/checkout@v6
@@ -126,11 +126,11 @@ jobs:
         uses: actions/checkout@v6
         with:
           path: uPlot.rs
-      - name: Kilitli GPUI
+      # GPUI ayrı bir depoda takip edilir; sabit commit'e kilitlenmez.
+      - name: GPUI
         uses: actions/checkout@v6
         with:
           repository: hakantr/gpui
-          ref: 18b9b8b4d6f5f8a6397e273f5b0fdbac51581192
           path: gpui
       - name: Kilitli GPUI bileşen kütüphanesi
         uses: actions/checkout@v6
@@ -138,9 +138,12 @@ jobs:
           repository: hakantr/gpui_kutuphanesi
           ref: c97926c3c15ab99091b51f7ed88bd98f357de409
           path: gpui_kutuphanesi
-      - name: Rust ve GPUI Web hedefi
-        uses: dtolnay/rust-toolchain@1.95
+      # GPUI Web kendi workspace'inde nightly + `build-std` ister; ayrıntı
+      # için `uygulamalar/web/rust-toolchain.toml` ve `.cargo/config.toml`.
+      - name: Rust nightly ve GPUI Web hedefi
+        uses: dtolnay/rust-toolchain@nightly
         with:
+          components: rust-src
           targets: wasm32-unknown-unknown
       - name: Trunk
         uses: taiki-e/install-action@v2
