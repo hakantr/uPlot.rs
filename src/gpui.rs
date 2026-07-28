@@ -2385,7 +2385,6 @@ impl GpuiGrafik {
                 )
             }
         };
-        let (sol, sağ, üst, alt) = self.çizim_alanı();
         let yatay = f64::from((fare.x - sol) / (sağ - sol));
         let dikey = f64::from((fare.y - üst) / (alt - üst));
         match self
@@ -3550,20 +3549,13 @@ fn sahneyi_önbellekli_boya(
     }
 
     for (komut_indeksi, komut) in sahne.komutlar().iter().enumerate() {
-        let komut_görünümü = boya_görünümü.filter(|_| {
-            yol_önbelleği
-                .veri_komutları
-                .get(komut_indeksi)
-                .copied()
-                .unwrap_or(false)
-        });
-        let yol_komut_görünümü = yol_boya_görünümü.filter(|_| {
-            yol_önbelleği
-                .veri_komutları
-                .get(komut_indeksi)
-                .copied()
-                .unwrap_or(false)
-        });
+        let veri_komutu = yol_önbelleği
+            .veri_komutları
+            .get(komut_indeksi)
+            .copied()
+            .unwrap_or(false);
+        let komut_görünümü = boya_görünümü.filter(|_| veri_komutu);
+        let yol_komut_görünümü = yol_boya_görünümü.filter(|_| veri_komutu);
         match komut {
             Komut::ArkaPlan { renk } => {
                 pencere.paint_quad(quad(
@@ -4193,6 +4185,11 @@ fn sahneyi_önbellekli_boya(
                 let karakter_sayısı = içerik.chars().count();
                 let adım = *boyut * 0.9;
                 let başlangıç_y = konum.y - (karakter_sayısı.saturating_sub(1) as f32 * adım) / 2.0;
+                // Yazı tipi ve renk etiket boyunca sabittir; karakter başına
+                // `text_style()` klonlamak ve renk tablosunu yeniden aramak
+                // yalnız glif sayısı kadar tekrar üretir.
+                let yazı_tipi = pencere.text_style().font();
+                let metin_rengi = yol_önbelleği.renk(renk);
                 for (indeks, karakter) in içerik.chars().rev().enumerate() {
                     let mut hasher = DefaultHasher::new();
                     karakter.hash(&mut hasher);
@@ -4200,8 +4197,8 @@ fn sahneyi_önbellekli_boya(
                     let metin_uzunluğu = karakter.len_utf8();
                     let koşu = TextRun {
                         len: metin_uzunluğu,
-                        font: pencere.text_style().font(),
-                        color: yol_önbelleği.renk(renk),
+                        font: yazı_tipi.clone(),
+                        color: metin_rengi,
                         background_color: None,
                         underline: None,
                         strikethrough: None,

@@ -1269,21 +1269,32 @@ impl Grafik {
                 )
             })
             .collect::<Vec<_>>();
-        let anahtar = DağılımVuruşAnahtarı {
-            genişlik: genişlik_px,
-            yükseklik: yükseklik_px,
-            x_aralığı,
-            y_aralıkları: y_aralıkları.clone(),
-        };
+        // Anahtarı yalnız önbellek ıskaladığında kurarız. Her pointer olayında
+        // ölçek adlarını taşıyan vektörü ikinci kez klonlamak, dizin güncelken
+        // tümüyle boşa giden bir tahsisti.
         let güncel = self
             .dağılım_vuruş_dizini
             .borrow()
             .as_ref()
-            .is_some_and(|dizin| dizin.anahtar == anahtar);
+            .is_some_and(|dizin| {
+                dizin.anahtar.genişlik == genişlik_px
+                    && dizin.anahtar.yükseklik == yükseklik_px
+                    && dizin.anahtar.x_aralığı == x_aralığı
+                    && dizin.anahtar.y_aralıkları == y_aralıkları
+            });
         if !güncel {
+            let anahtar = DağılımVuruşAnahtarı {
+                genişlik: genişlik_px,
+                yükseklik: yükseklik_px,
+                x_aralığı,
+                y_aralıkları,
+            };
             let mut kayıtlar = Vec::new();
-            for (seri, (seri_düzeni, (_, y_aralığı))) in
-                düzen.seriler.iter().zip(y_aralıkları.iter()).enumerate()
+            for (seri, (seri_düzeni, (_, y_aralığı))) in düzen
+                .seriler
+                .iter()
+                .zip(anahtar.y_aralıkları.iter())
+                .enumerate()
             {
                 for (indeks, nokta) in seri_düzeni.noktalar.iter().enumerate() {
                     let merkez = Nokta::yeni(
@@ -2427,17 +2438,29 @@ impl Grafik {
         if self.veri.seriler().is_empty() {
             return None;
         }
-        let beklenen = self.çubuk_vuruş_anahtarı(
-            genişlik_px,
-            yükseklik_px,
-            self.görünür_x_aralığı(),
-            self.görünür_y_aralığı(),
-        );
+        let x_aralığı = self.görünür_x_aralığı();
+        let y_aralığı = self.görünür_y_aralığı();
+        // Anahtarı kurmak seri görünürlüklerini bir `Vec<bool>` içine
+        // toplamak demek. Karşılaştırmayı yerinde yapmak, dizin güncelken —
+        // yani hemen her pointer olayında — bu tahsisi tümüyle atlar.
         let güncel = self
             .çubuk_vuruş_dizini
             .borrow()
             .as_ref()
-            .is_some_and(|dizin| dizin.anahtar == beklenen);
+            .is_some_and(|dizin| {
+                let anahtar = &dizin.anahtar;
+                anahtar.genişlik == genişlik_px
+                    && anahtar.yükseklik == yükseklik_px
+                    && anahtar.x_aralığı == x_aralığı
+                    && anahtar.y_aralığı == y_aralığı
+                    && anahtar.görünür_seriler.len() == self.seçenekler.seriler.len()
+                    && self
+                        .seçenekler
+                        .seriler
+                        .iter()
+                        .zip(anahtar.görünür_seriler.iter())
+                        .all(|(seri, görünür)| seri.göster == *görünür)
+            });
         if !güncel {
             // İlk vuruşta geometri bir kez ana çizim yolundan kurulur. Sonraki
             // pointer hareketleri yalnız uzamsal hücreyi tarar; sahne yeniden
