@@ -9396,5 +9396,7 @@ mod tests {
             ölç("ThinBars (55 yüzey)", KartKimliği::ThinBars(örnek), cx);
         }
         ölç("TimezonesDst (51 yüzey)", KartKimliği::TimezonesDst, cx);
+        ölç("LatencyHeatmap", KartKimliği::LatencyHeatmap, cx);
+        ölç("MassSpectrum", KartKimliği::MassSpectrum, cx);
     }
 }
