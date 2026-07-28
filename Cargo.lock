@@ -5847,6 +5847,7 @@ dependencies = [
  "gpui",
  "js-sys",
  "ortak_bilesenler",
+ "ortak_tema",
  "uplot-rs",
  "uplot-rs-gpui-ornekler",
  "wasm-bindgen",
