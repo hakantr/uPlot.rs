@@ -10,7 +10,7 @@ use uplot_rs_gpui_ornekler::{
     SparseÖrneği, SyncCursorÖrneği, TekerlekEkseni, UplotHatası,
     diagnostics::{GpuiRetainedBoyaÖlçer, Komut},
     latency_heatmap_kartları, latency_heatmap_kartı, mass_spectrum_kartı, multi_bars_kartı,
-    resize_kartı, sparse_kartı, sync_cursor_kartı,
+    resize_kartı, sparse_kartı, sync_cursor_kartı, uplot_bench_kartı,
 };
 
 const ÖLÇÜM_TURU: usize = 180;
@@ -368,6 +368,10 @@ fn phase_12_release_performans_kapıları() -> Result<(), UplotHatası> {
         ağır_senaryoyu_ölç("Sync Cursor CPU", || {
             sync_cursor_kartı(SyncCursorÖrneği::Cpu)
         })?,
+        // uPlot'un resmî benchmark grafiği: `bench/data.json`, 55.550 nokta
+        // x 3 seri. README'de yayınlanan kendi sonucu 34 ms ilk çizim
+        // (Ryzen 7 PRO 5850U, Chrome 113). Bizim sayımız onun karşılığı.
+        ağır_senaryoyu_ölç("uPlot bench 166.650", uplot_bench_kartı)?,
     ];
     let bitiş_rss = linux_rss_kib();
 

@@ -151,6 +151,48 @@ CI her push'ta Linux test/Clippy/performance/WASM matrisini ve macOS ARM64 ile
 Windows x64 native kontrollerini çalıştırır. Nightly yayın aynı kilitli kardeş
 commitlerden macOS, Linux, Windows ve GPUI Web artefaktları üretir.
 
+## uPlot resmî benchmark'ıyla karşılaştırma
+
+**Tarih:** 2026-07-29
+
+uPlot'un `bench/` dizini on iki rakip kütüphaneye karşı ölçüm yayınlıyor
+(`bench/results.json`, `bench/table.md`, `perf.png`). Ortak veri seti
+`bench/data.json`: 55.550 nokta × 3 seri = 166.650 nokta. uPlot v1.6.24 kendi
+sonucunu 34 ms ilk çizim olarak veriyor (Ryzen 7 PRO 5850U @ 1.9 GHz, Chrome
+113, 1.5 dpr, 2023-03-11).
+
+Aynı veri ve aynı dönüşüm `uygulamalar/ornekler/src/uplot_bench.rs` içinde
+kurulu; ölçüm `performance_budgets` senaryosu olarak koşuyor. Katalog kartı
+değil, çünkü uyum sözleşmesi katalogda uPlot'un 73 demosunu birebir tutuyor
+ve benchmark demo değil.
+
+| ölçüm | değer |
+|---|---:|
+| ilk çizim | 1,83 ms |
+| yeniden çizim p50 / p95 | 1,53 ms / 2,29 ms |
+| zoom p50 | 1,58 ms |
+| komut / geometri öğesi | 63 / 17.773 |
+| tahsis | 0 |
+
+166.650 noktanın 17.773 geometri öğesine inmesi piksel kovası seyreltmesinin
+çalıştığını gösteriyor (~9,4×).
+
+**Sayılar doğrudan karşılaştırılamaz ve öyle sunulmamalı.** Üç fark var:
+
+1. **Kapsam.** uPlot'un `console.time("chart")` sayacı
+   `new uPlot(opts, data, document.body)` çağrısını sarıyor: DOM kurulumu,
+   yerleşim, eksen hesabı, yol kurma ve **ilk canvas rasterleştirmesi**.
+   Bizim `Grafik::çiz()` yalnız sahne komutu üretiyor; rasterleştirme,
+   metin şekillendirme ve pencere kurulumu dahil değil. Uçtan uca karşılık
+   için üstüne GPUI boyama süresi eklenmeli — kök render bütçesinde
+   karşılaştırılabilir kartlar 0,6–1,0 ms bandında.
+2. **Donanım.** uPlot'un sayısı 2023 tarihli ve farklı bir CPU'da alınmış.
+3. **Sürüm.** Yayınlanan sonuç v1.6.24; kilitli kaynağımız v1.6.32.
+
+Doğru okuma: sahne üretimi tarafında geniş bir marj var, ama "19× hızlı"
+gibi bir iddia bu ölçümden çıkarılamaz. Senaryo, o marjın sessizce
+kaybolmasını engellemek için bütçeye bağlı.
+
 ## Karar: gpui'de fork yok, upstream yol gönderimi kabul edildi
 
 **Tarih:** 2026-07-28

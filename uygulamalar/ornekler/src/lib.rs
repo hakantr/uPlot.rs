@@ -73,6 +73,7 @@ mod tooltips;
 mod tooltips_closest;
 mod trendlines;
 mod update_cursor_select_resize;
+mod uplot_bench;
 mod veri_uretici;
 mod wind_direction;
 mod y_scale_drag;
@@ -269,6 +270,7 @@ pub use update_cursor_select_resize::{
     BoyutSenkronAkışı, UPDATE_CURSOR_SELECT_RESIZE_ARALIK_MS,
     UPDATE_CURSOR_SELECT_RESIZE_KART_TANIM_ÖRNEĞİ, update_cursor_select_resize_kartı,
 };
+pub use uplot_bench::{UPLOT_BENCH_KART_TANIM_ÖRNEĞİ, uplot_bench_kartı};
 pub use wind_direction::{WIND_DIRECTION_KART_TANIM_ÖRNEĞİ, wind_direction_kartı};
 pub use y_scale_drag::{Y_SCALE_DRAG_KART_TANIM_ÖRNEĞİ, y_scale_drag_kartı};
 pub use y_shifted_series::{
