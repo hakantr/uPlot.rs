@@ -3643,14 +3643,10 @@ fn raster_yüzeyi_boya(
     };
 
     let boya = |pencere: &mut Window| {
-        let _ = pencere.paint_image(
-            sınırlar,
-            Bounds::new(point(px(0.0), px(0.0)), sınırlar.size),
-            Corners::default(),
-            görsel,
-            0,
-            false,
-        );
+        // `image_bounds` görselin pencere içindeki yerleşim dikdörtgeni,
+        // `bounds` ise görünür kırpma; ikisi de yüzeyin kendisi. Yerleşimi
+        // pencere kökenine vermek sprite'ı sol üste çakar.
+        let _ = pencere.paint_image(sınırlar, sınırlar, Corners::default(), görsel, 0, false);
     };
     if let Some((k_sol, k_sağ, k_üst, k_alt)) = çizim_kırpması {
         let (kaynak_g, kaynak_y) = sahne.boyut();
