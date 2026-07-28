@@ -57,7 +57,7 @@ fn isteğe_bağlı_etkileşimler_kart_bazında_açılır() {
     assert!(!varsayılan.dokunma_etkileşimi);
 
     let ortak_profil = ortak_kart_etkileşimleri();
-    assert!(ortak_profil.tekerlek_etkileşimi);
+    assert!(!ortak_profil.tekerlek_etkileşimi);
     assert!(!ortak_profil.tekerlek_odaksız_etkileşim);
     assert!(ortak_profil.seçim_yakınlaştır);
     assert!(ortak_profil.çift_tıkla_tam_görünüm);
@@ -140,6 +140,7 @@ fn tekerlek_x_ve_y_eksenlerini_fare_odağında_yeniden_ölçekler() -> Result<()
     let tam_x = grafik.görünür_x_aralığı();
     let tam_y = grafik.görünür_y_aralığı();
 
+    grafik.tekerlek_etkileşimi_ayarla(true);
     assert!(grafik.tekerlek(0.25, 0.75, 1.0, false)?);
     let yakın_x = grafik.görünür_x_aralığı();
     let yakın_y = grafik.görünür_y_aralığı();
@@ -156,11 +157,13 @@ fn tekerlek_ekseni_çekirdekte_x_ve_y_olarak_ayrılır() -> Result<(), UplotHata
     let mut yalnız_x = Grafik::yeni(seçenekler.clone(), veri.clone())?;
     let tam_x = yalnız_x.görünür_x_aralığı();
     let tam_y = yalnız_x.görünür_y_aralığı();
+    yalnız_x.tekerlek_etkileşimi_ayarla(true);
     assert!(yalnız_x.tekerlek_eksende(0.25, 0.75, 1.0, false, TekerlekEkseni::X)?);
     assert_ne!(yalnız_x.görünür_x_aralığı(), tam_x);
     assert_eq!(yalnız_x.görünür_y_aralığı(), tam_y);
 
     let mut yalnız_y = Grafik::yeni(seçenekler, veri)?;
+    yalnız_y.tekerlek_etkileşimi_ayarla(true);
     assert!(yalnız_y.tekerlek_eksende(0.25, 0.75, 1.0, false, TekerlekEkseni::Y)?);
     assert_eq!(yalnız_y.görünür_x_aralığı(), tam_x);
     assert_ne!(yalnız_y.görünür_y_aralığı(), tam_y);
@@ -173,6 +176,7 @@ fn yakınlaştırılmış_görünüm_boşluk_sürüklemesi_için_çekirdekte_ta�
     let (seçenekler, veri) = resize_kartı(100)?;
     let mut grafik = Grafik::yeni(seçenekler, veri)?;
     assert!(!grafik.taşımayı_başlat());
+    grafik.tekerlek_etkileşimi_ayarla(true);
     assert!(grafik.tekerlek(0.3, 0.4, 1.0, false)?);
     let önceki_x = grafik.görünür_x_aralığı();
     let önceki_y = grafik.görünür_y_aralığı();
@@ -217,6 +221,7 @@ fn log_x_tekerlek_seçim_taşıma_ve_dokunmayı_dönüşüm_uzayında_tutar() ->
     let tam_açıklık = log_açıklığı(tam);
 
     let mut tekerlek = Grafik::yeni(seçenekler.clone(), veri.clone())?;
+    tekerlek.tekerlek_etkileşimi_ayarla(true);
     assert!(tekerlek.tekerlek_eksende(0.5, 0.5, 10.0, true, TekerlekEkseni::X,)?);
     let beklenen_tekerlek_oranı = 0.75_f64.powf(0.1);
     assert!(
@@ -252,6 +257,7 @@ fn çok_küçük_doğrusal_değerler_zoom_oranını_değiştirmez() -> Result<()
     let önce_x = grafik.görünür_x_aralığı();
     let önce_y = grafik.görünür_y_aralığı();
 
+    grafik.tekerlek_etkileşimi_ayarla(true);
     assert!(grafik.tekerlek(0.5, 0.5, 10.0, true)?);
     let sonra_x = grafik.görünür_x_aralığı();
     let sonra_y = grafik.görünür_y_aralığı();

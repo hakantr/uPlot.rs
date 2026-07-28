@@ -1,0 +1,101 @@
+name: ci-wasm
+
+# Yalnız wasm hedefi. Ayrı tutulmasının nedeni araç zinciri farkı: GPUI Web'in
+# `multithreaded` yolu `wasm_thread`'i çeker, o da wasm32'de
+# `feature(stdarch_wasm_atomic_wait)` kullandığından nightly ister; paylaşımlı
+# bellek ayrıca `build-std` ile std'nin atomics açık yeniden derlenmesini
+# gerektirir. Kök workspace ise stable 1.95'e sabitlidir.
+on:
+  workflow_dispatch:
+  schedule:
+    # Her gün 03:00 UTC; `ci` iş akışıyla çakışmaması için bir saat sonra.
+    - cron: "0 3 * * *"
+
+concurrency:
+  group: ci-wasm-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Çekirdek kütüphane ve katalog wasm hedefinde derleniyor mu? Bu taraf
+  # nightly istemez; kök workspace stable kanalda kalır.
+  kutuphane:
+    runs-on: ubuntu-latest
+    steps:
+      - name: uPlot.rs
+        uses: actions/checkout@v4
+        with:
+          path: uPlot.rs
+      - name: GPUI
+        uses: actions/checkout@v4
+        with:
+          repository: hakantr/gpui
+          path: gpui
+      - name: Kilitli GPUI bileşen kütüphanesi
+        uses: actions/checkout@v4
+        with:
+          repository: hakantr/gpui_kutuphanesi
+          ref: 8e3c06ef5f84b6862e4aa3ae4e10e3840f293f4a
+          path: gpui_kutuphanesi
+      - uses: dtolnay/rust-toolchain@1.95
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Linux sistem bağımlılıkları
+        run: >-
+          sudo apt-get update && sudo apt-get install -y
+          libasound2-dev libfontconfig1-dev libwayland-dev libxkbcommon-dev
+          libxkbcommon-x11-dev libxcb1-dev libxcb-render0-dev
+          libxcb-shape0-dev libxcb-xfixes0-dev libudev-dev
+      - name: Kök workspace wasm derlemesi
+        working-directory: uPlot.rs
+        run: cargo check --target wasm32-unknown-unknown --workspace
+
+  # GPUI Web uygulaması kendi workspace'idir; yanındaki `rust-toolchain.toml`
+  # ve `.cargo/config.toml` nightly ve `build-std` ayarlarını taşır.
+  web-uygulamasi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: uPlot.rs
+        uses: actions/checkout@v4
+        with:
+          path: uPlot.rs
+      - name: GPUI
+        uses: actions/checkout@v4
+        with:
+          repository: hakantr/gpui
+          path: gpui
+      - name: Kilitli GPUI bileşen kütüphanesi
+        uses: actions/checkout@v4
+        with:
+          repository: hakantr/gpui_kutuphanesi
+          ref: 8e3c06ef5f84b6862e4aa3ae4e10e3840f293f4a
+          path: gpui_kutuphanesi
+      - name: Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          # `build-std` std kaynağını ister.
+          components: rust-src
+          targets: wasm32-unknown-unknown
+      - name: Trunk
+        uses: taiki-e/install-action@v2
+        with:
+          tool: trunk
+      - name: Linux sistem bağımlılıkları
+        run: >-
+          sudo apt-get update && sudo apt-get install -y
+          libasound2-dev libfontconfig1-dev libwayland-dev libxkbcommon-dev
+          libxkbcommon-x11-dev libxcb1-dev libxcb-render0-dev
+          libxcb-shape0-dev libxcb-xfixes0-dev libudev-dev
+      # Web ayrı bir workspace olduğundan kökteki `cargo fmt --all` onu
+      # kapsamaz; biçim denetimi burada yapılır.
+      - name: Biçim
+        working-directory: uPlot.rs/uygulamalar/web
+        run: cargo fmt --all --check
+      - name: Clippy
+        working-directory: uPlot.rs/uygulamalar/web
+        run: cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
+      # `trunk build` derlemenin ötesinde wasm-bindgen iş parçacığı dönüşümünü
+      # de çalıştırır; eksik `__heap_base` gibi bağlayıcı hataları yalnız bu
+      # adımda görünür.
+      - name: Trunk derlemesi
+        working-directory: uPlot.rs/uygulamalar/web
+        run: trunk build

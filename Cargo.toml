@@ -20,8 +20,9 @@ members = [
     "uygulamalar/ornekler",
     "uygulamalar/katalog",
     "uygulamalar/masaustu",
-    "uygulamalar/web",
 ]
+# GPUI Web nightly + `build-std` ister; kendi workspace'i olarak ayrıdır.
+exclude = ["uygulamalar/web"]
 resolver = "3"
 
 [workspace.lints.rust]
@@ -51,6 +52,9 @@ indexing_slicing = "deny"
 [features]
 default = []
 gpui-svg = []
+# Etkileşim ve kare bütçesi tanılaması. Kütüphanenin varsayılan yüzeyinde
+# yer almaz; açıldığında bile `UPLOT_IZLEME=1` olmadan sessiz kalır.
+izleme = []
 
 [dependencies]
 gpui = { version = "0.2.2", path = "../gpui/crates/gpui" }

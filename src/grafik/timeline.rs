@@ -31,7 +31,7 @@ impl Grafik {
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(sol - 15.0, şerit_üstü + şerit_yüksekliği / 2.0 + 5.0),
                 içerik: etiket.clone(),
-                renk: "#4b5563".to_string(),
+                renk: "#4b5563".into(),
                 boyut: 12.0,
                 hiza: MetinHizası::Bitiş,
             });
@@ -80,8 +80,8 @@ impl Grafik {
                 konum: Nokta::yeni(x0, şerit_üstü),
                 genişlik: x1 - x0,
                 yükseklik: şerit_yüksekliği,
-                dolgu: hücre.dolgu.clone(),
-                çizgi: hücre.çizgi.clone(),
+                dolgu: hücre.dolgu.clone().into(),
+                çizgi: hücre.çizgi.clone().into(),
                 kalınlık,
             });
             let metin_genişliği = hücre.değer.chars().count() as f32 * 7.0 + kalınlık * 2.0 + 4.0;
@@ -96,7 +96,7 @@ impl Grafik {
                         şerit_üstü + şerit_yüksekliği / 2.0 + 5.0,
                     ),
                     içerik: hücre.değer.clone(),
-                    renk: "#111111".to_string(),
+                    renk: "#111111".into(),
                     boyut: 14.0,
                     hiza: if hücre.etiket_ortala {
                         MetinHizası::Orta

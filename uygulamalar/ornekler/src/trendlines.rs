@@ -134,6 +134,9 @@ mod testler {
         );
 
         assert!(grafik.tam_görünüm());
+        // Tekerlek yakınlaştırması varsayılan kapalı; test onu
+        // araç olarak kullandığı için açıkça açıyor.
+        grafik.tekerlek_etkileşimi_ayarla(true);
         assert!(grafik.tekerlek(0.37, 0.5, 1.0, false)?);
         let tekerlek_aralığı = grafik.görünür_x_aralığı();
         assert_eq!(tekerlek_aralığı.en_az.fract(), 0.0);

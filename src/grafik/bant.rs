@@ -190,13 +190,13 @@ impl Grafik {
                 } else {
                     sahne.ekle(Komut::Alan {
                         çokgenler,
-                        dolgu: bant.dolgu.clone(),
+                        dolgu: bant.dolgu.clone().into(),
                     });
                 }
                 if let Some(parçalar) = çubuk_kenarları {
                     sahne.ekle(Komut::Yol {
                         parçalar,
-                        renk: üst_ayarları.renk.clone(),
+                        renk: üst_ayarları.renk.clone().into(),
                         kalınlık: üst_ayarları.çizgi_kalınlığı,
                     });
                 }

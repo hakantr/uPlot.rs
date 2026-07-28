@@ -4,8 +4,9 @@
 use gpui::ClipboardItem;
 use gpui::{
     AccessibleAction, App, ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement,
-    KeyBinding, Render, Role, ScrollStrategy, SharedString, StyleRefinement, Task,
-    UniformListScrollHandle, Window, div, prelude::*, px, rgb, rgba, uniform_list,
+    KeyBinding, ListAlignment, ListState, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Render,
+    Role, ScrollStrategy, ScrollWheelEvent, SharedString, StyleRefinement, Task,
+    UniformListScrollHandle, Window, div, list, prelude::*, px, rgb, rgba, uniform_list,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
@@ -17,6 +18,7 @@ use std::time::Duration;
 use uplot_rs::gpui::{
     GpuiGrafik, GpuiGrafikGrubu, GpuiGrafikGrupAyarları, GpuiGrafikOlayı, GpuiSeriEşleme,
 };
+use uplot_rs::izleme;
 use uplot_rs_gpui_ornekler::{
     ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_ARALIK_MS,
@@ -96,6 +98,44 @@ fn önbellekli_grafik(grafik: Entity<GpuiGrafik>) -> impl IntoElement {
     grafik.cached(StyleRefinement::default().size_full())
 }
 
+/// Canlı lejant satırını taşıyan bağımsız yüzey.
+///
+/// Lejant metni imleç en yakın veri indeksini her değiştirdiğinde tazelenir.
+/// Yoğun serilerde bu neredeyse her pointer olayında olur; metni katalog
+/// kökünün içinde tutmak o olayların hepsini ~3.500 satırlık `render`'a
+/// bağlıyordu. Ayrı bir varlık yalnız bu tek `div`'i yeniden kurar.
+struct KatalogLejantı {
+    metin: SharedString,
+    renk: u32,
+}
+
+impl KatalogLejantı {
+    fn yeni(renk: u32) -> Self {
+        Self {
+            metin: SharedString::default(),
+            renk,
+        }
+    }
+
+    fn metni_ayarla(&mut self, metin: SharedString, cx: &mut Context<Self>) {
+        if self.metin == metin {
+            return;
+        }
+        self.metin = metin;
+        cx.notify();
+    }
+}
+
+impl Render for KatalogLejantı {
+    fn render(&mut self, _pencere: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .mb_2()
+            .text_xs()
+            .text_color(rgb(self.renk))
+            .child(self.metin.clone())
+    }
+}
+
 trait KatalogKaydırmaUzantısı: Styled {
     /// Dikey katalog içinde yatay yüzeyin normal wheel hareketini çalmasını
     /// önler; yatay hareket gerçek yatay delta veya Shift+wheel ile kalır.
@@ -108,7 +148,23 @@ trait KatalogKaydırmaUzantısı: Styled {
 impl<T: Styled> KatalogKaydırmaUzantısı for T {}
 
 /// Ortak grafik ve katalog GPUI eylemlerini uygulamaya bir kez kaydeder.
+/// Paylaşılan bileşen kütüphanesinin katalog kromuyla uyumlu ayarları.
+///
+/// Katalog kendi kromunu açık paletle çiziyor (`panel` beyaz, `zemin`
+/// `#f3f4f6`). `ortak_bilesenler` tema sağlayıcı verilmediğinde koyu temayı
+/// kuruyor (`ortak_bilesenler/src/tema.rs`, `VarsayilanTema::koyu()`); bu da
+/// anahtar etiketlerini `#DCE0E5` ile açık zeminde 1,20:1 kontrasta
+/// düşürüp okunmaz hâle getiriyordu. Açık temayı açıkça bağlıyoruz:
+/// aynı etiket `#24292F` ile 13,31:1 veriyor.
+pub fn ortak_bileşen_ayarları() -> ortak_bilesenler::OrtakBilesenAyarlari {
+    ortak_bilesenler::OrtakBilesenAyarlari {
+        tema_saglayici: Some(std::sync::Arc::new(ortak_tema::VarsayilanTema::acik())),
+        ..ortak_bilesenler::OrtakBilesenAyarlari::default()
+    }
+}
+
 pub fn başlat(cx: &mut App) {
+    izleme::başlat();
     uplot_rs::gpui::başlat(cx);
     cx.bind_keys([
         KeyBinding::new("enter", KartıEtkinleştir, Some("uplot_katalog_kartı")),
@@ -118,6 +174,19 @@ pub fn başlat(cx: &mut App) {
 
 const PERFORMANS_KARE_SAYISI: usize = 180;
 const KARE_P95_BÜTÇESİ_MS: f64 = 16.7;
+/// Katalog kökündeki `vurgu` rengiyle aynı; lejant kendi varlığında yaşıyor.
+const LEJANT_RENGİ: u32 = 0xdc2626;
+/// Kart listesindeki ikincil satırların rengi.
+///
+/// Önceki `#6b7280`, beyaz zeminde 4,83:1 veriyordu ama seçili kartın
+/// `#fef2f2` zemininde 4,42:1'e düşüp WCAG AA eşiğinin (4,5:1) altına
+/// iniyordu — üstelik bu satırlar `text_xs`. `#4b5563` aynı zeminlerde
+/// 7,56:1 ve 6,91:1 veriyor.
+const LİSTE_İKİNCİL_RENGİ: u32 = 0x4b5563;
+/// Kart listesindeki kaynak etiketinin rengi. Vurgu kırmızısı (`#dc2626`)
+/// seçili zeminde 4,42:1'de kalıyordu; `#b91c1c` 5,91:1 veriyor. Kenarlık
+/// ve seçim vurgusu için `vurgu` olduğu gibi kullanılmaya devam ediyor.
+const LİSTE_KAYNAK_RENGİ: u32 = 0xb91c1c;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Kareİstatistiği {
@@ -1777,15 +1846,35 @@ pub struct ChartListesi {
     svg_kayıt_baytı: Option<usize>,
     kare_ölçer: KareÖlçer,
     performans_kare_bekleniyor: bool,
+    lejant: Entity<KatalogLejantı>,
+    /// Sanallaştırılmış çok yüzeyli kartların kaydırma/ölçüm durumu. Kart
+    /// değişiminde sıfırlanır, aksi hâlde eski öğe sayısıyla ölçüm yapar.
+    thin_bars_liste_durumu: Option<ListState>,
+    timezones_dst_liste_durumu: Option<ListState>,
 }
 
 impl ChartListesi {
-    fn etkin_grafik_yüzeyleri(&self) -> Vec<Entity<GpuiGrafik>> {
-        let mut grafikler = self.grafik.iter().cloned().collect::<Vec<_>>();
+    /// Etkin kartın bütün yüzeylerini tekilleştirerek gezer.
+    ///
+    /// Tek gerçek yüzey listesi budur; hem sahiplenen `Vec` hem de tahsissiz
+    /// tarayanlar buradan beslenir, böylece yeni bir kart ailesi eklenirken
+    /// iki ayrı listeyi eşlemek gerekmez.
+    fn etkin_grafik_yüzeylerini_gez(&self, mut ziyaret: impl FnMut(&Entity<GpuiGrafik>)) {
+        let mut görülenler = HashSet::new();
+        let mut ekle = |grafik: &Entity<GpuiGrafik>| {
+            if görülenler.insert(grafik.entity_id()) {
+                ziyaret(grafik);
+            }
+        };
         macro_rules! yüzeyleri_ekle {
             ($alan:expr) => {
-                grafikler.extend($alan.iter().map(|(_, grafik)| grafik.clone()));
+                for (_, grafik) in $alan.iter() {
+                    ekle(grafik);
+                }
             };
+        }
+        for grafik in self.grafik.iter() {
+            ekle(grafik);
         }
         yüzeyleri_ekle!(self.align_data_grafikleri);
         yüzeyleri_ekle!(self.custom_scales_grafikleri);
@@ -1811,7 +1900,9 @@ impl ChartListesi {
         yüzeyleri_ekle!(self.timezones_dst_grafikleri);
         yüzeyleri_ekle!(self.nearest_non_null_grafikleri);
         yüzeyleri_ekle!(self.missing_data_grafikleri);
-        grafikler.extend(self.months_grafikleri.iter().cloned());
+        for grafik in self.months_grafikleri.iter() {
+            ekle(grafik);
+        }
         yüzeyleri_ekle!(self.path_gap_clip_grafikleri);
         yüzeyleri_ekle!(self.pixel_align_grafikleri);
         yüzeyleri_ekle!(self.points_grafikleri);
@@ -1820,9 +1911,35 @@ impl ChartListesi {
         yüzeyleri_ekle!(self.bars_grouped_stacked_grafikleri);
         yüzeyleri_ekle!(self.bars_values_autosize_grafikleri);
         yüzeyleri_ekle!(self.box_whisker_grafikleri);
-        let mut görülenler = HashSet::with_capacity(grafikler.len());
-        grafikler.retain(|grafik| görülenler.insert(grafik.entity_id()));
+    }
+
+    /// Yüzeyleri sahiplenen listeye toplar.
+    ///
+    /// `update` çağıran döngüler `cx`'i ödünç aldığından `self`'i aynı anda
+    /// ödünç alamaz; bu yollar klonlanmış listeye ihtiyaç duyar.
+    fn etkin_grafik_yüzeyleri(&self) -> Vec<Entity<GpuiGrafik>> {
+        let mut grafikler = Vec::new();
+        self.etkin_grafik_yüzeylerini_gez(|grafik| grafikler.push(grafik.clone()));
         grafikler
+    }
+
+    /// Etkin yüzeylerin geri/yakınlaştırma durumunu tahsis etmeden toplar.
+    ///
+    /// Kök `render` bu iki bayrağı ve yüzey sayısını her çağrıda istiyordu;
+    /// bunun için bütün yüzeylerin `Entity` klonlarından bir `Vec` kurulup
+    /// hemen atılıyordu. Sonuç yalnız iki bool ve bir sayaç olduğundan
+    /// listeyi maddileştirmeye gerek yok.
+    fn etkin_görünüm_durumu(&self, cx: &App) -> (bool, bool, usize) {
+        let mut geri_var = false;
+        let mut yakınlaştırılmış = false;
+        let mut sayı = 0_usize;
+        self.etkin_grafik_yüzeylerini_gez(|grafik| {
+            sayı = sayı.saturating_add(1);
+            let grafik = grafik.read(cx);
+            geri_var |= grafik.grafik().geri_var();
+            yakınlaştırılmış |= grafik.grafik().yakınlaştırılmış();
+        });
+        (geri_var, yakınlaştırılmış, sayı)
     }
 
     fn nokta_gösterimlerini_uygula(
@@ -1928,17 +2045,130 @@ impl ChartListesi {
                 self.cursor_bind_tıklama_sayısı = self.cursor_bind_tıklama_sayısı.saturating_add(1);
                 true
             }
-            // Lejant imleç değerlerini, durum olayı da görünür seri
-            // düğmelerini değiştirir. Görünüm olayı grafik alt yüzeylerinde
-            // zaten işlendiğinden 3.700+ satırlık katalog kökünü yenilemez.
-            GpuiGrafikOlayı::İmleçDeğişti | GpuiGrafikOlayı::DurumDeğişti => true,
-            GpuiGrafikOlayı::İmleçKonumuDeğişti
-            | GpuiGrafikOlayı::GörünümDeğişti { .. }
-            | GpuiGrafikOlayı::FareBırakıldı => false,
+            // İmleç olayı yalnız lejant satırını değiştirir. GPUI `notify`
+            // ataları da kirlettiğinden ayrı varlık kökü tek başına izole
+            // etmez; kazanç metin gerçekten değişmediğinde hiç `notify`
+            // etmemekten gelir. Lejant üç ondalıkla biçimlendiğinden yoğun
+            // serilerde ardışık örnekler çoğu zaman aynı satırı üretir.
+            // Durum olayı görünür seri düğmelerini de değiştirdiğinden kökü
+            // yeniler. Görünüm olayı grafik alt yüzeylerinde zaten işlenir.
+            GpuiGrafikOlayı::İmleçDeğişti => {
+                self.lejantı_yenile(cx);
+                false
+            }
+            GpuiGrafikOlayı::DurumDeğişti => {
+                self.lejantı_yenile(cx);
+                true
+            }
+            // Zoom imlecin veri X'ini değiştirmese de lejant değerini
+            // taşıyabilir; metin gerçekten değişirse `lejantı_yenile` zaten
+            // kendi `notify`'ını yapar.
+            GpuiGrafikOlayı::GörünümDeğişti { .. } => {
+                self.lejantı_yenile(cx);
+                false
+            }
+            GpuiGrafikOlayı::İmleçKonumuDeğişti | GpuiGrafikOlayı::FareBırakıldı => false,
         };
         if arayüz_değişti {
             cx.notify();
         }
+    }
+
+    /// Görünür seri adlarını kartın kaynağına göre toplar.
+    fn lejant_seri_adları(&self, cx: &App) -> Vec<String> {
+        let görünür_etiketler = |grafik: &Entity<GpuiGrafik>| {
+            grafik
+                .read(cx)
+                .grafik()
+                .seri_seçenekleri()
+                .iter()
+                .filter(|seri| seri.göster)
+                .map(|seri| seri.etiket.clone())
+                .collect::<Vec<_>>()
+        };
+        if self.aktif_kart == KartKimliği::TimeseriesDiscrete {
+            return self
+                .timeseries_discrete_grafikleri
+                .iter()
+                .flat_map(|(_, grafik)| görünür_etiketler(grafik))
+                .collect();
+        }
+        self.grafik
+            .as_ref()
+            .map_or_else(Vec::new, görünür_etiketler)
+    }
+
+    /// Canlı lejant satırını üretir.
+    fn lejant_metni(&self, cx: &App) -> SharedString {
+        let seri_adları = self.lejant_seri_adları(cx);
+        let değerler = if self.aktif_kart == KartKimliği::TimeseriesDiscrete {
+            let mut ortak_x = None;
+            let mut değerler = Vec::new();
+            let mut lejant_var = false;
+            for (_, grafik) in &self.timeseries_discrete_grafikleri {
+                let grafik = grafik.read(cx);
+                if let Some((x, yüzey_değerleri)) = grafik.lejant_değerleri() {
+                    lejant_var = true;
+                    ortak_x = ortak_x.or(x);
+                    değerler.extend(
+                        yüzey_değerleri
+                            .into_iter()
+                            .zip(grafik.grafik().seri_seçenekleri())
+                            .filter_map(|(değer, seri)| seri.göster.then_some(değer)),
+                    );
+                }
+            }
+            lejant_var.then_some((ortak_x, değerler))
+        } else {
+            self.grafik
+                .as_ref()
+                .and_then(|grafik| grafik.read(cx).lejant_değerleri())
+        };
+        let metin = değerler.map_or_else(
+            || {
+                let seriler = seri_adları
+                    .iter()
+                    .map(|ad| format!("□ {ad}: --"))
+                    .collect::<Vec<_>>()
+                    .join("    ");
+                format!("x: --    {seriler}")
+            },
+            |(x, değerler)| {
+                let seriler = seri_adları
+                    .iter()
+                    .zip(değerler.iter())
+                    .map(|(ad, değer)| {
+                        değer.map_or_else(
+                            || format!("□ {ad}: --"),
+                            |y| {
+                                let değer = if self.aktif_kart == KartKimliği::TimeseriesDiscrete
+                                    && ad.starts_with("DEV")
+                                {
+                                    format!("{y:.0}")
+                                } else {
+                                    format!("{y:.3}")
+                                };
+                                format!(
+                                    "□ {ad}: {değer}{}",
+                                    if x.is_none() { " (last)" } else { "" }
+                                )
+                            },
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join("    ");
+                let x = x.map_or_else(|| "--".to_string(), |x| format!("{x:.3}"));
+                format!("x: {x}    {seriler}")
+            },
+        );
+        SharedString::from(metin)
+    }
+
+    fn lejantı_yenile(&mut self, cx: &mut Context<Self>) {
+        let metin = self.lejant_metni(cx);
+        self.lejant.update(cx, |lejant, cx| {
+            lejant.metni_ayarla(metin, cx);
+        });
     }
 
     pub fn yeni(cx: &mut Context<Self>) -> Self {
@@ -2112,12 +2342,16 @@ impl ChartListesi {
             svg_kayıt_baytı: None,
             kare_ölçer: KareÖlçer::default(),
             performans_kare_bekleniyor: false,
+            lejant: cx.new(|_| KatalogLejantı::yeni(LEJANT_RENGİ)),
+            thin_bars_liste_durumu: None,
+            timezones_dst_liste_durumu: None,
         };
         if başlangıç_kartı != KartKimliği::Resize {
             bu.kartı_seç(başlangıç_kartı, cx);
         }
         bu.tekerlek_odaksız_etkileşimi_uygula(bu.tekerlek_odaksız_etkin, cx);
         bu.nokta_gösterimlerini_uygula(true, true, cx);
+        bu.lejantı_yenile(cx);
         bu
     }
 
@@ -2193,7 +2427,7 @@ impl ChartListesi {
                                     continue;
                                 }
                                 hedef_grafik.update(cx, |grafik, cx| {
-                                    grafik.görünür_x_aralığını_ayarla(x, true, cx);
+                                    grafik.görünür_x_aralığını_sessiz_ayarla(x, true, cx);
                                 });
                             }
                             bu.timeseries_discrete_senkronlanıyor = false;
@@ -2332,7 +2566,7 @@ impl ChartListesi {
                                     continue;
                                 }
                                 hedef_grafik.update(cx, |grafik, cx| {
-                                    grafik.görünür_x_aralığını_ayarla(x, true, cx);
+                                    grafik.görünür_x_aralığını_sessiz_ayarla(x, true, cx);
                                 });
                             }
                             bu.timezones_dst_senkronlanıyor = false;
@@ -2869,7 +3103,7 @@ impl ChartListesi {
                                     continue;
                                 }
                                 hedef_grafik.update(cx, |grafik, cx| {
-                                    grafik.görünür_x_aralığını_ayarla(x, true, cx);
+                                    grafik.görünür_x_aralığını_sessiz_ayarla(x, true, cx);
                                 });
                             }
                             bu.log_scales2_senkronlanıyor = false;
@@ -3193,7 +3427,8 @@ impl ChartListesi {
                             for (hedef, hedef_grafik) in yüzeyler {
                                 if hedef != örnek {
                                     hedef_grafik.update(cx, |grafik, cx| {
-                                        grafik.görünür_aralıkları_ayarla(x, y, true, cx);
+                                        grafik
+                                            .görünür_aralıkları_sessiz_ayarla(x, y, true, cx);
                                     });
                                 }
                             }
@@ -3579,7 +3814,8 @@ impl ChartListesi {
                             for (hedef, hedef_grafik) in yüzeyler {
                                 if hedef != örnek {
                                     hedef_grafik.update(cx, |grafik, cx| {
-                                        grafik.görünür_aralıkları_ayarla(x, y, true, cx);
+                                        grafik
+                                            .görünür_aralıkları_sessiz_ayarla(x, y, true, cx);
                                     });
                                 }
                             }
@@ -4010,6 +4246,7 @@ impl ChartListesi {
         if let Err(hata) = web_köprüsü::kart_url_adresini_güncelle(kart) {
             self.hata = Some(hata);
         }
+        izleme::kart_değişti(self.aktif_kart.slug(), kart.slug());
         self.aktif_kart = kart;
         if let Some(indeks) = KATALOG_KARTLARI
             .iter()
@@ -4018,6 +4255,8 @@ impl ChartListesi {
             self.kart_listesi_kaydırma_bekliyor = Some(indeks);
         }
         self.svg_kayıt_baytı = None;
+        self.thin_bars_liste_durumu = None;
+        self.timezones_dst_liste_durumu = None;
         self.kart_tanımı_açık = false;
         self.kullanım_rehberi_açık = false;
         self.arcsinh_kuvvet = 0;
@@ -4790,6 +5029,9 @@ impl ChartListesi {
             cx,
         );
         self.tekerlek_odaksız_etkileşimi_uygula(self.tekerlek_odaksız_etkin, cx);
+        // Yeni kartın serileri ve değerleri farklı; lejant artık kökün
+        // `render`'ında hesaplanmadığından burada bir kez tazelenmeli.
+        self.lejantı_yenile(cx);
     }
 
     fn soft_minmax_başlat(&mut self, cx: &mut Context<Self>) {
@@ -5094,6 +5336,12 @@ fn grafik_oluştur(
 
 impl Render for ChartListesi {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let _kare_ölçümü = izleme::Ölçüm::başlat(izleme::Yuva::KökRender);
+        let görüntü_alanı = window.viewport_size();
+        izleme::pencere_boyutu(
+            f32::from(görüntü_alanı.width),
+            f32::from(görüntü_alanı.height),
+        );
         if let Some(indeks) = self.kart_listesi_kaydırma_bekliyor.take() {
             cx.on_next_frame(window, move |bu, _, cx| {
                 bu.kart_listesi_kaydırma
@@ -5184,11 +5432,13 @@ impl Render for ChartListesi {
         let gpu_yazısı = gpu.map_or_else(
             || "GPU: platform bilgisi sunulmadı".to_string(),
             |özellikler| {
+                // Upstream `GpuSpecs` backend adını taşımaz; sürücü bilgisi
+                // pratikte aynı ayrımı (Vulkan/GL, Mesa sürümü) veriyor.
                 format!(
                     "GPU: {} · {} · {}{}",
                     özellikler.device_name,
-                    özellikler.backend_name,
                     özellikler.driver_name,
+                    özellikler.driver_info,
                     if özellikler.is_software_emulated {
                         " · YAZILIM FALLBACK"
                     } else {
@@ -5197,6 +5447,7 @@ impl Render for ChartListesi {
                 )
             },
         );
+        izleme::gpu_bilgisi(&gpu_yazısı);
         let soft_minmax_canlı = matches!(aktif_kart, KartKimliği::SoftMinMax(_));
         let soft_minmax_çalışıyor = self.soft_minmax_çalışıyor;
         let sync_cursor_etkin = self.sync_cursor_grubu.senkron();
@@ -5438,118 +5689,26 @@ impl Render for ChartListesi {
         let tekerlek_odaksız_anahtarı = self.tekerlek_odaksız_anahtarı.clone();
         let içi_boş_nokta_anahtarı = self.içi_boş_nokta_anahtarı.clone();
         let dolu_nokta_anahtarı = self.dolu_nokta_anahtarı.clone();
-        let (mut geri_var, mut yakınlaştırılmış, etkileşimler, lejant, bileşen_hatası) =
+        let (mut geri_var, mut yakınlaştırılmış, etkileşimler, bileşen_hatası) =
             self.grafik.as_ref().map_or_else(
-                || (false, false, aktif_kart.etkileşimler(), None, None),
+                || (false, false, aktif_kart.etkileşimler(), None),
                 |grafik| {
                     let grafik = grafik.read(cx);
                     (
                         grafik.grafik().geri_var(),
                         grafik.grafik().yakınlaştırılmış(),
                         grafik.grafik().etkileşim_seçenekleri(),
-                        grafik.lejant_değerleri(),
                         grafik.hata().map(str::to_string),
                     )
                 },
             );
-        let etkin_grafikler = self.etkin_grafik_yüzeyleri();
-        if etkin_grafikler.len() > 1 {
-            geri_var = false;
-            yakınlaştırılmış = false;
-            for grafik in etkin_grafikler {
-                let grafik = grafik.read(cx);
-                geri_var |= grafik.grafik().geri_var();
-                yakınlaştırılmış |= grafik.grafik().yakınlaştırılmış();
-                if geri_var && yakınlaştırılmış {
-                    break;
-                }
-            }
+        let (grup_geri_var, grup_yakınlaştırılmış, yüzey_sayısı) = self.etkin_görünüm_durumu(cx);
+        if yüzey_sayısı > 1 {
+            geri_var = grup_geri_var;
+            yakınlaştırılmış = grup_yakınlaştırılmış;
         }
         let çizim_hatası = self.hata.clone().or(bileşen_hatası);
-        let seri_adları = if aktif_kart == KartKimliği::TimeseriesDiscrete {
-            self.timeseries_discrete_grafikleri
-                .iter()
-                .flat_map(|(_, grafik)| {
-                    grafik
-                        .read(cx)
-                        .grafik()
-                        .seri_seçenekleri()
-                        .iter()
-                        .filter(|seri| seri.göster)
-                        .map(|seri| seri.etiket.clone())
-                        .collect::<Vec<_>>()
-                })
-                .collect()
-        } else {
-            self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
-                grafik
-                    .read(cx)
-                    .grafik()
-                    .seri_seçenekleri()
-                    .iter()
-                    .filter(|seri| seri.göster)
-                    .map(|seri| seri.etiket.clone())
-                    .collect::<Vec<_>>()
-            })
-        };
-        let lejant = if aktif_kart == KartKimliği::TimeseriesDiscrete {
-            let mut ortak_x = None;
-            let mut değerler = Vec::new();
-            let mut lejant_var = false;
-            for (_, grafik) in &self.timeseries_discrete_grafikleri {
-                let grafik = grafik.read(cx);
-                if let Some((x, yüzey_değerleri)) = grafik.lejant_değerleri() {
-                    lejant_var = true;
-                    ortak_x = ortak_x.or(x);
-                    değerler.extend(
-                        yüzey_değerleri
-                            .into_iter()
-                            .zip(grafik.grafik().seri_seçenekleri())
-                            .filter_map(|(değer, seri)| seri.göster.then_some(değer)),
-                    );
-                }
-            }
-            lejant_var.then_some((ortak_x, değerler))
-        } else {
-            lejant
-        };
-        let lejant = lejant.map_or_else(
-            || {
-                let seriler = seri_adları
-                    .iter()
-                    .map(|ad| format!("□ {ad}: --"))
-                    .collect::<Vec<_>>()
-                    .join("    ");
-                format!("x: --    {seriler}")
-            },
-            |(x, değerler)| {
-                let seriler = seri_adları
-                    .iter()
-                    .zip(değerler.iter())
-                    .map(|(ad, değer)| {
-                        değer.map_or_else(
-                            || format!("□ {ad}: --"),
-                            |y| {
-                                let değer = if aktif_kart == KartKimliği::TimeseriesDiscrete
-                                    && ad.starts_with("DEV")
-                                {
-                                    format!("{y:.0}")
-                                } else {
-                                    format!("{y:.3}")
-                                };
-                                format!(
-                                    "□ {ad}: {değer}{}",
-                                    if x.is_none() { " (last)" } else { "" }
-                                )
-                            },
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                    .join("    ");
-                let x = x.map_or_else(|| "--".to_string(), |x| format!("{x:.3}"));
-                format!("x: {x}    {seriler}")
-            },
-        );
+        let lejant = self.lejant.clone();
         let tooltip_serileri = if matches!(
             aktif_kart,
             KartKimliği::TooltipsClosest
@@ -5604,7 +5763,7 @@ impl Render for ChartListesi {
                     .mt_1()
                     .mb_4()
                     .text_sm()
-                    .text_color(soluk)
+                    .text_color(rgb(LİSTE_İKİNCİL_RENGİ))
                     .child("Canlı masaüstü doğrulaması"),
             )
             .child(
@@ -6903,53 +7062,68 @@ impl Render for ChartListesi {
                     ),
                 )
         } else if aktif_kart == KartKimliği::TimezonesDst {
-            çizim_tabanı
-                .flex_none()
-                .h(px(900.0))
-                .overflow_scroll()
-                .p_2()
-                .child(
+            // 51 yüzey sarmalı flex içinde her render'da kuruluyordu. Kaynak
+            // sayfanın üç sütunlu görünümü korunmak için bölümler üçerli
+            // satırlara toplanır ve satırlar sanallaştırılır; bölüm
+            // yükseklikleri (3–6 yüzey) farklı olduğundan `uniform_list`
+            // değil `list` kullanılır.
+            const SÜTUN: usize = 3;
+            let yüzeyler = self.timezones_dst_grafikleri.clone();
+            let bölüm_sayısı = 11_usize;
+            let satır_sayısı = bölüm_sayısı.div_ceil(SÜTUN);
+            let durum = self
+                .timezones_dst_liste_durumu
+                .get_or_insert_with(|| ListState::new(satır_sayısı, ListAlignment::Top, px(600.0)));
+            çizim_tabanı.min_h_0().p_2().child(
+                list(durum.clone(), move |satır, _pencere, _cx| {
+                    let ilk_bölüm = satır * SÜTUN;
                     div()
                         .flex()
-                        .flex_wrap()
                         .items_start()
                         .gap_4()
-                        .children((0..11).map(|bölüm| {
-                            let yüzeyler = self
-                                .timezones_dst_grafikleri
-                                .iter()
-                                .filter(|(örnek, _)| örnek.bölüm_indeksi() == bölüm)
-                                .map(|(örnek, grafik)| (*örnek, grafik.clone()))
-                                .collect::<Vec<_>>();
-                            let başlık = yüzeyler
-                                .first()
-                                .map_or("Timezones & DST", |(örnek, _)| örnek.bölüm());
-                            div()
-                                .w(px(600.0))
-                                .flex_none()
-                                .overflow_hidden()
-                                .rounded_md()
-                                .border_1()
-                                .border_color(rgb(0xd1d5db))
-                                .bg(rgb(0xffffff))
-                                .child(
-                                    div()
-                                        .w_full()
-                                        .px_3()
-                                        .py_2()
-                                        .text_center()
-                                        .text_sm()
-                                        .bg(rgb(0xe1f5fe))
-                                        .child(başlık),
-                                )
-                                .children(yüzeyler.into_iter().map(|(_, grafik)| {
-                                    div()
-                                        .w(px(600.0))
-                                        .h(px(200.0))
-                                        .child(önbellekli_grafik(grafik))
-                                }))
-                        })),
-                )
+                        .mb_4()
+                        .children(
+                            (ilk_bölüm..(ilk_bölüm + SÜTUN).min(bölüm_sayısı)).map(|bölüm| {
+                                let bölümde =
+                                    |örnek: &TimezonesDstÖrneği| örnek.bölüm_indeksi() == bölüm;
+                                let başlık = yüzeyler
+                                    .iter()
+                                    .find(|(örnek, _)| bölümde(örnek))
+                                    .map_or("Timezones & DST", |(örnek, _)| örnek.bölüm());
+                                div()
+                                    .w(px(600.0))
+                                    .flex_none()
+                                    .overflow_hidden()
+                                    .rounded_md()
+                                    .border_1()
+                                    .border_color(rgb(0xd1d5db))
+                                    .bg(rgb(0xffffff))
+                                    .child(
+                                        div()
+                                            .w_full()
+                                            .px_3()
+                                            .py_2()
+                                            .text_center()
+                                            .text_sm()
+                                            .bg(rgb(0xe1f5fe))
+                                            .child(başlık),
+                                    )
+                                    .children(
+                                        yüzeyler.iter().filter(|(örnek, _)| bölümde(örnek)).map(
+                                            |(_, grafik)| {
+                                                div()
+                                                    .w(px(600.0))
+                                                    .h(px(200.0))
+                                                    .child(önbellekli_grafik(grafik.clone()))
+                                            },
+                                        ),
+                                    )
+                            }),
+                        )
+                        .into_any_element()
+                })
+                .h_full(),
+            )
         } else if aktif_kart == KartKimliği::NearestNonNull {
             let yüzey = |örnek| {
                 self.nearest_non_null_grafikleri
@@ -7997,68 +8171,86 @@ impl Render for ChartListesi {
                         .when_some(grafik, |öğe, grafik| öğe.child(önbellekli_grafik(grafik)))
                 }))
         } else if matches!(aktif_kart, KartKimliği::ThinBars(_)) {
-            let yüzey = |örnek| {
-                self.thin_bars_grafikleri
-                    .iter()
-                    .find(|(kimlik, _)| *kimlik == örnek)
-                    .map(|(_, grafik)| grafik.clone())
-            };
+            // 55 yüzeyin tamamı her render'da eleman ağacına giriyordu; yüzey
+            // başına ~13,7 µs ile kart tek başına kareyi ikiye katlıyordu.
+            // Dikey sıra korunarak sanallaştırılır: 0 = açıklama, 1 = yoğunluk
+            // bloğu, sonrası dörderli geometri satırları. `uniform_list` eşit
+            // yükseklik ister, buradaki öğeler farklı yükseklikte; `list` bunu
+            // ölçerek yönetir.
+            let yüzeyler = self.thin_bars_grafikleri.clone();
             let örnekler = ThinBarsÖrneği::tümü();
-            let yoğunluklar = örnekler.iter().take(7).copied().collect::<Vec<_>>();
-            let geometri_grupları = örnekler
-                .iter()
-                .skip(7)
-                .copied()
-                .collect::<Vec<_>>()
-                .chunks(4)
-                .map(|grup| grup.to_vec())
-                .collect::<Vec<_>>();
-            çizim_tabanı
-                .flex_none()
-                .h(px(2100.0))
-                .overflow_scroll()
-                .p_2()
-                .child(
-                    div()
-                        .w(px(1600.0))
-                        .p_2()
-                        .rounded_md()
-                        .bg(rgb(0xf8fafc))
-                        .text_xs()
-                        .text_color(soluk)
-                        .child("Resmî thin-bars-stroke-fill.html sayfası 7 yoğunluk yüzeyini ve 12 align/width/gap grubundaki 48 geometri yüzeyini birlikte gösterir. Yüzeyler veri veya cursor paylaşmaz; her biri bağımsız zoom geçmişi tutar. Noktalar görünür X aralığındaki piksel açıklığı yeterli olduğunda otomatik açılır."),
-                )
-                .child(
-                    div().w(px(1600.0)).flex().flex_wrap().gap_2().children(
-                        yoğunluklar.into_iter().map(|örnek| {
-                            let (genişlik, yükseklik) = örnek.boyut();
+            let yoğunluk_sayısı = örnekler.len().min(7);
+            let satır_sayısı = örnekler.len().saturating_sub(yoğunluk_sayısı).div_ceil(4);
+            let durum = self.thin_bars_liste_durumu.get_or_insert_with(|| {
+                ListState::new(satır_sayısı + 2, ListAlignment::Top, px(600.0))
+            });
+            çizim_tabanı.min_h_0().p_2().child(
+                list(durum.clone(), move |indeks, _pencere, _cx| {
+                    let yüzey = |örnek: ThinBarsÖrneği| {
+                        yüzeyler
+                            .iter()
+                            .find(|(kimlik, _)| *kimlik == örnek)
+                            .map(|(_, grafik)| grafik.clone())
+                    };
+                    match indeks {
+                        0 => div()
+                            .w(px(1600.0))
+                            .p_2()
+                            .mb_2()
+                            .rounded_md()
+                            .bg(rgb(0xf8fafc))
+                            .text_xs()
+                            .text_color(rgb(0x6b7280))
+                            .child("Resmî thin-bars-stroke-fill.html sayfası 7 yoğunluk yüzeyini ve 12 align/width/gap grubundaki 48 geometri yüzeyini birlikte gösterir. Yüzeyler veri veya cursor paylaşmaz; her biri bağımsız zoom geçmişi tutar. Noktalar görünür X aralığındaki piksel açıklığı yeterli olduğunda otomatik açılır.")
+                            .into_any_element(),
+                        1 => div()
+                            .w(px(1600.0))
+                            .flex()
+                            .flex_wrap()
+                            .gap_2()
+                            .children(örnekler.iter().copied().take(yoğunluk_sayısı).map(
+                                |örnek| {
+                                    let (genişlik, yükseklik) = örnek.boyut();
+                                    div()
+                                        .flex_none()
+                                        .w(px(genişlik as f32))
+                                        .h(px(yükseklik as f32))
+                                        .border_1()
+                                        .border_color(rgb(0xe5e7eb))
+                                        .when_some(yüzey(örnek), |öğe, grafik| {
+                                            öğe.child(önbellekli_grafik(grafik))
+                                        })
+                                },
+                            ))
+                            .into_any_element(),
+                        _ => {
+                            let başlangıç = yoğunluk_sayısı + (indeks - 2) * 4;
+                            let grup = örnekler
+                                .get(başlangıç..(başlangıç + 4).min(örnekler.len()))
+                                .unwrap_or(&[]);
                             div()
-                                .flex_none()
-                                .w(px(genişlik as f32))
-                                .h(px(yükseklik as f32))
-                                .border_1()
-                                .border_color(rgb(0xe5e7eb))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik)))
-                        }),
-                    ),
-                )
-                .children(geometri_grupları.into_iter().map(|grup| {
-                    div()
-                        .w(px(1600.0))
-                        .flex()
-                        .border_t_1()
-                        .border_color(rgb(0xd1d5db))
-                        .pt_2()
-                        .children(grup.into_iter().map(|örnek| {
-                            div()
-                                .flex_none()
-                                .w(px(400.0))
-                                .h(px(200.0))
-                                .border_1()
-                                .border_color(rgb(0xe5e7eb))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik)))
-                        }))
-                }))
+                                .w(px(1600.0))
+                                .flex()
+                                .border_t_1()
+                                .border_color(rgb(0xd1d5db))
+                                .pt_2()
+                                .children(grup.iter().copied().map(|örnek| {
+                                    div()
+                                        .flex_none()
+                                        .w(px(400.0))
+                                        .h(px(200.0))
+                                        .border_1()
+                                        .border_color(rgb(0xe5e7eb))
+                                        .when_some(yüzey(örnek), |öğe, grafik| {
+                                            öğe.child(önbellekli_grafik(grafik))
+                                        })
+                                }))
+                                .into_any_element()
+                        }
+                    }
+                })
+                .h_full(),
+            )
         } else if matches!(aktif_kart, KartKimliği::TimePeriods(_)) {
             çizim_tabanı
                 .flex_none()
@@ -8401,6 +8593,18 @@ impl Render for ChartListesi {
                             .turu(DugmeTuru::Hayalet)
                             .tiklaninca(cx.listener(|bu, _, _, cx| {
                                 bu.kullanım_rehberi_açık = !bu.kullanım_rehberi_açık;
+                                izleme::olay(
+                                    "PANEL",
+                                    &format!(
+                                        "kullanım rehberi {} · {}",
+                                        if bu.kullanım_rehberi_açık {
+                                            "açıldı"
+                                        } else {
+                                            "kapandı"
+                                        },
+                                        bu.aktif_kart.slug()
+                                    ),
+                                );
                                 cx.notify();
                             })),
                         )
@@ -8524,6 +8728,18 @@ impl Render for ChartListesi {
                             .turu(DugmeTuru::Hayalet)
                             .tiklaninca(cx.listener(|bu, _, _, cx| {
                                 bu.kart_tanımı_açık = !bu.kart_tanımı_açık;
+                                izleme::olay(
+                                    "PANEL",
+                                    &format!(
+                                        "kart tanımı {} · {}",
+                                        if bu.kart_tanımı_açık {
+                                            "açıldı"
+                                        } else {
+                                            "kapandı"
+                                        },
+                                        bu.aktif_kart.slug()
+                                    ),
+                                );
                                 cx.notify();
                             })),
                     )
@@ -8546,6 +8762,45 @@ impl Render for ChartListesi {
             .flex()
             .flex_row()
             .bg(zemin)
+            // Kök dinleyiciler kabarma evresinde çalışır ve yayılımı kesmez;
+            // iç kaplar olayları normal şekilde görmeye devam eder.
+            .on_scroll_wheel(cx.listener(
+                |bu, olay: &ScrollWheelEvent, window: &mut Window, _cx| {
+                    let delta = olay.delta.pixel_delta(window.line_height());
+                    izleme::kaydırma(
+                        f32::from(delta.y),
+                        f32::from(delta.x),
+                        f32::from(olay.position.x),
+                        bu.aktif_kart.slug(),
+                    );
+                },
+            ))
+            .on_mouse_move(cx.listener(|bu, olay: &MouseMoveEvent, _, _| {
+                izleme::fare_hareketi(
+                    f32::from(olay.position.x),
+                    f32::from(olay.position.y),
+                    bu.aktif_kart.slug(),
+                );
+            }))
+            .on_any_mouse_down(cx.listener(|bu, olay: &MouseDownEvent, _, _| {
+                izleme::fare_düğmesi(
+                    true,
+                    &format!("{:?}", olay.button),
+                    f32::from(olay.position.x),
+                    bu.aktif_kart.slug(),
+                );
+            }))
+            .on_mouse_up(
+                gpui::MouseButton::Left,
+                cx.listener(|bu, olay: &MouseUpEvent, _, _| {
+                    izleme::fare_düğmesi(
+                        false,
+                        &format!("{:?}", olay.button),
+                        f32::from(olay.position.x),
+                        bu.aktif_kart.slug(),
+                    );
+                }),
+            )
             .child(liste)
             .child(ayrıntı)
             .when(açıklama_istendi, |kök| {
@@ -8660,10 +8915,16 @@ fn katalog_kartı(
             div()
                 .mt_1()
                 .text_xs()
-                .text_color(rgb(0x6b7280))
+                .text_color(rgb(LİSTE_İKİNCİL_RENGİ))
                 .child(alt_kimlik),
         )
-        .child(div().mt_2().text_xs().text_color(vurgu).child(durum))
+        .child(
+            div()
+                .mt_2()
+                .text_xs()
+                .text_color(rgb(LİSTE_KAYNAK_RENGİ))
+                .child(durum),
+        )
 }
 
 #[cfg(test)]
@@ -9170,5 +9431,77 @@ mod tests {
             assert_eq!(registry_verisi.seriler(), doğrudan_veri.seriler());
         }
         Ok(())
+    }
+
+    /// Kök render, tek yüzeyli kartlarda yaklaşık sabit bir taban maliyet
+    /// (yan menü, araç çubuğu, kart tanımı) ödüyor. Çok yüzeyli kartlar bunun
+    /// üstüne yüzey başına eleman kurulumu ekliyordu; ThinBars ve TimezonesDst
+    /// bu yüzden sanallaştırıldı. Bu test o kazancın kaybolmasını görünür
+    /// kılar: dağılımı yazdırır ve kare bütçesini aşarsa düşer.
+    ///
+    /// Yalnız release'de anlamlıdır; debug ölçümü bütçeyle karşılaştırılamaz.
+    #[::gpui::test]
+    async fn kok_render_kare_butcesi(cx: &mut ::gpui::TestAppContext) {
+        use std::time::{Duration, Instant};
+
+        if cfg!(debug_assertions) {
+            return;
+        }
+
+        const ISINMA_TURU: usize = 10;
+        const ÖLÇÜM_TURU: u32 = 50;
+        const KARE_BÜTÇESİ: Duration = Duration::from_micros(16_700);
+
+        cx.update(|cx| {
+            let _ = ortak_bilesenler::baslat(ortak_bileşen_ayarları(), cx);
+            başlat(cx);
+        });
+        let (liste, cx) = cx.add_window_view(|_, cx| ChartListesi::yeni(cx));
+
+        let ölç = |ad: &str, kart: KartKimliği, cx: &mut ::gpui::VisualTestContext| {
+            liste.update(cx, |bu, cx| bu.kartı_seç(kart, cx));
+            cx.run_until_parked();
+            let yüzey_sayısı = liste.read_with(cx, |bu, _| bu.etkin_grafik_yüzeyleri().len());
+
+            for _ in 0..ISINMA_TURU {
+                liste.update(cx, |_, cx| cx.notify());
+                cx.run_until_parked();
+            }
+
+            let mut süreler = Vec::with_capacity(ÖLÇÜM_TURU as usize);
+            for _ in 0..ÖLÇÜM_TURU {
+                let başlangıç = Instant::now();
+                liste.update(cx, |_, cx| cx.notify());
+                cx.run_until_parked();
+                süreler.push(başlangıç.elapsed());
+            }
+            süreler.sort_unstable();
+            let yüzdelik = |yüzde: usize| {
+                let son = süreler.len().saturating_sub(1);
+                süreler
+                    .get(son.saturating_mul(yüzde).div_ceil(100))
+                    .copied()
+                    .unwrap_or_default()
+            };
+            let (p50, p95) = (yüzdelik(50), yüzdelik(95));
+            eprintln!("{ad}: {yüzey_sayısı} yüzey · p50 {p50:?} · p95 {p95:?}");
+            assert!(
+                p50 <= KARE_BÜTÇESİ / 2,
+                "{ad} kök render p50 {p50:?}, bütçe {:?}",
+                KARE_BÜTÇESİ / 2
+            );
+            assert!(
+                p95 <= KARE_BÜTÇESİ,
+                "{ad} kök render p95 {p95:?}, bütçe {KARE_BÜTÇESİ:?}"
+            );
+        };
+
+        ölç("Resize (tek yüzey)", KartKimliği::Resize, cx);
+        if let Some(örnek) = ThinBarsÖrneği::tümü().first().copied() {
+            ölç("ThinBars (55 yüzey)", KartKimliği::ThinBars(örnek), cx);
+        }
+        ölç("TimezonesDst (51 yüzey)", KartKimliği::TimezonesDst, cx);
+        ölç("LatencyHeatmap", KartKimliği::LatencyHeatmap, cx);
+        ölç("MassSpectrum", KartKimliği::MassSpectrum, cx);
     }
 }

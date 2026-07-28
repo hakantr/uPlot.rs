@@ -80,7 +80,7 @@ mod testler {
             )
         );
         assert_eq!(seçenekler.seriler.len(), 3);
-        assert!(seçenekler.etkileşimler.tekerlek_etkileşimi);
+        assert!(!seçenekler.etkileşimler.tekerlek_etkileşimi);
         let grafik = Grafik::yeni(seçenekler, veri)?;
         assert_eq!(grafik.görünür_y_aralığı().en_az, -150.0);
         assert_eq!(grafik.görünür_y_aralığı().en_çok, 250.0);

@@ -7,3 +7,8 @@ public_url = "/"
 addresses = ["0.0.0.0"]
 port = 8081
 open = false
+
+# WebGPU ve SharedArrayBuffer için gereken izolasyon başlıkları. Yayınlanan
+# statik pakette (GitHub Pages) bunlar gönderilemediğinden aynı işi
+# `coi-serviceworker.js` üstlenir.
+headers = { "Cross-Origin-Embedder-Policy" = "require-corp", "Cross-Origin-Opener-Policy" = "same-origin" }

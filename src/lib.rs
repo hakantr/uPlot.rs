@@ -11,6 +11,16 @@ mod etkilesim;
 pub mod gpui;
 pub mod grafik;
 pub mod hata;
+/// Etkileşim ve kare bütçesi tanılaması; `izleme` feature'ıyla açılır.
+///
+/// Varsayılan yapılandırmada modül boş karşılıklardan oluşur ve çağrılar
+/// tümüyle elenir. Feature açıkken `UPLOT_IZLEME=1` ortam değişkeni
+/// günlüğü çalıştırır. Kararlı API değildir.
+#[cfg(feature = "izleme")]
+pub mod izleme;
+#[cfg(not(feature = "izleme"))]
+#[path = "izleme_kapali.rs"]
+pub mod izleme;
 pub mod olcek;
 pub mod secenek;
 pub mod veri;

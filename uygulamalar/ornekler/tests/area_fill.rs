@@ -29,7 +29,7 @@ fn area_fill_kaynak_verisini_ve_dolgularını_korur() -> Result<(), UplotHatası
         .komutlar()
         .iter()
         .filter_map(|komut| match komut {
-            Komut::Alan { dolgu, .. } => Some(dolgu.as_str()),
+            Komut::Alan { dolgu, .. } => Some(dolgu.as_ref()),
             _ => None,
         })
         .collect::<Vec<_>>();
@@ -49,6 +49,9 @@ fn area_fill_ortak_yakinlastirma_ve_gecmis_davranislarini_devralir() -> Result<(
     assert!(grafik.önceki_görünüm());
     assert_eq!(grafik.görünür_x_aralığı(), tam);
 
+    // Tekerlek yakınlaştırması varsayılan kapalı; test onu araç olarak
+    // kullandığı için açıkça açıyor.
+    grafik.tekerlek_etkileşimi_ayarla(true);
     assert!(grafik.tekerlek(0.5, 0.5, 1.0, false)?);
     assert!(grafik.yakınlaştırılmış());
     assert!(grafik.tam_görünüm());
@@ -65,6 +68,9 @@ fn area_fill_ortak_yakinlastirma_ve_gecmis_davranislarini_devralir() -> Result<(
 fn area_fill_yakinlastirmada_dolguyu_dikey_seritlere_bolmez() -> Result<(), UplotHatası> {
     let (seçenekler, veri) = area_fill_kartı()?;
     let mut grafik = Grafik::yeni(seçenekler, veri)?;
+    // Tekerlek yakınlaştırması varsayılan kapalı; test onu araç olarak
+    // kullandığı için açıkça açıyor.
+    grafik.tekerlek_etkileşimi_ayarla(true);
     for _ in 0..4 {
         assert!(grafik.tekerlek(0.5, 0.45, 1.0, false)?);
     }

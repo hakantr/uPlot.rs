@@ -343,7 +343,7 @@ mod testler {
             ilk_gradyan
                 .duraklar
                 .iter()
-                .map(|durak| durak.renk.as_str())
+                .map(|durak| durak.renk.as_ref())
                 .collect::<Vec<_>>(),
             ["#008000", "#ffa500", "#ff0000"]
         );
@@ -356,6 +356,9 @@ mod testler {
             [0.0, 0.5, 1.0]
         );
         let ilk_başlangıç = ilk_gradyan.başlangıç.y;
+        // Tekerlek yakınlaştırması varsayılan kapalı; test onu
+        // araç olarak kullandığı için açıkça açıyor.
+        grafik.tekerlek_etkileşimi_ayarla(true);
         assert!(grafik.tekerlek(0.7, 0.5, 1.0, false)?);
         let yakın = grafik.çiz();
         let yakın_başlangıç = yakın.komutlar().iter().find_map(|komut| match komut {

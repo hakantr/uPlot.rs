@@ -1,0 +1,23 @@
+# Kaynak: zed `crates/gpui_web/examples/hello_web/.cargo/config.toml`.
+#
+# GPUI Web'in iş parçacığı havuzu paylaşımlı bellek ve wasm atomics ister.
+# `build-std` std dahil bütün grafiği bu hedef özellikleriyle yeniden derler;
+# bu yüzden ilk derleme uzun sürer.
+[target.wasm32-unknown-unknown]
+rustflags = [
+    "-C", "target-feature=+atomics,+bulk-memory,+mutable-globals",
+    "-C", "link-arg=--shared-memory",
+    "-C", "link-arg=--max-memory=1073741824",
+    "-C", "link-arg=--import-memory",
+    "-C", "link-arg=--export=__wasm_init_tls",
+    "-C", "link-arg=--export=__tls_size",
+    "-C", "link-arg=--export=__tls_align",
+    "-C", "link-arg=--export=__tls_base",
+    # wasm-bindgen 0.2.126 iş parçacığı dönüşümü için bu globali arar;
+    # zed'in örneğindeki listede yok ve onsuz "failed to find `__heap_base`"
+    # hatası veriyor.
+    "-C", "link-arg=--export=__heap_base",
+]
+
+[unstable]
+build-std = ["std,panic_abort"]

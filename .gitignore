@@ -1,4 +1,6 @@
 /target/
+# GPUI Web ayrı bir workspace olduğundan kendi target dizinini üretir.
+/uygulamalar/web/target/
 /uygulamalar/web/dist/
 /testler/gorsel/gercek/
 /testler/gorsel/fark/

@@ -139,11 +139,11 @@ mod testler {
                 vec![
                     GradyanRenkDurağı {
                         oran: 0.0,
-                        renk: "#666666".to_string(),
+                        renk: "#666666".into(),
                     },
                     GradyanRenkDurağı {
                         oran: 1.0,
-                        renk: "#000000".to_string(),
+                        renk: "#000000".into(),
                     },
                 ]
             );

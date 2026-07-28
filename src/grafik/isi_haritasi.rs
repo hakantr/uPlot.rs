@@ -60,7 +60,7 @@ impl Grafik {
             for parça in çokgenler.chunks(1_024) {
                 sahne.ekle(Komut::Alan {
                     çokgenler: parça.to_vec(),
-                    dolgu: dolgu.clone(),
+                    dolgu: dolgu.clone().into(),
                 });
             }
         }

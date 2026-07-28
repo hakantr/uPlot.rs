@@ -40,7 +40,13 @@ impl ZoomFetchAkışı {
         let seçenekler = GrafikSeçenekleri::yeni(800, 400)?
             .başlık("Fetch Zoom")
             .x_zaman(false)
-            .etkileşimler(ortak_kart_etkileşimleri().seçim_yakınlaştır(false))
+            .etkileşimler(
+                // uPlot'un `demos/zoom-wheel.html` demosunun karşılığı:
+                // tekerlek yakınlaştırmasını kartın kendisi açar.
+                ortak_kart_etkileşimleri()
+                    .tekerlek_etkileşimi(true)
+                    .seçim_yakınlaştır(false),
+            )
             .seri(SeriSeçenekleri::yeni("Fetched").renk("red"));
         Ok(Self {
             grafik: Grafik::yeni(seçenekler, veri)?,
@@ -96,12 +102,14 @@ pub fn zoom_wheel_kartı() -> Result<(GrafikSeçenekleri, HizalıVeri), UplotHat
         .başlık("Wheel Zoom & Drag")
         .x_zaman(false)
         .etkileşimler(
-            ortak_kart_etkileşimleri().zoom_ranger(
-                ZoomRangerSeçenekleri::default()
-                    .etkin(true)
-                    .eksenler(true, true)
-                    .sürükleme_eşikleri(10.0, 10.0),
-            ),
+            ortak_kart_etkileşimleri()
+                .tekerlek_etkileşimi(true)
+                .zoom_ranger(
+                    ZoomRangerSeçenekleri::default()
+                        .etkin(true)
+                        .eksenler(true, true)
+                        .sürükleme_eşikleri(10.0, 10.0),
+                ),
         )
         .seri(SeriSeçenekleri::yeni("One").renk("#ff0000"))
         .seri(SeriSeçenekleri::yeni("Two").renk("#0000ff"));
@@ -119,12 +127,14 @@ pub fn zoom_ranger_xy_grafiği() -> Result<Grafik, UplotHatası> {
     let seçenekler = GrafikSeçenekleri::yeni(800, 400)?
         .x_zaman(false)
         .etkileşimler(
-            ortak_kart_etkileşimleri().zoom_ranger(
-                ZoomRangerSeçenekleri::default()
-                    .etkin(true)
-                    .eksenler(true, true)
-                    .sürükleme_eşikleri(10.0, 10.0),
-            ),
+            ortak_kart_etkileşimleri()
+                .tekerlek_etkileşimi(true)
+                .zoom_ranger(
+                    ZoomRangerSeçenekleri::default()
+                        .etkin(true)
+                        .eksenler(true, true)
+                        .sürükleme_eşikleri(10.0, 10.0),
+                ),
         )
         .seri(SeriSeçenekleri::yeni("sin(x)").renk("purple"));
     let mut grafik = Grafik::yeni(seçenekler, HizalıVeri::yeni(x, vec![y])?)?;

@@ -124,6 +124,9 @@ mod testler {
     fn ortak_yakınlaştırma_çubukları_çizim_alanında_kırpar() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = bars_values_autosize_kartı(ÇubukYönü::Dikey)?;
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        // Tekerlek yakınlaştırması varsayılan kapalı; test onu
+        // araç olarak kullandığı için açıkça açıyor.
+        grafik.tekerlek_etkileşimi_ayarla(true);
         assert!(grafik.tekerlek(0.5, 0.5, 1.0, false)?);
         let (sol, sağ, üst, alt) = grafik.çizim_alanı_boyutta(1_275, 600);
         let sahne = grafik.çiz();
