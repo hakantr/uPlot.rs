@@ -33,6 +33,14 @@ use crate::{
 type YAralıkPenceresiAnahtarı = (u64, u64);
 type YAralıkÖnbelleği = HashMap<String, HashMap<YAralıkPenceresiAnahtarı, Aralık>>;
 
+/// Bir Y ölçeği için saklanan azami görünür-X penceresi sayısı.
+///
+/// Zoom ve pan her karede yeni bir pencere anahtarı üretir; önbellek yalnız
+/// veri, boyut, seri görünürlüğü veya ölçek değişiminde temizlendiğinden
+/// sınırsız büyürdü. Sürekli etkileşimde yararlı olan pencere zaten en
+/// yenilerdir; sınır aşıldığında ölçeğin penceresi bir kez boşaltılır.
+const Y_ARALIĞI_ÖNBELLEK_SINIRI: usize = 64;
+
 /// Bir işaretçi seçiminin çekirdekte çözümlenen sonucu.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SeçimEylemi {
@@ -6967,11 +6975,12 @@ impl Grafik {
             return aralık;
         }
         let aralık = self.y_aralığı_ölçek_hesapla(anahtar, x_aralığı);
-        self.y_aralığı_önbelleği
-            .borrow_mut()
-            .entry(anahtar.to_owned())
-            .or_default()
-            .insert(pencere_anahtarı, aralık);
+        let mut önbellek = self.y_aralığı_önbelleği.borrow_mut();
+        let pencereler = önbellek.entry(anahtar.to_owned()).or_default();
+        if pencereler.len() >= Y_ARALIĞI_ÖNBELLEK_SINIRI {
+            pencereler.clear();
+        }
+        pencereler.insert(pencere_anahtarı, aralık);
         aralık
     }
 
