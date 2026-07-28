@@ -50,10 +50,10 @@ mod web {
         if let Some(kök) = belge.document_element() {
             let _ = kök.set_attribute("data-gpui-uplot", durum);
         }
-        if let Some(durum_öğesi) = belge.get_element_by_id("boot-status") {
-            if durum == "started" {
-                durum_öğesi.remove();
-            }
+        if durum == "started"
+            && let Some(durum_öğesi) = belge.get_element_by_id("boot-status")
+        {
+            durum_öğesi.remove();
         }
         if let Some(mesaj_öğesi) = belge.get_element_by_id("boot-message") {
             mesaj_öğesi.set_text_content(Some(mesaj));

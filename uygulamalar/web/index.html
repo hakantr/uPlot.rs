@@ -9,6 +9,11 @@
     <meta name="color-scheme" content="dark light" />
     <title>uPlot.rs · GPUI Web</title>
     <link data-trunk rel="rust" data-bin="uplot-rs-gpui-web" data-bindgen-target="web" />
+    <link data-trunk rel="copy-file" href="coi-serviceworker.js" />
+    <!-- GPUI Web'in iş parçacığı havuzu SharedArrayBuffer ister; GitHub Pages
+         COOP/COEP başlığı gönderemediğinden bu betik onları bir service
+         worker üzerinden uygular. Wasm yüklenmeden önce çalışmalıdır. -->
+    <script src="coi-serviceworker.js"></script>
     <style>
       * { box-sizing: border-box; }
       html, body {

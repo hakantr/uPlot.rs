@@ -1,3 +1,9 @@
+# Kök workspace stable kanala sabitlidir. GPUI Web'in çok iş parçacıklı yolu
+# nightly ve `build-std` istediğinden bu paket, zed'in `hello_web` örneğinde
+# olduğu gibi kendi workspace'i olarak ayrılır: yanındaki `rust-toolchain.toml`
+# ve `.cargo/config.toml` yalnız burada geçerli olur.
+[workspace]
+
 [package]
 name = "uplot-rs-gpui-web"
 version = "0.1.0"
@@ -20,5 +26,16 @@ gpui_platform = { path = "../../../gpui/crates/gpui_platform" }
 log = "0.4"
 web-sys = { version = "0.3", features = ["Document", "Element", "Window"] }
 
-[lints]
-workspace = true
+# Ayrı workspace olduğundan kökteki `workspace.lints` miras alınamaz; aynı
+# kurallar burada birebir yinelenir.
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+unreachable = "deny"
+indexing_slicing = "deny"
