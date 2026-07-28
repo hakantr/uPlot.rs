@@ -8118,7 +8118,7 @@ fn çizilecek_indeksler(
     }
 
     let mut sonuç = Vec::with_capacity(eşik);
-    let mut kova = None::<(usize, usize, usize, usize, usize, f64, f64)>;
+    let mut kova = None::<Kova>;
     let mut boşlukta = false;
     let Some(görünür_x) = x.get(görünür.clone()) else {
         return sonuç;
@@ -8126,8 +8126,8 @@ fn çizilecek_indeksler(
     for (göreli, (x_değeri, y_değeri)) in görünür_x.iter().zip(görünür_y).enumerate() {
         let indeks = görünür.start.saturating_add(göreli);
         let Some(y_değeri) = y_değeri else {
-            if let Some((_, ilk, son, en_az_i, en_çok_i, _, _)) = kova.take() {
-                kova_indekslerini_ekle(&mut sonuç, ilk, en_az_i, en_çok_i, son);
+            if let Some(dolan) = kova.take() {
+                kova_indekslerini_ekle(&mut sonuç, &dolan);
             }
             if !boşlukta {
                 sonuç.push(indeks);
@@ -8141,48 +8141,78 @@ fn çizilecek_indeksler(
             .round()
             .clamp(0.0, f64::from(piksel_genişliği.max(0.0))) as usize;
         match kova.as_mut() {
-            Some((kimlik, _ilk, son, en_az_i, en_çok_i, en_az, en_çok)) if *kimlik == yeni_kova =>
-            {
-                *son = indeks;
-                if *y_değeri < *en_az {
-                    *en_az = *y_değeri;
-                    *en_az_i = indeks;
+            Some(açık) if açık.kimlik == yeni_kova => {
+                açık.son = indeks;
+                açık.son_y = *y_değeri;
+                if *y_değeri < açık.en_az {
+                    açık.en_az = *y_değeri;
+                    açık.en_az_i = indeks;
                 }
-                if *y_değeri > *en_çok {
-                    *en_çok = *y_değeri;
-                    *en_çok_i = indeks;
+                if *y_değeri > açık.en_çok {
+                    açık.en_çok = *y_değeri;
+                    açık.en_çok_i = indeks;
                 }
             }
             _ => {
-                if let Some((_, ilk, son, en_az_i, en_çok_i, _, _)) = kova.take() {
-                    kova_indekslerini_ekle(&mut sonuç, ilk, en_az_i, en_çok_i, son);
+                if let Some(dolan) = kova.take() {
+                    kova_indekslerini_ekle(&mut sonuç, &dolan);
                 }
-                kova = Some((
-                    yeni_kova, indeks, indeks, indeks, indeks, *y_değeri, *y_değeri,
-                ));
+                kova = Some(Kova {
+                    kimlik: yeni_kova,
+                    ilk: indeks,
+                    ilk_y: *y_değeri,
+                    son: indeks,
+                    son_y: *y_değeri,
+                    en_az_i: indeks,
+                    en_çok_i: indeks,
+                    en_az: *y_değeri,
+                    en_çok: *y_değeri,
+                });
             }
         }
     }
-    if let Some((_, ilk, son, en_az_i, en_çok_i, _, _)) = kova {
-        kova_indekslerini_ekle(&mut sonuç, ilk, en_az_i, en_çok_i, son);
+    if let Some(dolan) = kova {
+        kova_indekslerini_ekle(&mut sonuç, &dolan);
     }
     sonuç
 }
 
-fn kova_indekslerini_ekle(
-    sonuç: &mut Vec<usize>,
+/// Tek bir X piksel kovasında biriken uç değerler.
+struct Kova {
+    kimlik: usize,
     ilk: usize,
-    en_az: usize,
-    en_çok: usize,
+    ilk_y: f64,
     son: usize,
-) {
-    // Resmî `_drawAcc`: giriş → min → max → çıkış. Ekstremumların veri
-    // zamanına göre sıralanması aynı piksel kovasındaki dikey zarfı bozar.
-    for aday in [ilk, en_az, en_çok, son] {
+    son_y: f64,
+    en_az_i: usize,
+    en_çok_i: usize,
+    en_az: f64,
+    en_çok: f64,
+}
+
+fn kova_indekslerini_ekle(sonuç: &mut Vec<usize>, kova: &Kova) {
+    // Resmî `_drawAcc` (uPlot `paths/linear.js`): giriş → min → max → çıkış.
+    // Ekstremumların veri zamanına göre sıralanması aynı piksel kovasındaki
+    // dikey zarfı bozar.
+    let mut ekle = |aday: usize| {
         if sonuç.last().copied() != Some(aday) {
             sonuç.push(aday);
         }
+    };
+    ekle(kova.ilk);
+    // Kova düzse (`minY == maxY`) uPlot yalnız giriş noktasını bırakır: aynı
+    // piksel sütunundaki yatay parçanın ara uçları hiçbir piksel üretmez.
+    if kova.en_az == kova.en_çok {
+        return;
     }
+    // Uç değer girişe veya çıkışa eşitse zaten temsil ediliyor.
+    if kova.ilk_y != kova.en_az && kova.son_y != kova.en_az {
+        ekle(kova.en_az_i);
+    }
+    if kova.ilk_y != kova.en_çok && kova.son_y != kova.en_çok {
+        ekle(kova.en_çok_i);
+    }
+    ekle(kova.son);
 }
 
 /// uPlot'un sayısal eksen yaklaşımı gibi görünür aralık ve piksel yoğunluğuna
