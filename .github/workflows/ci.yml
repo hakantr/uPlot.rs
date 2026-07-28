@@ -37,7 +37,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: hakantr/gpui_kutuphanesi
-          ref: c97926c3c15ab99091b51f7ed88bd98f357de409
+          ref: 8e3c06ef5f84b6862e4aa3ae4e10e3840f293f4a
           path: gpui_kutuphanesi
       - uses: dtolnay/rust-toolchain@1.95
         with:
@@ -120,7 +120,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: hakantr/gpui_kutuphanesi
-          ref: c97926c3c15ab99091b51f7ed88bd98f357de409
+          ref: 8e3c06ef5f84b6862e4aa3ae4e10e3840f293f4a
           path: gpui_kutuphanesi
       - name: Rust 1.95
         uses: dtolnay/rust-toolchain@1.95
