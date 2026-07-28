@@ -72,11 +72,59 @@ struct GpuiBoyaGörünümü {
     y_kaydırması: f32,
 }
 
+/// Sahne komutlarının geometrik noktalarının ötesine taşan azami görsel pay.
+///
+/// uPlot kırpma dikdörtgenini seri kalınlığının yarısı kadar genişletir
+/// (`drawPath`: `plotLft - width / 2`, `plotWid + width`), nokta işaretleri
+/// içinse nokta çapı kadar (`paths/points.js`: `lft - dia`, `wid + dia * 2`).
+/// Aksi hâlde tam çizim sınırındaki çizgi yarım, sınırdaki nokta işareti ise
+/// ortadan tıraşlanır.
+fn kırpma_payı(sahne: &Sahne) -> f32 {
+    let mut azami = 0.0_f32;
+    let mut aday = |değer: f32| {
+        if değer.is_finite() && değer > azami {
+            azami = değer;
+        }
+    };
+    for komut in sahne.komutlar() {
+        match komut {
+            Komut::Çizgi { kalınlık, .. }
+            | Komut::KesikliÇizgi { kalınlık, .. }
+            | Komut::Yol { kalınlık, .. }
+            | Komut::GradyanYol { kalınlık, .. }
+            | Komut::KesikliYol { kalınlık, .. }
+            | Komut::Dikdörtgen { kalınlık, .. }
+            | Komut::YuvarlatılmışDikdörtgen { kalınlık, .. } => aday(*kalınlık / 2.0),
+            Komut::Daire {
+                yarıçap, kalınlık,
+            ..
+            }
+            | Komut::Daireler {
+                yarıçap, kalınlık,
+            ..
+            } => aday(*yarıçap + *kalınlık / 2.0),
+            Komut::DeğişkenDaireler {
+                daireler, kalınlık,
+            ..
+            } => {
+                let en_geniş = daireler
+                    .iter()
+                    .map(|(_, yarıçap)| *yarıçap)
+                    .fold(0.0_f32, f32::max);
+                aday(en_geniş + *kalınlık / 2.0);
+            }
+            _ => {}
+        }
+    }
+    azami
+}
+
 impl GpuiBoyaGörünümü {
     fn hesapla(
         görünüm: GpuiVeriGörünümü,
         yüzey: GpuiYüzeyDönüşümü,
         fiziksel_ölçek: f32,
+        kırpma_payı: f32,
     ) -> Option<Self> {
         let (sol, sağ, üst, alt) = görünüm.çizim_alanı;
         let genişlik = sağ - sol;
@@ -105,8 +153,14 @@ impl GpuiBoyaGörünümü {
                 translation: [x_kaydırması * fiziksel_ölçek, y_kaydırması * fiziksel_ölçek],
             },
             kesme_sınırları: Bounds::new(
-                point(px(hedef_sol), px(hedef_üst)),
-                size(px(genişlik * yüzey.ölçek), px(yükseklik * yüzey.ölçek)),
+                point(
+                    px(hedef_sol - kırpma_payı * yüzey.ölçek),
+                    px(hedef_üst - kırpma_payı * yüzey.ölçek),
+                ),
+                size(
+                    px((genişlik + kırpma_payı * 2.0) * yüzey.ölçek),
+                    px((yükseklik + kırpma_payı * 2.0) * yüzey.ölçek),
+                ),
             ),
             mantıksal_çizim_alanı: görünüm.çizim_alanı,
             x_ölçeği,
@@ -3572,10 +3626,12 @@ fn sahneyi_önbellekli_boya(
             px(yerel_dönüşüm.köken_y + nokta.y * yerel_dönüşüm.ölçek),
         )
     };
+    let pay = kırpma_payı(sahne);
     let boya_görünümü = veri_görünümü
-        .and_then(|görünüm| GpuiBoyaGörünümü::hesapla(görünüm, dönüşüm, fiziksel_ölçek));
-    let yol_boya_görünümü = veri_görünümü
-        .and_then(|görünüm| GpuiBoyaGörünümü::hesapla(görünüm, yerel_dönüşüm, fiziksel_ölçek));
+        .and_then(|görünüm| GpuiBoyaGörünümü::hesapla(görünüm, dönüşüm, fiziksel_ölçek, pay));
+    let yol_boya_görünümü = veri_görünümü.and_then(|görünüm| {
+        GpuiBoyaGörünümü::hesapla(görünüm, yerel_dönüşüm, fiziksel_ölçek, pay)
+    });
     let hedef_köken = sınırlar.origin;
     if let Some(görünüm) = boya_görünümü {
         yol_önbelleği.veri_komutlarını_hazırla(sahne, görünüm.mantıksal_çizim_alanı);
@@ -3583,8 +3639,14 @@ fn sahneyi_önbellekli_boya(
 
     let çizim_maskesi = çizim_kırpması.map(|(k_sol, k_sağ, k_üst, k_alt)| ContentMask {
         bounds: Bounds::new(
-            point(px(köken_x + k_sol * ölçek), px(köken_y + k_üst * ölçek)),
-            size(px((k_sağ - k_sol) * ölçek), px((k_alt - k_üst) * ölçek)),
+            point(
+                px(köken_x + (k_sol - pay) * ölçek),
+                px(köken_y + (k_üst - pay) * ölçek),
+            ),
+            size(
+                px((k_sağ - k_sol + pay * 2.0) * ölçek),
+                px((k_alt - k_üst + pay * 2.0) * ölçek),
+            ),
         ),
     });
     pencere.with_content_mask(çizim_maskesi, |pencere| {
@@ -4908,7 +4970,7 @@ mod testler {
             köken_x: 0.0,
             köken_y: 0.0,
         };
-        let boya = GpuiBoyaGörünümü::hesapla(görünüm, yüzey, 2.0);
+        let boya = GpuiBoyaGörünümü::hesapla(görünüm, yüzey, 2.0, 0.0);
         assert!(boya.is_some(), "geçerli zoom matrisi bekleniyordu");
         let Some(boya) = boya else { return };
         let kaynak_sol = point(px(250.0), px(150.0));
