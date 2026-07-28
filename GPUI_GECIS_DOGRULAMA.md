@@ -151,8 +151,50 @@ CI her push'ta Linux test/Clippy/performance/WASM matrisini ve macOS ARM64 ile
 Windows x64 native kontrollerini çalıştırır. Nightly yayın aynı kilitli kardeş
 commitlerden macOS, Linux, Windows ve GPUI Web artefaktları üretir.
 
+## Karar: gpui'de fork yok, upstream yol gönderimi kabul edildi
+
+**Tarih:** 2026-07-28
+
+Bir dönem `../gpui`, uPlot.rs için iki ek taşıdı: `Path.vertices`'in
+`Arc<Vec<_>>` olması ve cihaz ölçeğine çevrilmiş yolu paylaşımlı gönderen
+`paint_scaled_path` / `paint_transformed_scaled_path`. İkisi de Zed'de hiç
+var olmadı ve gpui'nin kendi parite politikasına (`AGENTS.md`) aykırıydı;
+2026-07-28 Zed senkronu bu yüzden onları kaldırdı.
+
+Ekleme geri getirilmedi. Gerekçe ölçüldü, tahmin edilmedi:
+
+| ölçüm | fork'lu | upstream | not |
+|---|---:|---:|---|
+| Resize kök render p50 | 578 µs | 699 µs | ihmal edilebilir |
+| ThinBars (55 yüzey) | 897 µs | 917 µs | ihmal edilebilir |
+| TimezonesDst (51 yüzey) | 923 µs | 978 µs | ihmal edilebilir |
+| MassSpectrum | 564 µs | 621 µs | ihmal edilebilir |
+| **LatencyHeatmap** | **684 µs** | **4,93 ms** | tek anlamlı fark |
+
+LatencyHeatmap yüzey başına ~49K köşe taşıyor; maliyet köşe hacmiyle
+süperdoğrusal büyüyor. Kalıcı bütçe testinin p50 sınırı 8,35 ms olduğu için
+kart hâlâ bütçenin içinde.
+
+Başsız ölçüm ile canlı davranış ayrışıyor ve bunu bilerek kabul ettik:
+bütçe testi her turda `cx.notify()` ile tam yeniden boyama zorluyor, canlı
+uygulamada ise veri yüzeyi `cached()` altında olduğundan çoğu karede
+`sahneyi_önbellekli_boya` hiç çalışmıyor. Aynı kartın canlı etkileşim
+CPU'su %21–27 ölçüldü ve gezinme akıcı bulundu.
+
+Tessellation önbelleği (asıl kazanç) korunuyor; kaldırılan yalnız
+ölçeklenmiş kopyanın kareler arası paylaşımıydı.
+`uygulamalar/katalog/tests/upstream_yol_butcesi.rs` kabul edilen köşe başına
+maliyeti bütçeye bağlar ve sessiz büyümeyi engeller. Zed ileride eşdeğer bir
+API eklerse normal senkronla gelir; buraya yeniden eklenmez.
+
 ## Sürekli koruma
 
 `tools/uyum/denetle.mjs` eski runtime, bağımsız SVG renderer veya ikinci
 katalog tekrar eklenirse CI'yı başarısız yapar. `main` ile `origin/main`
 eşliği ve temiz çalışma ağacı son kabulün parçasıdır.
+
+`tools/paket_siniri_denetle.sh` kart listesinin ve örnek kabukların
+kütüphane paketine sızmadığını doğrular: paket içeriği, uygulama
+crate'lerinin `publish = false` durumu ve kütüphanenin bağımlılık yönü. Sınır
+hedeften değil paket içeriğinden geldiği için native ve wasm aynı denetimle
+kapsanır.
