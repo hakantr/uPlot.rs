@@ -940,14 +940,14 @@ impl Grafik {
     /// Bu sahne yalnız veri, seri veya boyut değiştiğinde yenilenir. Zoom ve
     /// pan sırasında aynı geometri GPUI dönüşüm matrisiyle yeniden kullanılır.
     pub(crate) fn gpui_tam_sahneyi_çiz(&self) -> Sahne {
-        self.çiz_boyutta_aralıklarla(
+        self.çiz_boyutta_aralıklarla_katmanda(
             self.seçenekler.genişlik,
             self.seçenekler.yükseklik,
             Some(self.etkileşim.tam_x()),
             Some(self.etkileşim.tam_y()),
             false,
+            Some(SahneKatmanı::Veri),
         )
-        .katmanı_süz(SahneKatmanı::Veri)
     }
 
     /// GPUI'nin veri ve eksen yüzeylerinin altında kalan sabit arka planı.
@@ -957,14 +957,14 @@ impl Grafik {
 
     /// Güncel görünümün yalnız hafif eksen/grid katmanını üretir.
     pub(crate) fn gpui_eksen_sahnesini_çiz(&self) -> Sahne {
-        self.çiz_boyutta_aralıklarla(
+        self.çiz_boyutta_aralıklarla_katmanda(
             self.seçenekler.genişlik,
             self.seçenekler.yükseklik,
             Some(self.görünür_x_aralığı()),
             Some(self.gpui_görünür_y_aralığı()),
             true,
+            Some(SahneKatmanı::Eksen),
         )
-        .katmanı_süz(SahneKatmanı::Eksen)
     }
 
     /// GPUI zoomunda görünür X dilimini taramadan kullanılan Y penceresi.
@@ -3902,12 +3902,36 @@ impl Grafik {
         görünür_y: Option<Aralık>,
         yalnız_eksen: bool,
     ) -> Sahne {
+        self.çiz_boyutta_aralıklarla_katmanda(
+            genişlik_px,
+            yükseklik_px,
+            görünür_x,
+            görünür_y,
+            yalnız_eksen,
+            None,
+        )
+    }
+
+    /// `tutulan_katman` verildiğinde yalnız o katmanın komutları toplanır.
+    ///
+    /// GPUI'nin veri ve eksen yüzeyleri tek katman tüketir; filtreyi sahneye
+    /// başta vermek diğer katmanın geometri özetlerini hiç üretmemeyi sağlar.
+    fn çiz_boyutta_aralıklarla_katmanda(
+        &self,
+        genişlik_px: u32,
+        yükseklik_px: u32,
+        görünür_x: Option<Aralık>,
+        görünür_y: Option<Aralık>,
+        yalnız_eksen: bool,
+        tutulan_katman: Option<SahneKatmanı>,
+    ) -> Sahne {
         let mut sahne = self.çiz_boyutta_aralıklarla_sırasız(
             genişlik_px,
             yükseklik_px,
             görünür_x,
             görünür_y,
             yalnız_eksen,
+            tutulan_katman,
         );
         sahne.katman_sırasını_uygula(&self.seçenekler.katman_sırası);
         sahne
@@ -3920,6 +3944,7 @@ impl Grafik {
         görünür_x: Option<Aralık>,
         görünür_y: Option<Aralık>,
         yalnız_eksen: bool,
+        tutulan_katman: Option<SahneKatmanı>,
     ) -> Sahne {
         let çizim_başlangıcı = self
             .seçenekler
@@ -3937,7 +3962,8 @@ impl Grafik {
         } else {
             yükseklik_px.max(120)
         };
-        let mut sahne = self.arka_plan_sahnesini_boyutta(genişlik_px, yükseklik_px);
+        let mut sahne =
+            self.arka_plan_sahnesini_katmanda(genişlik_px, yükseklik_px, tutulan_katman);
         let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
         let genişlik = sağ - sol;
         let yükseklik = alt - üst;
@@ -5435,6 +5461,15 @@ impl Grafik {
     }
 
     fn arka_plan_sahnesini_boyutta(&self, genişlik_px: u32, yükseklik_px: u32) -> Sahne {
+        self.arka_plan_sahnesini_katmanda(genişlik_px, yükseklik_px, None)
+    }
+
+    fn arka_plan_sahnesini_katmanda(
+        &self,
+        genişlik_px: u32,
+        yükseklik_px: u32,
+        tutulan_katman: Option<SahneKatmanı>,
+    ) -> Sahne {
         let genişlik_px = if self.seçenekler.kompakt_yüzey {
             genişlik_px.max(2)
         } else {
@@ -5445,7 +5480,10 @@ impl Grafik {
         } else {
             yükseklik_px.max(120)
         };
-        let mut sahne = Sahne::yeni(genişlik_px, yükseklik_px);
+        let mut sahne = tutulan_katman.map_or_else(
+            || Sahne::yeni(genişlik_px, yükseklik_px),
+            |katman| Sahne::katmanda(genişlik_px, yükseklik_px, katman),
+        );
         sahne.katmanı_ayarla(SahneKatmanı::ArkaPlan);
         sahne.ekle(Komut::ArkaPlan {
             renk: self.seçenekler.arka_plan_rengi.clone(),

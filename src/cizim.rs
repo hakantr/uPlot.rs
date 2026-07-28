@@ -181,6 +181,13 @@ pub struct Sahne {
     geometri_kimlikleri: Vec<u64>,
     katmanlar: Vec<SahneKatmanı>,
     etkin_katman: SahneKatmanı,
+    /// Ayarlıysa yalnız bu katmanın komutları saklanır.
+    ///
+    /// GPUI retained yüzeyleri tek katman tüketir. Filtreyi `ekle` sınırında
+    /// uygulamak, atılacak komutların geometri özetini ve katman dizilerini
+    /// hiç üretmemeyi sağlar; ayrıca sonradan üç ayrı `retain` geçişi
+    /// gerekmez.
+    tutulan_katman: Option<SahneKatmanı>,
 }
 
 impl Sahne {
@@ -192,7 +199,15 @@ impl Sahne {
             geometri_kimlikleri: Vec::new(),
             katmanlar: Vec::new(),
             etkin_katman: SahneKatmanı::Veri,
+            tutulan_katman: None,
         }
+    }
+
+    /// Yalnız verilen katmanın komutlarını toplayan boş sahne.
+    pub(crate) fn katmanda(genişlik: u32, yükseklik: u32, katman: SahneKatmanı) -> Self {
+        let mut sahne = Self::yeni(genişlik, yükseklik);
+        sahne.tutulan_katman = Some(katman);
+        sahne
     }
 
     pub(crate) fn yeniden_kullan(&mut self, genişlik: u32, yükseklik: u32) {
@@ -202,9 +217,16 @@ impl Sahne {
         self.geometri_kimlikleri.clear();
         self.katmanlar.clear();
         self.etkin_katman = SahneKatmanı::Veri;
+        self.tutulan_katman = None;
     }
 
     pub fn ekle(&mut self, komut: Komut) {
+        if self
+            .tutulan_katman
+            .is_some_and(|katman| katman != self.etkin_katman)
+        {
+            return;
+        }
         self.geometri_kimlikleri
             .push(komut_geometri_kimliği(&komut));
         self.katmanlar.push(self.etkin_katman);
@@ -213,23 +235,6 @@ impl Sahne {
 
     pub(crate) fn katmanı_ayarla(&mut self, katman: SahneKatmanı) {
         self.etkin_katman = katman;
-    }
-
-    pub(crate) fn katmanı_süz(mut self, katman: SahneKatmanı) -> Self {
-        let mut indeks = 0;
-        self.komutlar.retain(|_| {
-            let tutulacak = self.katmanlar.get(indeks).copied() == Some(katman);
-            indeks += 1;
-            tutulacak
-        });
-        let mut indeks = 0;
-        self.geometri_kimlikleri.retain(|_| {
-            let tutulacak = self.katmanlar.get(indeks).copied() == Some(katman);
-            indeks += 1;
-            tutulacak
-        });
-        self.katmanlar.retain(|değer| *değer == katman);
-        self
     }
 
     pub fn komutlar(&self) -> &[Komut] {
@@ -241,6 +246,10 @@ impl Sahne {
     }
 
     pub(crate) fn katman_sırasını_uygula(&mut self, sıra: &[crate::ÇizimKatmanı; 4]) {
+        if self.tutulan_katman.is_some() {
+            // Tek katmanlı sahnede sıralamanın gözlemlenebilir bir etkisi yok.
+            return;
+        }
         let mut sahne_sırası = [SahneKatmanı::Veri; 3];
         let mut indeks = 0;
         for katman in sıra {
