@@ -5388,11 +5388,13 @@ impl Render for ChartListesi {
         let gpu_yazısı = gpu.map_or_else(
             || "GPU: platform bilgisi sunulmadı".to_string(),
             |özellikler| {
+                // Upstream `GpuSpecs` backend adını taşımaz; sürücü bilgisi
+                // pratikte aynı ayrımı (Vulkan/GL, Mesa sürümü) veriyor.
                 format!(
                     "GPU: {} · {} · {}{}",
                     özellikler.device_name,
-                    özellikler.backend_name,
                     özellikler.driver_name,
+                    özellikler.driver_info,
                     if özellikler.is_software_emulated {
                         " · YAZILIM FALLBACK"
                     } else {
