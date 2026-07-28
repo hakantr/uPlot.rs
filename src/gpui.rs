@@ -873,7 +873,7 @@ impl GpuiGrafik {
     pub fn yeni(grafik: Grafik) -> Self {
         let boyut_senkron_katmanı = grafik.boyut_senkron_düzeni();
         let arka_plan_sahnesi = Rc::new(grafik.gpui_arka_plan_sahnesini_çiz());
-        let ana_sahne = Rc::new(grafik.gpui_tam_sahneyi_çiz());
+        let ana_sahne = Rc::new(grafik.gpui_görünür_veri_sahnesini_çiz());
         let eksen_sahnesi = Rc::new(grafik.gpui_eksen_sahnesini_çiz());
         let veri_görünümü = Rc::new(Cell::new(GpuiVeriGörünümü {
             pencere: grafik.oransal_görünüm(),
@@ -2584,7 +2584,7 @@ impl GpuiGrafik {
         let _ölçüm = crate::izleme::Ölçüm::başlat(crate::izleme::Yuva::TamSahne);
         self.açıklama_vuruşu = None;
         self.arka_plan_sahnesi = Rc::new(self.grafik.gpui_arka_plan_sahnesini_çiz());
-        self.ana_sahne = Rc::new(self.grafik.gpui_tam_sahneyi_çiz());
+        self.ana_sahne = Rc::new(self.grafik.gpui_görünür_veri_sahnesini_çiz());
         self.ana_sahne_revizyonu = self.ana_sahne_revizyonu.saturating_add(1);
         self.görünümü_yenile();
         if let Some(yüzey) = self.arka_plan_yüzeyi.as_ref() {
@@ -2606,12 +2606,14 @@ impl GpuiGrafik {
         self.etkileşim_yüzeyini_yenile(cx);
     }
 
-    /// Odak yalnız seri sunumunu değiştirir. Sabit arka planı ve eksen/grid
-    /// katmanını yeniden kurmadan veri yüzeyini tazeler.
+    /// Veri yüzeyini güncel görünüm penceresi için yeniden kurar. Sabit arka
+    /// planı ve eksen/grid katmanını ellemez; odak değişimi ile görünüm
+    /// değişimi aynı yolu paylaşır.
     fn veri_sahnesini_yenile(&mut self, cx: &mut Context<Self>) {
         let _ölçüm = crate::izleme::Ölçüm::başlat(crate::izleme::Yuva::VeriSahnesi);
-        self.ana_sahne = Rc::new(self.grafik.gpui_tam_sahneyi_çiz());
+        self.ana_sahne = Rc::new(self.grafik.gpui_görünür_veri_sahnesini_çiz());
         self.ana_sahne_revizyonu = self.ana_sahne_revizyonu.saturating_add(1);
+        self.görünümü_yenile();
         let duyarlı_grafik = self.grafik.duyarlı_boyut_mu().then(|| cx.weak_entity());
         if let Some(yüzey) = self.ana_yüzey.as_ref() {
             let sahne = self.ana_sahne.clone();
@@ -2635,7 +2637,10 @@ impl GpuiGrafik {
 
     fn görünümü_yenile(&mut self) {
         self.veri_görünümü.set(GpuiVeriGörünümü {
-            pencere: self.grafik.oransal_görünüm(),
+            // Veri sahnesi güncel görünüm penceresi için kurulduğundan
+            // yüzeye ek bir yakınlaştırma dönüşümü uygulanmaz; pencere
+            // birimdir ve `GpuiBoyaGörünümü` yalnız kırpmayı taşır.
+            pencere: OransalGörünüm::default(),
             çizim_alanı: self.çizim_alanı(),
         });
         self.görünüm_revizyonu = self.görünüm_revizyonu.saturating_add(1);
@@ -2653,14 +2658,11 @@ impl GpuiGrafik {
         });
     }
 
-    /// Görünüm matrisini ve eksen katmanını tazeler; olay yaymaz.
+    /// Veri ve eksen katmanlarını güncel pencereye göre tazeler; olay yaymaz.
     fn görünümü_sessiz_bildir(&mut self, cx: &mut Context<Self>) {
         self.açıklama_vuruşu = None;
-        self.görünümü_yenile();
+        self.veri_sahnesini_yenile(cx);
         self.eksen_sahnesini_yenile(cx);
-        if let Some(yüzey) = self.ana_yüzey.as_ref() {
-            yüzey.update(cx, |_, cx| cx.notify());
-        }
         cx.notify();
     }
 
@@ -4835,10 +4837,12 @@ mod testler {
         Ok(())
     }
 
+    /// uPlot her `setScale`'de seri yollarını geçersizleştirir; veri katmanı
+    /// da yakınlaştırmada yeniden kurulmalı, aksi hâlde kontur kalınlığı
+    /// anizotropik ölçeklenir ve piksel kovası seyreltmesi ilk yoğunlukta
+    /// donar.
     #[::gpui::test]
-    fn tekerlek_zoom_ana_sahneyi_değil_yalnız_görünüm_matrisini_değiştirir(
-        cx: &mut ::gpui::TestAppContext,
-    ) {
+    fn tekerlek_zoom_veri_katmanını_yeniden_kurar(cx: &mut ::gpui::TestAppContext) {
         let kart = test_çizgi_kartı(800, 600);
         assert!(kart.is_ok(), "test grafiği seçenekleri oluşturulamadı");
         let Ok((seçenekler, veri)) = kart else {
@@ -4864,22 +4868,25 @@ mod testler {
         });
 
         grafik.read_with(cx, |grafik, _| {
-            assert!(Rc::ptr_eq(&grafik.ana_sahne, &ana_sahne));
-            assert_eq!(grafik.ana_sahne_revizyonu, ana_revizyon);
+            assert!(
+                !Rc::ptr_eq(&grafik.ana_sahne, &ana_sahne),
+                "yakınlaştırma veri sahnesini yeniden kurmalı"
+            );
+            assert!(grafik.ana_sahne_revizyonu > ana_revizyon);
             assert!(grafik.görünüm_revizyonu > görünüm_revizyonu);
             assert!(grafik.grafik.yakınlaştırılmış());
         });
     }
 
+    /// Sahne güncel pencere için kurulduğundan yüzeye ikinci bir
+    /// yakınlaştırma dönüşümü uygulanmamalı; aksi hâlde geometri iki kez
+    /// ölçeklenir.
     #[test]
-    fn zoom_retained_ana_geometriyi_yeniden_üretmez() -> Result<(), UplotHatası> {
+    fn zoom_sonrası_görünüm_penceresi_birim_kalır() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = test_çizgi_kartı(800, 600)?;
         let grafik = Grafik::yeni(seçenekler, veri)?;
         let mut bileşen = GpuiGrafik::yeni(grafik);
-        let ana_sahne = bileşen.ana_sahne.clone();
-        let ana_revizyon = bileşen.ana_sahne_revizyonu;
         let görünüm_revizyonu = bileşen.görünüm_revizyonu;
-        let geometri_kimlikleri = bileşen.ana_sahne.geometri_kimlikleri().to_vec();
 
         assert!(
             bileşen
@@ -4888,13 +4895,12 @@ mod testler {
         );
         bileşen.görünümü_yenile();
 
-        assert!(Rc::ptr_eq(&bileşen.ana_sahne, &ana_sahne));
-        assert_eq!(bileşen.ana_sahne_revizyonu, ana_revizyon);
         assert!(bileşen.görünüm_revizyonu > görünüm_revizyonu);
-        assert_eq!(bileşen.ana_sahne.geometri_kimlikleri(), geometri_kimlikleri);
         let pencere = bileşen.veri_görünümü.get().pencere;
-        assert!((pencere.sol - 0.25).abs() <= 0.0001);
-        assert!((pencere.sağ - 0.75).abs() <= 0.0001);
+        assert!(pencere.sol.abs() <= 0.0001);
+        assert!((pencere.sağ - 1.0).abs() <= 0.0001);
+        assert!(pencere.üst.abs() <= 0.0001);
+        assert!((pencere.alt - 1.0).abs() <= 0.0001);
         Ok(())
     }
 

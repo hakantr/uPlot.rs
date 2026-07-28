@@ -935,16 +935,19 @@ impl Grafik {
         )
     }
 
-    /// GPUI'nin retained veri katmanı için tam ölçek geometrisini üretir.
+    /// Veri katmanını güncel görünüm penceresi için kurar.
     ///
-    /// Bu sahne yalnız veri, seri veya boyut değiştiğinde yenilenir. Zoom ve
-    /// pan sırasında aynı geometri GPUI dönüşüm matrisiyle yeniden kullanılır.
-    pub(crate) fn gpui_tam_sahneyi_çiz(&self) -> Sahne {
+    /// Katman eskiden tüm veri aralığı için tek seferde tessellate edilir,
+    /// yakınlaştırma ise GPU dönüşümüne bırakılırdı; bu, kontur kalınlığını
+    /// anizotropik ölçekliyor ve piksel kovası seyreltmesini ilk yoğunlukta
+    /// donduruyordu. uPlot her `setScale`'de seri yollarını geçersizleştirip
+    /// yeniden kurar (`uPlot.js`: `s._paths = null`); bunun karşılığıdır.
+    pub(crate) fn gpui_görünür_veri_sahnesini_çiz(&self) -> Sahne {
         self.çiz_boyutta_aralıklarla_katmanda(
             self.seçenekler.genişlik,
             self.seçenekler.yükseklik,
-            Some(self.etkileşim.tam_x()),
-            Some(self.etkileşim.tam_y()),
+            Some(self.görünür_x_aralığı()),
+            Some(self.gpui_görünür_y_aralığı()),
             false,
             Some(SahneKatmanı::Veri),
         )
