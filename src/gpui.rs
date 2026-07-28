@@ -1625,21 +1625,21 @@ impl GpuiGrafik {
                 ),
                 genişlik: çizim_genişliği * düzen.seçim_genişlik_oranı,
                 yükseklik: çizim_yüksekliği * düzen.seçim_yükseklik_oranı,
-                dolgu: "#00000012".to_string(),
-                çizgi: "#00000000".to_string(),
+                dolgu: "#00000012".into(),
+                çizgi: "#00000000".into(),
                 kalınlık: 0.0,
             });
             sahne.ekle(Komut::KesikliÇizgi {
                 başlangıç: Nokta::yeni(imleç.x, üst),
                 bitiş: Nokta::yeni(imleç.x, alt),
-                renk: "#607d8b".to_string(),
+                renk: "#607d8b".into(),
                 kalınlık: 1.0,
                 kesik: 4.0,
             });
             sahne.ekle(Komut::KesikliÇizgi {
                 başlangıç: Nokta::yeni(sol, imleç.y),
                 bitiş: Nokta::yeni(sağ, imleç.y),
-                renk: "#607d8b".to_string(),
+                renk: "#607d8b".into(),
                 kalınlık: 1.0,
                 kesik: 4.0,
             });
@@ -1655,8 +1655,8 @@ impl GpuiGrafik {
                         üst + çizim_yüksekliği * düzen.hover_y_oranı,
                     ),
                     yarıçap: 2.5,
-                    dolgu: "red".to_string(),
-                    çizgi: "red".to_string(),
+                    dolgu: "red".into(),
+                    çizgi: "red".into(),
                     kalınlık: 0.0,
                 });
             }
@@ -1695,8 +1695,8 @@ impl GpuiGrafik {
                             ),
                             genişlik: x1 - x0,
                             yükseklik: şerit_yüksekliği,
-                            dolgu: "#0000004d".to_string(),
-                            çizgi: "#00000000".to_string(),
+                            dolgu: "#0000004d".into(),
+                            çizgi: "#00000000".into(),
                             kalınlık: 0.0,
                         });
                     }
@@ -1707,8 +1707,8 @@ impl GpuiGrafik {
                 sahne.ekle(Komut::Daire {
                     merkez: vuruş.merkez,
                     yarıçap: vuruş.boyut / 2.0,
-                    dolgu: "#ffffff66".to_string(),
-                    çizgi: "#111111".to_string(),
+                    dolgu: "#ffffff66".into(),
+                    çizgi: "#111111".into(),
                     kalınlık: 2.0,
                 });
                 return;
@@ -1723,8 +1723,8 @@ impl GpuiGrafik {
                     konum,
                     genişlik,
                     yükseklik,
-                    dolgu: "#ffffff4d".to_string(),
-                    çizgi: "#ffffff00".to_string(),
+                    dolgu: "#ffffff4d".into(),
+                    çizgi: "#ffffff00".into(),
                     kalınlık: 0.0,
                 });
                 return;
@@ -1744,8 +1744,8 @@ impl GpuiGrafik {
                     konum,
                     genişlik,
                     yükseklik,
-                    dolgu: "#33ccff4d".to_string(),
-                    çizgi: "#33ccff00".to_string(),
+                    dolgu: "#33ccff4d".into(),
+                    çizgi: "#33ccff00".into(),
                     kalınlık: 0.0,
                 });
                 let (satırlar, imleç_ofseti, kaynak_mum_konumu) =
@@ -1815,15 +1815,15 @@ impl GpuiGrafik {
                         konum: Nokta::yeni(kutu_x, kutu_y),
                         genişlik: kutu_genişliği,
                         yükseklik: kutu_yüksekliği,
-                        dolgu: "#fff9c4eb".to_string(),
-                        çizgi: "#00000033".to_string(),
+                        dolgu: "#fff9c4eb".into(),
+                        çizgi: "#00000033".into(),
                         kalınlık: 1.0,
                     });
                     for (satır, içerik) in satırlar.into_iter().enumerate() {
                         sahne.ekle(Komut::Metin {
                             konum: Nokta::yeni(kutu_x + 8.0, kutu_y + 16.0 + satır as f32 * 16.0),
                             içerik,
-                            renk: "#111111".to_string(),
+                            renk: "#111111".into(),
                             boyut: 11.0,
                             hiza: MetinHizası::Başlangıç,
                         });
@@ -1853,7 +1853,7 @@ impl GpuiGrafik {
                 Komut::KesikliÇizgi {
                     başlangıç: Nokta::yeni(sol, x_konumu),
                     bitiş: Nokta::yeni(sağ, x_konumu),
-                    renk: "#6b7280".to_string(),
+                    renk: "#6b7280".into(),
                     kalınlık: 1.0,
                     kesik: 4.0,
                 }
@@ -1861,7 +1861,7 @@ impl GpuiGrafik {
                 Komut::KesikliÇizgi {
                     başlangıç: Nokta::yeni(x_konumu, üst),
                     bitiş: Nokta::yeni(x_konumu, alt),
-                    renk: "#6b7280".to_string(),
+                    renk: "#6b7280".into(),
                     kalınlık: 1.0,
                     kesik: 4.0,
                 }
@@ -1871,7 +1871,7 @@ impl GpuiGrafik {
                     Komut::KesikliÇizgi {
                         başlangıç: Nokta::yeni(imleç.fare.x, üst),
                         bitiş: Nokta::yeni(imleç.fare.x, alt),
-                        renk: "#6b7280".to_string(),
+                        renk: "#6b7280".into(),
                         kalınlık: 1.0,
                         kesik: 4.0,
                     }
@@ -1879,7 +1879,7 @@ impl GpuiGrafik {
                     Komut::KesikliÇizgi {
                         başlangıç: Nokta::yeni(sol, imleç.fare.y),
                         bitiş: Nokta::yeni(sağ, imleç.fare.y),
-                        renk: "#6b7280".to_string(),
+                        renk: "#6b7280".into(),
                         kalınlık: 1.0,
                         kesik: 4.0,
                     }
@@ -1891,14 +1891,14 @@ impl GpuiGrafik {
                     konum: Nokta::yeni(x_konumu - x_rozet_genişliği / 2.0, alt + 6.0),
                     genişlik: x_rozet_genişliği,
                     yükseklik: 22.0,
-                    dolgu: "#111111".to_string(),
-                    çizgi: "#111111".to_string(),
+                    dolgu: "#111111".into(),
+                    çizgi: "#111111".into(),
                     kalınlık: 0.0,
                 });
                 sahne.ekle(Komut::Metin {
                     konum: Nokta::yeni(x_konumu, alt + 21.0),
                     içerik: x_metni,
-                    renk: "#ffffff".to_string(),
+                    renk: "#ffffff".into(),
                     boyut: 11.0,
                     hiza: MetinHizası::Orta,
                 });
@@ -1944,7 +1944,7 @@ impl GpuiGrafik {
                     sahne.ekle(Komut::KesikliÇizgi {
                         başlangıç: Nokta::yeni(sol, y_konumu),
                         bitiş: Nokta::yeni(sağ, y_konumu),
-                        renk: seri_rengi.clone(),
+                        renk: seri_rengi.clone().into(),
                         kalınlık: 1.0,
                         kesik: 4.0,
                     });
@@ -1957,14 +1957,14 @@ impl GpuiGrafik {
                         konum: Nokta::yeni(rozet_x, y_konumu - 11.0),
                         genişlik: rozet_genişliği,
                         yükseklik: 22.0,
-                        dolgu: seri_rengi.clone(),
-                        çizgi: seri_rengi.clone(),
+                        dolgu: seri_rengi.clone().into(),
+                        çizgi: seri_rengi.clone().into(),
                         kalınlık: 0.0,
                     });
                     sahne.ekle(Komut::Metin {
                         konum: Nokta::yeni(rozet_x + rozet_genişliği / 2.0, y_konumu + 4.0),
                         içerik: değer_metni,
-                        renk: "#ffffff".to_string(),
+                        renk: "#ffffff".into(),
                         boyut: 11.0,
                         hiza: MetinHizası::Orta,
                     });
@@ -1982,8 +1982,8 @@ impl GpuiGrafik {
                     sahne.ekle(Komut::Daire {
                         merkez: seri_noktası,
                         yarıçap: boyut / 2.0,
-                        dolgu,
-                        çizgi,
+                        dolgu: dolgu.into(),
+                        çizgi: çizgi.into(),
                         kalınlık: seri.imleç_nokta_kalınlığı.unwrap_or(0.0),
                     });
                 }
@@ -2017,8 +2017,8 @@ impl GpuiGrafik {
                 } else {
                     alt - üst
                 },
-                dolgu: dolgu.to_string(),
-                çizgi: çizgi.to_string(),
+                dolgu: dolgu.into(),
+                çizgi: çizgi.into(),
                 kalınlık: 1.0,
             });
         }
@@ -4259,7 +4259,7 @@ impl GpuiRetainedBoyaÖlçer {
         let mut sahne = Sahne::yeni(320, 180);
         sahne.ekle(Komut::Yol {
             parçalar: vec![vec![Nokta::yeni(10.0, 20.0), Nokta::yeni(200.0, 80.0)]],
-            renk: "#305cde".to_string(),
+            renk: "#305cde".into(),
             kalınlık: 2.0,
         });
         Self {
@@ -4870,7 +4870,7 @@ mod testler {
         let mut sahne = Sahne::yeni(320, 180);
         sahne.ekle(Komut::Yol {
             parçalar: vec![vec![Nokta::yeni(10.0, 20.0), Nokta::yeni(bitiş_x, 80.0)]],
-            renk: renk.to_owned(),
+            renk: renk.to_owned().into(),
             kalınlık,
         });
         sahne
@@ -5656,13 +5656,13 @@ mod testler {
         let mut eski = yol_sahnesi("#ff0000", 2.0, 200.0);
         eski.ekle(Komut::Yol {
             parçalar: vec![vec![Nokta::yeni(10.0, 100.0), Nokta::yeni(200.0, 40.0)]],
-            renk: "#00ff00".to_string(),
+            renk: "#00ff00".into(),
             kalınlık: 2.0,
         });
         let mut yeni = yol_sahnesi("#ff0000", 2.0, 200.0);
         yeni.ekle(Komut::Yol {
             parçalar: vec![vec![Nokta::yeni(10.0, 100.0), Nokta::yeni(240.0, 20.0)]],
-            renk: "#00ff00".to_string(),
+            renk: "#00ff00".into(),
             kalınlık: 2.0,
         });
         let mut önbellek = GpuiYolÖnbelleği {

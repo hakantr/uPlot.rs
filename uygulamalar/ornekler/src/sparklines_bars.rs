@@ -243,7 +243,7 @@ mod testler {
             .iter()
             .filter_map(|komut| match komut {
                 Komut::Dikdörtgen { dolgu, .. } if dolgu == "red" || dolgu == "green" => {
-                    Some(dolgu.as_str())
+                    Some(dolgu.as_ref())
                 }
                 _ => None,
             })
@@ -277,7 +277,7 @@ mod testler {
                 gradyan
                     .duraklar
                     .iter()
-                    .map(|durak| durak.renk.as_str())
+                    .map(|durak| durak.renk.as_ref())
                     .collect::<Vec<_>>(),
                 vec!["red", "white", "green"]
             );

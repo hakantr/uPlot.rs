@@ -29,7 +29,7 @@ fn area_fill_kaynak_verisini_ve_dolgularını_korur() -> Result<(), UplotHatası
         .komutlar()
         .iter()
         .filter_map(|komut| match komut {
-            Komut::Alan { dolgu, .. } => Some(dolgu.as_str()),
+            Komut::Alan { dolgu, .. } => Some(dolgu.as_ref()),
             _ => None,
         })
         .collect::<Vec<_>>();

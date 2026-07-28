@@ -6,6 +6,13 @@ use std::cell::Cell;
 
 pub(crate) mod kirpma;
 
+/// Sahne komutlarının renk alanı.
+///
+/// Değerlerin ezici çoğunluğu derleme zamanı sabitidir. `Cow` bunları hiç
+/// tahsis etmeden taşır; çalışma anında üretilen renkler (seri paleti,
+/// gradyan çözümü, alfa karışımı) `String` olarak girer.
+pub type RenkDeğeri = std::borrow::Cow<'static, str>;
+
 #[cfg(test)]
 std::thread_local! {
     static SVG_SERİLEŞTİRME_ÇAĞRILARI: Cell<usize> = const { Cell::new(0) };
@@ -36,7 +43,7 @@ impl Nokta {
 #[derive(Debug, Clone, PartialEq)]
 pub struct GradyanRenkDurağı {
     pub oran: f32,
-    pub renk: String,
+    pub renk: RenkDeğeri,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -64,24 +71,24 @@ pub struct KöşeYarıçapları {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Komut {
     ArkaPlan {
-        renk: String,
+        renk: RenkDeğeri,
     },
     Çizgi {
         başlangıç: Nokta,
         bitiş: Nokta,
-        renk: String,
+        renk: RenkDeğeri,
         kalınlık: f32,
     },
     KesikliÇizgi {
         başlangıç: Nokta,
         bitiş: Nokta,
-        renk: String,
+        renk: RenkDeğeri,
         kalınlık: f32,
         kesik: f32,
     },
     Yol {
         parçalar: Vec<Vec<Nokta>>,
-        renk: String,
+        renk: RenkDeğeri,
         kalınlık: f32,
     },
     GradyanYol {
@@ -91,14 +98,14 @@ pub enum Komut {
     },
     KesikliYol {
         parçalar: Vec<Vec<Nokta>>,
-        renk: String,
+        renk: RenkDeğeri,
         kalınlık: f32,
         çizgi: f32,
         boşluk: f32,
     },
     Alan {
         çokgenler: Vec<Vec<Nokta>>,
-        dolgu: String,
+        dolgu: RenkDeğeri,
     },
     GradyanAlan {
         çokgenler: Vec<Vec<Nokta>>,
@@ -107,8 +114,8 @@ pub enum Komut {
     Daire {
         merkez: Nokta,
         yarıçap: f32,
-        dolgu: String,
-        çizgi: String,
+        dolgu: RenkDeğeri,
+        çizgi: RenkDeğeri,
         kalınlık: f32,
     },
     /// Aynı stile ve yarıçapa sahip çok sayıda daireyi tek çizim komutunda taşır.
@@ -118,16 +125,16 @@ pub enum Komut {
     Daireler {
         merkezler: Vec<Nokta>,
         yarıçap: f32,
-        dolgu: String,
-        çizgi: String,
+        dolgu: RenkDeğeri,
+        çizgi: RenkDeğeri,
         kalınlık: f32,
         kesme_sınırları: Option<(Nokta, Nokta)>,
     },
     /// Aynı stile sahip değişken yarıçaplı daireleri tek Path2D/SVG yolunda taşır.
     DeğişkenDaireler {
         daireler: Vec<(Nokta, f32)>,
-        dolgu: String,
-        çizgi: String,
+        dolgu: RenkDeğeri,
+        çizgi: RenkDeğeri,
         kalınlık: f32,
         kesme_sınırları: Option<(Nokta, Nokta)>,
     },
@@ -135,8 +142,8 @@ pub enum Komut {
         konum: Nokta,
         genişlik: f32,
         yükseklik: f32,
-        dolgu: String,
-        çizgi: String,
+        dolgu: RenkDeğeri,
+        çizgi: RenkDeğeri,
         kalınlık: f32,
     },
     YuvarlatılmışDikdörtgen {
@@ -144,21 +151,21 @@ pub enum Komut {
         genişlik: f32,
         yükseklik: f32,
         yarıçaplar: KöşeYarıçapları,
-        dolgu: String,
-        çizgi: String,
+        dolgu: RenkDeğeri,
+        çizgi: RenkDeğeri,
         kalınlık: f32,
     },
     Metin {
         konum: Nokta,
         içerik: String,
-        renk: String,
+        renk: RenkDeğeri,
         boyut: f32,
         hiza: MetinHizası,
     },
     DöndürülmüşMetin {
         konum: Nokta,
         içerik: String,
-        renk: String,
+        renk: RenkDeğeri,
         boyut: f32,
         hiza: MetinHizası,
         açı: f32,
@@ -1085,21 +1092,21 @@ mod svg_testleri {
         let mut sahne = Sahne::yeni(100, 100);
         sahne.katmanı_ayarla(SahneKatmanı::ArkaPlan);
         sahne.ekle(Komut::ArkaPlan {
-            renk: "white".to_string(),
+            renk: "white".into(),
         });
         sahne.katmanı_ayarla(SahneKatmanı::Eksen);
         sahne.ekle(Komut::Çizgi {
             başlangıç: Nokta::yeni(0.0, 0.0),
             bitiş: Nokta::yeni(1.0, 1.0),
-            renk: "gray".to_string(),
+            renk: "gray".into(),
             kalınlık: 1.0,
         });
         sahne.katmanı_ayarla(SahneKatmanı::Veri);
         sahne.ekle(Komut::Daire {
             merkez: Nokta::yeni(1.0, 1.0),
             yarıçap: 1.0,
-            dolgu: "red".to_string(),
-            çizgi: "red".to_string(),
+            dolgu: "red".into(),
+            çizgi: "red".into(),
             kalınlık: 1.0,
         });
 
@@ -1126,14 +1133,14 @@ mod svg_testleri {
         sahne.ekle(Komut::Metin {
             konum: Nokta::yeni(20.0, 30.0),
             içerik: "ilk & satır\r\nikinci <satır>\n".to_string(),
-            renk: "#123456".to_string(),
+            renk: "#123456".into(),
             boyut: 12.0,
             hiza: MetinHizası::Başlangıç,
         });
         sahne.ekle(Komut::DöndürülmüşMetin {
             konum: Nokta::yeni(100.0, 120.0),
             içerik: "sol\nsağ".to_string(),
-            renk: "#654321".to_string(),
+            renk: "#654321".into(),
             boyut: 14.0,
             hiza: MetinHizası::Orta,
             açı: -90.0,
@@ -1155,13 +1162,13 @@ mod svg_testleri {
         sahne.ekle(Komut::Çizgi {
             başlangıç: Nokta::yeni(f32::NAN, f32::INFINITY),
             bitiş: Nokta::yeni(f32::NEG_INFINITY, f32::MAX),
-            renk: "#123456".to_string(),
+            renk: "#123456".into(),
             kalınlık: f32::NAN,
         });
         sahne.ekle(Komut::DöndürülmüşMetin {
             konum: Nokta::yeni(f32::INFINITY, f32::NEG_INFINITY),
             içerik: "güvenli".to_string(),
-            renk: "#654321".to_string(),
+            renk: "#654321".into(),
             boyut: f32::INFINITY,
             hiza: MetinHizası::Orta,
             açı: f32::NAN,

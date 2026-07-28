@@ -1468,7 +1468,7 @@ impl Grafik {
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(vuruş.başlangıç_x, vuruş.üst),
                 bitiş: Nokta::yeni(vuruş.başlangıç_x, vuruş.alt),
-                renk: vuruş.çizgi.clone(),
+                renk: vuruş.çizgi.clone().into(),
                 kalınlık: vuruş.kalınlık,
             });
         }
@@ -1500,7 +1500,7 @@ impl Grafik {
                 sahne.ekle(Komut::Çizgi {
                     başlangıç,
                     bitiş,
-                    renk: vuruş.çizgi.clone(),
+                    renk: vuruş.çizgi.clone().into(),
                     kalınlık: vuruş.kalınlık,
                 });
             }
@@ -3995,7 +3995,7 @@ impl Grafik {
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(genişlik_px as f32 / 2.0, 26.0),
                 içerik: self.seçenekler.başlık.clone(),
-                renk: self.seçenekler.başlık_rengi.clone(),
+                renk: self.seçenekler.başlık_rengi.clone().into(),
                 boyut: 18.0,
                 hiza: MetinHizası::Orta,
             });
@@ -4136,7 +4136,7 @@ impl Grafik {
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(x, üst),
                 bitiş: Nokta::yeni(x, alt),
-                renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                renk: self.seçenekler.birincil_y_eksen_rengi.clone().into(),
                 kalınlık: 1.0,
             });
         }
@@ -4187,7 +4187,7 @@ impl Grafik {
                             birincil_biçim,
                             birincil_çarpan,
                         ),
-                        renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                        renk: self.seçenekler.birincil_y_eksen_rengi.clone().into(),
                         boyut: 11.0,
                         hiza: MetinHizası::Orta,
                     });
@@ -4228,7 +4228,8 @@ impl Grafik {
                         .seçenekler
                         .birincil_y_eksen_çentik_rengi
                         .clone()
-                        .unwrap_or_else(|| self.seçenekler.birincil_y_eksen_rengi.clone()),
+                        .unwrap_or_else(|| self.seçenekler.birincil_y_eksen_rengi.clone())
+                        .into(),
                     kalınlık: 1.0,
                 });
             }
@@ -4259,7 +4260,7 @@ impl Grafik {
                         birincil_biçim,
                         birincil_çarpan,
                     ),
-                    renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                    renk: self.seçenekler.birincil_y_eksen_rengi.clone().into(),
                     boyut: 11.0,
                     hiza: if self.seçenekler.birincil_y_karşıda {
                         MetinHizası::Başlangıç
@@ -4282,7 +4283,7 @@ impl Grafik {
                         },
                     ),
                     içerik: self.seçenekler.y_eksen_etiketi.clone(),
-                    renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                    renk: self.seçenekler.birincil_y_eksen_rengi.clone().into(),
                     boyut: 12.0,
                     hiza: MetinHizası::Orta,
                 });
@@ -4295,7 +4296,7 @@ impl Grafik {
                 sahne.ekle(Komut::DöndürülmüşMetin {
                     konum: Nokta::yeni(eksen_etiketi_x, (üst + alt) / 2.0),
                     içerik: self.seçenekler.y_eksen_etiketi.clone(),
-                    renk: self.seçenekler.birincil_y_eksen_rengi.clone(),
+                    renk: self.seçenekler.birincil_y_eksen_rengi.clone().into(),
                     boyut: 12.0,
                     hiza: MetinHizası::Orta,
                     açı: -90.0,
@@ -4338,7 +4339,7 @@ impl Grafik {
                 sahne.ekle(Komut::Çizgi {
                     başlangıç: Nokta::yeni(eksen_sınırı_x, üst),
                     bitiş: Nokta::yeni(eksen_sınırı_x, alt),
-                    renk: ölçek.eksen_rengi.clone(),
+                    renk: ölçek.eksen_rengi.clone().into(),
                     kalınlık: 1.0,
                 });
             }
@@ -4354,7 +4355,7 @@ impl Grafik {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(sol, y),
                         bitiş: Nokta::yeni(sağ, y),
-                        renk: self.seçenekler.ızgara_rengi.clone(),
+                        renk: self.seçenekler.ızgara_rengi.clone().into(),
                         kalınlık: 1.0,
                     });
                 }
@@ -4367,7 +4368,7 @@ impl Grafik {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(başlangıç_x, y),
                         bitiş: Nokta::yeni(bitiş_x, y),
-                        renk: ölçek.eksen_rengi.clone(),
+                        renk: ölçek.eksen_rengi.clone().into(),
                         kalınlık: 1.0,
                     });
                 }
@@ -4388,7 +4389,7 @@ impl Grafik {
                             Some(ölçek.dağılım),
                             ölçek.etiket_biçimi,
                         ),
-                        renk: ölçek.eksen_rengi.clone(),
+                        renk: ölçek.eksen_rengi.clone().into(),
                         boyut: 11.0,
                         hiza: if ölçek.sağda {
                             MetinHizası::Başlangıç
@@ -4402,7 +4403,7 @@ impl Grafik {
                 sahne.ekle(Komut::Metin {
                     konum: Nokta::yeni(if ölçek.sağda { sağ } else { sol }, üst - 12.0),
                     içerik: ölçek.eksen_etiketi.clone(),
-                    renk: ölçek.eksen_rengi.clone(),
+                    renk: ölçek.eksen_rengi.clone().into(),
                     boyut: 12.0,
                     hiza: if ölçek.sağda {
                         MetinHizası::Bitiş
@@ -4451,7 +4452,7 @@ impl Grafik {
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(sol, y),
                 bitiş: Nokta::yeni(sağ, y),
-                renk: self.seçenekler.x_eksen_rengi.clone(),
+                renk: self.seçenekler.x_eksen_rengi.clone().into(),
                 kalınlık: 1.0,
             });
         }
@@ -4466,7 +4467,7 @@ impl Grafik {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(sol, y),
                         bitiş: Nokta::yeni(sağ, y),
-                        renk: self.seçenekler.ızgara_rengi.clone(),
+                        renk: self.seçenekler.ızgara_rengi.clone().into(),
                         kalınlık: 1.0,
                     });
                 }
@@ -4495,7 +4496,7 @@ impl Grafik {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(x, üst),
                         bitiş: Nokta::yeni(x, alt),
-                        renk: self.seçenekler.ızgara_rengi.clone(),
+                        renk: self.seçenekler.ızgara_rengi.clone().into(),
                         kalınlık: 1.0,
                     });
                 }
@@ -4513,7 +4514,8 @@ impl Grafik {
                             .seçenekler
                             .x_eksen_çentik_rengi
                             .clone()
-                            .unwrap_or_else(|| self.seçenekler.x_eksen_rengi.clone()),
+                            .unwrap_or_else(|| self.seçenekler.x_eksen_rengi.clone())
+                            .into(),
                         kalınlık: 1.0,
                     });
                 }
@@ -4554,7 +4556,7 @@ impl Grafik {
                             biçim => ölçek_eksen_değerini_yaz(değer, artım, "", None, biçim),
                         }
                     },
-                    renk: self.seçenekler.x_eksen_rengi.clone(),
+                    renk: self.seçenekler.x_eksen_rengi.clone().into(),
                     boyut: 11.0,
                     hiza: etiket_hizası,
                 });
@@ -4587,7 +4589,7 @@ impl Grafik {
                 sahne.ekle(Komut::Metin {
                     konum: Nokta::yeni(x, alt + 38.0),
                     içerik: etiket,
-                    renk: ikincil.renk.clone(),
+                    renk: ikincil.renk.clone().into(),
                     boyut: 11.0,
                     hiza: MetinHizası::Orta,
                 });
@@ -4616,7 +4618,7 @@ impl Grafik {
                     )
                 },
                 içerik: self.seçenekler.x_eksen_etiketi.clone(),
-                renk: self.seçenekler.x_eksen_rengi.clone(),
+                renk: self.seçenekler.x_eksen_rengi.clone().into(),
                 boyut: 12.0,
                 hiza: if self.seçenekler.x_dikey && self.seçenekler.x_eksen_karşıda {
                     MetinHizası::Bitiş
@@ -4692,8 +4694,8 @@ impl Grafik {
                     sahne.ekle(Komut::Daireler {
                         merkezler: toplu_merkezler,
                         yarıçap,
-                        dolgu: seri.dolgu.clone(),
-                        çizgi: "#00000000".to_string(),
+                        dolgu: seri.dolgu.clone().into(),
+                        çizgi: "#00000000".into(),
                         kalınlık: 0.0,
                         kesme_sınırları: Some((Nokta::yeni(sol, üst), Nokta::yeni(sağ, alt))),
                     });
@@ -4701,8 +4703,8 @@ impl Grafik {
                 if !değişken_daireler.is_empty() {
                     sahne.ekle(Komut::DeğişkenDaireler {
                         daireler: değişken_daireler,
-                        dolgu: seri.dolgu.clone(),
-                        çizgi: seri.renk.clone(),
+                        dolgu: seri.dolgu.clone().into(),
+                        çizgi: seri.renk.clone().into(),
                         kalınlık: 1.0,
                         kesme_sınırları: Some((Nokta::yeni(sol, üst), Nokta::yeni(sağ, alt))),
                     });
@@ -5014,7 +5016,7 @@ impl Grafik {
                 } else if let Some(dolgu) = &seri_dolgusu {
                     sahne.ekle(Komut::Alan {
                         çokgenler,
-                        dolgu: dolgu.clone(),
+                        dolgu: dolgu.clone().into(),
                     });
                 }
             }
@@ -5042,7 +5044,7 @@ impl Grafik {
             } else if let Some((çizgi, boşluk)) = seri.çizgi_kesik {
                 sahne.ekle(Komut::KesikliYol {
                     parçalar,
-                    renk: seri_rengi.clone(),
+                    renk: seri_rengi.clone().into(),
                     kalınlık: seri_kalınlığı,
                     çizgi,
                     boşluk,
@@ -5050,7 +5052,7 @@ impl Grafik {
             } else {
                 sahne.ekle(Komut::Yol {
                     parçalar,
-                    renk: seri_rengi.clone(),
+                    renk: seri_rengi.clone().into(),
                     kalınlık: seri_kalınlığı,
                 });
             }
@@ -5069,7 +5071,7 @@ impl Grafik {
                             düzen.yıldız_dış_yarıçapı,
                             düzen.yıldız_iç_yarıçapı,
                         )],
-                        dolgu: seri_rengi.clone(),
+                        dolgu: seri_rengi.clone().into(),
                     });
                 }
             } else {
@@ -5150,8 +5152,8 @@ impl Grafik {
                         sahne.ekle(Komut::Daireler {
                             merkezler,
                             yarıçap,
-                            dolgu,
-                            çizgi,
+                            dolgu: dolgu.into(),
+                            çizgi: çizgi.into(),
                             kalınlık: seri.nokta_kalınlığı,
                             kesme_sınırları: None,
                         });
@@ -5163,7 +5165,8 @@ impl Grafik {
                         dolgu: seri
                             .nokta_dolgusu
                             .clone()
-                            .unwrap_or_else(|| seri_rengi.clone()),
+                            .unwrap_or_else(|| seri_rengi.clone())
+                            .into(),
                     });
                 }
             }
@@ -5179,7 +5182,7 @@ impl Grafik {
                 sahne.ekle(Komut::KesikliÇizgi {
                     başlangıç: Nokta::yeni(başlangıç.x + ofset, başlangıç.y + ofset),
                     bitiş: Nokta::yeni(bitiş.x + ofset, bitiş.y + ofset),
-                    renk: seri_rengi.clone(),
+                    renk: seri_rengi.clone().into(),
                     kalınlık: seri_kalınlığı,
                     kesik: düzen.trend_kesik,
                 });
@@ -5198,14 +5201,14 @@ impl Grafik {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(sol, y),
                         bitiş: Nokta::yeni(sağ, y),
-                        renk: renk_alfa(&seri_rengi, 0x14),
+                        renk: renk_alfa(&seri_rengi, 0x14).into(),
                         kalınlık: dış_kalınlık,
                     });
                 }
                 sahne.ekle(Komut::Çizgi {
                     başlangıç: Nokta::yeni(sol, y),
                     bitiş: Nokta::yeni(sağ, y),
-                    renk: renk_alfa(&seri_rengi, 0x33),
+                    renk: renk_alfa(&seri_rengi, 0x33).into(),
                     kalınlık: düzen.medyan_kalınlığı,
                 });
             }
@@ -5228,7 +5231,7 @@ impl Grafik {
             if !kılavuzlar.is_empty() {
                 sahne.ekle(Komut::Yol {
                     parçalar: kılavuzlar,
-                    renk: renk_alfa(&düzen.interpolasyon_rengi, 0x7a),
+                    renk: renk_alfa(&düzen.interpolasyon_rengi, 0x7a).into(),
                     kalınlık: 1.0,
                 });
             }
@@ -5270,8 +5273,8 @@ impl Grafik {
                         konum: Nokta::yeni(kırpılmış_sol, üst),
                         genişlik: kırpılmış_sağ - kırpılmış_sol,
                         yükseklik,
-                        dolgu: stil.dolgu.clone(),
-                        çizgi: "#00000000".to_string(),
+                        dolgu: stil.dolgu.clone().into(),
+                        çizgi: "#00000000".into(),
                         kalınlık: 0.0,
                     });
                 }
@@ -5279,7 +5282,7 @@ impl Grafik {
                     sahne.ekle(Komut::KesikliÇizgi {
                         başlangıç: Nokta::yeni(başlangıç_x, üst),
                         bitiş: Nokta::yeni(başlangıç_x, alt),
-                        renk: stil.çizgi.clone(),
+                        renk: stil.çizgi.clone().into(),
                         kalınlık: stil.kalınlık,
                         kesik: stil.kesik,
                     });
@@ -5288,7 +5291,7 @@ impl Grafik {
                     sahne.ekle(Komut::KesikliÇizgi {
                         başlangıç: Nokta::yeni(bitiş_x, üst),
                         bitiş: Nokta::yeni(bitiş_x, alt),
-                        renk: stil.çizgi.clone(),
+                        renk: stil.çizgi.clone().into(),
                         kalınlık: stil.kalınlık,
                         kesik: stil.kesik,
                     });
@@ -5311,8 +5314,8 @@ impl Grafik {
                     konum: Nokta::yeni(etiket_sol, etiket_üst),
                     genişlik: etiket_genişliği,
                     yükseklik: etiket_yüksekliği,
-                    dolgu: "#ffffff".to_string(),
-                    çizgi: "#00000000".to_string(),
+                    dolgu: "#ffffff".into(),
+                    çizgi: "#00000000".into(),
                     kalınlık: 0.0,
                 });
                 for (başlangıç, bitiş) in [
@@ -5342,7 +5345,7 @@ impl Grafik {
                     sahne.ekle(Komut::KesikliÇizgi {
                         başlangıç,
                         bitiş,
-                        renk: stil.çizgi.clone(),
+                        renk: stil.çizgi.clone().into(),
                         kalınlık: stil.kalınlık,
                         kesik: stil.kesik,
                     });
@@ -5350,7 +5353,7 @@ impl Grafik {
                 sahne.ekle(Komut::Metin {
                     konum: Nokta::yeni(başlangıç_x, etiket_üst + 13.0),
                     içerik: işaret.etiket.clone(),
-                    renk: "#111111".to_string(),
+                    renk: "#111111".into(),
                     boyut: 12.0,
                     hiza: MetinHizası::Orta,
                 });
@@ -5378,20 +5381,20 @@ impl Grafik {
                 sahne.ekle(Komut::Daire {
                     merkez,
                     yarıçap: 10.0,
-                    dolgu: "#00000000".to_string(),
-                    çizgi: renk.to_string(),
+                    dolgu: "#00000000".into(),
+                    çizgi: renk.into(),
                     kalınlık: 2.0,
                 });
                 sahne.ekle(Komut::Çizgi {
                     başlangıç: Nokta::yeni(merkez.x - 15.0, merkez.y),
                     bitiş: Nokta::yeni(merkez.x + 15.0, merkez.y),
-                    renk: renk.to_string(),
+                    renk: renk.into(),
                     kalınlık: 2.0,
                 });
                 sahne.ekle(Komut::Çizgi {
                     başlangıç: Nokta::yeni(merkez.x, merkez.y - 15.0),
                     bitiş: Nokta::yeni(merkez.x, merkez.y + 15.0),
-                    renk: renk.to_string(),
+                    renk: renk.into(),
                     kalınlık: 2.0,
                 });
             }
@@ -5408,7 +5411,7 @@ impl Grafik {
                         üç_anlamlı_basamak(x2 - x1),
                         üç_anlamlı_basamak(y2 - y1)
                     ),
-                    renk: "black".to_string(),
+                    renk: "black".into(),
                     boyut: 12.0,
                     hiza: MetinHizası::Orta,
                 });
@@ -5452,8 +5455,8 @@ impl Grafik {
                         konum: Nokta::yeni(x, y),
                         genişlik: katman.boyut,
                         yükseklik: katman.boyut,
-                        dolgu: katman.renk.clone(),
-                        çizgi: katman.renk.clone(),
+                        dolgu: katman.renk.clone().into(),
+                        çizgi: katman.renk.clone().into(),
                         kalınlık: 0.0,
                     });
                 }
@@ -5474,7 +5477,7 @@ impl Grafik {
                         .map(|başlangıç| başlangıç.elapsed().as_millis())
                         .unwrap_or_default()
                 ),
-                renk: düzen.çizim_süresi_metni_rengi.clone(),
+                renk: düzen.çizim_süresi_metni_rengi.clone().into(),
                 boyut: düzen.çizim_süresi_yazı_boyutu,
                 hiza: MetinHizası::Başlangıç,
             });
@@ -5509,7 +5512,7 @@ impl Grafik {
         );
         sahne.katmanı_ayarla(SahneKatmanı::ArkaPlan);
         sahne.ekle(Komut::ArkaPlan {
-            renk: self.seçenekler.arka_plan_rengi.clone(),
+            renk: self.seçenekler.arka_plan_rengi.clone().into(),
         });
 
         let (sol, sağ, üst, alt) = self.çizim_alanı_boyutta(genişlik_px, yükseklik_px);
@@ -5520,8 +5523,8 @@ impl Grafik {
                 konum: Nokta::yeni(sol, üst),
                 genişlik,
                 yükseklik,
-                dolgu: renk.clone(),
-                çizgi: "#00000000".to_string(),
+                dolgu: renk.clone().into(),
+                çizgi: "#00000000".into(),
                 kalınlık: 0.0,
             });
         }
@@ -5550,7 +5553,7 @@ impl Grafik {
                         .enumerate()
                         .map(|(indeks, renk)| GradyanRenkDurağı {
                             oran: indeks as f32 / payda,
-                            renk: renk.clone(),
+                            renk: renk.clone().into(),
                         })
                         .collect(),
                 },
@@ -5569,7 +5572,7 @@ impl Grafik {
             sahne.ekle(Komut::KesikliÇizgi {
                 başlangıç,
                 bitiş,
-                renk: self.seçenekler.ızgara_rengi.clone(),
+                renk: self.seçenekler.ızgara_rengi.clone().into(),
                 kalınlık: 1.0,
                 kesik,
             });
@@ -5577,7 +5580,7 @@ impl Grafik {
             sahne.ekle(Komut::Çizgi {
                 başlangıç,
                 bitiş,
-                renk: self.seçenekler.ızgara_rengi.clone(),
+                renk: self.seçenekler.ızgara_rengi.clone().into(),
                 kalınlık: 1.0,
             });
         }
@@ -5690,7 +5693,7 @@ impl Grafik {
             // vektörleri tek bir yol komutuyla boyar.
             sahne.ekle(Komut::Yol {
                 parçalar,
-                renk: düzen.renk.clone(),
+                renk: düzen.renk.clone().into(),
                 kalınlık: düzen.kalınlık,
             });
         }
@@ -5821,7 +5824,7 @@ impl Grafik {
         if !toplu_çokgenler.is_empty() {
             sahne.ekle(Komut::Alan {
                 çokgenler: toplu_çokgenler.clone(),
-                dolgu: varsayılan_dolgu.clone(),
+                dolgu: varsayılan_dolgu.clone().into(),
             });
             if seri.çizgi_kalınlığı > 0.0 {
                 let parçalar = toplu_çokgenler
@@ -5835,7 +5838,7 @@ impl Grafik {
                     .collect();
                 sahne.ekle(Komut::Yol {
                     parçalar,
-                    renk: seri.renk.clone(),
+                    renk: seri.renk.clone().into(),
                     kalınlık: seri.çizgi_kalınlığı,
                 });
             }
@@ -5993,7 +5996,7 @@ impl Grafik {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(sol, y),
                         bitiş: Nokta::yeni(sağ, y),
-                        renk: "#e5e7eb".to_string(),
+                        renk: "#e5e7eb".into(),
                         kalınlık: 1.0,
                     });
                     sahne.ekle(Komut::Metin {
@@ -6003,7 +6006,7 @@ impl Grafik {
                             eksen_değerini_yaz(değer, uygun_artım(aralık, çizim_y, 30.0)),
                             birincil_y_birimi
                         ),
-                        renk: "#4b5563".to_string(),
+                        renk: "#4b5563".into(),
                         boyut: 11.0,
                         hiza: MetinHizası::Bitiş,
                     });
@@ -6110,7 +6113,7 @@ impl Grafik {
                         sahne.ekle(Komut::Metin {
                             konum: Nokta::yeni(merkez, alt + 22.0),
                             içerik,
-                            renk: "#4b5563".to_string(),
+                            renk: "#4b5563".into(),
                             boyut: 11.0,
                             hiza: MetinHizası::Orta,
                         });
@@ -6210,8 +6213,8 @@ impl Grafik {
                                     merkez: Nokta::yeni(merkez, y1.clamp(üst, alt)),
                                     yarıçap: ((seri.nokta_boyutu - seri.nokta_kalınlığı) / 2.0)
                                         .max(0.0),
-                                    dolgu,
-                                    çizgi: seri.renk.clone(),
+                                    dolgu: dolgu.into(),
+                                    çizgi: seri.renk.clone().into(),
                                     kalınlık: seri.nokta_kalınlığı,
                                 }
                             });
@@ -6281,8 +6284,8 @@ impl Grafik {
                                 konum: Nokta::yeni(çubuk_sol, alan_y),
                                 genişlik: (çubuk_sağ - çubuk_sol).max(0.0),
                                 yükseklik: alan_yüksekliği.max(0.0),
-                                dolgu: "#00ff0022".to_string(),
-                                çizgi: "none".to_string(),
+                                dolgu: "#00ff0022".into(),
+                                çizgi: "none".into(),
                                 kalınlık: 0.0,
                             });
                             if yazı_boyutu >= 10.0 {
@@ -6308,7 +6311,7 @@ impl Grafik {
                                             .and_then(|seri| seri.get(indeks))
                                             .and_then(Clone::clone)
                                             .unwrap_or_else(|| kompakt_sayı(değer)),
-                                        renk: "#111111".to_string(),
+                                        renk: "#111111".into(),
                                         boyut: yazı_boyutu,
                                         hiza: MetinHizası::Orta,
                                     });
@@ -6325,7 +6328,7 @@ impl Grafik {
                                 sahne.ekle(Komut::Metin {
                                     konum: Nokta::yeni(etiket_x, etiket_y),
                                     içerik: format!("{tepe}"),
-                                    renk: "#111111".to_string(),
+                                    renk: "#111111".into(),
                                     boyut: 10.0,
                                     hiza: MetinHizası::Orta,
                                 });
@@ -6348,7 +6351,7 @@ impl Grafik {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(x, üst),
                         bitiş: Nokta::yeni(x, alt),
-                        renk: "#e5e7eb".to_string(),
+                        renk: "#e5e7eb".into(),
                         kalınlık: 1.0,
                     });
                     sahne.ekle(Komut::Metin {
@@ -6358,7 +6361,7 @@ impl Grafik {
                             eksen_değerini_yaz(değer, uygun_artım(aralık, çizim_g, 50.0)),
                             birincil_y_birimi
                         ),
-                        renk: "#4b5563".to_string(),
+                        renk: "#4b5563".into(),
                         boyut: 11.0,
                         hiza: MetinHizası::Orta,
                     });
@@ -6394,7 +6397,7 @@ impl Grafik {
                     sahne.ekle(Komut::Metin {
                         konum: Nokta::yeni(sol - 10.0, merkez + 4.0),
                         içerik: kategoriler.get(indeks).cloned().unwrap_or_default(),
-                        renk: "#4b5563".to_string(),
+                        renk: "#4b5563".into(),
                         boyut: 11.0,
                         hiza: MetinHizası::Bitiş,
                     });
@@ -6494,8 +6497,8 @@ impl Grafik {
                                 konum: Nokta::yeni(alan_x, çubuk_üst),
                                 genişlik: alan_genişliği.max(0.0),
                                 yükseklik: (çubuk_alt - çubuk_üst).max(0.0),
-                                dolgu: "#00ff0022".to_string(),
-                                çizgi: "none".to_string(),
+                                dolgu: "#00ff0022".into(),
+                                çizgi: "none".into(),
                                 kalınlık: 0.0,
                             });
                             if yazı_boyutu >= 10.0 {
@@ -6521,7 +6524,7 @@ impl Grafik {
                                     sahne.ekle(Komut::Metin {
                                         konum: Nokta::yeni(etiket_x, etiket_y),
                                         içerik: metin,
-                                        renk: "#111111".to_string(),
+                                        renk: "#111111".into(),
                                         boyut: yazı_boyutu,
                                         hiza: MetinHizası::Orta,
                                     });
@@ -6545,7 +6548,7 @@ impl Grafik {
                                 sahne.ekle(Komut::Metin {
                                     konum: Nokta::yeni(etiket_x, etiket_y),
                                     içerik,
-                                    renk: "#111111".to_string(),
+                                    renk: "#111111".into(),
                                     boyut: 10.0,
                                     hiza,
                                 });
@@ -6642,15 +6645,15 @@ impl Grafik {
         }
         sahne.ekle(Komut::Yol {
             parçalar: vec![noktalar.clone()],
-            renk: seri.renk.clone(),
+            renk: seri.renk.clone().into(),
             kalınlık: seri.çizgi_kalınlığı.max(1.0),
         });
         for merkez in noktalar {
             sahne.ekle(Komut::Daire {
                 merkez,
                 yarıçap: 3.0,
-                dolgu: "#ffffff".to_string(),
-                çizgi: seri.renk.clone(),
+                dolgu: "#ffffff".into(),
+                çizgi: seri.renk.clone().into(),
                 kalınlık: 1.5,
             });
         }
@@ -6720,13 +6723,13 @@ impl Grafik {
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(sol, y),
                 bitiş: Nokta::yeni(sağ, y),
-                renk: "#e5e7eb".to_string(),
+                renk: "#e5e7eb".into(),
                 kalınlık: 1.0,
             });
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(sol - 8.0, y + 4.0),
                 içerik: eksen_değerini_yaz(değer, artım),
-                renk: "#4b5563".to_string(),
+                renk: "#4b5563".into(),
                 boyut: 11.0,
                 hiza: MetinHizası::Bitiş,
             });
@@ -6768,7 +6771,7 @@ impl Grafik {
                 sahne.ekle(Komut::KesikliÇizgi {
                     başlangıç: Nokta::yeni(merkez.clamp(sol, sağ), max_y.min(min_y)),
                     bitiş: Nokta::yeni(merkez.clamp(sol, sağ), max_y.max(min_y)),
-                    renk: "#000000".to_string(),
+                    renk: "#000000".into(),
                     kalınlık: 2.0,
                     kesik: 4.0,
                 });
@@ -6776,7 +6779,7 @@ impl Grafik {
                     sahne.ekle(Komut::Çizgi {
                         başlangıç: Nokta::yeni(gövde_sol, y),
                         bitiş: Nokta::yeni(gövde_sağ, y),
-                        renk: "#000000".to_string(),
+                        renk: "#000000".into(),
                         kalınlık: 2.0,
                     });
                 }
@@ -6785,16 +6788,16 @@ impl Grafik {
                 konum: Nokta::yeni(gövde_sol, gövde_üst),
                 genişlik: (gövde_sağ - gövde_sol).max(0.0),
                 yükseklik: (gövde_alt - gövde_üst).max(0.0),
-                dolgu: "#eeeeee".to_string(),
-                çizgi: "#000000".to_string(),
+                dolgu: "#eeeeee".into(),
+                çizgi: "#000000".into(),
                 kalınlık: 1.0,
             });
             sahne.ekle(Komut::Dikdörtgen {
                 konum: Nokta::yeni(gövde_sol, medyan_y - 1.0),
                 genişlik: (gövde_sağ - gövde_sol).max(0.0),
                 yükseklik: 2.0,
-                dolgu: "#000000".to_string(),
-                çizgi: "#000000".to_string(),
+                dolgu: "#000000".into(),
+                çizgi: "#000000".into(),
                 kalınlık: 0.0,
             });
             if let Some(ayrıklar) = düzen.ayrık_değerler.get(indeks) {
@@ -6805,8 +6808,8 @@ impl Grafik {
                             konum: Nokta::yeni(merkez - 4.0, y - 4.0),
                             genişlik: 8.0,
                             yükseklik: 8.0,
-                            dolgu: "#000000".to_string(),
-                            çizgi: "#000000".to_string(),
+                            dolgu: "#000000".into(),
+                            çizgi: "#000000".into(),
                             kalınlık: 0.0,
                         });
                     }
@@ -6821,7 +6824,7 @@ impl Grafik {
             sahne.ekle(Komut::DöndürülmüşMetin {
                 konum: Nokta::yeni(merkez, alt + 8.0),
                 içerik: etiket,
-                renk: "#4b5563".to_string(),
+                renk: "#4b5563".into(),
                 boyut: 10.0,
                 hiza: MetinHizası::Bitiş,
                 açı: -90.0,
@@ -6859,13 +6862,13 @@ impl Grafik {
             sahne.ekle(Komut::Çizgi {
                 başlangıç: Nokta::yeni(sol, y),
                 bitiş: Nokta::yeni(sağ, y),
-                renk: "#e5e7eb".to_string(),
+                renk: "#e5e7eb".into(),
                 kalınlık: 1.0,
             });
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(sol - 8.0, y + 4.0),
                 içerik: usd_biçimle(değer, 0),
-                renk: "#4b5563".to_string(),
+                renk: "#4b5563".into(),
                 boyut: 11.0,
                 hiza: MetinHizası::Bitiş,
             });
@@ -6925,8 +6928,8 @@ impl Grafik {
                 konum: Nokta::yeni(piksele_hizala(merkez - 1.0, piksel, oran), fitil_y),
                 genişlik: 2.0,
                 yükseklik: fitil_yüksekliği,
-                dolgu: "#000000".to_string(),
-                çizgi: "#000000".to_string(),
+                dolgu: "#000000".into(),
+                çizgi: "#000000".into(),
                 kalınlık: 0.0,
             });
             let gövde_x = piksele_hizala(merkez - gövde_genişliği / 2.0, piksel, oran);
@@ -6937,8 +6940,8 @@ impl Grafik {
                 konum: Nokta::yeni(gövde_x, gövde_y),
                 genişlik: gövde_genişliği,
                 yükseklik: gövde_yüksekliği,
-                dolgu: "#000000".to_string(),
-                çizgi: "none".to_string(),
+                dolgu: "#000000".into(),
+                çizgi: "none".into(),
                 kalınlık: 0.0,
             });
             if gövde_genişliği > 2.0 && gövde_yüksekliği > 2.0 {
@@ -6946,8 +6949,8 @@ impl Grafik {
                     konum: Nokta::yeni(gövde_x + 1.0, gövde_y + 1.0),
                     genişlik: gövde_genişliği - 2.0,
                     yükseklik: gövde_yüksekliği - 2.0,
-                    dolgu: renk.clone(),
-                    çizgi: "none".to_string(),
+                    dolgu: renk.clone().into(),
+                    çizgi: "none".into(),
                     kalınlık: 0.0,
                 });
             }
@@ -6960,8 +6963,8 @@ impl Grafik {
                 konum: Nokta::yeni(gövde_x, hacim_y),
                 genişlik: gövde_genişliği,
                 yükseklik: piksele_hizala(alt - hacim_y, piksel, oran).max(0.0),
-                dolgu: renk.clone(),
-                çizgi: "none".to_string(),
+                dolgu: renk.clone().into(),
+                çizgi: "none".into(),
                 kalınlık: 0.0,
             });
             if indeks.is_multiple_of(etiket_adımı)
@@ -6971,7 +6974,7 @@ impl Grafik {
                 sahne.ekle(Komut::Metin {
                     konum: Nokta::yeni(merkez, alt + 18.0),
                     içerik: format!("{yıl:04}-{ay:02}-{gün:02}"),
-                    renk: "#4b5563".to_string(),
+                    renk: "#4b5563".into(),
                     boyut: 9.0,
                     hiza: MetinHizası::Orta,
                 });
@@ -6982,7 +6985,7 @@ impl Grafik {
             sahne.ekle(Komut::Metin {
                 konum: Nokta::yeni(sağ + 8.0, y + 4.0),
                 içerik: format!("{değer:.0}"),
-                renk: "#4b5563".to_string(),
+                renk: "#4b5563".into(),
                 boyut: 10.0,
                 hiza: MetinHizası::Başlangıç,
             });
@@ -7315,11 +7318,11 @@ impl Grafik {
                 duraklar: vec![
                     GradyanRenkDurağı {
                         oran: 0.0,
-                        renk: en_az_durak.1.clone(),
+                        renk: en_az_durak.1.clone().into(),
                     },
                     GradyanRenkDurağı {
                         oran: 1.0,
-                        renk: en_az_durak.1.clone(),
+                        renk: en_az_durak.1.clone().into(),
                     },
                 ],
             });
@@ -7343,12 +7346,12 @@ impl Grafik {
             {
                 duraklar.push(GradyanRenkDurağı {
                     oran,
-                    renk: önceki_renk.clone(),
+                    renk: önceki_renk.clone().into(),
                 });
             }
             duraklar.push(GradyanRenkDurağı {
                 oran,
-                renk: renk.clone(),
+                renk: renk.clone().into(),
             });
             önceki_renk = Some(renk.clone());
         }
@@ -7515,8 +7518,8 @@ fn çubuk_komutu(
             konum,
             genişlik,
             yükseklik,
-            dolgu,
-            çizgi,
+            dolgu: dolgu.into(),
+            çizgi: çizgi.into(),
             kalınlık,
         };
     }
@@ -7554,8 +7557,8 @@ fn çubuk_komutu(
         genişlik,
         yükseklik,
         yarıçaplar,
-        dolgu,
-        çizgi,
+        dolgu: dolgu.into(),
+        çizgi: çizgi.into(),
         kalınlık,
     }
 }
@@ -8858,7 +8861,9 @@ mod eksen_testleri {
             .komutlar()
             .iter()
             .filter_map(|komut| match komut {
-                Komut::Daireler { dolgu, çizgi, .. } if çizgi == "#123456" => Some(dolgu.clone()),
+                Komut::Daireler { dolgu, çizgi, .. } if çizgi == "#123456" => {
+                    Some(dolgu.clone().into_owned())
+                }
                 _ => None,
             })
             .collect()

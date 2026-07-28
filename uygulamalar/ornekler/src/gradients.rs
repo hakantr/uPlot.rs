@@ -343,7 +343,7 @@ mod testler {
             ilk_gradyan
                 .duraklar
                 .iter()
-                .map(|durak| durak.renk.as_str())
+                .map(|durak| durak.renk.as_ref())
                 .collect::<Vec<_>>(),
             ["#008000", "#ffa500", "#ff0000"]
         );
