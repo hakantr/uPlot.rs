@@ -1102,15 +1102,45 @@ impl GpuiGrafik {
     ) -> Result<bool, UplotHatası> {
         let değişti = self.grafik.oransal_görünümü_ayarla(görünüm, false)?;
         if değişti {
-            self.açıklama_vuruşu = None;
-            self.görünümü_yenile();
-            self.eksen_sahnesini_yenile(cx);
-            if let Some(yüzey) = self.ana_yüzey.as_ref() {
-                yüzey.update(cx, |_, cx| cx.notify());
-            }
-            cx.notify();
+            self.görünümü_sessiz_bildir(cx);
         }
         Ok(değişti)
+    }
+
+    /// Görünümü senkron grubu hedefine yayar ve olay yankısı üretmez.
+    ///
+    /// GPUI `emit` çağrıları `pending_effects` kuyruğuna yazılır; kaynak
+    /// tarafın `senkronlanıyor` bayrağı hedefler olaylarını yaydığında çoktan
+    /// sıfırlanmış olur. Hedefin `GörünümDeğişti` yayması bu yüzden her üyeyi
+    /// bir tur daha gereksiz çalıştırır ve üyelerde ayrı geçmiş girdisi
+    /// bırakır. Grup hedefleri zaten aynı turda doğrudan güncellendiğinden
+    /// yeniden yayın taşımaz.
+    pub fn görünür_aralıkları_sessiz_ayarla(
+        &mut self,
+        x: Aralık,
+        y: Aralık,
+        geçmişe_ekle: bool,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let değişti = self.grafik.görünür_aralıkları_ayarla(x, y, geçmişe_ekle);
+        if değişti {
+            self.görünümü_sessiz_bildir(cx);
+        }
+        değişti
+    }
+
+    /// [`Self::görünür_aralıkları_sessiz_ayarla`] karşılığı; yalnız X taşır.
+    pub fn görünür_x_aralığını_sessiz_ayarla(
+        &mut self,
+        x: Aralık,
+        geçmişe_ekle: bool,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let değişti = self.grafik.görünür_x_aralığını_ayarla(x, geçmişe_ekle);
+        if değişti {
+            self.görünümü_sessiz_bildir(cx);
+        }
+        değişti
     }
 
     pub fn senkron_imleci_temizle(&mut self, cx: &mut Context<Self>) -> bool {
@@ -2551,15 +2581,20 @@ impl GpuiGrafik {
     }
 
     fn görünüm_bildir(&mut self, fare_basma_bırakma: bool, cx: &mut Context<Self>) {
+        self.görünümü_sessiz_bildir(cx);
+        cx.emit(GpuiGrafikOlayı::GörünümDeğişti {
+            fare_basma_bırakma
+        });
+    }
+
+    /// Görünüm matrisini ve eksen katmanını tazeler; olay yaymaz.
+    fn görünümü_sessiz_bildir(&mut self, cx: &mut Context<Self>) {
         self.açıklama_vuruşu = None;
         self.görünümü_yenile();
         self.eksen_sahnesini_yenile(cx);
         if let Some(yüzey) = self.ana_yüzey.as_ref() {
             yüzey.update(cx, |_, cx| cx.notify());
         }
-        cx.emit(GpuiGrafikOlayı::GörünümDeğişti {
-            fare_basma_bırakma
-        });
         cx.notify();
     }
 

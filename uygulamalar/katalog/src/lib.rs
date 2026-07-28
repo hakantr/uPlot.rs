@@ -2193,7 +2193,7 @@ impl ChartListesi {
                                     continue;
                                 }
                                 hedef_grafik.update(cx, |grafik, cx| {
-                                    grafik.görünür_x_aralığını_ayarla(x, true, cx);
+                                    grafik.görünür_x_aralığını_sessiz_ayarla(x, true, cx);
                                 });
                             }
                             bu.timeseries_discrete_senkronlanıyor = false;
@@ -2332,7 +2332,7 @@ impl ChartListesi {
                                     continue;
                                 }
                                 hedef_grafik.update(cx, |grafik, cx| {
-                                    grafik.görünür_x_aralığını_ayarla(x, true, cx);
+                                    grafik.görünür_x_aralığını_sessiz_ayarla(x, true, cx);
                                 });
                             }
                             bu.timezones_dst_senkronlanıyor = false;
@@ -2869,7 +2869,7 @@ impl ChartListesi {
                                     continue;
                                 }
                                 hedef_grafik.update(cx, |grafik, cx| {
-                                    grafik.görünür_x_aralığını_ayarla(x, true, cx);
+                                    grafik.görünür_x_aralığını_sessiz_ayarla(x, true, cx);
                                 });
                             }
                             bu.log_scales2_senkronlanıyor = false;
@@ -3193,7 +3193,8 @@ impl ChartListesi {
                             for (hedef, hedef_grafik) in yüzeyler {
                                 if hedef != örnek {
                                     hedef_grafik.update(cx, |grafik, cx| {
-                                        grafik.görünür_aralıkları_ayarla(x, y, true, cx);
+                                        grafik
+                                            .görünür_aralıkları_sessiz_ayarla(x, y, true, cx);
                                     });
                                 }
                             }
@@ -3579,7 +3580,8 @@ impl ChartListesi {
                             for (hedef, hedef_grafik) in yüzeyler {
                                 if hedef != örnek {
                                     hedef_grafik.update(cx, |grafik, cx| {
-                                        grafik.görünür_aralıkları_ayarla(x, y, true, cx);
+                                        grafik
+                                            .görünür_aralıkları_sessiz_ayarla(x, y, true, cx);
                                     });
                                 }
                             }
