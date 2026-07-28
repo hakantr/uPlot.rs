@@ -4,8 +4,9 @@
 use gpui::ClipboardItem;
 use gpui::{
     AccessibleAction, App, ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement,
-    KeyBinding, Render, Role, ScrollStrategy, SharedString, StyleRefinement, Task,
-    UniformListScrollHandle, Window, div, prelude::*, px, rgb, rgba, uniform_list,
+    KeyBinding, ListAlignment, ListState, Render, Role, ScrollStrategy, SharedString,
+    StyleRefinement, Task, UniformListScrollHandle, Window, div, list, prelude::*, px, rgb, rgba,
+    uniform_list,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
@@ -1818,6 +1819,10 @@ pub struct ChartListesi {
     kare_ölçer: KareÖlçer,
     performans_kare_bekleniyor: bool,
     lejant: Entity<KatalogLejantı>,
+    /// Sanallaştırılmış çok yüzeyli kartların kaydırma/ölçüm durumu. Kart
+    /// değişiminde sıfırlanır, aksi hâlde eski öğe sayısıyla ölçüm yapar.
+    thin_bars_liste_durumu: Option<ListState>,
+    timezones_dst_liste_durumu: Option<ListState>,
 }
 
 impl ChartListesi {
@@ -2310,6 +2315,8 @@ impl ChartListesi {
             kare_ölçer: KareÖlçer::default(),
             performans_kare_bekleniyor: false,
             lejant: cx.new(|_| KatalogLejantı::yeni(LEJANT_RENGİ)),
+            thin_bars_liste_durumu: None,
+            timezones_dst_liste_durumu: None,
         };
         if başlangıç_kartı != KartKimliği::Resize {
             bu.kartı_seç(başlangıç_kartı, cx);
@@ -4219,6 +4226,8 @@ impl ChartListesi {
             self.kart_listesi_kaydırma_bekliyor = Some(indeks);
         }
         self.svg_kayıt_baytı = None;
+        self.thin_bars_liste_durumu = None;
+        self.timezones_dst_liste_durumu = None;
         self.kart_tanımı_açık = false;
         self.kullanım_rehberi_açık = false;
         self.arcsinh_kuvvet = 0;
@@ -7017,53 +7026,68 @@ impl Render for ChartListesi {
                     ),
                 )
         } else if aktif_kart == KartKimliği::TimezonesDst {
-            çizim_tabanı
-                .flex_none()
-                .h(px(900.0))
-                .overflow_scroll()
-                .p_2()
-                .child(
+            // 51 yüzey sarmalı flex içinde her render'da kuruluyordu. Kaynak
+            // sayfanın üç sütunlu görünümü korunmak için bölümler üçerli
+            // satırlara toplanır ve satırlar sanallaştırılır; bölüm
+            // yükseklikleri (3–6 yüzey) farklı olduğundan `uniform_list`
+            // değil `list` kullanılır.
+            const SÜTUN: usize = 3;
+            let yüzeyler = self.timezones_dst_grafikleri.clone();
+            let bölüm_sayısı = 11_usize;
+            let satır_sayısı = bölüm_sayısı.div_ceil(SÜTUN);
+            let durum = self
+                .timezones_dst_liste_durumu
+                .get_or_insert_with(|| ListState::new(satır_sayısı, ListAlignment::Top, px(600.0)));
+            çizim_tabanı.min_h_0().p_2().child(
+                list(durum.clone(), move |satır, _pencere, _cx| {
+                    let ilk_bölüm = satır * SÜTUN;
                     div()
                         .flex()
-                        .flex_wrap()
                         .items_start()
                         .gap_4()
-                        .children((0..11).map(|bölüm| {
-                            let yüzeyler = self
-                                .timezones_dst_grafikleri
-                                .iter()
-                                .filter(|(örnek, _)| örnek.bölüm_indeksi() == bölüm)
-                                .map(|(örnek, grafik)| (*örnek, grafik.clone()))
-                                .collect::<Vec<_>>();
-                            let başlık = yüzeyler
-                                .first()
-                                .map_or("Timezones & DST", |(örnek, _)| örnek.bölüm());
-                            div()
-                                .w(px(600.0))
-                                .flex_none()
-                                .overflow_hidden()
-                                .rounded_md()
-                                .border_1()
-                                .border_color(rgb(0xd1d5db))
-                                .bg(rgb(0xffffff))
-                                .child(
-                                    div()
-                                        .w_full()
-                                        .px_3()
-                                        .py_2()
-                                        .text_center()
-                                        .text_sm()
-                                        .bg(rgb(0xe1f5fe))
-                                        .child(başlık),
-                                )
-                                .children(yüzeyler.into_iter().map(|(_, grafik)| {
-                                    div()
-                                        .w(px(600.0))
-                                        .h(px(200.0))
-                                        .child(önbellekli_grafik(grafik))
-                                }))
-                        })),
-                )
+                        .mb_4()
+                        .children(
+                            (ilk_bölüm..(ilk_bölüm + SÜTUN).min(bölüm_sayısı)).map(|bölüm| {
+                                let bölümde =
+                                    |örnek: &TimezonesDstÖrneği| örnek.bölüm_indeksi() == bölüm;
+                                let başlık = yüzeyler
+                                    .iter()
+                                    .find(|(örnek, _)| bölümde(örnek))
+                                    .map_or("Timezones & DST", |(örnek, _)| örnek.bölüm());
+                                div()
+                                    .w(px(600.0))
+                                    .flex_none()
+                                    .overflow_hidden()
+                                    .rounded_md()
+                                    .border_1()
+                                    .border_color(rgb(0xd1d5db))
+                                    .bg(rgb(0xffffff))
+                                    .child(
+                                        div()
+                                            .w_full()
+                                            .px_3()
+                                            .py_2()
+                                            .text_center()
+                                            .text_sm()
+                                            .bg(rgb(0xe1f5fe))
+                                            .child(başlık),
+                                    )
+                                    .children(
+                                        yüzeyler.iter().filter(|(örnek, _)| bölümde(örnek)).map(
+                                            |(_, grafik)| {
+                                                div()
+                                                    .w(px(600.0))
+                                                    .h(px(200.0))
+                                                    .child(önbellekli_grafik(grafik.clone()))
+                                            },
+                                        ),
+                                    )
+                            }),
+                        )
+                        .into_any_element()
+                })
+                .h_full(),
+            )
         } else if aktif_kart == KartKimliği::NearestNonNull {
             let yüzey = |örnek| {
                 self.nearest_non_null_grafikleri
@@ -8111,64 +8135,86 @@ impl Render for ChartListesi {
                         .when_some(grafik, |öğe, grafik| öğe.child(önbellekli_grafik(grafik)))
                 }))
         } else if matches!(aktif_kart, KartKimliği::ThinBars(_)) {
-            let yüzey = |örnek| {
-                self.thin_bars_grafikleri
-                    .iter()
-                    .find(|(kimlik, _)| *kimlik == örnek)
-                    .map(|(_, grafik)| grafik.clone())
-            };
-            // Kaynak sayfa ilk 7 yoğunluk yüzeyini, ardından dörderli 12
-            // geometri satırını gösterir. Bölme dilimler üzerinden yapılır;
-            // eskiden her render'da 15 ara `Vec` üretiliyordu.
+            // 55 yüzeyin tamamı her render'da eleman ağacına giriyordu; yüzey
+            // başına ~13,7 µs ile kart tek başına kareyi ikiye katlıyordu.
+            // Dikey sıra korunarak sanallaştırılır: 0 = açıklama, 1 = yoğunluk
+            // bloğu, sonrası dörderli geometri satırları. `uniform_list` eşit
+            // yükseklik ister, buradaki öğeler farklı yükseklikte; `list` bunu
+            // ölçerek yönetir.
+            let yüzeyler = self.thin_bars_grafikleri.clone();
             let örnekler = ThinBarsÖrneği::tümü();
-            let (yoğunluklar, geometriler) = örnekler.split_at(örnekler.len().min(7));
-            let geometri_grupları = geometriler.chunks(4);
-            çizim_tabanı
-                .flex_none()
-                .h(px(2100.0))
-                .overflow_scroll()
-                .p_2()
-                .child(
-                    div()
-                        .w(px(1600.0))
-                        .p_2()
-                        .rounded_md()
-                        .bg(rgb(0xf8fafc))
-                        .text_xs()
-                        .text_color(soluk)
-                        .child("Resmî thin-bars-stroke-fill.html sayfası 7 yoğunluk yüzeyini ve 12 align/width/gap grubundaki 48 geometri yüzeyini birlikte gösterir. Yüzeyler veri veya cursor paylaşmaz; her biri bağımsız zoom geçmişi tutar. Noktalar görünür X aralığındaki piksel açıklığı yeterli olduğunda otomatik açılır."),
-                )
-                .child(
-                    div().w(px(1600.0)).flex().flex_wrap().gap_2().children(
-                        yoğunluklar.iter().copied().map(|örnek| {
-                            let (genişlik, yükseklik) = örnek.boyut();
+            let yoğunluk_sayısı = örnekler.len().min(7);
+            let satır_sayısı = örnekler.len().saturating_sub(yoğunluk_sayısı).div_ceil(4);
+            let durum = self.thin_bars_liste_durumu.get_or_insert_with(|| {
+                ListState::new(satır_sayısı + 2, ListAlignment::Top, px(600.0))
+            });
+            çizim_tabanı.min_h_0().p_2().child(
+                list(durum.clone(), move |indeks, _pencere, _cx| {
+                    let yüzey = |örnek: ThinBarsÖrneği| {
+                        yüzeyler
+                            .iter()
+                            .find(|(kimlik, _)| *kimlik == örnek)
+                            .map(|(_, grafik)| grafik.clone())
+                    };
+                    match indeks {
+                        0 => div()
+                            .w(px(1600.0))
+                            .p_2()
+                            .mb_2()
+                            .rounded_md()
+                            .bg(rgb(0xf8fafc))
+                            .text_xs()
+                            .text_color(rgb(0x6b7280))
+                            .child("Resmî thin-bars-stroke-fill.html sayfası 7 yoğunluk yüzeyini ve 12 align/width/gap grubundaki 48 geometri yüzeyini birlikte gösterir. Yüzeyler veri veya cursor paylaşmaz; her biri bağımsız zoom geçmişi tutar. Noktalar görünür X aralığındaki piksel açıklığı yeterli olduğunda otomatik açılır.")
+                            .into_any_element(),
+                        1 => div()
+                            .w(px(1600.0))
+                            .flex()
+                            .flex_wrap()
+                            .gap_2()
+                            .children(örnekler.iter().copied().take(yoğunluk_sayısı).map(
+                                |örnek| {
+                                    let (genişlik, yükseklik) = örnek.boyut();
+                                    div()
+                                        .flex_none()
+                                        .w(px(genişlik as f32))
+                                        .h(px(yükseklik as f32))
+                                        .border_1()
+                                        .border_color(rgb(0xe5e7eb))
+                                        .when_some(yüzey(örnek), |öğe, grafik| {
+                                            öğe.child(önbellekli_grafik(grafik))
+                                        })
+                                },
+                            ))
+                            .into_any_element(),
+                        _ => {
+                            let başlangıç = yoğunluk_sayısı + (indeks - 2) * 4;
+                            let grup = örnekler
+                                .get(başlangıç..(başlangıç + 4).min(örnekler.len()))
+                                .unwrap_or(&[]);
                             div()
-                                .flex_none()
-                                .w(px(genişlik as f32))
-                                .h(px(yükseklik as f32))
-                                .border_1()
-                                .border_color(rgb(0xe5e7eb))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik)))
-                        }),
-                    ),
-                )
-                .children(geometri_grupları.map(|grup| {
-                    div()
-                        .w(px(1600.0))
-                        .flex()
-                        .border_t_1()
-                        .border_color(rgb(0xd1d5db))
-                        .pt_2()
-                        .children(grup.iter().copied().map(|örnek| {
-                            div()
-                                .flex_none()
-                                .w(px(400.0))
-                                .h(px(200.0))
-                                .border_1()
-                                .border_color(rgb(0xe5e7eb))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik)))
-                        }))
-                }))
+                                .w(px(1600.0))
+                                .flex()
+                                .border_t_1()
+                                .border_color(rgb(0xd1d5db))
+                                .pt_2()
+                                .children(grup.iter().copied().map(|örnek| {
+                                    div()
+                                        .flex_none()
+                                        .w(px(400.0))
+                                        .h(px(200.0))
+                                        .border_1()
+                                        .border_color(rgb(0xe5e7eb))
+                                        .when_some(yüzey(örnek), |öğe, grafik| {
+                                            öğe.child(önbellekli_grafik(grafik))
+                                        })
+                                }))
+                                .into_any_element()
+                        }
+                    }
+                })
+                .h_full(),
+            )
         } else if matches!(aktif_kart, KartKimliği::TimePeriods(_)) {
             çizim_tabanı
                 .flex_none()
