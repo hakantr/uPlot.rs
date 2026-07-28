@@ -18,6 +18,7 @@ use std::time::Duration;
 use uplot_rs::gpui::{
     GpuiGrafik, GpuiGrafikGrubu, GpuiGrafikGrupAyarları, GpuiGrafikOlayı, GpuiSeriEşleme,
 };
+use uplot_rs::izleme;
 use uplot_rs_gpui_ornekler::{
     ADD_DEL_SERIES_KART_TANIM_ÖRNEĞİ, ALIGN_DATA_KART_TANIM_ÖRNEĞİ, ANNOTATIONS_KART_TANIM_ÖRNEĞİ,
     ARCSINH_SCALES_KART_TANIM_ÖRNEĞİ, AREA_FILL_KART_TANIM_ÖRNEĞİ, AXIS_AUTOSIZE_ARALIK_MS,
@@ -85,7 +86,6 @@ use uplot_rs_gpui_ornekler::{
 };
 use web_time::Instant;
 
-mod izleme;
 #[path = "web_koprusu.rs"]
 mod web_köprüsü;
 
@@ -5310,7 +5310,7 @@ fn grafik_oluştur(
 
 impl Render for ChartListesi {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let _kare_ölçümü = izleme::KareÖlçümü::başlat();
+        let _kare_ölçümü = izleme::Ölçüm::başlat(izleme::Yuva::KökRender);
         let görüntü_alanı = window.viewport_size();
         izleme::pencere_boyutu(
             f32::from(görüntü_alanı.width),

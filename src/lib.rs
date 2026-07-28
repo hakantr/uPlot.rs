@@ -11,6 +11,7 @@ mod etkilesim;
 pub mod gpui;
 pub mod grafik;
 pub mod hata;
+pub mod izleme;
 pub mod olcek;
 pub mod secenek;
 pub mod veri;

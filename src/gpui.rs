@@ -2516,6 +2516,7 @@ impl GpuiGrafik {
     }
 
     fn sahneyi_yenile(&mut self, cx: &mut Context<Self>) {
+        let _ölçüm = crate::izleme::Ölçüm::başlat(crate::izleme::Yuva::TamSahne);
         self.açıklama_vuruşu = None;
         self.arka_plan_sahnesi = Rc::new(self.grafik.gpui_arka_plan_sahnesini_çiz());
         self.ana_sahne = Rc::new(self.grafik.gpui_tam_sahneyi_çiz());
@@ -2543,6 +2544,7 @@ impl GpuiGrafik {
     /// Odak yalnız seri sunumunu değiştirir. Sabit arka planı ve eksen/grid
     /// katmanını yeniden kurmadan veri yüzeyini tazeler.
     fn veri_sahnesini_yenile(&mut self, cx: &mut Context<Self>) {
+        let _ölçüm = crate::izleme::Ölçüm::başlat(crate::izleme::Yuva::VeriSahnesi);
         self.ana_sahne = Rc::new(self.grafik.gpui_tam_sahneyi_çiz());
         self.ana_sahne_revizyonu = self.ana_sahne_revizyonu.saturating_add(1);
         let duyarlı_grafik = self.grafik.duyarlı_boyut_mu().then(|| cx.weak_entity());
@@ -2613,6 +2615,7 @@ impl EventEmitter<GpuiGrafikOlayı> for GpuiGrafik {}
 
 impl Render for GpuiGrafik {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let _ölçüm = crate::izleme::Ölçüm::başlat(crate::izleme::Yuva::GrafikRender);
         if self
             .grafik
             .cihaz_piksel_oranını_ayarla(window.scale_factor())
@@ -3112,6 +3115,7 @@ impl Render for GpuiGrafik {
                 if imleç_değişti {
                     bu.bilgi_balonu_beklemesini_yenile(cx);
                 }
+                crate::izleme::fare_sahne_kararı(ana_sahne_değişti);
                 if ana_sahne_değişti {
                     if görünüm_değişti {
                         bu.görünüm_bildir(false, cx);
@@ -3492,6 +3496,7 @@ fn sahneyi_önbellekli_boya(
     pencere: &mut Window,
     uygulama: &mut App,
 ) {
+    let _ölçüm = crate::izleme::Ölçüm::başlat(crate::izleme::Yuva::YüzeyBoyama);
     // GPUI cached-view anahtarı kaydırma sırasında bounds/content-mask ile
     // değişebilir. Yüzey bütünüyle görünür alanın dışındaysa retained komutları
     // yeniden sahneye eklemek hiçbir piksel üretemez; özellikle aynı sayfadaki

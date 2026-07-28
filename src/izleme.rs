@@ -1,13 +1,13 @@
-//! Etkileşim izleme günlüğü.
+//! Etkileşim ve kare bütçesi izleme günlüğü.
 //!
 //! `UPLOT_IZLEME=1` ortam değişkeniyle açılır. Amacı, harici bir CPU
 //! örnekleyicisinin çıktısıyla aynı zaman ekseninde "hangi işlem ne kadar
-//! yük getirdi" eşlemesi yapabilmek: kart değişimi, kaydırma, pencere
-//! boyutu ve saniyelik kök render özeti tek satırlık kayıtlar hâlinde
-//! stdout'a basılır.
+//! yük getirdi" eşlemesi yapabilmek: etkileşim olayları ve kare içindeki
+//! ölçüm yuvaları tek satırlık kayıtlar hâlinde stdout'a basılır.
 //!
 //! Kapalıyken her giriş noktası tek bir `OnceLock` okumasına iner; sıcak
-//! yolda ölçülebilir bir maliyeti yoktur.
+//! yolda ölçülebilir bir maliyeti yoktur. Tanılama içindir; kararlı API
+//! değildir.
 
 use std::sync::{Mutex, OnceLock};
 
@@ -18,8 +18,8 @@ const SERİ_SESSİZLİĞİ: f64 = 0.15;
 /// Kesintisiz seride ara satır basma aralığı; uzun hareketler tek dev
 /// satıra sıkışmasın, saniyelik CPU örnekleriyle hizalanabilsin.
 const SERİ_ARA_RAPOR: f64 = 0.5;
-/// Kök render özetinin periyodu.
-const KARE_ÖZET_PERİYODU: f64 = 1.0;
+/// Kare özetlerinin periyodu.
+const ÖZET_PERİYODU: f64 = 1.0;
 /// Kart listesi panelinin genişliği; olayın hangi bölgede olduğunu ayırt
 /// etmek için kullanılır.
 const LİSTE_GENİŞLİĞİ: f32 = 280.0;
@@ -28,11 +28,53 @@ static ETKİN: OnceLock<bool> = OnceLock::new();
 static BAŞLANGIÇ: OnceLock<Instant> = OnceLock::new();
 static DURUM: Mutex<Durum> = Mutex::new(Durum::yeni());
 
+/// Kare içinde ayrı ayrı raporlanan ölçüm noktaları.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Yuva {
+    /// Uygulamanın kök görünümünün `render` çağrısı.
+    KökRender,
+    /// Tek bir grafik varlığının `render` çağrısı.
+    GrafikRender,
+    /// Odak değişimiyle tetiklenen veri sahnesi yeniden kurulumu.
+    VeriSahnesi,
+    /// Boyut/ölçek değişimiyle tetiklenen tam sahne yeniden kurulumu.
+    TamSahne,
+    /// Bir yüzeyin boyanması: yol tessellation'ı ve GPU komut üretimi.
+    YüzeyBoyama,
+}
+
+impl Yuva {
+    const SAYI: usize = 5;
+    const HEPSİ: [Self; Self::SAYI] = [
+        Self::KökRender,
+        Self::GrafikRender,
+        Self::VeriSahnesi,
+        Self::TamSahne,
+        Self::YüzeyBoyama,
+    ];
+
+    const fn indeks(self) -> usize {
+        self as usize
+    }
+
+    const fn ad(self) -> &'static str {
+        match self {
+            Self::KökRender => "kök render",
+            Self::GrafikRender => "grafik render",
+            Self::VeriSahnesi => "veri sahnesi",
+            Self::TamSahne => "tam sahne",
+            Self::YüzeyBoyama => "yüzey boyama",
+        }
+    }
+}
+
 struct Durum {
     kaydırma: Option<Kaydırma>,
     fare: Option<Fare>,
-    kare_süreleri: Vec<f64>,
-    kare_özet_zamanı: f64,
+    süreler: [Vec<f64>; Yuva::SAYI],
+    fare_olayı: u32,
+    fare_sahne_kurdu: u32,
+    özet_zamanı: f64,
     pencere: Option<(i32, i32)>,
 }
 
@@ -41,8 +83,10 @@ impl Durum {
         Self {
             kaydırma: None,
             fare: None,
-            kare_süreleri: Vec::new(),
-            kare_özet_zamanı: 0.0,
+            süreler: [const { Vec::new() }; Yuva::SAYI],
+            fare_olayı: 0,
+            fare_sahne_kurdu: 0,
+            özet_zamanı: 0.0,
             pencere: None,
         }
     }
@@ -208,6 +252,21 @@ pub fn fare_düğmesi(basıldı: bool, düğme: &str, x: f32, kart: &'static str
     );
 }
 
+/// Bir fare hareketinin ana veri sahnesini yeniden kurdurup kurmadığını
+/// sayar. Oran yüksekse imleç takibi her harekette tüm veri yollarını
+/// yeniden tessellate ettiriyor demektir.
+pub fn fare_sahne_kararı(sahne_kuruldu: bool) {
+    if !etkin() {
+        return;
+    }
+    if let Ok(mut durum) = DURUM.lock() {
+        durum.fare_olayı = durum.fare_olayı.saturating_add(1);
+        if sahne_kuruldu {
+            durum.fare_sahne_kurdu = durum.fare_sahne_kurdu.saturating_add(1);
+        }
+    }
+}
+
 /// Pencere boyutu değiştiyse kaydeder.
 pub fn pencere_boyutu(genişlik: f32, yükseklik: f32) {
     if !etkin() {
@@ -233,28 +292,29 @@ pub fn pencere_boyutu(genişlik: f32, yükseklik: f32) {
     }
 }
 
-/// Kök render süresini ölçen kapsam koruyucusu; `Drop` anında birikime
-/// yazar, saniyelik özeti zamanlayıcı basar.
-pub struct KareÖlçümü(Option<Instant>);
+/// Bir ölçüm yuvasının süresini tutan kapsam koruyucusu; `Drop` anında
+/// birikime yazar, saniyelik özeti zamanlayıcı basar.
+pub struct Ölçüm(Option<(Yuva, Instant)>);
 
-impl KareÖlçümü {
+impl Ölçüm {
     /// İzleme kapalıysa hiçbir şey ölçmez.
-    pub fn başlat() -> Self {
-        Self(etkin().then(Instant::now))
+    pub fn başlat(yuva: Yuva) -> Self {
+        Self(etkin().then(|| (yuva, Instant::now())))
     }
 }
 
-impl Drop for KareÖlçümü {
+impl Drop for Ölçüm {
     fn drop(&mut self) {
-        if let Some(başlangıç) = self.0
+        if let Some((yuva, başlangıç)) = self.0
             && let Ok(mut durum) = DURUM.lock()
+            && let Some(birikim) = durum.süreler.get_mut(yuva.indeks())
         {
-            durum.kare_süreleri.push(başlangıç.elapsed().as_secs_f64());
+            birikim.push(başlangıç.elapsed().as_secs_f64());
         }
     }
 }
 
-/// Sessizleşen serileri ve saniyelik kare özetini boşaltır.
+/// Sessizleşen serileri ve saniyelik özetleri boşaltır.
 fn zamanlayıcı() {
     let şimdi = geçen();
     let mut biten_kaydırma = None;
@@ -275,11 +335,15 @@ fn zamanlayıcı() {
         {
             biten_fare = durum.fare.take();
         }
-        if şimdi - durum.kare_özet_zamanı >= KARE_ÖZET_PERİYODU {
-            let pencere = şimdi - durum.kare_özet_zamanı;
-            durum.kare_özet_zamanı = şimdi;
-            if !durum.kare_süreleri.is_empty() {
-                özet = Some((std::mem::take(&mut durum.kare_süreleri), pencere));
+        if şimdi - durum.özet_zamanı >= ÖZET_PERİYODU {
+            let pencere = şimdi - durum.özet_zamanı;
+            durum.özet_zamanı = şimdi;
+            let süreler = std::mem::replace(&mut durum.süreler, [const { Vec::new() }; Yuva::SAYI]);
+            let fare = (durum.fare_olayı, durum.fare_sahne_kurdu);
+            durum.fare_olayı = 0;
+            durum.fare_sahne_kurdu = 0;
+            if süreler.iter().any(|birikim| !birikim.is_empty()) || fare.0 > 0 {
+                özet = Some((süreler, fare, pencere));
             }
         }
     }
@@ -289,8 +353,23 @@ fn zamanlayıcı() {
     if let Some(f) = biten_fare {
         fare_satırı(&f);
     }
-    if let Some((mut süreler, pencere)) = özet {
-        kare_satırı(&mut süreler, pencere);
+    if let Some((mut süreler, (fare_olayı, sahne_kurdu), pencere)) = özet {
+        for yuva in Yuva::HEPSİ {
+            if let Some(birikim) = süreler.get_mut(yuva.indeks())
+                && !birikim.is_empty()
+            {
+                yuva_satırı(yuva, birikim, pencere);
+            }
+        }
+        if fare_olayı > 0 {
+            yaz(
+                "ODAK",
+                &format!(
+                    "{fare_olayı} fare olayı · {sahne_kurdu} tanesinde veri sahnesi yeniden kuruldu (%{:.1})",
+                    f64::from(sahne_kurdu) / f64::from(fare_olayı) * 100.0
+                ),
+            );
+        }
     }
 }
 
@@ -326,17 +405,18 @@ fn fare_satırı(f: &Fare) {
     );
 }
 
-fn kare_satırı(süreler: &mut [f64], pencere: f64) {
+fn yuva_satırı(yuva: Yuva, süreler: &mut [f64], pencere: f64) {
     süreler.sort_unstable_by(f64::total_cmp);
     let toplam: f64 = süreler.iter().sum();
     let yüzdelik = |oran: f64| {
-        let indeks = ((süreler.len() - 1) as f64 * oran).round() as usize;
+        let indeks = (süreler.len().saturating_sub(1) as f64 * oran).round() as usize;
         süreler.get(indeks).copied().unwrap_or_default() * 1000.0
     };
     yaz(
         "KARE",
         &format!(
-            "{} kök render / {pencere:.1}s · p50 {:.2}ms · p95 {:.2}ms · azami {:.2}ms · toplam {:.0}ms (%{:.1})",
+            "{:14} {} kez / {pencere:.1}s · p50 {:.2}ms · p95 {:.2}ms · azami {:.2}ms · toplam {:.0}ms (%{:.1})",
+            yuva.ad(),
             süreler.len(),
             yüzdelik(0.5),
             yüzdelik(0.95),
