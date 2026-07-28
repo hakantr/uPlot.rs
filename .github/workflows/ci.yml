@@ -57,6 +57,12 @@ jobs:
       - name: Biçim
         working-directory: uPlot.rs
         run: cargo fmt --all --check
+      # Kart listesi ve örnek kabuklar kütüphaneyi göstermek içindir; ne
+      # native ne wasm paketinde yer almamalı. Sınır paket içeriğinden ve
+      # bağımlılık yönünden gelir, hedeften değil.
+      - name: Paket sınırı
+        working-directory: uPlot.rs
+        run: ./tools/paket_siniri_denetle.sh
       - name: GPUI ve SVG dışa aktarım feature matrisi
         working-directory: uPlot.rs
         run: |
