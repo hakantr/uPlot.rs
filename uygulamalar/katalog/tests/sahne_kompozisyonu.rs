@@ -6,7 +6,10 @@
 
 use uplot_rs::diagnostics::Komut;
 use uplot_rs::{Grafik, UplotHatası};
-use uplot_rs_gpui_ornekler::{LatencyHeatmapÖrneği, latency_heatmap_kartı};
+use uplot_rs_gpui_ornekler::{
+    LatencyHeatmapÖrneği, MultiBarsÖrneği, TimelineDiscreteÖrneği, latency_heatmap_kartı,
+    multi_bars_kartı, timeline_discrete_kartı,
+};
 
 fn komut_adı(komut: &Komut) -> &'static str {
     match komut {
@@ -86,6 +89,68 @@ fn latency_heatmap_yuzey_kompozisyonu() -> Result<(), UplotHatası> {
             0,
             "{}: ısı haritası hücreleri eksen hizalı dikdörtgen kalmalı",
             örnek.kimlik()
+        );
+    }
+    Ok(())
+}
+
+/// Yoğun içerik stile göre gruplanmış toplu komutlarla taşınmalı.
+///
+/// uPlot da öyle yapıyor: `demos/timeline-discrete.html` renk başına tek
+/// `Path2D` kurup bir kez `fill()` ediyor, `demos/scatter.html` seri başına
+/// tek path'e bütün daireleri ekliyor. Bizde karşılıkları `Komut::Alan`,
+/// `Komut::Daireler` ve `Komut::DeğişkenDaireler`.
+///
+/// Öğe başına komut üretmek onlarca öğede sorun değil; ölçülen kartlarda
+/// timeline 12-88, multi-bars 159 öğe komutu üretiyor ve ikisi de ucuz.
+/// Ama binlerce öğe batch'siz kalırsa hem sahne kurulumu hem kare başına
+/// gönderim doğrusal büyür. Bu test o eşiği bekçiliyor.
+#[test]
+fn yogun_icerik_toplu_komutlarda_kalir() -> Result<(), UplotHatası> {
+    /// Bu sayının üstünde öğe komutu, batch'lenmesi gereken içerik demektir.
+    const ÖĞE_KOMUTU_SINIRI: usize = 500;
+
+    let mut kartlar: Vec<(String, Grafik)> = Vec::new();
+    for örnek in LatencyHeatmapÖrneği::TÜMÜ {
+        let (seçenekler, veri) = latency_heatmap_kartı(örnek, 5.0, 0.0)?;
+        kartlar.push((
+            format!("latency-heatmap/{}", örnek.kimlik()),
+            Grafik::yeni(seçenekler, veri)?,
+        ));
+    }
+    for örnek in TimelineDiscreteÖrneği::TÜMÜ {
+        let (seçenekler, veri) = timeline_discrete_kartı(örnek)?;
+        kartlar.push((
+            format!("timeline/{}", örnek.kimlik()),
+            Grafik::yeni(seçenekler, veri)?,
+        ));
+    }
+    for örnek in MultiBarsÖrneği::TÜMÜ {
+        let (seçenekler, veri) = multi_bars_kartı(örnek)?;
+        kartlar.push((
+            format!("multi-bars/{}", örnek.kimlik()),
+            Grafik::yeni(seçenekler, veri)?,
+        ));
+    }
+
+    for (ad, grafik) in &kartlar {
+        let sahne = grafik.çiz();
+        let öğe_komutu = sahne
+            .komutlar()
+            .iter()
+            .filter(|komut| {
+                matches!(
+                    komut,
+                    Komut::Daire { .. }
+                        | Komut::Dikdörtgen { .. }
+                        | Komut::YuvarlatılmışDikdörtgen { .. }
+                )
+            })
+            .count();
+        assert!(
+            öğe_komutu <= ÖĞE_KOMUTU_SINIRI,
+            "{ad}: {öğe_komutu} öğe komutu üretiyor, sınır {ÖĞE_KOMUTU_SINIRI}. \
+             Yoğun içerik Alan/Daireler gibi toplu komutlara alınmalı."
         );
     }
     Ok(())
