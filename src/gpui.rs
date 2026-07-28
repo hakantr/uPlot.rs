@@ -55,6 +55,13 @@ struct GpuiYüzeyDönüşümü {
     köken_y: f32,
 }
 
+/// Veri yüzeyinin boyama bağlamı.
+///
+/// `pencere` geçmişte yakınlaştırmayı GPU dönüşümüne çeviriyordu; sahne artık
+/// her görünüm değişiminde güncel pencere için kurulduğundan (uPlot
+/// `s._paths = null`) hep birimdir ve [`GpuiBoyaGörünümü`] pratikte yalnız
+/// çizim alanı kırpmasını taşır. [`Grafik::oransal_görünüm`] render yolunda
+/// okunmaz; senkron grupları ve zoom-ranger için durur.
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct GpuiVeriGörünümü {
     pencere: OransalGörünüm,
@@ -876,7 +883,7 @@ impl GpuiGrafik {
         let ana_sahne = Rc::new(grafik.gpui_görünür_veri_sahnesini_çiz());
         let eksen_sahnesi = Rc::new(grafik.gpui_eksen_sahnesini_çiz());
         let veri_görünümü = Rc::new(Cell::new(GpuiVeriGörünümü {
-            pencere: grafik.oransal_görünüm(),
+            pencere: OransalGörünüm::default(),
             çizim_alanı: grafik.çizim_alanı_boyutta(grafik.boyut().0, grafik.boyut().1),
         }));
         Self {
