@@ -8,14 +8,14 @@ use gpui::{App, AppContext, Bounds, px, size};
 #[cfg(not(target_family = "wasm"))]
 use gpui_platform::application;
 #[cfg(not(target_family = "wasm"))]
-use ortak_bilesenler::{OrtakBilesenAyarlari, PencereKurulumAyarlari, baslat, pencere_secenekleri};
+use ortak_bilesenler::{PencereKurulumAyarlari, baslat, pencere_secenekleri};
 #[cfg(not(target_family = "wasm"))]
-use uplot_rs_gpui_katalog::{ChartListesi, başlat as katalog_başlat};
+use uplot_rs_gpui_katalog::{ChartListesi, başlat as katalog_başlat, ortak_bileşen_ayarları};
 
 #[cfg(not(target_family = "wasm"))]
 fn main() {
     application().run(|cx: &mut App| {
-        if let Err(hata) = baslat(OrtakBilesenAyarlari::default(), cx) {
+        if let Err(hata) = baslat(ortak_bileşen_ayarları(), cx) {
             eprintln!("UI kütüphanesi başlatılamadı: {hata}");
             cx.quit();
             return;

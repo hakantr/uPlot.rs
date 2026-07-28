@@ -148,6 +148,21 @@ trait KatalogKaydırmaUzantısı: Styled {
 impl<T: Styled> KatalogKaydırmaUzantısı for T {}
 
 /// Ortak grafik ve katalog GPUI eylemlerini uygulamaya bir kez kaydeder.
+/// Paylaşılan bileşen kütüphanesinin katalog kromuyla uyumlu ayarları.
+///
+/// Katalog kendi kromunu açık paletle çiziyor (`panel` beyaz, `zemin`
+/// `#f3f4f6`). `ortak_bilesenler` tema sağlayıcı verilmediğinde koyu temayı
+/// kuruyor (`ortak_bilesenler/src/tema.rs`, `VarsayilanTema::koyu()`); bu da
+/// anahtar etiketlerini `#DCE0E5` ile açık zeminde 1,20:1 kontrasta
+/// düşürüp okunmaz hâle getiriyordu. Açık temayı açıkça bağlıyoruz:
+/// aynı etiket `#24292F` ile 13,31:1 veriyor.
+pub fn ortak_bileşen_ayarları() -> ortak_bilesenler::OrtakBilesenAyarlari {
+    ortak_bilesenler::OrtakBilesenAyarlari {
+        tema_saglayici: Some(std::sync::Arc::new(ortak_tema::VarsayilanTema::acik())),
+        ..ortak_bilesenler::OrtakBilesenAyarlari::default()
+    }
+}
+
 pub fn başlat(cx: &mut App) {
     izleme::başlat();
     uplot_rs::gpui::başlat(cx);
@@ -9438,7 +9453,7 @@ mod tests {
         const KARE_BÜTÇESİ: Duration = Duration::from_micros(16_700);
 
         cx.update(|cx| {
-            let _ = ortak_bilesenler::baslat(ortak_bilesenler::OrtakBilesenAyarlari::default(), cx);
+            let _ = ortak_bilesenler::baslat(ortak_bileşen_ayarları(), cx);
             başlat(cx);
         });
         let (liste, cx) = cx.add_window_view(|_, cx| ChartListesi::yeni(cx));

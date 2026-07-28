@@ -4,7 +4,7 @@
 mod web {
     use gpui::{App, AppContext as _, WindowOptions};
     use gpui_platform::{single_threaded_web, web_init};
-    use ortak_bilesenler::{OrtakBilesenAyarlari, baslat};
+    use ortak_bilesenler::baslat;
     use uplot_rs_gpui_katalog::{ChartListesi, başlat as katalog_başlat};
 
     pub fn başlat() {
@@ -21,7 +21,7 @@ mod web {
     }
 
     fn uygulamayı_kur(cx: &mut App) {
-        if let Err(hata) = baslat(OrtakBilesenAyarlari::default(), cx) {
+        if let Err(hata) = baslat(uplot_rs_gpui_katalog::ortak_bileşen_ayarları(), cx) {
             web_hatası(&format!("Ortak GPUI bileşenleri başlatılamadı: {hata}"));
             return;
         }
