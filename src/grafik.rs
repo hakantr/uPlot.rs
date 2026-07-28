@@ -3135,15 +3135,12 @@ impl Grafik {
                 if self.kutu_bıyık_grafiği() {
                     self.kutu_bıyık_y_aralığı()
                 } else {
-                    let x_aralığı = self.görünür_x_aralığı();
-                    let çizim_yüksekliği =
-                        self.seçenekler.yükseklik.saturating_sub(96).max(1) as f32;
-                    self.güzel_ölçek_aralığı(
-                        &self.seçenekler.birincil_y_ölçeği,
-                        x_aralığı,
-                        çizim_yüksekliği,
-                    )
-                    .map_or_else(|| self.y_aralığı(x_aralığı), |(aralık, _)| aralık)
+                    // `y_aralığı` aynı güzel-ölçek/otomatik tarama zincirini
+                    // aynı nominal yükseklikle çalıştırır, ama sonucu X
+                    // penceresi başına memoize eder. Bu dalı elle tekrarlamak
+                    // pointer olayı başına birkaç kez tam veri taraması
+                    // demekti; 500K noktada tek çağrı 0,7 ms sürüyordu.
+                    self.y_aralığı(self.görünür_x_aralığı())
                 }
             })
     }
