@@ -79,6 +79,13 @@ jobs:
         run: >-
           cargo test --release -p uplot-rs-gpui-ornekler --test performance_budgets
           --all-features -- --test-threads=1 --nocapture
+      # Kök render bütçesi gerçek bir GPUI penceresi kurar ve yalnız release'de
+      # anlamlıdır; debug koşumunda test kendini atlar.
+      - name: Katalog kök render bütçesi
+        working-directory: uPlot.rs
+        run: >-
+          cargo test --release -p uplot-rs-gpui-katalog --lib kok_render_kare_butcesi
+          -- --test-threads=1 --nocapture
 
   native-platformlar:
     name: native-${{ matrix.ad }}

@@ -9327,4 +9327,74 @@ mod tests {
         }
         Ok(())
     }
+
+    /// Kök render, tek yüzeyli kartlarda yaklaşık sabit bir taban maliyet
+    /// (yan menü, araç çubuğu, kart tanımı) ödüyor. Çok yüzeyli kartlar bunun
+    /// üstüne yüzey başına eleman kurulumu ekliyordu; ThinBars ve TimezonesDst
+    /// bu yüzden sanallaştırıldı. Bu test o kazancın kaybolmasını görünür
+    /// kılar: dağılımı yazdırır ve kare bütçesini aşarsa düşer.
+    ///
+    /// Yalnız release'de anlamlıdır; debug ölçümü bütçeyle karşılaştırılamaz.
+    #[::gpui::test]
+    async fn kok_render_kare_butcesi(cx: &mut ::gpui::TestAppContext) {
+        use std::time::{Duration, Instant};
+
+        if cfg!(debug_assertions) {
+            return;
+        }
+
+        const ISINMA_TURU: usize = 10;
+        const ÖLÇÜM_TURU: u32 = 50;
+        const KARE_BÜTÇESİ: Duration = Duration::from_micros(16_700);
+
+        cx.update(|cx| {
+            let _ = ortak_bilesenler::baslat(ortak_bilesenler::OrtakBilesenAyarlari::default(), cx);
+            başlat(cx);
+        });
+        let (liste, cx) = cx.add_window_view(|_, cx| ChartListesi::yeni(cx));
+
+        let ölç = |ad: &str, kart: KartKimliği, cx: &mut ::gpui::VisualTestContext| {
+            liste.update(cx, |bu, cx| bu.kartı_seç(kart, cx));
+            cx.run_until_parked();
+            let yüzey_sayısı = liste.read_with(cx, |bu, _| bu.etkin_grafik_yüzeyleri().len());
+
+            for _ in 0..ISINMA_TURU {
+                liste.update(cx, |_, cx| cx.notify());
+                cx.run_until_parked();
+            }
+
+            let mut süreler = Vec::with_capacity(ÖLÇÜM_TURU as usize);
+            for _ in 0..ÖLÇÜM_TURU {
+                let başlangıç = Instant::now();
+                liste.update(cx, |_, cx| cx.notify());
+                cx.run_until_parked();
+                süreler.push(başlangıç.elapsed());
+            }
+            süreler.sort_unstable();
+            let yüzdelik = |yüzde: usize| {
+                let son = süreler.len().saturating_sub(1);
+                süreler
+                    .get(son.saturating_mul(yüzde).div_ceil(100))
+                    .copied()
+                    .unwrap_or_default()
+            };
+            let (p50, p95) = (yüzdelik(50), yüzdelik(95));
+            eprintln!("{ad}: {yüzey_sayısı} yüzey · p50 {p50:?} · p95 {p95:?}");
+            assert!(
+                p50 <= KARE_BÜTÇESİ / 2,
+                "{ad} kök render p50 {p50:?}, bütçe {:?}",
+                KARE_BÜTÇESİ / 2
+            );
+            assert!(
+                p95 <= KARE_BÜTÇESİ,
+                "{ad} kök render p95 {p95:?}, bütçe {KARE_BÜTÇESİ:?}"
+            );
+        };
+
+        ölç("Resize (tek yüzey)", KartKimliği::Resize, cx);
+        if let Some(örnek) = ThinBarsÖrneği::tümü().first().copied() {
+            ölç("ThinBars (55 yüzey)", KartKimliği::ThinBars(örnek), cx);
+        }
+        ölç("TimezonesDst (51 yüzey)", KartKimliği::TimezonesDst, cx);
+    }
 }
