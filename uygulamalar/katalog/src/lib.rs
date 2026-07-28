@@ -96,6 +96,44 @@ fn önbellekli_grafik(grafik: Entity<GpuiGrafik>) -> impl IntoElement {
     grafik.cached(StyleRefinement::default().size_full())
 }
 
+/// Canlı lejant satırını taşıyan bağımsız yüzey.
+///
+/// Lejant metni imleç en yakın veri indeksini her değiştirdiğinde tazelenir.
+/// Yoğun serilerde bu neredeyse her pointer olayında olur; metni katalog
+/// kökünün içinde tutmak o olayların hepsini ~3.500 satırlık `render`'a
+/// bağlıyordu. Ayrı bir varlık yalnız bu tek `div`'i yeniden kurar.
+struct KatalogLejantı {
+    metin: SharedString,
+    renk: u32,
+}
+
+impl KatalogLejantı {
+    fn yeni(renk: u32) -> Self {
+        Self {
+            metin: SharedString::default(),
+            renk,
+        }
+    }
+
+    fn metni_ayarla(&mut self, metin: SharedString, cx: &mut Context<Self>) {
+        if self.metin == metin {
+            return;
+        }
+        self.metin = metin;
+        cx.notify();
+    }
+}
+
+impl Render for KatalogLejantı {
+    fn render(&mut self, _pencere: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .mb_2()
+            .text_xs()
+            .text_color(rgb(self.renk))
+            .child(self.metin.clone())
+    }
+}
+
 trait KatalogKaydırmaUzantısı: Styled {
     /// Dikey katalog içinde yatay yüzeyin normal wheel hareketini çalmasını
     /// önler; yatay hareket gerçek yatay delta veya Shift+wheel ile kalır.
@@ -118,6 +156,8 @@ pub fn başlat(cx: &mut App) {
 
 const PERFORMANS_KARE_SAYISI: usize = 180;
 const KARE_P95_BÜTÇESİ_MS: f64 = 16.7;
+/// Katalog kökündeki `vurgu` rengiyle aynı; lejant kendi varlığında yaşıyor.
+const LEJANT_RENGİ: u32 = 0xdc2626;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Kareİstatistiği {
@@ -1777,15 +1817,31 @@ pub struct ChartListesi {
     svg_kayıt_baytı: Option<usize>,
     kare_ölçer: KareÖlçer,
     performans_kare_bekleniyor: bool,
+    lejant: Entity<KatalogLejantı>,
 }
 
 impl ChartListesi {
-    fn etkin_grafik_yüzeyleri(&self) -> Vec<Entity<GpuiGrafik>> {
-        let mut grafikler = self.grafik.iter().cloned().collect::<Vec<_>>();
+    /// Etkin kartın bütün yüzeylerini tekilleştirerek gezer.
+    ///
+    /// Tek gerçek yüzey listesi budur; hem sahiplenen `Vec` hem de tahsissiz
+    /// tarayanlar buradan beslenir, böylece yeni bir kart ailesi eklenirken
+    /// iki ayrı listeyi eşlemek gerekmez.
+    fn etkin_grafik_yüzeylerini_gez(&self, mut ziyaret: impl FnMut(&Entity<GpuiGrafik>)) {
+        let mut görülenler = HashSet::new();
+        let mut ekle = |grafik: &Entity<GpuiGrafik>| {
+            if görülenler.insert(grafik.entity_id()) {
+                ziyaret(grafik);
+            }
+        };
         macro_rules! yüzeyleri_ekle {
             ($alan:expr) => {
-                grafikler.extend($alan.iter().map(|(_, grafik)| grafik.clone()));
+                for (_, grafik) in $alan.iter() {
+                    ekle(grafik);
+                }
             };
+        }
+        for grafik in self.grafik.iter() {
+            ekle(grafik);
         }
         yüzeyleri_ekle!(self.align_data_grafikleri);
         yüzeyleri_ekle!(self.custom_scales_grafikleri);
@@ -1811,7 +1867,9 @@ impl ChartListesi {
         yüzeyleri_ekle!(self.timezones_dst_grafikleri);
         yüzeyleri_ekle!(self.nearest_non_null_grafikleri);
         yüzeyleri_ekle!(self.missing_data_grafikleri);
-        grafikler.extend(self.months_grafikleri.iter().cloned());
+        for grafik in self.months_grafikleri.iter() {
+            ekle(grafik);
+        }
         yüzeyleri_ekle!(self.path_gap_clip_grafikleri);
         yüzeyleri_ekle!(self.pixel_align_grafikleri);
         yüzeyleri_ekle!(self.points_grafikleri);
@@ -1820,9 +1878,35 @@ impl ChartListesi {
         yüzeyleri_ekle!(self.bars_grouped_stacked_grafikleri);
         yüzeyleri_ekle!(self.bars_values_autosize_grafikleri);
         yüzeyleri_ekle!(self.box_whisker_grafikleri);
-        let mut görülenler = HashSet::with_capacity(grafikler.len());
-        grafikler.retain(|grafik| görülenler.insert(grafik.entity_id()));
+    }
+
+    /// Yüzeyleri sahiplenen listeye toplar.
+    ///
+    /// `update` çağıran döngüler `cx`'i ödünç aldığından `self`'i aynı anda
+    /// ödünç alamaz; bu yollar klonlanmış listeye ihtiyaç duyar.
+    fn etkin_grafik_yüzeyleri(&self) -> Vec<Entity<GpuiGrafik>> {
+        let mut grafikler = Vec::new();
+        self.etkin_grafik_yüzeylerini_gez(|grafik| grafikler.push(grafik.clone()));
         grafikler
+    }
+
+    /// Etkin yüzeylerin geri/yakınlaştırma durumunu tahsis etmeden toplar.
+    ///
+    /// Kök `render` bu iki bayrağı ve yüzey sayısını her çağrıda istiyordu;
+    /// bunun için bütün yüzeylerin `Entity` klonlarından bir `Vec` kurulup
+    /// hemen atılıyordu. Sonuç yalnız iki bool ve bir sayaç olduğundan
+    /// listeyi maddileştirmeye gerek yok.
+    fn etkin_görünüm_durumu(&self, cx: &App) -> (bool, bool, usize) {
+        let mut geri_var = false;
+        let mut yakınlaştırılmış = false;
+        let mut sayı = 0_usize;
+        self.etkin_grafik_yüzeylerini_gez(|grafik| {
+            sayı = sayı.saturating_add(1);
+            let grafik = grafik.read(cx);
+            geri_var |= grafik.grafik().geri_var();
+            yakınlaştırılmış |= grafik.grafik().yakınlaştırılmış();
+        });
+        (geri_var, yakınlaştırılmış, sayı)
     }
 
     fn nokta_gösterimlerini_uygula(
@@ -1928,17 +2012,130 @@ impl ChartListesi {
                 self.cursor_bind_tıklama_sayısı = self.cursor_bind_tıklama_sayısı.saturating_add(1);
                 true
             }
-            // Lejant imleç değerlerini, durum olayı da görünür seri
-            // düğmelerini değiştirir. Görünüm olayı grafik alt yüzeylerinde
-            // zaten işlendiğinden 3.700+ satırlık katalog kökünü yenilemez.
-            GpuiGrafikOlayı::İmleçDeğişti | GpuiGrafikOlayı::DurumDeğişti => true,
-            GpuiGrafikOlayı::İmleçKonumuDeğişti
-            | GpuiGrafikOlayı::GörünümDeğişti { .. }
-            | GpuiGrafikOlayı::FareBırakıldı => false,
+            // İmleç olayı yalnız lejant satırını değiştirir. GPUI `notify`
+            // ataları da kirlettiğinden ayrı varlık kökü tek başına izole
+            // etmez; kazanç metin gerçekten değişmediğinde hiç `notify`
+            // etmemekten gelir. Lejant üç ondalıkla biçimlendiğinden yoğun
+            // serilerde ardışık örnekler çoğu zaman aynı satırı üretir.
+            // Durum olayı görünür seri düğmelerini de değiştirdiğinden kökü
+            // yeniler. Görünüm olayı grafik alt yüzeylerinde zaten işlenir.
+            GpuiGrafikOlayı::İmleçDeğişti => {
+                self.lejantı_yenile(cx);
+                false
+            }
+            GpuiGrafikOlayı::DurumDeğişti => {
+                self.lejantı_yenile(cx);
+                true
+            }
+            // Zoom imlecin veri X'ini değiştirmese de lejant değerini
+            // taşıyabilir; metin gerçekten değişirse `lejantı_yenile` zaten
+            // kendi `notify`'ını yapar.
+            GpuiGrafikOlayı::GörünümDeğişti { .. } => {
+                self.lejantı_yenile(cx);
+                false
+            }
+            GpuiGrafikOlayı::İmleçKonumuDeğişti | GpuiGrafikOlayı::FareBırakıldı => false,
         };
         if arayüz_değişti {
             cx.notify();
         }
+    }
+
+    /// Görünür seri adlarını kartın kaynağına göre toplar.
+    fn lejant_seri_adları(&self, cx: &App) -> Vec<String> {
+        let görünür_etiketler = |grafik: &Entity<GpuiGrafik>| {
+            grafik
+                .read(cx)
+                .grafik()
+                .seri_seçenekleri()
+                .iter()
+                .filter(|seri| seri.göster)
+                .map(|seri| seri.etiket.clone())
+                .collect::<Vec<_>>()
+        };
+        if self.aktif_kart == KartKimliği::TimeseriesDiscrete {
+            return self
+                .timeseries_discrete_grafikleri
+                .iter()
+                .flat_map(|(_, grafik)| görünür_etiketler(grafik))
+                .collect();
+        }
+        self.grafik
+            .as_ref()
+            .map_or_else(Vec::new, görünür_etiketler)
+    }
+
+    /// Canlı lejant satırını üretir.
+    fn lejant_metni(&self, cx: &App) -> SharedString {
+        let seri_adları = self.lejant_seri_adları(cx);
+        let değerler = if self.aktif_kart == KartKimliği::TimeseriesDiscrete {
+            let mut ortak_x = None;
+            let mut değerler = Vec::new();
+            let mut lejant_var = false;
+            for (_, grafik) in &self.timeseries_discrete_grafikleri {
+                let grafik = grafik.read(cx);
+                if let Some((x, yüzey_değerleri)) = grafik.lejant_değerleri() {
+                    lejant_var = true;
+                    ortak_x = ortak_x.or(x);
+                    değerler.extend(
+                        yüzey_değerleri
+                            .into_iter()
+                            .zip(grafik.grafik().seri_seçenekleri())
+                            .filter_map(|(değer, seri)| seri.göster.then_some(değer)),
+                    );
+                }
+            }
+            lejant_var.then_some((ortak_x, değerler))
+        } else {
+            self.grafik
+                .as_ref()
+                .and_then(|grafik| grafik.read(cx).lejant_değerleri())
+        };
+        let metin = değerler.map_or_else(
+            || {
+                let seriler = seri_adları
+                    .iter()
+                    .map(|ad| format!("□ {ad}: --"))
+                    .collect::<Vec<_>>()
+                    .join("    ");
+                format!("x: --    {seriler}")
+            },
+            |(x, değerler)| {
+                let seriler = seri_adları
+                    .iter()
+                    .zip(değerler.iter())
+                    .map(|(ad, değer)| {
+                        değer.map_or_else(
+                            || format!("□ {ad}: --"),
+                            |y| {
+                                let değer = if self.aktif_kart == KartKimliği::TimeseriesDiscrete
+                                    && ad.starts_with("DEV")
+                                {
+                                    format!("{y:.0}")
+                                } else {
+                                    format!("{y:.3}")
+                                };
+                                format!(
+                                    "□ {ad}: {değer}{}",
+                                    if x.is_none() { " (last)" } else { "" }
+                                )
+                            },
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join("    ");
+                let x = x.map_or_else(|| "--".to_string(), |x| format!("{x:.3}"));
+                format!("x: {x}    {seriler}")
+            },
+        );
+        SharedString::from(metin)
+    }
+
+    fn lejantı_yenile(&mut self, cx: &mut Context<Self>) {
+        let metin = self.lejant_metni(cx);
+        self.lejant.update(cx, |lejant, cx| {
+            lejant.metni_ayarla(metin, cx);
+        });
     }
 
     pub fn yeni(cx: &mut Context<Self>) -> Self {
@@ -2112,12 +2309,14 @@ impl ChartListesi {
             svg_kayıt_baytı: None,
             kare_ölçer: KareÖlçer::default(),
             performans_kare_bekleniyor: false,
+            lejant: cx.new(|_| KatalogLejantı::yeni(LEJANT_RENGİ)),
         };
         if başlangıç_kartı != KartKimliği::Resize {
             bu.kartı_seç(başlangıç_kartı, cx);
         }
         bu.tekerlek_odaksız_etkileşimi_uygula(bu.tekerlek_odaksız_etkin, cx);
         bu.nokta_gösterimlerini_uygula(true, true, cx);
+        bu.lejantı_yenile(cx);
         bu
     }
 
@@ -4792,6 +4991,9 @@ impl ChartListesi {
             cx,
         );
         self.tekerlek_odaksız_etkileşimi_uygula(self.tekerlek_odaksız_etkin, cx);
+        // Yeni kartın serileri ve değerleri farklı; lejant artık kökün
+        // `render`'ında hesaplanmadığından burada bir kez tazelenmeli.
+        self.lejantı_yenile(cx);
     }
 
     fn soft_minmax_başlat(&mut self, cx: &mut Context<Self>) {
@@ -5440,118 +5642,26 @@ impl Render for ChartListesi {
         let tekerlek_odaksız_anahtarı = self.tekerlek_odaksız_anahtarı.clone();
         let içi_boş_nokta_anahtarı = self.içi_boş_nokta_anahtarı.clone();
         let dolu_nokta_anahtarı = self.dolu_nokta_anahtarı.clone();
-        let (mut geri_var, mut yakınlaştırılmış, etkileşimler, lejant, bileşen_hatası) =
+        let (mut geri_var, mut yakınlaştırılmış, etkileşimler, bileşen_hatası) =
             self.grafik.as_ref().map_or_else(
-                || (false, false, aktif_kart.etkileşimler(), None, None),
+                || (false, false, aktif_kart.etkileşimler(), None),
                 |grafik| {
                     let grafik = grafik.read(cx);
                     (
                         grafik.grafik().geri_var(),
                         grafik.grafik().yakınlaştırılmış(),
                         grafik.grafik().etkileşim_seçenekleri(),
-                        grafik.lejant_değerleri(),
                         grafik.hata().map(str::to_string),
                     )
                 },
             );
-        let etkin_grafikler = self.etkin_grafik_yüzeyleri();
-        if etkin_grafikler.len() > 1 {
-            geri_var = false;
-            yakınlaştırılmış = false;
-            for grafik in etkin_grafikler {
-                let grafik = grafik.read(cx);
-                geri_var |= grafik.grafik().geri_var();
-                yakınlaştırılmış |= grafik.grafik().yakınlaştırılmış();
-                if geri_var && yakınlaştırılmış {
-                    break;
-                }
-            }
+        let (grup_geri_var, grup_yakınlaştırılmış, yüzey_sayısı) = self.etkin_görünüm_durumu(cx);
+        if yüzey_sayısı > 1 {
+            geri_var = grup_geri_var;
+            yakınlaştırılmış = grup_yakınlaştırılmış;
         }
         let çizim_hatası = self.hata.clone().or(bileşen_hatası);
-        let seri_adları = if aktif_kart == KartKimliği::TimeseriesDiscrete {
-            self.timeseries_discrete_grafikleri
-                .iter()
-                .flat_map(|(_, grafik)| {
-                    grafik
-                        .read(cx)
-                        .grafik()
-                        .seri_seçenekleri()
-                        .iter()
-                        .filter(|seri| seri.göster)
-                        .map(|seri| seri.etiket.clone())
-                        .collect::<Vec<_>>()
-                })
-                .collect()
-        } else {
-            self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
-                grafik
-                    .read(cx)
-                    .grafik()
-                    .seri_seçenekleri()
-                    .iter()
-                    .filter(|seri| seri.göster)
-                    .map(|seri| seri.etiket.clone())
-                    .collect::<Vec<_>>()
-            })
-        };
-        let lejant = if aktif_kart == KartKimliği::TimeseriesDiscrete {
-            let mut ortak_x = None;
-            let mut değerler = Vec::new();
-            let mut lejant_var = false;
-            for (_, grafik) in &self.timeseries_discrete_grafikleri {
-                let grafik = grafik.read(cx);
-                if let Some((x, yüzey_değerleri)) = grafik.lejant_değerleri() {
-                    lejant_var = true;
-                    ortak_x = ortak_x.or(x);
-                    değerler.extend(
-                        yüzey_değerleri
-                            .into_iter()
-                            .zip(grafik.grafik().seri_seçenekleri())
-                            .filter_map(|(değer, seri)| seri.göster.then_some(değer)),
-                    );
-                }
-            }
-            lejant_var.then_some((ortak_x, değerler))
-        } else {
-            lejant
-        };
-        let lejant = lejant.map_or_else(
-            || {
-                let seriler = seri_adları
-                    .iter()
-                    .map(|ad| format!("□ {ad}: --"))
-                    .collect::<Vec<_>>()
-                    .join("    ");
-                format!("x: --    {seriler}")
-            },
-            |(x, değerler)| {
-                let seriler = seri_adları
-                    .iter()
-                    .zip(değerler.iter())
-                    .map(|(ad, değer)| {
-                        değer.map_or_else(
-                            || format!("□ {ad}: --"),
-                            |y| {
-                                let değer = if aktif_kart == KartKimliği::TimeseriesDiscrete
-                                    && ad.starts_with("DEV")
-                                {
-                                    format!("{y:.0}")
-                                } else {
-                                    format!("{y:.3}")
-                                };
-                                format!(
-                                    "□ {ad}: {değer}{}",
-                                    if x.is_none() { " (last)" } else { "" }
-                                )
-                            },
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                    .join("    ");
-                let x = x.map_or_else(|| "--".to_string(), |x| format!("{x:.3}"));
-                format!("x: {x}    {seriler}")
-            },
-        );
+        let lejant = self.lejant.clone();
         let tooltip_serileri = if matches!(
             aktif_kart,
             KartKimliği::TooltipsClosest
