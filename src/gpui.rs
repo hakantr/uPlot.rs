@@ -3458,6 +3458,7 @@ fn retained_yolu_boya(
     fiziksel_ölçek: f32,
     pencere: &mut Window,
 ) {
+    crate::izleme::yol_boyandı(yol.fiziksel.vertices.len());
     let boya = boya.into();
     if let Some(mut görünüm) = görünüm {
         görünüm.dönüşüm.translation[0] += f32::from(hedef_köken.x) * fiziksel_ölçek;

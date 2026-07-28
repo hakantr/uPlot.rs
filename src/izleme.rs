@@ -72,6 +72,8 @@ struct Durum {
     kaydırma: Option<Kaydırma>,
     fare: Option<Fare>,
     süreler: [Vec<f64>; Yuva::SAYI],
+    yol_sayısı: u64,
+    köşe_sayısı: u64,
     fare_olayı: u32,
     fare_sahne_kurdu: u32,
     özet_zamanı: f64,
@@ -84,6 +86,8 @@ impl Durum {
             kaydırma: None,
             fare: None,
             süreler: [const { Vec::new() }; Yuva::SAYI],
+            yol_sayısı: 0,
+            köşe_sayısı: 0,
             fare_olayı: 0,
             fare_sahne_kurdu: 0,
             özet_zamanı: 0.0,
@@ -252,6 +256,20 @@ pub fn fare_düğmesi(basıldı: bool, düğme: &str, x: f32, kart: &'static str
     );
 }
 
+/// Sahneye gönderilen bir retained yolun köşe sayısını biriktirir. Yollar
+/// yeniden tessellate edilmese bile her karede GPU'ya sunulduğu için,
+/// saniyelik köşe hacmi "görünmeyen" CPU'nun sürücü/renderer tarafında mı
+/// harcandığını gösterir.
+pub fn yol_boyandı(köşe: usize) {
+    if !etkin() {
+        return;
+    }
+    if let Ok(mut durum) = DURUM.lock() {
+        durum.yol_sayısı = durum.yol_sayısı.saturating_add(1);
+        durum.köşe_sayısı = durum.köşe_sayısı.saturating_add(köşe as u64);
+    }
+}
+
 /// Bir fare hareketinin ana veri sahnesini yeniden kurdurup kurmadığını
 /// sayar. Oran yüksekse imleç takibi her harekette tüm veri yollarını
 /// yeniden tessellate ettiriyor demektir.
@@ -340,10 +358,13 @@ fn zamanlayıcı() {
             durum.özet_zamanı = şimdi;
             let süreler = std::mem::replace(&mut durum.süreler, [const { Vec::new() }; Yuva::SAYI]);
             let fare = (durum.fare_olayı, durum.fare_sahne_kurdu);
+            let yol = (durum.yol_sayısı, durum.köşe_sayısı);
             durum.fare_olayı = 0;
             durum.fare_sahne_kurdu = 0;
-            if süreler.iter().any(|birikim| !birikim.is_empty()) || fare.0 > 0 {
-                özet = Some((süreler, fare, pencere));
+            durum.yol_sayısı = 0;
+            durum.köşe_sayısı = 0;
+            if süreler.iter().any(|birikim| !birikim.is_empty()) || fare.0 > 0 || yol.0 > 0 {
+                özet = Some((süreler, fare, yol, pencere));
             }
         }
     }
@@ -353,13 +374,27 @@ fn zamanlayıcı() {
     if let Some(f) = biten_fare {
         fare_satırı(&f);
     }
-    if let Some((mut süreler, (fare_olayı, sahne_kurdu), pencere)) = özet {
+    if let Some((mut süreler, (fare_olayı, sahne_kurdu), (yol_sayısı, köşe_sayısı), pencere)) =
+        özet
+    {
         for yuva in Yuva::HEPSİ {
             if let Some(birikim) = süreler.get_mut(yuva.indeks())
                 && !birikim.is_empty()
             {
                 yuva_satırı(yuva, birikim, pencere);
             }
+        }
+        if yol_sayısı > 0 {
+            let kare = süreler
+                .get(Yuva::YüzeyBoyama.indeks())
+                .map_or(0, |birikim| birikim.len());
+            yaz(
+                "YOL",
+                &format!(
+                    "{yol_sayısı} yol · {köşe_sayısı} köşe / {pencere:.1}s · yüzey boyama başına ~{} köşe",
+                    köşe_sayısı / u64::from(kare.max(1) as u32)
+                ),
+            );
         }
         if fare_olayı > 0 {
             yaz(
