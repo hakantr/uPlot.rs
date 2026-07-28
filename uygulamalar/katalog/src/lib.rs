@@ -161,6 +161,17 @@ const PERFORMANS_KARE_SAYISI: usize = 180;
 const KARE_P95_BÜTÇESİ_MS: f64 = 16.7;
 /// Katalog kökündeki `vurgu` rengiyle aynı; lejant kendi varlığında yaşıyor.
 const LEJANT_RENGİ: u32 = 0xdc2626;
+/// Kart listesindeki ikincil satırların rengi.
+///
+/// Önceki `#6b7280`, beyaz zeminde 4,83:1 veriyordu ama seçili kartın
+/// `#fef2f2` zemininde 4,42:1'e düşüp WCAG AA eşiğinin (4,5:1) altına
+/// iniyordu — üstelik bu satırlar `text_xs`. `#4b5563` aynı zeminlerde
+/// 7,56:1 ve 6,91:1 veriyor.
+const LİSTE_İKİNCİL_RENGİ: u32 = 0x4b5563;
+/// Kart listesindeki kaynak etiketinin rengi. Vurgu kırmızısı (`#dc2626`)
+/// seçili zeminde 4,42:1'de kalıyordu; `#b91c1c` 5,91:1 veriyor. Kenarlık
+/// ve seçim vurgusu için `vurgu` olduğu gibi kullanılmaya devam ediyor.
+const LİSTE_KAYNAK_RENGİ: u32 = 0xb91c1c;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Kareİstatistiği {
@@ -5737,7 +5748,7 @@ impl Render for ChartListesi {
                     .mt_1()
                     .mb_4()
                     .text_sm()
-                    .text_color(soluk)
+                    .text_color(rgb(LİSTE_İKİNCİL_RENGİ))
                     .child("Canlı masaüstü doğrulaması"),
             )
             .child(
@@ -8889,10 +8900,16 @@ fn katalog_kartı(
             div()
                 .mt_1()
                 .text_xs()
-                .text_color(rgb(0x6b7280))
+                .text_color(rgb(LİSTE_İKİNCİL_RENGİ))
                 .child(alt_kimlik),
         )
-        .child(div().mt_2().text_xs().text_color(vurgu).child(durum))
+        .child(
+            div()
+                .mt_2()
+                .text_xs()
+                .text_color(rgb(LİSTE_KAYNAK_RENGİ))
+                .child(durum),
+        )
 }
 
 #[cfg(test)]
