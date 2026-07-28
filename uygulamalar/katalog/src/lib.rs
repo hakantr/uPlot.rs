@@ -4,9 +4,9 @@
 use gpui::ClipboardItem;
 use gpui::{
     AccessibleAction, App, ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement,
-    KeyBinding, ListAlignment, ListState, Render, Role, ScrollStrategy, ScrollWheelEvent,
-    SharedString, StyleRefinement, Task, UniformListScrollHandle, Window, div, list, prelude::*,
-    px, rgb, rgba, uniform_list,
+    KeyBinding, ListAlignment, ListState, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Render,
+    Role, ScrollStrategy, ScrollWheelEvent, SharedString, StyleRefinement, Task,
+    UniformListScrollHandle, Window, div, list, prelude::*, px, rgb, rgba, uniform_list,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
@@ -5421,6 +5421,7 @@ impl Render for ChartListesi {
                 )
             },
         );
+        izleme::gpu_bilgisi(&gpu_yazısı);
         let soft_minmax_canlı = matches!(aktif_kart, KartKimliği::SoftMinMax(_));
         let soft_minmax_çalışıyor = self.soft_minmax_çalışıyor;
         let sync_cursor_etkin = self.sync_cursor_grubu.senkron();
@@ -8735,8 +8736,8 @@ impl Render for ChartListesi {
             .flex()
             .flex_row()
             .bg(zemin)
-            // Kök dinleyici kabarma evresinde çalışır ve yayılımı kesmez;
-            // iç kaydırma kapları olayı normal şekilde görmeye devam eder.
+            // Kök dinleyiciler kabarma evresinde çalışır ve yayılımı kesmez;
+            // iç kaplar olayları normal şekilde görmeye devam eder.
             .on_scroll_wheel(cx.listener(
                 |bu, olay: &ScrollWheelEvent, window: &mut Window, _cx| {
                     let delta = olay.delta.pixel_delta(window.line_height());
@@ -8748,6 +8749,32 @@ impl Render for ChartListesi {
                     );
                 },
             ))
+            .on_mouse_move(cx.listener(|bu, olay: &MouseMoveEvent, _, _| {
+                izleme::fare_hareketi(
+                    f32::from(olay.position.x),
+                    f32::from(olay.position.y),
+                    bu.aktif_kart.slug(),
+                );
+            }))
+            .on_any_mouse_down(cx.listener(|bu, olay: &MouseDownEvent, _, _| {
+                izleme::fare_düğmesi(
+                    true,
+                    &format!("{:?}", olay.button),
+                    f32::from(olay.position.x),
+                    bu.aktif_kart.slug(),
+                );
+            }))
+            .on_mouse_up(
+                gpui::MouseButton::Left,
+                cx.listener(|bu, olay: &MouseUpEvent, _, _| {
+                    izleme::fare_düğmesi(
+                        false,
+                        &format!("{:?}", olay.button),
+                        f32::from(olay.position.x),
+                        bu.aktif_kart.slug(),
+                    );
+                }),
+            )
             .child(liste)
             .child(ayrıntı)
             .when(açıklama_istendi, |kök| {

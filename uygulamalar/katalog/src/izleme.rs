@@ -13,15 +13,15 @@ use std::sync::{Mutex, OnceLock};
 
 use web_time::Instant;
 
-/// Bir kaydırma serisinin kapandığına karar verme eşiği.
-const KAYDIRMA_SESSİZLİĞİ: f64 = 0.15;
-/// Kesintisiz kaydırmada ara satır basma aralığı; uzun kaydırmalar tek
-/// dev satıra sıkışmasın, saniyelik CPU örnekleriyle hizalanabilsin.
-const KAYDIRMA_ARA_RAPOR: f64 = 0.5;
+/// Bir kaydırma/fare serisinin kapandığına karar verme eşiği.
+const SERİ_SESSİZLİĞİ: f64 = 0.15;
+/// Kesintisiz seride ara satır basma aralığı; uzun hareketler tek dev
+/// satıra sıkışmasın, saniyelik CPU örnekleriyle hizalanabilsin.
+const SERİ_ARA_RAPOR: f64 = 0.5;
 /// Kök render özetinin periyodu.
 const KARE_ÖZET_PERİYODU: f64 = 1.0;
-/// Kart listesi panelinin genişliği; kaydırmanın hangi bölgede olduğunu
-/// ayırt etmek için kullanılır.
+/// Kart listesi panelinin genişliği; olayın hangi bölgede olduğunu ayırt
+/// etmek için kullanılır.
 const LİSTE_GENİŞLİĞİ: f32 = 280.0;
 
 static ETKİN: OnceLock<bool> = OnceLock::new();
@@ -30,6 +30,7 @@ static DURUM: Mutex<Durum> = Mutex::new(Durum::yeni());
 
 struct Durum {
     kaydırma: Option<Kaydırma>,
+    fare: Option<Fare>,
     kare_süreleri: Vec<f64>,
     kare_özet_zamanı: f64,
     pencere: Option<(i32, i32)>,
@@ -39,6 +40,7 @@ impl Durum {
     const fn yeni() -> Self {
         Self {
             kaydırma: None,
+            fare: None,
             kare_süreleri: Vec::new(),
             kare_özet_zamanı: 0.0,
             pencere: None,
@@ -52,6 +54,16 @@ struct Kaydırma {
     dikey: f32,
     yatay: f32,
     olay: u32,
+    bölge: &'static str,
+    kart: &'static str,
+}
+
+struct Fare {
+    başlangıç: f64,
+    son_olay: f64,
+    mesafe: f32,
+    olay: u32,
+    konum: (f32, f32),
     bölge: &'static str,
     kart: &'static str,
 }
@@ -79,12 +91,23 @@ pub fn başlat() {
     });
 }
 
+/// Rasterleştirici bilgisini bir kez kaydeder. Yazılım fallback'i (llvmpipe
+/// gibi) canlı kare süresini başsız ölçümlerin çok üstüne çıkardığı için
+/// günlüğün başında görünmesi gerekiyor.
+pub fn gpu_bilgisi(ayrıntı: &str) {
+    static YAZILDI: OnceLock<()> = OnceLock::new();
+    if !etkin() || YAZILDI.set(()).is_err() {
+        return;
+    }
+    yaz("GPU", ayrıntı);
+}
+
 /// Kart değişimini kaydeder.
 pub fn kart_değişti(önceki: &'static str, yeni: &'static str) {
     if !etkin() {
         return;
     }
-    kaydırmayı_kapat();
+    serileri_kapat();
     yaz("KART", &format!("{önceki} → {yeni}"));
 }
 
@@ -94,7 +117,7 @@ pub fn olay(etiket: &str, ayrıntı: &str) {
     if !etkin() {
         return;
     }
-    kaydırmayı_kapat();
+    serileri_kapat();
     yaz(etiket, ayrıntı);
 }
 
@@ -105,16 +128,12 @@ pub fn kaydırma(dikey: f32, yatay: f32, x: f32, kart: &'static str) {
         return;
     }
     let şimdi = geçen();
-    let bölge = if x < LİSTE_GENİŞLİĞİ {
-        "kart listesi"
-    } else {
-        "içerik"
-    };
+    let bölge = bölge_adı(x);
     let mut biten = None;
     if let Ok(mut durum) = DURUM.lock() {
         if durum.kaydırma.as_ref().is_some_and(|k| {
-            şimdi - k.son_olay > KAYDIRMA_SESSİZLİĞİ
-                || şimdi - k.başlangıç > KAYDIRMA_ARA_RAPOR
+            şimdi - k.son_olay > SERİ_SESSİZLİĞİ
+                || şimdi - k.başlangıç > SERİ_ARA_RAPOR
                 || k.bölge != bölge
                 || k.kart != kart
         }) {
@@ -137,6 +156,56 @@ pub fn kaydırma(dikey: f32, yatay: f32, x: f32, kart: &'static str) {
     if let Some(k) = biten {
         kaydırma_satırı(&k);
     }
+}
+
+/// Fare hareketini biriktirir. Grafik yüzeyleri üzerindeki imleç takibi
+/// etkileşim katmanını her harekette yeniden kurduğu için, kaydırmadan
+/// bağımsız olarak ayrı izlenmesi gerekiyor.
+pub fn fare_hareketi(x: f32, y: f32, kart: &'static str) {
+    if !etkin() {
+        return;
+    }
+    let şimdi = geçen();
+    let bölge = bölge_adı(x);
+    let mut biten = None;
+    if let Ok(mut durum) = DURUM.lock() {
+        if durum.fare.as_ref().is_some_and(|f| {
+            şimdi - f.son_olay > SERİ_SESSİZLİĞİ
+                || şimdi - f.başlangıç > SERİ_ARA_RAPOR
+                || f.bölge != bölge
+                || f.kart != kart
+        }) {
+            biten = durum.fare.take();
+        }
+        let f = durum.fare.get_or_insert(Fare {
+            başlangıç: şimdi,
+            son_olay: şimdi,
+            mesafe: 0.0,
+            olay: 0,
+            konum: (x, y),
+            bölge,
+            kart,
+        });
+        f.mesafe += (x - f.konum.0).hypot(y - f.konum.1);
+        f.konum = (x, y);
+        f.son_olay = şimdi;
+        f.olay += 1;
+    }
+    if let Some(f) = biten {
+        fare_satırı(&f);
+    }
+}
+
+/// Fare düğmesi olayları; sürükleme pencerelerini görünür kılar.
+pub fn fare_düğmesi(basıldı: bool, düğme: &str, x: f32, kart: &'static str) {
+    if !etkin() {
+        return;
+    }
+    serileri_kapat();
+    yaz(
+        if basıldı { "BASTI" } else { "BIRAKTI" },
+        &format!("{düğme} · {} · {kart}", bölge_adı(x)),
+    );
 }
 
 /// Pencere boyutu değiştiyse kaydeder.
@@ -185,18 +254,26 @@ impl Drop for KareÖlçümü {
     }
 }
 
-/// Sessizleşen kaydırmaları ve saniyelik kare özetini boşaltır.
+/// Sessizleşen serileri ve saniyelik kare özetini boşaltır.
 fn zamanlayıcı() {
     let şimdi = geçen();
-    let mut biten = None;
+    let mut biten_kaydırma = None;
+    let mut biten_fare = None;
     let mut özet = None;
     if let Ok(mut durum) = DURUM.lock() {
         if durum
             .kaydırma
             .as_ref()
-            .is_some_and(|k| şimdi - k.son_olay >= KAYDIRMA_SESSİZLİĞİ)
+            .is_some_and(|k| şimdi - k.son_olay >= SERİ_SESSİZLİĞİ)
         {
-            biten = durum.kaydırma.take();
+            biten_kaydırma = durum.kaydırma.take();
+        }
+        if durum
+            .fare
+            .as_ref()
+            .is_some_and(|f| şimdi - f.son_olay >= SERİ_SESSİZLİĞİ)
+        {
+            biten_fare = durum.fare.take();
         }
         if şimdi - durum.kare_özet_zamanı >= KARE_ÖZET_PERİYODU {
             let pencere = şimdi - durum.kare_özet_zamanı;
@@ -206,8 +283,11 @@ fn zamanlayıcı() {
             }
         }
     }
-    if let Some(k) = biten {
+    if let Some(k) = biten_kaydırma {
         kaydırma_satırı(&k);
+    }
+    if let Some(f) = biten_fare {
+        fare_satırı(&f);
     }
     if let Some((mut süreler, pencere)) = özet {
         kare_satırı(&mut süreler, pencere);
@@ -235,6 +315,17 @@ fn kaydırma_satırı(k: &Kaydırma) {
     );
 }
 
+fn fare_satırı(f: &Fare) {
+    let süre = (f.son_olay - f.başlangıç).max(0.0);
+    yaz(
+        "FARE",
+        &format!(
+            "{:.0}px yol · {} olay · {süre:.2}s · {} · {}",
+            f.mesafe, f.olay, f.bölge, f.kart
+        ),
+    );
+}
+
 fn kare_satırı(süreler: &mut [f64], pencere: f64) {
     süreler.sort_unstable_by(f64::total_cmp);
     let toplam: f64 = süreler.iter().sum();
@@ -256,13 +347,24 @@ fn kare_satırı(süreler: &mut [f64], pencere: f64) {
     );
 }
 
-fn kaydırmayı_kapat() {
-    let biten = DURUM
+fn serileri_kapat() {
+    let (kaydırma, fare) = DURUM
         .lock()
-        .ok()
-        .and_then(|mut durum| durum.kaydırma.take());
-    if let Some(k) = biten {
+        .map(|mut durum| (durum.kaydırma.take(), durum.fare.take()))
+        .unwrap_or((None, None));
+    if let Some(k) = kaydırma {
         kaydırma_satırı(&k);
+    }
+    if let Some(f) = fare {
+        fare_satırı(&f);
+    }
+}
+
+fn bölge_adı(x: f32) -> &'static str {
+    if x < LİSTE_GENİŞLİĞİ {
+        "kart listesi"
+    } else {
+        "içerik"
     }
 }
 
