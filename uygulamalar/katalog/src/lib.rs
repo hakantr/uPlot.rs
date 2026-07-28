@@ -4,9 +4,9 @@
 use gpui::ClipboardItem;
 use gpui::{
     AccessibleAction, App, ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement,
-    KeyBinding, ListAlignment, ListState, Render, Role, ScrollStrategy, SharedString,
-    StyleRefinement, Task, UniformListScrollHandle, Window, div, list, prelude::*, px, rgb, rgba,
-    uniform_list,
+    KeyBinding, ListAlignment, ListState, Render, Role, ScrollStrategy, ScrollWheelEvent,
+    SharedString, StyleRefinement, Task, UniformListScrollHandle, Window, div, list, prelude::*,
+    px, rgb, rgba, uniform_list,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
@@ -85,6 +85,7 @@ use uplot_rs_gpui_ornekler::{
 };
 use web_time::Instant;
 
+mod izleme;
 #[path = "web_koprusu.rs"]
 mod web_köprüsü;
 
@@ -148,6 +149,7 @@ impl<T: Styled> KatalogKaydırmaUzantısı for T {}
 
 /// Ortak grafik ve katalog GPUI eylemlerini uygulamaya bir kez kaydeder.
 pub fn başlat(cx: &mut App) {
+    izleme::başlat();
     uplot_rs::gpui::başlat(cx);
     cx.bind_keys([
         KeyBinding::new("enter", KartıEtkinleştir, Some("uplot_katalog_kartı")),
@@ -4218,6 +4220,7 @@ impl ChartListesi {
         if let Err(hata) = web_köprüsü::kart_url_adresini_güncelle(kart) {
             self.hata = Some(hata);
         }
+        izleme::kart_değişti(self.aktif_kart.slug(), kart.slug());
         self.aktif_kart = kart;
         if let Some(indeks) = KATALOG_KARTLARI
             .iter()
@@ -5307,6 +5310,12 @@ fn grafik_oluştur(
 
 impl Render for ChartListesi {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let _kare_ölçümü = izleme::KareÖlçümü::başlat();
+        let görüntü_alanı = window.viewport_size();
+        izleme::pencere_boyutu(
+            f32::from(görüntü_alanı.width),
+            f32::from(görüntü_alanı.height),
+        );
         if let Some(indeks) = self.kart_listesi_kaydırma_bekliyor.take() {
             cx.on_next_frame(window, move |bu, _, cx| {
                 bu.kart_listesi_kaydırma
@@ -8557,6 +8566,18 @@ impl Render for ChartListesi {
                             .turu(DugmeTuru::Hayalet)
                             .tiklaninca(cx.listener(|bu, _, _, cx| {
                                 bu.kullanım_rehberi_açık = !bu.kullanım_rehberi_açık;
+                                izleme::olay(
+                                    "PANEL",
+                                    &format!(
+                                        "kullanım rehberi {} · {}",
+                                        if bu.kullanım_rehberi_açık {
+                                            "açıldı"
+                                        } else {
+                                            "kapandı"
+                                        },
+                                        bu.aktif_kart.slug()
+                                    ),
+                                );
                                 cx.notify();
                             })),
                         )
@@ -8680,6 +8701,18 @@ impl Render for ChartListesi {
                             .turu(DugmeTuru::Hayalet)
                             .tiklaninca(cx.listener(|bu, _, _, cx| {
                                 bu.kart_tanımı_açık = !bu.kart_tanımı_açık;
+                                izleme::olay(
+                                    "PANEL",
+                                    &format!(
+                                        "kart tanımı {} · {}",
+                                        if bu.kart_tanımı_açık {
+                                            "açıldı"
+                                        } else {
+                                            "kapandı"
+                                        },
+                                        bu.aktif_kart.slug()
+                                    ),
+                                );
                                 cx.notify();
                             })),
                     )
@@ -8702,6 +8735,19 @@ impl Render for ChartListesi {
             .flex()
             .flex_row()
             .bg(zemin)
+            // Kök dinleyici kabarma evresinde çalışır ve yayılımı kesmez;
+            // iç kaydırma kapları olayı normal şekilde görmeye devam eder.
+            .on_scroll_wheel(cx.listener(
+                |bu, olay: &ScrollWheelEvent, window: &mut Window, _cx| {
+                    let delta = olay.delta.pixel_delta(window.line_height());
+                    izleme::kaydırma(
+                        f32::from(delta.y),
+                        f32::from(delta.x),
+                        f32::from(olay.position.x),
+                        bu.aktif_kart.slug(),
+                    );
+                },
+            ))
             .child(liste)
             .child(ayrıntı)
             .when(açıklama_istendi, |kök| {
