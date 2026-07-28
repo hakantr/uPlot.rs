@@ -9,6 +9,7 @@ use std::cell::{Cell, RefCell};
 use std::collections::{HashMap, hash_map::DefaultHasher};
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
+use std::sync::Arc;
 use std::time::Duration;
 
 use ::gpui::{
@@ -28,6 +29,9 @@ use crate::{
     bilgi_kutusunu_yerleştir,
 };
 use web_time::Instant;
+
+/// Yoğun yüzeyleri tek sprite'a indiren CPU rasterleştirici.
+mod raster;
 
 ::gpui::actions!(
     uplot_rs,
@@ -647,6 +651,13 @@ struct GpuiYolÖnbelleği {
     renkler: HashMap<String, Hsla>,
     veri_komutları: Vec<bool>,
     veri_komutu_çizim_alanı: Option<(u32, u32, u32, u32)>,
+    /// Yoğun yüzeyin tek sprite'a indirilmiş hâli.
+    ///
+    /// `None` iken yüzey vektör yolundadır. Anahtar fiziksel çözünürlüktür;
+    /// veri, ölçek/görünüm veya boyut değişimi `yüzeyi_hazırla` içinde
+    /// önbelleği zaten düşürüyor, cihaz piksel oranı değişimi ise anahtarla
+    /// yakalanıyor. Tetikleyici kümesi uPlot'un `_commit()` eşleniğidir.
+    raster: Option<(u32, u32, Arc<::gpui::RenderImage>)>,
 }
 
 /// Kareler arası saklanan, pencere konumuna yerleştirilmiş yol.
@@ -713,6 +724,7 @@ impl GpuiYolÖnbelleği {
             self.ikincil_yollar.clear();
             self.veri_komutları.clear();
             self.veri_komutu_çizim_alanı = None;
+            self.raster = None;
         }
         self.sınırlar = Some(sınırlar);
         if self.yollar.len() != sahne.komutlar().len() {
@@ -745,6 +757,7 @@ impl GpuiYolÖnbelleği {
     fn sahneyi_değiştir(&mut self, eski: &Sahne, yeni: &Sahne) -> usize {
         self.veri_komutları.clear();
         self.veri_komutu_çizim_alanı = None;
+        self.raster = None;
         if eski.boyut() != yeni.boyut() {
             self.sahne_boyutu = Some(yeni.boyut());
             self.sınırlar = None;
@@ -3562,6 +3575,114 @@ fn retained_yolu_boya(
     }
 }
 
+/// Yüzeyi tek sprite olarak boyar; uygun değilse `false` döner.
+///
+/// Uygunluk iki koşula bağlı: köşe bütçesinin aşılması ve sahnenin kayıpsız
+/// rasterleştirilebilmesi. İkincisi sağlanmazsa yüzey vektör yolunda kalır,
+/// yani politika kart bazlı değil ölçüm bazlıdır ve yeni kartlar da
+/// kendiliğinden kapsanır.
+fn raster_yüzeyi_boya(
+    sahne: &Sahne,
+    sınırlar: Bounds<Pixels>,
+    yol_önbelleği: &mut GpuiYolÖnbelleği,
+    çizim_kırpması: Option<(f32, f32, f32, f32)>,
+    pencere: &mut Window,
+) -> bool {
+    let fiziksel_ölçek = pencere.scale_factor();
+    let fiziksel_genişlik = (f32::from(sınırlar.size.width) * fiziksel_ölçek)
+        .round()
+        .max(0.0) as u32;
+    let fiziksel_yükseklik = (f32::from(sınırlar.size.height) * fiziksel_ölçek)
+        .round()
+        .max(0.0) as u32;
+    if fiziksel_genişlik == 0 || fiziksel_yükseklik == 0 {
+        return false;
+    }
+
+    let önbellekte = yol_önbelleği
+        .raster
+        .as_ref()
+        .filter(|(g, y, _)| *g == fiziksel_genişlik && *y == fiziksel_yükseklik)
+        .map(|(_, _, görsel)| Arc::clone(görsel));
+
+    let görsel = match önbellekte {
+        Some(görsel) => görsel,
+        None => {
+            let Some(nokta) = raster::nokta_sayısı_rasterlenebilirse(sahne) else {
+                return false;
+            };
+            if nokta < raster::RASTER_NOKTA_EŞİĞİ {
+                return false;
+            }
+            let (kaynak_g, kaynak_y) = sahne.boyut();
+            let dönüşüm = GpuiYüzeyDönüşümü::hesapla(
+                kaynak_g,
+                kaynak_y,
+                0.0,
+                0.0,
+                f32::from(sınırlar.size.width),
+                f32::from(sınırlar.size.height),
+            );
+            let üretilen = {
+                let renkler = &mut *yol_önbelleği;
+                raster::rasterleştir(
+                    sahne,
+                    fiziksel_genişlik,
+                    fiziksel_yükseklik,
+                    dönüşüm.ölçek * fiziksel_ölçek,
+                    |kod| renkler.renk(kod),
+                )
+            };
+            let Some(üretilen) = üretilen else {
+                return false;
+            };
+            yol_önbelleği.raster =
+                Some((fiziksel_genişlik, fiziksel_yükseklik, Arc::clone(&üretilen)));
+            üretilen
+        }
+    };
+
+    let boya = |pencere: &mut Window| {
+        let _ = pencere.paint_image(
+            sınırlar,
+            Bounds::new(point(px(0.0), px(0.0)), sınırlar.size),
+            Corners::default(),
+            görsel,
+            0,
+            false,
+        );
+    };
+    if let Some((k_sol, k_sağ, k_üst, k_alt)) = çizim_kırpması {
+        let (kaynak_g, kaynak_y) = sahne.boyut();
+        let dönüşüm = GpuiYüzeyDönüşümü::hesapla(
+            kaynak_g,
+            kaynak_y,
+            f32::from(sınırlar.origin.x),
+            f32::from(sınırlar.origin.y),
+            f32::from(sınırlar.size.width),
+            f32::from(sınırlar.size.height),
+        );
+        pencere.with_content_mask(
+            Some(ContentMask {
+                bounds: Bounds::new(
+                    point(
+                        px(dönüşüm.köken_x + k_sol * dönüşüm.ölçek),
+                        px(dönüşüm.köken_y + k_üst * dönüşüm.ölçek),
+                    ),
+                    size(
+                        px((k_sağ - k_sol) * dönüşüm.ölçek),
+                        px((k_alt - k_üst) * dönüşüm.ölçek),
+                    ),
+                ),
+            }),
+            boya,
+        );
+    } else {
+        boya(pencere);
+    }
+    true
+}
+
 fn sahneyi_önbellekli_boya(
     sahne: &Sahne,
     sınırlar: Bounds<Pixels>,
@@ -3621,6 +3742,13 @@ fn sahneyi_önbellekli_boya(
             px(yerel_dönüşüm.köken_y + nokta.y * yerel_dönüşüm.ölçek),
         )
     };
+    // uPlot'un canvas'ı `_commit()` başına bir kez çizip piksellerini korur;
+    // GPUI ise her karede tüm geometriyi yeniden gönderir. Köşe bütçesini
+    // aşan ve kayıpsız rasterleştirilebilen yüzeyler tek sprite'a indirilerek
+    // aynı davranışa getirilir.
+    if raster_yüzeyi_boya(sahne, sınırlar, yol_önbelleği, çizim_kırpması, pencere) {
+        return;
+    }
     let pay = kırpma_payı(sahne);
     let boya_görünümü =
         veri_görünümü.and_then(|görünüm| GpuiBoyaGörünümü::hesapla(görünüm, dönüşüm, pay));
@@ -5678,6 +5806,7 @@ mod testler {
             renkler: HashMap::new(),
             veri_komutları: Vec::new(),
             veri_komutu_çizim_alanı: None,
+            raster: None,
         };
         önbelleğe_örnek_yol_ekle(&mut önbellek);
 
@@ -5700,6 +5829,7 @@ mod testler {
                 renkler: HashMap::new(),
                 veri_komutları: Vec::new(),
                 veri_komutu_çizim_alanı: None,
+                raster: None,
             };
             önbelleğe_örnek_yol_ekle(&mut önbellek);
 
@@ -5730,6 +5860,7 @@ mod testler {
             renkler: HashMap::new(),
             veri_komutları: Vec::new(),
             veri_komutu_çizim_alanı: None,
+            raster: None,
         };
 
         assert_eq!(önbellek.sahneyi_değiştir(&eski, &yeni), 1);
@@ -5749,6 +5880,7 @@ mod testler {
             renkler: HashMap::new(),
             veri_komutları: Vec::new(),
             veri_komutu_çizim_alanı: None,
+            raster: None,
         };
         önbelleğe_örnek_yol_ekle(&mut önbellek);
         let yol_kapasitesi = önbellek.yollar.capacity();

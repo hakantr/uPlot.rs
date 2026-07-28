@@ -58,6 +58,9 @@ izleme = []
 
 [dependencies]
 gpui = { version = "0.2.2", path = "../gpui/crates/gpui" }
+# Yoğun yüzeylerin raster katmanı `RenderImage`'a BGRA tampon veriyor; kodek
+# gerekmediği için varsayılan özellikler kapalı.
+image = { version = "0.25.1", default-features = false }
 web-time = "1.1.0"
 
 [dev-dependencies]
