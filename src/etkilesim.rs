@@ -313,10 +313,15 @@ impl EtkileşimDenetleyicisi {
         } else {
             mevcut_y
         };
-        let y_görünümü = if y != self.tam_y || (eksen == TekerlekEkseni::X && x != self.tam_x) {
-            Some(y)
+        // uPlot `setScale('x', …)` sonrası `auto: true` Y ölçeklerini görünür
+        // pencereye göre yeniden aralıklar; `seçim_yakınlaştır` de Y görünümüne
+        // dokunmaz. Tekerlek yolu yalnız X'te yakınlaştırırken Y'yi
+        // sabitlediğinde iki yol birbiriyle çelişiyor ve düz bir bölgeye
+        // yaklaşınca Y ekseni o bölgeye daralmıyordu.
+        let y_görünümü = if matches!(eksen, TekerlekEkseni::İkisi | TekerlekEkseni::Y) {
+            (y != self.tam_y).then_some(y)
         } else {
-            None
+            self.görünüm.y
         };
         let yeni = Görünüm {
             x: (x != self.tam_x).then_some(x),
@@ -683,5 +688,52 @@ mod testler {
             true,
         ));
         assert!(!denetleyici.geri_var());
+    }
+
+    /// uPlot `setScale('x', …)` sonrası `auto: true` Y ölçeklerini görünür
+    /// pencereye göre yeniden aralıklar; `seçim_yakınlaştır` de Y görünümüne
+    /// dokunmaz. Tekerlek yolu da aynı sözleşmeye uymalı, aksi hâlde iki
+    /// yakınlaştırma yolu birbiriyle çelişir.
+    #[test]
+    fn yalnız_x_tekerleği_y_görünümünü_otomatik_bırakır() {
+        let tam_x = Aralık {
+            en_az: 0.0,
+            en_çok: 100.0,
+        };
+        let tam_y = Aralık {
+            en_az: 0.0,
+            en_çok: 100.0,
+        };
+        let mut denetleyici = EtkileşimDenetleyicisi::yeni(
+            tam_x,
+            tam_y,
+            EtkileşimSeçenekleri::default().tekerlek_etkileşimi(true),
+        );
+        // Görünür Y, tam aralıktan dar: eski davranış bunu görünüme
+        // sabitleyip sonraki adımlarda otomatik taramayı kesiyordu.
+        let görünür_y = Aralık {
+            en_az: 20.0,
+            en_çok: 40.0,
+        };
+
+        let sonuç = denetleyici.tekerlek(
+            0.5,
+            0.5,
+            görünür_y,
+            1.0,
+            false,
+            TekerlekEkseni::X,
+            XÖlçekDağılımı::Doğrusal,
+            YÖlçekDağılımı::Doğrusal,
+            Instant::now(),
+        );
+        assert!(sonuç.is_ok(), "tekerlek yakınlaştırması uygulanamadı");
+        assert!(sonuç.unwrap_or(false), "X görünümü değişmeliydi");
+        assert!(denetleyici.görünür_x() != tam_x, "X yakınlaşmalıydı");
+        assert_eq!(
+            denetleyici.görünür_y(),
+            None,
+            "yalnız X tekerleği Y görünümünü sabitlememeli"
+        );
     }
 }
