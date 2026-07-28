@@ -293,6 +293,9 @@ mod testler {
     fn y_zoomu_gradyan_sıfırını_görünür_ölçeğe_göre_yeniler() -> Result<(), UplotHatası> {
         let (seçenekler, veri) = sparklines_bars_kartı(SparklinesBarsÖrneği::GradyanÇubuklar)?;
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        // Tekerlek yakınlaştırması varsayılan kapalı; test onu
+        // araç olarak kullandığı için açıkça açıyor.
+        grafik.tekerlek_etkileşimi_ayarla(true);
         assert!(grafik.tekerlek_eksende(0.5, 0.35, 120.0, false, TekerlekEkseni::Y)?);
         let aralık = grafik.görünür_y_aralığı();
         let beklenen = ((0.0 - aralık.en_az) / (aralık.en_çok - aralık.en_az)) as f32;

@@ -283,7 +283,7 @@ mod testler {
                     1_566_633_540.0
                 })
             );
-            assert!(seçenekler.etkileşimler.tekerlek_etkileşimi);
+            assert!(!seçenekler.etkileşimler.tekerlek_etkileşimi);
             assert!(!seçenekler.etkileşimler.seçim_yakınlaştır);
             let grafik = Grafik::yeni(seçenekler, veri)?;
             let (son_x, son_değerler) =
@@ -393,6 +393,9 @@ mod testler {
         let mut akış = StreamDataAkışı::yeni(StreamDataÖrneği::SabitUzunluk)?;
         let (seçenekler, veri) = akış.kartı()?;
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
+        // Tekerlek yakınlaştırması varsayılan kapalı; test onu
+        // araç olarak kullandığı için açıkça açıyor.
+        grafik.tekerlek_etkileşimi_ayarla(true);
         assert!(grafik.tekerlek_eksende(0.5, 0.5, 100.0, true, crate::TekerlekEkseni::X,)?);
         let yakın = grafik.görünür_x_aralığı();
         assert!(akış.ilerlet());

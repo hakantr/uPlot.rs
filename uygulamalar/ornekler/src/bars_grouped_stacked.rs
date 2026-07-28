@@ -375,7 +375,7 @@ mod testler {
         for örnek in ÇubukÖrneği::TÜMÜ {
             let (seçenekler, _) = bars_grouped_stacked_kartı(örnek)?;
             let etkileşimler = seçenekler.etkileşimler;
-            assert!(etkileşimler.tekerlek_etkileşimi, "{}", örnek.kimlik());
+            assert!(!etkileşimler.tekerlek_etkileşimi, "{}", örnek.kimlik());
             assert!(etkileşimler.seçim_yakınlaştır, "{}", örnek.kimlik());
             assert!(etkileşimler.çift_tıkla_tam_görünüm, "{}", örnek.kimlik());
             assert!(etkileşimler.dokunma_etkileşimi, "{}", örnek.kimlik());
@@ -394,6 +394,9 @@ mod testler {
             let (seçenekler, veri) = bars_grouped_stacked_kartı(örnek)?;
             let mut grafik = Grafik::yeni(seçenekler, veri)?;
             let tam_x = grafik.görünür_x_aralığı();
+            // Tekerlek yakınlaştırması varsayılan kapalı; test onu
+            // araç olarak kullandığı için açıkça açıyor.
+            grafik.tekerlek_etkileşimi_ayarla(true);
             assert!(grafik.tekerlek(0.5, 0.5, 1.0, false)?, "{}", örnek.kimlik());
             let sahne = grafik.çiz_görünür_boyutta(genişlik, yükseklik);
             let merkez = sahne.komutlar().iter().find_map(|komut| match komut {

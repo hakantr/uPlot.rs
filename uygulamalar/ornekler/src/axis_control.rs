@@ -110,6 +110,9 @@ mod testler {
         );
         assert!(grafik.seri_görünürlüğünü_ayarla(0, true)?);
         assert_eq!(grafik.görünür_y_aralığı(), Aralık::yeni(-50.0, 50.0)?);
+        // Tekerlek yakınlaştırması varsayılan kapalı; test onu
+        // araç olarak kullandığı için açıkça açıyor.
+        grafik.tekerlek_etkileşimi_ayarla(true);
         assert!(grafik.tekerlek_eksende(0.5, 0.5, 120.0, true, TekerlekEkseni::Y)?);
         assert_ne!(grafik.görünür_y_aralığı(), Aralık::yeni(-50.0, 50.0)?);
         assert!(grafik.tam_görünüm());

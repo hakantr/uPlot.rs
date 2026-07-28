@@ -481,6 +481,9 @@ mod testler {
         let (seçenekler, veri) = multi_bars_kartı(MultiBarsÖrneği::KitaplıklarDikey)?;
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
         let önce = grafik.görünür_x_aralığı();
+        // Tekerlek yakınlaştırması varsayılan kapalı; test onu
+        // araç olarak kullandığı için açıkça açıyor.
+        grafik.tekerlek_etkileşimi_ayarla(true);
         assert!(grafik.tekerlek(0.3, 0.5, 120.0, true)?);
         let sonra = grafik.görünür_x_aralığı();
         assert!(sonra.en_çok - sonra.en_az < önce.en_çok - önce.en_az);
@@ -507,6 +510,9 @@ mod testler {
         let (seçenekler, veri) = multi_bars_kartı(MultiBarsÖrneği::KitaplıklarDikey)?;
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
         for _ in 0..7 {
+            // Tekerlek yakınlaştırması varsayılan kapalı; test onu
+            // araç olarak kullandığı için açıkça açıyor.
+            grafik.tekerlek_etkileşimi_ayarla(true);
             assert!(grafik.tekerlek_eksende(0.5, 0.45, 100.0, true, TekerlekEkseni::Y,)?);
         }
         let sahne = grafik.çiz();

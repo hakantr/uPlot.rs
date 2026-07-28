@@ -126,6 +126,9 @@ mod testler {
                 .any(|komut| matches!(komut, Komut::Metin { içerik, .. } if içerik.contains(" °")))
         );
 
+        // Tekerlek yakınlaştırması varsayılan kapalı; test onu
+        // araç olarak kullandığı için açıkça açıyor.
+        grafik.tekerlek_etkileşimi_ayarla(true);
         assert!(grafik.tekerlek_eksende(0.5, 0.5, 120.0, true, TekerlekEkseni::Y)?);
         assert!(dönüşüm_korunur(&grafik));
         assert!(grafik.görünür_aralıkları_ayarla(

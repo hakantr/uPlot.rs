@@ -68,7 +68,7 @@ mod testler {
         assert_eq!(veri.x().last().copied(), Some(30.0));
         assert_eq!(veri.seriler().len(), 3);
         assert!(veri.seriler().iter().all(|seri| seri.len() == 30));
-        assert!(seçenekler.etkileşimler.tekerlek_etkileşimi);
+        assert!(!seçenekler.etkileşimler.tekerlek_etkileşimi);
         assert!(seçenekler.etkileşimler.seçim_yakınlaştır);
         assert!(seçenekler.etkileşimler.çift_tıkla_tam_görünüm);
         assert!(seçenekler.etkileşimler.görünüm_geçmişi);

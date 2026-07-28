@@ -525,6 +525,9 @@ mod testler {
         let mut grafik = Grafik::yeni(seçenekler, veri)?;
         let ilk = ilk_ısı_hücresi_boyutu(&grafik.çiz_görünür_boyutta(1_800, 600))
             .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
+        // Tekerlek yakınlaştırması varsayılan kapalı; test onu
+        // araç olarak kullandığı için açıkça açıyor.
+        grafik.tekerlek_etkileşimi_ayarla(true);
         grafik.tekerlek_eksende(0.5, 0.5, 160.0, false, TekerlekEkseni::Y)?;
         let yakın = ilk_ısı_hücresi_boyutu(&grafik.çiz_görünür_boyutta(1_800, 600))
             .ok_or(UplotHatası::YetersizVeri { uzunluk: 0 })?;
@@ -557,6 +560,9 @@ mod testler {
                     (boşluk - beklenen_boşluk).abs() < 0.02,
                     "{örnek:?}: {boşluk}"
                 );
+                // Tekerlek yakınlaştırması varsayılan kapalı; test onu
+                // araç olarak kullandığı için açıkça açıyor.
+                grafik.tekerlek_etkileşimi_ayarla(true);
                 grafik.tekerlek_eksende(0.5, 0.5, 100.0, false, TekerlekEkseni::X)?;
             }
         }
