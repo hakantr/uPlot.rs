@@ -15,10 +15,10 @@ use std::time::Duration;
 use ::gpui::{
     AnyElement, App, BorderStyle, Bounds, ContentMask, Context, Corners, Entity, EventEmitter,
     FocusHandle, Hsla, IntoElement, KeyBinding, KeyDownEvent, KeyUpEvent, MouseButton,
-    MouseDownEvent, MouseExitEvent, MouseMoveEvent, MouseUpEvent, Path, PathBuilder, PinchEvent,
-    Pixels, Render, Role, ScrollDelta, ScrollWheelEvent, SharedString, StyleRefinement, Task,
-    TextAlign, TextRun, TouchPhase, WeakEntity, Window, canvas, div, linear_color_stop,
-    linear_gradient, point, prelude::*, px, quad, rgb, rgba, size,
+    MouseDownEvent, MouseMoveEvent, MouseUpEvent, Path, PathBuilder, PinchEvent, Pixels, Render,
+    Role, ScrollDelta, ScrollWheelEvent, SharedString, StyleRefinement, Task, TextAlign, TextRun,
+    TouchPhase, WeakEntity, Window, canvas, div, linear_color_stop, linear_gradient, point,
+    prelude::*, px, quad, rgb, rgba, size,
 };
 
 use crate::grafik::OransalGörünüm;
@@ -967,6 +967,15 @@ impl GpuiGrafik {
 
     pub fn grafik(&self) -> &Grafik {
         &self.grafik
+    }
+
+    /// İmleç yüzeyin üzerinde mi.
+    ///
+    /// Fare yüzeyi terk ettiğinde temizlenir; uPlot'un `mouseleave` ile
+    /// cursor'ı gizlemesinin karşılığıdır. Testler ve tüketiciler imleç
+    /// katmanının gerçekten söndüğünü buradan doğrular.
+    pub const fn imleç_etkin_mi(&self) -> bool {
+        self.imleç.is_some()
     }
 
     /// Yüzeyin son yerleşimde ölçülen çizim alanı, pencere koordinatında.
@@ -3346,21 +3355,45 @@ impl Render for GpuiGrafik {
                     cx.notify();
                 }
             }))
-            .on_mouse_exit(cx.listener(|bu, _: &MouseExitEvent, _, cx| {
-                if !bu.imleç_kilitli && bu.seçim.is_none() && bu.taşıma_başlangıcı.is_none()
-                {
-                    bu.bilgi_balonu_beklemesini_iptal_et();
-                    bu.imleç = None;
-                    bu.açıklama_vuruşu = None;
-                    bu.eksen_üzerinde = false;
-                    if bu.grafik.imleç_odağını_temizle() {
-                        bu.veri_sahnesini_yenile(cx);
-                    }
-                    bu.etkileşim_yüzeyini_yenile(cx);
-                    cx.emit(GpuiGrafikOlayı::İmleçKonumuDeğişti);
-                    cx.emit(GpuiGrafikOlayı::İmleçDeğişti);
-                    cx.notify();
+            // uPlot cursor'ı `mouseleave` ile gizler. GPUI'de bunun karşılığı
+            // `on_mouse_exit` değil: o olay yalnız fare **pencereyi** terk
+            // ettiğinde üretilir ve `on_mouse_move` de hitbox ile filtrelidir,
+            // yani yüzey sınırından çıkışta ikisi de çağrılmaz. `on_hover`
+            // hareketi filtresiz dinleyip hover geçişini bildirir ve pencere
+            // çıkışını da kapsar. Bu ayrım olmadan imleç çizgisi terk edilen
+            // yüzeyde kalıyordu — `sparklines` tablosunda 20 küçük yüzeyin
+            // her biri kendi çizgisini bırakıyordu.
+            .on_hover(cx.listener(|bu, üzerinde: &bool, pencere, cx| {
+                if *üzerinde || bu.imleç_kilitli {
+                    return;
                 }
+                // Seçim ve taşıma sürerken fare yüzeyin dışına çıkabilir;
+                // sürükleme kendi bırakma olayıyla temizlenir.
+                if bu.seçim.is_some() || bu.taşıma_başlangıcı.is_some() {
+                    return;
+                }
+                // `on_hover` hitbox'ı üst bir katman gölgelediğinde de `false`
+                // bildirir; fare hâlâ yüzeyin üstündeyse imleci temizlemek
+                // çizgiyi hareket ederken söndürür. Ölçülen alan tek
+                // güvenilir ölçüttür.
+                if bu
+                    .çizim_sınırları
+                    .get()
+                    .is_some_and(|alan| alan.contains(&pencere.mouse_position()))
+                {
+                    return;
+                }
+                bu.bilgi_balonu_beklemesini_iptal_et();
+                bu.imleç = None;
+                bu.açıklama_vuruşu = None;
+                bu.eksen_üzerinde = false;
+                if bu.grafik.imleç_odağını_temizle() {
+                    bu.veri_sahnesini_yenile(cx);
+                }
+                bu.etkileşim_yüzeyini_yenile(cx);
+                cx.emit(GpuiGrafikOlayı::İmleçKonumuDeğişti);
+                cx.emit(GpuiGrafikOlayı::İmleçDeğişti);
+                cx.notify();
             }))
             .on_mouse_down(
                 MouseButton::Left,

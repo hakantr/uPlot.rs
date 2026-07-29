@@ -9764,6 +9764,71 @@ mod tests {
         Ok(())
     }
 
+    /// Fare bir yüzeyi terk ettiğinde o yüzeyin imleci sönmeli.
+    ///
+    /// `sparklines` tablosunda 20 küçük yüzey var ve fare sürekli birinden
+    /// çıkıp diğerine giriyor; terk edilen yüzeylerde kesik imleç çizgisi
+    /// kalıyordu. GPUI'de `on_mouse_exit` yalnız fare **pencereyi** terk
+    /// ettiğinde üretilir, `on_mouse_move` de hitbox ile filtrelidir — yüzey
+    /// sınırından çıkışı ikisi de bildirmez.
+    #[::gpui::test]
+    async fn yüzeyi_terk_eden_fare_imleci_söndürür(cx: &mut ::gpui::TestAppContext) {
+        cx.update(|cx| {
+            let _ = ortak_bilesenler::baslat(ortak_bileşen_ayarları(), cx);
+            başlat(cx);
+        });
+        let (liste, cx) = cx.add_window_view(|_, cx| ChartListesi::yeni(cx));
+        liste.update(cx, |bu, cx| {
+            bu.kartı_seç(KartKimliği::Sparklines(SparklineÖrneği::İLK), cx);
+        });
+        cx.run_until_parked();
+
+        // İlk yüzeyin ölçülen alanının ortasına gir.
+        let alan = liste.read_with(cx, |bu, cx| {
+            let mut ilk = None;
+            bu.etkin_grafik_yüzeylerini_gez(|yüzey| {
+                if ilk.is_none() {
+                    ilk = yüzey.read(cx).ölçülen_alan();
+                }
+            });
+            ilk
+        });
+        assert!(alan.is_some(), "yüzey ölçüm vermedi");
+        let Some(alan) = alan else { return };
+        cx.simulate_mouse_move(alan.center(), None, ::gpui::Modifiers::default());
+        cx.run_until_parked();
+
+        let imleçler = |cx: &mut ::gpui::VisualTestContext| {
+            liste.read_with(cx, |bu, cx| {
+                let mut etkin = 0_usize;
+                bu.etkin_grafik_yüzeylerini_gez(|yüzey| {
+                    if yüzey.read(cx).imleç_etkin_mi() {
+                        etkin += 1;
+                    }
+                });
+                etkin
+            })
+        };
+        assert_eq!(
+            imleçler(cx),
+            1,
+            "fare yüzeyin üstündeyken imleç etkin olmalı"
+        );
+
+        // Kartın dışına, kaydırma alanının boş bölgesine çık.
+        cx.simulate_mouse_move(
+            ::gpui::point(alan.left(), alan.bottom() + ::gpui::px(400.0)),
+            None,
+            ::gpui::Modifiers::default(),
+        );
+        cx.run_until_parked();
+        assert_eq!(
+            imleçler(cx),
+            0,
+            "fare yüzeyi terk ettiğinde imleç sönmeli; kesik çizgi kalıyor"
+        );
+    }
+
     /// Aynı kartın iki grafik yüzeyi birbirinin üstüne yerleşmemeli.
     ///
     /// Bu oturumda bulunan kusurların hiçbirini sahne komutu testleri
