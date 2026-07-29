@@ -1,105 +1,126 @@
 # Devir notu
 
-**Tarih:** 2026-07-29
+**Tarih:** 2026-07-29 (macOS oturumu)
 
-Bu not, oturumun bittiği noktadan başka bir ortamda (özellikle macOS)
-devam edebilmek içindir. Kalıcı mimari kararlar `GPUI_GECIS_DOGRULAMA.md`
-içindedir; burada yalnız devir için gereken durum, açık konular ve
-tekrar üretim adımları var.
+Bu not, oturumun bittiği noktadan devam edebilmek içindir. Kalıcı mimari
+kararlar `GPUI_GECIS_DOGRULAMA.md` içindedir; burada yalnız devir için
+gereken durum, açık konular ve tekrar üretim adımları var.
 
 ## Depo durumu
 
 | depo | dal | son commit | durum |
 |---|---|---|---|
-| `uPlot.rs` | `main` | `b6ca42a` + devir notu | temiz, gönderildi |
+| `uPlot.rs` | `main` | `a74ea7b` | temiz, **gönderilmedi** |
 | `../gpui` | `main` | `d3a6038` | temiz, gönderildi |
 | `../gpui_kutuphanesi` | `main` | `36f1174` | temiz, gönderildi |
 
 Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
 `uPlot` (normatif kaynak, `master`), `zed` (parite doğrulaması için
-`7b030b5008`).
+`7b030b5008`; bu makinede `401a0c7e3d` duruyor).
+
+## Önceki oturumun açık konuları — kapanış
+
+**Linux'ta web boş ekran (eski #1): macOS'ta sorun yok.** WebGPU bağlamı
+kuruluyor, katalog render ediliyor, konsol temiz. Boş ekran o makineye
+(RADV) özgü.
+
+**73 kart doğrulaması (eski #2): yapıldı.** Katalog 66 kart tanımı taşıyor
+(`multi-bars` 4 varyantlı). Hepsi `?kart=<slug>` ile tek tek gezildi.
+
+**LAN üzerinden WebGPU (eski #3):** değişmedi, güvenli bağlam gerekir.
+
+**`gpui_web` varsayılan `multithreaded` (eski #5):** konsolda
+`SharedArrayBuffer not available; falling back to single-threaded
+dispatcher` uyarısı `crossOriginIsolated: true` iken bile düşüyor. Kabuk
+zaten `single_threaded_web()` çağırdığından `default-features = false`
+argümanı güçlendi.
 
 ## Bu oturumda yapılanlar
 
-**gpui katı pariteye döndü.** `paint_scaled_path` /
-`paint_transformed_scaled_path` ve `Path.vertices`'in `Arc<Vec<_>>` hâli
-geri alındı; kaynak Zed `7b030b5008` ile birebir, yalnız
-`EXTRACTION.md`'de belgelenmiş iki test uyarlaması farklı. Karar ölçümle
-verildi ve `EXTRACTION.md`'ye "Evaluated and rejected" başlığıyla yazıldı.
+**Yüzey yerleşimi çekirdeğe alındı** (`src/gpui/yerlesim.rs`, commit
+`9587523`). Uygulama yalnız resmî sayfadaki ham boyutu bildirir; yüzey
+kendini görünür alana uyarlar. `otomatik_uyarla` açıkken en boy oranı
+korunarak dikeyde sığdırılır, kapalıyken ham boyutta kalır. Yüzey asla
+büyütülmez. Ölçek `EN_KÜÇÜK_ÖLÇEK = 0.5` altına inecekse sığdırma
+uygulanmaz — 800×2300 yatay çubuk yüzeyi sığdırılınca eksen etiketleri
+okunamıyordu. `uyarlanan_alan` `Styled` döndürür; başlık/açıklama blokları
+ölçüm dışında bırakılabilir. 7 birim testi.
 
-**Raster katmanı eklendi** (`src/gpui/raster.rs`). Köşe bütçesini aşan ve
-kayıpsız rasterleştirilebilen yüzeyler bir kez BGRA tamponuna çizilip
-kare başına tek sprite gönderiyor — uPlot'un canvas modelinin GPUI
-karşılığı. LatencyHeatmap kök render 4,93 ms → 666 µs. Politika kart
-bazlı değil ölçüm bazlı; eşik `RASTER_NOKTA_EŞİĞİ = 8_000`.
+**Katalog buna bağlandı** (commit `eb8a375`). 38 kart `çizim_tabanı`'nı
+`.flex_none().h(px(N))` ile eziyordu; kapsayıcı pencere yüksekliğinden
+bağımsız kalıyor, dış hat ekranı kullanmıyordu. Sabit yükseklikler
+kaldırıldı, sabit yüzey boyutu sıfıra indi. Ölçüm iki yoldan gelir:
+kapanışta kurulabilen kartlar doğrudan `uyarlanan_alan`dan, `Context`
+isteyen kartlar bir önceki karede ölçülen alandan (canvas ölçer, güncelleme
+`cx.defer` ile ertelenir — çizim sırasında `Entity::update` etkisiz).
+Sync Cursor panelleri grup olduğu için tek ölçekle birlikte sığdırılır.
 
-**uPlot paritesi düzeltmeleri:** tekerlek zoomunda Y görünümü otomatik
-bırakılıyor, tekerlek yakınlaştırması varsayılan kapalı (uPlot'ta
-çekirdekte yok, demo eklentisi), yakınlaştırmada veri katmanı yeniden
-kuruluyor, imleç katmanı ızgara sınırına kırpılıyor, kırpma dikdörtgenine
-görsel pay eklendi.
+**Dağılım yüzeyleri raster yoluna alındı** (commit `a74ea7b`). 40.000
+noktalı scatter tamamen boştu: GPUI yol kurucusu tek yolda 4.000 daireyi
+kurabiliyor, 8.000'i kuramıyor ve `Komut::Daireler` çizimindeki
+`build().ok()` hatayı yutuyor. Raster katmanı yalnız `ArkaPlan`, `Alan` ve
+dolu `Dikdörtgen` tanıdığından bu sahneler eşiği aştıkları hâlde
+rasterlenebilir sayılmıyordu. Vuruşsuz daireler artık kapsamda. Kare
+bütçesi etkilenmedi (LatencyHeatmap p50 374 µs).
 
-**Erişilebilirlik:** kart listesi ikincil satırlarının kontrastı AA
-eşiğinin üstüne çıkarıldı; paylaşılan bileşenlere açık tema bağlandı
-(`ortak_bileşen_ayarları`), anahtar düğmesinin kontrastı
-`gpui_kutuphanesi`'nde düzeltildi.
+**İmleç çizgisi fareyi izliyor.** Kesik çizgi `imleç.veri_x` üzerinden
+konumlanıyor, yani en yakın örneğe yapışıyordu. Yapışma Ctrl'e alındı;
+lejant ve odak değerleri her iki durumda da en yakın örnekten çözülür.
 
-**Ölçüm altyapısı:** `izleme` feature'ı (varsayılan kapalı,
-`UPLOT_IZLEME=1` ile çalışır), `upstream_yol_butcesi`,
-`sahne_kompozisyonu` ve uPlot resmî benchmark senaryosu
-(`uplot_bench_kartı`, 166.650 nokta).
+**Küçük görsel düzeltmeler.** Kart listesinde iki satıra saran başlıklarda
+kaynak satırı kırpılıyordu (`uniform_list` tek yükseklik uygular) → satır
+118 px. Web fontunun kapsamadığı semboller (`▾ ▸ ＋ ▶ □`) kapsadıklarıyla
+değiştirildi (`− + → ●`). latency-heatmap X ekseni etiketleri geldi.
 
 ## Açık konular
 
-**1. Linux'ta web boş ekran veriyor — bu makineye özgü.**
-Aynı kod macOS'ta çalışıyor ve kartlar görüntüleniyor. Bu makinede
-(Linux, AMD Radeon 780M/RADV, Chrome 150) WebGPU bağlamı kuruluyor ama
-ilk karede patlıyor:
+**1. Sparkline ailesinde iki kart bozuk.** "Sparklines · 10×2 tablo"da 20
+yüzeyin yalnız sonuncusu çiziliyor, diğerleri boş `ArkaPlan` gösteriyor;
+"Sparkline + Floating Bars" tek parça yeşil şekil veriyor.
 
-```
-CopyTextureForBrowser from [Texture (unlabeled 1x1 px, BGRA8Unorm)]
-to [Invalid Texture]
-```
+Ölçüm: **2 satır (4 yüzey) → hepsi çizilir. 5 satır (10 yüzey) → yalnız
+sonuncusu.** Belirti yüzey sayısıyla ortaya çıkıyor.
 
-Canvas doğru boyutta (1265×1398), kopyalanan yüzey dokusu 1×1. Chrome'da
-`chrome://flags/#enable-vulkan` açılmadan adaptör hiç gelmiyordu; açınca
-adaptör geliyor ama kare başarısız oluyor.
+Elenenler: çekirdek sahnesi doğru (testler 15/15, `ArkaPlan`/`Alan`
+komutları doğrulanıyor); entity eşleşmesi doğru (`TÜMÜ` 20, `SATIRLAR` 10
+çift); raster/vektör ayrımı değil (eşik 10'a düşürülüp denendi);
+`Entity::cached` değil; yol önbelleği paylaşımı değil (her yüzey kendi
+`Rc<RefCell<GpuiYolÖnbelleği>>`'ini alır); ilk kare boyut ölçümü değil
+(hover/tıklama ile yeniden çizim tetiklendi).
 
-İlgili: senkron, `gpui_web/src/wgpu_context.rs`'ten fork-local **WebGL2
-fallback**'ini kaldırdı. Eskiden WebGPU tökezlediğinde WebGL2'ye
-düşülüyordu; artık yedek yok. Parite politikası gereği geri konmadı,
-ama bu kurulumda değerinin somut olduğu görüldü. Çözüm önce Zed'de
+Kalan şüphe GPUI'nin kare başına yol/atlas kapasitesi. Scatter'da komut
+parçalama denendiğinde `wgpu_atlas.rs:79 index out of bounds` alınmıştı;
+burada hata verilmeden sessizce çizilmiyor. Sonraki adım `gpui_wgpu` atlas
+ayırma yolunu okuyup kapasite aşımının nasıl raporlandığına bakmak. gpui
+katı Zed paritesinde tutulduğundan çözüm katalog/çekirdek tarafında
 aranmalı.
 
-**2. Kart doğrulaması yapılmadı.** Asıl hedef 73 kartı wasm üzerinden
-gezip hataları toplamaktı; yukarıdaki engel yüzünden bu makinede
-yapılamadı. macOS'ta yapılmalı.
+**2. Zoom sırasında kavisli sütun uçları yanlış kırpılıyor.** Sütun çizim
+alanı sınırının dışına taştığında kavisli ucun kırpılması gerekirken kavis
+yeniden çizilip sınıra yapışıyor.
 
-**3. LAN üzerinden erişim WebGPU vermez.** `http://192.168.0.35:8081`
-güvenli bağlam olmadığından `navigator.gpu` hiç tanımlanmıyor
-(`isSecureContext: false`). Uzaktan bakmak için SSH tüneli gerekir:
+**3. Sütun değer etiketleri zoom'da ölçeklenmiyor.** Sütun büyürken
+ucundaki değer yazısı aynı boyutta kalıyor.
 
-```sh
-ssh -L 8081:localhost:8081 <kullanıcı>@<mac>
-# sonra http://localhost:8081
-```
+**4. Zoom sırasında hover vurgusu eski konumda donuyor.** Fare hareket
+edene kadar yeni boyuta göre yeniden konumlanmıyor.
 
-Ama sayfa yine yerel tarayıcıda render edilir; 1 numaralı engel sürer.
+**5. Legend uPlot davranışından uzak.** Resmî sayfa değerleri daha okunaklı
+gösteriyor ve değere tıklayınca seriyi gizleyip geri getiriyor. Ayrıca
+legend tanım sırasına göre alt/sol/üst/sağ konumlandırılabilmeli ve
+bulunduğu alana uygun listelenmeli.
 
-**4. Başlık çubuğu sürüklemesi.** Bir ara çalışmadı, sonra düzeldi;
-nedeni doğrulanmadı. Şüphe: `gpui_kutuphanesi/platform_pencere.rs`'e
-yeni eklenen `BaslikSuruklemeDurumu` taşımayı basıştan sonraki **ilk
-harekette** başlatıyor, Wayland ise `xdg_toplevel::move` için taze giriş
-serial'i bekliyor. Tekrarlarsa oradan başlanmalı.
+**6. Y ekseni etiketleri yer yer çakışıyor** (mass-spectrum, custom-scales
+log yüzeyi). Y bölmeleri `eksen_bölmeleri(aralık, çizim_y, 30.0)` ile
+üretiliyor; log ölçekli eksende seyreltme yetersiz kalıyor.
 
-**5. `gpui_web` varsayılan `multithreaded`.** Nightly ve `build-std`
-zorunluluğunu bu getiriyor, ama web kabuğumuz `single_threaded_web()`
-çağırıyor. Gerçekten kullanılmıyorsa `default-features = false` nightly
-bakımını tümüyle kaldırabilir. Şimdilik Zed yaklaşımı korunuyor.
+**7. Görsel regresyon otomasyonu hâlâ yok.** Bu oturumdaki kusurların
+hiçbirini test yakalamadı; hepsi tarayıcıda gözle bulundu.
 
-**6. Görsel regresyon otomasyonu yok.** Raster sprite yerleşim hatasını
-(`c847866`) hiçbir test yakalamadı; kare bütçesi süreyi ölçüyor,
-yerleşimi değil.
+**8. Tarayıcı önbelleği doğrulamayı yanıltıyor.** Chrome saatlerce eski
+wasm'ı servis etti ve düzeltmeler "etkisiz" göründü. Doğrulama yaparken
+URL'ye sürüm parametresi ekleyin (`?kart=...&v=N`) ve yüklenen dosya
+adını `dist/` içindekiyle karşılaştırın.
 
 ## Çalıştırma
 
@@ -107,11 +128,12 @@ yerleşimi değil.
 # Masaüstü
 cargo run -p uplot-rs-chart-listesi --release
 
-# İzleme günlüğü açık (kart değişimi, kaydırma, fare, kare özetleri)
+# İzleme günlüğü açık
 UPLOT_IZLEME=1 cargo run -p uplot-rs-chart-listesi --release
 
-# Web (kendi workspace'i; nightly + build-std, ilk derleme uzun)
-cd uygulamalar/web && trunk serve --release
+# Web — katalog ve örnekler de izlenmeli, yoksa değişiklik yayına girmez
+cd uygulamalar/web && trunk serve --release \
+  --watch . --watch ../katalog/src --watch ../ornekler/src --watch ../../src
 
 # Doğrulama
 cargo fmt --all --check
@@ -120,21 +142,15 @@ cargo test --workspace --all-targets --all-features
 ./tools/paket_siniri_denetle.sh
 npm --prefix tools/uyum run denetle
 cargo test --release -p uplot-rs-gpui-katalog --lib kok_render_kare_butcesi -- --nocapture
-RUSTFLAGS='--cfg phase12_allocator --cap-lints allow' \
-  cargo test --release -p uplot-rs-gpui-ornekler --test performance_budgets \
-  --all-features -- --test-threads=1 --nocapture
 ```
 
-## Son ölçümler (bu makine, uygulama kapalıyken)
+## Son ölçümler (bu makine)
 
 | kart | kök render p50 |
 |---|---:|
-| MassSpectrum | 562 µs |
-| LatencyHeatmap | 666 µs |
-| Resize | 759 µs |
-| TimezonesDst (51 yüzey) | 978 µs |
-| ThinBars (55 yüzey) | 987 µs |
+| ThinBars (55 yüzey) | 548 µs |
+| TimezonesDst (51 yüzey) | 520 µs |
+| LatencyHeatmap | 374 µs |
+| MassSpectrum | 330 µs |
 
-uPlot resmî benchmark senaryosu (166.650 nokta): ilk çizim 1,83 ms,
-yeniden çizim p50 1,53 ms, 17.773 geometri öğesi, sıfır tahsis.
-Karşılaştırmanın sınırları `GPUI_GECIS_DOGRULAMA.md` içinde yazılı.
+Raster katmanına daire desteği eklendikten sonra da bütçe korunuyor.
