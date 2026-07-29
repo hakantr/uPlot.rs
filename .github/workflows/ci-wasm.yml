@@ -1,10 +1,9 @@
 name: ci-wasm
 
-# Yalnız wasm hedefi. Ayrı tutulmasının nedeni araç zinciri farkı: GPUI Web'in
-# `multithreaded` yolu `wasm_thread`'i çeker, o da wasm32'de
-# `feature(stdarch_wasm_atomic_wait)` kullandığından nightly ister; paylaşımlı
-# bellek ayrıca `build-std` ile std'nin atomics açık yeniden derlenmesini
-# gerektirir. Kök workspace ise stable 1.95'e sabitlidir.
+# Yalnız wasm hedefi. Web uygulaması kendi workspace'i olduğundan (kök
+# `cargo fmt --all` ve clippy onu kapsamaz) ayrı iş olarak denetlenir.
+# Araç zinciri artık kökle aynı: kabuk `gpui_web`'i `default-features = false`
+# ile çektiğinden nightly, `build-std` ve atomics rustflag'leri gerekmiyor.
 on:
   workflow_dispatch:
   schedule:
@@ -16,8 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Çekirdek kütüphane ve katalog wasm hedefinde derleniyor mu? Bu taraf
-  # nightly istemez; kök workspace stable kanalda kalır.
+  # Çekirdek kütüphane ve katalog wasm hedefinde derleniyor mu?
   kutuphane:
     runs-on: ubuntu-latest
     steps:
@@ -49,8 +47,8 @@ jobs:
         working-directory: uPlot.rs
         run: cargo check --target wasm32-unknown-unknown --workspace
 
-  # GPUI Web uygulaması kendi workspace'idir; yanındaki `rust-toolchain.toml`
-  # ve `.cargo/config.toml` nightly ve `build-std` ayarlarını taşır.
+  # GPUI Web uygulaması kendi workspace'idir; kök `cargo fmt --all` ve clippy
+  # onu kapsamadığından denetimi burada yapılır.
   web-uygulamasi:
     runs-on: ubuntu-latest
     steps:
@@ -69,11 +67,9 @@ jobs:
           repository: hakantr/gpui_kutuphanesi
           ref: 36f1174423cf4d79f6795f042c6f4b4fa333b91d
           path: gpui_kutuphanesi
-      - name: Rust nightly
-        uses: dtolnay/rust-toolchain@nightly
+      - name: Rust wasm hedefi
+        uses: dtolnay/rust-toolchain@stable
         with:
-          # `build-std` std kaynağını ister.
-          components: rust-src
           targets: wasm32-unknown-unknown
       - name: Trunk
         uses: taiki-e/install-action@v2

@@ -1,7 +1,8 @@
 name: ci
 
 # Wasm dışındaki bütün doğrulama. Wasm ayrı bir iş akışındadır
-# (`ci-wasm.yml`), çünkü GPUI Web nightly araç zinciri ve `build-std` ister.
+# (`ci-wasm.yml`): GPUI Web kendi workspace'i olduğundan kök `cargo fmt --all`
+# ve clippy onu kapsamaz.
 on:
   workflow_dispatch:
   schedule:

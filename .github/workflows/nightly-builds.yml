@@ -138,12 +138,9 @@ jobs:
           repository: hakantr/gpui_kutuphanesi
           ref: 36f1174423cf4d79f6795f042c6f4b4fa333b91d
           path: gpui_kutuphanesi
-      # GPUI Web kendi workspace'inde nightly + `build-std` ister; ayrıntı
-      # için `uygulamalar/web/rust-toolchain.toml` ve `.cargo/config.toml`.
-      - name: Rust nightly ve GPUI Web hedefi
-        uses: dtolnay/rust-toolchain@nightly
+      - name: Rust ve GPUI Web hedefi
+        uses: dtolnay/rust-toolchain@stable
         with:
-          components: rust-src
           targets: wasm32-unknown-unknown
       - name: Trunk
         uses: taiki-e/install-action@v2

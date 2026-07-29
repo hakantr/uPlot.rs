@@ -2,10 +2,29 @@
 
 #[cfg(target_family = "wasm")]
 mod web {
-    use gpui::{App, AppContext as _, WindowOptions};
-    use gpui_platform::{single_threaded_web, web_init};
+    use std::rc::Rc;
+    use std::sync::Arc;
+
+    use gpui::{App, AppContext as _, Application, WindowOptions};
+    use gpui_web::WebPlatform;
     use ortak_bilesenler::baslat;
     use uplot_rs_gpui_katalog::{ChartListesi, başlat as katalog_başlat};
+
+    /// `gpui_platform::single_threaded_web` ile aynı kurulum, doğrudan
+    /// `gpui_web` üzerinden. Aradaki crate `gpui_web`'i varsayılan
+    /// feature'larıyla çektiğinden `multithreaded` kapatılamıyordu; kabuk
+    /// zaten tek iş parçacıklı yolu kullanıyor.
+    fn single_threaded_web() -> Application {
+        let platform = Rc::new(WebPlatform::new(false));
+        let http_client = Arc::new(platform.fetch_http_client());
+        Application::with_platform(platform).with_http_client(http_client)
+    }
+
+    /// `gpui_platform::web_init` karşılığı: panic kancası ve konsol günlüğü.
+    fn web_init() {
+        console_error_panic_hook::set_once();
+        gpui_web::init_logging();
+    }
 
     pub fn başlat() {
         web_init();

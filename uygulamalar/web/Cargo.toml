@@ -1,7 +1,5 @@
-# Kök workspace stable kanala sabitlidir. GPUI Web'in çok iş parçacıklı yolu
-# nightly ve `build-std` istediğinden bu paket, zed'in `hello_web` örneğinde
-# olduğu gibi kendi workspace'i olarak ayrılır: yanındaki `rust-toolchain.toml`
-# ve `.cargo/config.toml` yalnız burada geçerli olur.
+# Kök workspace'ten ayrı tutulur: bu paket yalnız `wasm32-unknown-unknown`
+# hedefine derlenir ve kendi bağımlılık kümesini seçer.
 [workspace]
 
 [package]
@@ -22,7 +20,26 @@ ortak_bilesenler = { path = "../../../gpui_kutuphanesi/kutuphaneler/ortak_bilese
 uplot-rs-gpui-katalog = { path = "../katalog" }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
-gpui_platform = { path = "../../../gpui/crates/gpui_platform" }
+# `gpui_platform` yerine doğrudan `gpui_web`: o crate `gpui_web`'i varsayılan
+# feature'larla çeker ve varsayılan `multithreaded`, `wasm_thread` üzerinden
+# atomics hedef özelliğini zorunlu kılar. Atomics açıkken `parking_lot_core`
+# nightly gate'i de açılır, yani zincir nightly kanal + `build-std` + on
+# satırlık rustflag bakımı demektir. `gpui_platform`'un web tarafı da
+# `WebPlatform::new` ve `init_logging` üzerine ince bir sarmalayıcıydı.
+#
+# `multithreaded` kapalı, çünkü bugün hiçbir işe yaramıyordu: kabuk
+# `single_threaded_web()` yolunu kullanıyor ve tarayıcı `crossOriginIsolated`
+# olsa bile `SharedArrayBuffer not available; falling back to single-threaded
+# dispatcher` düşüyordu. Yani bedeli ödeniyor, karşılığı alınmıyordu.
+#
+# YENİDEN AÇMA KOŞULU: gpui tarafında iş parçacıklı web yolu gerçekten
+# çalışır hâle gelir ve katalog ondan ölçülebilir kazanç sağlarsa
+# (`default-features = false` kaldırılır), beraberinde nightly toolchain,
+# `build-std` ve atomics rustflag'leri geri gelir. O gün `git log` bu
+# commit'i ve kaldırılan `rust-toolchain.toml` / `.cargo/config.toml`
+# dosyalarını taşıyor.
+gpui_web = { path = "../../../gpui/crates/gpui_web", default-features = false }
+console_error_panic_hook = "0.1"
 log = "0.4"
 web-sys = { version = "0.3", features = ["Document", "Element", "Window"] }
 

@@ -1,9 +1,0 @@
-# Kaynak: zed `crates/gpui_web/examples/hello_web/rust-toolchain.toml`.
-#
-# `gpui_web` varsayılan `multithreaded` özelliğiyle `wasm_thread`'i çeker; o da
-# wasm32'de `feature(stdarch_wasm_atomic_wait)` kullandığından stable kanalda
-# derlenmez. `build-std` ayrıca `rust-src` bileşenini ister.
-[toolchain]
-channel = "nightly"
-targets = ["wasm32-unknown-unknown"]
-components = ["rust-src", "rustfmt", "clippy"]
