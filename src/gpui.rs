@@ -2716,6 +2716,13 @@ impl GpuiGrafik {
     /// Veri ve eksen katmanlarını güncel pencereye göre tazeler; olay yaymaz.
     fn görünümü_sessiz_bildir(&mut self, cx: &mut Context<Self>) {
         self.açıklama_vuruşu = None;
+        // Görünüm değişince imleç katmanı eski piksel konumunda kalıyordu:
+        // zoom sonrası vurgu ve lejant, fare kıpırdayana kadar yeni ölçeğin
+        // yanlış noktasını gösteriyordu. İmleç aynı fare konumundan yeni
+        // görünüme göre yeniden çözülür.
+        if let Some(fare) = self.imleç.as_ref().map(|imleç| imleç.fare) {
+            self.canlı_imleci_yenile(fare);
+        }
         self.veri_sahnesini_yenile(cx);
         self.eksen_sahnesini_yenile(cx);
         cx.notify();
