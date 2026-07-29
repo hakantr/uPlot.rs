@@ -25,6 +25,9 @@ uyarlama ve uzantıların birbirine karışmaması için tutulur.
 | Örnek/çekirdek sınırı | Demolar dağıtımdan ayrı HTML girişleridir | GPUI kataloğu ayrı ve yayınlanmayan workspace uygulamasıdır; bütün davranış çekirdektedir | Rust paket uyarlaması |
 | Yüzey seçimi | Canvas tarayıcı ortamına gömülüdür | Tek interaktif renderer GPUI'dir; `gpui-svg` yalnız isteğe bağlı vektör dışa aktarımı açar | GPUI odaklı Rust paket uyarlaması |
 | Ortak kart profili | Her demo yalnız kendi kurduğu çekirdek/eklenti davranışlarını taşır | Port kartları kaynak çizimini korurken Resize ile olgunlaştırılan isteğe bağlı wheel/touch, taşıma ve geçmiş profilini kullanabilir; manifest bunu açıkça kaydeder | uPlot.rs katalog/API uyarlaması |
+| Lejant yerleşimi | Lejant DOM'da yüzeyin altındadır; konum CSS'e bırakılır | `GrafikSeçenekleri::lejant_konumu` ile alt/üst/sol/sağ seçilir, varsayılan `Alt` kaynakla aynıdır | CSS'siz yüzey uyarlaması |
+| Etiketsiz seri lejantı | Etiketsiz seri lejantta boş hücre gösterir | Katalog lejantı boş etiket yerine `Seri N` sıra numarası yazar | Katalog keşfedilebilirlik uyarlaması |
+| Çok yüzeyli kart lejantı | Her uPlot örneğinin kendi lejantı vardır | Katalog tek ortak lejant gösterir ve onu imlecin en son girdiği yüzeye bağlar; fare ayrıldıktan sonra seçim korunur | Katalog sunum uyarlaması |
 
 ### Hassas tekerlek normalizasyonu
 

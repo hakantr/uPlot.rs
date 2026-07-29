@@ -315,9 +315,18 @@ fn lejant_girdilerini_ekle(
                 format!("{değer}{}", if boşta { " (last)" } else { "" })
             },
         );
+        // uPlot etiketsiz seriyi lejantta boş hücre gösterir. Katalog bir
+        // doğrulama aracı olduğundan burada sıra numarası veriliyor: aksi
+        // hâlde `stacked-series` gibi etiketsiz kartlarda girdiler `● : --`
+        // olarak çıkıyor ve hangi seriye tıklandığı ayırt edilemiyor.
+        let etiket = if seri.etiket.trim().is_empty() {
+            format!("Seri {}", seri_indeksi.saturating_add(1))
+        } else {
+            seri.etiket.clone()
+        };
         girdiler.push(LejantGirdisi {
             indeks: girdiler.len(),
-            etiket: SharedString::from(seri.etiket.clone()),
+            etiket: SharedString::from(etiket),
             değer: SharedString::from(değer),
             renk: renk_çöz(&seri.renk),
             görünür: seri.göster,
@@ -2034,6 +2043,10 @@ pub struct ChartListesi {
     /// kartın kendi `GrafikSeçenekleri::lejant_konumu` değeri geçerlidir;
     /// kart değişiminde sıfırlanır.
     lejant_konumu_seçimi: Option<LejantKonumu>,
+    /// Lejantın değerlerini gösterdiği yüzey. İmleç bir yüzeye girdiğinde
+    /// oraya taşınır ve fare ayrıldıktan sonra da korunur; `None` iken kartın
+    /// ilk yüzeyi gösterilir. Kart değişiminde sıfırlanır.
+    lejant_yüzeyi: Option<::gpui::EntityId>,
     /// Sanallaştırılmış çok yüzeyli kartların kaydırma/ölçüm durumu. Kart
     /// değişiminde sıfırlanır, aksi hâlde eski öğe sayısıyla ölçüm yapar.
     thin_bars_liste_durumu: Option<ListState>,
@@ -2263,8 +2276,11 @@ impl ChartListesi {
 
     /// Lejantı besleyen yüzeyleri girdilerin üretileceği sırayla döndürür.
     ///
-    /// Timeseries Discrete dışındaki kartlarda lejant tek etkin yüzeyi
-    /// gösterir; o kart iki yüzeyin serilerini tek listede birleştirir.
+    /// Timeseries Discrete iki yüzeyin serilerini tek listede birleştirir;
+    /// kalan kartlarda lejant tek yüzey gösterir. Çok yüzeyli kartlarda bu
+    /// yüzey imlecin en son girdiğidir — `lejant_yüzeyi` — çünkü kart
+    /// tanımının ilk yüzeyini göstermek, imleç 16 yüzeyli Stacked Series'in
+    /// herhangi birinde gezerken hep aynı değerleri listeliyordu.
     fn lejant_yüzeyleri(&self) -> Vec<Entity<GpuiGrafik>> {
         if self.aktif_kart == KartKimliği::TimeseriesDiscrete {
             return self
@@ -2273,7 +2289,50 @@ impl ChartListesi {
                 .map(|(_, grafik)| grafik.clone())
                 .collect();
         }
-        self.grafik.iter().cloned().collect()
+        let seçili_kimlik = self.lejant_yüzeyi;
+        let mut seçili = None;
+        let mut ilk = None;
+        self.etkin_grafik_yüzeylerini_gez(|yüzey| {
+            if ilk.is_none() {
+                ilk = Some(yüzey.clone());
+            }
+            if seçili.is_none() && seçili_kimlik == Some(yüzey.entity_id()) {
+                seçili = Some(yüzey.clone());
+            }
+        });
+        seçili.or(ilk).into_iter().collect()
+    }
+
+    /// Yüzeyi kurar ve standart grafik olaylarını köke bağlar.
+    ///
+    /// Abonelik olmadan imleç ve durum olayları köke hiç ulaşmaz: lejant o
+    /// yüzeyin değerlerini göremez, `sparklines` tablosunda fare hangi
+    /// hücrede olursa olsun satır `x: -- Hacim: --` kalıyordu. Çok yüzeyli
+    /// kartların hepsi bu yoldan geçmeli.
+    fn bağlı_yüzey(grafik: Grafik, cx: &mut Context<Self>) -> Entity<GpuiGrafik> {
+        let yüzey = cx.new(|_| GpuiGrafik::yeni(grafik));
+        cx.subscribe(&yüzey, |bu, _, olay: &GpuiGrafikOlayı, cx| {
+            bu.standart_grafik_olayını_işle(olay, cx);
+        })
+        .detach();
+        yüzey
+    }
+
+    /// Lejantın izlediği yüzeyi imlecin bulunduğu yüzeye taşır.
+    ///
+    /// Fare yüzeyden ayrılınca seçim korunur: aksi hâlde lejant girdisine
+    /// tıklamak için fareyi yüzeyden çekmek gösterilen seriyi değiştirir ve
+    /// tıklama yanlış yüzeye giderdi.
+    fn lejant_yüzeyini_güncelle(&mut self, cx: &App) {
+        let mut imleçli = None;
+        self.etkin_grafik_yüzeylerini_gez(|yüzey| {
+            if imleçli.is_none() && yüzey.read(cx).imleç_etkin_mi() {
+                imleçli = Some(yüzey.entity_id());
+            }
+        });
+        if imleçli.is_some() {
+            self.lejant_yüzeyi = imleçli;
+        }
     }
 
     /// Lejantın X başlığını ve seri girdilerini üretir.
@@ -2348,6 +2407,7 @@ impl ChartListesi {
     }
 
     fn lejantı_yenile(&mut self, cx: &mut Context<Self>) {
+        self.lejant_yüzeyini_güncelle(cx);
         let (x_metni, girdiler) = self.lejant_içeriği(cx);
         let konum = self.lejant_konumu(cx);
         self.lejant.update(cx, |lejant, cx| {
@@ -2563,6 +2623,7 @@ impl ChartListesi {
                 cx.new(|_| KatalogLejantı::yeni(sahip))
             },
             lejant_konumu_seçimi: None,
+            lejant_yüzeyi: None,
             thin_bars_liste_durumu: None,
             timezones_dst_liste_durumu: None,
         };
@@ -3327,7 +3388,7 @@ impl ChartListesi {
                 }
             };
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
-            yüzeyler.push(cx.new(|_| GpuiGrafik::yeni(grafik)));
+            yüzeyler.push(Self::bağlı_yüzey(grafik, cx));
         }
         self.grafik = yüzeyler.first().cloned();
         self.months_grafikleri = yüzeyler;
@@ -3359,7 +3420,7 @@ impl ChartListesi {
                 }
             };
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
-            yüzeyler.push((örnek, cx.new(|_| GpuiGrafik::yeni(grafik))));
+            yüzeyler.push((örnek, Self::bağlı_yüzey(grafik, cx)));
         }
         self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
         self.missing_data_grafikleri = yüzeyler;
@@ -3510,7 +3571,7 @@ impl ChartListesi {
                 }
             };
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
-            yüzeyler.push((örnek, cx.new(|_| GpuiGrafik::yeni(grafik))));
+            yüzeyler.push((örnek, Self::bağlı_yüzey(grafik, cx)));
         }
         self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
         self.points_grafikleri = yüzeyler;
@@ -3877,7 +3938,7 @@ impl ChartListesi {
                 }
             };
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
-            yüzeyler.push((örnek, cx.new(|_| GpuiGrafik::yeni(grafik))));
+            yüzeyler.push((örnek, Self::bağlı_yüzey(grafik, cx)));
         }
         self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
         self.sparklines_bars_grafikleri = yüzeyler;
@@ -3909,7 +3970,7 @@ impl ChartListesi {
                 }
             };
             grafik.tekerlek_etkileşimi_ayarla(self.tekerlek_etkin);
-            yüzeyler.push((örnek, cx.new(|_| GpuiGrafik::yeni(grafik))));
+            yüzeyler.push((örnek, Self::bağlı_yüzey(grafik, cx)));
         }
         self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
         self.sparklines_grafikleri = yüzeyler;
@@ -5210,6 +5271,7 @@ impl ChartListesi {
         // seçimi kartın kendi tanımına bırakılır, önceki kartın denetimi
         // taşınmaz.
         self.lejant_konumu_seçimi = None;
+        self.lejant_yüzeyi = None;
         self.lejantı_yenile(cx);
     }
 
@@ -9537,6 +9599,23 @@ mod tests {
     }
 
     #[test]
+    fn etiketsiz_seri_lejantta_sıra_numarası_alır() {
+        let seriler = [
+            lejant_serisi("", true),
+            lejant_serisi("Value", true),
+            lejant_serisi("  ", true),
+        ];
+        let mut girdiler = Vec::new();
+        lejant_girdilerini_ekle(&mut girdiler, &seriler, &[None, None, None], false, false);
+
+        let etiketler = girdiler
+            .iter()
+            .map(|girdi| girdi.etiket.as_ref())
+            .collect::<Vec<_>>();
+        assert_eq!(etiketler, vec!["Seri 1", "Value", "Seri 3"]);
+    }
+
+    #[test]
     fn lejant_değeri_boşta_son_örneği_işaretler() {
         let seriler = [lejant_serisi("Value", true), lejant_serisi("DEV1", true)];
         let mut girdiler = Vec::new();
@@ -9762,6 +9841,72 @@ mod tests {
             assert_eq!(registry_verisi.seriler(), doğrudan_veri.seriler());
         }
         Ok(())
+    }
+
+    /// Çok yüzeyli kartlarda lejant imlecin girdiği yüzeyi göstermeli.
+    ///
+    /// Lejant kartın ilk yüzeyini okuyordu; Stacked Series 16 yüzeyli ve
+    /// imleç hangisinde gezerse gezsin hep aynı değerler listeleniyordu.
+    /// Seçim fare ayrıldıktan sonra da korunur — aksi hâlde lejant girdisine
+    /// tıklamak için fareyi yüzeyden çekmek gösterilen seriyi değiştirir ve
+    /// tıklama yanlış yüzeye giderdi.
+    #[::gpui::test]
+    async fn lejant_imlecin_girdiği_yüzeyi_gösterir(cx: &mut ::gpui::TestAppContext) {
+        cx.update(|cx| {
+            let _ = ortak_bilesenler::baslat(ortak_bileşen_ayarları(), cx);
+            başlat(cx);
+        });
+        let (liste, cx) = cx.add_window_view(|_, cx| ChartListesi::yeni(cx));
+        liste.update(cx, |bu, cx| {
+            bu.kartı_seç(KartKimliği::Sparklines(SparklineÖrneği::İLK), cx);
+        });
+        cx.run_until_parked();
+
+        // Ölçüm veren ilk iki yüzeyi al; tabloda farklı hisselere aitler.
+        let alanlar = liste.read_with(cx, |bu, cx| {
+            let mut alanlar = Vec::new();
+            bu.etkin_grafik_yüzeylerini_gez(|yüzey| {
+                if let Some(alan) = yüzey.read(cx).ölçülen_alan() {
+                    alanlar.push((yüzey.entity_id(), alan));
+                }
+            });
+            alanlar
+        });
+        assert!(alanlar.len() >= 2, "tablo en az iki yüzey ölçmeli");
+        let (Some(ilk), Some(ikinci)) = (alanlar.first().copied(), alanlar.get(1).copied()) else {
+            return;
+        };
+
+        let izlenen =
+            |cx: &mut ::gpui::VisualTestContext| liste.read_with(cx, |bu, _| bu.lejant_yüzeyi);
+        cx.simulate_mouse_move(ilk.1.center(), None, ::gpui::Modifiers::default());
+        cx.run_until_parked();
+        assert_eq!(
+            izlenen(cx),
+            Some(ilk.0),
+            "lejant imlecin girdiği yüzeye geçmeli"
+        );
+
+        cx.simulate_mouse_move(ikinci.1.center(), None, ::gpui::Modifiers::default());
+        cx.run_until_parked();
+        assert_eq!(
+            izlenen(cx),
+            Some(ikinci.0),
+            "lejant ikinci yüzeye taşınmalı"
+        );
+
+        // Fare tablodan çıkınca seçim korunur, ilk yüzeye geri dönmez.
+        cx.simulate_mouse_move(
+            ::gpui::point(ikinci.1.left(), ikinci.1.bottom() + ::gpui::px(400.0)),
+            None,
+            ::gpui::Modifiers::default(),
+        );
+        cx.run_until_parked();
+        assert_eq!(
+            izlenen(cx),
+            Some(ikinci.0),
+            "fare ayrılınca lejant son gezilen yüzeyde kalmalı"
+        );
     }
 
     /// Fare bir yüzeyi terk ettiğinde o yüzeyin imleci sönmeli.
