@@ -10,7 +10,7 @@ gereken durum, açık konular ve tekrar üretim adımları var.
 
 | depo | dal | son commit | durum |
 |---|---|---|---|
-| `uPlot.rs` | `main` | `7c413ad` | temiz, gönderildi |
+| `uPlot.rs` | `main` | `2ccd8eb` | temiz, gönderildi |
 | `../gpui` | `main` | `d3a6038` | temiz, gönderildi |
 | `../gpui_kutuphanesi` | `main` | `36f1174` | temiz, gönderildi |
 
@@ -21,6 +21,8 @@ Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
 Bu oturumun commit'leri (`4b5fa67` sonrası, hepsi gönderildi):
 
 ```
+2ccd8eb fix(gpui): yüzeyi terk eden farede imleci söndür
+392c14d docs: devir notunu yerleşim ve gradyan invaryantlarıyla güncelle
 7c413ad test(gpui): yerleşim ve gradyan şeritlerini regresyon testine bağla
 2e8f256 docs: devir notunu sparkline ailesinin kapanışıyla güncelle
 06807d1 fix(gpui): gradyan maskelerini yol ile aynı koordinat uzayına al
@@ -42,7 +44,7 @@ eb8a375 fix(katalog): kart yüzeylerini görünür alana sığdır ve kesik içe
 ```
 
 Doğrulama durumu: `cargo fmt --all --check` temiz, `cargo clippy --workspace
---all-targets` uyarısız, testler çekirdek 98 / örnekler 262 / katalog 15 +
+--all-targets` uyarısız, testler çekirdek 99 / örnekler 262 / katalog 17 +
 sahne 2 / resize 13 / svg 6 / area_fill 3 / bütçe 2 geçiyor.
 
 **`upstream_yol_butcesi` yalnız `--release` ile anlamlıdır.** Debug'da
@@ -172,6 +174,15 @@ boşluksuz, örtüşmesiz kaplıyor. Test karışık koordinat uzayını taklit
 ediyor: o durumda son durak hiç şerit almıyor — yüzeyde ayrık gradyanın
 bir dalının kaybolması olarak görünen belirti buydu.
 
+**İmleç yüzeyi terk edince sönüyor** (commit `2ccd8eb`). Temizleme
+`on_mouse_exit`e bağlıydı; GPUI o olayı yalnız fare **pencereyi** terk
+ettiğinde üretiyor ve `on_mouse_move` de `hitbox.is_hovered()` ile
+filtreli — yüzey sınırından çıkışı ikisi de bildirmiyor. Karşılığı
+`on_hover`: hareketi filtresiz dinler, hover geçişini verir, pencere
+çıkışını da kapsar. `on_hover` üst katman hitbox'ı gölgelediğinde de
+`false` bildirdiğinden temizleme ölçülen alana karşı doğrulanıyor; aksi
+hâlde çizgi fare yüzeyin üstünde hareket ederken sönüyor.
+
 **Eksen ve çubuk düzeltmeleri.** Logaritmik X ekseninde etiketler yüzey
 boyutundan bağımsız üretiliyordu; Y'de var olan `log_etiketi_göster`
 seyreltmesi X'e de uygulandı. Y ekseni başlığı eksen payının ortasına
@@ -213,6 +224,13 @@ adını `dist/` içindekiyle karşılaştırın.
 yanında uzak bir Linux Chrome da kayıtlı; komutlar varsayılan olarak
 yanlış olana gidip `127.0.0.1:8081` için "error page" verebiliyor.
 `list_connected_browsers` ile yerel olanı (`isLocal: true`) seçin.
+
+**5. Wasm katalogda hover doğrulaması hazırlık bekler.** WebGPU bağlamı
+kurulana kadar sayfa siyah kalıyor ve o sırada gönderilen `hover`
+kayboluyor — düzeltilmiş imleç davranışı iki kez "bozuk" göründü. Önce
+ekran görüntüsüyle kartın çizildiğini doğrulayın, hover'ı ondan sonra
+gönderin. Fare etkileşimini ölçmenin daha güvenilir yolu GPUI test
+bağlamı: `cx.simulate_mouse_move` + `GpuiGrafik::imleç_etkin_mi`.
 
 ## Yapılacaklar — öncelik sırası
 
