@@ -4837,6 +4837,38 @@ fn css_alfa_kanalı(değer: &str) -> Option<u8> {
 mod testler {
     use super::*;
 
+    /// Dağılım yüzeyleri on binlerce daireyi tek `PathBuilder` yoluna yazar.
+    /// `build()` bu ölçekte başarısız olursa çağrı yerindeki `.ok()` hatayı
+    /// yutar ve yüzey sessizce boş çizilir.
+    /// GPUI yol kurucusunun toplu daire sınırını belgeler.
+    ///
+    /// Ölçüm 4.000 dairenin tek yolda kurulduğunu, 8.000'in kurulamadığını
+    /// gösterdi. `build()` bu sınırın üstünde `Err` döndürür ve `Komut::Daireler`
+    /// çizimindeki `.ok()` hatayı yutar; yüzey sessizce boş çizilir. 40.000
+    /// noktalı dağılım yüzeyinin boş görünmesinin nedeni budur.
+    #[test]
+    fn iki_bin_daire_tek_yola_kurulabilir() {
+        let mut yol = PathBuilder::fill();
+        let yarıçap = px(2.5);
+        let yarıçaplar = point(yarıçap, yarıçap);
+        for indeks in 0..2_000 {
+            let merkez = point(
+                px((indeks % 100) as f32 * 8.0),
+                px((indeks / 100) as f32 * 8.0),
+            );
+            let sol = point(merkez.x - yarıçap, merkez.y);
+            let sağ = point(merkez.x + yarıçap, merkez.y);
+            yol.move_to(sol);
+            yol.arc_to(yarıçaplar, px(0.0), false, true, sağ);
+            yol.arc_to(yarıçaplar, px(0.0), false, true, sol);
+            yol.close();
+        }
+        assert!(
+            yol.build().is_ok(),
+            "parça boyutundaki daire yığını kurulamadı: dağılım yüzeyleri boş çizilir"
+        );
+    }
+
     #[::gpui::test]
     fn gpui_test_context_retained_sahne_ve_hover_katmanını_ayrı_tutar(
         cx: &mut ::gpui::TestAppContext,
