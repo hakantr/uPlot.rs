@@ -4534,7 +4534,25 @@ impl Grafik {
                     MetinHizası::Orta,
                 )
             };
-            if self.seçenekler.x_eksen_görünür {
+            // Logaritmik eksende bölme sayısı aralığa bağlıdır, yüzey
+            // boyutuna değil; dar yüzeylerde etiketler üst üste binerdi.
+            // uPlot gibi ızgara tüm bölmelerde kalır, yalnız metin seyrelir.
+            let x_log_dağılımı = match self.seçenekler.x_dağılımı {
+                XÖlçekDağılımı::Logaritmik { taban } => {
+                    Some(YÖlçekDağılımı::Logaritmik { taban })
+                }
+                _ => None,
+            };
+            if self.seçenekler.x_eksen_görünür
+                && log_etiketi_göster(
+                    x_değeri,
+                    x_aralığı,
+                    x_boyutu,
+                    x_log_dağılımı,
+                    YÖlçekEtiketBiçimi::Otomatik,
+                    x_etiket_boşluğu,
+                )
+            {
                 sahne.ekle(Komut::Metin {
                     konum: etiket_konumu,
                     içerik: if self.seçenekler.x_zaman {
