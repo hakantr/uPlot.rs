@@ -33,6 +33,11 @@ use web_time::Instant;
 /// Yoğun yüzeyleri tek sprite'a indiren CPU rasterleştirici.
 mod raster;
 
+/// Yüzeylerin görünür alana uyarlanması.
+#[path = "gpui/yerlesim.rs"]
+mod yerleşim;
+pub use yerleşim::{GörünürAlan, uyarlanan_alan};
+
 ::gpui::actions!(
     uplot_rs,
     [ÖlçümüTemizle, BirinciDatumuAyarla, İkinciDatumuAyarla]
@@ -561,6 +566,11 @@ pub struct GpuiGrafik {
     veri_görünümü: Rc<Cell<GpuiVeriGörünümü>>,
     odak: Option<FocusHandle>,
     imleç_kilitli: bool,
+    /// İmleç çizgisinin en yakın örneğin X konumuna oturup oturmayacağı.
+    ///
+    /// Ctrl basılıyken açılır. Kapalıyken çizgi fareyi kesintisiz izler;
+    /// lejant ve odak değerleri her iki durumda da en yakın örnekten çözülür.
+    imleç_değere_yapışsın: bool,
     boyut_senkron_katmanı: Option<BoyutSenkronDüzeni>,
     eksen_üzerinde: bool,
     açıklama_vuruşu: Option<AçıklamaVuruşu>,
@@ -925,6 +935,7 @@ impl GpuiGrafik {
             veri_görünümü,
             odak: None,
             imleç_kilitli: boyut_senkron_katmanı.is_some(),
+            imleç_değere_yapışsın: false,
             boyut_senkron_katmanı,
             eksen_üzerinde: false,
             açıklama_vuruşu: None,
@@ -1388,7 +1399,9 @@ impl GpuiGrafik {
             .iter()
             .map(|örnek| örnek.map(|örnek| örnek.değer))
             .collect();
-        let x_konumu = self.grafik.x_konum_oranı(çözüm.imleç_x).unwrap_or(x_oranı) as f32;
+        // Veri yenilenirken çizgi, kullanıcının bıraktığı fare konumunda
+        // kalır; değerler aşağıda en yakın örnekten yeniden çözülür.
+        let x_konumu = x_oranı as f32;
         self.imleç = Some(İmleçDurumu {
             fare: if x_dikey {
                 Nokta::yeni(fare.x, alt - x_konumu * (alt - üst))
@@ -1894,20 +1907,26 @@ impl GpuiGrafik {
                 return;
             }
             let x_dikey = self.grafik.x_dikey_mi();
-            let x_konumu = self.grafik.x_konum_oranı(imleç.veri_x).map_or(
-                if x_dikey {
-                    imleç.fare.y
-                } else {
-                    imleç.fare.x
-                },
-                |oran| {
-                    if x_dikey {
-                        alt - oran as f32 * (alt - üst)
-                    } else {
-                        sol + oran as f32 * (sağ - sol)
-                    }
-                },
-            );
+            // Yapışma kapalıyken çizgi, imleç durumunda tutulan serbest fare
+            // konumunu kullanır; açıkken en yakın örneğin X konumuna oturur.
+            let serbest_konum = if x_dikey {
+                imleç.fare.y
+            } else {
+                imleç.fare.x
+            };
+            let x_konumu = if self.imleç_değere_yapışsın {
+                self.grafik
+                    .x_konum_oranı(imleç.veri_x)
+                    .map_or(serbest_konum, |oran| {
+                        if x_dikey {
+                            alt - oran as f32 * (alt - üst)
+                        } else {
+                            sol + oran as f32 * (sağ - sol)
+                        }
+                    })
+            } else {
+                serbest_konum
+            };
             sahne.ekle(if x_dikey {
                 Komut::KesikliÇizgi {
                     başlangıç: Nokta::yeni(sol, x_konumu),
@@ -2193,10 +2212,21 @@ impl GpuiGrafik {
         ))
     }
 
-    fn imleci_güncelle(&mut self, pencere_konumu: ::gpui::Point<Pixels>) -> bool {
+    /// İmleç katmanını fare konumuna göre günceller.
+    ///
+    /// `değere_yapış` açıkken imleç çizgisi en yakın örneğin X konumuna
+    /// oturur; kapalıyken fareyi kesintisiz izler. Lejant ve odak değerleri
+    /// her iki durumda da en yakın örnekten çözülür — uPlot'ta olduğu gibi
+    /// çizginin serbest olması okunan değeri değiştirmez.
+    fn imleci_güncelle(
+        &mut self,
+        pencere_konumu: ::gpui::Point<Pixels>,
+        değere_yapış: bool,
+    ) -> bool {
         if self.imleç_kilitli {
             return false;
         }
+        self.imleç_değere_yapışsın = değere_yapış;
         let Some(fare) = self.sahne_konumu(pencere_konumu) else {
             self.imleç = None;
             self.açıklama_vuruşu = None;
@@ -2269,7 +2299,11 @@ impl GpuiGrafik {
             .iter()
             .map(|örnek| örnek.map(|örnek| örnek.değer))
             .collect();
-        let x_konumu = self.grafik.x_konum_oranı(çözüm.imleç_x).unwrap_or(x_oranı) as f32;
+        let x_konumu = if değere_yapış {
+            self.grafik.x_konum_oranı(çözüm.imleç_x).unwrap_or(x_oranı) as f32
+        } else {
+            x_oranı as f32
+        };
         self.imleç = Some(İmleçDurumu {
             fare: if x_dikey {
                 Nokta::yeni(
@@ -3162,7 +3196,9 @@ impl Render for GpuiGrafik {
                     bu.açıklama_vuruşu = önceki_açıklama.take();
                     imleç_korundu = true;
                 } else {
-                    ana_sahne_değişti = bu.imleci_güncelle(olay.position);
+                    // Ctrl basılıyken imleç çizgisi örnek konumlarına oturur;
+                    // basılı değilken fareyi kesintisiz izler.
+                    ana_sahne_değişti = bu.imleci_güncelle(olay.position, olay.modifiers.control);
                 }
                 if bu.taşıma_başlangıcı.is_none()
                     && !bu.grafik.eksen_sürükleniyor()
