@@ -9764,6 +9764,77 @@ mod tests {
         Ok(())
     }
 
+    /// Aynı kartın iki grafik yüzeyi birbirinin üstüne yerleşmemeli.
+    ///
+    /// Bu oturumda bulunan kusurların hiçbirini sahne komutu testleri
+    /// yakalamadı: komutlar doğruydu, yüzey yanlış boyutta yerleşiyordu.
+    /// `sparklines` 10×2 tablosunda grafik kökünün sabit 120 px taban
+    /// yüksekliği her 150×30 hücreyi 150×120 yerleştiriyordu; yüzeyler
+    /// sonraki üç satırın üstüne yazıyor ve tabloda yalnız son satır
+    /// görünüyordu. Çakışma, hücre boyutlarını bilmeye gerek kalmadan bu
+    /// sınıf hatanın tamamını yakalar.
+    ///
+    /// Sanallaştırılmış kartlarda görünür alana girmemiş yüzeyler ölçüm
+    /// vermez ve doğal olarak atlanır.
+    #[::gpui::test]
+    async fn kart_yüzeyleri_üst_üste_yerleşmez(cx: &mut ::gpui::TestAppContext) {
+        /// Komşu yüzeyler kenarlarını paylaşabilir; ölçüm cihaz pikseline
+        /// yuvarlandığından bir piksellik örtüşme yerleşim hatası değildir.
+        const TOLERANS: f32 = 1.0;
+
+        cx.update(|cx| {
+            let _ = ortak_bilesenler::baslat(ortak_bileşen_ayarları(), cx);
+            başlat(cx);
+        });
+        let (liste, cx) = cx.add_window_view(|_, cx| ChartListesi::yeni(cx));
+
+        let mut ihlaller = Vec::new();
+        let mut ölçülen_kart_sayısı = 0_usize;
+        for tanım in KATALOG_KARTLARI {
+            liste.update(cx, |bu, cx| bu.kartı_seç(tanım.kimlik, cx));
+            cx.run_until_parked();
+            let alanlar = liste.read_with(cx, |bu, cx| {
+                let mut alanlar = Vec::new();
+                bu.etkin_grafik_yüzeylerini_gez(|yüzey| {
+                    if let Some(alan) = yüzey.read(cx).ölçülen_alan() {
+                        alanlar.push(alan);
+                    }
+                });
+                alanlar
+            });
+            if !alanlar.is_empty() {
+                ölçülen_kart_sayısı += 1;
+            }
+            for (sıra, alan) in alanlar.iter().enumerate() {
+                for diğer in alanlar.iter().skip(sıra + 1) {
+                    let yatay = f32::from(alan.right().min(diğer.right()))
+                        - f32::from(alan.left().max(diğer.left()));
+                    let dikey = f32::from(alan.bottom().min(diğer.bottom()))
+                        - f32::from(alan.top().max(diğer.top()));
+                    if yatay > TOLERANS && dikey > TOLERANS {
+                        ihlaller.push(format!(
+                            "{}: {:?} ile {:?} {yatay}×{dikey} px örtüşüyor",
+                            tanım.slug, alan, diğer
+                        ));
+                    }
+                }
+            }
+        }
+
+        // Ölçüm hiç gelmediyse test sessizce yeşile döner; o durumda
+        // invaryant değil, ölçüm yolu bozuktur.
+        assert!(
+            ölçülen_kart_sayısı > KATALOG_KARTLARI.len() / 2,
+            "kartların yarısından azı ölçüm verdi ({ölçülen_kart_sayısı}/{}); ölçüm yolu bozuk olabilir",
+            KATALOG_KARTLARI.len()
+        );
+        assert!(
+            ihlaller.is_empty(),
+            "grafik yüzeyleri üst üste yerleşti:\n{}",
+            ihlaller.join("\n")
+        );
+    }
+
     /// Kök render, tek yüzeyli kartlarda yaklaşık sabit bir taban maliyet
     /// (yan menü, araç çubuğu, kart tanımı) ödüyor. Çok yüzeyli kartlar bunun
     /// üstüne yüzey başına eleman kurulumu ekliyordu; ThinBars ve TimezonesDst

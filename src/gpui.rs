@@ -969,6 +969,17 @@ impl GpuiGrafik {
         &self.grafik
     }
 
+    /// Yüzeyin son yerleşimde ölçülen çizim alanı, pencere koordinatında.
+    ///
+    /// Ana yüzeyin `canvas` prepaint aşamasında yazılır; ilk yerleşim
+    /// tamamlanana kadar ve sanallaştırılmış listelerde görünür alana
+    /// girmemiş yüzeylerde `None`'dır. Yerleşimi doğrulayan testler
+    /// buradan okur: sahne komutları doğruyken yüzeyin yanlış boyutta
+    /// yerleşmesi yalnız bu ölçümde görünür.
+    pub fn ölçülen_alan(&self) -> Option<Bounds<Pixels>> {
+        self.çizim_sınırları.get()
+    }
+
     pub fn grafik_kimliği(&self) -> u64 {
         self.grafik.kimlik()
     }
@@ -4627,7 +4638,6 @@ fn gradyan_yolunu_boya(
     } else {
         f32::from(yol_sınırları.bottom())
     };
-    let sınır_uzunluğu = (sınır_sonu - sınır_başı).max(f32::EPSILON);
     let açı = if yatay {
         if eksen_farkı >= 0.0 { 90.0 } else { 270.0 }
     } else if eksen_farkı >= 0.0 {
@@ -4636,78 +4646,155 @@ fn gradyan_yolunu_boya(
         0.0
     };
 
-    let ilk_konum = eksen_başlangıcı + ilk.oran.clamp(0.0, 1.0) * eksen_farkı;
-    boya_maskeli_aralık(
-        &yol,
-        yatay,
-        if eksen_farkı >= 0.0 {
-            sınır_başı
-        } else {
-            ilk_konum
-        },
-        if eksen_farkı >= 0.0 {
-            ilk_konum
-        } else {
-            sınır_sonu
-        },
-        renk_önbelleği.renk(&ilk.renk),
-        görünüm,
-        yol_sınırları,
-        hedef_köken,
-        pencere,
-    );
+    let oranlar = gradyan
+        .duraklar
+        .iter()
+        .map(|durak| durak.oran)
+        .collect::<Vec<_>>();
+    for şerit in gradyan_şeritleri(
+        &oranlar,
+        eksen_başlangıcı,
+        eksen_bitişi,
+        sınır_başı,
+        sınır_sonu,
+    ) {
+        let Some(boya) = şerit.boya(&gradyan.duraklar, açı, renk_önbelleği) else {
+            continue;
+        };
+        boya_maskeli_aralık(
+            &yol,
+            yatay,
+            şerit.başlangıç,
+            şerit.bitiş,
+            boya,
+            görünüm,
+            yol_sınırları,
+            hedef_köken,
+            pencere,
+        );
+    }
+}
 
-    for çift in gradyan.duraklar.windows(2) {
+/// Bir gradyan şeridinin kaplayacağı aralık ve boyası.
+///
+/// Eksenin dışında kalan bölgeler uç durakların düz rengiyle dolar; eksen
+/// içindeki her durak çifti kendi doğrusal geçişini alır.
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct GradyanŞeridi {
+    başlangıç: f32,
+    bitiş: f32,
+    sol_durak: usize,
+    sağ_durak: usize,
+    /// Geçişin yol sınırlarına göre başlangıç ve bitiş yüzdesi. Düz
+    /// şeritlerde kullanılmaz.
+    sol_yüzde: f32,
+    sağ_yüzde: f32,
+}
+
+impl GradyanŞeridi {
+    fn boya(
+        &self,
+        duraklar: &[crate::GradyanRenkDurağı],
+        açı: f32,
+        renk_önbelleği: &mut GpuiYolÖnbelleği,
+    ) -> Option<::gpui::Background> {
+        let sol = duraklar.get(self.sol_durak)?;
+        if self.sol_durak == self.sağ_durak {
+            return Some(renk_önbelleği.renk(&sol.renk).into());
+        }
+        let sağ = duraklar.get(self.sağ_durak)?;
+        let sol_rengi = renk_önbelleği.renk(&sol.renk);
+        let sağ_rengi = renk_önbelleği.renk(&sağ.renk);
+        Some(linear_gradient(
+            açı,
+            linear_color_stop(sol_rengi, self.sol_yüzde),
+            linear_color_stop(sağ_rengi, self.sağ_yüzde),
+        ))
+    }
+}
+
+/// Gradyan duraklarını yol sınırları içinde boyanacak şeritlere böler.
+///
+/// Eksen noktaları ve sınırlar **aynı** koordinat uzayında olmalıdır. Uzaylar
+/// karıştığında şeritler örtüşür ve son boyanan renk öncekileri gizler:
+/// `sparklines-bars` yüzen çubuklarında kırmızı ile yeşil aynı şeride düşüp
+/// çubukların tamamı yeşil çiziliyordu. Şeritler bu yüzden sınırlara kısılır;
+/// döndürülen aralıklar sınırları boşluksuz ve örtüşmesiz kaplar.
+fn gradyan_şeritleri(
+    oranlar: &[f32],
+    eksen_başlangıcı: f32,
+    eksen_bitişi: f32,
+    sınır_başı: f32,
+    sınır_sonu: f32,
+) -> Vec<GradyanŞeridi> {
+    let eksen_farkı = eksen_bitişi - eksen_başlangıcı;
+    let sınır_uzunluğu = (sınır_sonu - sınır_başı).max(f32::EPSILON);
+    let konum = |oran: f32| {
+        (eksen_başlangıcı + oran.clamp(0.0, 1.0) * eksen_farkı).clamp(sınır_başı, sınır_sonu)
+    };
+    let mut şeritler = Vec::with_capacity(oranlar.len().saturating_add(1));
+    // Geçiş şeritlerinde yüzdeler durakların kendi konumlarından gelir; şerit
+    // sınırlara kısılsa da renk rampası yerinde kalır. Düz şeritler onları
+    // kullanmadığından kendi aralıklarını verir.
+    let mut ekle = |başlangıç: f32,
+                    bitiş: f32,
+                    sol_durak: usize,
+                    sağ_durak: usize,
+                    yüzdeler: Option<(f32, f32)>| {
+        let (başlangıç, bitiş) = (başlangıç.min(bitiş), başlangıç.max(bitiş));
+        if bitiş - başlangıç <= f32::EPSILON {
+            return;
+        }
+        let (sol_yüzde, sağ_yüzde) = yüzdeler.unwrap_or((
+            (başlangıç - sınır_başı) / sınır_uzunluğu,
+            (bitiş - sınır_başı) / sınır_uzunluğu,
+        ));
+        şeritler.push(GradyanŞeridi {
+            başlangıç,
+            bitiş,
+            sol_durak,
+            sağ_durak,
+            sol_yüzde,
+            sağ_yüzde,
+        });
+    };
+
+    let son_indeks = oranlar.len().saturating_sub(1);
+    let (Some(ilk_oran), Some(son_oran)) = (oranlar.first(), oranlar.last()) else {
+        return şeritler;
+    };
+    let ilk_konum = konum(*ilk_oran);
+    let son_konum = konum(*son_oran);
+    // Eksenin gerisinde kalan bölge ilk durağın düz rengiyle dolar.
+    if eksen_farkı >= 0.0 {
+        ekle(sınır_başı, ilk_konum, 0, 0, None);
+    } else {
+        ekle(ilk_konum, sınır_sonu, 0, 0, None);
+    }
+    for (sıra, çift) in oranlar.windows(2).enumerate() {
         let (Some(sol), Some(sağ)) = (çift.first(), çift.get(1)) else {
             continue;
         };
-        let sol_konum = eksen_başlangıcı + sol.oran.clamp(0.0, 1.0) * eksen_farkı;
-        let sağ_konum = eksen_başlangıcı + sağ.oran.clamp(0.0, 1.0) * eksen_farkı;
-        if (sağ_konum - sol_konum).abs() <= f32::EPSILON {
-            continue;
-        }
-        let sol_yüzde = (sol_konum - sınır_başı) / sınır_uzunluğu;
-        let sağ_yüzde = (sağ_konum - sınır_başı) / sınır_uzunluğu;
-        let arka_plan = linear_gradient(
-            açı,
-            linear_color_stop(renk_önbelleği.renk(&sol.renk), sol_yüzde),
-            linear_color_stop(renk_önbelleği.renk(&sağ.renk), sağ_yüzde),
+        let (sol_konum, sağ_konum) = (konum(*sol), konum(*sağ));
+        let yüzdeler = (
+            (sol_konum - sınır_başı) / sınır_uzunluğu,
+            (sağ_konum - sınır_başı) / sınır_uzunluğu,
         );
-        boya_maskeli_aralık(
-            &yol,
-            yatay,
-            sol_konum.min(sağ_konum),
-            sol_konum.max(sağ_konum),
-            arka_plan,
-            görünüm,
-            yol_sınırları,
-            hedef_köken,
-            pencere,
+        ekle(
+            sol_konum,
+            sağ_konum,
+            sıra,
+            sıra.saturating_add(1),
+            Some(yüzdeler),
         );
     }
-
-    if let Some(son) = gradyan.duraklar.last() {
-        let son_konum = eksen_başlangıcı + son.oran.clamp(0.0, 1.0) * eksen_farkı;
-        boya_maskeli_aralık(
-            &yol,
-            yatay,
-            if eksen_farkı >= 0.0 {
-                son_konum
-            } else {
-                sınır_başı
-            },
-            if eksen_farkı >= 0.0 {
-                sınır_sonu
-            } else {
-                son_konum
-            },
-            renk_önbelleği.renk(&son.renk),
-            görünüm,
-            yol_sınırları,
-            hedef_köken,
-            pencere,
-        );
+    // Eksenin ötesinde kalan bölge son durağın düz rengiyle dolar.
+    if eksen_farkı >= 0.0 {
+        ekle(son_konum, sınır_sonu, son_indeks, son_indeks, None);
+    } else {
+        ekle(sınır_başı, son_konum, son_indeks, son_indeks, None);
     }
+    şeritler
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -4887,6 +4974,68 @@ mod testler {
         assert_eq!(en_az_yüzey_yüksekliği(120), 120.0);
         // Uzun yüzeylerde taban değişmez; esnek kapta sıfıra çökmeyi önler.
         assert_eq!(en_az_yüzey_yüksekliği(600), 120.0);
+    }
+
+    /// Gradyan şeritleri yol sınırlarını boşluksuz ve örtüşmesiz kaplamalı.
+    ///
+    /// `sparklines-bars` yüzen çubuklarında eksen noktaları yüzey-yerel,
+    /// yol sınırları ise mutlak koordinattaydı. Karışım şeritleri aynı
+    /// yere düşürüyor, son boyanan yeşil kırmızıyı örtüyordu. Testin ikinci
+    /// yarısı o karışımı taklit ederek invaryantın gerçekten koruduğunu
+    /// gösterir.
+    #[test]
+    fn gradyan_şeritleri_sınırları_örtüşmeden_kaplar() {
+        // `sparklines-bars` yüzen çubuk gradyanı: ayrık kırmızı/yeşil,
+        // eksen 392 → 152, yol sınırı 8 → 392.
+        let oranlar = [0.0, 1.0, 1.0];
+        let şeritler = gradyan_şeritleri(&oranlar, 392.0, 152.0, 8.0, 392.0);
+        assert!(!şeritler.is_empty(), "şerit üretilmedi");
+
+        let mut sıralı = şeritler.clone();
+        sıralı.sort_by(|a, b| a.başlangıç.total_cmp(&b.başlangıç));
+        let ilk = sıralı.first().map(|şerit| şerit.başlangıç);
+        let son = sıralı.last().map(|şerit| şerit.bitiş);
+        assert_eq!(ilk, Some(8.0), "şeritler sınırın başından başlamalı");
+        assert_eq!(son, Some(392.0), "şeritler sınırın sonunda bitmeli");
+        for çift in sıralı.windows(2) {
+            let (Some(önce), Some(sonra)) = (çift.first(), çift.get(1)) else {
+                continue;
+            };
+            assert!(
+                (sonra.başlangıç - önce.bitiş).abs() <= f32::EPSILON,
+                "şeritler arasında boşluk veya örtüşme var: {önce:?} → {sonra:?}"
+            );
+        }
+        // Her durak en az bir şeritte temsil edilmeli; ayrık gradyanın
+        // negatif dalı ilk durağı, pozitif dalı son durağı kullanır.
+        let temsil_edilen = |şeritler: &[GradyanŞeridi]| {
+            (0..oranlar.len())
+                .filter(|indeks| {
+                    şeritler
+                        .iter()
+                        .any(|şerit| şerit.sol_durak == *indeks || şerit.sağ_durak == *indeks)
+                })
+                .count()
+        };
+        assert_eq!(
+            temsil_edilen(&şeritler),
+            oranlar.len(),
+            "her durak boyanmalı: {şeritler:?}"
+        );
+
+        // Karışık uzay: sınırlar 352 px ötelenmiş, eksen yerel kalmış.
+        let karışık = gradyan_şeritleri(&oranlar, 392.0, 152.0, 360.0, 744.0);
+        assert!(
+            karışık.iter().all(|şerit| şerit.başlangıç >= 360.0),
+            "kısıtlama olmadan şeritler sınırın dışına taşardı: {karışık:?}"
+        );
+        // Karışımın gerçek zararı: eksen sınırın gerisinde kaldığından son
+        // durak hiç şerit almıyor. Yüzeyde bu, ayrık gradyanın bir dalının
+        // tamamen kaybolması olarak görünüyordu.
+        assert!(
+            temsil_edilen(&karışık) < oranlar.len(),
+            "karışık uzayda durak kaybı beklenir, invaryant bunu yakalar: {karışık:?}"
+        );
     }
 
     /// Retained yol önbellekten `hedef_köken`e ötelenmiş çıkar; sınırları da
