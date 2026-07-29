@@ -10,8 +10,8 @@ gereken durum, açık konular ve tekrar üretim adımları var.
 
 | depo | dal | son commit | durum |
 |---|---|---|---|
-| `uPlot.rs` | `main` | `7f54978` | temiz, gönderildi |
-| `../gpui` | `main` | `39c95ac` | temiz, gönderildi |
+| `uPlot.rs` | `main` | `c1f95f8` | temiz, gönderildi |
+| `../gpui` | `main` | `91d67c5` | temiz, gönderildi |
 | `../gpui_kutuphanesi` | `main` | `36f1174` | temiz, gönderildi |
 
 Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
@@ -21,6 +21,10 @@ Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
 Bu oturumun commit'leri (`4b5fa67` sonrası, hepsi gönderildi):
 
 ```
+c1f95f8 feat(lejant): satıra gelince seriyi odakla
+7a7ba77 test(perf): dört performans iddiasını ölçüme bağla
+03bd648 build(web): kabuğu stable toolchain'e al
+eb87122 docs: devir notunu çoklu yüzey lejantının kapanışıyla güncelle
 7f54978 fix(lejant): ortak lejantı imlecin girdiği yüzeye bağla
 b4e1f61 docs: gpui 259297035a senkronunun denetimini kaydet
 294aa70 docs: devir notunu imleç sönme düzeltmesiyle güncelle
@@ -47,7 +51,7 @@ eb8a375 fix(katalog): kart yüzeylerini görünür alana sığdır ve kesik içe
 ```
 
 Doğrulama durumu: `cargo fmt --all --check` temiz, `cargo clippy --workspace
---all-targets` uyarısız, testler çekirdek 99 / örnekler 262 / katalog 19 +
+--all-targets` uyarısız, testler çekirdek 99 / örnekler 262 / katalog 20 +
 sahne 2 / resize 13 / svg 6 / area_fill 3 / bütçe 2 geçiyor.
 
 **`upstream_yol_butcesi` yalnız `--release` ile anlamlıdır.** Debug'da
@@ -68,13 +72,13 @@ kuruluyor, katalog render ediliyor, konsol temiz. Boş ekran o makineye
 
 **LAN üzerinden WebGPU (eski #3):** değişmedi, güvenli bağlam gerekir.
 
-**`gpui_web` varsayılan `multithreaded` (eski #5):** konsolda
+**`gpui_web` varsayılan `multithreaded` (eski #5): kapatıldı.** Konsoldaki
 `SharedArrayBuffer not available; falling back to single-threaded
-dispatcher` uyarısı `crossOriginIsolated: true` iken bile düşüyor. Kabuk
-zaten `single_threaded_web()` çağırdığından `default-features = false`
-argümanı güçlendi. `259297035a` senkronuyla upstream'in
-`--no-default-features` yolu artık derleniyor, ama kapatma uPlot.rs'ten
-yapılamıyor — gerekçe yapılacaklar 3'te.
+dispatcher` uyarısı `crossOriginIsolated: true` iken bile düşüyordu, yani
+iş parçacıklı yol hiç çalışmıyordu. Web kabuğu artık `gpui_platform`
+yerine doğrudan `gpui_web`'e `default-features = false` ile bağlanıyor;
+nightly kanal, `build-std` ve atomics rustflag'leri kalktı (commit
+`03bd648`, ayrıntı "Bu oturumda yapılanlar"da).
 
 ## Bu oturumda yapılanlar
 
@@ -227,6 +231,28 @@ değer yazısı sabit 10 px'ti, çubuk kalınlığına göre ölçekleniyor. Çu
 kırpılan uçta köşe düz bırakılıyor. Görünüm değişiminde imleç katmanı eski
 piksel konumunda kalıyordu, aynı fare konumundan yeniden çözülüyor.
 
+**Web kabuğu stable kanala alındı** (commit `03bd648`). Kabuk
+`gpui_platform` üzerinden `gpui_web`'i varsayılan feature'larla çekiyordu;
+varsayılan `multithreaded`, `wasm_thread` aracılığıyla atomics hedef
+özelliğini zorunlu kılıyor ve atomics açıkken `parking_lot_core`'un
+nightly gate'i de açılıyordu. Bedeli ayrı bir nightly toolchain,
+`build-std` ile std'nin yeniden derlenmesi ve on satırlık rustflag
+bakımıydı; karşılığı alınmıyordu, çünkü kabuk zaten tek iş parçacıklı
+yolu kullanıyordu.
+
+`gpui_platform`'un web tarafı `WebPlatform::new` ve `init_logging` üzerine
+ince bir sarmalayıcı ve o crate'i başka kimse çekmiyor; kabuk aynı
+kurulumu doğrudan yapıyor. `rust-toolchain.toml` ile `.cargo/config.toml`
+silindi, CI stable'a alındı. Manifestte yeniden açma koşulu yazılı: gpui
+tarafında iş parçacıklı web yolu gerçekten çalışır ve katalog ondan
+ölçülebilir kazanç sağlarsa feature geri açılır.
+
+**Lejant satırı seriyi odaklıyor** (commit `c1f95f8`). uPlot lejantta
+`setSeries(i, {focus: true})` uygular; tıklama davranışı zaten vardı,
+odak eksikti. Odak yalnız `cursor.focus` kurulmuş kartlarda boyandığından
+`odak_sunumu_var_mı` ile önce kontrol ediliyor. Birleşik lejantta hedef
+dışındaki yüzeylerin odağı da bırakılıyor.
+
 **Dört performans iddiası ölçüldü, dördü de düzeltme gerektirmedi.** Dışarıdan
 gelen bir değerlendirme `src/gpui.rs` ve `src/grafik.rs` için dört "performansı
 kötü etkileyen" madde saydı. Hepsi tek tek sınandı; hiçbiri ölçümle
@@ -284,28 +310,29 @@ bağlamı: `cx.simulate_mouse_move` + `GpuiGrafik::imleç_etkin_mi`.
 ## Yapılacaklar — öncelik sırası
 
 **1. Görsel regresyonun kalan boşluğu (açık konu 1).** Yerleşim ve şerit
-invaryantları kuruldu; kalan sınıf renk/şekil hataları. Bunun için gpui
-tarafında sahneyi okuyan bir test kancası gerekiyor ve gpui katı Zed
-paritesinde tutuluyor — bu yüzden sırada arkada duruyor.
+invaryantları kuruldu; kalan sınıf renk/şekil hataları.
 
-**2. `gpui_web` varsayılan `multithreaded` — engel tespit edildi.**
-Kapatılırsa nightly kanal, `build-std` ve on satırlık atomics rustflag
-bakımı **tümüyle** kalkar; zincir doğrulandı: `wasm_thread` atomics
-hedef özelliğini gerektiriyor, `parking_lot_core`'un nightly gate'i de
-`all(feature = "nightly", target_family = "wasm", target_feature =
-"atomics")` koşullu — atomics olmadan stable'da derleniyor.
+Bu madde bir kez "gpui'de test kancası gerekir" diye kapatılmıştı; o
+teşhis fazla kısaydı. Yakalanamayan kusurların ikisi de (gradyan maskesi,
+yüzey tabanı) **uPlot.rs'in kendi** boyama kodundaydı, gpui'nin içinde
+değil. Yani `sahneyi_boya`'nın ürettiği boya kararları — hangi yol, hangi
+renk, hangi maske — kendi tarafımızda kaydedilip doğrulanabilir.
+`gradyan_şeritleri` bunun tek seferlik örneği; sistematik hâli bir boya
+günlüğü soyutlamasıdır. gpui'nin sorumluluğunda kalan tek şey o
+çağrıların piksele nasıl döndüğü ve orası zaten Zed'de test ediliyor.
 
-Ama uPlot.rs bunu kapatamıyor: `gpui_platform` wasm hedefinde
-`gpui_web`'i varsayılan feature'larla çekiyor (`gpui_web.workspace =
-true`) ve Cargo'da bir bağımlılığın feature'ı aşağıdan kapatılamaz.
-`cargo tree -i wasm_thread` zinciri gösteriyor:
-`wasm_thread → gpui_web → gpui_platform → uplot-rs-gpui-web`.
+**Yapılacaklar 2 kapandı:** `gpui_web` varsayılan `multithreaded` artık
+çekilmiyor, web kabuğu stable kanalda (commit `03bd648`). "gpui'de
+passthrough feature gerekir" teşhisi yanlıştı: `gpui_platform`'un web
+tarafı `WebPlatform::new` ve `init_logging` üzerine ince bir
+sarmalayıcıydı ve o crate'i başka kimse çekmiyordu, kabuk doğrudan
+`gpui_web`'e bağlanınca `default-features = false` mümkün oldu.
 
-Çözüm `gpui_platform` manifestinde `default-features = false` + bir
-`multithreaded` passthrough feature'ı ister; bu gpui'de parite sapması
-olur ve `yetenek.md` yerel workaround eklemeyi açıkça yasaklıyor
-("düzeltme önce Zed'e girmelidir"). Yani iş uPlot.rs'te değil, upstream
-katkısında.
+Buradan çıkan ders iki kez tekrarlandı: "gpui'ye dokunmak gerekiyor"
+sonucuna varmadan önce tüketici tarafındaki yolu sonuna kadar arayın.
+gpui'de bilinçli sapma artık koşullu olarak mümkün
+(`../gpui/AGENTS.md`, kayıt yeri `../gpui/SAPMALAR.md`), ama sürecin ilk
+koşulu gerçek bir sınır olması.
 
 ## Çalıştırma
 
