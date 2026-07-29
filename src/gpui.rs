@@ -605,6 +605,22 @@ fn duyarlı_boyut_güncellenmeli(önceki: Option<Bounds<Pixels>>, güncel: Bound
     önceki.is_none_or(|önceki| önceki.size != güncel.size)
 }
 
+/// Yüzeyin sıfır yüksekliğe çökmesini önleyen taban.
+///
+/// Grafik kökü sarmalayıcının yüksekliğini devralır; esnek bir kapta ölçüm
+/// sıfır dönerse yüzey hiç görünmez. Taban bunu engeller, ama grafiğin kendi
+/// ham yüksekliğini aşamaz: `sparklines` 150×30 hücrelere yerleşiyor ve sabit
+/// 120 px taban her yüzeyi kendinden sonraki üç satırın üstüne taşırıyordu.
+/// Sonra çizilen üstte kaldığından tabloda yalnız son satır görünür oluyordu.
+const fn en_az_yüzey_yüksekliği(ham_yükseklik: u32) -> f32 {
+    const TABAN: f32 = 120.0;
+    if ham_yükseklik as f32 >= TABAN {
+        TABAN
+    } else {
+        ham_yükseklik as f32
+    }
+}
+
 impl GpuiEtkileşimYüzeyi {
     fn sahneyi_ayarla(&mut self, sahne: Rc<Sahne>) {
         self.yol_önbelleği
@@ -3103,7 +3119,7 @@ impl Render for GpuiGrafik {
             .track_focus(&odak)
             .key_context("uplot_rs_grafik")
             .size_full()
-            .min_h(px(120.0))
+            .min_h(px(en_az_yüzey_yüksekliği(self.grafik.boyut().1)))
             .overflow_hidden()
             .when(taşıyor, |yüzey| yüzey.cursor_grabbing())
             .when(!taşıyor && taşımaya_hazır, |yüzey| yüzey.cursor_grab())
@@ -4849,6 +4865,21 @@ fn css_alfa_kanalı(değer: &str) -> Option<u8> {
 #[cfg(test)]
 mod testler {
     use super::*;
+
+    /// Grafik kökünün taban yüksekliği yüzeyi kendi hücresinden taşırmamalı.
+    ///
+    /// `sparklines` 10×2 tablosu 150×30 hücrelere yerleşir. Sabit 120 px taban
+    /// her yüzeyi 90 px aşağı taşırıp kendinden sonraki üç satırın üstüne
+    /// yazıyordu; sonra çizilen üstte kaldığından tabloda yalnız son satır
+    /// görünüyordu. Taban artık ham yüksekliği aşamaz.
+    #[test]
+    fn taban_yükseklik_ham_yüksekliği_aşmaz() {
+        assert_eq!(en_az_yüzey_yüksekliği(30), 30.0);
+        assert_eq!(en_az_yüzey_yüksekliği(119), 119.0);
+        assert_eq!(en_az_yüzey_yüksekliği(120), 120.0);
+        // Uzun yüzeylerde taban değişmez; esnek kapta sıfıra çökmeyi önler.
+        assert_eq!(en_az_yüzey_yüksekliği(600), 120.0);
+    }
 
     /// Dağılım yüzeyleri on binlerce daireyi tek `PathBuilder` yoluna yazar.
     /// `build()` bu ölçekte başarısız olursa çağrı yerindeki `.ok()` hatayı
