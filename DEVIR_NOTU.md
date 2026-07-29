@@ -11,12 +11,12 @@ gereken durum, açık konular ve tekrar üretim adımları var.
 | depo | dal | son commit | durum |
 |---|---|---|---|
 | `uPlot.rs` | `main` | `2ccd8eb` | temiz, gönderildi |
-| `../gpui` | `main` | `d3a6038` | temiz, gönderildi |
+| `../gpui` | `main` | `39c95ac` | temiz, gönderildi |
 | `../gpui_kutuphanesi` | `main` | `36f1174` | temiz, gönderildi |
 
 Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
 `uPlot` (normatif kaynak, `master`), `zed` (parite doğrulaması için
-`7b030b5008`; bu makinede `401a0c7e3d` duruyor).
+`259297035a`; bu makinede `401a0c7e3d` duruyor).
 
 Bu oturumun commit'leri (`4b5fa67` sonrası, hepsi gönderildi):
 
@@ -69,7 +69,9 @@ kuruluyor, katalog render ediliyor, konsol temiz. Boş ekran o makineye
 `SharedArrayBuffer not available; falling back to single-threaded
 dispatcher` uyarısı `crossOriginIsolated: true` iken bile düşüyor. Kabuk
 zaten `single_threaded_web()` çağırdığından `default-features = false`
-argümanı güçlendi.
+argümanı güçlendi. `259297035a` senkronuyla upstream'in
+`--no-default-features` yolu artık derleniyor, ama kapatma uPlot.rs'ten
+yapılamıyor — gerekçe yapılacaklar 3'te.
 
 ## Bu oturumda yapılanlar
 
@@ -174,6 +176,22 @@ boşluksuz, örtüşmesiz kaplıyor. Test karışık koordinat uzayını taklit
 ediyor: o durumda son durak hiç şerit almıyor — yüzeyde ayrık gradyanın
 bir dalının kaybolması olarak görünen belirti buydu.
 
+**gpui `259297035a` senkronu denetlendi** (gpui `39c95ac`). uPlot.rs'te
+düzeltme gerektiren kırılım çıkmadı: `cargo check --workspace
+--all-targets --all-features` ve bütün testler temiz, kare bütçesi ve
+wasm kataloğu (sparklines, sparklines-bars, timeseries-discrete, imleç
+sönmesi) değişmedi.
+
+Gelen API'ler uPlot.rs'in dokunduğu yüzeylere değmiyor:
+`external_drag_payload`/`ExternalDragPayload` (dış sürükleme),
+`grid_rows_min_content`/`max_content`, `GridTemplateMinSize` yeniden
+adlandırması, `spawn_when_idle`/`idle_time_remaining`. `div.rs` ve
+`window.rs` değişiklikleri yalnız sürükleme yolunu ilgilendiriyor;
+hover/hitbox dağıtımı aynı kaldı, yani bu oturumun `on_hover`
+düzeltmesi etkilenmedi. `spawn_when_idle` için karşılık gelen bir iş
+yok — katalogdaki tek erteleme canvas ölçümü ve o bir sonraki karede
+gerekli, boş zamana bırakılamaz.
+
 **İmleç yüzeyi terk edince sönüyor** (commit `2ccd8eb`). Temizleme
 `on_mouse_exit`e bağlıydı; GPUI o olayı yalnız fare **pencereyi** terk
 ettiğinde üretiyor ve `on_mouse_move` de `hitbox.is_hovered()` ile
@@ -241,9 +259,24 @@ invaryantları kuruldu; kalan sınıf renk/şekil hataları. Bunun için gpui
 tarafında sahneyi okuyan bir test kancası gerekiyor ve gpui katı Zed
 paritesinde tutuluyor — bu yüzden sırada arkada duruyor.
 
-Sırada olmayan ama not düşülmeye değer: `gpui_web` varsayılan
-`multithreaded` özelliği hâlâ çekiliyor (yukarıda), kapatılırsa nightly ve
-`build-std` bakımı tümüyle kalkabilir.
+**3. `gpui_web` varsayılan `multithreaded` — engel tespit edildi.**
+Kapatılırsa nightly kanal, `build-std` ve on satırlık atomics rustflag
+bakımı **tümüyle** kalkar; zincir doğrulandı: `wasm_thread` atomics
+hedef özelliğini gerektiriyor, `parking_lot_core`'un nightly gate'i de
+`all(feature = "nightly", target_family = "wasm", target_feature =
+"atomics")` koşullu — atomics olmadan stable'da derleniyor.
+
+Ama uPlot.rs bunu kapatamıyor: `gpui_platform` wasm hedefinde
+`gpui_web`'i varsayılan feature'larla çekiyor (`gpui_web.workspace =
+true`) ve Cargo'da bir bağımlılığın feature'ı aşağıdan kapatılamaz.
+`cargo tree -i wasm_thread` zinciri gösteriyor:
+`wasm_thread → gpui_web → gpui_platform → uplot-rs-gpui-web`.
+
+Çözüm `gpui_platform` manifestinde `default-features = false` + bir
+`multithreaded` passthrough feature'ı ister; bu gpui'de parite sapması
+olur ve `yetenek.md` yerel workaround eklemeyi açıkça yasaklıyor
+("düzeltme önce Zed'e girmelidir"). Yani iş uPlot.rs'te değil, upstream
+katkısında.
 
 ## Çalıştırma
 
