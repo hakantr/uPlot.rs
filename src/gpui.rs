@@ -4579,7 +4579,15 @@ fn gradyan_yolunu_boya(
     }
     let mut başlangıç = dönüştür(gradyan.başlangıç);
     let mut bitiş = dönüştür(gradyan.bitiş);
+    // Gradyan ekseni `yolu_dönüştür` ile yüzey-yerel koordinatta gelir; yol ise
+    // önbellekten `hedef_köken`e ötelenmiş çıkar ve sınırları mutlaktır. İkisi
+    // karışırsa maske aralıkları farklı uzaylardan hesaplanıp çakışır: yüzen
+    // çubuk gradyanında kırmızı ve yeşil aynı şeride düşüyor, sonra boyanan
+    // yeşil kırmızıyı tamamen örtüyordu. `boya_maskeli_aralık` ötelemeyi zaten
+    // kendisi uyguladığından hesap yerel uzayda yapılır.
     let mut yol_sınırları = yol.mantıksal_sınırlar;
+    yol_sınırları.origin.x -= hedef_köken.x;
+    yol_sınırları.origin.y -= hedef_köken.y;
     if let Some(görünüm) = görünüm {
         başlangıç = görünüm.noktayı_dönüştür(başlangıç);
         bitiş = görünüm.noktayı_dönüştür(bitiş);
@@ -4879,6 +4887,32 @@ mod testler {
         assert_eq!(en_az_yüzey_yüksekliği(120), 120.0);
         // Uzun yüzeylerde taban değişmez; esnek kapta sıfıra çökmeyi önler.
         assert_eq!(en_az_yüzey_yüksekliği(600), 120.0);
+    }
+
+    /// Retained yol önbellekten `hedef_köken`e ötelenmiş çıkar; sınırları da
+    /// öyle. Gradyan ekseni ise `yolu_dönüştür` ile yüzey-yerel hesaplanır.
+    /// `gradyan_yolunu_boya` bu ötelemeyi sınırlardan geri düşer — iki uzay
+    /// karışırsa maske aralıkları çakışıp son boyanan renk öncekileri örter.
+    #[test]
+    fn boyanabilir_yol_sınırları_hedef_kökene_ötelenir() {
+        let mut kurucu = PathBuilder::fill();
+        kurucu.move_to(point(px(0.0), px(0.0)));
+        kurucu.line_to(point(px(10.0), px(0.0)));
+        kurucu.line_to(point(px(10.0), px(10.0)));
+        kurucu.close();
+        let yol = kurucu.build();
+        assert!(yol.is_ok(), "üçgen yol kurulamadı");
+        let Ok(yol) = yol else { return };
+
+        let mut önbellekli = ÖnbellekliGpuiYol::yeni(yol);
+        let boyanabilir = önbellekli.boyanabilir(point(px(305.0), px(352.0)));
+        assert_eq!(boyanabilir.mantıksal_sınırlar.origin.x, px(305.0));
+        assert_eq!(boyanabilir.mantıksal_sınırlar.origin.y, px(352.0));
+
+        // Aynı önbellek başka bir kökene taşındığında sınırlar onu izler.
+        let boyanabilir = önbellekli.boyanabilir(point(px(0.0), px(0.0)));
+        assert_eq!(boyanabilir.mantıksal_sınırlar.origin.x, px(0.0));
+        assert_eq!(boyanabilir.mantıksal_sınırlar.origin.y, px(0.0));
     }
 
     /// Dağılım yüzeyleri on binlerce daireyi tek `PathBuilder` yoluna yazar.
