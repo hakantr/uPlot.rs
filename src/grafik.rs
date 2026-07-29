@@ -6345,8 +6345,11 @@ impl Grafik {
                                 }
                             }
                         } else if düzen.değer_etiketleri {
+                            let yazı_boyutu = değer_etiketi_boyutu(genişlik);
                             let etiket_y = if değer < 0.0 { y1 + 11.0 } else { y1 - 2.0 };
                             let etiket_x = x + genişlik / 2.0;
+                            // Sığma payı kaynaktaki sabit ölçüde kalır; yazı
+                            // büyüdüğü için etiket elenmemeli.
                             if etiket_x >= sol
                                 && etiket_x <= sağ
                                 && etiket_y - 10.0 >= üst
@@ -6356,7 +6359,7 @@ impl Grafik {
                                     konum: Nokta::yeni(etiket_x, etiket_y),
                                     içerik: format!("{tepe}"),
                                     renk: "#111111".into(),
-                                    boyut: 10.0,
+                                    boyut: yazı_boyutu,
                                     hiza: MetinHizası::Orta,
                                 });
                             }
@@ -6563,8 +6566,10 @@ impl Grafik {
                             } else {
                                 (x1 + 3.0, MetinHizası::Başlangıç)
                             };
+                            let yazı_boyutu = değer_etiketi_boyutu(yükseklik);
                             let içerik = format!("{uç}");
-                            let metin_genişliği = içerik.chars().count() as f32 * 5.5;
+                            let metin_genişliği =
+                                içerik.chars().count() as f32 * yazı_boyutu * 0.55;
                             let etiket_y = y + yükseklik / 2.0 + 4.0;
                             let yatay_sığıyor = if değer < 0.0 {
                                 etiket_x - metin_genişliği >= sol
@@ -6576,7 +6581,7 @@ impl Grafik {
                                     konum: Nokta::yeni(etiket_x, etiket_y),
                                     içerik,
                                     renk: "#111111".into(),
-                                    boyut: 10.0,
+                                    boyut: yazı_boyutu,
                                     hiza,
                                 });
                             }
@@ -8339,6 +8344,19 @@ fn güzel_ölçek(
     let alt = artıma_yuvarla((en_az / artım).floor() * artım, artım);
     let üst = artıma_yuvarla((en_çok / artım).ceil() * artım, artım);
     Some((Aralık::yeni(alt, üst).ok()?, artım))
+}
+
+/// Çubuk ucundaki değer etiketinin çubuk kalınlığına göre yazı boyutu.
+///
+/// Etiket sabit 10 px çiziliyordu; yakınlaştırmada çubuk genişlerken yazı
+/// aynı kalıyor ve orantısız görünüyordu. Taban değer eski boyuttur, böylece
+/// dar çubuklarda görünüm değişmez; çubuk kalınlaştıkça etiket de büyür.
+/// Üst sınır `değer_etiketi_otomatik` kipindeki 25 px'in altında tutulur.
+fn değer_etiketi_boyutu(çubuk_kalınlığı: f32) -> f32 {
+    const ORAN: f32 = 0.55;
+    const EN_KÜÇÜK: f32 = 10.0;
+    const EN_BÜYÜK: f32 = 22.0;
+    (çubuk_kalınlığı * ORAN).clamp(EN_KÜÇÜK, EN_BÜYÜK)
 }
 
 fn eksen_bölmeleri(aralık: Aralık, boyut: f32, en_az_boşluk: f32) -> Vec<f64> {
