@@ -10,7 +10,7 @@ gereken durum, açık konular ve tekrar üretim adımları var.
 
 | depo | dal | son commit | durum |
 |---|---|---|---|
-| `uPlot.rs` | `main` | `a2add2b` | temiz, gönderildi |
+| `uPlot.rs` | `main` | `6296f82` | temiz, gönderildi |
 | `../gpui` | `main` | `d3a6038` | temiz, gönderildi |
 | `../gpui_kutuphanesi` | `main` | `36f1174` | temiz, gönderildi |
 
@@ -21,6 +21,8 @@ Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
 Bu oturumun commit'leri (`4b5fa67` sonrası, hepsi gönderildi):
 
 ```
+6296f82 feat(lejant): seri girdilerini tıklanabilir yap ve konumlandırılabilir kıl
+12002a1 docs: devir notuna commit listesi ve öncelikli yapılacaklar ekle
 b2427a9 docs: devir notunu eksen ve çubuk düzeltmeleriyle güncelle
 a2add2b fix(çubuk): kırpılan değer ucunda köşe yuvarlatmasını kaldır
 1fd03a9 fix(çubuk): değer etiketini çubuk kalınlığına göre ölçekle
@@ -35,8 +37,15 @@ eb8a375 fix(katalog): kart yüzeylerini görünür alana sığdır ve kesik içe
 ```
 
 Doğrulama durumu: `cargo fmt --all --check` temiz, `cargo clippy --workspace
---all-targets` uyarısız, testler çekirdek 88 / örnekler 261 / katalog 12 /
-yerleşim 7 geçiyor. Kare bütçesi testi geçiyor.
+--all-targets` uyarısız, testler çekirdek 96 / örnekler 262 / katalog 15 +
+sahne 2 / resize 13 / svg 6 / area_fill 3 / bütçe 2 geçiyor.
+
+**`upstream_yol_butcesi` yalnız `--release` ile anlamlıdır.** Debug'da
+`Path::scale` köşe başına ~19 ns ölçülür ve 4 ns bütçesini aşar; test
+gpui'nin yol gönderim maliyetini ölçtüğünden bu bir regresyon değil,
+optimizasyonsuz derlemenin sonucudur. Aşağıdaki doğrulama komutlarında
+`cargo test --workspace` bu tek testi düşürür; `cargo test --release -p
+uplot-rs-gpui-katalog --test upstream_yol_butcesi` ayrı koşulmalıdır.
 
 ## Önceki oturumun açık konuları — kapanış
 
@@ -92,6 +101,28 @@ kaynak satırı kırpılıyordu (`uniform_list` tek yükseklik uygular) → sat�
 118 px. Web fontunun kapsamadığı semboller (`▾ ▸ ＋ ▶ □`) kapsadıklarıyla
 değiştirildi (`− + → ●`). latency-heatmap X ekseni etiketleri geldi.
 
+**Lejant uPlot davranışına getirildi** (commit `6296f82`). Üç iş birlikte
+yapıldı, çünkü tek tek yapılsa lejant tutarsız kalırdı.
+
+Girdiler seri bazlı: işaret serinin rengini taşır, gizli seri kaynak
+`.u-legend .u-off` kuralıyla aynı 0,3 opaklıkta listede kalır, tıklanınca
+`seri_görünürlüğünü_ayarla` çağrılır. Eski `filter(|seri| seri.göster)`
+elemesi yalnız gizli seriyi saklamıyordu, aynı zamanda değerleri
+kaydırıyordu: değer listesi filtrelenmemiş seri sırasıyla geldiğinden gizli
+serinin ardındaki her girdi komşusunun değerini gösteriyordu.
+
+Konum çekirdeğe `GrafikSeçenekleri::lejant_konumu` olarak eklendi
+(`LejantKonumu::{Alt, Üst, Sol, Sağ}`, varsayılan `Alt` = kaynak yerleşimi).
+Yan konumlar tek sütunda listeler. Kart tanımlarının hepsi varsayılanı
+kullandığından dördü de ancak denetim çubuğundaki döngü düğmesiyle
+görülebilir.
+
+13 tooltip kartının ayrı düğme satırı ve Timeseries Discrete'in yüzey içi
+düğmeleri kaldırıldı. Birleşik indeks artık yüzey başına sabit seri sayısı
+varsaymıyor; `lejant_hedefini_çöz` girdileri üreten sayımın tersini alıyor.
+Kırılgan iki karar (değer kayması, birleşik indeks) saf fonksiyona çıkarılıp
+üç birim testine bağlandı.
+
 **Eksen ve çubuk düzeltmeleri.** Logaritmik X ekseninde etiketler yüzey
 boyutundan bağımsız üretiliyordu; Y'de var olan `log_etiketi_göster`
 seyreltmesi X'e de uygulandı. Y ekseni başlığı eksen payının ortasına
@@ -124,43 +155,43 @@ ayırma yolunu okuyup kapasite aşımının nasıl raporlandığına bakmak. gpu
 katı Zed paritesinde tutulduğundan çözüm katalog/çekirdek tarafında
 aranmalı.
 
-**2. Legend uPlot davranışından uzak.** Üç iş birlikte tasarlanmalı:
-
-* Gizli seriler lejantta hiç görünmüyor — `lejant_seri_adları`
-  `filter(|seri| seri.göster)` ile eliyor. uPlot'ta gizli seri soluk kalır.
-* Canlı lejant satırı tek `SharedString`; tıklanabilir değil. Seri bazlı
-  girdilere ayrılıp tıklamada `GpuiGrafik::seri_görünürlüğünü_ayarla`
-  çağrılmalı. `KatalogLejantı` ayrı bir varlık olduğundan sahibine
-  `WeakEntity<ChartListesi>` ile ulaşmalı (bu ayrım pointer olaylarının
-  ~3.500 satırlık `render`'ı tetiklememesi için var, korunmalı).
-* Legend tanım sırasına göre alt/sol/üst/sağ konumlandırılabilmeli ve
-  bulunduğu alana uygun listelenmeli.
-
-Not: 14 kart kendi seri düğmelerini ayrıca kuruyor (`_serisini_değiştir`);
-ortak lejant gelince onlar sadeleşebilir.
-
-**3. Görsel regresyon otomasyonu hâlâ yok.** Bu oturumdaki kusurların
+**2. Görsel regresyon otomasyonu hâlâ yok.** Bu oturumdaki kusurların
 hiçbirini test yakalamadı; hepsi tarayıcıda gözle bulundu.
+
+**3. Çoklu yüzeyli kartlarda lejant yalnız ilk yüzeyi gösteriyor.** Ortak
+lejant `self.grafik`'i okur; Stacked Series gibi 16 yüzeyli kartlarda imleç
+hangi yüzeydeyse onun değil, ilk yüzeyin değerleri listelenir. Yüzeylerin
+kendi düğmeleri korunmalı — onlar yalnız görünürlük değil, bant yeniden
+kurulumu da yapıyor (`stacked_series` açıklaması). Timeseries Discrete'in
+birleşik lejantı bu işin nasıl genelleştirileceğini gösteriyor: lejant
+`lejant_yüzeyleri` listesini gezip indeksi yüzey sınırının ötesine taşır.
+
+Ayrıca `stacked-series` serilerinin bir kısmı kaynakta etiketsiz; lejantta
+`● : --` olarak çıkıyorlar. uPlot da etiketsiz seriyi boş hücre gösterdiği
+için parite doğru, ama katalogda tıklama hedefi ayırt edilemiyor.
 
 **4. Tarayıcı önbelleği doğrulamayı yanıltıyor.** Chrome saatlerce eski
 wasm'ı servis etti ve düzeltmeler "etkisiz" göründü. Doğrulama yaparken
 URL'ye sürüm parametresi ekleyin (`?kart=...&v=N`) ve yüklenen dosya
 adını `dist/` içindekiyle karşılaştırın.
 
+**5. Chrome MCP birden çok tarayıcıya bağlı.** Bu makinede yerel Chrome'un
+yanında uzak bir Linux Chrome da kayıtlı; komutlar varsayılan olarak
+yanlış olana gidip `127.0.0.1:8081` için "error page" verebiliyor.
+`list_connected_browsers` ile yerel olanı (`isLocal: true`) seçin.
+
 ## Yapılacaklar — öncelik sırası
 
-**1. Legend (açık konu 2).** En büyük kalan iş; üç parçası birlikte
-tasarlanmalı, tek tek yapılırsa lejant tutarsız kalır. Başlangıç noktası
-`uygulamalar/katalog/src/lib.rs`: `lejant_seri_adları` (~2115),
-`lejant_metni` (~2137), `KatalogLejantı` (~136).
-
-**2. Sparkline (açık konu 1).** Elenen altı hipotez ve ölçüm notta yazılı;
+**1. Sparkline (açık konu 1).** Elenen altı hipotez ve ölçüm notta yazılı;
 sıradaki adım `gpui_wgpu` atlas ayırma yolunu okumak. Çözüm katalog veya
 çekirdek tarafında aranmalı, gpui'ye dokunulmamalı.
 
-**3. Görsel regresyon otomasyonu (açık konu 3).** Bu oturumda bulunan
-kusurların hiçbirini test yakalamadı. Kart başına sahne komutu sayımı veya
-piksel karşılaştırması düşünülebilir.
+**2. Görsel regresyon otomasyonu (açık konu 2).** Kart başına sahne komutu
+sayımı veya piksel karşılaştırması düşünülebilir. Lejant çalışmasında
+uygulanan yaklaşım örnek olabilir: kırılgan kararlar (değer kayması,
+birleşik indeks) saf fonksiyonlara çıkarılıp teste bağlandı.
+
+**3. Çoklu yüzeyli kartlarda lejant (açık konu 3).**
 
 Sırada olmayan ama not düşülmeye değer: `gpui_web` varsayılan
 `multithreaded` özelliği hâlâ çekiliyor (yukarıda), kapatılırsa nightly ve
@@ -192,9 +223,11 @@ cargo test --release -p uplot-rs-gpui-katalog --lib kok_render_kare_butcesi -- -
 
 | kart | kök render p50 |
 |---|---:|
-| ThinBars (55 yüzey) | 548 µs |
-| TimezonesDst (51 yüzey) | 520 µs |
-| LatencyHeatmap | 374 µs |
-| MassSpectrum | 330 µs |
+| ThinBars (55 yüzey) | 559 µs |
+| TimezonesDst (51 yüzey) | 536 µs |
+| LatencyHeatmap | 406 µs |
+| Resize (tek yüzey) | 352 µs |
+| MassSpectrum | 359 µs |
 
-Raster katmanına daire desteği eklendikten sonra da bütçe korunuyor.
+Raster katmanına daire desteği ve seri bazlı lejant eklendikten sonra da
+bütçe korunuyor.
