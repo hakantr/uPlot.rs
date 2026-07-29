@@ -5795,10 +5795,17 @@ impl Grafik {
                 continue;
             }
             let merkez = self.x_konumu(x_aralığı, *x_değeri, sol, genişlik);
-            let y0 = (alt - self.y_konumu(&seri.ölçek, y_aralığı, taban_değer, 0.0, yükseklik))
-                .clamp(üst, alt);
-            let y1 = (alt - self.y_konumu(&seri.ölçek, y_aralığı, üst_değer, 0.0, yükseklik))
-                .clamp(üst, alt);
+            let ham_y0 = alt - self.y_konumu(&seri.ölçek, y_aralığı, taban_değer, 0.0, yükseklik);
+            let ham_y1 = alt - self.y_konumu(&seri.ölçek, y_aralığı, üst_değer, 0.0, yükseklik);
+            let y0 = ham_y0.clamp(üst, alt);
+            let y1 = ham_y1.clamp(üst, alt);
+            // Değer ucu çizim alanına kırpıldıysa köşe yuvarlatması kavisi
+            // sınıra yapıştırırdı; o uçta köşe düz bırakılır.
+            let değer_ucu_kırpıldı = if üst_değer < taban_değer {
+                ham_y1 > alt
+            } else {
+                ham_y1 < üst
+            };
             let (ham_x0, ham_x1) = match seri.çubuk_hizası {
                 1 => (merkez, merkez + çubuk_genişliği),
                 -1 => (merkez - çubuk_genişliği, merkez),
@@ -5845,6 +5852,7 @@ impl Grafik {
                     seri.çubuk_uç_yarıçap_oranı,
                     crate::ÇubukYönü::Dikey,
                     üst_değer < taban_değer,
+                    değer_ucu_kırpıldı,
                 ));
             }
         }
@@ -6268,8 +6276,17 @@ impl Grafik {
                         } else {
                             normal_dolgu
                         };
-                        let çubuk_üst = y1.min(y0).clamp(üst, alt);
-                        let çubuk_alt = y1.max(y0).clamp(üst, alt);
+                        let ham_üst = y1.min(y0);
+                        let ham_alt = y1.max(y0);
+                        let çubuk_üst = ham_üst.clamp(üst, alt);
+                        let çubuk_alt = ham_alt.clamp(üst, alt);
+                        // Dikey çubukta değer ucu pozitifte üstte, negatifte
+                        // alttadır; yalnız o uç kırpıldıysa kavis kaldırılır.
+                        let değer_ucu_kırpıldı = if değer < 0.0 {
+                            ham_alt > alt
+                        } else {
+                            ham_üst < üst
+                        };
                         let çubuk_genişliği = (çubuk_sağ - çubuk_sol).max(0.0);
                         let çubuk_yüksekliği = (çubuk_alt - çubuk_üst).max(0.0);
                         let nokta_çizgisi = seri
@@ -6287,6 +6304,7 @@ impl Grafik {
                             düzen.uç_yarıçap_oranı,
                             düzen.yön,
                             değer < 0.0,
+                            değer_ucu_kırpıldı,
                         ));
                         if çubuk_genişliği > 0.0 && çubuk_yüksekliği > 0.0 {
                             vuruş_kayıtları.push(ÇubukVuruşKaydı {
@@ -6491,8 +6509,17 @@ impl Grafik {
                             .cloned()
                             .unwrap_or(vuruş_rengi);
                         let kalınlık = seri.map_or(0.0, |seri| seri.çizgi_kalınlığı);
-                        let çubuk_sol = x0.min(x1).clamp(sol, sağ);
-                        let çubuk_sağ = x0.max(x1).clamp(sol, sağ);
+                        let ham_sol = x0.min(x1);
+                        let ham_sağ = x0.max(x1);
+                        let çubuk_sol = ham_sol.clamp(sol, sağ);
+                        let çubuk_sağ = ham_sağ.clamp(sol, sağ);
+                        // Yatay çubukta değer ucu pozitifte sağda, negatifte
+                        // soldadır.
+                        let değer_ucu_kırpıldı = if değer < 0.0 {
+                            ham_sol < sol
+                        } else {
+                            ham_sağ > sağ
+                        };
                         let çubuk_konumu = Nokta::yeni(çubuk_sol, çubuk_üst);
                         let çubuk_genişliği = (çubuk_sağ - çubuk_sol).max(0.0);
                         let çubuk_yüksekliği = (çubuk_alt - çubuk_üst).max(0.0);
@@ -6506,6 +6533,7 @@ impl Grafik {
                             düzen.uç_yarıçap_oranı,
                             düzen.yön,
                             değer < 0.0,
+                            değer_ucu_kırpıldı,
                         ));
                         if çubuk_genişliği > 0.0 && çubuk_yüksekliği > 0.0 {
                             vuruş_kayıtları.push(ÇubukVuruşKaydı {
@@ -7544,8 +7572,12 @@ fn çubuk_komutu(
     uç_yarıçap_oranı: f32,
     yön: crate::ÇubukYönü,
     negatif: bool,
+    değer_ucu_kırpıldı: bool,
 ) -> Komut {
-    if uç_yarıçap_oranı <= 0.0 {
+    // Çubuk çizim alanına kırpıldığında değer ucu artık gerçek uç değildir;
+    // yuvarlatma uygulanırsa kavis kırpma sınırına yapışır ve çubuk sınırda
+    // bitiyormuş gibi görünür. Kırpılan uçta köşe düz bırakılır.
+    if uç_yarıçap_oranı <= 0.0 || değer_ucu_kırpıldı {
         return Komut::Dikdörtgen {
             konum,
             genişlik,

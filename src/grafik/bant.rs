@@ -185,6 +185,9 @@ impl Grafik {
                             üst_ayarları.çubuk_uç_yarıçap_oranı,
                             crate::ÇubukYönü::Dikey,
                             ilk.y > karşı.y,
+                            // Bant çubukları çizim alanına göre önceden
+                            // sınırlandığından ayrıca kırpma olmaz.
+                            false,
                         ));
                     }
                 } else {
