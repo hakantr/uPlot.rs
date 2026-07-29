@@ -3647,6 +3647,10 @@ impl Grafik {
         self.seçenekler.lejant_canlı
     }
 
+    pub fn lejant_konumu(&self) -> crate::LejantKonumu {
+        self.seçenekler.lejant_konumu
+    }
+
     /// Canlı akış ve özel formatter'ların kullanabildiği son hizalı veri
     /// satırını döndürür.
     pub fn son_değerler(&self) -> Option<(f64, Vec<Option<f64>>)> {
@@ -8974,6 +8978,36 @@ mod eksen_testleri {
                 _ => None,
             })
             .collect()
+    }
+
+    #[test]
+    fn lejant_konumu_varsayılan_alttır_ve_grafiğe_taşınır() -> Result<(), UplotHatası> {
+        let seçenekler = GrafikSeçenekleri::yeni(400, 240)?;
+        assert_eq!(seçenekler.lejant_konumu, crate::LejantKonumu::Alt);
+        let seçenekler = seçenekler
+            .x_zaman(false)
+            .lejant_konumu(crate::LejantKonumu::Sağ)
+            .seri(crate::SeriSeçenekleri::yeni("seri"));
+        let veri = HizalıVeri::yeni(vec![0.0], vec![vec![Some(1.0)]])?;
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        assert_eq!(grafik.lejant_konumu(), crate::LejantKonumu::Sağ);
+        Ok(())
+    }
+
+    #[test]
+    fn lejant_konumu_yönü_ve_sırayı_bildirir() {
+        for konum in [crate::LejantKonumu::Sol, crate::LejantKonumu::Sağ] {
+            assert!(konum.dikey_mi(), "{konum:?}");
+        }
+        for konum in [crate::LejantKonumu::Alt, crate::LejantKonumu::Üst] {
+            assert!(!konum.dikey_mi(), "{konum:?}");
+        }
+        for konum in [crate::LejantKonumu::Üst, crate::LejantKonumu::Sol] {
+            assert!(konum.yüzeyden_önce_mi(), "{konum:?}");
+        }
+        for konum in [crate::LejantKonumu::Alt, crate::LejantKonumu::Sağ] {
+            assert!(!konum.yüzeyden_önce_mi(), "{konum:?}");
+        }
     }
 
     #[test]

@@ -4732,7 +4732,13 @@ fn tek_satır_metin_kimliği(metin: &str) -> (u64, usize) {
     (hasher.finish(), metin.len())
 }
 
-fn renk_çöz(kod: &str) -> Hsla {
+/// Seri seçeneklerindeki CSS renk kodunu GPUI rengine çevirir.
+///
+/// Hex (`#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`), `rgb()`/`rgba()` ve temel
+/// adlandırılmış renkleri tanır; tanınmayan kod siyaha düşer. Lejant ve seri
+/// düğmesi kuran tüketiciler aynı rengi yüzeydeki çizgiyle birebir eşlemek
+/// için buna ihtiyaç duyar.
+pub fn renk_çöz(kod: &str) -> Hsla {
     let kod = kod.trim().to_ascii_lowercase();
     if let Some(ham) = kod.strip_prefix('#') {
         return match ham.len() {

@@ -3,10 +3,11 @@
 #[cfg(not(target_family = "wasm"))]
 use gpui::ClipboardItem;
 use gpui::{
-    AccessibleAction, App, Bounds, ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement,
-    KeyBinding, ListAlignment, ListState, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels,
-    Render, Role, ScrollStrategy, ScrollWheelEvent, SharedString, Size, StyleRefinement, Task,
-    UniformListScrollHandle, Window, canvas, div, list, prelude::*, px, rgb, rgba, uniform_list,
+    AccessibleAction, App, Bounds, ClickEvent, Context, Entity, Focusable, FontWeight, Hsla,
+    IntoElement, KeyBinding, ListAlignment, ListState, MouseDownEvent, MouseMoveEvent,
+    MouseUpEvent, Pixels, Render, Role, ScrollStrategy, ScrollWheelEvent, SharedString, Size,
+    StyleRefinement, Task, UniformListScrollHandle, WeakEntity, Window, canvas, div, list,
+    prelude::*, px, rgb, rgba, uniform_list,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
@@ -15,9 +16,10 @@ use ortak_bilesenler::{
 use std::collections::HashSet;
 use std::ops::Range;
 use std::time::Duration;
+use uplot_rs::LejantKonumu;
 use uplot_rs::gpui::{
     GpuiGrafik, GpuiGrafikGrubu, GpuiGrafikGrupAyarları, GpuiGrafikOlayı, GpuiSeriEşleme,
-    GörünürAlan, uyarlanan_alan,
+    GörünürAlan, renk_çöz, uyarlanan_alan,
 };
 use uplot_rs::izleme;
 use uplot_rs_gpui_ornekler::{
@@ -127,41 +129,109 @@ const SYNC_PANEL_YÜKSEKLİĞİ: f32 = 236.0;
 /// birlikte sığdırılır; panel başına ayrı ölçek uygulanmaz.
 const SYNC_TOPLAM_YÜKSEKLİK: f32 = SYNC_PANEL_YÜKSEKLİĞİ * 3.0 + 16.0;
 
-/// Canlı lejant satırını taşıyan bağımsız yüzey.
+/// Canlı lejantın tek seri girdisi.
 ///
-/// Lejant metni imleç en yakın veri indeksini her değiştirdiğinde tazelenir.
-/// Yoğun serilerde bu neredeyse her pointer olayında olur; metni katalog
-/// kökünün içinde tutmak o olayların hepsini ~3.500 satırlık `render`'a
-/// bağlıyordu. Ayrı bir varlık yalnız bu tek `div`'i yeniden kurar.
+/// `indeks`, sahibin görünürlük yolunda kullandığı birleşik seri numarasıdır:
+/// tek yüzeyli kartlarda doğrudan seri indeksi, birleşik lejant kuran
+/// Timeseries Discrete'te yüzeyler boyunca ilerleyen sıralı numaradır.
+#[derive(Clone, PartialEq)]
+struct LejantGirdisi {
+    indeks: usize,
+    etiket: SharedString,
+    değer: SharedString,
+    renk: Hsla,
+    görünür: bool,
+}
+
+/// Canlı lejantı taşıyan bağımsız yüzey.
+///
+/// Lejant imleç en yakın veri indeksini her değiştirdiğinde tazelenir. Yoğun
+/// serilerde bu neredeyse her pointer olayında olur; içeriği katalog kökünün
+/// içinde tutmak o olayların hepsini ~3.500 satırlık `render`'a bağlıyordu.
+/// Ayrı bir varlık yalnız bu listeyi yeniden kurar.
 struct KatalogLejantı {
-    metin: SharedString,
-    renk: u32,
+    /// Tıklama görünürlüğü kartın sahibinde değiştirir; lejant hangi yüzeyin
+    /// hangi serisi olduğunu bilmez. Zayıf tutulur, aksi hâlde kökle karşılıklı
+    /// sahiplik oluşur.
+    sahip: WeakEntity<ChartListesi>,
+    x_metni: SharedString,
+    girdiler: Vec<LejantGirdisi>,
+    konum: LejantKonumu,
 }
 
 impl KatalogLejantı {
-    fn yeni(renk: u32) -> Self {
+    fn yeni(sahip: WeakEntity<ChartListesi>) -> Self {
         Self {
-            metin: SharedString::default(),
-            renk,
+            sahip,
+            x_metni: SharedString::default(),
+            girdiler: Vec::new(),
+            konum: LejantKonumu::Alt,
         }
     }
 
-    fn metni_ayarla(&mut self, metin: SharedString, cx: &mut Context<Self>) {
-        if self.metin == metin {
+    fn içeriği_ayarla(
+        &mut self,
+        x_metni: SharedString,
+        girdiler: Vec<LejantGirdisi>,
+        konum: LejantKonumu,
+        cx: &mut Context<Self>,
+    ) {
+        if self.x_metni == x_metni && self.girdiler == girdiler && self.konum == konum {
             return;
         }
-        self.metin = metin;
+        self.x_metni = x_metni;
+        self.girdiler = girdiler;
+        self.konum = konum;
         cx.notify();
     }
 }
 
 impl Render for KatalogLejantı {
     fn render(&mut self, _pencere: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        let dikey = self.konum.dikey_mi();
+        let sahip = self.sahip.clone();
         div()
-            .mb_2()
+            .flex()
+            .when(dikey, |öğe| öğe.flex_col().gap_1())
+            .when(!dikey, |öğe| öğe.flex_wrap().gap_x_3().gap_y_1())
+            .items_start()
             .text_xs()
-            .text_color(rgb(self.renk))
-            .child(self.metin.clone())
+            .child(
+                div()
+                    .flex_none()
+                    .text_color(rgb(LEJANT_METİN_RENGİ))
+                    .child(self.x_metni.clone()),
+            )
+            .children(self.girdiler.iter().map(|girdi| {
+                let indeks = girdi.indeks;
+                let sahip = sahip.clone();
+                // uPlot gizli seriyi lejanttan kaldırmaz, `.u-off` ile
+                // soluklaştırır; girdi yerinde kalmazsa hangi serinin
+                // kapatıldığı ve nereden geri açılacağı görünmez olur.
+                let (işaret, metin) = if girdi.görünür {
+                    (girdi.renk, rgb(LEJANT_METİN_RENGİ).into())
+                } else {
+                    (
+                        girdi.renk.opacity(GİZLİ_SERİ_SOLUKLUĞU),
+                        Hsla::from(rgb(LEJANT_METİN_RENGİ)).opacity(GİZLİ_SERİ_SOLUKLUĞU),
+                    )
+                };
+                div()
+                    .id(("lejant-seri", indeks))
+                    .flex()
+                    .flex_none()
+                    .items_center()
+                    .gap_1()
+                    .cursor_pointer()
+                    .text_color(metin)
+                    .child(div().flex_none().size(px(8.0)).rounded_full().bg(işaret))
+                    .child(format!("{}: {}", girdi.etiket, girdi.değer))
+                    .on_click(move |_, _, cx| {
+                        sahip
+                            .update(cx, |bu, cx| bu.lejant_serisini_değiştir(indeks, cx))
+                            .ok();
+                    })
+            }))
     }
 }
 
@@ -203,8 +273,86 @@ pub fn başlat(cx: &mut App) {
 
 const PERFORMANS_KARE_SAYISI: usize = 180;
 const KARE_P95_BÜTÇESİ_MS: f64 = 16.7;
-/// Katalog kökündeki `vurgu` rengiyle aynı; lejant kendi varlığında yaşıyor.
-const LEJANT_RENGİ: u32 = 0xdc2626;
+/// Lejant etiket ve değer metninin rengi.
+///
+/// İşaret kutusu serinin kendi rengini taşıdığından metin nötr kalır; aksi
+/// hâlde açık renkli serilerde satır beyaz zeminde okunmuyordu. `#374151`
+/// beyaz üzerinde 9,73:1 veriyor.
+const LEJANT_METİN_RENGİ: u32 = 0x374151;
+/// Gizli serinin lejant satırına uygulanan opaklık.
+///
+/// uPlot `.u-legend .u-off > *` kuralıyla aynı 0,3 değeridir; girdi
+/// okunabilir kalmalı ama kapalı olduğu ilk bakışta ayırt edilmelidir.
+const GİZLİ_SERİ_SOLUKLUĞU: f32 = 0.3;
+/// Lejant yan konumdayken sütuna ayrılan genişlik.
+///
+/// Sınır olmadan uzun seri etiketleri yüzeyin payını yiyor, kısa etiketlerde
+/// ise sütun gereksiz daralıp değerleri sarıyordu.
+const LEJANT_YAN_GENİŞLİĞİ: f32 = 180.0;
+
+/// Bir yüzeyin serilerini lejant girdisi olarak listeye ekler.
+///
+/// `değerler`, serilerle aynı sırada gelir ve gizli seriler de listede kalır:
+/// girdi düşürülseydi ardındaki her seri bir kayarak komşusunun değerini
+/// gösterirdi. `indeks` liste boyunca artar, böylece birleşik lejant kuran
+/// kartlarda yüzey sınırını geçen tek bir numaralandırma oluşur.
+fn lejant_girdilerini_ekle(
+    girdiler: &mut Vec<LejantGirdisi>,
+    seriler: &[uplot_rs::SeriSeçenekleri],
+    değerler: &[Option<f64>],
+    boşta: bool,
+    tam_sayı_değerler: bool,
+) {
+    for (seri_indeksi, seri) in seriler.iter().enumerate() {
+        let değer = değerler.get(seri_indeksi).copied().flatten().map_or_else(
+            || "--".to_string(),
+            |y| {
+                let değer = if tam_sayı_değerler && seri.etiket.starts_with("DEV") {
+                    format!("{y:.0}")
+                } else {
+                    format!("{y:.3}")
+                };
+                format!("{değer}{}", if boşta { " (last)" } else { "" })
+            },
+        );
+        girdiler.push(LejantGirdisi {
+            indeks: girdiler.len(),
+            etiket: SharedString::from(seri.etiket.clone()),
+            değer: SharedString::from(değer),
+            renk: renk_çöz(&seri.renk),
+            görünür: seri.göster,
+        });
+    }
+}
+
+/// Birleşik lejant indeksini (yüzey sırası, yüzey içi seri) çiftine çözer.
+///
+/// `lejant_girdilerini_ekle` yüzeyleri sırayla numaralandırdığından tıklanan
+/// girdi de aynı sayımla geri çözülmelidir; yüzey başına sabit seri sayısı
+/// varsaymak seri eklenip silinen kartlarda yanlış seriyi kapatır.
+fn lejant_hedefini_çöz(
+    seri_sayıları: &[usize],
+    birleşik_indeks: usize,
+) -> Option<(usize, usize)> {
+    let mut kalan = birleşik_indeks;
+    for (yüzey, seri_sayısı) in seri_sayıları.iter().enumerate() {
+        if kalan < *seri_sayısı {
+            return Some((yüzey, kalan));
+        }
+        kalan -= *seri_sayısı;
+    }
+    None
+}
+
+/// Lejant konumunun denetim düğmesinde gösterilen adı.
+const fn lejant_konumu_başlığı(konum: LejantKonumu) -> &'static str {
+    match konum {
+        LejantKonumu::Alt => "alt",
+        LejantKonumu::Üst => "üst",
+        LejantKonumu::Sol => "sol",
+        LejantKonumu::Sağ => "sağ",
+    }
+}
 /// Kart listesindeki ikincil satırların rengi.
 ///
 /// Önceki `#6b7280`, beyaz zeminde 4,83:1 veriyordu ama seçili kartın
@@ -1882,6 +2030,10 @@ pub struct ChartListesi {
     kare_ölçer: KareÖlçer,
     performans_kare_bekleniyor: bool,
     lejant: Entity<KatalogLejantı>,
+    /// Denetim çubuğundaki lejant konumu düğmesinin seçimi. `None` iken
+    /// kartın kendi `GrafikSeçenekleri::lejant_konumu` değeri geçerlidir;
+    /// kart değişiminde sıfırlanır.
+    lejant_konumu_seçimi: Option<LejantKonumu>,
     /// Sanallaştırılmış çok yüzeyli kartların kaydırma/ölçüm durumu. Kart
     /// değişiminde sıfırlanır, aksi hâlde eski öğe sayısıyla ölçüm yapar.
     thin_bars_liste_durumu: Option<ListState>,
@@ -2109,101 +2261,126 @@ impl ChartListesi {
         }
     }
 
-    /// Görünür seri adlarını kartın kaynağına göre toplar.
-    fn lejant_seri_adları(&self, cx: &App) -> Vec<String> {
-        let görünür_etiketler = |grafik: &Entity<GpuiGrafik>| {
-            grafik
-                .read(cx)
-                .grafik()
-                .seri_seçenekleri()
-                .iter()
-                .filter(|seri| seri.göster)
-                .map(|seri| seri.etiket.clone())
-                .collect::<Vec<_>>()
-        };
+    /// Lejantı besleyen yüzeyleri girdilerin üretileceği sırayla döndürür.
+    ///
+    /// Timeseries Discrete dışındaki kartlarda lejant tek etkin yüzeyi
+    /// gösterir; o kart iki yüzeyin serilerini tek listede birleştirir.
+    fn lejant_yüzeyleri(&self) -> Vec<Entity<GpuiGrafik>> {
         if self.aktif_kart == KartKimliği::TimeseriesDiscrete {
             return self
                 .timeseries_discrete_grafikleri
                 .iter()
-                .flat_map(|(_, grafik)| görünür_etiketler(grafik))
+                .map(|(_, grafik)| grafik.clone())
                 .collect();
         }
-        self.grafik
-            .as_ref()
-            .map_or_else(Vec::new, görünür_etiketler)
+        self.grafik.iter().cloned().collect()
     }
 
-    /// Canlı lejant satırını üretir.
-    fn lejant_metni(&self, cx: &App) -> SharedString {
-        let seri_adları = self.lejant_seri_adları(cx);
-        let değerler = if self.aktif_kart == KartKimliği::TimeseriesDiscrete {
-            let mut ortak_x = None;
-            let mut değerler = Vec::new();
-            let mut lejant_var = false;
-            for (_, grafik) in &self.timeseries_discrete_grafikleri {
-                let grafik = grafik.read(cx);
-                if let Some((x, yüzey_değerleri)) = grafik.lejant_değerleri() {
-                    lejant_var = true;
+    /// Lejantın X başlığını ve seri girdilerini üretir.
+    ///
+    /// Gizli seriler de listelenir. Değerler seri sırasıyla eşleştiğinden
+    /// listeden düşürülselerdi gizli serinin ardındaki her girdi bir kayarak
+    /// komşusunun değerini gösterirdi; uPlot da girdiyi kaldırmak yerine
+    /// soluklaştırır.
+    fn lejant_içeriği(&self, cx: &App) -> (SharedString, Vec<LejantGirdisi>) {
+        let tam_sayı_değerler = self.aktif_kart == KartKimliği::TimeseriesDiscrete;
+        let mut girdiler = Vec::new();
+        let mut ortak_x = None;
+        for yüzey in self.lejant_yüzeyleri() {
+            let yüzey = yüzey.read(cx);
+            let (x, seri_değerleri, canlı) = match yüzey.lejant_değerleri() {
+                Some((x, değerler)) => {
                     ortak_x = ortak_x.or(x);
-                    değerler.extend(
-                        yüzey_değerleri
-                            .into_iter()
-                            .zip(grafik.grafik().seri_seçenekleri())
-                            .filter_map(|(değer, seri)| seri.göster.then_some(değer)),
-                    );
+                    (x, değerler, true)
                 }
-            }
-            lejant_var.then_some((ortak_x, değerler))
-        } else {
-            self.grafik
-                .as_ref()
-                .and_then(|grafik| grafik.read(cx).lejant_değerleri())
+                None => (None, Vec::new(), false),
+            };
+            // uPlot `series.value` imleç dışındayken son örneği gösterebilir;
+            // o değerin imleçle okunan değerle karıştırılmaması gerekir.
+            let boşta = canlı && x.is_none();
+            lejant_girdilerini_ekle(
+                &mut girdiler,
+                yüzey.grafik().seri_seçenekleri(),
+                &seri_değerleri,
+                boşta,
+                tam_sayı_değerler,
+            );
+        }
+        let x_metni = ortak_x.map_or_else(|| "x: --".to_string(), |x| format!("x: {x:.3}"));
+        (SharedString::from(x_metni), girdiler)
+    }
+
+    /// Denetim düğmesiyle lejantı bir sonraki konuma taşır.
+    ///
+    /// Kart tanımlarının hepsi kaynak sayfalardaki `Alt` yerleşimini
+    /// kullandığından dört konumun da canlı doğrulanabilmesi için tek yol
+    /// budur.
+    fn lejant_konumunu_ilerlet(&mut self, cx: &mut Context<Self>) {
+        let sonraki = match self.lejant_konumu(cx) {
+            LejantKonumu::Alt => LejantKonumu::Sol,
+            LejantKonumu::Sol => LejantKonumu::Üst,
+            LejantKonumu::Üst => LejantKonumu::Sağ,
+            LejantKonumu::Sağ => LejantKonumu::Alt,
         };
-        let metin = değerler.map_or_else(
-            || {
-                let seriler = seri_adları
-                    .iter()
-                    .map(|ad| format!("● {ad}: --"))
-                    .collect::<Vec<_>>()
-                    .join("    ");
-                format!("x: --    {seriler}")
-            },
-            |(x, değerler)| {
-                let seriler = seri_adları
-                    .iter()
-                    .zip(değerler.iter())
-                    .map(|(ad, değer)| {
-                        değer.map_or_else(
-                            || format!("● {ad}: --"),
-                            |y| {
-                                let değer = if self.aktif_kart == KartKimliği::TimeseriesDiscrete
-                                    && ad.starts_with("DEV")
-                                {
-                                    format!("{y:.0}")
-                                } else {
-                                    format!("{y:.3}")
-                                };
-                                format!(
-                                    "● {ad}: {değer}{}",
-                                    if x.is_none() { " (last)" } else { "" }
-                                )
-                            },
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                    .join("    ");
-                let x = x.map_or_else(|| "--".to_string(), |x| format!("{x:.3}"));
-                format!("x: {x}    {seriler}")
-            },
+        self.lejant_konumu_seçimi = Some(sonraki);
+        izleme::olay(
+            "PANEL",
+            &format!(
+                "lejant konumu {} · {}",
+                lejant_konumu_başlığı(sonraki),
+                self.aktif_kart.slug()
+            ),
         );
-        SharedString::from(metin)
+        self.lejantı_yenile(cx);
+        cx.notify();
+    }
+
+    /// Etkin kartın lejant konumu; kullanıcı denetimi seçeneği ezmediyse
+    /// kaynak sayfayla aynı `Alt` yerleşimi gelir.
+    fn lejant_konumu(&self, cx: &App) -> LejantKonumu {
+        self.lejant_konumu_seçimi.unwrap_or_else(|| {
+            self.lejant_yüzeyleri()
+                .first()
+                .map_or(LejantKonumu::Alt, |yüzey| {
+                    yüzey.read(cx).grafik().lejant_konumu()
+                })
+        })
     }
 
     fn lejantı_yenile(&mut self, cx: &mut Context<Self>) {
-        let metin = self.lejant_metni(cx);
+        let (x_metni, girdiler) = self.lejant_içeriği(cx);
+        let konum = self.lejant_konumu(cx);
         self.lejant.update(cx, |lejant, cx| {
-            lejant.metni_ayarla(metin, cx);
+            lejant.içeriği_ayarla(x_metni, girdiler, konum, cx);
         });
+    }
+
+    /// Lejant girdisine tıklandığında ilgili serinin görünürlüğünü çevirir.
+    ///
+    /// Birleşik indeks `lejant_içeriği` ile aynı sırayı izler: yüzeyler
+    /// sırayla gezilir ve her yüzeyde seri sayısı kadar ilerlenir.
+    fn lejant_serisini_değiştir(&mut self, birleşik_indeks: usize, cx: &mut Context<Self>) {
+        let yüzeyler = self.lejant_yüzeyleri();
+        let seri_sayıları = yüzeyler
+            .iter()
+            .map(|yüzey| yüzey.read(cx).grafik().seri_seçenekleri().len())
+            .collect::<Vec<_>>();
+        let Some((yüzey_sırası, seri)) = lejant_hedefini_çöz(&seri_sayıları, birleşik_indeks)
+        else {
+            return;
+        };
+        let Some(yüzey) = yüzeyler.into_iter().nth(yüzey_sırası) else {
+            return;
+        };
+        let görünür = yüzey.read(cx).grafik().seri_görünür_mü(seri);
+        match yüzey.update(cx, |grafik, cx| {
+            grafik.seri_görünürlüğünü_ayarla(seri, !görünür, cx)
+        }) {
+            Ok(_) => self.hata = None,
+            Err(hata) => self.hata = Some(format!("Lejant serisi değiştirilemedi: {hata}")),
+        }
+        self.lejantı_yenile(cx);
+        cx.notify();
     }
 
     pub fn yeni(cx: &mut Context<Self>) -> Self {
@@ -2381,7 +2558,11 @@ impl ChartListesi {
             svg_kayıt_baytı: None,
             kare_ölçer: KareÖlçer::default(),
             performans_kare_bekleniyor: false,
-            lejant: cx.new(|_| KatalogLejantı::yeni(LEJANT_RENGİ)),
+            lejant: {
+                let sahip = cx.weak_entity();
+                cx.new(|_| KatalogLejantı::yeni(sahip))
+            },
+            lejant_konumu_seçimi: None,
             thin_bars_liste_durumu: None,
             timezones_dst_liste_durumu: None,
         };
@@ -2486,50 +2667,6 @@ impl ChartListesi {
             self.grafik = yüzeyler.first().map(|(_, grafik)| grafik.clone());
             self.timeseries_discrete_grafikleri = yüzeyler;
             self.hata = None;
-        }
-        cx.notify();
-    }
-
-    fn timeseries_discrete_serisini_değiştir(
-        &mut self,
-        birleşik_indeks: usize,
-        cx: &mut Context<Self>,
-    ) {
-        let (örnek, seri_indeksi) = if birleşik_indeks == 0 {
-            (TimeseriesDiscreteÖrneği::ZamanSerisi, 0)
-        } else {
-            (TimeseriesDiscreteÖrneği::AyrıkDurumlar, birleşik_indeks - 1)
-        };
-        let Some((_, yüzey)) = self
-            .timeseries_discrete_grafikleri
-            .iter()
-            .find(|(kimlik, _)| *kimlik == örnek)
-            .cloned()
-        else {
-            return;
-        };
-        let görünür = yüzey.read(cx).grafik().seri_görünür_mü(seri_indeksi);
-        match yüzey.update(cx, |grafik, cx| {
-            grafik.seri_görünürlüğünü_ayarla(seri_indeksi, !görünür, cx)
-        }) {
-            Ok(_) => self.hata = None,
-            Err(hata) => {
-                self.hata = Some(format!("Birleşik lejant serisi değiştirilemedi: {hata}"));
-            }
-        }
-        cx.notify();
-    }
-
-    fn tooltip_serisini_değiştir(&mut self, seri: usize, cx: &mut Context<Self>) {
-        let Some(grafik) = self.grafik.clone() else {
-            return;
-        };
-        let görünür = grafik.read(cx).grafik().seri_görünür_mü(seri);
-        match grafik.update(cx, |grafik, cx| {
-            grafik.seri_görünürlüğünü_ayarla(seri, !görünür, cx)
-        }) {
-            Ok(_) => self.hata = None,
-            Err(hata) => self.hata = Some(format!("Tooltip serisi değiştirilemedi: {hata}")),
         }
         cx.notify();
     }
@@ -5069,7 +5206,10 @@ impl ChartListesi {
         );
         self.tekerlek_odaksız_etkileşimi_uygula(self.tekerlek_odaksız_etkin, cx);
         // Yeni kartın serileri ve değerleri farklı; lejant artık kökün
-        // `render`'ında hesaplanmadığından burada bir kez tazelenmeli.
+        // `render`'ında hesaplanmadığından burada bir kez tazelenmeli. Konum
+        // seçimi kartın kendi tanımına bırakılır, önceki kartın denetimi
+        // taşınmaz.
+        self.lejant_konumu_seçimi = None;
         self.lejantı_yenile(cx);
     }
 
@@ -5748,35 +5888,17 @@ impl Render for ChartListesi {
         }
         let çizim_hatası = self.hata.clone().or(bileşen_hatası);
         let lejant = self.lejant.clone();
-        let tooltip_serileri = if matches!(
+        let lejant_konumu = self.lejant_konumu(cx);
+        // Çubuk aileleri kendi yüzey başına düğmelerini kuruyor, mum kartında
+        // kaynak setSeries sunmuyor; kalan kartlarda seri görünürlüğü tek
+        // yoldan, lejant girdisine tıklanarak değişir.
+        let lejant_görünür = !matches!(
             aktif_kart,
-            KartKimliği::TooltipsClosest
-                | KartKimliği::Tooltips
-                | KartKimliği::CursorSnap
-                | KartKimliği::Trendlines
-                | KartKimliği::UpdateCursorSelectResize
-                | KartKimliği::WindDirection
-                | KartKimliği::YScaleDrag
-                | KartKimliği::YShiftedSeries
-                | KartKimliği::DependentScale
-                | KartKimliği::ArcSinhScales
-                | KartKimliği::AxisControl
-                | KartKimliği::AxisAutosize
-                | KartKimliği::AxisIndicators
-        ) {
-            self.grafik.as_ref().map_or_else(Vec::new, |grafik| {
-                grafik
-                    .read(cx)
-                    .grafik()
-                    .seri_seçenekleri()
-                    .iter()
-                    .enumerate()
-                    .map(|(indeks, seri)| (indeks, seri.etiket.clone(), seri.göster))
-                    .collect()
-            })
-        } else {
-            Vec::new()
-        };
+            KartKimliği::Bars(_)
+                | KartKimliği::BarsValuesAutosize(_)
+                | KartKimliği::BoxWhisker(_)
+                | KartKimliği::Candlestick
+        );
 
         let liste = div()
             .id("kart-listesi")
@@ -5893,6 +6015,22 @@ impl Render for ChartListesi {
             .child(tekerlek_odaksız_anahtarı)
             .child(içi_boş_nokta_anahtarı)
             .child(dolu_nokta_anahtarı)
+            .when(lejant_görünür, |öğe| {
+                öğe.child(
+                    Dugme::yeni(
+                        "lejant-konumu",
+                        SharedString::from(format!(
+                            "Lejant · {}",
+                            lejant_konumu_başlığı(lejant_konumu)
+                        )),
+                    )
+                    .boyutu(DugmeBoyutu::Kucuk)
+                    .turu(DugmeTuru::Ikincil)
+                    .tiklaninca(cx.listener(|bu, _, _, cx| {
+                        bu.lejant_konumunu_ilerlet(cx);
+                    })),
+                )
+            })
             .when(matches!(aktif_kart, KartKimliği::MultiBars(_)), |öğe| {
                 öğe.children(MultiBarsÖrneği::TÜMÜ.into_iter().map(|örnek| {
                     let seçili = aktif_kart == KartKimliği::MultiBars(örnek);
@@ -7185,18 +7323,6 @@ impl Render for ChartListesi {
                 .iter()
                 .find(|(örnek, _)| *örnek == TimeseriesDiscreteÖrneği::AyrıkDurumlar)
                 .map(|(_, grafik)| grafik.clone());
-            let birleşik_görünürlük = [
-                (TimeseriesDiscreteÖrneği::ZamanSerisi, 0),
-                (TimeseriesDiscreteÖrneği::AyrıkDurumlar, 0),
-                (TimeseriesDiscreteÖrneği::AyrıkDurumlar, 1),
-                (TimeseriesDiscreteÖrneği::AyrıkDurumlar, 2),
-            ]
-            .map(|(örnek, seri)| {
-                self.timeseries_discrete_grafikleri
-                    .iter()
-                    .find(|(kimlik, _)| *kimlik == örnek)
-                    .is_some_and(|(_, grafik)| grafik.read(cx).grafik().seri_görünür_mü(seri))
-            });
             çizim_tabanı
                 .overflow_scroll()
                 .p_2()
@@ -7224,40 +7350,6 @@ impl Render for ChartListesi {
                             .yüzey(1920.0, 200.0)
                             .1))
                         .when_some(alt, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
-                )
-                .child(
-                    div().mt_2().flex().gap_2().children(
-                        ["Value", "DEV1", "DEV2", "DEV3"]
-                            .into_iter()
-                            .enumerate()
-                            .map(|(indeks, etiket)| {
-                                let görünür =
-                                    birleşik_görünürlük.get(indeks).copied().unwrap_or(false);
-                                div()
-                                    .id(SharedString::from(format!(
-                                        "timeseries-discrete-toggle-{indeks}"
-                                    )))
-                                    .px_2()
-                                    .py_1()
-                                    .rounded_sm()
-                                    .cursor_pointer()
-                                    .text_xs()
-                                    .bg(if görünür {
-                                        rgb(0xe2e8f0)
-                                    } else {
-                                        rgb(0xf8fafc)
-                                    })
-                                    .text_color(if görünür {
-                                        rgb(0x111827)
-                                    } else {
-                                        rgb(0x94a3b8)
-                                    })
-                                    .child(etiket)
-                                    .on_click(cx.listener(move |bu, _: &ClickEvent, _, cx| {
-                                        bu.timeseries_discrete_serisini_değiştir(indeks, cx);
-                                    }))
-                            }),
-                    ),
                 )
         } else if aktif_kart == KartKimliği::TimezonesDst {
             // 51 yüzey sarmalı flex içinde her render'da kuruluyordu. Kaynak
@@ -8720,6 +8812,36 @@ impl Render for ChartListesi {
                     bu.no_data_örneğini_seç(örnek, cx);
                 }))
             }));
+        // Lejant yüzeyle aynı kapsayıcıda durur: alt/üst konumda yüzeyin
+        // altına veya üstüne, sol/sağ konumda yanına geçer. Kapsayıcı kalan
+        // dikey alanı aldığından yüzey ölçeri lejantın payını düşülmüş
+        // alanda ölçer, ayrı bir pay hesabı gerekmez.
+        let lejant_bloğu = div()
+            .flex_none()
+            .when(lejant_konumu.dikey_mi(), |öğe| {
+                öğe.w(px(LEJANT_YAN_GENİŞLİĞİ)).overflow_hidden()
+            })
+            .map(|öğe| match lejant_konumu {
+                LejantKonumu::Alt => öğe.mt_2(),
+                LejantKonumu::Üst => öğe.mb_2(),
+                LejantKonumu::Sol => öğe.mr_3(),
+                LejantKonumu::Sağ => öğe.ml_3(),
+            })
+            .child(lejant);
+        let yüzey_bloğu = div().flex().flex_1().min_h_0().min_w_0().map(|öğe| {
+            if lejant_konumu.dikey_mi() {
+                öğe.flex_row()
+            } else {
+                öğe.flex_col()
+            }
+        });
+        let yüzey_bloğu = if !lejant_görünür {
+            yüzey_bloğu.child(çizim)
+        } else if lejant_konumu.yüzeyden_önce_mi() {
+            yüzey_bloğu.child(lejant_bloğu).child(çizim)
+        } else {
+            yüzey_bloğu.child(çizim).child(lejant_bloğu)
+        };
         let kullanım_rehberi = aktif_kart_tanımı.açıklama;
         let kullanım_rehberi_açık = self.kullanım_rehberi_açık;
         let ayrıntı = div()
@@ -8815,73 +8937,6 @@ impl Render for ChartListesi {
                         }),
                 )
             })
-            .when(
-                !matches!(
-                    aktif_kart,
-                    KartKimliği::TooltipsClosest
-                        | KartKimliği::Tooltips
-                        | KartKimliği::CursorSnap
-                        | KartKimliği::Trendlines
-                        | KartKimliği::UpdateCursorSelectResize
-                        | KartKimliği::WindDirection
-                        | KartKimliği::YScaleDrag
-                        | KartKimliği::YShiftedSeries
-                        | KartKimliği::DependentScale
-                        | KartKimliği::ArcSinhScales
-                        | KartKimliği::AxisControl
-                        | KartKimliği::AxisAutosize
-                        | KartKimliği::AxisIndicators
-                        | KartKimliği::Bars(_)
-                        | KartKimliği::BarsValuesAutosize(_)
-                        | KartKimliği::BoxWhisker(_)
-                        | KartKimliği::Candlestick
-                ),
-                |öğe| öğe.child(div().mb_2().text_xs().text_color(vurgu).child(lejant)),
-            )
-            .when(
-                matches!(
-                    aktif_kart,
-                    KartKimliği::TooltipsClosest
-                        | KartKimliği::Tooltips
-                        | KartKimliği::CursorSnap
-                        | KartKimliği::Trendlines
-                        | KartKimliği::UpdateCursorSelectResize
-                        | KartKimliği::WindDirection
-                        | KartKimliği::YScaleDrag
-                        | KartKimliği::YShiftedSeries
-                        | KartKimliği::DependentScale
-                        | KartKimliği::ArcSinhScales
-                        | KartKimliği::AxisControl
-                        | KartKimliği::AxisAutosize
-                        | KartKimliği::AxisIndicators
-                ),
-                |öğe| {
-                    öğe.child(
-                        div().mb_2().flex().flex_wrap().gap_2().children(
-                            tooltip_serileri
-                                .into_iter()
-                                .map(|(indeks, etiket, görünür)| {
-                                    Dugme::yeni(
-                                        SharedString::from(format!("tooltip-seri-{indeks}")),
-                                        SharedString::from(format!(
-                                            "● {etiket}{}",
-                                            if görünür { "" } else { " · gizli" }
-                                        )),
-                                    )
-                                    .boyutu(DugmeBoyutu::Kucuk)
-                                    .turu(if görünür {
-                                        DugmeTuru::Hayalet
-                                    } else {
-                                        DugmeTuru::Ikincil
-                                    })
-                                    .tiklaninca(cx.listener(move |bu, _, _, cx| {
-                                        bu.tooltip_serisini_değiştir(indeks, cx);
-                                    }))
-                                }),
-                        ),
-                    )
-                },
-            )
             .when(aktif_kart == KartKimliği::CursorBind, |öğe| {
                 öğe.child(
                     div()
@@ -8908,7 +8963,7 @@ impl Render for ChartListesi {
                         .child(hata),
                 )
             })
-            .child(çizim)
+            .child(yüzey_bloğu)
             .child(
                 div()
                     .flex_none()
@@ -9440,6 +9495,84 @@ mod tests {
     #[test]
     fn yan_menü_ana_kart_sayısı_sabittir() {
         assert_eq!(KATALOG_KARTLARI.len(), 66);
+    }
+
+    fn lejant_serisi(etiket: &str, göster: bool) -> uplot_rs::SeriSeçenekleri {
+        let mut seri = uplot_rs::SeriSeçenekleri::yeni(etiket);
+        seri.göster = göster;
+        seri
+    }
+
+    #[test]
+    fn gizli_seri_lejantta_kalır_ve_değerleri_kaydırmaz() {
+        let seriler = [
+            lejant_serisi("A", true),
+            lejant_serisi("B", false),
+            lejant_serisi("C", true),
+        ];
+        let değerler = [Some(1.0), Some(2.0), Some(3.0)];
+        let mut girdiler = Vec::new();
+        lejant_girdilerini_ekle(&mut girdiler, &seriler, &değerler, false, false);
+
+        assert_eq!(girdiler.len(), 3, "gizli seri listeden düşürülmemeli");
+        let okunan = girdiler
+            .iter()
+            .map(|girdi| {
+                (
+                    girdi.indeks,
+                    girdi.etiket.as_ref(),
+                    girdi.değer.as_ref(),
+                    girdi.görünür,
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            okunan,
+            vec![
+                (0, "A", "1.000", true),
+                (1, "B", "2.000", false),
+                (2, "C", "3.000", true),
+            ]
+        );
+    }
+
+    #[test]
+    fn lejant_değeri_boşta_son_örneği_işaretler() {
+        let seriler = [lejant_serisi("Value", true), lejant_serisi("DEV1", true)];
+        let mut girdiler = Vec::new();
+        lejant_girdilerini_ekle(&mut girdiler, &seriler, &[Some(4.5), None], true, true);
+
+        assert_eq!(
+            girdiler.first().map(|girdi| girdi.değer.as_ref()),
+            Some("4.500 (last)")
+        );
+        // Değeri olmayan seri "(last)" almaz; okuyan onu son örnek sanmamalı.
+        assert_eq!(
+            girdiler.get(1).map(|girdi| girdi.değer.as_ref()),
+            Some("--")
+        );
+
+        let mut tam_sayı = Vec::new();
+        lejant_girdilerini_ekle(
+            &mut tam_sayı,
+            &seriler,
+            &[Some(4.5), Some(2.0)],
+            false,
+            true,
+        );
+        assert_eq!(tam_sayı.get(1).map(|girdi| girdi.değer.as_ref()), Some("2"));
+    }
+
+    #[test]
+    fn birleşik_lejant_indeksi_yüzey_sınırını_geçer() {
+        let sayılar = [1_usize, 3];
+        assert_eq!(lejant_hedefini_çöz(&sayılar, 0), Some((0, 0)));
+        assert_eq!(lejant_hedefini_çöz(&sayılar, 1), Some((1, 0)));
+        assert_eq!(lejant_hedefini_çöz(&sayılar, 3), Some((1, 2)));
+        assert_eq!(lejant_hedefini_çöz(&sayılar, 4), None);
+        assert_eq!(lejant_hedefini_çöz(&[], 0), None);
+        // Boş yüzey atlanmalı, kendi numarasını tüketmemeli.
+        assert_eq!(lejant_hedefini_çöz(&[0, 2], 0), Some((1, 0)));
     }
 
     #[test]

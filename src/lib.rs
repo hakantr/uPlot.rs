@@ -45,14 +45,14 @@ pub use secenek::{
     AçıklamaDüzeni, AçıklamaHizası, AçıklamaStili, Açıklamaİşareti, BantYönü, BoyutSenkronDüzeni,
     DağılımDüzeni, DağılımNoktası, DağılımSerisi, EnYakınTooltipBilgisi, EnYakınTooltipDüzeni,
     EtkileşimSeçenekleri, GradyanDurağı, GradyanEkseni, GradyanKonumu, GrafikSeçenekleri,
-    GüzelÖlçekDüzeni, IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu, KutuBıyıkDüzeni, MumDüzeni,
-    NoktaFiltreKipi, NoktaKatmanı, NoktaŞekli, NullİmleçDüzeni, OdakDüzeni, OdakStili,
-    RüzgarYönüDüzeni, SeriBandı, SeriSeçenekleri, SeriÇizimTürü, TarihAdları, TekerlekAyarları,
-    TekerlekEkseni, TekerlekKipi, TimelineDüzeni, TimelineHücresi, TooltipBilgisi, TooltipDüzeni,
-    VARSAYILAN_KATMAN_SIRASI, XÖlçekDağılımı, YÖlçekDağılımı, YÖlçekDönüşümFn, YÖlçekEtiketBiçimi,
-    YÖlçekSeçenekleri, ZamanDilimi, ZoomRangerSeçenekleri, ZoomSürüklemeKipi, ÇizimKancasıDüzeni,
-    ÇizimKatmanı, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı, ÖzelYÖlçekDönüşümü, İkincilXEksen,
-    İmleçBağSeçenekleri,
+    GüzelÖlçekDüzeni, IsıHaritasıDüzeni, IsıHücresi, IsıHücresiBoyutu, KutuBıyıkDüzeni,
+    LejantKonumu, MumDüzeni, NoktaFiltreKipi, NoktaKatmanı, NoktaŞekli, NullİmleçDüzeni,
+    OdakDüzeni, OdakStili, RüzgarYönüDüzeni, SeriBandı, SeriSeçenekleri, SeriÇizimTürü,
+    TarihAdları, TekerlekAyarları, TekerlekEkseni, TekerlekKipi, TimelineDüzeni, TimelineHücresi,
+    TooltipBilgisi, TooltipDüzeni, VARSAYILAN_KATMAN_SIRASI, XÖlçekDağılımı, YÖlçekDağılımı,
+    YÖlçekDönüşümFn, YÖlçekEtiketBiçimi, YÖlçekSeçenekleri, ZamanDilimi, ZoomRangerSeçenekleri,
+    ZoomSürüklemeKipi, ÇizimKancasıDüzeni, ÇizimKatmanı, ÇubukDüzeni, ÇubukYönü, ÖlçekGradyanı,
+    ÖzelYÖlçekDönüşümü, İkincilXEksen, İmleçBağSeçenekleri,
 };
 pub use veri::{BoşlukKipi, HizalıDeğer, HizalıVeri, hizalı_verileri_birleştir};
 pub use yuzey::{

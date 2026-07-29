@@ -32,7 +32,10 @@ yapılmadan yeni kart eklenemez.
 5. Seri yolları ve dolguları çizim dikdörtgeninin dört sınırında kırpılır.
 6. Eksen ve ızgara yakınlaştırma/taşıma sonrasında görünür aralıktan yeniden hesaplanır; sıfır hizası korunur.
 7. Kesikli cursor çizgileri veri noktaları arasında atlamaz, gerçek fare konumunu kesintisiz izler.
-8. Lejant ortak X konumundaki bütün seri değerlerini canlı gösterir.
+8. Lejant ortak X konumundaki bütün seri değerlerini canlı gösterir. Girdiler
+   seri sırasını korur: gizlenen seri listeden düşmez, kaynak `.u-off` gibi
+   soluklaşır ve tıklanınca geri açılır. Yerleşim `lejant_konumu` ile
+   alt/üst/sol/sağ seçilir; kaynak sayfalarla aynı varsayılan `Alt`'tır.
 9. Kaynak nokta gösteriyorsa normal noktalar boş, hover noktası seri rengiyle dolu çizilir.
 10. Sürükleyerek X seçimi/yakınlaştırma kart seçeneğiyle yönetilir.
 11. Çift tıklamayla tam veri görünümüne dönüş kart seçeneğiyle yönetilir.

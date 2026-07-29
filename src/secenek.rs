@@ -27,6 +27,35 @@ pub enum XÖlçekDağılımı {
     Logaritmik { taban: f64 },
 }
 
+/// Lejant listesinin çizim yüzeyine göre yerleşimi.
+///
+/// uPlot lejantı DOM'da yüzeyin altına kurar ve konumu CSS'e bırakır. CSS'i
+/// olmayan yüzeylerde bu karar tüketiciye kalamayacağından seçenek ağacında
+/// taşınır; varsayılan `Alt` kaynakla aynı yerleşimi verir.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum LejantKonumu {
+    #[default]
+    Alt,
+    Üst,
+    Sol,
+    Sağ,
+}
+
+impl LejantKonumu {
+    /// Girdilerin tek sütunda alt alta mı, satır boyunca sarılarak mı
+    /// listeleneceği. Yan konumlarda genişlik dar, yükseklik boldur.
+    #[must_use]
+    pub const fn dikey_mi(self) -> bool {
+        matches!(self, Self::Sol | Self::Sağ)
+    }
+
+    /// Lejantın çizim yüzeyinden önce gelip gelmediği.
+    #[must_use]
+    pub const fn yüzeyden_önce_mi(self) -> bool {
+        matches!(self, Self::Üst | Self::Sol)
+    }
+}
+
 /// uPlot `cursor.dataIdx`, `cursor.hover` ve `cursor.move` null-atlama
 /// davranışlarının yüzeyden bağımsız karşılığıdır.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -1220,6 +1249,9 @@ pub struct GrafikSeçenekleri {
     pub tooltip: Option<TooltipDüzeni>,
     pub boyut_senkron_düzeni: Option<BoyutSenkronDüzeni>,
     pub lejant_canlı: bool,
+    /// Lejant listesinin yüzeye göre yerleşimi. Kaynak sayfalardaki `Alt`
+    /// varsayılanı dışına yalnız tüketici çıkar.
+    pub lejant_konumu: LejantKonumu,
     /// `addSeries` / `delSeries` kancalarının kaynak sırasını tüketiciye
     /// aktarmak için yaşam döngüsü olay kuyruğunu etkinleştirir.
     pub seri_yaşam_döngüsünü_izle: bool,
@@ -1321,6 +1353,7 @@ impl GrafikSeçenekleri {
             tooltip: None,
             boyut_senkron_düzeni: None,
             lejant_canlı: true,
+            lejant_konumu: LejantKonumu::Alt,
             seri_yaşam_döngüsünü_izle: false,
             katman_sırası: VARSAYILAN_KATMAN_SIRASI,
             piksel_hizası: 1.0,
@@ -1572,6 +1605,11 @@ impl GrafikSeçenekleri {
 
     pub fn lejant_canlı(mut self, canlı: bool) -> Self {
         self.lejant_canlı = canlı;
+        self
+    }
+
+    pub fn lejant_konumu(mut self, konum: LejantKonumu) -> Self {
+        self.lejant_konumu = konum;
         self
     }
 
