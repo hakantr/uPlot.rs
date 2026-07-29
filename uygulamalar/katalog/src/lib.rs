@@ -3,10 +3,10 @@
 #[cfg(not(target_family = "wasm"))]
 use gpui::ClipboardItem;
 use gpui::{
-    AccessibleAction, App, ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement,
-    KeyBinding, ListAlignment, ListState, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Render,
-    Role, ScrollStrategy, ScrollWheelEvent, SharedString, StyleRefinement, Task,
-    UniformListScrollHandle, Window, div, list, prelude::*, px, rgb, rgba, uniform_list,
+    AccessibleAction, App, Bounds, ClickEvent, Context, Entity, Focusable, FontWeight, IntoElement,
+    KeyBinding, ListAlignment, ListState, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels,
+    Render, Role, ScrollStrategy, ScrollWheelEvent, SharedString, Size, StyleRefinement, Task,
+    UniformListScrollHandle, Window, canvas, div, list, prelude::*, px, rgb, rgba, uniform_list,
 };
 use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
@@ -17,6 +17,7 @@ use std::ops::Range;
 use std::time::Duration;
 use uplot_rs::gpui::{
     GpuiGrafik, GpuiGrafikGrubu, GpuiGrafikGrupAyarları, GpuiGrafikOlayı, GpuiSeriEşleme,
+    GörünürAlan, uyarlanan_alan,
 };
 use uplot_rs::izleme;
 use uplot_rs_gpui_ornekler::{
@@ -97,6 +98,34 @@ gpui::actions!(uplot_katalog, [KartıEtkinleştir]);
 fn önbellekli_grafik(grafik: Entity<GpuiGrafik>) -> impl IntoElement {
     grafik.cached(StyleRefinement::default().size_full())
 }
+
+/// Kart yüzeylerinin görünür alana uyarlanıp uyarlanmayacağı.
+///
+/// Açıkken yüzeyler resmî sayfadaki ham boyutlarının en boy oranını koruyarak
+/// görünür alana dikeyde sığdırılır; kapatıldığında ham boyutlarıyla çizilir ve
+/// alana sığmayan kısım kaydırmayla gezilir. Uyarlama davranışının kendisi
+/// çekirdekte `uplot_rs::gpui::uyarlanan_alan` altında tanımlıdır.
+const OTOMATİK_UYARLA: bool = true;
+
+/// Yüzeyin üstündeki başlık, açıklama kutusu ve alt yazı satırlarının
+/// sığdırma alanından düşülen ortak payı.
+///
+/// Ölçüm çizim tabanının tamamını kapsadığından, yüzeye kalan alan bu metin
+/// bloklarının yüksekliği kadar azdır. Pay düşülmezse yüzey kalan alandan
+/// büyük hesaplanır ve alt kenardan kırpılır.
+const AÇIKLAMA_PAYI: f32 = 190.0;
+
+/// Sync Cursor panelinde lejant satırına ayrılan yükseklik.
+const SYNC_LEJANT_PAYI: f32 = 30.0;
+
+/// Sync Cursor panelinin ham yüksekliği: grafik yüzeyi ve lejant satırı.
+const SYNC_PANEL_YÜKSEKLİĞİ: f32 = 236.0;
+
+/// Üç panel satırının ve aralarındaki iki boşluğun ham toplamı.
+///
+/// Grup üyeleri imleç, seçim ve zoom durumunu paylaştığından tek ölçekle
+/// birlikte sığdırılır; panel başına ayrı ölçek uygulanmaz.
+const SYNC_TOPLAM_YÜKSEKLİK: f32 = SYNC_PANEL_YÜKSEKLİĞİ * 3.0 + 16.0;
 
 /// Canlı lejant satırını taşıyan bağımsız yüzey.
 ///
@@ -1763,6 +1792,12 @@ impl KartKimliği {
 
 pub struct ChartListesi {
     aktif_kart: KartKimliği,
+    /// Çizim tabanının son ölçülen boyutu.
+    ///
+    /// Yüzey yerleşimi normalde `uyarlanan_alan` ile ölçüm anında çözülür.
+    /// Lejant düğmesi gibi `Context` isteyen içerikler kapanışa taşınamadığı
+    /// için o kartlar bu ölçümü kullanır; değer yalnız değiştiğinde yazılır.
+    çizim_alanı: Size<Pixels>,
     kart_listesi_kaydırma: UniformListScrollHandle,
     latency_heatmap_kaydırma: UniformListScrollHandle,
     kart_listesi_kaydırma_bekliyor: Option<usize>,
@@ -2128,7 +2163,7 @@ impl ChartListesi {
             || {
                 let seriler = seri_adları
                     .iter()
-                    .map(|ad| format!("□ {ad}: --"))
+                    .map(|ad| format!("● {ad}: --"))
                     .collect::<Vec<_>>()
                     .join("    ");
                 format!("x: --    {seriler}")
@@ -2139,7 +2174,7 @@ impl ChartListesi {
                     .zip(değerler.iter())
                     .map(|(ad, değer)| {
                         değer.map_or_else(
-                            || format!("□ {ad}: --"),
+                            || format!("● {ad}: --"),
                             |y| {
                                 let değer = if self.aktif_kart == KartKimliği::TimeseriesDiscrete
                                     && ad.starts_with("DEV")
@@ -2149,7 +2184,7 @@ impl ChartListesi {
                                     format!("{y:.3}")
                                 };
                                 format!(
-                                    "□ {ad}: {değer}{}",
+                                    "● {ad}: {değer}{}",
                                     if x.is_none() { " (last)" } else { "" }
                                 )
                             },
@@ -2259,6 +2294,10 @@ impl ChartListesi {
         }
         let mut bu = Self {
             aktif_kart: KartKimliği::Resize,
+            çizim_alanı: Size {
+                width: px(0.0),
+                height: px(0.0),
+            },
             kart_listesi_kaydırma: UniformListScrollHandle::new(),
             latency_heatmap_kaydırma: UniformListScrollHandle::new(),
             kart_listesi_kaydırma_bekliyor: None,
@@ -5682,7 +5721,7 @@ impl Render for ChartListesi {
         let kart_tanımı_açık = self.kart_tanımı_açık;
         let kart_tanımı_etiketi = SharedString::from(format!(
             "{} Kart tanımı · {}",
-            if kart_tanımı_açık { "▾" } else { "▸" },
+            if kart_tanımı_açık { "−" } else { "+" },
             aktif_kart_tanımı.tanım_yolu
         ));
         let tekerlek_anahtarı = self.tekerlek_anahtarı.clone();
@@ -5923,7 +5962,7 @@ impl Render for ChartListesi {
             })
             .when(soft_minmax_canlı, |öğe| {
                 öğe.child(
-                    Dugme::yeni("soft-minmax-baslat", "▶ dataMax++")
+                    Dugme::yeni("soft-minmax-baslat", "→ dataMax++")
                         .boyutu(DugmeBoyutu::Kucuk)
                         .turu(DugmeTuru::Ikincil)
                         .devre_disi(soft_minmax_çalışıyor)
@@ -6083,7 +6122,7 @@ impl Render for ChartListesi {
                     })),
             )
             .child(
-                Dugme::yeni("nokta-artir", "＋ Nokta")
+                Dugme::yeni("nokta-artir", "+ Nokta")
                     .boyutu(DugmeBoyutu::Kucuk)
                     .turu(DugmeTuru::Ikincil)
                     .devre_disi(aktif_kart != KartKimliği::Resize)
@@ -6496,10 +6535,37 @@ impl Render for ChartListesi {
                     })),
             );
 
+        // `Context` isteyen kartların kullandığı, bir önceki karede ölçülmüş alan.
+        let görünür_alan = GörünürAlan::yeni(self.çizim_alanı, OTOMATİK_UYARLA);
+        let alan_ölçeri = canvas(
+            {
+                let bu = cx.entity();
+                move |sınır: Bounds<Pixels>, _pencere: &mut Window, cx: &mut App| {
+                    // Ölçüm çizim sırasında alınır; varlık güncellemesi aynı
+                    // karede yapılamayacağından bir sonraki tura ertelenir.
+                    cx.defer(move |cx| {
+                        bu.update(cx, |bu, cx| {
+                            if bu.çizim_alanı != sınır.size {
+                                bu.çizim_alanı = sınır.size;
+                                cx.notify();
+                            }
+                        });
+                    });
+                }
+            },
+            |_sınır, _durum, _pencere, _cx| {},
+        )
+        .absolute()
+        .size_full();
         let çizim_tabanı = div()
             .id("canli-chart")
+            .relative()
+            .child(alan_ölçeri)
             .flex_1()
-            .min_h(px(320.0))
+            // Kalan dikey alan 320 px'in altına düştüğünde sabit alt sınır
+            // yüzeyi görünür alandan taşırıyordu; yüzey artık kalan alana
+            // sığacak şekilde ölçeklendiği için taban serbest bırakıldı.
+            .min_h_0()
             .rounded_lg()
             .border_1()
             .border_color(rgb(0xe5e7eb))
@@ -6517,62 +6583,72 @@ impl Render for ChartListesi {
                     .find(|(kimlik, _)| *kimlik == örnek)
                     .map(|(_, grafik)| grafik.clone())
             };
+            let yüzeyler = AlignDataÖrneği::TÜMÜ
+                .into_iter()
+                .map(|örnek| (örnek, yüzey(örnek)))
+                .collect::<Vec<_>>();
             çizim_tabanı
-                .flex_none()
-                .h(px(1380.0))
-                .overflow_y_scroll()
-                .p_2()
-                .child(
+                .overflow_hidden()
+                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
                     div()
+                        .id("align-data-kaydirma")
+                        .size_full()
+                        .overflow_y_scroll()
                         .p_2()
-                        .rounded_md()
-                        .bg(rgb(0xf8fafc))
-                        .text_xs()
-                        .text_color(soluk)
-                        .child("Resmî align-data.html aynı sayfada iki bağımsız uPlot örneği kurar. İlk panel 5×5×1000 tabloyu altı ısınma turundan sonra NULL_EXPAND ile birleştirir ve yalnız onun spanGaps değeri saniyede bir değişir. İkinci panel farklı X dizilerindeki yoğun çizgi ile dört seyrek barı gösterir; zoom ve imleç durumları paylaşılmaz."),
-                )
-                .children(AlignDataÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                    let (genişlik, yükseklik, açıklama) = match örnek {
-                        AlignDataÖrneği::HizalamaMaliyeti => (
-                            2_560.0,
-                            600.0,
-                            "25 birleşik seri; yalnız kırmızı, yeşil ve mavi çizilir · 6 warmup + 1 sonuç join",
-                        ),
-                        AlignDataÖrneği::ÇizgiVeÇubuk => (
-                            1_920.0,
-                            600.0,
-                            "38 noktalı kırmızı çizgi + dört mavi bar · bağımsız görünür aralık",
-                        ),
-                    };
-                    div()
-                        .mt_3()
                         .child(
                             div()
-                                .text_sm()
-                                .font_weight(FontWeight::BOLD)
-                                .text_color(metin)
-                                .child(örnek.başlık()),
+                                .p_2()
+                                .rounded_md()
+                                .bg(rgb(0xf8fafc))
+                                .text_xs()
+                                .text_color(soluk)
+                                .child("Resmî align-data.html aynı sayfada iki bağımsız uPlot örneği kurar. İlk panel 5×5×1000 tabloyu altı ısınma turundan sonra NULL_EXPAND ile birleştirir ve yalnız onun spanGaps değeri saniyede bir değişir. İkinci panel farklı X dizilerindeki yoğun çizgi ile dört seyrek barı gösterir; zoom ve imleç durumları paylaşılmaz."),
                         )
-                        .child(div().text_xs().text_color(soluk).child(açıklama))
-                        .child(
+                        .children(yüzeyler.into_iter().map(|(örnek, grafik)| {
+                            let (doğal_genişlik, doğal_yükseklik, açıklama) = match örnek {
+                                AlignDataÖrneği::HizalamaMaliyeti => (
+                                    2_560.0,
+                                    600.0,
+                                    "25 birleşik seri; yalnız kırmızı, yeşil ve mavi çizilir · 6 warmup + 1 sonuç join",
+                                ),
+                                AlignDataÖrneği::ÇizgiVeÇubuk => (
+                                    1_920.0,
+                                    600.0,
+                                    "38 noktalı kırmızı çizgi + dört mavi bar · bağımsız görünür aralık",
+                                ),
+                            };
+                            let (genişlik, yükseklik) =
+                                alan.yüzey(doğal_genişlik, doğal_yükseklik);
                             div()
-                                .id(SharedString::from(format!(
-                                    "align-data-{}-kaydirma",
-                                    örnek.kimlik()
-                                )))
-                                .w_full()
-                                .h(px(yükseklik))
-                                .overflow_x_scroll()
-                                .yalnız_tekerlek_ekseninde_kaydır()
+                                .mt_3()
                                 .child(
                                     div()
-                                        .w(px(genişlik))
+                                        .text_sm()
+                                        .font_weight(FontWeight::BOLD)
+                                        .text_color(metin)
+                                        .child(örnek.başlık()),
+                                )
+                                .child(div().text_xs().text_color(soluk).child(açıklama))
+                                .child(
+                                    div()
+                                        .id(SharedString::from(format!(
+                                            "align-data-{}-kaydirma",
+                                            örnek.kimlik()
+                                        )))
+                                        .w_full()
                                         .h(px(yükseklik))
-                                        .when_some(yüzey(örnek), |öğe, grafik| {
-                                            öğe.child(önbellekli_grafik(grafik))
-                                        }),
-                                ),
-                        )
+                                        .overflow_x_scroll()
+                                        .yalnız_tekerlek_ekseninde_kaydır()
+                                        .child(
+                                            div()
+                                                .w(px(genişlik))
+                                                .h(px(yükseklik))
+                                                .when_some(grafik, |öğe, grafik| {
+                                                    öğe.child(önbellekli_grafik(grafik))
+                                                }),
+                                        ),
+                                )
+                        }))
                 }))
         } else if aktif_kart == KartKimliği::CustomScales {
             let yüzey = |örnek| {
@@ -6581,26 +6657,35 @@ impl Render for ChartListesi {
                     .find(|(kimlik, _)| *kimlik == örnek)
                     .map(|(_, grafik)| grafik.clone())
             };
+            let yüzeyler = CustomScaleÖrneği::TÜMÜ
+                .into_iter()
+                .map(|örnek| (örnek, yüzey(örnek)))
+                .collect::<Vec<_>>();
             çizim_tabanı
-                .flex_none()
-                .h(px(1_700.0))
-                .overflow_y_scroll()
-                .p_2()
-                .child(div().flex().flex_wrap().items_start().gap_3().children(
-                    CustomScaleÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                        div()
-                            .id(SharedString::from(format!(
-                                "custom-scales-{}-surface",
-                                örnek.kimlik()
-                            )))
-                            .flex_none()
-                            .w(px(800.0))
-                            .h(px(800.0))
-                            .when_some(yüzey(örnek), |öğe, grafik| {
-                                öğe.child(önbellekli_grafik(grafik))
-                            })
-                    }),
-                ))
+                .overflow_hidden()
+                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+                    let (genişlik, yükseklik) = alan.yüzey(800.0, 800.0);
+                    div()
+                        .id("custom-scales-kaydirma")
+                        .size_full()
+                        .overflow_y_scroll()
+                        .p_2()
+                        .child(div().flex().flex_wrap().items_start().gap_3().children(
+                            yüzeyler.into_iter().map(|(örnek, grafik)| {
+                                div()
+                                    .id(SharedString::from(format!(
+                                        "custom-scales-{}-surface",
+                                        örnek.kimlik()
+                                    )))
+                                    .flex_none()
+                                    .w(px(genişlik))
+                                    .h(px(yükseklik))
+                                    .when_some(grafik, |öğe, grafik| {
+                                        öğe.child(önbellekli_grafik(grafik))
+                                    })
+                            }),
+                        ))
+                }))
         } else if aktif_kart == KartKimliği::DataSmoothing {
             let yüzey = |örnek| {
                 self.data_smoothing_grafikleri
@@ -6608,30 +6693,39 @@ impl Render for ChartListesi {
                     .find(|(kimlik, _)| *kimlik == örnek)
                     .map(|(_, grafik)| grafik.clone())
             };
+            let yüzeyler = SmoothingÖrneği::TÜMÜ
+                .into_iter()
+                .map(|örnek| (örnek, yüzey(örnek)))
+                .collect::<Vec<_>>();
             çizim_tabanı
-                .flex_none()
-                .h(px(1_450.0))
-                .overflow_y_scroll()
-                .p_2()
-                .children(SmoothingÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                .overflow_hidden()
+                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+                    let (genişlik, yükseklik) = alan.yüzey(1_920.0, 300.0);
                     div()
-                        .id(SharedString::from(format!(
-                            "data-smoothing-{}-surface",
-                            örnek.kimlik()
-                        )))
-                        .w_full()
-                        .h(px(300.0))
-                        .mb(px(50.0))
-                        .overflow_x_scroll()
-                        .yalnız_tekerlek_ekseninde_kaydır()
-                        .child(
+                        .id("data-smoothing-kaydirma")
+                        .size_full()
+                        .overflow_y_scroll()
+                        .p_2()
+                        .children(yüzeyler.into_iter().map(|(örnek, grafik)| {
                             div()
-                                .w(px(1_920.0))
-                                .h(px(300.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| {
-                                    öğe.child(önbellekli_grafik(grafik))
-                                }),
-                        )
+                                .id(SharedString::from(format!(
+                                    "data-smoothing-{}-surface",
+                                    örnek.kimlik()
+                                )))
+                                .w_full()
+                                .h(px(yükseklik))
+                                .mb(px(50.0))
+                                .overflow_x_scroll()
+                                .yalnız_tekerlek_ekseninde_kaydır()
+                                .child(
+                                    div()
+                                        .w(px(genişlik))
+                                        .h(px(yükseklik))
+                                        .when_some(grafik, |öğe, grafik| {
+                                            öğe.child(önbellekli_grafik(grafik))
+                                        }),
+                                )
+                        }))
                 }))
         } else if aktif_kart == KartKimliği::FocusCursor {
             let yüzey = |örnek| {
@@ -6640,30 +6734,39 @@ impl Render for ChartListesi {
                     .find(|(kimlik, _)| *kimlik == örnek)
                     .map(|(_, grafik)| grafik.clone())
             };
+            let yüzeyler = FocusÖrneği::TÜMÜ
+                .into_iter()
+                .map(|örnek| (örnek, yüzey(örnek)))
+                .collect::<Vec<_>>();
             çizim_tabanı
-                .flex_none()
-                .h(px(2_700.0))
-                .overflow_y_scroll()
-                .p_2()
-                .children(FocusÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                .overflow_hidden()
+                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+                    let (genişlik, yükseklik) = alan.yüzey(1_920.0, 600.0);
                     div()
-                        .id(SharedString::from(format!(
-                            "focus-cursor-{}-surface",
-                            örnek.kimlik()
-                        )))
-                        .w_full()
-                        .h(px(600.0))
-                        .mb(px(50.0))
-                        .overflow_x_scroll()
-                        .yalnız_tekerlek_ekseninde_kaydır()
-                        .child(
+                        .id("focus-cursor-kaydirma")
+                        .size_full()
+                        .overflow_y_scroll()
+                        .p_2()
+                        .children(yüzeyler.into_iter().map(|(örnek, grafik)| {
                             div()
-                                .w(px(1_920.0))
-                                .h(px(600.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| {
-                                    öğe.child(önbellekli_grafik(grafik))
-                                }),
-                        )
+                                .id(SharedString::from(format!(
+                                    "focus-cursor-{}-surface",
+                                    örnek.kimlik()
+                                )))
+                                .w_full()
+                                .h(px(yükseklik))
+                                .mb(px(50.0))
+                                .overflow_x_scroll()
+                                .yalnız_tekerlek_ekseninde_kaydır()
+                                .child(
+                                    div()
+                                        .w(px(genişlik))
+                                        .h(px(yükseklik))
+                                        .when_some(grafik, |öğe, grafik| {
+                                            öğe.child(önbellekli_grafik(grafik))
+                                        }),
+                                )
+                        }))
                 }))
         } else if aktif_kart == KartKimliği::Gradients {
             let yüzey = |örnek| {
@@ -6672,26 +6775,35 @@ impl Render for ChartListesi {
                     .find(|(kimlik, _)| *kimlik == örnek)
                     .map(|(_, grafik)| grafik.clone())
             };
+            let yüzeyler = GradientÖrneği::TÜMÜ
+                .into_iter()
+                .map(|örnek| (örnek, yüzey(örnek)))
+                .collect::<Vec<_>>();
             çizim_tabanı
-                .flex_none()
-                .h(px(2_050.0))
-                .overflow_y_scroll()
-                .p_2()
-                .child(div().flex().flex_wrap().items_start().gap_3().children(
-                    GradientÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                        div()
-                            .id(SharedString::from(format!(
-                                "gradients-{}-surface",
-                                örnek.kimlik()
-                            )))
-                            .flex_none()
-                            .w(px(800.0))
-                            .h(px(600.0))
-                            .when_some(yüzey(örnek), |öğe, grafik| {
-                                öğe.child(önbellekli_grafik(grafik))
-                            })
-                    }),
-                ))
+                .overflow_hidden()
+                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+                    let (genişlik, yükseklik) = alan.yüzey(800.0, 600.0);
+                    div()
+                        .id("gradients-kaydirma")
+                        .size_full()
+                        .overflow_y_scroll()
+                        .p_2()
+                        .child(div().flex().flex_wrap().items_start().gap_3().children(
+                            yüzeyler.into_iter().map(|(örnek, grafik)| {
+                                div()
+                                    .id(SharedString::from(format!(
+                                        "gradients-{}-surface",
+                                        örnek.kimlik()
+                                    )))
+                                    .flex_none()
+                                    .w(px(genişlik))
+                                    .h(px(yükseklik))
+                                    .when_some(grafik, |öğe, grafik| {
+                                        öğe.child(önbellekli_grafik(grafik))
+                                    })
+                            }),
+                        ))
+                }))
         } else if aktif_kart == KartKimliği::HighLowBands {
             let yüzey = |örnek| {
                 self.high_low_bands_grafikleri
@@ -6699,43 +6811,57 @@ impl Render for ChartListesi {
                     .find(|(kimlik, _)| *kimlik == örnek)
                     .map(|(_, grafik)| grafik.clone())
             };
+            let yüzeyler = HighLowBandsÖrneği::TÜMÜ
+                .into_iter()
+                .map(|örnek| (örnek, yüzey(örnek)))
+                .collect::<Vec<_>>();
             çizim_tabanı
-                .flex_none()
-                .h(px(6_400.0))
-                .overflow_y_scroll()
-                .p_2()
-                .children(HighLowBandsÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                    let (genişlik, yükseklik) = match örnek {
-                        HighLowBandsÖrneği::HizalanmamışÇubuklar
-                        | HighLowBandsÖrneği::HizalanmamışÇubukVuruşu => (400.0, 300.0),
-                        HighLowBandsÖrneği::ÇokİnceÇubuklar => (800.0, 300.0),
-                        _ => (1_920.0, 600.0),
-                    };
+                .overflow_hidden()
+                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+                    // Her yüzeyin başlığı 30 px yer kaplar; sığdırma payı geri kalanıdır.
+                    let çizim_alanı = alan.pay_düş(30.0);
                     div()
-                        .id(SharedString::from(format!(
-                            "high-low-bands-{}-surface",
-                            örnek.kimlik()
-                        )))
-                        .flex_none()
-                        .w_full()
-                        .h(px(yükseklik + 30.0))
-                        .mb_3()
-                        .overflow_x_scroll()
-                        .yalnız_tekerlek_ekseninde_kaydır()
-                        .child(
+                        .id("high-low-bands-kaydirma")
+                        .size_full()
+                        .overflow_y_scroll()
+                        .p_2()
+                        .children(yüzeyler.into_iter().map(|(örnek, grafik)| {
+                            let (doğal_genişlik, doğal_yükseklik) = match örnek {
+                                HighLowBandsÖrneği::HizalanmamışÇubuklar
+                                | HighLowBandsÖrneği::HizalanmamışÇubukVuruşu => {
+                                    (400.0, 300.0)
+                                }
+                                HighLowBandsÖrneği::ÇokİnceÇubuklar => (800.0, 300.0),
+                                _ => (1_920.0, 600.0),
+                            };
+                            let (genişlik, yükseklik) =
+                                çizim_alanı.yüzey(doğal_genişlik, doğal_yükseklik);
                             div()
-                                .text_sm()
-                                .font_weight(FontWeight::SEMIBOLD)
-                                .child(örnek.başlık()),
-                        )
-                        .child(
-                            div()
-                                .w(px(genişlik))
-                                .h(px(yükseklik))
-                                .when_some(yüzey(örnek), |öğe, grafik| {
-                                    öğe.child(önbellekli_grafik(grafik))
-                                }),
-                        )
+                                .id(SharedString::from(format!(
+                                    "high-low-bands-{}-surface",
+                                    örnek.kimlik()
+                                )))
+                                .flex_none()
+                                .w_full()
+                                .h(px(yükseklik + 30.0))
+                                .mb_3()
+                                .overflow_x_scroll()
+                                .yalnız_tekerlek_ekseninde_kaydır()
+                                .child(
+                                    div()
+                                        .text_sm()
+                                        .font_weight(FontWeight::SEMIBOLD)
+                                        .child(örnek.başlık()),
+                                )
+                                .child(
+                                    div()
+                                        .w(px(genişlik))
+                                        .h(px(yükseklik))
+                                        .when_some(grafik, |öğe, grafik| {
+                                            öğe.child(önbellekli_grafik(grafik))
+                                        }),
+                                )
+                        }))
                 }))
         } else if aktif_kart == KartKimliği::LatencyHeatmap {
             çizim_tabanı.min_h_0().p_2().child(
@@ -6743,6 +6869,11 @@ impl Render for ChartListesi {
                     "latency-heatmap-yuzey-listesi",
                     LatencyHeatmapÖrneği::TÜMÜ.len(),
                     cx.processor(|bu, aralık: Range<usize>, _pencere, _cx| {
+                        // Yüzey başlığı 30 px; kalan alan sığdırmaya girer.
+                        let (genişlik, yükseklik) =
+                            GörünürAlan::yeni(bu.çizim_alanı, OTOMATİK_UYARLA)
+                                .pay_düş(30.0)
+                                .yüzey(1_800.0, 600.0);
                         aralık
                             .filter_map(|indeks| {
                                 let örnek = LatencyHeatmapÖrneği::TÜMÜ.get(indeks).copied()?;
@@ -6759,7 +6890,7 @@ impl Render for ChartListesi {
                                         )))
                                         .flex_none()
                                         .w_full()
-                                        .h(px(630.0))
+                                        .h(px(yükseklik + 30.0))
                                         .overflow_x_scroll()
                                         .yalnız_tekerlek_ekseninde_kaydır()
                                         .child(
@@ -6770,8 +6901,8 @@ impl Render for ChartListesi {
                                         )
                                         .child(
                                             div()
-                                                .w(px(1_800.0))
-                                                .h(px(600.0))
+                                                .w(px(genişlik))
+                                                .h(px(yükseklik))
                                                 .child(önbellekli_grafik(grafik)),
                                         ),
                                 )
@@ -6789,34 +6920,44 @@ impl Render for ChartListesi {
                     .find(|(kimlik, _)| *kimlik == örnek)
                     .map(|(_, grafik)| grafik.clone())
             };
+            let yüzeyler = LinePathsÖrneği::TÜMÜ
+                .into_iter()
+                .map(|örnek| (örnek, yüzey(örnek)))
+                .collect::<Vec<_>>();
             çizim_tabanı
-                .flex_none()
-                .h(px(5_050.0))
-                .overflow_y_scroll()
-                .p_2()
-                .children(LinePathsÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                .overflow_hidden()
+                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+                    let çizim_alanı = alan.pay_düş(30.0);
+                    let (genişlik, yükseklik) = çizim_alanı.yüzey(2_400.0, 600.0);
                     div()
-                        .id(SharedString::from(format!("{}-surface", örnek.kimlik())))
-                        .flex_none()
-                        .w_full()
-                        .h(px(630.0))
-                        .mb_3()
-                        .overflow_x_scroll()
-                        .yalnız_tekerlek_ekseninde_kaydır()
-                        .child(
+                        .id("line-paths-kaydirma")
+                        .size_full()
+                        .overflow_y_scroll()
+                        .p_2()
+                        .children(yüzeyler.into_iter().map(|(örnek, grafik)| {
                             div()
-                                .text_sm()
-                                .font_weight(FontWeight::SEMIBOLD)
-                                .child(örnek.başlık()),
-                        )
-                        .child(
-                            div()
-                                .w(px(2_400.0))
-                                .h(px(600.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| {
-                                    öğe.child(önbellekli_grafik(grafik))
-                                }),
-                        )
+                                .id(SharedString::from(format!("{}-surface", örnek.kimlik())))
+                                .flex_none()
+                                .w_full()
+                                .h(px(yükseklik + 30.0))
+                                .mb_3()
+                                .overflow_x_scroll()
+                                .yalnız_tekerlek_ekseninde_kaydır()
+                                .child(
+                                    div()
+                                        .text_sm()
+                                        .font_weight(FontWeight::SEMIBOLD)
+                                        .child(örnek.başlık()),
+                                )
+                                .child(
+                                    div()
+                                        .w(px(genişlik))
+                                        .h(px(yükseklik))
+                                        .when_some(grafik, |öğe, grafik| {
+                                            öğe.child(önbellekli_grafik(grafik))
+                                        }),
+                                )
+                        }))
                 }))
         } else if aktif_kart == KartKimliği::LogScales {
             let yüzey = |örnek| {
@@ -6825,34 +6966,44 @@ impl Render for ChartListesi {
                     .find(|(kimlik, _)| *kimlik == örnek)
                     .map(|(_, grafik)| grafik.clone())
             };
+            let yüzeyler = LogScalesÖrneği::TÜMÜ
+                .into_iter()
+                .map(|örnek| (örnek, yüzey(örnek)))
+                .collect::<Vec<_>>();
             çizim_tabanı
-                .flex_none()
-                .h(px(1_290.0))
-                .overflow_y_scroll()
-                .p_2()
-                .children(LogScalesÖrneği::TÜMÜ.into_iter().map(|örnek| {
+                .overflow_hidden()
+                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+                    let çizim_alanı = alan.pay_düş(30.0);
+                    let (genişlik, yükseklik) = çizim_alanı.yüzey(1_600.0, 600.0);
                     div()
-                        .id(SharedString::from(format!("{}-surface", örnek.kimlik())))
-                        .flex_none()
-                        .w_full()
-                        .h(px(630.0))
-                        .mb_3()
-                        .overflow_x_scroll()
-                        .yalnız_tekerlek_ekseninde_kaydır()
-                        .child(
+                        .id("log-scales-kaydirma")
+                        .size_full()
+                        .overflow_y_scroll()
+                        .p_2()
+                        .children(yüzeyler.into_iter().map(|(örnek, grafik)| {
                             div()
-                                .text_sm()
-                                .font_weight(FontWeight::SEMIBOLD)
-                                .child(örnek.başlık()),
-                        )
-                        .child(
-                            div()
-                                .w(px(1_600.0))
-                                .h(px(600.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| {
-                                    öğe.child(önbellekli_grafik(grafik))
-                                }),
-                        )
+                                .id(SharedString::from(format!("{}-surface", örnek.kimlik())))
+                                .flex_none()
+                                .w_full()
+                                .h(px(yükseklik + 30.0))
+                                .mb_3()
+                                .overflow_x_scroll()
+                                .yalnız_tekerlek_ekseninde_kaydır()
+                                .child(
+                                    div()
+                                        .text_sm()
+                                        .font_weight(FontWeight::SEMIBOLD)
+                                        .child(örnek.başlık()),
+                                )
+                                .child(
+                                    div()
+                                        .w(px(genişlik))
+                                        .h(px(yükseklik))
+                                        .when_some(grafik, |öğe, grafik| {
+                                            öğe.child(önbellekli_grafik(grafik))
+                                        }),
+                                )
+                        }))
                 }))
         } else if aktif_kart == KartKimliği::LogScales2 {
             let yüzey = |örnek| {
@@ -6861,60 +7012,71 @@ impl Render for ChartListesi {
                     .find(|(kimlik, _)| *kimlik == örnek)
                     .map(|(_, grafik)| grafik.clone())
             };
+            let yüzeyler = LogScales2Örneği::TÜMÜ
+                .into_iter()
+                .map(|örnek| (örnek, yüzey(örnek)))
+                .collect::<Vec<_>>();
             çizim_tabanı
-                .flex_none()
-                .h(px(6_000.0))
-                .overflow_y_scroll()
-                .p_2()
-                .children(LogScales2Örneği::TÜMÜ.into_iter().map(|örnek| {
-                    let (genişlik, yükseklik) = match örnek {
-                        LogScales2Örneği::GenişDoğrusal
-                        | LogScales2Örneği::GenişLog10
-                        | LogScales2Örneği::GenişLog2
-                        | LogScales2Örneği::PozitifFiltreli => (1_600.0, 600.0),
-                        LogScales2Örneği::TersGiriş | LogScales2Örneği::TersÇıkış => {
-                            (1_600.0, 300.0)
-                        }
-                        LogScales2Örneği::TümüNull => (800.0, 400.0),
-                        LogScales2Örneği::ÇokKüçük => (800.0, 600.0),
-                        LogScales2Örneği::SeyrekLog10 | LogScales2Örneği::SeyrekLog2 => {
-                            (800.0, 300.0)
-                        }
-                        LogScales2Örneği::KısmiBüyük | LogScales2Örneği::KısmiKüçük => {
-                            (600.0, 300.0)
-                        }
-                    };
-                    let ters_çift = matches!(
-                        örnek,
-                        LogScales2Örneği::TersGiriş | LogScales2Örneği::TersÇıkış
-                    );
+                .overflow_hidden()
+                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
                     div()
-                        .id(SharedString::from(format!("{}-surface", örnek.kimlik())))
-                        .flex_none()
-                        .w_full()
-                        .h(px(yükseklik + if ters_çift { 24.0 } else { 30.0 }))
-                        .mb(if örnek == LogScales2Örneği::TersGiriş {
-                            px(0.0)
-                        } else {
-                            px(12.0)
-                        })
-                        .overflow_x_scroll()
-                        .yalnız_tekerlek_ekseninde_kaydır()
-                        .child(div().text_sm().font_weight(FontWeight::SEMIBOLD).child(
-                            if örnek == LogScales2Örneği::TersÇıkış {
-                                "Out · cursor.sync.key=\"moo\" · birleşik In/Out lejant"
-                            } else {
-                                örnek.başlık()
-                            },
-                        ))
-                        .child(
+                        .id("log-scales2-kaydirma")
+                        .size_full()
+                        .overflow_y_scroll()
+                        .p_2()
+                        .children(yüzeyler.into_iter().map(|(örnek, grafik)| {
+                            let (ham_genişlik, ham_yükseklik) = match örnek {
+                                LogScales2Örneği::GenişDoğrusal
+                                | LogScales2Örneği::GenişLog10
+                                | LogScales2Örneği::GenişLog2
+                                | LogScales2Örneği::PozitifFiltreli => (1_600.0, 600.0),
+                                LogScales2Örneği::TersGiriş | LogScales2Örneği::TersÇıkış => {
+                                    (1_600.0, 300.0)
+                                }
+                                LogScales2Örneği::TümüNull => (800.0, 400.0),
+                                LogScales2Örneği::ÇokKüçük => (800.0, 600.0),
+                                LogScales2Örneği::SeyrekLog10 | LogScales2Örneği::SeyrekLog2 => {
+                                    (800.0, 300.0)
+                                }
+                                LogScales2Örneği::KısmiBüyük | LogScales2Örneği::KısmiKüçük => {
+                                    (600.0, 300.0)
+                                }
+                            };
+                            let ters_çift = matches!(
+                                örnek,
+                                LogScales2Örneği::TersGiriş | LogScales2Örneği::TersÇıkış
+                            );
+                            let başlık_payı = if ters_çift { 24.0 } else { 30.0 };
+                            let (genişlik, yükseklik) =
+                                alan.pay_düş(başlık_payı).yüzey(ham_genişlik, ham_yükseklik);
                             div()
-                                .w(px(genişlik))
-                                .h(px(yükseklik))
-                                .when_some(yüzey(örnek), |öğe, grafik| {
-                                    öğe.child(önbellekli_grafik(grafik))
-                                }),
-                        )
+                                .id(SharedString::from(format!("{}-surface", örnek.kimlik())))
+                                .flex_none()
+                                .w_full()
+                                .h(px(yükseklik + başlık_payı))
+                                .mb(if örnek == LogScales2Örneği::TersGiriş {
+                                    px(0.0)
+                                } else {
+                                    px(12.0)
+                                })
+                                .overflow_x_scroll()
+                                .yalnız_tekerlek_ekseninde_kaydır()
+                                .child(div().text_sm().font_weight(FontWeight::SEMIBOLD).child(
+                                    if örnek == LogScales2Örneği::TersÇıkış {
+                                        "Out · cursor.sync.key=\"moo\" · birleşik In/Out lejant"
+                                    } else {
+                                        örnek.başlık()
+                                    },
+                                ))
+                                .child(
+                                    div()
+                                        .w(px(genişlik))
+                                        .h(px(yükseklik))
+                                        .when_some(grafik, |öğe, grafik| {
+                                            öğe.child(önbellekli_grafik(grafik))
+                                        }),
+                                )
+                        }))
                 }))
         } else if aktif_kart == KartKimliği::SyncCursor {
             let cpu = sync_yüzeyi(SyncCursorÖrneği::Cpu);
@@ -6922,70 +7084,96 @@ impl Render for ChartListesi {
             let tcp = sync_yüzeyi(SyncCursorÖrneği::Tcp);
             let kırmızı_mavi = sync_yüzeyi(SyncCursorÖrneği::UyumsuzKırmızıMavi);
             let yeşil_kırmızı = sync_yüzeyi(SyncCursorÖrneği::UyumsuzYeşilKırmızı);
-            let sync_paneli =
-                |örnek: SyncCursorÖrneği, grafik: Option<Entity<GpuiGrafik>>| {
-                    let seriler = grafik.as_ref().map_or_else(Vec::new, |grafik| {
-                        grafik
-                            .read(cx)
-                            .grafik()
-                            .seri_seçenekleri()
-                            .iter()
-                            .enumerate()
-                            .map(|(indeks, seri)| {
-                                (indeks, seri.etiket.clone(), seri.renk.clone(), seri.göster)
-                            })
-                            .collect::<Vec<_>>()
-                    });
+            // Lejant düğmeleri `cx` ister; panel gövdesi ise yalnız ölçülmüş
+            // yüksekliği. Düğmeler burada kurulur, gövde görünür alan
+            // ölçüldükten sonra kapanışla üretilir.
+            let sync_paneli = |örnek: SyncCursorÖrneği, grafik: Option<Entity<GpuiGrafik>>| {
+                let seriler = grafik.as_ref().map_or_else(Vec::new, |grafik| {
+                    grafik
+                        .read(cx)
+                        .grafik()
+                        .seri_seçenekleri()
+                        .iter()
+                        .enumerate()
+                        .map(|(indeks, seri)| {
+                            (indeks, seri.etiket.clone(), seri.renk.clone(), seri.göster)
+                        })
+                        .collect::<Vec<_>>()
+                });
+                let düğmeler = seriler
+                    .into_iter()
+                    .map(|(indeks, etiket, _, görünür)| {
+                        let yazı = SharedString::from(format!(
+                            "● {etiket}{}",
+                            if görünür { "" } else { " · gizli" }
+                        ));
+                        Dugme::yeni(
+                            SharedString::from(format!("sync-{}-{indeks}", örnek.kimlik())),
+                            yazı,
+                        )
+                        .boyutu(DugmeBoyutu::Kucuk)
+                        .turu(if görünür {
+                            DugmeTuru::Hayalet
+                        } else {
+                            DugmeTuru::Ikincil
+                        })
+                        .tiklaninca(cx.listener(move |bu, _, _, cx| {
+                            bu.sync_cursor_serisini_değiştir(örnek, indeks, cx);
+                        }))
+                    })
+                    .collect::<Vec<_>>();
+                move |yükseklik: f32| {
                     div()
                         .flex_1()
                         .min_w_0()
-                        .h(px(236.0))
+                        .h(px(yükseklik))
                         .child(
                             div()
                                 .w_full()
-                                .h(px(206.0))
+                                .h(px((yükseklik - SYNC_LEJANT_PAYI).max(1.0)))
                                 .when_some(grafik, |öğe, grafik| {
                                     öğe.child(önbellekli_grafik(grafik))
                                 }),
                         )
-                        .child(div().flex().items_center().gap_1().children(
-                            seriler.into_iter().map(|(indeks, etiket, _, görünür)| {
-                                let yazı = SharedString::from(format!(
-                                    "● {etiket}{}",
-                                    if görünür { "" } else { " · gizli" }
-                                ));
-                                Dugme::yeni(
-                                    SharedString::from(format!("sync-{}-{indeks}", örnek.kimlik())),
-                                    yazı,
-                                )
-                                .boyutu(DugmeBoyutu::Kucuk)
-                                .turu(if görünür {
-                                    DugmeTuru::Hayalet
-                                } else {
-                                    DugmeTuru::Ikincil
-                                })
-                                .tiklaninca(cx.listener(
-                                    move |bu, _, _, cx| {
-                                        bu.sync_cursor_serisini_değiştir(örnek, indeks, cx);
-                                    },
-                                ))
-                            }),
-                        ))
-                };
+                        .child(div().flex().items_center().gap_1().children(düğmeler))
+                        .into_any_element()
+                }
+            };
+            let cpu_paneli = sync_paneli(SyncCursorÖrneği::Cpu, cpu);
+            let ram_paneli = sync_paneli(SyncCursorÖrneği::Ram, ram);
+            let tcp_paneli = sync_paneli(SyncCursorÖrneği::Tcp, tcp);
+            let kırmızı_mavi_paneli =
+                sync_paneli(SyncCursorÖrneği::UyumsuzKırmızıMavi, kırmızı_mavi);
+            let yeşil_kırmızı_paneli =
+                sync_paneli(SyncCursorÖrneği::UyumsuzYeşilKırmızı, yeşil_kırmızı);
             çizim_tabanı
-                .flex_none()
-                .h(px(760.0))
-                .overflow_y_scroll()
-                .p_2()
-                .child(sync_paneli(SyncCursorÖrneği::Cpu, cpu))
-                .child(div().mt_2().flex().gap_2().children([
-                    sync_paneli(SyncCursorÖrneği::Ram, ram),
-                    sync_paneli(SyncCursorÖrneği::Tcp, tcp),
-                ]))
-                .child(div().mt_2().flex().gap_2().children([
-                    sync_paneli(SyncCursorÖrneği::UyumsuzKırmızıMavi, kırmızı_mavi),
-                    sync_paneli(SyncCursorÖrneği::UyumsuzYeşilKırmızı, yeşil_kırmızı),
-                ]))
+                .overflow_hidden()
+                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+                    // Grup üyeleri imleç ve zoom'u paylaşır; birlikte
+                    // görünmeleri gerektiğinden üç satırın toplamı tek ölçekle
+                    // sığdırılır, panel başına ayrı ölçek uygulanmaz.
+                    let (_, toplam) = alan.yüzey(SYNC_TOPLAM_YÜKSEKLİK, SYNC_TOPLAM_YÜKSEKLİK);
+                    let panel = SYNC_PANEL_YÜKSEKLİĞİ * toplam / SYNC_TOPLAM_YÜKSEKLİK;
+                    div()
+                        .id("sync-cursor-kaydirma")
+                        .size_full()
+                        .overflow_y_scroll()
+                        .p_2()
+                        .child(cpu_paneli(panel))
+                        .child(
+                            div()
+                                .mt_2()
+                                .flex()
+                                .gap_2()
+                                .children([ram_paneli(panel), tcp_paneli(panel)]),
+                        )
+                        .child(
+                            div().mt_2().flex().gap_2().children([
+                                kırmızı_mavi_paneli(panel),
+                                yeşil_kırmızı_paneli(panel),
+                            ]),
+                        )
+                }))
         } else if aktif_kart == KartKimliği::TimeseriesDiscrete {
             let üst = self
                 .timeseries_discrete_grafikleri
@@ -7010,21 +7198,31 @@ impl Render for ChartListesi {
                     .is_some_and(|(_, grafik)| grafik.read(cx).grafik().seri_görünür_mü(seri))
             });
             çizim_tabanı
-                .flex_none()
-                .h(px(760.0))
                 .overflow_scroll()
                 .p_2()
                 .child(
                     div()
-                        .w(px(1920.0))
-                        .h(px(600.0))
+                        .w(px(görünür_alan
+                            .pay_düş(AÇIKLAMA_PAYI)
+                            .yüzey(1920.0, 600.0)
+                            .0))
+                        .h(px(görünür_alan
+                            .pay_düş(AÇIKLAMA_PAYI)
+                            .yüzey(1920.0, 600.0)
+                            .1))
                         .when_some(üst, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                 )
                 .child(
                     div()
                         .mt_2()
-                        .w(px(1920.0))
-                        .h(px(200.0))
+                        .w(px(görünür_alan
+                            .pay_düş(AÇIKLAMA_PAYI)
+                            .yüzey(1920.0, 200.0)
+                            .0))
+                        .h(px(görünür_alan
+                            .pay_düş(AÇIKLAMA_PAYI)
+                            .yüzey(1920.0, 200.0)
+                            .1))
                         .when_some(alt, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                 )
                 .child(
@@ -7140,49 +7338,43 @@ impl Render for ChartListesi {
                 NearestNonNullÖrneği::ÖncekiSeri,
                 NearestNonNullÖrneği::ÖncekiİmleçVeSeri,
             ];
+            let tam_yüzeyler = tam
+                .into_iter()
+                .map(|örnek| (örnek, yüzey(örnek)))
+                .collect::<Vec<_>>();
+            let küçük_yüzeyler = küçük
+                .into_iter()
+                .map(|örnek| (örnek, yüzey(örnek)))
+                .collect::<Vec<_>>();
             çizim_tabanı
-                .flex_none()
-                .h(px(1240.0))
-                .overflow_y_scroll()
-                .p_2()
-                .child(
+                .overflow_hidden()
+                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+                    // Yüzeyler `w_full`; en boy oranını kapsayıcı belirlediği
+                    // için yalnız yükseklik görünür alana çekilir. 20 px pay
+                    // yüzey üstündeki kısa açıklama satırınındır.
+                    let tam_yükseklik = alan.pay_düş(20.0).dikey(300.0);
+                    let küçük_yükseklik = alan.pay_düş(20.0).dikey(250.0);
                     div()
+                        .id("nearest-non-null-kaydirma")
+                        .size_full()
+                        .overflow_y_scroll()
                         .p_2()
-                        .rounded_md()
-                        .bg(rgb(0xf8fafc))
-                        .text_xs()
-                        .text_color(soluk)
-                        .child("Amaç: eksik telemetride en yakın X, piksel proximity ve önceki örnek politikalarını karşılaştırır. ")
-                        .child("API: null_imleç_düzeni seri başına gerçek index/x/value üretir; null ile join hizalama eksiği ayrıdır. ")
-                        .child("İzleme: legend gerçek örnek zamanını göstermeli ve eski değeri güncelmiş gibi sunmamak için stale eşiği koymalıdır. ")
-                        .child("Maliyet: sıralı X araması O(log N), null koşusu O(K); hover yalnız hafif cursor katmanını boyar."),
-                )
-                .children(tam.into_iter().map(|örnek| {
-                    div()
-                        .mt_2()
-                        .w_full()
                         .child(
                             div()
+                                .p_2()
+                                .rounded_md()
+                                .bg(rgb(0xf8fafc))
                                 .text_xs()
                                 .text_color(soluk)
-                                .child(örnek.kısa_açıklama()),
+                                .child("Amaç: eksik telemetride en yakın X, piksel proximity ve önceki örnek politikalarını karşılaştırır. ")
+                                .child("API: null_imleç_düzeni seri başına gerçek index/x/value üretir; null ile join hizalama eksiği ayrıdır. ")
+                                .child("İzleme: legend gerçek örnek zamanını göstermeli ve eski değeri güncelmiş gibi sunmamak için stale eşiği koymalıdır. ")
+                                .child("Maliyet: sıralı X araması O(log N), null koşusu O(K); hover yalnız hafif cursor katmanını boyar."),
                         )
-                        .child(
+                        .children(tam_yüzeyler.into_iter().map(|(örnek, grafik)| {
                             div()
+                                .mt_2()
                                 .w_full()
-                                .h(px(300.0))
-                                .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
-                        )
-                }))
-                .child(
-                    div()
-                        .mt_2()
-                        .flex()
-                        .gap_2()
-                        .children(küçük.into_iter().map(|örnek| {
-                            div()
-                                .flex_1()
-                                .min_w_0()
                                 .child(
                                     div()
                                         .text_xs()
@@ -7192,15 +7384,36 @@ impl Render for ChartListesi {
                                 .child(
                                     div()
                                         .w_full()
-                                        .h(px(250.0))
-                                        .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
+                                        .h(px(tam_yükseklik))
+                                        .when_some(grafik, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                                 )
-                        })),
-                )
+                        }))
+                        .child(
+                            div()
+                                .mt_2()
+                                .flex()
+                                .gap_2()
+                                .children(küçük_yüzeyler.into_iter().map(|(örnek, grafik)| {
+                                    div()
+                                        .flex_1()
+                                        .min_w_0()
+                                        .child(
+                                            div()
+                                                .text_xs()
+                                                .text_color(soluk)
+                                                .child(örnek.kısa_açıklama()),
+                                        )
+                                        .child(
+                                            div()
+                                                .w_full()
+                                                .h(px(küçük_yükseklik))
+                                                .when_some(grafik, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
+                                        )
+                                })),
+                        )
+                }))
         } else if aktif_kart == KartKimliği::MissingData {
             çizim_tabanı
-                .flex_none()
-                .h(px(1280.0))
                 .overflow_y_scroll()
                 .p_2()
                 .child(
@@ -7240,7 +7453,7 @@ impl Render for ChartListesi {
                         .child(
                             div()
                                 .w_full()
-                                .h(px(520.0))
+                                .h(px(görünür_alan.pay_düş(AÇIKLAMA_PAYI).dikey(520.0)))
                                 .when_some(grafik, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                         )
                         .child(div().flex().flex_wrap().gap_1().children(
@@ -7264,8 +7477,6 @@ impl Render for ChartListesi {
         } else if aktif_kart == KartKimliği::Months {
             let yüzey = |indeks: usize| self.months_grafikleri.get(indeks).cloned();
             çizim_tabanı
-                .flex_none()
-                .h(px(620.0))
                 .overflow_y_scroll()
                 .p_2()
                 .child(
@@ -7370,8 +7581,6 @@ impl Render for ChartListesi {
                 ),
             ];
             çizim_tabanı
-                .flex_none()
-                .h(px(1260.0))
                 .overflow_y_scroll()
                 .p_2()
                 .child(
@@ -7400,7 +7609,10 @@ impl Render for ChartListesi {
                                 .iter()
                                 .find(|(kimlik, _)| kimlik == örnek)
                                 .map(|(_, grafik)| grafik.clone())?;
-                            let (genişlik, yükseklik) = örnek.kaynak_boyutu();
+                            let (ham_genişlik, ham_yükseklik) = örnek.kaynak_boyutu();
+                            let (genişlik, yükseklik) = görünür_alan
+                                .pay_düş(AÇIKLAMA_PAYI)
+                                .yüzey(ham_genişlik as f32, ham_yükseklik as f32);
                             Some(
                                 div()
                                     .mt_2()
@@ -7424,13 +7636,13 @@ impl Render for ChartListesi {
                                                 örnek.kimlik()
                                             )))
                                             .w_full()
-                                            .h(px(yükseklik as f32))
+                                            .h(px(yükseklik))
                                             .overflow_x_scroll()
                                             .yalnız_tekerlek_ekseninde_kaydır()
                                             .child(
                                                 div()
-                                                    .w(px(genişlik as f32))
-                                                    .h(px(yükseklik as f32))
+                                                    .w(px(genişlik))
+                                                    .h(px(yükseklik))
                                                     .child(önbellekli_grafik(grafik)),
                                             ),
                                     ),
@@ -7445,8 +7657,6 @@ impl Render for ChartListesi {
                     .map(|(_, grafik)| grafik.clone())
             };
             çizim_tabanı
-                .flex_none()
-                .h(px(860.0))
                 .overflow_y_scroll()
                 .p_2()
                 .child(
@@ -7483,7 +7693,7 @@ impl Render for ChartListesi {
                         .child(
                             div()
                                 .w_full()
-                                .h(px(360.0))
+                                .h(px(görünür_alan.pay_düş(AÇIKLAMA_PAYI).dikey(360.0)))
                                 .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                         )
                 }))
@@ -7495,8 +7705,6 @@ impl Render for ChartListesi {
                     .map(|(_, grafik)| grafik.clone())
             };
             çizim_tabanı
-                .flex_none()
-                .h(px(900.0))
                 .overflow_y_scroll()
                 .p_2()
                 .child(
@@ -7509,7 +7717,10 @@ impl Render for ChartListesi {
                         .child("Dört panel resmî points.html sayfasının tek anlatımıdır. Ortadaki Points ve Too dense test aynı 180 noktalı veriyi paylaşır; yalnız X aralığı değişerek varsayılan nokta yoğunluğu eşiğini karşılaştırır."),
                 )
                 .children(PointsÖrneği::TÜMÜ.into_iter().map(|örnek| {
-                    let (genişlik, yükseklik) = örnek.kaynak_boyutu();
+                    let (ham_genişlik, ham_yükseklik) = örnek.kaynak_boyutu();
+                            let (genişlik, yükseklik) = görünür_alan
+                                .pay_düş(AÇIKLAMA_PAYI)
+                                .yüzey(ham_genişlik as f32, ham_yükseklik as f32);
                     div()
                         .mt_2()
                         .child(
@@ -7532,13 +7743,13 @@ impl Render for ChartListesi {
                                     örnek.kimlik()
                                 )))
                                 .w_full()
-                                .h(px(yükseklik as f32))
+                                .h(px(yükseklik))
                                 .overflow_x_scroll()
                                 .yalnız_tekerlek_ekseninde_kaydır()
                                 .child(
                                     div()
-                                        .w(px(genişlik as f32))
-                                        .h(px(yükseklik as f32))
+                                        .w(px(genişlik))
+                                        .h(px(yükseklik))
                                         .when_some(yüzey(örnek), |öğe, grafik| {
                                             öğe.child(önbellekli_grafik(grafik))
                                         }),
@@ -7569,10 +7780,13 @@ impl Render for ChartListesi {
                                 .into_iter()
                                 .filter(move |örnek| örnek.x_dikey() == dikey)
                                 .map(|örnek| {
-                                    let (genişlik, yükseklik) = örnek.boyut();
+                                    let (ham_genişlik, ham_yükseklik) = örnek.boyut();
+                                    let (genişlik, yükseklik) = görünür_alan
+                                        .pay_düş(AÇIKLAMA_PAYI)
+                                        .yüzey(ham_genişlik as f32, ham_yükseklik as f32);
                                     div()
                                         .flex_none()
-                                        .w(px(genişlik as f32))
+                                        .w(px(genişlik))
                                         .child(
                                             div()
                                                 .mb_1()
@@ -7583,8 +7797,8 @@ impl Render for ChartListesi {
                                         )
                                         .child(
                                             div()
-                                                .w(px(genişlik as f32))
-                                                .h(px(yükseklik as f32))
+                                                .w(px(genişlik))
+                                                .h(px(yükseklik))
                                                 .when_some(yüzey(örnek), |öğe, grafik| {
                                                     öğe.child(önbellekli_grafik(grafik))
                                                 }),
@@ -7594,8 +7808,6 @@ impl Render for ChartListesi {
                     )
             };
             çizim_tabanı
-                .flex_none()
-                .h(px(2100.0))
                 .overflow_scroll()
                 .p_2()
                 .child(
@@ -7617,8 +7829,6 @@ impl Render for ChartListesi {
                     .map(|(_, grafik)| grafik.clone())
             };
             çizim_tabanı
-                .flex_none()
-                .h(px(1320.0))
                 .overflow_y_scroll()
                 .p_2()
                 .child(
@@ -7661,8 +7871,8 @@ impl Render for ChartListesi {
                                 .yalnız_tekerlek_ekseninde_kaydır()
                                 .child(
                                     div()
-                                        .w(px(1920.0))
-                                        .h(px(600.0))
+                                        .w(px(görünür_alan.pay_düş(AÇIKLAMA_PAYI).yüzey(1920.0, 600.0).0))
+                                .h(px(görünür_alan.pay_düş(AÇIKLAMA_PAYI).yüzey(1920.0, 600.0).1))
                                         .when_some(yüzey(örnek), |öğe, grafik| {
                                             öğe.child(önbellekli_grafik(grafik))
                                         }),
@@ -7677,8 +7887,6 @@ impl Render for ChartListesi {
                     .map(|(_, grafik)| grafik.clone())
             };
             çizim_tabanı
-                .flex_none()
-                .h(px(760.0))
                 .overflow_scroll()
                 .p_2()
                 .child(
@@ -7763,8 +7971,6 @@ impl Render for ChartListesi {
                     .map(|(_, grafik)| grafik.clone())
             };
             çizim_tabanı
-                .flex_none()
-                .h(px(760.0))
                 .overflow_scroll()
                 .p_2()
                 .child(
@@ -7831,15 +8037,13 @@ impl Render for ChartListesi {
                         )
                         .child(
                             div()
-                                .w(px(1275.0))
-                                .h(px(600.0))
+                                .w(px(görünür_alan.pay_düş(AÇIKLAMA_PAYI).yüzey(1275.0, 600.0).0))
+                                .h(px(görünür_alan.pay_düş(AÇIKLAMA_PAYI).yüzey(1275.0, 600.0).1))
                                 .when_some(grafik, |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                         )
                 }))
         } else if matches!(aktif_kart, KartKimliği::BoxWhisker(_)) {
             çizim_tabanı
-                .flex_none()
-                .h(px(980.0))
                 .overflow_scroll()
                 .p_2()
                 .child(
@@ -7888,8 +8092,6 @@ impl Render for ChartListesi {
                     .map(|(_, grafik)| grafik.clone())
             };
             çizim_tabanı
-                .flex_none()
-                .h(px(1160.0))
                 .overflow_scroll()
                 .p_2()
                 .child(
@@ -7899,7 +8101,7 @@ impl Render for ChartListesi {
                         .bg(rgb(0xf8fafc))
                         .text_xs()
                         .text_color(soluk)
-                        .child("Resmî soft-minmax.html tek veri nesnesini paylaşan dört canlı rangeNum karşılaştırmasını ve bağımsız düz-sıfır yüzeyini birlikte gösterir. ▶ dataMax++ tek ortak değeri her 50 ms’de dört canlı yüzeye aynı adımda uygular."),
+                        .child("Resmî soft-minmax.html tek veri nesnesini paylaşan dört canlı rangeNum karşılaştırmasını ve bağımsız düz-sıfır yüzeyini birlikte gösterir. → dataMax++ tek ortak değeri her 50 ms’de dört canlı yüzeye aynı adımda uygular."),
                 )
                 .child(
                     div().flex().flex_wrap().gap_3().items_start().children(
@@ -7923,8 +8125,8 @@ impl Render for ChartListesi {
                                 )
                                 .child(
                                     div()
-                                        .w(px(400.0))
-                                        .h(px(400.0))
+                                        .w(px(görünür_alan.pay_düş(AÇIKLAMA_PAYI).yüzey(400.0, 400.0).0))
+                                .h(px(görünür_alan.pay_düş(AÇIKLAMA_PAYI).yüzey(400.0, 400.0).1))
                                         .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                                 )
                         }),
@@ -7938,8 +8140,6 @@ impl Render for ChartListesi {
                     .map(|(_, grafik)| grafik.clone())
             };
             çizim_tabanı
-                .flex_none()
-                .h(px(940.0))
                 .overflow_scroll()
                 .p_2()
                 .child(
@@ -7972,8 +8172,8 @@ impl Render for ChartListesi {
                         .child(div().text_xs().text_color(soluk).child(açıklama))
                         .child(
                             div()
-                                .w(px(800.0))
-                                .h(px(400.0))
+                                .w(px(görünür_alan.pay_düş(AÇIKLAMA_PAYI).yüzey(800.0, 400.0).0))
+                                .h(px(görünür_alan.pay_düş(AÇIKLAMA_PAYI).yüzey(800.0, 400.0).1))
                                 .when_some(yüzey(örnek), |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                         )
                 }))
@@ -7985,8 +8185,6 @@ impl Render for ChartListesi {
                     .map(|(_, grafik)| grafik.clone())
             };
             çizim_tabanı
-                .flex_none()
-                .h(px(430.0))
                 .overflow_scroll()
                 .p_2()
                 .child(
@@ -8070,8 +8268,6 @@ impl Render for ChartListesi {
                     .map(|(_, grafik)| grafik.clone())
             };
             çizim_tabanı
-                .flex_none()
-                .h(px(700.0))
                 .overflow_scroll()
                 .p_2()
                 .children(SparseÖrneği::TÜMÜ.into_iter().map(|örnek| {
@@ -8095,12 +8291,8 @@ impl Render for ChartListesi {
                         )
                 }))
         } else if matches!(aktif_kart, KartKimliği::StackedSeries(_)) {
-            çizim_tabanı
-                .flex_none()
-                .h(px(760.0))
-                .overflow_scroll()
-                .p_2()
-                .children(StackedSeriesÖrneği::TÜMÜ.into_iter().map(|örnek| {
+            çizim_tabanı.overflow_scroll().p_2().children(
+                StackedSeriesÖrneği::TÜMÜ.into_iter().map(|örnek| {
                     let grafik = self
                         .stacked_series_grafikleri
                         .iter()
@@ -8116,13 +8308,16 @@ impl Render for ChartListesi {
                             .map(|(indeks, seri)| (indeks, seri.etiket.clone(), seri.göster))
                             .collect::<Vec<_>>()
                     });
-                    let (genişlik, yükseklik) = örnek.boyut();
+                    let (ham_genişlik, ham_yükseklik) = örnek.boyut();
+                    let (genişlik, yükseklik) = görünür_alan
+                        .pay_düş(AÇIKLAMA_PAYI)
+                        .yüzey(ham_genişlik as f32, ham_yükseklik as f32);
                     div()
                         .mb_4()
                         .child(
                             div()
-                                .w(px(genişlik as f32))
-                                .h(px(yükseklik as f32))
+                                .w(px(genişlik))
+                                .h(px(yükseklik))
                                 .border_1()
                                 .border_color(rgb(0xc0c0c0))
                                 .when_some(grafik, |öğe, grafik| {
@@ -8149,11 +8344,10 @@ impl Render for ChartListesi {
                                 ))
                             }),
                         ))
-                }))
+                }),
+            )
         } else if matches!(aktif_kart, KartKimliği::StreamData(_)) {
             çizim_tabanı
-                .flex_none()
-                .h(px(760.0))
                 .overflow_scroll()
                 .p_2()
                 .children(StreamDataÖrneği::TÜMÜ.into_iter().map(|örnek| {
@@ -8210,11 +8404,14 @@ impl Render for ChartListesi {
                             .gap_2()
                             .children(örnekler.iter().copied().take(yoğunluk_sayısı).map(
                                 |örnek| {
-                                    let (genişlik, yükseklik) = örnek.boyut();
+                                    let (ham_genişlik, ham_yükseklik) = örnek.boyut();
+                            let (genişlik, yükseklik) = görünür_alan
+                                .pay_düş(AÇIKLAMA_PAYI)
+                                .yüzey(ham_genişlik as f32, ham_yükseklik as f32);
                                     div()
                                         .flex_none()
-                                        .w(px(genişlik as f32))
-                                        .h(px(yükseklik as f32))
+                                        .w(px(genişlik))
+                                        .h(px(yükseklik))
                                         .border_1()
                                         .border_color(rgb(0xe5e7eb))
                                         .when_some(yüzey(örnek), |öğe, grafik| {
@@ -8253,8 +8450,6 @@ impl Render for ChartListesi {
             )
         } else if matches!(aktif_kart, KartKimliği::TimePeriods(_)) {
             çizim_tabanı
-                .flex_none()
-                .h(px(760.0))
                 .overflow_scroll()
                 .p_2()
                 .child(
@@ -8295,8 +8490,6 @@ impl Render for ChartListesi {
                 }))
         } else if matches!(aktif_kart, KartKimliği::TimelineDiscrete(_)) {
             çizim_tabanı
-                .flex_none()
-                .h(px(760.0))
                 .overflow_scroll()
                 .p_2()
                 .child(
@@ -8392,21 +8585,22 @@ impl Render for ChartListesi {
                         )
                 }))
         } else if aktif_kart == KartKimliği::UpdateCursorSelectResize {
-            let boyut = self
+            let ham_boyut = self
                 .boyut_senkron_akışı
                 .map_or(800, BoyutSenkronAkışı::boyut);
+            // Kaynak yüzey karedir; setSize canlı olarak boyutu değiştirdiğinden
+            // sığdırma her karede güncel ham değerden hesaplanır.
+            let (genişlik, yükseklik) = görünür_alan.yüzey(ham_boyut as f32, ham_boyut as f32);
             çizim_tabanı.overflow_scroll().child(
                 div()
-                    .w(px(boyut as f32))
-                    .h(px(boyut as f32))
+                    .w(px(genişlik))
+                    .h(px(yükseklik))
                     .when_some(self.grafik.clone(), |öğe, grafik| {
                         öğe.child(önbellekli_grafik(grafik))
                     }),
             )
         } else if aktif_kart == KartKimliği::ScrollSync {
             çizim_tabanı
-                .flex_none()
-                .h(px(400.0))
                 .overflow_y_scroll()
                 .child(
                 div()
@@ -8419,8 +8613,8 @@ impl Render for ChartListesi {
                     .child(
                         div()
                             .my_3()
-                            .w(px(400.0))
-                            .h(px(200.0))
+                            .w(px(görünür_alan.pay_düş(AÇIKLAMA_PAYI).yüzey(400.0, 200.0).0))
+                                .h(px(görünür_alan.pay_düş(AÇIKLAMA_PAYI).yüzey(400.0, 200.0).1))
                             .when_some(self.grafik.clone(), |öğe, grafik| öğe.child(önbellekli_grafik(grafik))),
                     )
                     .child("Grafiği kaydırdıktan sonra imleç ve seçim aynı görsel noktada kalır. Kaynak parity için doğal kapsayıcı kaydırması varsayılandır; wheel/touch yakınlaştırma ortak API'den isteğe bağlı açılır."),
@@ -8433,25 +8627,24 @@ impl Render for ChartListesi {
                     (800.0, 400.0)
                 }
             };
+            let grafik = self.grafik.clone();
             çizim_tabanı
-                .flex_none()
-                .h(px(620.0))
                 .overflow_hidden()
-                .child(
+                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+                    let (genişlik, yükseklik) = alan.yüzey(genişlik, yükseklik);
                     div()
                         .id("multi-bars-kaydirma")
-                        .w_full()
-                        .h_full()
+                        .size_full()
                         .overflow_scroll()
                         .child(
                             div()
                                 .w(px(genişlik))
                                 .h(px(yükseklik))
-                                .when_some(self.grafik.clone(), |öğe, grafik| {
+                                .when_some(grafik, |öğe, grafik| {
                                     öğe.child(önbellekli_grafik(grafik))
                                 }),
-                        ),
-                )
+                        )
+                }))
         } else {
             çizim_tabanı
                 .overflow_hidden()
@@ -8536,9 +8729,11 @@ impl Render for ChartListesi {
             .min_h_0()
             .h_full()
             .overflow_scroll()
-            .when(aktif_kart == KartKimliği::LatencyHeatmap, |öğe| {
-                öğe.overflow_hidden()
-            })
+            .when(
+                aktif_kart == KartKimliği::LatencyHeatmap
+                    || matches!(aktif_kart, KartKimliği::MultiBars(_)),
+                |öğe| öğe.overflow_hidden(),
+            )
             .p_4()
             .flex()
             .flex_col()
@@ -8584,9 +8779,9 @@ impl Render for ChartListesi {
                             Dugme::yeni(
                                 "kullanim-rehberi-toggle",
                                 if kullanım_rehberi_açık {
-                                    "▾ Açıklama · kullanım ve kaynak maliyeti"
+                                    "− Açıklama · kullanım ve kaynak maliyeti"
                                 } else {
-                                    "▸ Açıklama · kullanım ve kaynak maliyeti"
+                                    "+ Açıklama · kullanım ve kaynak maliyeti"
                                 },
                             )
                             .boyutu(DugmeBoyutu::Kucuk)
@@ -8897,7 +9092,10 @@ fn katalog_kartı(
     div()
         .id(kimlik)
         .cursor_pointer()
-        .h(px(96.0))
+        // `uniform_list` bütün satırlara tek yükseklik uygular. 96 px yalnız
+        // tek satırlık başlığa yetiyor, iki satıra saran başlıklarda kaynak
+        // satırı alttan kırpılıyordu; yükseklik iki satırlık başlığa göre.
+        .h(px(118.0))
         .mb_2()
         .overflow_hidden()
         .p_3()
