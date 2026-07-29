@@ -10,7 +10,7 @@ gereken durum, açık konular ve tekrar üretim adımları var.
 
 | depo | dal | son commit | durum |
 |---|---|---|---|
-| `uPlot.rs` | `main` | `a74ea7b` | temiz, **gönderilmedi** |
+| `uPlot.rs` | `main` | `a2add2b` | temiz, gönderildi |
 | `../gpui` | `main` | `d3a6038` | temiz, gönderildi |
 | `../gpui_kutuphanesi` | `main` | `36f1174` | temiz, gönderildi |
 
@@ -72,6 +72,15 @@ kaynak satırı kırpılıyordu (`uniform_list` tek yükseklik uygular) → sat�
 118 px. Web fontunun kapsamadığı semboller (`▾ ▸ ＋ ▶ □`) kapsadıklarıyla
 değiştirildi (`− + → ●`). latency-heatmap X ekseni etiketleri geldi.
 
+**Eksen ve çubuk düzeltmeleri.** Logaritmik X ekseninde etiketler yüzey
+boyutundan bağımsız üretiliyordu; Y'de var olan `log_etiketi_göster`
+seyreltmesi X'e de uygulandı. Y ekseni başlığı eksen payının ortasına
+konduğu için değer etiketleriyle çakışıyordu, kenara alındı. Çubuk ucundaki
+değer yazısı sabit 10 px'ti, çubuk kalınlığına göre ölçekleniyor. Çubuk
+çizim alanına kırpıldığında köşe yuvarlatması kavisi sınıra yapıştırıyordu,
+kırpılan uçta köşe düz bırakılıyor. Görünüm değişiminde imleç katmanı eski
+piksel konumunda kalıyordu, aynı fare konumundan yeniden çözülüyor.
+
 ## Açık konular
 
 **1. Sparkline ailesinde iki kart bozuk.** "Sparklines · 10×2 tablo"da 20
@@ -95,29 +104,25 @@ ayırma yolunu okuyup kapasite aşımının nasıl raporlandığına bakmak. gpu
 katı Zed paritesinde tutulduğundan çözüm katalog/çekirdek tarafında
 aranmalı.
 
-**2. Zoom sırasında kavisli sütun uçları yanlış kırpılıyor.** Sütun çizim
-alanı sınırının dışına taştığında kavisli ucun kırpılması gerekirken kavis
-yeniden çizilip sınıra yapışıyor.
+**2. Legend uPlot davranışından uzak.** Üç iş birlikte tasarlanmalı:
 
-**3. Sütun değer etiketleri zoom'da ölçeklenmiyor.** Sütun büyürken
-ucundaki değer yazısı aynı boyutta kalıyor.
+* Gizli seriler lejantta hiç görünmüyor — `lejant_seri_adları`
+  `filter(|seri| seri.göster)` ile eliyor. uPlot'ta gizli seri soluk kalır.
+* Canlı lejant satırı tek `SharedString`; tıklanabilir değil. Seri bazlı
+  girdilere ayrılıp tıklamada `GpuiGrafik::seri_görünürlüğünü_ayarla`
+  çağrılmalı. `KatalogLejantı` ayrı bir varlık olduğundan sahibine
+  `WeakEntity<ChartListesi>` ile ulaşmalı (bu ayrım pointer olaylarının
+  ~3.500 satırlık `render`'ı tetiklememesi için var, korunmalı).
+* Legend tanım sırasına göre alt/sol/üst/sağ konumlandırılabilmeli ve
+  bulunduğu alana uygun listelenmeli.
 
-**4. Zoom sırasında hover vurgusu eski konumda donuyor.** Fare hareket
-edene kadar yeni boyuta göre yeniden konumlanmıyor.
+Not: 14 kart kendi seri düğmelerini ayrıca kuruyor (`_serisini_değiştir`);
+ortak lejant gelince onlar sadeleşebilir.
 
-**5. Legend uPlot davranışından uzak.** Resmî sayfa değerleri daha okunaklı
-gösteriyor ve değere tıklayınca seriyi gizleyip geri getiriyor. Ayrıca
-legend tanım sırasına göre alt/sol/üst/sağ konumlandırılabilmeli ve
-bulunduğu alana uygun listelenmeli.
-
-**6. Y ekseni etiketleri yer yer çakışıyor** (mass-spectrum, custom-scales
-log yüzeyi). Y bölmeleri `eksen_bölmeleri(aralık, çizim_y, 30.0)` ile
-üretiliyor; log ölçekli eksende seyreltme yetersiz kalıyor.
-
-**7. Görsel regresyon otomasyonu hâlâ yok.** Bu oturumdaki kusurların
+**3. Görsel regresyon otomasyonu hâlâ yok.** Bu oturumdaki kusurların
 hiçbirini test yakalamadı; hepsi tarayıcıda gözle bulundu.
 
-**8. Tarayıcı önbelleği doğrulamayı yanıltıyor.** Chrome saatlerce eski
+**4. Tarayıcı önbelleği doğrulamayı yanıltıyor.** Chrome saatlerce eski
 wasm'ı servis etti ve düzeltmeler "etkisiz" göründü. Doğrulama yaparken
 URL'ye sürüm parametresi ekleyin (`?kart=...&v=N`) ve yüklenen dosya
 adını `dist/` içindekiyle karşılaştırın.
