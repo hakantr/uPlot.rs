@@ -18,6 +18,26 @@ Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
 `uPlot` (normatif kaynak, `master`), `zed` (parite doğrulaması için
 `7b030b5008`; bu makinede `401a0c7e3d` duruyor).
 
+Bu oturumun commit'leri (`4b5fa67` sonrası, hepsi gönderildi):
+
+```
+b2427a9 docs: devir notunu eksen ve çubuk düzeltmeleriyle güncelle
+a2add2b fix(çubuk): kırpılan değer ucunda köşe yuvarlatmasını kaldır
+1fd03a9 fix(çubuk): değer etiketini çubuk kalınlığına göre ölçekle
+db5525c fix(gpui): görünüm değişiminde imleç katmanını yeniden çöz
+286d064 fix(eksen): Y ekseni başlığını değer etiketlerinin dışına al
+2b8a8ec fix(test): raster testlerinde expect ve panic kullanımını kaldır
+74c9307 fix(eksen): logaritmik X etiketlerini piksel alanına göre seyrelt
+a74ea7b fix(gpui): dağılım yüzeylerini raster yolunda çiz
+c03076c test(gpui): toplu daire yolunun kurulum sınırını belgele
+eb8a375 fix(katalog): kart yüzeylerini görünür alana sığdır ve kesik içeriği gider
+9587523 feat(gpui): yüzeyleri görünür alana uyarlayan yerleşim katmanı ekle
+```
+
+Doğrulama durumu: `cargo fmt --all --check` temiz, `cargo clippy --workspace
+--all-targets` uyarısız, testler çekirdek 88 / örnekler 261 / katalog 12 /
+yerleşim 7 geçiyor. Kare bütçesi testi geçiyor.
+
 ## Önceki oturumun açık konuları — kapanış
 
 **Linux'ta web boş ekran (eski #1): macOS'ta sorun yok.** WebGPU bağlamı
@@ -126,6 +146,25 @@ hiçbirini test yakalamadı; hepsi tarayıcıda gözle bulundu.
 wasm'ı servis etti ve düzeltmeler "etkisiz" göründü. Doğrulama yaparken
 URL'ye sürüm parametresi ekleyin (`?kart=...&v=N`) ve yüklenen dosya
 adını `dist/` içindekiyle karşılaştırın.
+
+## Yapılacaklar — öncelik sırası
+
+**1. Legend (açık konu 2).** En büyük kalan iş; üç parçası birlikte
+tasarlanmalı, tek tek yapılırsa lejant tutarsız kalır. Başlangıç noktası
+`uygulamalar/katalog/src/lib.rs`: `lejant_seri_adları` (~2115),
+`lejant_metni` (~2137), `KatalogLejantı` (~136).
+
+**2. Sparkline (açık konu 1).** Elenen altı hipotez ve ölçüm notta yazılı;
+sıradaki adım `gpui_wgpu` atlas ayırma yolunu okumak. Çözüm katalog veya
+çekirdek tarafında aranmalı, gpui'ye dokunulmamalı.
+
+**3. Görsel regresyon otomasyonu (açık konu 3).** Bu oturumda bulunan
+kusurların hiçbirini test yakalamadı. Kart başına sahne komutu sayımı veya
+piksel karşılaştırması düşünülebilir.
+
+Sırada olmayan ama not düşülmeye değer: `gpui_web` varsayılan
+`multithreaded` özelliği hâlâ çekiliyor (yukarıda), kapatılırsa nightly ve
+`build-std` bakımı tümüyle kalkabilir.
 
 ## Çalıştırma
 
