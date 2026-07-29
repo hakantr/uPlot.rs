@@ -204,7 +204,8 @@ impl Render for KatalogLejantı {
             )
             .children(self.girdiler.iter().map(|girdi| {
                 let indeks = girdi.indeks;
-                let sahip = sahip.clone();
+                let tıklama_sahibi = sahip.clone();
+                let odak_sahibi = sahip.clone();
                 // uPlot gizli seriyi lejanttan kaldırmaz, `.u-off` ile
                 // soluklaştırır; girdi yerinde kalmazsa hangi serinin
                 // kapatıldığı ve nereden geri açılacağı görünmez olur.
@@ -227,8 +228,18 @@ impl Render for KatalogLejantı {
                     .child(div().flex_none().size(px(8.0)).rounded_full().bg(işaret))
                     .child(format!("{}: {}", girdi.etiket, girdi.değer))
                     .on_click(move |_, _, cx| {
-                        sahip
+                        tıklama_sahibi
                             .update(cx, |bu, cx| bu.lejant_serisini_değiştir(indeks, cx))
+                            .ok();
+                    })
+                    // uPlot lejant satırında `setSeries(i, {focus: true})`
+                    // uygular: odaklanan seri kendi rengini korur, diğerleri
+                    // `focus.alpha` ile soluklaşır. Etki yalnız `cursor.focus`
+                    // kurulmuş kartlarda görünür.
+                    .on_hover(move |üzerinde: &bool, _, cx| {
+                        let hedef = üzerinde.then_some(indeks);
+                        odak_sahibi
+                            .update(cx, |bu, cx| bu.lejant_serisini_odakla(hedef, cx))
                             .ok();
                     })
             }))
@@ -2413,6 +2424,28 @@ impl ChartListesi {
         self.lejant.update(cx, |lejant, cx| {
             lejant.içeriği_ayarla(x_metni, girdiler, konum, cx);
         });
+    }
+
+    /// Lejant satırına gelindiğinde ilgili seriyi odaklar; ayrılınca bırakır.
+    ///
+    /// uPlot `setSeries(i, {focus: true})` karşılığıdır. Odak yalnız
+    /// `cursor.focus` kurulmuş kartlarda boyanır; kurulu olmayan kartlarda
+    /// çağrı sahneye dokunmaz. Birleşik lejantta hedef dışındaki yüzeylerin
+    /// odağı da bırakılır, yoksa önceki yüzeyde soluk seriler asılı kalırdı.
+    fn lejant_serisini_odakla(&mut self, birleşik_indeks: Option<usize>, cx: &mut Context<Self>) {
+        let yüzeyler = self.lejant_yüzeyleri();
+        let seri_sayıları = yüzeyler
+            .iter()
+            .map(|yüzey| yüzey.read(cx).grafik().seri_seçenekleri().len())
+            .collect::<Vec<_>>();
+        let hedef =
+            birleşik_indeks.and_then(|indeks| lejant_hedefini_çöz(&seri_sayıları, indeks));
+        for (sıra, yüzey) in yüzeyler.into_iter().enumerate() {
+            let seri = hedef
+                .filter(|(yüzey_sırası, _)| *yüzey_sırası == sıra)
+                .map(|(_, seri)| seri);
+            yüzey.update(cx, |grafik, cx| grafik.odak_serisini_ayarla(seri, cx));
+        }
     }
 
     /// Lejant girdisine tıklandığında ilgili serinin görünürlüğünü çevirir.
@@ -9841,6 +9874,57 @@ mod tests {
             assert_eq!(registry_verisi.seriler(), doğrudan_veri.seriler());
         }
         Ok(())
+    }
+
+    /// Lejant satırına gelmek uPlot gibi seriyi odaklamalı, ayrılmak bırakmalı.
+    ///
+    /// Odak yalnız `cursor.focus` kurulmuş kartlarda boyanır; `focus-cursor`
+    /// ailesi bu davranışın kaynağıdır. Hedef dışındaki yüzeylerin odağı da
+    /// bırakılır, yoksa önceki yüzeyde soluk seriler asılı kalırdı.
+    #[::gpui::test]
+    async fn lejant_satırına_gelmek_seriyi_odaklar(cx: &mut ::gpui::TestAppContext) {
+        cx.update(|cx| {
+            let _ = ortak_bilesenler::baslat(ortak_bileşen_ayarları(), cx);
+            başlat(cx);
+        });
+        let (liste, cx) = cx.add_window_view(|_, cx| ChartListesi::yeni(cx));
+        liste.update(cx, |bu, cx| bu.kartı_seç(KartKimliği::FocusCursor, cx));
+        cx.run_until_parked();
+
+        let odaklar = |cx: &mut ::gpui::VisualTestContext| {
+            liste.read_with(cx, |bu, cx| {
+                bu.lejant_yüzeyleri()
+                    .iter()
+                    .map(|yüzey| yüzey.read(cx).grafik().odak_serisi())
+                    .collect::<Vec<_>>()
+            })
+        };
+        let seri_sayısı = liste.read_with(cx, |bu, cx| {
+            bu.lejant_yüzeyleri()
+                .first()
+                .map_or(0, |yüzey| yüzey.read(cx).grafik().seri_seçenekleri().len())
+        });
+        assert!(seri_sayısı >= 2, "odak kartı en az iki seri taşımalı");
+        assert_eq!(odaklar(cx), vec![None], "başlangıçta odak olmamalı");
+
+        liste.update(cx, |bu, cx| bu.lejant_serisini_odakla(Some(1), cx));
+        cx.run_until_parked();
+        assert_eq!(
+            odaklar(cx),
+            vec![Some(1)],
+            "lejant satırı seriyi odaklamalı"
+        );
+
+        liste.update(cx, |bu, cx| bu.lejant_serisini_odakla(None, cx));
+        cx.run_until_parked();
+        assert_eq!(odaklar(cx), vec![None], "satırdan ayrılmak odağı bırakmalı");
+
+        // Seri sınırının dışı sessizce yok sayılır; odak değişmez.
+        liste.update(cx, |bu, cx| {
+            bu.lejant_serisini_odakla(Some(seri_sayısı + 5), cx);
+        });
+        cx.run_until_parked();
+        assert_eq!(odaklar(cx), vec![None], "geçersiz indeks odak kurmamalı");
     }
 
     /// Çok yüzeyli kartlarda lejant imlecin girdiği yüzeyi göstermeli.
