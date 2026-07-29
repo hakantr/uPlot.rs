@@ -10115,5 +10115,8 @@ mod tests {
         ölç("TimezonesDst (51 yüzey)", KartKimliği::TimezonesDst, cx);
         ölç("LatencyHeatmap", KartKimliği::LatencyHeatmap, cx);
         ölç("MassSpectrum", KartKimliği::MassSpectrum, cx);
+        // 40.000 nokta CPU raster yoluyla tek sprite'a iniyor; ölçüm o yolun
+        // gerçek payını görünür kılar.
+        ölç("Scatter (raster yolu)", KartKimliği::Scatter, cx);
     }
 }

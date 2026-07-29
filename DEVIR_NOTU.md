@@ -227,6 +227,32 @@ değer yazısı sabit 10 px'ti, çubuk kalınlığına göre ölçekleniyor. Çu
 kırpılan uçta köşe düz bırakılıyor. Görünüm değişiminde imleç katmanı eski
 piksel konumunda kalıyordu, aynı fare konumundan yeniden çözülüyor.
 
+**Dört performans iddiası ölçüldü, dördü de düzeltme gerektirmedi.** Dışarıdan
+gelen bir değerlendirme `src/gpui.rs` ve `src/grafik.rs` için dört "performansı
+kötü etkileyen" madde saydı. Hepsi tek tek sınandı; hiçbiri ölçümle
+doğrulanmadı. Sayılar bu makinede, release derlemede:
+
+| iddia | ölçüm | sonuç |
+|---|---|---|
+| Her kare `Path::clone` heap churn | 47.994 köşede 26 µs, en ağır yükte %0,34 CPU | kabul edilmiş maliyet |
+| Scatter'ın CPU raster yolu gereksiz yük | Scatter kök render p50 396 µs (Resize 350, LatencyHeatmap 406) | alternatifi yok, maliyeti komşularıyla aynı |
+| Renk önbelleğinde biriken `String` tahsisi | cache HIT'te tahsis yok, `to_owned()` yalnız MISS'te | kart ömrü boyunca 5–20 tahsis, kare başına 0 |
+| `Rc<RefCell>` borrow denetimi | kare başına yüzey başına 2 çağrı; 55 yüzeyde ~110 ns | bütçenin %0,0007'si |
+
+Bağlam: kare bütçesi 16,7 ms ve en ağır kart 563 µs, yani **%3,4**. Dördünün
+toplamı bu payın içinde ölçülemeyecek kadar küçük.
+
+İki not. Birincisi, raster yolu bir tercih değil zorunluluk: GPUI yol kurucusu
+tek yolda 8.000 daireyi kuramıyor ve `Komut::Daireler` çizimindeki
+`build().ok()` hatayı yuttuğu için yüzey sessizce boş çiziliyordu (bkz. gpui
+testi `toplu_daire_yolunun_kurulum_sınırı`). İkincisi, `Path::clone` maddesinin
+çözümü gpui'de paylaşımlı yol gönderme API'si olurdu; sapma artık koşullu
+olarak mümkün (`../gpui/AGENTS.md`) ama o sürecin ilk koşulu gerçek bir sınır
+olması — %0,34 CPU sınır değil.
+
+Ölçüm kalıcı: Scatter kare bütçesi testine eklendi, yol kopyalama ölçümü
+`upstream_yol_butcesi` içinde zaten vardı ve notu güncellendi.
+
 ## Açık konular
 
 **1. Görsel regresyon kapsamı kısmi.** Yerleşim ve gradyan şeridi

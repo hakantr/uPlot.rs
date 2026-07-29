@@ -1540,6 +1540,24 @@ impl GpuiGrafik {
         Ok(())
     }
 
+    /// Lejant satırındaki `setSeries(i, {focus: true})` karşılığını uygular;
+    /// `None` odağı bırakır.
+    ///
+    /// uPlot odak alfasını yalnız `cursor.focus` kurulmuş grafiklerde boyar,
+    /// bu yüzden sunumu olmayan grafiklerde sahne yenilenmez. Odak yalnız
+    /// seri stilini değiştirdiğinden veri katmanı yeniden çözülür; imleç ve
+    /// seçim katmanlarına dokunulmaz.
+    pub fn odak_serisini_ayarla(&mut self, seri: Option<usize>, cx: &mut Context<Self>) -> bool {
+        if !self.grafik.odak_sunumu_var_mı() {
+            return false;
+        }
+        let değişti = self.grafik.imleç_odağını_seriye_ayarla(seri);
+        if değişti {
+            self.veri_sahnesini_yenile(cx);
+        }
+        değişti
+    }
+
     /// Web tarafındaki lejant düğmeleriyle aynı görünürlük değişimini GPUI
     /// uygulamalarına sunar ve yalnız gerekli sahne katmanlarını yeniler.
     pub fn seri_görünürlüğünü_ayarla(

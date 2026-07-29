@@ -10,6 +10,12 @@
 //! ama ölçülen kazanç en ağır yükte ~%0,6 CPU'da kaldı ve her upstream
 //! senkronunda fork'u yeniden harmanlamanın bakım yükünü karşılamadı.
 //! Test, kabul edilen maliyetin sessizce büyümesini engeller.
+//!
+//! Karar 2026-07-30'da bu makinede yeniden ölçüldü: 47.994 köşede
+//! `Path::scale` 0,560 ns/köşe, replay kopyası 0,550 ns/köşe, en ağır
+//! yükte toplam pay **%0,34 CPU**. gpui'de bilinçli sapma artık koşullu
+//! olarak mümkün (`../gpui/AGENTS.md`), ama o sürecin ilk koşulu gerçek
+//! bir sınır olması; %0,34 CPU sınır değil, kabul edilmiş bir maliyettir.
 
 use std::hint::black_box;
 use std::time::Instant;

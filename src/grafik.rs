@@ -3867,6 +3867,15 @@ impl Grafik {
         self.odak_serisi
     }
 
+    /// Serinin `cursor.focus` sunumu tanımlı mı.
+    ///
+    /// uPlot odak alfasını yalnız `cursor.focus` kurulmuş grafiklerde uygular;
+    /// tanımsızsa odak değişimi hiçbir şeyi boyamaz. Lejant satırından gelen
+    /// odak isteği bunu görüp boşuna sahne yenilemez.
+    pub const fn odak_sunumu_var_mı(&self) -> bool {
+        self.seçenekler.odak.is_some()
+    }
+
     /// Güncel `cursor.focus` durumundan sonra serinin yalnız boya sunumunu
     /// döndürür. Yüzey adaptörleri retained geometriyi yeniden kurmadan
     /// stroke/fill/width özelliklerini yerinde güncelleyebilir.
