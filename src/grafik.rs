@@ -4291,10 +4291,16 @@ impl Grafik {
                     hiza: MetinHizası::Orta,
                 });
             } else {
+                // Başlık, eksen payının ortasına konursa değer etiketleriyle
+                // aynı sütuna düşüp üst üste biniyordu (mass-spectrum'da
+                // "% relative abundance" sayıların üstüne geliyordu). Başlık
+                // dikey çizildiğinden dar bir şerit yeter; kenara alınır,
+                // değer etiketleri kendi payında kalır.
+                const EKSEN_BAŞLIĞI_KENAR_PAYI: f32 = 10.0;
                 let eksen_etiketi_x = if self.seçenekler.birincil_y_karşıda {
-                    (sağ + genişlik_px as f32) / 2.0
+                    (genişlik_px as f32 - EKSEN_BAŞLIĞI_KENAR_PAYI).max(sağ)
                 } else {
-                    sol / 2.0
+                    EKSEN_BAŞLIĞI_KENAR_PAYI.min(sol)
                 };
                 sahne.ekle(Komut::DöndürülmüşMetin {
                     konum: Nokta::yeni(eksen_etiketi_x, (üst + alt) / 2.0),
