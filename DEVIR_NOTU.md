@@ -10,7 +10,7 @@ gereken durum, açık konular ve tekrar üretim adımları var.
 
 | depo | dal | son commit | durum |
 |---|---|---|---|
-| `uPlot.rs` | `main` | `2ccd8eb` | temiz, gönderildi |
+| `uPlot.rs` | `main` | `7f54978` | temiz, gönderildi |
 | `../gpui` | `main` | `39c95ac` | temiz, gönderildi |
 | `../gpui_kutuphanesi` | `main` | `36f1174` | temiz, gönderildi |
 
@@ -21,6 +21,9 @@ Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
 Bu oturumun commit'leri (`4b5fa67` sonrası, hepsi gönderildi):
 
 ```
+7f54978 fix(lejant): ortak lejantı imlecin girdiği yüzeye bağla
+b4e1f61 docs: gpui 259297035a senkronunun denetimini kaydet
+294aa70 docs: devir notunu imleç sönme düzeltmesiyle güncelle
 2ccd8eb fix(gpui): yüzeyi terk eden farede imleci söndür
 392c14d docs: devir notunu yerleşim ve gradyan invaryantlarıyla güncelle
 7c413ad test(gpui): yerleşim ve gradyan şeritlerini regresyon testine bağla
@@ -44,7 +47,7 @@ eb8a375 fix(katalog): kart yüzeylerini görünür alana sığdır ve kesik içe
 ```
 
 Doğrulama durumu: `cargo fmt --all --check` temiz, `cargo clippy --workspace
---all-targets` uyarısız, testler çekirdek 99 / örnekler 262 / katalog 17 +
+--all-targets` uyarısız, testler çekirdek 99 / örnekler 262 / katalog 19 +
 sahne 2 / resize 13 / svg 6 / area_fill 3 / bütçe 2 geçiyor.
 
 **`upstream_yol_butcesi` yalnız `--release` ile anlamlıdır.** Debug'da
@@ -176,6 +179,20 @@ boşluksuz, örtüşmesiz kaplıyor. Test karışık koordinat uzayını taklit
 ediyor: o durumda son durak hiç şerit almıyor — yüzeyde ayrık gradyanın
 bir dalının kaybolması olarak görünen belirti buydu.
 
+**Çoklu yüzey lejantı kapandı** (commit `7f54978`). Görünürdeki sorun
+"lejant hep ilk yüzeyi gösteriyor"du; asıl neden daha derindi. Beş kart
+(months, missing-data, points, sparklines, sparklines-bars) yüzeylerini
+kurarken **hiç abone olmuyordu**, yani imleç ve durum olayları köke
+ulaşmıyordu. Sparklines tablosunda fare hangi hücrede olursa olsun satır
+`x: -- Hacim: --` kalıyordu — lejant ilk yüzeyi bile göstermiyordu.
+Yüzey kurulumu artık ortak `bağlı_yüzey` yardımcısından geçiyor.
+
+Lejant `lejant_yüzeyi` ile imlecin en son girdiği yüzeyi izliyor; seçim
+fare ayrıldıktan sonra korunuyor, çünkü lejant girdisine tıklamak için
+fareyi yüzeyden çekmek gerekiyor ve aksi hâlde tıklama yanlış yüzeye
+giderdi. Etiketsiz seriler `Seri N` sıra numarası alıyor (uPlot boş hücre
+gösterir; fark `RESMI_DEPO_FARKLILIKLARI.md`de).
+
 **gpui `259297035a` senkronu denetlendi** (gpui `39c95ac`). uPlot.rs'te
 düzeltme gerektiren kırılım çıkmadı: `cargo check --workspace
 --all-targets --all-features` ve bütün testler temiz, kare bütçesi ve
@@ -221,29 +238,17 @@ sahne komutlarından ürediği için bu boşluğu kapatmaz; kapatmak için ya
 gpui'de sahneyi okuyan bir test kancası ya da gerçek GPU karesinin
 piksel karşılaştırması gerekir.
 
-**2. Çoklu yüzeyli kartlarda lejant yalnız ilk yüzeyi gösteriyor.** Ortak
-lejant `self.grafik`'i okur; Stacked Series gibi 16 yüzeyli kartlarda imleç
-hangi yüzeydeyse onun değil, ilk yüzeyin değerleri listelenir. Yüzeylerin
-kendi düğmeleri korunmalı — onlar yalnız görünürlük değil, bant yeniden
-kurulumu da yapıyor (`stacked_series` açıklaması). Timeseries Discrete'in
-birleşik lejantı bu işin nasıl genelleştirileceğini gösteriyor: lejant
-`lejant_yüzeyleri` listesini gezip indeksi yüzey sınırının ötesine taşır.
-
-Ayrıca `stacked-series` serilerinin bir kısmı kaynakta etiketsiz; lejantta
-`● : --` olarak çıkıyorlar. uPlot da etiketsiz seriyi boş hücre gösterdiği
-için parite doğru, ama katalogda tıklama hedefi ayırt edilemiyor.
-
-**3. Tarayıcı önbelleği doğrulamayı yanıltıyor.** Chrome saatlerce eski
+**2. Tarayıcı önbelleği doğrulamayı yanıltıyor.** Chrome saatlerce eski
 wasm'ı servis etti ve düzeltmeler "etkisiz" göründü. Doğrulama yaparken
 URL'ye sürüm parametresi ekleyin (`?kart=...&v=N`) ve yüklenen dosya
 adını `dist/` içindekiyle karşılaştırın.
 
-**4. Chrome MCP birden çok tarayıcıya bağlı.** Bu makinede yerel Chrome'un
+**3. Chrome MCP birden çok tarayıcıya bağlı.** Bu makinede yerel Chrome'un
 yanında uzak bir Linux Chrome da kayıtlı; komutlar varsayılan olarak
 yanlış olana gidip `127.0.0.1:8081` için "error page" verebiliyor.
 `list_connected_browsers` ile yerel olanı (`isLocal: true`) seçin.
 
-**5. Wasm katalogda hover doğrulaması hazırlık bekler.** WebGPU bağlamı
+**4. Wasm katalogda hover doğrulaması hazırlık bekler.** WebGPU bağlamı
 kurulana kadar sayfa siyah kalıyor ve o sırada gönderilen `hover`
 kayboluyor — düzeltilmiş imleç davranışı iki kez "bozuk" göründü. Önce
 ekran görüntüsüyle kartın çizildiğini doğrulayın, hover'ı ondan sonra
@@ -252,14 +257,12 @@ bağlamı: `cx.simulate_mouse_move` + `GpuiGrafik::imleç_etkin_mi`.
 
 ## Yapılacaklar — öncelik sırası
 
-**1. Çoklu yüzeyli kartlarda lejant (açık konu 2).**
-
-**2. Görsel regresyonun kalan boşluğu (açık konu 1).** Yerleşim ve şerit
+**1. Görsel regresyonun kalan boşluğu (açık konu 1).** Yerleşim ve şerit
 invaryantları kuruldu; kalan sınıf renk/şekil hataları. Bunun için gpui
 tarafında sahneyi okuyan bir test kancası gerekiyor ve gpui katı Zed
 paritesinde tutuluyor — bu yüzden sırada arkada duruyor.
 
-**3. `gpui_web` varsayılan `multithreaded` — engel tespit edildi.**
+**2. `gpui_web` varsayılan `multithreaded` — engel tespit edildi.**
 Kapatılırsa nightly kanal, `build-std` ve on satırlık atomics rustflag
 bakımı **tümüyle** kalkar; zincir doğrulandı: `wasm_thread` atomics
 hedef özelliğini gerektiriyor, `parking_lot_core`'un nightly gate'i de
