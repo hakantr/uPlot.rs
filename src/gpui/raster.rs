@@ -434,7 +434,8 @@ mod testler {
         let görsel = rasterleştir(&sahne, 40, 40, 1.0, siyah);
         assert!(görsel.is_some(), "daire sahnesi rasterleştirilemedi");
         let Some(görsel) = görsel else { return };
-        let bayt = görsel.as_bytes(0).expect("kare yok");
+        let bayt = görsel.as_bytes(0).unwrap_or_default();
+        assert!(!bayt.is_empty(), "raster karesi okunamadı");
         let alfa = |x: usize, y: usize| bayt.get((y * 40 + x) * 4 + 3).copied().unwrap_or(0);
         assert_eq!(alfa(20, 20), 255, "daire merkezi boyanmadı");
         assert_eq!(alfa(2, 2), 0, "daire dışı boyandı");
@@ -453,10 +454,10 @@ mod testler {
             kesme_sınırları: Some((Nokta::yeni(20.0, 20.0), Nokta::yeni(38.0, 38.0))),
         });
         let görsel = rasterleştir(&sahne, 40, 40, 1.0, siyah);
-        let Some(görsel) = görsel else {
-            panic!("sahne rasterleştirilemedi")
-        };
-        let bayt = görsel.as_bytes(0).expect("kare yok");
+        assert!(görsel.is_some(), "sahne rasterleştirilemedi");
+        let Some(görsel) = görsel else { return };
+        let bayt = görsel.as_bytes(0).unwrap_or_default();
+        assert!(!bayt.is_empty(), "raster karesi okunamadı");
         assert!(
             bayt.iter().skip(3).step_by(4).all(|alfa| *alfa == 0),
             "kesme sınırı dışındaki daire boyandı"
