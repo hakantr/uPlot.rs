@@ -605,6 +605,27 @@ fn duyarlı_boyut_güncellenmeli(önceki: Option<Bounds<Pixels>>, güncel: Bound
     önceki.is_none_or(|önceki| önceki.size != güncel.size)
 }
 
+/// Yapışma açıkken ikinci eksenin oturacağı konumu seçer.
+///
+/// `oranlar` yapışılan X'teki seri değerlerinin eksen oranıdır; `None`
+/// girdiler o X'te örneği olmayan serilerdir. Dönen değer, fareye
+/// (`ham`) en yakın adayın çizim alanı içindeki konumudur.
+///
+/// Y oranı eksen başlangıcından ölçülür. Dikey ekran ekseninde sıfır
+/// alttadır, bu yüzden normal yönelimde çevrilir; X dikeyken ikinci eksen
+/// yataydır ve oran doğrudan kullanılır.
+fn ikincil_yapışma_konumu(oranlar: &[Option<f64>], ham: f64, x_dikey: bool) -> Option<f64> {
+    oranlar
+        .iter()
+        .filter_map(|oran| {
+            let oran = (*oran)?;
+            let konum = if x_dikey { oran } else { 1.0 - oran };
+            konum.is_finite().then(|| (konum, (konum - ham).abs()))
+        })
+        .min_by(|(_, sol), (_, sağ)| sol.total_cmp(sağ))
+        .map(|(konum, _)| konum)
+}
+
 /// Yüzeyin sıfır yüksekliğe çökmesini önleyen taban.
 ///
 /// Grafik kökü sarmalayıcının yüksekliğini devralır; esnek bir kapta ölçüm
@@ -967,6 +988,15 @@ impl GpuiGrafik {
 
     pub fn grafik(&self) -> &Grafik {
         &self.grafik
+    }
+
+    /// İmlecin çizim alanı içindeki güncel konumu, kaynak boyutunda.
+    ///
+    /// Yapışma açıkken en yakın örneğin üstündedir, kapalıyken fareyi izler.
+    /// İmleç katmanını kendi çizen tüketiciler ve yapışmayı doğrulayan
+    /// testler buradan okur.
+    pub fn imleç_konumu(&self) -> Option<Nokta> {
+        self.imleç.as_ref().map(|imleç| imleç.fare)
     }
 
     /// İmleç yüzeyin üzerinde mi.
@@ -2268,10 +2298,11 @@ impl GpuiGrafik {
 
     /// İmleç katmanını fare konumuna göre günceller.
     ///
-    /// `değere_yapış` açıkken imleç çizgisi en yakın örneğin X konumuna
-    /// oturur; kapalıyken fareyi kesintisiz izler. Lejant ve odak değerleri
-    /// her iki durumda da en yakın örnekten çözülür — uPlot'ta olduğu gibi
-    /// çizginin serbest olması okunan değeri değiştirmez.
+    /// `değere_yapış` açıkken imleç en yakın örneğin üstüne oturur: X ekseni
+    /// örneğin X'ine, ikinci eksen o X'teki en yakın seri değerine. Kapalıyken
+    /// fareyi kesintisiz izler. Lejant ve odak değerleri her iki durumda da en
+    /// yakın örnekten çözülür — uPlot'ta olduğu gibi çizginin serbest olması
+    /// okunan değeri değiştirmez.
     fn imleci_güncelle(
         &mut self,
         pencere_konumu: ::gpui::Point<Pixels>,
@@ -2358,16 +2389,36 @@ impl GpuiGrafik {
         } else {
             x_oranı as f32
         };
+        // Yapışma açıkken ikinci eksen de örneğe oturur. Yalnız X yapışınca
+        // imleç noktası veri noktasının hizasına gelmiyor, yanından geçen bir
+        // kesişim gösteriyordu; uPlot'un hover noktası zaten örneğin
+        // üstündedir. Aday, yapışılan X'teki seri değerleri arasından fareye
+        // en yakın olandır.
+        let ikincil_ham = if x_dikey { yatay } else { dikey };
+        let ikincil_konum = if değere_yapış {
+            let oranlar = çözüm
+                .seriler
+                .iter()
+                .enumerate()
+                .map(|(seri, örnek)| {
+                    let örnek = (*örnek)?;
+                    self.grafik.seri_y_konum_oranı(seri, örnek.değer)
+                })
+                .collect::<Vec<_>>();
+            ikincil_yapışma_konumu(&oranlar, ikincil_ham, x_dikey).unwrap_or(ikincil_ham) as f32
+        } else {
+            ikincil_ham as f32
+        };
         self.imleç = Some(İmleçDurumu {
             fare: if x_dikey {
                 Nokta::yeni(
-                    sol + yatay as f32 * (sağ - sol),
+                    sol + ikincil_konum * (sağ - sol),
                     alt - x_konumu * (alt - üst),
                 )
             } else {
                 Nokta::yeni(
                     sol + x_konumu * (sağ - sol),
-                    üst + dikey as f32 * (alt - üst),
+                    üst + ikincil_konum * (alt - üst),
                 )
             },
             veri_x: çözüm.ortak_x,
@@ -5025,6 +5076,35 @@ mod testler {
         assert_eq!(en_az_yüzey_yüksekliği(120), 120.0);
         // Uzun yüzeylerde taban değişmez; esnek kapta sıfıra çökmeyi önler.
         assert_eq!(en_az_yüzey_yüksekliği(600), 120.0);
+    }
+
+    /// Ctrl yapışması ikinci eksende de fareye en yakın örneğe oturmalı.
+    ///
+    /// Yalnız X yapıştığında imleç noktası veri noktasının hizasına gelmiyor,
+    /// yanından geçen bir kesişim gösteriyordu.
+    #[test]
+    fn ikincil_yapışma_en_yakın_örneği_seçer() {
+        // Normal yönelim: y oranı 0 = alt, ekran dikeyi 0 = üst.
+        let oranlar = [Some(0.25), Some(0.80), None];
+        // Fare üst bölgede (0,15) → çevrilmiş konumları 0,75 ve 0,20;
+        // en yakın 0,20 olan ikinci seridir.
+        assert_eq!(
+            ikincil_yapışma_konumu(&oranlar, 0.15, false),
+            Some(0.19999999999999996)
+        );
+        // Fare alt bölgede (0,70) → 0,75 kazanır.
+        assert_eq!(ikincil_yapışma_konumu(&oranlar, 0.70, false), Some(0.75));
+
+        // X dikeyken ikinci eksen yataydır; oran çevrilmez.
+        assert_eq!(ikincil_yapışma_konumu(&oranlar, 0.30, true), Some(0.25));
+
+        // Örneği olmayan seriler ve sonsuz oranlar aday değildir.
+        assert_eq!(ikincil_yapışma_konumu(&[None, None], 0.5, false), None);
+        assert_eq!(
+            ikincil_yapışma_konumu(&[Some(f64::INFINITY)], 0.5, false),
+            None
+        );
+        assert_eq!(ikincil_yapışma_konumu(&[], 0.5, false), None);
     }
 
     /// Gradyan şeritleri yol sınırlarını boşluksuz ve örtüşmesiz kaplamalı.

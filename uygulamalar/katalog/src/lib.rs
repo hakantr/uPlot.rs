@@ -9876,6 +9876,86 @@ mod tests {
         Ok(())
     }
 
+    /// Ctrl basılıyken imleç iki eksende de en yakın örneğe oturmalı.
+    ///
+    /// Yalnız X yapıştığında imleç noktası veri noktasının hizasına gelmiyor,
+    /// yanından geçen bir kesişim gösteriyordu. Ctrl bırakıldığında çizgiler
+    /// yeniden fareyi izler.
+    #[::gpui::test]
+    async fn ctrl_yapışması_imleci_örneğin_üstüne_oturtur(cx: &mut ::gpui::TestAppContext) {
+        cx.update(|cx| {
+            let _ = ortak_bilesenler::baslat(ortak_bileşen_ayarları(), cx);
+            başlat(cx);
+        });
+        let (liste, cx) = cx.add_window_view(|_, cx| ChartListesi::yeni(cx));
+        liste.update(cx, |bu, cx| bu.kartı_seç(KartKimliği::Resize, cx));
+        cx.run_until_parked();
+
+        let alan = liste.read_with(cx, |bu, cx| {
+            bu.grafik
+                .as_ref()
+                .and_then(|yüzey| yüzey.read(cx).ölçülen_alan())
+        });
+        assert!(alan.is_some(), "yüzey ölçüm vermedi");
+        let Some(alan) = alan else { return };
+        let konum = liste.read_with(cx, |bu, cx| {
+            bu.grafik
+                .as_ref()
+                .and_then(|yüzey| yüzey.read(cx).imleç_konumu())
+        });
+        assert!(konum.is_none(), "başlangıçta imleç olmamalı");
+
+        // Sinüs eğrisinin dik indiği bölge: yapışma ile ham fare arasındaki
+        // dikey fark burada ölçülebilir büyüklükte.
+        let hedef = ::gpui::point(
+            alan.left() + alan.size.width * 0.45,
+            alan.top() + alan.size.height * 0.62,
+        );
+        let ölç = |cx: &mut ::gpui::VisualTestContext| {
+            liste.read_with(cx, |bu, cx| {
+                bu.grafik
+                    .as_ref()
+                    .and_then(|yüzey| yüzey.read(cx).imleç_konumu())
+            })
+        };
+
+        cx.simulate_mouse_move(hedef, None, ::gpui::Modifiers::default());
+        cx.run_until_parked();
+        let serbest = ölç(cx);
+        assert!(serbest.is_some(), "imleç kurulmalı");
+
+        cx.simulate_mouse_move(
+            hedef,
+            None,
+            ::gpui::Modifiers {
+                control: true,
+                ..::gpui::Modifiers::default()
+            },
+        );
+        cx.run_until_parked();
+        let yapışık = ölç(cx);
+        assert!(yapışık.is_some(), "yapışık imleç kurulmalı");
+
+        let (Some(serbest), Some(yapışık)) = (serbest, yapışık) else {
+            return;
+        };
+        // Yapışma iki ekseni de örneğe taşır; serbest imleç ham fare
+        // konumunda kalır, yani ikisi ayrışmalıdır.
+        assert!(
+            (serbest.y - yapışık.y).abs() > 1.0,
+            "Ctrl ikinci ekseni de örneğe oturtmalı: serbest {serbest:?}, yapışık {yapışık:?}"
+        );
+
+        // Ctrl bırakılınca çizgiler yeniden fareyi izler.
+        cx.simulate_mouse_move(hedef, None, ::gpui::Modifiers::default());
+        cx.run_until_parked();
+        assert_eq!(
+            ölç(cx).map(|nokta| nokta.y),
+            Some(serbest.y),
+            "Ctrl bırakılınca imleç ham fare konumuna dönmeli"
+        );
+    }
+
     /// Lejant satırına gelmek uPlot gibi seriyi odaklamalı, ayrılmak bırakmalı.
     ///
     /// Odak yalnız `cursor.focus` kurulmuş kartlarda boyanır; `focus-cursor`
