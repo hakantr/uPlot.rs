@@ -10,7 +10,7 @@ gereken durum, açık konular ve tekrar üretim adımları var.
 
 | depo | dal | son commit | durum |
 |---|---|---|---|
-| `uPlot.rs` | `main` | `06807d1` | temiz, gönderildi |
+| `uPlot.rs` | `main` | `7c413ad` | temiz, gönderildi |
 | `../gpui` | `main` | `d3a6038` | temiz, gönderildi |
 | `../gpui_kutuphanesi` | `main` | `36f1174` | temiz, gönderildi |
 
@@ -21,6 +21,8 @@ Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
 Bu oturumun commit'leri (`4b5fa67` sonrası, hepsi gönderildi):
 
 ```
+7c413ad test(gpui): yerleşim ve gradyan şeritlerini regresyon testine bağla
+2e8f256 docs: devir notunu sparkline ailesinin kapanışıyla güncelle
 06807d1 fix(gpui): gradyan maskelerini yol ile aynı koordinat uzayına al
 1adaa52 fix(gpui): yüzey taban yüksekliğini ham yüksekliğe bağla
 9bae73e docs: devir notunu lejant çalışmasıyla güncelle
@@ -151,6 +153,25 @@ kesiliyordu; o da düzeldi.
 oturumda da denendi (cache kapatıldı, resize ile bypass edildi), belirti
 değişmedi.
 
+**Yerleşim ve gradyan invaryantları teste bağlandı** (commit `7c413ad`).
+Bu oturumdaki üç kusurun hiçbirini sahne komutu testleri yakalamadı;
+komutlar doğruydu, hata yerleşim ve boyama aşamasındaydı. İki invaryant
+o sınıfı kapsıyor.
+
+`kart_yüzeyleri_üst_üste_yerleşmez` 66 kartı GPUI test bağlamında render
+edip yüzeylerin ölçülen alanlarını (`GpuiGrafik::ölçülen_alan`)
+karşılaştırıyor. Hücre boyutu bilmeye gerek yok. Testin gerçekten
+koruduğu doğrulandı: `min_h` düzeltmesi geri alındığında 150×90 px
+örtüşme raporluyor. Sanallaştırılmış kartlarda görünür alana girmemiş
+yüzeyler ölçüm vermediği için atlanıyor; kartların yarısından azı ölçüm
+verirse test ölçüm yolunun bozulduğunu söylüyor.
+
+`gradyan_şeritleri` maske hesabını `gradyan_yolunu_boya` içinden saf bir
+fonksiyona çıkarıyor; şeritler sınırlara kısılıyor ve aralıklar sınırları
+boşluksuz, örtüşmesiz kaplıyor. Test karışık koordinat uzayını taklit
+ediyor: o durumda son durak hiç şerit almıyor — yüzeyde ayrık gradyanın
+bir dalının kaybolması olarak görünen belirti buydu.
+
 **Eksen ve çubuk düzeltmeleri.** Logaritmik X ekseninde etiketler yüzey
 boyutundan bağımsız üretiliyordu; Y'de var olan `log_etiketi_göster`
 seyreltmesi X'e de uygulandı. Y ekseni başlığı eksen payının ortasına
@@ -162,8 +183,14 @@ piksel konumunda kalıyordu, aynı fare konumundan yeniden çözülüyor.
 
 ## Açık konular
 
-**1. Görsel regresyon otomasyonu hâlâ yok.** Bu oturumdaki kusurların
-hiçbirini test yakalamadı; hepsi tarayıcıda gözle bulundu.
+**1. Görsel regresyon kapsamı kısmi.** Yerleşim ve gradyan şeridi
+invaryantları kuruldu (aşağıda), ama boyanan primitive'ler hâlâ
+görülmüyor: `Window::rendered_frame` gpui'de `pub(crate)` ve gpui'ye
+dokunulmuyor. Yakalanamayan sınıf: doğru yere doğru boyutta çizilen ama
+yanlış renk/şekil taşıyan sahneler. SVG kaydı (`src/gpui/svg_kaydi.rs`)
+sahne komutlarından ürediği için bu boşluğu kapatmaz; kapatmak için ya
+gpui'de sahneyi okuyan bir test kancası ya da gerçek GPU karesinin
+piksel karşılaştırması gerekir.
 
 **2. Çoklu yüzeyli kartlarda lejant yalnız ilk yüzeyi gösteriyor.** Ortak
 lejant `self.grafik`'i okur; Stacked Series gibi 16 yüzeyli kartlarda imleç
@@ -189,16 +216,12 @@ yanlış olana gidip `127.0.0.1:8081` için "error page" verebiliyor.
 
 ## Yapılacaklar — öncelik sırası
 
-**1. Görsel regresyon otomasyonu (açık konu 1).** Kart başına sahne komutu
-sayımı veya piksel karşılaştırması düşünülebilir. Bu oturumda uygulanan
-yaklaşım örnek olabilir: kırılgan kararlar saf fonksiyonlara çıkarılıp
-teste bağlandı (lejant değer kayması ve birleşik indeks, yüzey taban
-yüksekliği, retained yol öteleme semantiği).
+**1. Çoklu yüzeyli kartlarda lejant (açık konu 2).**
 
-Ancak üç kusurun üçü de yalnız boyama aşamasında görünüyordu; komut
-sayımı hiçbirini yakalamazdı. Piksel karşılaştırması gerekiyor.
-
-**2. Çoklu yüzeyli kartlarda lejant (açık konu 2).**
+**2. Görsel regresyonun kalan boşluğu (açık konu 1).** Yerleşim ve şerit
+invaryantları kuruldu; kalan sınıf renk/şekil hataları. Bunun için gpui
+tarafında sahneyi okuyan bir test kancası gerekiyor ve gpui katı Zed
+paritesinde tutuluyor — bu yüzden sırada arkada duruyor.
 
 Sırada olmayan ama not düşülmeye değer: `gpui_web` varsayılan
 `multithreaded` özelliği hâlâ çekiliyor (yukarıda), kapatılırsa nightly ve
