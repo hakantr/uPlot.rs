@@ -10,7 +10,7 @@ gereken durum, açık konular ve tekrar üretim adımları var.
 
 | depo | dal | son commit | durum |
 |---|---|---|---|
-| `uPlot.rs` | `main` | `6296f82` | temiz, gönderildi |
+| `uPlot.rs` | `main` | `06807d1` | temiz, gönderildi |
 | `../gpui` | `main` | `d3a6038` | temiz, gönderildi |
 | `../gpui_kutuphanesi` | `main` | `36f1174` | temiz, gönderildi |
 
@@ -21,6 +21,9 @@ Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
 Bu oturumun commit'leri (`4b5fa67` sonrası, hepsi gönderildi):
 
 ```
+06807d1 fix(gpui): gradyan maskelerini yol ile aynı koordinat uzayına al
+1adaa52 fix(gpui): yüzey taban yüksekliğini ham yüksekliğe bağla
+9bae73e docs: devir notunu lejant çalışmasıyla güncelle
 6296f82 feat(lejant): seri girdilerini tıklanabilir yap ve konumlandırılabilir kıl
 12002a1 docs: devir notuna commit listesi ve öncelikli yapılacaklar ekle
 b2427a9 docs: devir notunu eksen ve çubuk düzeltmeleriyle güncelle
@@ -37,7 +40,7 @@ eb8a375 fix(katalog): kart yüzeylerini görünür alana sığdır ve kesik içe
 ```
 
 Doğrulama durumu: `cargo fmt --all --check` temiz, `cargo clippy --workspace
---all-targets` uyarısız, testler çekirdek 96 / örnekler 262 / katalog 15 +
+--all-targets` uyarısız, testler çekirdek 98 / örnekler 262 / katalog 15 +
 sahne 2 / resize 13 / svg 6 / area_fill 3 / bütçe 2 geçiyor.
 
 **`upstream_yol_butcesi` yalnız `--release` ile anlamlıdır.** Debug'da
@@ -123,6 +126,31 @@ varsaymıyor; `lejant_hedefini_çöz` girdileri üreten sayımın tersini alıyo
 Kırılgan iki karar (değer kayması, birleşik indeks) saf fonksiyona çıkarılıp
 üç birim testine bağlandı.
 
+**Sparkline ailesi kapandı** (commit'ler `1adaa52`, `06807d1`). İki kart
+bozuktu ve kök nedenleri ayrıydı; ikisi de önceki oturumun şüphelendiği
+yol/atlas kapasitesi değil, boyama aşamasında koordinat hatasıydı.
+
+*10×2 tablo:* grafik kökü sabit `min_h(px(120.0))` dayatıyordu, tablo
+hücreleri ise 150×30. Her yüzey kendi hücresinden 90 px taşıp sonraki üç
+satırın üstüne yazıyor, sonra çizilen üstte kaldığı için yalnız son satır
+görünüyordu. Öndeki satırlardaki "boş `ArkaPlan`" da buydu: üstlerini
+örten yüzeyin sparkline geometrisi kendi alt kısmında kalıyordu. Taban
+artık ham yüksekliği aşamıyor (`en_az_yüzey_yüksekliği`). Ölçüm: yüzey
+sınırları 150×120 → 150×30.
+
+*Floating Bars:* gradyan ekseni `yolu_dönüştür` ile yüzey-yerel
+hesaplanırken yol önbellekten `hedef_köken`e ötelenmiş çıkıyor ve
+`mantıksal_sınırlar` mutlak oluyordu. `gradyan_yolunu_boya` iki uzayı
+karıştırıp maske aralıklarını üst üste düşürüyordu; son boyanan yeşil
+kırmızıyı örtüyordu. Ölçüm (800×400, köken 305,352): eksen 392..152
+yerel, sınır 360..696 mutlak. Aynı karışım `gradients` kartında da
+vardı — üç duraklı gradyanın yalnız ilk ikisi görünüyor, çizgi erken
+kesiliyordu; o da düzeldi.
+
+Önceki oturumun elediği hipotezler doğru çıktı: `Entity::cached` bu
+oturumda da denendi (cache kapatıldı, resize ile bypass edildi), belirti
+değişmedi.
+
 **Eksen ve çubuk düzeltmeleri.** Logaritmik X ekseninde etiketler yüzey
 boyutundan bağımsız üretiliyordu; Y'de var olan `log_etiketi_göster`
 seyreltmesi X'e de uygulandı. Y ekseni başlığı eksen payının ortasına
@@ -134,31 +162,10 @@ piksel konumunda kalıyordu, aynı fare konumundan yeniden çözülüyor.
 
 ## Açık konular
 
-**1. Sparkline ailesinde iki kart bozuk.** "Sparklines · 10×2 tablo"da 20
-yüzeyin yalnız sonuncusu çiziliyor, diğerleri boş `ArkaPlan` gösteriyor;
-"Sparkline + Floating Bars" tek parça yeşil şekil veriyor.
-
-Ölçüm: **2 satır (4 yüzey) → hepsi çizilir. 5 satır (10 yüzey) → yalnız
-sonuncusu.** Belirti yüzey sayısıyla ortaya çıkıyor.
-
-Elenenler: çekirdek sahnesi doğru (testler 15/15, `ArkaPlan`/`Alan`
-komutları doğrulanıyor); entity eşleşmesi doğru (`TÜMÜ` 20, `SATIRLAR` 10
-çift); raster/vektör ayrımı değil (eşik 10'a düşürülüp denendi);
-`Entity::cached` değil; yol önbelleği paylaşımı değil (her yüzey kendi
-`Rc<RefCell<GpuiYolÖnbelleği>>`'ini alır); ilk kare boyut ölçümü değil
-(hover/tıklama ile yeniden çizim tetiklendi).
-
-Kalan şüphe GPUI'nin kare başına yol/atlas kapasitesi. Scatter'da komut
-parçalama denendiğinde `wgpu_atlas.rs:79 index out of bounds` alınmıştı;
-burada hata verilmeden sessizce çizilmiyor. Sonraki adım `gpui_wgpu` atlas
-ayırma yolunu okuyup kapasite aşımının nasıl raporlandığına bakmak. gpui
-katı Zed paritesinde tutulduğundan çözüm katalog/çekirdek tarafında
-aranmalı.
-
-**2. Görsel regresyon otomasyonu hâlâ yok.** Bu oturumdaki kusurların
+**1. Görsel regresyon otomasyonu hâlâ yok.** Bu oturumdaki kusurların
 hiçbirini test yakalamadı; hepsi tarayıcıda gözle bulundu.
 
-**3. Çoklu yüzeyli kartlarda lejant yalnız ilk yüzeyi gösteriyor.** Ortak
+**2. Çoklu yüzeyli kartlarda lejant yalnız ilk yüzeyi gösteriyor.** Ortak
 lejant `self.grafik`'i okur; Stacked Series gibi 16 yüzeyli kartlarda imleç
 hangi yüzeydeyse onun değil, ilk yüzeyin değerleri listelenir. Yüzeylerin
 kendi düğmeleri korunmalı — onlar yalnız görünürlük değil, bant yeniden
@@ -170,28 +177,28 @@ Ayrıca `stacked-series` serilerinin bir kısmı kaynakta etiketsiz; lejantta
 `● : --` olarak çıkıyorlar. uPlot da etiketsiz seriyi boş hücre gösterdiği
 için parite doğru, ama katalogda tıklama hedefi ayırt edilemiyor.
 
-**4. Tarayıcı önbelleği doğrulamayı yanıltıyor.** Chrome saatlerce eski
+**3. Tarayıcı önbelleği doğrulamayı yanıltıyor.** Chrome saatlerce eski
 wasm'ı servis etti ve düzeltmeler "etkisiz" göründü. Doğrulama yaparken
 URL'ye sürüm parametresi ekleyin (`?kart=...&v=N`) ve yüklenen dosya
 adını `dist/` içindekiyle karşılaştırın.
 
-**5. Chrome MCP birden çok tarayıcıya bağlı.** Bu makinede yerel Chrome'un
+**4. Chrome MCP birden çok tarayıcıya bağlı.** Bu makinede yerel Chrome'un
 yanında uzak bir Linux Chrome da kayıtlı; komutlar varsayılan olarak
 yanlış olana gidip `127.0.0.1:8081` için "error page" verebiliyor.
 `list_connected_browsers` ile yerel olanı (`isLocal: true`) seçin.
 
 ## Yapılacaklar — öncelik sırası
 
-**1. Sparkline (açık konu 1).** Elenen altı hipotez ve ölçüm notta yazılı;
-sıradaki adım `gpui_wgpu` atlas ayırma yolunu okumak. Çözüm katalog veya
-çekirdek tarafında aranmalı, gpui'ye dokunulmamalı.
+**1. Görsel regresyon otomasyonu (açık konu 1).** Kart başına sahne komutu
+sayımı veya piksel karşılaştırması düşünülebilir. Bu oturumda uygulanan
+yaklaşım örnek olabilir: kırılgan kararlar saf fonksiyonlara çıkarılıp
+teste bağlandı (lejant değer kayması ve birleşik indeks, yüzey taban
+yüksekliği, retained yol öteleme semantiği).
 
-**2. Görsel regresyon otomasyonu (açık konu 2).** Kart başına sahne komutu
-sayımı veya piksel karşılaştırması düşünülebilir. Lejant çalışmasında
-uygulanan yaklaşım örnek olabilir: kırılgan kararlar (değer kayması,
-birleşik indeks) saf fonksiyonlara çıkarılıp teste bağlandı.
+Ancak üç kusurun üçü de yalnız boyama aşamasında görünüyordu; komut
+sayımı hiçbirini yakalamazdı. Piksel karşılaştırması gerekiyor.
 
-**3. Çoklu yüzeyli kartlarda lejant (açık konu 3).**
+**2. Çoklu yüzeyli kartlarda lejant (açık konu 2).**
 
 Sırada olmayan ama not düşülmeye değer: `gpui_web` varsayılan
 `multithreaded` özelliği hâlâ çekiliyor (yukarıda), kapatılırsa nightly ve
