@@ -10,7 +10,7 @@ gereken durum, açık konular ve tekrar üretim adımları var.
 
 | depo | dal | son commit | durum |
 |---|---|---|---|
-| `uPlot.rs` | `main` | `0389407` | temiz, gönderildi |
+| `uPlot.rs` | `main` | `60ce387` | temiz, gönderildi |
 | `../gpui` | `main` | `91d67c5` | temiz, gönderildi |
 | `../gpui_kutuphanesi` | `main` | `36f1174` | temiz, gönderildi |
 
@@ -21,6 +21,8 @@ Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
 Bu oturumun commit'leri (`4b5fa67` sonrası, hepsi gönderildi):
 
 ```
+60ce387 test(boya): boya günlüğünü bütün katalogda invaryanta bağla
+f1cca32 docs: devir notunu sığdırma kapanışıyla güncelle
 0389407 fix(sığdırma): iki eksen açıkken yüzeyi kaba oturt
 1443989 feat(yerleşim): iki eksenli sığdırmayı ölçüm yoluna bağla
 aa46b8e docs: devir notunu sığdırma politikasıyla güncelle
@@ -58,7 +60,7 @@ eb8a375 fix(katalog): kart yüzeylerini görünür alana sığdır ve kesik içe
 ```
 
 Doğrulama durumu: `cargo fmt --all --check` temiz, `cargo clippy --workspace
---all-targets` uyarısız, testler çekirdek 106 / örnekler 262 / katalog 25 +
+--all-targets` uyarısız, testler çekirdek 106 / örnekler 262 / katalog 26 +
 sahne 2 / resize 13 / svg 6 / area_fill 3 / bütçe 2 geçiyor.
 
 **`upstream_yol_butcesi` yalnız `--release` ile anlamlıdır.** Debug'da
@@ -336,14 +338,16 @@ olması — %0,34 CPU sınır değil.
 
 ## Açık konular
 
-**1. Görsel regresyon kapsamı kısmi.** Yerleşim ve gradyan şeridi
-invaryantları kuruldu (aşağıda), ama boyanan primitive'ler hâlâ
-görülmüyor: `Window::rendered_frame` gpui'de `pub(crate)` ve gpui'ye
-dokunulmuyor. Yakalanamayan sınıf: doğru yere doğru boyutta çizilen ama
-yanlış renk/şekil taşıyan sahneler. SVG kaydı (`src/gpui/svg_kaydi.rs`)
-sahne komutlarından ürediği için bu boşluğu kapatmaz; kapatmak için ya
-gpui'de sahneyi okuyan bir test kancası ya da gerçek GPU karesinin
-piksel karşılaştırması gerekir.
+**1. Görsel regresyonun kalan boşluğu piksel doğruluğu.** Boya günlüğü
+artık bütün katalogu geziyor ve dört invaryant tutuyor (aşağıda), yani
+"boyandı mı, nereye, hangi renkle, geometri taşıyor mu" sorularının
+hepsi test edilebilir. `Window::rendered_frame` hâlâ `pub(crate)`, ama
+kayıt boyama çağrılarının kendisinden alındığı için buna gerek kalmadı.
+
+Kalan sınıf dar: kayda geçen renk ve sınır doğruyken GPU'nun ürettiği
+pikselin yanlış olması — kesme maskesi, karışım modu, kenar yumuşatma.
+Bunu ancak gerçek bir GPU karesinin piksel karşılaştırması yakalar ve o
+katman zaten Zed'de test ediliyor.
 
 **2. Tarayıcı önbelleği doğrulamayı yanıltıyor.** Chrome saatlerce eski
 wasm'ı servis etti ve düzeltmeler "etkisiz" göründü. Doğrulama yaparken
@@ -364,17 +368,46 @@ bağlamı: `cx.simulate_mouse_move` + `GpuiGrafik::imleç_etkin_mi`.
 
 ## Yapılacaklar — öncelik sırası
 
-**1. Görsel regresyonun kalan boşluğu (açık konu 1).** Yerleşim ve şerit
-invaryantları kuruldu; kalan sınıf renk/şekil hataları.
+**Yapılacaklar 1 kapandı** (commit `60ce387`). Boya günlüğü tek kartlık
+örnekten bütün katalogu gezen invaryanta çıktı:
+`her_kart_boyanır_ve_yolları_geometri_taşır` 73 kartı dolaşıp dört şey
+doğruluyor — kart boyanmalı, boyanan her yol geometri taşımalı, sınırlar
+sonlu ve negatif olmamalı, sahnede en az iki ayrı renk bulunmalı.
 
 Bu madde bir kez "gpui'de test kancası gerekir" diye kapatılmıştı; o
 teşhis fazla kısaydı. Yakalanamayan kusurların ikisi de (gradyan maskesi,
 yüzey tabanı) **uPlot.rs'in kendi** boyama kodundaydı, gpui'nin içinde
-değil. Yani `sahneyi_boya`'nın ürettiği boya kararları — hangi yol, hangi
-renk, hangi maske — kendi tarafımızda kaydedilip doğrulanabilir.
-`gradyan_şeritleri` bunun tek seferlik örneği; sistematik hâli bir boya
-günlüğü soyutlamasıdır. gpui'nin sorumluluğunda kalan tek şey o
-çağrıların piksele nasıl döndüğü ve orası zaten Zed'de test ediliyor.
+değil — ve kayıt boyama çağrısının kendisinden alınınca gpui'ye hiç
+dokunmadan çalıştı.
+
+Tarama üç şey buldu:
+
+- **Dörtgenler günlüğün dışındaydı.** `retained_yolu_boya` yalnız yolları
+  görüyordu; `paint_quad` ile giden arka plan ve iki dikdörtgen komutu
+  kaydedilmiyordu. Isı haritası hücreleri, mum gövdeleri ve timeline
+  dikdörtgenleri tümüyle quad olduğundan o kartlar "yalnız eksen
+  boyanmış" görünüyordu. Üçü de artık kaydediyor.
+- **Sıfır köşeli yollar boyanıyordu.** Aynı noktaya çizilen bir çizgi
+  köşe üretmez, ekranda hiçbir şey çizmez, ama bir draw call harcar:
+  `pixel-align` 116 boyamanın 12'si, `no-data` 46'nın 2'si.
+  `retained_yolu_boya` böyle yolları erkenden bırakıyor.
+- **Ölçüm karesi yanlış seçilmişti.** Kart seçtikten sonra yüzeyleri tek
+  tek bildirip ikinci kare beklemek çoğu kartta çalışıyor, ama yüzeyi
+  doğrudan çocuk olarak gömen `box-whisker`'da `cached()` alt ağaç
+  yeniden oynatılıyor ve boyama closure'ı hiç çağrılmıyor: 17 yüzeyin
+  17'si ölçülüyor, sıfırı boyanıyordu. Kart tarayıcıda doğru çiziliyor —
+  ölçüm artık seçimin kendi karesinde alınıyor.
+
+Denenip vazgeçilen invaryant: "kart tanımındaki görünür serilerin en az
+birinin rengi boyanmalı". Kırılgan çıktı; ısı haritası hücre renkleriyle,
+mum çubuğu yön renkleriyle, sparkline çubuğu gradyan dolgusuyla çiziliyor
+ve hiçbiri `SeriSeçenekleri::renk` alanını kullanmıyor. Yerine konan ayrı
+renk sayısı bu varsayımların hiçbirine yaslanmıyor.
+
+`BoyaKaydı` renk + mantıksal sınırlar + köşe sayısı taşıyor. Renk tek
+başına "yanlış renk" sınıfını yakalıyordu; konum kusurları — sparkline
+taşması, gradyan maskesinin koordinat karışıklığı — sınır olmadan
+görünmüyordu.
 
 **Yapılacaklar 2 kapandı:** `gpui_web` varsayılan `multithreaded` artık
 çekilmiyor, web kabuğu stable kanalda (commit `03bd648`). "gpui'de
