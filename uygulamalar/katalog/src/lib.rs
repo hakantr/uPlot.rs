@@ -101,13 +101,13 @@ fn önbellekli_grafik(grafik: Entity<GpuiGrafik>) -> impl IntoElement {
     grafik.cached(StyleRefinement::default().size_full())
 }
 
-/// Kart yüzeylerinin görünür alana uyarlanıp uyarlanmayacağı.
+/// Kart tanımı sığdırma politikası bildirmediğinde kullanılan çift.
 ///
-/// Açıkken yüzeyler resmî sayfadaki ham boyutlarının en boy oranını koruyarak
-/// görünür alana dikeyde sığdırılır; kapatıldığında ham boyutlarıyla çizilir ve
-/// alana sığmayan kısım kaydırmayla gezilir. Uyarlama davranışının kendisi
-/// çekirdekte `uplot_rs::gpui::uyarlanan_alan` altında tanımlıdır.
-const OTOMATİK_UYARLA: bool = true;
+/// `GrafikSeçenekleri` varsayılanıyla aynıdır: yükseklik görünür alana
+/// çekilir, genişlik aynı oranda değişir. Kartlar `sığdırma(dikey, yatay)`
+/// ile bunu kendi tanımlarında değiştirebilir; davranışın kendisi çekirdekte
+/// `uplot_rs::gpui::uyarlanan_alan` altında tanımlıdır.
+const VARSAYILAN_SIĞDIRMA: (bool, bool) = (true, false);
 
 /// Yüzeyin üstündeki başlık, açıklama kutusu ve alt yazı satırlarının
 /// sığdırma alanından düşülen ortak payı.
@@ -2058,6 +2058,10 @@ pub struct ChartListesi {
     /// oraya taşınır ve fare ayrıldıktan sonra da korunur; `None` iken kartın
     /// ilk yüzeyi gösterilir. Kart değişiminde sıfırlanır.
     lejant_yüzeyi: Option<::gpui::EntityId>,
+    /// Denetim çubuğundaki sığdırma anahtarlarının seçimi. `None` iken kart
+    /// tanımındaki `GrafikSeçenekleri::sığdırma` geçerlidir; kart değişiminde
+    /// sıfırlanır.
+    sığdırma_seçimi: Option<(bool, bool)>,
     /// Sanallaştırılmış çok yüzeyli kartların kaydırma/ölçüm durumu. Kart
     /// değişiminde sıfırlanır, aksi hâlde eski öğe sayısıyla ölçüm yapar.
     thin_bars_liste_durumu: Option<ListState>,
@@ -2283,6 +2287,90 @@ impl ChartListesi {
         if arayüz_değişti {
             cx.notify();
         }
+    }
+
+    /// Etkin kartın sığdırma politikası: `(dikey, yatay)`.
+    ///
+    /// Kart tanımı `GrafikSeçenekleri::sığdırma` ile kendi politikasını
+    /// bildirir; yüzey henüz kurulmadıysa varsayılan kullanılır. Bir kartın
+    /// bütün yüzeyleri aynı tanımdan geldiğinden ilk yüzey yeterlidir.
+    /// Denetim çubuğundaki anahtarlar tanımı geçici olarak ezer.
+    fn sığdırma_politikası(&self, cx: &App) -> (bool, bool) {
+        // `duyarlı_boyut` yüzeyi ölçülen alana kendisi oturtur; üstüne bir de
+        // sığdırma uygulamak geri besleme kuruyordu: ölçek genişliği düşürür,
+        // duyarlı boyut düşen genişliği yeni ham boyut sanar, ölçek yeniden
+        // hesaplanır. Yüzey her turda biraz daha eziliyor ve oran bozuk
+        // görünüyordu. Bu kartlarda politika alanı doldurmaktır.
+        if self.duyarlı_yüzey_mi(cx) {
+            return (true, true);
+        }
+        self.sığdırma_seçimi.unwrap_or_else(|| {
+            self.grafik.as_ref().map_or(VARSAYILAN_SIĞDIRMA, |yüzey| {
+                yüzey.read(cx).grafik().sığdırma()
+            })
+        })
+    }
+
+    /// Etkin kartın yüzeyi ölçülen alana kendi oturuyor mu.
+    fn duyarlı_yüzey_mi(&self, cx: &App) -> bool {
+        self.grafik
+            .as_ref()
+            .is_some_and(|yüzey| yüzey.read(cx).grafik().duyarlı_boyut_mu())
+    }
+
+    /// Denetim çubuğundaki sığdırma anahtarını çevirir.
+    ///
+    /// Dört durumu canlı denemek için var: kart tanımları kaynak sayfaların
+    /// varsayılanını taşır ve tek başına hiçbiri diğer üç durumu göstermez.
+    fn sığdırma_eksenini_değiştir(&mut self, dikey: bool, cx: &mut Context<Self>) {
+        let (şu_dikey, şu_yatay) = self.sığdırma_politikası(cx);
+        self.sığdırma_seçimi = Some(if dikey {
+            (!şu_dikey, şu_yatay)
+        } else {
+            (şu_dikey, !şu_yatay)
+        });
+        cx.notify();
+    }
+
+    /// Etkin kartın ham yüzey boyutu; denetim değiştirmediyse kart tanımınınki.
+    fn ham_yüzey_boyutu(&self, cx: &App) -> Option<(u32, u32)> {
+        self.grafik
+            .as_ref()
+            .map(|yüzey| yüzey.read(cx).grafik().boyut())
+    }
+
+    /// Ham yüzey boyutunu adım adım değiştirir.
+    ///
+    /// Sığdırma politikasını denemek için ham boyutun da oynaması gerekiyor:
+    /// yüzey alana sığdığı sürece politika görünmez, çünkü hiçbir eksen
+    /// küçültülmez.
+    fn ham_boyutu_değiştir(
+        &mut self,
+        genişlik_adımı: i32,
+        yükseklik_adımı: i32,
+        cx: &mut Context<Self>,
+    ) {
+        /// Yüzeyin okunabilir kaldığı alt sınır ve makul bir üst sınır.
+        const EN_AZ: i32 = 200;
+        const EN_ÇOK: i32 = 4_000;
+        let Some((genişlik, yükseklik)) = self.ham_yüzey_boyutu(cx) else {
+            return;
+        };
+        let yeni_genişlik = (genişlik as i32 + genişlik_adımı).clamp(EN_AZ, EN_ÇOK) as u32;
+        let yeni_yükseklik = (yükseklik as i32 + yükseklik_adımı).clamp(EN_AZ, EN_ÇOK) as u32;
+        if (yeni_genişlik, yeni_yükseklik) == (genişlik, yükseklik) {
+            return;
+        }
+        for yüzey in self.etkin_grafik_yüzeyleri() {
+            let sonuç = yüzey.update(cx, |grafik, cx| {
+                grafik.boyutu_ayarla(yeni_genişlik, yeni_yükseklik, cx)
+            });
+            if let Err(hata) = sonuç {
+                self.hata = Some(format!("Yüzey boyutu değiştirilemedi: {hata}"));
+                break;
+            }
+        }
+        cx.notify();
     }
 
     /// Lejantı besleyen yüzeyleri girdilerin üretileceği sırayla döndürür.
@@ -2657,6 +2745,7 @@ impl ChartListesi {
             },
             lejant_konumu_seçimi: None,
             lejant_yüzeyi: None,
+            sığdırma_seçimi: None,
             thin_bars_liste_durumu: None,
             timezones_dst_liste_durumu: None,
         };
@@ -5305,6 +5394,7 @@ impl ChartListesi {
         // taşınmaz.
         self.lejant_konumu_seçimi = None;
         self.lejant_yüzeyi = None;
+        self.sığdırma_seçimi = None;
         self.lejantı_yenile(cx);
     }
 
@@ -6093,6 +6183,13 @@ impl Render for ChartListesi {
                 .min_h_0(),
             );
 
+        // Sığdırma politikası hem denetim çubuğunda gösterilir hem de
+        // yüzey yerleşiminde kullanılır; tek yerde çözülür.
+        let (dikey_sığdır, yatay_sığdır) = self.sığdırma_politikası(cx);
+        // Duyarlı yüzeyler boyutlarını ölçümden alır; politika ve ham boyut
+        // denetimleri onlarda etkisiz kalır, bu yüzden kapatılır.
+        let sığdırma_denetlenebilir = !self.duyarlı_yüzey_mi(cx);
+        let ham_boyut = self.ham_yüzey_boyutu(cx);
         let araçlar = div()
             .flex()
             .flex_wrap()
@@ -6342,6 +6439,91 @@ impl Render for ChartListesi {
                                     bu.latency_ofset.saturating_add(1),
                                     cx,
                                 );
+                            })),
+                    )
+            })
+            // Sığdırma politikası ve ham boyut denetimi. Kart tanımları
+            // kaynak sayfaların varsayılanını taşıdığından dört durumu ancak
+            // buradan denemek mümkün; ham boyut da oynamalı, çünkü yüzey
+            // alana sığdığı sürece hiçbir eksen küçültülmez.
+            .child(
+                Dugme::yeni(
+                    "sigdir-dikey",
+                    if dikey_sığdır {
+                        "Dikey sığdır: açık"
+                    } else {
+                        "Dikey sığdır: kapalı"
+                    },
+                )
+                .boyutu(DugmeBoyutu::Kucuk)
+                .devre_disi(!sığdırma_denetlenebilir)
+                .turu(if dikey_sığdır {
+                    DugmeTuru::Birincil
+                } else {
+                    DugmeTuru::Ikincil
+                })
+                .tiklaninca(cx.listener(|bu, _, _, cx| {
+                    bu.sığdırma_eksenini_değiştir(true, cx);
+                })),
+            )
+            .child(
+                Dugme::yeni(
+                    "sigdir-yatay",
+                    if yatay_sığdır {
+                        "Yatay sığdır: açık"
+                    } else {
+                        "Yatay sığdır: kapalı"
+                    },
+                )
+                .boyutu(DugmeBoyutu::Kucuk)
+                .devre_disi(!sığdırma_denetlenebilir)
+                .turu(if yatay_sığdır {
+                    DugmeTuru::Birincil
+                } else {
+                    DugmeTuru::Ikincil
+                })
+                .tiklaninca(cx.listener(|bu, _, _, cx| {
+                    bu.sığdırma_eksenini_değiştir(false, cx);
+                })),
+            )
+            .when_some(ham_boyut, |öğe, (genişlik, yükseklik)| {
+                öğe
+                    .child(
+                        div()
+                            .text_xs()
+                            .text_color(soluk)
+                            .child(format!("ham {genişlik}×{yükseklik}")),
+                    )
+                    .child(
+                        Dugme::yeni("ham-genislik-azalt", "− G")
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Hayalet)
+                            .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                bu.ham_boyutu_değiştir(-100, 0, cx);
+                            })),
+                    )
+                    .child(
+                        Dugme::yeni("ham-genislik-artir", "+ G")
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Hayalet)
+                            .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                bu.ham_boyutu_değiştir(100, 0, cx);
+                            })),
+                    )
+                    .child(
+                        Dugme::yeni("ham-yukseklik-azalt", "− Y")
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Hayalet)
+                            .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                bu.ham_boyutu_değiştir(0, -100, cx);
+                            })),
+                    )
+                    .child(
+                        Dugme::yeni("ham-yukseklik-artir", "+ Y")
+                            .boyutu(DugmeBoyutu::Kucuk)
+                            .turu(DugmeTuru::Hayalet)
+                            .tiklaninca(cx.listener(|bu, _, _, cx| {
+                                bu.ham_boyutu_değiştir(0, 100, cx);
                             })),
                     )
             })
@@ -6769,7 +6951,7 @@ impl Render for ChartListesi {
             );
 
         // `Context` isteyen kartların kullandığı, bir önceki karede ölçülmüş alan.
-        let görünür_alan = GörünürAlan::yeni(self.çizim_alanı, OTOMATİK_UYARLA);
+        let görünür_alan = GörünürAlan::yeni(self.çizim_alanı, dikey_sığdır, yatay_sığdır);
         let alan_ölçeri = canvas(
             {
                 let bu = cx.entity();
@@ -6822,7 +7004,7 @@ impl Render for ChartListesi {
                 .collect::<Vec<_>>();
             çizim_tabanı
                 .overflow_hidden()
-                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+                .child(uyarlanan_alan(dikey_sığdır, yatay_sığdır, move |alan| {
                     div()
                         .id("align-data-kaydirma")
                         .size_full()
@@ -6894,9 +7076,10 @@ impl Render for ChartListesi {
                 .into_iter()
                 .map(|örnek| (örnek, yüzey(örnek)))
                 .collect::<Vec<_>>();
-            çizim_tabanı
-                .overflow_hidden()
-                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+            çizim_tabanı.overflow_hidden().child(uyarlanan_alan(
+                dikey_sığdır,
+                yatay_sığdır,
+                move |alan| {
                     let (genişlik, yükseklik) = alan.yüzey(800.0, 800.0);
                     div()
                         .id("custom-scales-kaydirma")
@@ -6918,7 +7101,8 @@ impl Render for ChartListesi {
                                     })
                             }),
                         ))
-                }))
+                },
+            ))
         } else if aktif_kart == KartKimliği::DataSmoothing {
             let yüzey = |örnek| {
                 self.data_smoothing_grafikleri
@@ -6930,9 +7114,10 @@ impl Render for ChartListesi {
                 .into_iter()
                 .map(|örnek| (örnek, yüzey(örnek)))
                 .collect::<Vec<_>>();
-            çizim_tabanı
-                .overflow_hidden()
-                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+            çizim_tabanı.overflow_hidden().child(uyarlanan_alan(
+                dikey_sığdır,
+                yatay_sığdır,
+                move |alan| {
                     let (genişlik, yükseklik) = alan.yüzey(1_920.0, 300.0);
                     div()
                         .id("data-smoothing-kaydirma")
@@ -6959,7 +7144,8 @@ impl Render for ChartListesi {
                                         }),
                                 )
                         }))
-                }))
+                },
+            ))
         } else if aktif_kart == KartKimliği::FocusCursor {
             let yüzey = |örnek| {
                 self.focus_cursor_grafikleri
@@ -6971,9 +7157,10 @@ impl Render for ChartListesi {
                 .into_iter()
                 .map(|örnek| (örnek, yüzey(örnek)))
                 .collect::<Vec<_>>();
-            çizim_tabanı
-                .overflow_hidden()
-                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+            çizim_tabanı.overflow_hidden().child(uyarlanan_alan(
+                dikey_sığdır,
+                yatay_sığdır,
+                move |alan| {
                     let (genişlik, yükseklik) = alan.yüzey(1_920.0, 600.0);
                     div()
                         .id("focus-cursor-kaydirma")
@@ -7000,7 +7187,8 @@ impl Render for ChartListesi {
                                         }),
                                 )
                         }))
-                }))
+                },
+            ))
         } else if aktif_kart == KartKimliği::Gradients {
             let yüzey = |örnek| {
                 self.gradients_grafikleri
@@ -7012,9 +7200,10 @@ impl Render for ChartListesi {
                 .into_iter()
                 .map(|örnek| (örnek, yüzey(örnek)))
                 .collect::<Vec<_>>();
-            çizim_tabanı
-                .overflow_hidden()
-                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+            çizim_tabanı.overflow_hidden().child(uyarlanan_alan(
+                dikey_sığdır,
+                yatay_sığdır,
+                move |alan| {
                     let (genişlik, yükseklik) = alan.yüzey(800.0, 600.0);
                     div()
                         .id("gradients-kaydirma")
@@ -7036,7 +7225,8 @@ impl Render for ChartListesi {
                                     })
                             }),
                         ))
-                }))
+                },
+            ))
         } else if aktif_kart == KartKimliği::HighLowBands {
             let yüzey = |örnek| {
                 self.high_low_bands_grafikleri
@@ -7048,9 +7238,10 @@ impl Render for ChartListesi {
                 .into_iter()
                 .map(|örnek| (örnek, yüzey(örnek)))
                 .collect::<Vec<_>>();
-            çizim_tabanı
-                .overflow_hidden()
-                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+            çizim_tabanı.overflow_hidden().child(uyarlanan_alan(
+                dikey_sığdır,
+                yatay_sığdır,
+                move |alan| {
                     // Her yüzeyin başlığı 30 px yer kaplar; sığdırma payı geri kalanıdır.
                     let çizim_alanı = alan.pay_düş(30.0);
                     div()
@@ -7095,16 +7286,17 @@ impl Render for ChartListesi {
                                         }),
                                 )
                         }))
-                }))
+                },
+            ))
         } else if aktif_kart == KartKimliği::LatencyHeatmap {
             çizim_tabanı.min_h_0().p_2().child(
                 uniform_list(
                     "latency-heatmap-yuzey-listesi",
                     LatencyHeatmapÖrneği::TÜMÜ.len(),
-                    cx.processor(|bu, aralık: Range<usize>, _pencere, _cx| {
+                    cx.processor(move |bu, aralık: Range<usize>, _pencere, _cx| {
                         // Yüzey başlığı 30 px; kalan alan sığdırmaya girer.
                         let (genişlik, yükseklik) =
-                            GörünürAlan::yeni(bu.çizim_alanı, OTOMATİK_UYARLA)
+                            GörünürAlan::yeni(bu.çizim_alanı, dikey_sığdır, yatay_sığdır)
                                 .pay_düş(30.0)
                                 .yüzey(1_800.0, 600.0);
                         aralık
@@ -7157,9 +7349,10 @@ impl Render for ChartListesi {
                 .into_iter()
                 .map(|örnek| (örnek, yüzey(örnek)))
                 .collect::<Vec<_>>();
-            çizim_tabanı
-                .overflow_hidden()
-                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+            çizim_tabanı.overflow_hidden().child(uyarlanan_alan(
+                dikey_sığdır,
+                yatay_sığdır,
+                move |alan| {
                     let çizim_alanı = alan.pay_düş(30.0);
                     let (genişlik, yükseklik) = çizim_alanı.yüzey(2_400.0, 600.0);
                     div()
@@ -7191,7 +7384,8 @@ impl Render for ChartListesi {
                                         }),
                                 )
                         }))
-                }))
+                },
+            ))
         } else if aktif_kart == KartKimliği::LogScales {
             let yüzey = |örnek| {
                 self.log_scales_grafikleri
@@ -7203,9 +7397,10 @@ impl Render for ChartListesi {
                 .into_iter()
                 .map(|örnek| (örnek, yüzey(örnek)))
                 .collect::<Vec<_>>();
-            çizim_tabanı
-                .overflow_hidden()
-                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+            çizim_tabanı.overflow_hidden().child(uyarlanan_alan(
+                dikey_sığdır,
+                yatay_sığdır,
+                move |alan| {
                     let çizim_alanı = alan.pay_düş(30.0);
                     let (genişlik, yükseklik) = çizim_alanı.yüzey(1_600.0, 600.0);
                     div()
@@ -7237,7 +7432,8 @@ impl Render for ChartListesi {
                                         }),
                                 )
                         }))
-                }))
+                },
+            ))
         } else if aktif_kart == KartKimliği::LogScales2 {
             let yüzey = |örnek| {
                 self.log_scales2_grafikleri
@@ -7249,9 +7445,10 @@ impl Render for ChartListesi {
                 .into_iter()
                 .map(|örnek| (örnek, yüzey(örnek)))
                 .collect::<Vec<_>>();
-            çizim_tabanı
-                .overflow_hidden()
-                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+            çizim_tabanı.overflow_hidden().child(uyarlanan_alan(
+                dikey_sığdır,
+                yatay_sığdır,
+                move |alan| {
                     div()
                         .id("log-scales2-kaydirma")
                         .size_full()
@@ -7310,7 +7507,8 @@ impl Render for ChartListesi {
                                         }),
                                 )
                         }))
-                }))
+                },
+            ))
         } else if aktif_kart == KartKimliği::SyncCursor {
             let cpu = sync_yüzeyi(SyncCursorÖrneği::Cpu);
             let ram = sync_yüzeyi(SyncCursorÖrneği::Ram);
@@ -7379,9 +7577,10 @@ impl Render for ChartListesi {
                 sync_paneli(SyncCursorÖrneği::UyumsuzKırmızıMavi, kırmızı_mavi);
             let yeşil_kırmızı_paneli =
                 sync_paneli(SyncCursorÖrneği::UyumsuzYeşilKırmızı, yeşil_kırmızı);
-            çizim_tabanı
-                .overflow_hidden()
-                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+            çizim_tabanı.overflow_hidden().child(uyarlanan_alan(
+                dikey_sığdır,
+                yatay_sığdır,
+                move |alan| {
                     // Grup üyeleri imleç ve zoom'u paylaşır; birlikte
                     // görünmeleri gerektiğinden üç satırın toplamı tek ölçekle
                     // sığdırılır, panel başına ayrı ölçek uygulanmaz.
@@ -7406,7 +7605,8 @@ impl Render for ChartListesi {
                                 yeşil_kırmızı_paneli(panel),
                             ]),
                         )
-                }))
+                },
+            ))
         } else if aktif_kart == KartKimliği::TimeseriesDiscrete {
             let üst = self
                 .timeseries_discrete_grafikleri
@@ -7535,7 +7735,7 @@ impl Render for ChartListesi {
                 .collect::<Vec<_>>();
             çizim_tabanı
                 .overflow_hidden()
-                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+                .child(uyarlanan_alan(dikey_sığdır, yatay_sığdır, move |alan| {
                     // Yüzeyler `w_full`; en boy oranını kapsayıcı belirlediği
                     // için yalnız yükseklik görünür alana çekilir. 20 px pay
                     // yüzey üstündeki kısa açıklama satırınındır.
@@ -8815,9 +9015,10 @@ impl Render for ChartListesi {
                 }
             };
             let grafik = self.grafik.clone();
-            çizim_tabanı
-                .overflow_hidden()
-                .child(uyarlanan_alan(OTOMATİK_UYARLA, move |alan| {
+            çizim_tabanı.overflow_hidden().child(uyarlanan_alan(
+                dikey_sığdır,
+                yatay_sığdır,
+                move |alan| {
                     let (genişlik, yükseklik) = alan.yüzey(genişlik, yükseklik);
                     div()
                         .id("multi-bars-kaydirma")
@@ -8831,13 +9032,45 @@ impl Render for ChartListesi {
                                     öğe.child(önbellekli_grafik(grafik))
                                 }),
                         )
-                }))
+                },
+            ))
         } else {
+            // Tek yüzeyli kartlar. Yüzey kabı doldurmak yerine kart
+            // tanımındaki politikaya göre yerleşir: sığdırma açık eksen alana
+            // çekilir, kapalı eksen ham değerinde kalır. İkisi de kapalıysa
+            // yüzey resmî sayfadaki boyutunda kalır ve taşan kısım
+            // kaydırmayla gezilir.
+            let ham = self
+                .grafik
+                .as_ref()
+                .map(|grafik| grafik.read(cx).grafik().boyut());
+            let yüzey = self.grafik.clone();
             çizim_tabanı
-                .overflow_hidden()
-                .when_some(self.grafik.clone(), |öğe, grafik| {
-                    öğe.child(önbellekli_grafik(grafik))
+                .when(dikey_sığdır && yatay_sığdır, |öğe| {
+                    öğe.overflow_hidden()
                 })
+                .when(!(dikey_sığdır && yatay_sığdır), |öğe| {
+                    öğe.overflow_scroll()
+                })
+                .child(uyarlanan_alan(
+                    dikey_sığdır,
+                    yatay_sığdır,
+                    move |alan| {
+                        let (genişlik, yükseklik) = ham.map_or((0.0, 0.0), |(ham_g, ham_y)| {
+                            alan.yüzey(ham_g as f32, ham_y as f32)
+                        });
+                        div()
+                            // İki eksen de açıkken ölçüm kapsayıcıyı doldurur;
+                            // ölçülmemiş ilk karede de yüzey görünür kalsın diye
+                            // sabit boyut yalnız politika istediğinde verilir.
+                            .when(
+                                !(dikey_sığdır && yatay_sığdır) && genişlik > 0.0,
+                                |öğe| öğe.w(px(genişlik)).h(px(yükseklik)).flex_none(),
+                            )
+                            .when(dikey_sığdır && yatay_sığdır, |öğe| öğe.size_full())
+                            .when_some(yüzey, |öğe, grafik| öğe.child(önbellekli_grafik(grafik)))
+                    },
+                ))
         };
 
         let yardım = match aktif_kart {
@@ -9590,6 +9823,72 @@ mod tests {
     #[test]
     fn yan_menü_ana_kart_sayısı_sabittir() {
         assert_eq!(KATALOG_KARTLARI.len(), 66);
+    }
+
+    /// Duyarlı yüzeylerde sığdırma devreye girmemeli.
+    ///
+    /// `duyarlı_boyut` yüzeyi ölçülen alana kendisi oturtur. Üstüne sığdırma
+    /// uygulanınca geri besleme kuruluyordu: ölçek genişliği düşürür, duyarlı
+    /// boyut düşen genişliği yeni ham boyut sanar, ölçek yeniden hesaplanır.
+    /// Yüzey her turda biraz daha eziliyor ve oran gözle görülür şekilde
+    /// bozuluyordu.
+    #[::gpui::test]
+    async fn duyarlı_yüzeyde_sığdırma_devre_dışı(cx: &mut ::gpui::TestAppContext) {
+        cx.update(|cx| {
+            let _ = ortak_bilesenler::baslat(ortak_bileşen_ayarları(), cx);
+            başlat(cx);
+        });
+        let (liste, cx) = cx.add_window_view(|_, cx| ChartListesi::yeni(cx));
+
+        // Resize duyarlı bir karttır; politika alanı doldurmaya sabitlenir.
+        liste.update(cx, |bu, cx| bu.kartı_seç(KartKimliği::Resize, cx));
+        cx.run_until_parked();
+        assert!(liste.read_with(cx, ChartListesi::duyarlı_yüzey_mi));
+        assert_eq!(
+            liste.read_with(cx, ChartListesi::sığdırma_politikası),
+            (true, true),
+            "duyarlı yüzeyde sığdırma alanı doldurmalı"
+        );
+
+        // Denetim seçimi bile bu kararı değiştirmez; aksi hâlde geri besleme
+        // yeniden kurulurdu.
+        liste.update(cx, |bu, cx| bu.sığdırma_eksenini_değiştir(false, cx));
+        cx.run_until_parked();
+        assert_eq!(
+            liste.read_with(cx, ChartListesi::sığdırma_politikası),
+            (true, true),
+            "duyarlı yüzeyde denetim politikayı ezmemeli"
+        );
+
+        // Duyarlı olmayan kartta kart tanımının politikası geçerlidir.
+        liste.update(cx, |bu, cx| bu.kartı_seç(KartKimliği::Scatter, cx));
+        cx.run_until_parked();
+        assert!(!liste.read_with(cx, ChartListesi::duyarlı_yüzey_mi));
+        assert_eq!(
+            liste.read_with(cx, ChartListesi::sığdırma_politikası),
+            VARSAYILAN_SIĞDIRMA
+        );
+    }
+
+    /// Kart tanımının sığdırma politikası katalog yerleşimine ulaşmalı.
+    ///
+    /// Politika `GrafikSeçenekleri`'nde taşınır; katalog onu kart başına
+    /// okur. Varsayılan çift kaynak sayfalardaki davranışı verir: yükseklik
+    /// alana çekilir, genişlik aynı oranda değişir.
+    #[test]
+    fn kart_sığdırma_politikası_seçeneklerden_gelir() -> Result<(), UplotHatası> {
+        let (seçenekler, veri) = resize_kartı(100)?;
+        let grafik = Grafik::yeni(seçenekler, veri)?;
+        assert_eq!(
+            grafik.sığdırma(),
+            VARSAYILAN_SIĞDIRMA,
+            "kart tanımı bildirmediğinde varsayılan geçerli"
+        );
+
+        let (seçenekler, veri) = resize_kartı(100)?;
+        let grafik = Grafik::yeni(seçenekler.sığdırma(false, true), veri)?;
+        assert_eq!(grafik.sığdırma(), (false, true));
+        Ok(())
     }
 
     fn lejant_serisi(etiket: &str, göster: bool) -> uplot_rs::SeriSeçenekleri {

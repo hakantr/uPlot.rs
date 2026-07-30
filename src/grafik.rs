@@ -3651,6 +3651,14 @@ impl Grafik {
         self.seçenekler.lejant_konumu
     }
 
+    /// Yüzeyin görünür alana hangi eksenlerde uyacağı: `(dikey, yatay)`.
+    ///
+    /// Varsayılan `(true, false)`; yerleşim katmanı bu çifti
+    /// [`GörünürAlan`](crate::gpui::GörünürAlan) politikasına çevirir.
+    pub const fn sığdırma(&self) -> (bool, bool) {
+        (self.seçenekler.dikey_sığdır, self.seçenekler.yatay_sığdır)
+    }
+
     /// Canlı akış ve özel formatter'ların kullanabildiği son hizalı veri
     /// satırını döndürür.
     pub fn son_değerler(&self) -> Option<(f64, Vec<Option<f64>>)> {

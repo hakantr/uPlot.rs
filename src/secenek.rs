@@ -1158,6 +1158,19 @@ pub struct GrafikSeçenekleri {
     /// Taşıyıcı yüzey değiştiğinde uPlot `setSize()` gibi sahne
     /// geometrisini yeni CSS piksel boyutunda yeniden hesaplar.
     pub duyarlı_boyut: bool,
+    /// Yüzeyin bulunduğu alana dikeyde uyup uymayacağı. Açıkken yükseklik
+    /// görünür alana çekilir; `yatay_sığdır` kapalıysa genişlik aynı oranda
+    /// değişir, yani en boy oranı korunur.
+    pub dikey_sığdır: bool,
+    /// Yüzeyin bulunduğu alana yatayda uyup uymayacağı. Açıkken genişlik
+    /// görünür alana çekilir; `dikey_sığdır` kapalıysa yükseklik aynı oranda
+    /// değişir.
+    ///
+    /// İkisi birlikte açıldığında yüzey iki ekseni bağımsız doldurur ve en
+    /// boy oranı bozulabilir — bu, ancak açıkça istendiğinde olur. İkisi de
+    /// kapalıyken yüzey ham boyutunda kalır ve alana sığmayan kısım
+    /// kaydırmayla gezilir.
+    pub yatay_sığdır: bool,
     pub x_zaman: bool,
     pub x_zaman_milisaniye: bool,
     pub x_tarih_adları: TarihAdları,
@@ -1291,6 +1304,8 @@ impl GrafikSeçenekleri {
             yükseklik,
             kompakt_yüzey: false,
             duyarlı_boyut: false,
+            dikey_sığdır: true,
+            yatay_sığdır: false,
             x_zaman: true,
             x_zaman_milisaniye: false,
             x_tarih_adları: TarihAdları::default(),
@@ -1389,6 +1404,16 @@ impl GrafikSeçenekleri {
 
     pub fn duyarlı_boyut(mut self, duyarlı: bool) -> Self {
         self.duyarlı_boyut = duyarlı;
+        self
+    }
+
+    /// Yüzeyin görünür alana hangi eksenlerde uyacağını belirler.
+    ///
+    /// Varsayılan `(true, false)`: yükseklik alana çekilir, genişlik aynı
+    /// oranda değişir. İkisi birlikte açıldığında en boy oranı bozulabilir.
+    pub fn sığdırma(mut self, dikey: bool, yatay: bool) -> Self {
+        self.dikey_sığdır = dikey;
+        self.yatay_sığdır = yatay;
         self
     }
 
