@@ -1,6 +1,6 @@
 # Devir notu
 
-**Tarih:** 2026-07-29 (macOS oturumu)
+**Tarih:** 2026-07-30 (macOS oturumu)
 
 Bu not, oturumun bittiği noktadan devam edebilmek içindir. Kalıcı mimari
 kararlar `GPUI_GECIS_DOGRULAMA.md` içindedir; burada yalnız devir için
@@ -10,7 +10,7 @@ gereken durum, açık konular ve tekrar üretim adımları var.
 
 | depo | dal | son commit | durum |
 |---|---|---|---|
-| `uPlot.rs` | `main` | `000a6da` | temiz, gönderildi |
+| `uPlot.rs` | `main` | `0389407` | temiz, gönderildi |
 | `../gpui` | `main` | `91d67c5` | temiz, gönderildi |
 | `../gpui_kutuphanesi` | `main` | `36f1174` | temiz, gönderildi |
 
@@ -21,6 +21,9 @@ Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
 Bu oturumun commit'leri (`4b5fa67` sonrası, hepsi gönderildi):
 
 ```
+0389407 fix(sığdırma): iki eksen açıkken yüzeyi kaba oturt
+1443989 feat(yerleşim): iki eksenli sığdırmayı ölçüm yoluna bağla
+aa46b8e docs: devir notunu sığdırma politikasıyla güncelle
 000a6da feat(yerleşim): kart sığdırmasını iki eksen bayrağına ayır
 6b1bd05 test(gpui): boyanan renkleri günlüğe bağla
 140046c feat(imleç): Ctrl yapışmasını ikinci eksene de uygula
@@ -55,15 +58,16 @@ eb8a375 fix(katalog): kart yüzeylerini görünür alana sığdır ve kesik içe
 ```
 
 Doğrulama durumu: `cargo fmt --all --check` temiz, `cargo clippy --workspace
---all-targets` uyarısız, testler çekirdek 106 / örnekler 262 / katalog 24 +
+--all-targets` uyarısız, testler çekirdek 106 / örnekler 262 / katalog 25 +
 sahne 2 / resize 13 / svg 6 / area_fill 3 / bütçe 2 geçiyor.
 
 **`upstream_yol_butcesi` yalnız `--release` ile anlamlıdır.** Debug'da
 `Path::scale` köşe başına ~19 ns ölçülür ve 4 ns bütçesini aşar; test
 gpui'nin yol gönderim maliyetini ölçtüğünden bu bir regresyon değil,
-optimizasyonsuz derlemenin sonucudur. Aşağıdaki doğrulama komutlarında
-`cargo test --workspace` bu tek testi düşürür; `cargo test --release -p
-uplot-rs-gpui-katalog --test upstream_yol_butcesi` ayrı koşulmalıdır.
+optimizasyonsuz derlemenin sonucudur. Test artık `cfg!(debug_assertions)`
+ile kendini atlar, yani `cargo test --workspace` yanlış alarm vermez; ölçüm
+için `cargo test --release -p uplot-rs-gpui-katalog --test
+upstream_yol_butcesi` ayrı koşulmalıdır.
 
 ## Önceki oturumun açık konuları — kapanış
 
@@ -270,12 +274,39 @@ doğrudan dolduruyordu, yani politikayı hiç görmüyorlardı.
 kuruluyordu — ölçek genişliği düşürür, duyarlı boyut düşen genişliği yeni
 ham boyut sanar, ölçek yeniden hesaplanır. Ham boyut `800×400`'den
 `686×600`'e kayıyor ve yüzey gözle görülür şekilde eziliyordu. O kartlarda
-politika artık alanı doldurmaya sabit, denetimler kapalı.
+politika alanı doldurmaya sabit.
 
 Katalog denetim çubuğuna iki sığdırma anahtarı ve ham boyut adımları
 eklendi. Kart tanımları kaynak sayfaların varsayılanını taşıdığından dört
 durum başka türlü denenemiyor; ham boyut da oynamalı, çünkü yüzey alana
 sığdığı sürece hiçbir eksen küçültülmez.
+
+**"İkisi de açık" durumu yedi denemede çözülmedi, sekizincide ölçümle
+çözüldü** (commit `0389407`). Politika, ölçüm yolu ve `GörünürAlan`
+doğruydu; kusur tek satırlık bir yerleşim kısıtındaydı. `çizim_tabanı`'nda
+`min_h_0()` vardı, `min_w_0()` yoktu: yüzey kendi ham genişliğini kaba
+dayatıyor, kap o genişlikte ölçülüyor, sığdırma da şişmiş ölçüme oturunca
+hiç küçülmüyordu. Ölçüm `1920×600` ham için `1920×600` dönüyordu; kap
+gerçekte `1597×600`'dü — oran korunuyor gibi görünmesinin sebebi buydu.
+
+Devir dersi: yedi denemenin hepsi *teşhis etmeden* düzeltme denemesiydi.
+Çözen adım, denetim çubuğuna kap ölçümünü basmak oldu. Gösterge kalıcı:
+etiket artık `ham 1920×300 · kap 1597×600` biçiminde; ikisinin ayrışması
+taşmanın tek görünür işareti.
+
+**`duyarlı_boyut` çalışma zamanında çevrilebiliyor.**
+`Grafik::duyarlı_boyutu_ayarla` + `GpuiGrafik::duyarlı_boyutu_ayarla`.
+Duyarlı kart ölçülen alanı ham boyut saydığından sığdırma denetimi orada
+ölüydü (Resize kartında düğmeler pasifti). Denetime dokunulduğu an bayrak
+düşüyor ve ham boyut son ölçümde donuyor, yani yüzey sıçramıyor. Kart
+yeniden seçilince tanımın duyarlı davranışı geri geliyor.
+
+Dört durum tarayıcıda tek tek doğrulandı (MassSpectrum, ham `1920×300`,
+kap `1597×600`): kapalı/kapalı ham boyutu korudu ve kalan alanı boş
+bıraktı; yalnız yatay genişliği kaba çekip yüksekliği oransal küçülttü
+(X ekseni 950 → 1100); yalnız dikey yüksekliği kaba oturtup genişliği
+oranla taşırdı; ikisi birden ham boyutu `1597×600` yapıp kabı doldurdu.
+Regresyon testi `iki_eksen_açıkken_ham_boyut_alana_oturur`.
 
 **Dört performans iddiası ölçüldü, dördü de düzeltme gerektirmedi.** Dışarıdan
 gelen bir değerlendirme `src/gpui.rs` ve `src/grafik.rs` için dört "performansı
@@ -384,11 +415,15 @@ cargo test --release -p uplot-rs-gpui-katalog --lib kok_render_kare_butcesi -- -
 
 | kart | kök render p50 |
 |---|---:|
-| ThinBars (55 yüzey) | 559 µs |
-| TimezonesDst (51 yüzey) | 536 µs |
-| LatencyHeatmap | 406 µs |
-| Resize (tek yüzey) | 352 µs |
-| MassSpectrum | 359 µs |
+| ThinBars (55 yüzey) | 613 µs |
+| TimezonesDst (51 yüzey) | 588 µs |
+| LatencyHeatmap | 454 µs |
+| Scatter (raster yolu) | 447 µs |
+| Resize (tek yüzey) | 405 µs |
+| MassSpectrum | 401 µs |
 
-Raster katmanına daire desteği ve seri bazlı lejant eklendikten sonra da
-bütçe korunuyor.
+Raster katmanına daire desteği, seri bazlı lejant ve iki eksenli sığdırma
+eklendikten sonra da bütçe korunuyor: en ağır kart 16,7 ms bütçenin
+%3,7'sinde. Değerler önceki turdan ~%10 yüksek; aynı makinede ölçüldü,
+kod tarafında karşılığı olan bir değişiklik yok (sığdırma yolunda kare
+başına eklenen tek iş bir `Cell` yazması), bu yüzden gürültü sayıldı.
