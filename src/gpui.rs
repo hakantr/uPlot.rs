@@ -605,6 +605,59 @@ fn duyarlı_boyut_güncellenmeli(önceki: Option<Bounds<Pixels>>, güncel: Bound
     önceki.is_none_or(|önceki| önceki.size != güncel.size)
 }
 
+/// Boyanan yol renklerinin test kaydı.
+///
+/// Sahne komutları doğruyken boyama aşamasında yanlış renk üretmek — gradyan
+/// maskelerinin çakışıp bir dalın kaybolması gibi — komut testlerine
+/// görünmüyor. `Window::rendered_frame` gpui'de `pub(crate)` olduğundan
+/// boyanan primitive'lere dışarıdan da erişilemiyor. Bütün yol boyamaları
+/// [`retained_yolu_boya`] üzerinden geçtiği için kayıt orada tek noktada
+/// alınır.
+///
+/// `boya-gunlugu` özelliği kapalıyken bütün çağrılar boştur ve derleyici
+/// tarafından elenir.
+pub mod boya_günlüğü {
+    #[cfg(feature = "boya-gunlugu")]
+    use std::cell::RefCell;
+
+    #[cfg(feature = "boya-gunlugu")]
+    thread_local! {
+        static KAYITLAR: RefCell<Vec<::gpui::Hsla>> = const { RefCell::new(Vec::new()) };
+    }
+
+    /// Kaydı sıfırlar. Ölçülecek kareden hemen önce çağrılır.
+    pub fn temizle() {
+        #[cfg(feature = "boya-gunlugu")]
+        KAYITLAR.with(|kayıtlar| kayıtlar.borrow_mut().clear());
+    }
+
+    /// Son temizlemeden bu yana ekrana giden renkler, boyanma sırasıyla.
+    ///
+    /// Düz boyalar tek kayıt, gradyan şeritleri iki durak rengi bırakır.
+    #[must_use]
+    pub fn kayıtlar() -> Vec<::gpui::Hsla> {
+        #[cfg(feature = "boya-gunlugu")]
+        return KAYITLAR.with(|kayıtlar| kayıtlar.borrow().clone());
+        #[cfg(not(feature = "boya-gunlugu"))]
+        Vec::new()
+    }
+
+    /// Düz boyayı kaydeder; gradyanlar `yaz_renk` ile kendi duraklarını yazar.
+    #[cfg_attr(not(feature = "boya-gunlugu"), expect(unused_variables))]
+    pub(super) fn yaz(boya: ::gpui::Background) {
+        #[cfg(feature = "boya-gunlugu")]
+        if let Some(düz) = boya.as_solid() {
+            yaz_renk(düz);
+        }
+    }
+
+    #[cfg_attr(not(feature = "boya-gunlugu"), expect(unused_variables))]
+    pub(super) fn yaz_renk(renk: ::gpui::Hsla) {
+        #[cfg(feature = "boya-gunlugu")]
+        KAYITLAR.with(|kayıtlar| kayıtlar.borrow_mut().push(renk));
+    }
+}
+
 /// Yapışma açıkken ikinci eksenin oturacağı konumu seçer.
 ///
 /// `oranlar` yapışılan X'teki seri değerlerinin eksen oranıdır; `None`
@@ -3731,6 +3784,7 @@ fn retained_yolu_boya(
 ) {
     crate::izleme::yol_boyandı(yol.yol.vertices.len());
     let boya = boya.into();
+    boya_günlüğü::yaz(boya);
     let yerleşik = yol.yol;
     if let Some(mut görünüm) = görünüm {
         görünüm.kesme_sınırları.origin += hedef_köken;
@@ -4807,6 +4861,10 @@ impl GradyanŞeridi {
         let sağ = duraklar.get(self.sağ_durak)?;
         let sol_rengi = renk_önbelleği.renk(&sol.renk);
         let sağ_rengi = renk_önbelleği.renk(&sağ.renk);
+        // Geçiş şeridi `Background::as_solid` vermez; durak renkleri günlüğe
+        // burada yazılır, yoksa gradyanla boyanan hiçbir renk görünmez.
+        boya_günlüğü::yaz_renk(sol_rengi);
+        boya_günlüğü::yaz_renk(sağ_rengi);
         Some(linear_gradient(
             açı,
             linear_color_stop(sol_rengi, self.sol_yüzde),

@@ -9876,6 +9876,61 @@ mod tests {
         Ok(())
     }
 
+    /// Ayrık gradyanın iki dalı da gerçekten boyanmalı.
+    ///
+    /// Bu sınıf hata komut testlerine görünmüyor: `sparklines-bars` yüzen
+    /// çubuklarının sahnesi doğru `GradyanAlan` komutlarını üretiyordu, ama
+    /// boyama aşamasında maske aralıkları çakışıp kırmızı dalı yeşilin altına
+    /// gömüyordu. Kart tümüyle yeşil çiziliyor ve hiçbir test düşmüyordu.
+    ///
+    /// Boya günlüğü o aşamayı görünür kılar; `Window::rendered_frame` gpui'de
+    /// `pub(crate)` olduğundan boyanan primitive'lere başka türlü
+    /// erişilemiyor.
+    #[::gpui::test]
+    async fn gradyan_kartında_iki_dal_da_boyanır(cx: &mut ::gpui::TestAppContext) {
+        cx.update(|cx| {
+            let _ = ortak_bilesenler::baslat(ortak_bileşen_ayarları(), cx);
+            başlat(cx);
+        });
+        let (liste, cx) = cx.add_window_view(|_, cx| ChartListesi::yeni(cx));
+        let Some(örnek) = SparklinesBarsÖrneği::TÜMÜ.first().copied() else {
+            return;
+        };
+        liste.update(cx, |bu, cx| {
+            bu.kartı_seç(KartKimliği::SparklinesBars(örnek), cx);
+        });
+        cx.run_until_parked();
+
+        // Ölçülecek kareyi izole et: kart kurulumu sırasındaki boyamalar
+        // sayıma girmesin. Kökü kirletmek yetmez — yüzeyler `cached()`
+        // olduğundan alt ağaç yeniden boyanmaz; her yüzey ayrıca bildirilir.
+        uplot_rs::gpui::boya_günlüğü::temizle();
+        liste.update(cx, |bu, cx| {
+            for yüzey in bu.etkin_grafik_yüzeyleri() {
+                yüzey.update(cx, |_, cx| cx.notify());
+            }
+        });
+        cx.run_until_parked();
+        let boyalar = uplot_rs::gpui::boya_günlüğü::kayıtlar();
+
+        assert!(
+            !boyalar.is_empty(),
+            "kart boyanmadı; boya günlüğü özelliği açık mı?"
+        );
+        let kırmızı = uplot_rs::gpui::renk_çöz("red");
+        let yeşil = uplot_rs::gpui::renk_çöz("green");
+        assert!(
+            boyalar.contains(&kırmızı),
+            "ayrık gradyanın negatif dalı boyanmadı: {} renk kaydı",
+            boyalar.len()
+        );
+        assert!(
+            boyalar.contains(&yeşil),
+            "ayrık gradyanın pozitif dalı boyanmadı: {} renk kaydı",
+            boyalar.len()
+        );
+    }
+
     /// Ctrl basılıyken imleç iki eksende de en yakın örneğe oturmalı.
     ///
     /// Yalnız X yapıştığında imleç noktası veri noktasının hizasına gelmiyor,

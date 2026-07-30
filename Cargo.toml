@@ -55,6 +55,12 @@ gpui-svg = []
 # Etkileşim ve kare bütçesi tanılaması. Kütüphanenin varsayılan yüzeyinde
 # yer almaz; açıldığında bile `UPLOT_IZLEME=1` olmadan sessiz kalır.
 izleme = []
+# Boyanan yol renklerini test için kaydeder. Sahne komutları doğruyken
+# boyama aşamasında yanlış renk üretmek (gradyan maskelerinin çakışması
+# gibi) yalnız burada görünür; `Window::rendered_frame` gpui'de
+# `pub(crate)` olduğundan boyanan primitive'lere dışarıdan erişilemiyor.
+# Yalnız test derlemelerinde açılır.
+boya-gunlugu = []
 
 [dependencies]
 gpui = { version = "0.2.2", path = "../gpui/crates/gpui" }

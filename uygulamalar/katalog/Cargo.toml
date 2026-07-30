@@ -19,6 +19,9 @@ web-time = "1.1.0"
 [dev-dependencies]
 # Kök render bütçesi ölçümü gerçek bir GPUI penceresi ister.
 gpui = { path = "../../../gpui/crates/gpui", features = ["test-support"] }
+# Boya günlüğü yalnız test derlemesinde açılır; normal katalog yüzeyi
+# kayıt tutmaz.
+uplot-rs = { path = "../..", features = ["boya-gunlugu"] }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
 js-sys = "0.3"
