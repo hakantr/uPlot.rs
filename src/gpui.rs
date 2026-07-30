@@ -1043,6 +1043,20 @@ impl GpuiGrafik {
         &self.grafik
     }
 
+    /// Yüzey ham boyutunu ölçülen alandan mı alıyor.
+    ///
+    /// İki yoldan açılır: kart `duyarlı_boyut` bildirmiştir ya da sığdırma
+    /// politikası iki ekseni birden istemiştir. İkisi de aynı şeyi söyler —
+    /// "yüzey alan kadar olsun" — ve aynı mekanizmayı kullanır.
+    ///
+    /// Politika yolu şart, çünkü [`GpuiYüzeyDönüşümü`] tek ölçek taşır ve
+    /// `min(...)` ile oranı korur: kabı doldurmak yetmez, çizim kendi oranını
+    /// sürdürüp yanlarda boşluk bırakır. Oran ancak ham boyutun kendisi alana
+    /// eşitlenince serbest kalır.
+    fn alana_uyar_mı(&self) -> bool {
+        self.grafik.duyarlı_boyut_mu() || self.grafik.sığdırma() == (true, true)
+    }
+
     /// İmlecin çizim alanı içindeki güncel konumu, kaynak boyutunda.
     ///
     /// Yapışma açıkken en yakın örneğin üstündedir, kapalıyken fareyi izler.
@@ -1637,6 +1651,23 @@ impl GpuiGrafik {
         let değişti = self.grafik.imleç_odağını_seriye_ayarla(seri);
         if değişti {
             self.veri_sahnesini_yenile(cx);
+        }
+        değişti
+    }
+
+    /// Sığdırma politikasını çalışma anında değiştirir.
+    ///
+    /// İki eksen birden istendiğinde yüzey ham boyutunu ölçülen alandan alır;
+    /// bu yüzden karar sahneyi de yeniler.
+    pub fn sığdırmayı_ayarla(
+        &mut self,
+        dikey: bool,
+        yatay: bool,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let değişti = self.grafik.sığdırmayı_ayarla(dikey, yatay);
+        if değişti {
+            self.grafik_bildir(cx);
         }
         değişti
     }
@@ -2807,7 +2838,7 @@ impl GpuiGrafik {
                 cx.notify();
             });
         }
-        let duyarlı_grafik = self.grafik.duyarlı_boyut_mu().then(|| cx.weak_entity());
+        let duyarlı_grafik = self.alana_uyar_mı().then(|| cx.weak_entity());
         if let Some(yüzey) = self.ana_yüzey.as_ref() {
             let sahne = self.ana_sahne.clone();
             yüzey.update(cx, |yüzey, cx| {
@@ -2827,7 +2858,7 @@ impl GpuiGrafik {
         self.ana_sahne = Rc::new(self.grafik.gpui_görünür_veri_sahnesini_çiz());
         self.ana_sahne_revizyonu = self.ana_sahne_revizyonu.saturating_add(1);
         self.görünümü_yenile();
-        let duyarlı_grafik = self.grafik.duyarlı_boyut_mu().then(|| cx.weak_entity());
+        let duyarlı_grafik = self.alana_uyar_mı().then(|| cx.weak_entity());
         if let Some(yüzey) = self.ana_yüzey.as_ref() {
             let sahne = self.ana_sahne.clone();
             yüzey.update(cx, |yüzey, cx| {
@@ -2924,13 +2955,16 @@ impl Render for GpuiGrafik {
                 })
             })
             .clone();
+        // `get_or_insert_with` kapanışı `self`'i ödünç aldığından politika
+        // önceden çözülür.
+        let alana_uyar = self.alana_uyar_mı();
         let ana_yüzey = self
             .ana_yüzey
             .get_or_insert_with(|| {
                 let sahne = self.ana_sahne.clone();
                 let çizim_sınırları = self.çizim_sınırları.clone();
                 let veri_görünümü = self.veri_görünümü.clone();
-                let duyarlı_grafik = self.grafik.duyarlı_boyut_mu().then(|| cx.weak_entity());
+                let duyarlı_grafik = alana_uyar.then(|| cx.weak_entity());
                 cx.new(|_| GpuiAnaYüzey {
                     sahne,
                     çizim_sınırları,

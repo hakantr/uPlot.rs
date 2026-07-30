@@ -3659,6 +3659,19 @@ impl Grafik {
         (self.seçenekler.dikey_sığdır, self.seçenekler.yatay_sığdır)
     }
 
+    /// Sığdırma politikasını çalışma anında değiştirir; değişti mi döner.
+    ///
+    /// Yüzey adaptörü iki eksen birden istendiğinde ham boyutu ölçülen alana
+    /// oturtur, yani karar yalnız yerleşimi değil çizim boyutunu da etkiler.
+    pub fn sığdırmayı_ayarla(&mut self, dikey: bool, yatay: bool) -> bool {
+        if (self.seçenekler.dikey_sığdır, self.seçenekler.yatay_sığdır) == (dikey, yatay) {
+            return false;
+        }
+        self.seçenekler.dikey_sığdır = dikey;
+        self.seçenekler.yatay_sığdır = yatay;
+        true
+    }
+
     /// Canlı akış ve özel formatter'ların kullanabildiği son hizalı veri
     /// satırını döndürür.
     pub fn son_değerler(&self) -> Option<(f64, Vec<Option<f64>>)> {

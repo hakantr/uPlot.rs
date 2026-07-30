@@ -2324,11 +2324,20 @@ impl ChartListesi {
     /// varsayılanını taşır ve tek başına hiçbiri diğer üç durumu göstermez.
     fn sığdırma_eksenini_değiştir(&mut self, dikey: bool, cx: &mut Context<Self>) {
         let (şu_dikey, şu_yatay) = self.sığdırma_politikası(cx);
-        self.sığdırma_seçimi = Some(if dikey {
+        let yeni = if dikey {
             (!şu_dikey, şu_yatay)
         } else {
             (şu_dikey, !şu_yatay)
-        });
+        };
+        self.sığdırma_seçimi = Some(yeni);
+        // Politika yalnız katalog yerleşimini değil yüzeyin ölçüm yolunu da
+        // belirliyor: iki eksen birden istendiğinde ham boyut ölçülen alandan
+        // gelir. Bu yüzden karar yüzeylere de yazılır.
+        for yüzey in self.etkin_grafik_yüzeyleri() {
+            yüzey.update(cx, |grafik, cx| {
+                grafik.sığdırmayı_ayarla(yeni.0, yeni.1, cx)
+            });
+        }
         cx.notify();
     }
 
@@ -9052,10 +9061,8 @@ impl Render for ChartListesi {
                 .when(!(dikey_sığdır && yatay_sığdır), |öğe| {
                     öğe.overflow_scroll()
                 })
-                .child(uyarlanan_alan(
-                    dikey_sığdır,
-                    yatay_sığdır,
-                    move |alan| {
+                .child(
+                    uyarlanan_alan(dikey_sığdır, yatay_sığdır, move |alan| {
                         let (genişlik, yükseklik) = ham.map_or((0.0, 0.0), |(ham_g, ham_y)| {
                             alan.yüzey(ham_g as f32, ham_y as f32)
                         });
@@ -9069,8 +9076,15 @@ impl Render for ChartListesi {
                             )
                             .when(dikey_sığdır && yatay_sığdır, |öğe| öğe.size_full())
                             .when_some(yüzey, |öğe, grafik| öğe.child(önbellekli_grafik(grafik)))
-                    },
-                ))
+                    })
+                    // Kapsayıcı ebeveynini doldurmazsa içeriğine göre ölçülür ve
+                    // esnek yüzeyde ölçüm kendi ham boyutuna kilitlenir: alan ham
+                    // boyutu, ham boyut alanı belirler. Yüzeyin ölçtüğü alanın
+                    // gerçek yerleşim alanı olması için kap doldurulur.
+                    .size_full()
+                    .min_h_0()
+                    .min_w_0(),
+                )
         };
 
         let yardım = match aktif_kart {
