@@ -44,6 +44,13 @@ fn yol_kur(nokta_sayısı: usize) -> Option<Path<Pixels>> {
 
 #[test]
 fn upstream_yol_gonderimi_kare_butcesinde_kalir() {
+    // Bütçe optimize edilmiş kod için konuldu; `cargo test` varsayılanı olan
+    // debug profilinde aynı döngü ~30 kat yavaş ölçülüyor ve test gerçek bir
+    // gerileme olmadan patlıyordu. Ölçüm yalnız release profilinde anlamlı.
+    if cfg!(debug_assertions) {
+        eprintln!("debug profili: kare bütçesi ölçümü atlandı (release ile çalıştırın)");
+        return;
+    }
     let yol = yol_kur(8_000);
     assert!(yol.is_some(), "temsil edici yol kurulamadı");
     let Some(yol) = yol else { return };

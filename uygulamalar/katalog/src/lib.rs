@@ -13,8 +13,10 @@ use ortak_bilesenler::{
     Anahtar, AnahtarOlayi, CubukAyarlari, Dugme, DugmeBoyutu, DugmeTuru, MetinAlani,
     MetinAlaniOlayi, PlatformPencere,
 };
+use std::cell::Cell;
 use std::collections::HashSet;
 use std::ops::Range;
+use std::rc::Rc;
 use std::time::Duration;
 use uplot_rs::LejantKonumu;
 use uplot_rs::gpui::{
@@ -2062,6 +2064,11 @@ pub struct ChartListesi {
     /// tanımındaki `GrafikSeçenekleri::sığdırma` geçerlidir; kart değişiminde
     /// sıfırlanır.
     sığdırma_seçimi: Option<(bool, bool)>,
+    /// Yüzeyi saran kabın son ölçümü. Denetim çubuğu ham boyutun yanında bunu
+    /// gösterir: sığdırmanın gerçekten alana oturup oturmadığı ancak ikisi
+    /// karşılaştırılınca anlaşılıyor. Ölçüm render sırasında düştüğü için
+    /// paylaşılan bir hücrede tutulur ve bir kare gecikmeli okunur.
+    kap_ölçümü: Rc<Cell<Option<(u32, u32)>>>,
     /// Sanallaştırılmış çok yüzeyli kartların kaydırma/ölçüm durumu. Kart
     /// değişiminde sıfırlanır, aksi hâlde eski öğe sayısıyla ölçüm yapar.
     thin_bars_liste_durumu: Option<ListState>,
@@ -2335,6 +2342,10 @@ impl ChartListesi {
         // gelir. Bu yüzden karar yüzeylere de yazılır.
         for yüzey in self.etkin_grafik_yüzeyleri() {
             yüzey.update(cx, |grafik, cx| {
+                // Duyarlı kart ölçülen alanı ham boyut sayar ve dört durumu
+                // görünmez kılar; denetim kullanıldığı anda bayrak düşer ve
+                // ham boyut son ölçümde donar.
+                grafik.duyarlı_boyutu_ayarla(false, cx);
                 grafik.sığdırmayı_ayarla(yeni.0, yeni.1, cx)
             });
         }
@@ -2755,6 +2766,7 @@ impl ChartListesi {
             lejant_konumu_seçimi: None,
             lejant_yüzeyi: None,
             sığdırma_seçimi: None,
+            kap_ölçümü: Rc::default(),
             thin_bars_liste_durumu: None,
             timezones_dst_liste_durumu: None,
         };
@@ -6197,8 +6209,11 @@ impl Render for ChartListesi {
         let (dikey_sığdır, yatay_sığdır) = self.sığdırma_politikası(cx);
         // Duyarlı yüzeyler boyutlarını ölçümden alır; politika ve ham boyut
         // denetimleri onlarda etkisiz kalır, bu yüzden kapatılır.
-        let sığdırma_denetlenebilir = !self.duyarlı_yüzey_mi(cx);
+        // Duyarlı kartlar da denetlenebilir: ilk tıklama duyarlı bayrağını
+        // düşürüp ham boyutu dondurur, sonrası diğer kartlarla aynı yolu izler.
+        let sığdırma_denetlenebilir = self.grafik.is_some();
         let ham_boyut = self.ham_yüzey_boyutu(cx);
+        let ölçülen_alan = self.kap_ölçümü.get();
         let araçlar = div()
             .flex()
             .flex_wrap()
@@ -6497,12 +6512,12 @@ impl Render for ChartListesi {
             )
             .when_some(ham_boyut, |öğe, (genişlik, yükseklik)| {
                 öğe
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(soluk)
-                            .child(format!("ham {genişlik}×{yükseklik}")),
-                    )
+                    .child(div().text_xs().text_color(soluk).child(match ölçülen_alan {
+                        Some((alan_g, alan_y)) => {
+                            format!("ham {genişlik}×{yükseklik} · kap {alan_g}×{alan_y}")
+                        }
+                        None => format!("ham {genişlik}×{yükseklik}"),
+                    }))
                     .child(
                         Dugme::yeni("ham-genislik-azalt", "− G")
                             .boyutu(DugmeBoyutu::Kucuk)
@@ -6990,6 +7005,10 @@ impl Render for ChartListesi {
             // yüzeyi görünür alandan taşırıyordu; yüzey artık kalan alana
             // sığacak şekilde ölçeklendiği için taban serbest bırakıldı.
             .min_h_0()
+            // Dikey ikizi olmadan yüzey kendi ham genişliğini kaba dayatıp
+            // ölçüm alanını şişiriyordu; sığdırma o şişmiş alana oturunca
+            // hiç küçülmeden taşıyordu.
+            .min_w_0()
             .rounded_lg()
             .border_1()
             .border_color(rgb(0xe5e7eb))
@@ -9054,6 +9073,7 @@ impl Render for ChartListesi {
                 .as_ref()
                 .map(|grafik| grafik.read(cx).grafik().boyut());
             let yüzey = self.grafik.clone();
+            let kap_ölçümü = Rc::clone(&self.kap_ölçümü);
             çizim_tabanı
                 .when(dikey_sığdır && yatay_sığdır, |öğe| {
                     öğe.overflow_hidden()
@@ -9066,6 +9086,15 @@ impl Render for ChartListesi {
                         let (genişlik, yükseklik) = ham.map_or((0.0, 0.0), |(ham_g, ham_y)| {
                             alan.yüzey(ham_g as f32, ham_y as f32)
                         });
+                        let ölçüm = alan.alan();
+                        kap_ölçümü.set((ölçüm.width > px(0.0) && ölçüm.height > px(0.0)).then(
+                            || {
+                                (
+                                    f32::from(ölçüm.width).round() as u32,
+                                    f32::from(ölçüm.height).round() as u32,
+                                )
+                            },
+                        ));
                         div()
                             // İki eksen de açıkken ölçüm kapsayıcıyı doldurur;
                             // ölçülmemiş ilk karede de yüzey görünür kalsın diye
@@ -9839,6 +9868,62 @@ mod tests {
         assert_eq!(KATALOG_KARTLARI.len(), 66);
     }
 
+    /// İki eksen birden istendiğinde ham boyut ölçülen alana oturmalı.
+    ///
+    /// `GpuiYüzeyDönüşümü` tek ölçek taşır ve `min(...)` ile oranı korur; kabı
+    /// doldurmak yetmez, çizim kendi oranını sürdürüp yanlarda boşluk bırakır.
+    /// Oran ancak ham boyutun kendisi alana eşitlenince serbest kalır.
+    #[::gpui::test]
+    async fn iki_eksen_açıkken_ham_boyut_alana_oturur(cx: &mut ::gpui::TestAppContext) {
+        cx.update(|cx| {
+            let _ = ortak_bilesenler::baslat(ortak_bileşen_ayarları(), cx);
+            başlat(cx);
+        });
+        let (liste, cx) = cx.add_window_view(|_, cx| ChartListesi::yeni(cx));
+        liste.update(cx, |bu, cx| bu.kartı_seç(KartKimliği::MassSpectrum, cx));
+        cx.run_until_parked();
+
+        let ham = |cx: &mut ::gpui::VisualTestContext| {
+            liste.read_with(cx, ChartListesi::ham_yüzey_boyutu)
+        };
+        let alan = |cx: &mut ::gpui::VisualTestContext| {
+            liste.read_with(cx, |bu, cx| {
+                bu.grafik
+                    .as_ref()
+                    .and_then(|yüzey| yüzey.read(cx).ölçülen_alan())
+            })
+        };
+        let başlangıç = ham(cx);
+        assert!(başlangıç.is_some(), "kart yüzeyi kurulmalı");
+
+        // İki ekseni de aç: yatay kapalıydı, tek tıklama yeterli.
+        liste.update(cx, |bu, cx| bu.sığdırma_eksenini_değiştir(false, cx));
+        cx.run_until_parked();
+        assert_eq!(
+            liste.read_with(cx, ChartListesi::sığdırma_politikası),
+            (true, true)
+        );
+
+        let (ham_boyut, ölçüm) = (ham(cx), alan(cx));
+        assert!(
+            ham_boyut.is_some() && ölçüm.is_some(),
+            "ölçüm ve ham boyut okunmalı"
+        );
+        let (Some((ham_g, ham_y)), Some(alan)) = (ham_boyut, ölçüm) else {
+            return;
+        };
+        let (alan_g, alan_y) = (
+            f32::from(alan.size.width).round() as u32,
+            f32::from(alan.size.height).round() as u32,
+        );
+        // Bir piksellik yuvarlama farkı yerleşim hatası değildir.
+        assert!(
+            ham_g.abs_diff(alan_g) <= 1 && ham_y.abs_diff(alan_y) <= 1,
+            "ham {ham_g}×{ham_y} ölçülen alana ({alan_g}×{alan_y}) oturmalı; \
+             başlangıç {başlangıç:?}"
+        );
+    }
+
     /// Duyarlı yüzeylerde sığdırma devreye girmemeli.
     ///
     /// `duyarlı_boyut` yüzeyi ölçülen alana kendisi oturtur. Üstüne sığdırma
@@ -9864,15 +9949,25 @@ mod tests {
             "duyarlı yüzeyde sığdırma alanı doldurmalı"
         );
 
-        // Denetim seçimi bile bu kararı değiştirmez; aksi hâlde geri besleme
-        // yeniden kurulurdu.
+        // Denetime dokunulduğu an duyarlı bayrağı düşer: bayrak açık kalsaydı
+        // ölçülen alan ham boyut sayılır, dört durumun üçü görünmez olurdu.
         liste.update(cx, |bu, cx| bu.sığdırma_eksenini_değiştir(false, cx));
         cx.run_until_parked();
+        assert!(
+            !liste.read_with(cx, ChartListesi::duyarlı_yüzey_mi),
+            "denetim kullanıldığında duyarlı mod bırakılmalı"
+        );
         assert_eq!(
             liste.read_with(cx, ChartListesi::sığdırma_politikası),
-            (true, true),
-            "duyarlı yüzeyde denetim politikayı ezmemeli"
+            (true, false),
+            "denetim seçimi politikaya geçmeli"
         );
+
+        // Kart yeniden seçildiğinde tanımın duyarlı davranışı geri gelmeli.
+        liste.update(cx, |bu, cx| bu.kartı_seç(KartKimliği::Scatter, cx));
+        liste.update(cx, |bu, cx| bu.kartı_seç(KartKimliği::Resize, cx));
+        cx.run_until_parked();
+        assert!(liste.read_with(cx, ChartListesi::duyarlı_yüzey_mi));
 
         // Duyarlı olmayan kartta kart tanımının politikası geçerlidir.
         liste.update(cx, |bu, cx| bu.kartı_seç(KartKimliği::Scatter, cx));

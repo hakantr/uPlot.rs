@@ -3672,6 +3672,19 @@ impl Grafik {
         true
     }
 
+    /// `duyarlı_boyut` bayrağını çalışma zamanında çevirir.
+    ///
+    /// Duyarlı yüzey ölçülen alanı kendi ham boyutu sayar; bu, sığdırma
+    /// politikasının dört durumunu görünmez kılar. Denetim yüzeyleri bayrağı
+    /// kapatıp ham boyutu son ölçümde dondurarak politikayı devreye alır.
+    pub fn duyarlı_boyutu_ayarla(&mut self, duyarlı: bool) -> bool {
+        if self.seçenekler.duyarlı_boyut == duyarlı {
+            return false;
+        }
+        self.seçenekler.duyarlı_boyut = duyarlı;
+        true
+    }
+
     /// Canlı akış ve özel formatter'ların kullanabildiği son hizalı veri
     /// satırını döndürür.
     pub fn son_değerler(&self) -> Option<(f64, Vec<Option<f64>>)> {

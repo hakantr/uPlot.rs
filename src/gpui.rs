@@ -951,6 +951,7 @@ impl Render for GpuiAnaYüzey {
                 }
                 let genişlik = f32::from(sınırlar.size.width).round().max(160.0) as u32;
                 let yükseklik = f32::from(sınırlar.size.height).round().max(120.0) as u32;
+                crate::izleme::olay("BOYUT", &format!("ayarla {genişlik}x{yükseklik}"));
                 uygulama.defer(move |uygulama| {
                     if let Some(grafik) = grafik.upgrade() {
                         grafik.update(uygulama, |grafik, cx| {
@@ -1670,6 +1671,21 @@ impl GpuiGrafik {
             self.grafik_bildir(cx);
         }
         değişti
+    }
+
+    /// `duyarlı_boyut` bayrağını çevirir; bayrak kapanırken ham boyut son
+    /// ölçülen alana sabitlenir ki yüzey görünür bir sıçrama yaşamasın.
+    pub fn duyarlı_boyutu_ayarla(&mut self, duyarlı: bool, cx: &mut Context<Self>) -> bool {
+        if !self.grafik.duyarlı_boyutu_ayarla(duyarlı) {
+            return false;
+        }
+        if !duyarlı && let Some(sınırlar) = self.ölçülen_alan() {
+            let genişlik = f32::from(sınırlar.size.width).round().max(1.0) as u32;
+            let yükseklik = f32::from(sınırlar.size.height).round().max(1.0) as u32;
+            let _ = self.grafik.boyutu_ayarla(genişlik, yükseklik);
+        }
+        self.grafik_bildir(cx);
+        true
     }
 
     /// Web tarafındaki lejant düğmeleriyle aynı görünürlük değişimini GPUI
