@@ -446,6 +446,8 @@ cargo test --release -p uplot-rs-gpui-katalog --lib kok_render_kare_butcesi -- -
 
 ## Son ölçümler (bu makine)
 
+### Native — kök render p50
+
 | kart | kök render p50 |
 |---|---:|
 | ThinBars (55 yüzey) | 613 µs |
@@ -460,3 +462,55 @@ eklendikten sonra da bütçe korunuyor: en ağır kart 16,7 ms bütçenin
 %3,7'sinde. Değerler önceki turdan ~%10 yüksek; aynı makinede ölçüldü,
 kod tarafında karşılığı olan bir değişiklik yok (sığdırma yolunda kare
 başına eklenen tek iş bir `Cell` yazması), bu yüzden gürültü sayıldı.
+
+### Wasm — tarayıcı ölçümü
+
+Chrome, localhost, `crossOriginIsolated: true`, 14 çekirdek, **DPR 1**,
+trunk `--release`. Kare aralığı katalogun kendi ölçeri (180 örnek). CPU
+payı `MessageChannel` görev gecikmesiyle ölçüldü: kesintisiz görev
+planlanır, gecikmesi ana iş parçacığının başka işle meşgul olduğu süredir.
+Bellek `performance.measureUserAgentSpecificMemory()` — wasm linear memory
+dahil.
+
+| kart | yük | bellek | CPU boşta | CPU fare 120 Hz | kare p50 / p99 |
+|---|---|---:|---:|---:|---|
+| Resize | 100 nokta | 26–30 MB | %4,8 | %12,5 | 16,66 / 17,61 |
+| MassSpectrum | 41.986 nokta | 28,3 MB | %5,1 | %12,7 | 16,67 / 17,61 |
+| ThinBars | 55 yüzey · 1.422 çubuk | 26,7 MB | — | — | 16,66 / 17,64 |
+| Scatter | 40.000 nokta (raster) | 41,3 MB | — | — | 16,66 / 17,59 |
+| LatencyHeatmap | 5 yüzey · quad yoğun | 43,8 MB | %4,0 | %13,6 | — |
+| BoxWhisker | 17 yüzey | 31,2 MB | %5,1 | %14,2 | — |
+| SineStream | 6 seri × 600 · 60 FPS akış | 47,4 MB | %25,7 (akış) | — | 16,66 / 17,42 |
+
+Ölçüm tabanı ~%4–5 (tarayıcı compositor + GC), yani net kütüphane payı
+fare etkileşiminde ~%8, canlı akışta ~%21.
+
+Dört bulgu:
+
+- **Veri boyutu etkileşim maliyetini belirlemiyor.** 41.986 noktalı
+  spektrum ile 100 noktalı sinüs fare altında aynı CPU'yu yiyor (%12,7 ve
+  %12,5). Retained yol önbelleği veri yolunu kareler arası saklıyor, fare
+  yalnız imleç katmanını yeniliyor.
+- **Boştayken gerçekten boş.** Statik sahnede ana iş parçacığı p99
+  gecikmesi 0,01 ms.
+- **Bellek sızıntısı yok.** Aynı oturumda dört kart arasında üç tur:
+  26,0 → 46,7 → 50,5 → 43,9 MB. Monoton artış yok.
+- **En ağır senaryo canlı akış:** kare başına ~4,3 ms. Önbellek burada
+  devre dışı; her karede 3.600 nokta ve 6 yol + 6 alan dolgusu yeniden
+  kuruluyor.
+
+Zayıf başlıklar: wasm paketi 11,06 MB (gzip **4,14 MB**) ve ~26 MB sabit
+bellek tabanı — ikisi de GPUI/wgpu çalışma zamanının maliyeti, uPlot.rs'in
+kendi kodunun değil. Raster katmanı Scatter'da +14 MB.
+
+Ölçülmeyen iki şey: **DPR 2 (retina)** — bu makinede ekran DPR 1, dört kat
+piksel senaryosu denenemedi; ve **eşzamanlı çok akışlı yük** — tek akış
+kartı %26'da, üç-dört akış yüzeyinin sınırı test edilmedi.
+
+Tarayıcı ölçümünde iki yol denendi ve çalışmadı, tekrar denenmesin:
+`wasmBindings` yalnız `default` ve `initSync` veriyor, `WebAssembly.Memory`
+dışarıya çıkmıyor (bellek için `measureUserAgentSpecificMemory` şart).
+Katalog `popstate` dinlemiyor; `history.pushState` + `PopStateEvent` kart
+değiştirmiyor, sızıntı turu sol menüden gerçek tıklamayla yapılmalı.
+Sentetik `pointermove`/`mousemove` canvas'a gönderilince GPUI'ye ulaşıyor —
+lejantın `x:` değeri güncelleniyorsa ölçüm geçerlidir, önce onu doğrulayın.
