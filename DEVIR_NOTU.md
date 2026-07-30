@@ -10,7 +10,7 @@ gereken durum, açık konular ve tekrar üretim adımları var.
 
 | depo | dal | son commit | durum |
 |---|---|---|---|
-| `uPlot.rs` | `main` | `c1f95f8` | temiz, gönderildi |
+| `uPlot.rs` | `main` | `000a6da` | temiz, gönderildi |
 | `../gpui` | `main` | `91d67c5` | temiz, gönderildi |
 | `../gpui_kutuphanesi` | `main` | `36f1174` | temiz, gönderildi |
 
@@ -21,6 +21,10 @@ Yan yana beklenen dizinler: `uPlot.rs`, `gpui`, `gpui_kutuphanesi`,
 Bu oturumun commit'leri (`4b5fa67` sonrası, hepsi gönderildi):
 
 ```
+000a6da feat(yerleşim): kart sığdırmasını iki eksen bayrağına ayır
+6b1bd05 test(gpui): boyanan renkleri günlüğe bağla
+140046c feat(imleç): Ctrl yapışmasını ikinci eksene de uygula
+38361c3 docs: devir notunu stable geçişi ve lejant odağıyla güncelle
 c1f95f8 feat(lejant): satıra gelince seriyi odakla
 7a7ba77 test(perf): dört performans iddiasını ölçüme bağla
 03bd648 build(web): kabuğu stable toolchain'e al
@@ -51,7 +55,7 @@ eb8a375 fix(katalog): kart yüzeylerini görünür alana sığdır ve kesik içe
 ```
 
 Doğrulama durumu: `cargo fmt --all --check` temiz, `cargo clippy --workspace
---all-targets` uyarısız, testler çekirdek 99 / örnekler 262 / katalog 20 +
+--all-targets` uyarısız, testler çekirdek 106 / örnekler 262 / katalog 24 +
 sahne 2 / resize 13 / svg 6 / area_fill 3 / bütçe 2 geçiyor.
 
 **`upstream_yol_butcesi` yalnız `--release` ile anlamlıdır.** Debug'da
@@ -252,6 +256,26 @@ tarafında iş parçacıklı web yolu gerçekten çalışır ve katalog ondan
 odak eksikti. Odak yalnız `cursor.focus` kurulmuş kartlarda boyandığından
 `odak_sunumu_var_mı` ile önce kontrol ediliyor. Birleşik lejantta hedef
 dışındaki yüzeylerin odağı da bırakılıyor.
+
+**Kart sığdırması iki eksen bayrağına ayrıldı** (commit `000a6da`).
+`GrafikSeçenekleri::sığdırma(dikey, yatay)` dört durum üretiyor: tek eksen
+açıkken o eksen alana çekilir ve diğeri aynı oranda değişir; ikisi açıkken
+her eksen bağımsız uyar ve oran ancak burada bozulur; ikisi kapalıyken
+yüzey ham boyutunda kalır ve kaydırmayla gezilir. Varsayılan `(true,
+false)` kaynak sayfalardaki davranıştır. Tek yüzeyli kartlar önceden kabı
+doğrudan dolduruyordu, yani politikayı hiç görmüyorlardı.
+
+**Duyarlı yüzeyler bu politikadan ayrıldı.** `duyarlı_boyut` yüzeyi
+ölçülen alana kendisi oturtuyor; üstüne sığdırma uygulanınca geri besleme
+kuruluyordu — ölçek genişliği düşürür, duyarlı boyut düşen genişliği yeni
+ham boyut sanar, ölçek yeniden hesaplanır. Ham boyut `800×400`'den
+`686×600`'e kayıyor ve yüzey gözle görülür şekilde eziliyordu. O kartlarda
+politika artık alanı doldurmaya sabit, denetimler kapalı.
+
+Katalog denetim çubuğuna iki sığdırma anahtarı ve ham boyut adımları
+eklendi. Kart tanımları kaynak sayfaların varsayılanını taşıdığından dört
+durum başka türlü denenemiyor; ham boyut da oynamalı, çünkü yüzey alana
+sığdığı sürece hiçbir eksen küçültülmez.
 
 **Dört performans iddiası ölçüldü, dördü de düzeltme gerektirmedi.** Dışarıdan
 gelen bir değerlendirme `src/gpui.rs` ve `src/grafik.rs` için dört "performansı
