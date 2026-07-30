@@ -605,14 +605,19 @@ fn duyarlı_boyut_güncellenmeli(önceki: Option<Bounds<Pixels>>, güncel: Bound
     önceki.is_none_or(|önceki| önceki.size != güncel.size)
 }
 
-/// Boyanan yol renklerinin test kaydı.
+/// Ekrana giden boyamaların test kaydı.
 ///
 /// Sahne komutları doğruyken boyama aşamasında yanlış renk üretmek — gradyan
 /// maskelerinin çakışıp bir dalın kaybolması gibi — komut testlerine
 /// görünmüyor. `Window::rendered_frame` gpui'de `pub(crate)` olduğundan
-/// boyanan primitive'lere dışarıdan da erişilemiyor. Bütün yol boyamaları
-/// [`retained_yolu_boya`] üzerinden geçtiği için kayıt orada tek noktada
-/// alınır.
+/// boyanan primitive'lere dışarıdan da erişilemiyor.
+///
+/// İki giriş noktası var. Yol boyamaları [`retained_yolu_boya`] üzerinden
+/// geçtiği için kayıt orada tek noktada alınır; dörtgenler (`Komut::ArkaPlan`,
+/// dikdörtgen ve yuvarlatılmış dikdörtgen) `paint_quad` ile ayrı gider ve
+/// kendi çağrı yerlerinde kaydedilir. Dörtgenler bir tur boyunca dışarıda
+/// kalmıştı: ısı haritası hücreleri, mum gövdeleri ve timeline dikdörtgenleri
+/// tümüyle quad olduğundan o kartlar "yalnız eksen boyanmış" görünüyordu.
 ///
 /// `boya-gunlugu` özelliği kapalıyken bütün çağrılar boştur ve derleyici
 /// tarafından elenir.
@@ -620,9 +625,28 @@ pub mod boya_günlüğü {
     #[cfg(feature = "boya-gunlugu")]
     use std::cell::RefCell;
 
+    use ::gpui::{Bounds, Pixels};
+
+    /// Ekrana giden tek bir boyama.
+    ///
+    /// Renk tek başına "yanlış renk" sınıfını yakalar ama "yanlış yerde" ya da
+    /// "yanlış boyutta" sınıfını yakalamaz; sparkline taşması ve gradyan
+    /// maskesinin koordinat karışıklığı ikisi de konum kusuruydu. Sınırlar bu
+    /// yüzden renkle birlikte kaydedilir.
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    pub struct BoyaKaydı {
+        pub renk: ::gpui::Hsla,
+        /// Yolun mantıksal (yüzey-yerel) sınırları. Gradyan durakları yolun
+        /// kendi sınırlarını paylaşır.
+        pub sınırlar: Bounds<Pixels>,
+        /// Yolun köşe sayısı. Sıfır köşeli bir yol boyanmışsa sahne komutu
+        /// üretilmiş ama geometri kurulamamış demektir.
+        pub köşe_sayısı: usize,
+    }
+
     #[cfg(feature = "boya-gunlugu")]
     thread_local! {
-        static KAYITLAR: RefCell<Vec<::gpui::Hsla>> = const { RefCell::new(Vec::new()) };
+        static KAYITLAR: RefCell<Vec<BoyaKaydı>> = const { RefCell::new(Vec::new()) };
     }
 
     /// Kaydı sıfırlar. Ölçülecek kareden hemen önce çağrılır.
@@ -631,30 +655,49 @@ pub mod boya_günlüğü {
         KAYITLAR.with(|kayıtlar| kayıtlar.borrow_mut().clear());
     }
 
-    /// Son temizlemeden bu yana ekrana giden renkler, boyanma sırasıyla.
+    /// Son temizlemeden bu yana ekrana giden boyamalar, boyanma sırasıyla.
     ///
     /// Düz boyalar tek kayıt, gradyan şeritleri iki durak rengi bırakır.
     #[must_use]
-    pub fn kayıtlar() -> Vec<::gpui::Hsla> {
+    pub fn girdiler() -> Vec<BoyaKaydı> {
         #[cfg(feature = "boya-gunlugu")]
         return KAYITLAR.with(|kayıtlar| kayıtlar.borrow().clone());
         #[cfg(not(feature = "boya-gunlugu"))]
         Vec::new()
     }
 
+    /// Dörtgenler `paint_quad` ile tek primitive olarak gider; yol gibi köşe
+    /// üretmezler. Günlükte "geometrisi var" sayılmaları için dörtgenin dört
+    /// köşesi yazılır, yoksa her quad geometrisiz yol gibi görünürdü.
+    pub const DÖRTGEN_KÖŞE_SAYISI: usize = 4;
+
+    /// Yalnız renkleri isteyen çağrılar için kısayol.
+    #[must_use]
+    pub fn kayıtlar() -> Vec<::gpui::Hsla> {
+        girdiler().into_iter().map(|kayıt| kayıt.renk).collect()
+    }
+
     /// Düz boyayı kaydeder; gradyanlar `yaz_renk` ile kendi duraklarını yazar.
     #[cfg_attr(not(feature = "boya-gunlugu"), expect(unused_variables))]
-    pub(super) fn yaz(boya: ::gpui::Background) {
+    pub(super) fn yaz(
+        boya: ::gpui::Background, sınırlar: Bounds<Pixels>, köşe_sayısı: usize
+    ) {
         #[cfg(feature = "boya-gunlugu")]
         if let Some(düz) = boya.as_solid() {
-            yaz_renk(düz);
+            yaz_renk(düz, sınırlar, köşe_sayısı);
         }
     }
 
     #[cfg_attr(not(feature = "boya-gunlugu"), expect(unused_variables))]
-    pub(super) fn yaz_renk(renk: ::gpui::Hsla) {
+    pub(super) fn yaz_renk(renk: ::gpui::Hsla, sınırlar: Bounds<Pixels>, köşe_sayısı: usize) {
         #[cfg(feature = "boya-gunlugu")]
-        KAYITLAR.with(|kayıtlar| kayıtlar.borrow_mut().push(renk));
+        KAYITLAR.with(|kayıtlar| {
+            kayıtlar.borrow_mut().push(BoyaKaydı {
+                renk,
+                sınırlar,
+                köşe_sayısı,
+            });
+        });
     }
 }
 
@@ -3832,9 +3875,16 @@ fn retained_yolu_boya(
     hedef_köken: ::gpui::Point<Pixels>,
     pencere: &mut Window,
 ) {
+    // Sıfır uzunluklu segment — aynı noktaya çizilen bir çizgi ya da tümüyle
+    // kırpılmış bir yol — köşe üretmez. Böyle bir yol ekranda hiçbir şey
+    // çizmez ama yine de bir draw call harcar; `pixel-align` kartında 116
+    // boyamanın 12'si buydu.
+    if yol.yol.vertices.is_empty() {
+        return;
+    }
     crate::izleme::yol_boyandı(yol.yol.vertices.len());
     let boya = boya.into();
-    boya_günlüğü::yaz(boya);
+    boya_günlüğü::yaz(boya, yol.mantıksal_sınırlar, yol.yol.vertices.len());
     let yerleşik = yol.yol;
     if let Some(mut görünüm) = görünüm {
         görünüm.kesme_sınırları.origin += hedef_köken;
@@ -4054,13 +4104,16 @@ fn sahneyi_önbellekli_boya(
             let yol_komut_görünümü = yol_boya_görünümü.filter(|_| veri_komutu);
             match komut {
                 Komut::ArkaPlan { renk } => {
+                    let sınırlar = Bounds::new(
+                        point(px(köken_x), px(köken_y)),
+                        size(px(kaynak_g as f32 * ölçek), px(kaynak_y as f32 * ölçek)),
+                    );
+                    let dolgu = yol_önbelleği.renk(renk);
+                    boya_günlüğü::yaz_renk(dolgu, sınırlar, boya_günlüğü::DÖRTGEN_KÖŞE_SAYISI);
                     pencere.paint_quad(quad(
-                        Bounds::new(
-                            point(px(köken_x), px(köken_y)),
-                            size(px(kaynak_g as f32 * ölçek), px(kaynak_y as f32 * ölçek)),
-                        ),
+                        sınırlar,
                         px(0.0),
-                        yol_önbelleği.renk(renk),
+                        dolgu,
                         px(0.0),
                         rgba(0x00000000),
                         BorderStyle::default(),
@@ -4526,13 +4579,21 @@ fn sahneyi_önbellekli_boya(
                         boyut.width *= görünüm.x_ölçeği;
                         boyut.height *= görünüm.y_ölçeği;
                     }
-                    let mut boya = |pencere: &mut Window| {
+                    let sınırlar = Bounds::new(konum, boyut);
+                    let dolgu_rengi = yol_önbelleği.renk(dolgu);
+                    let çizgi_rengi = yol_önbelleği.renk(çizgi);
+                    boya_günlüğü::yaz_renk(
+                        dolgu_rengi,
+                        sınırlar,
+                        boya_günlüğü::DÖRTGEN_KÖŞE_SAYISI,
+                    );
+                    let boya = |pencere: &mut Window| {
                         pencere.paint_quad(quad(
-                            Bounds::new(konum, boyut),
+                            sınırlar,
                             px(0.0),
-                            yol_önbelleği.renk(dolgu),
+                            dolgu_rengi,
                             px(*kalınlık * ölçek),
-                            yol_önbelleği.renk(çizgi),
+                            çizgi_rengi,
                             BorderStyle::default(),
                         ));
                     };
@@ -4566,18 +4627,26 @@ fn sahneyi_önbellekli_boya(
                     } else {
                         1.0
                     };
-                    let mut boya = |pencere: &mut Window| {
+                    let sınırlar = Bounds::new(konum, boyut);
+                    let dolgu_rengi = yol_önbelleği.renk(dolgu);
+                    let çizgi_rengi = yol_önbelleği.renk(çizgi);
+                    boya_günlüğü::yaz_renk(
+                        dolgu_rengi,
+                        sınırlar,
+                        boya_günlüğü::DÖRTGEN_KÖŞE_SAYISI,
+                    );
+                    let boya = |pencere: &mut Window| {
                         pencere.paint_quad(quad(
-                            Bounds::new(konum, boyut),
+                            sınırlar,
                             Corners {
                                 top_left: px(yarıçaplar.üst_sol * ölçek * yarıçap_ölçeği),
                                 top_right: px(yarıçaplar.üst_sağ * ölçek * yarıçap_ölçeği),
                                 bottom_right: px(yarıçaplar.alt_sağ * ölçek * yarıçap_ölçeği),
                                 bottom_left: px(yarıçaplar.alt_sol * ölçek * yarıçap_ölçeği),
                             },
-                            yol_önbelleği.renk(dolgu),
+                            dolgu_rengi,
                             px(*kalınlık * ölçek),
-                            yol_önbelleği.renk(çizgi),
+                            çizgi_rengi,
                             BorderStyle::default(),
                         ));
                     };
@@ -4864,7 +4933,13 @@ fn gradyan_yolunu_boya(
         sınır_başı,
         sınır_sonu,
     ) {
-        let Some(boya) = şerit.boya(&gradyan.duraklar, açı, renk_önbelleği) else {
+        let Some(boya) = şerit.boya(
+            &gradyan.duraklar,
+            açı,
+            renk_önbelleği,
+            yol_sınırları,
+            yol.yol.vertices.len(),
+        ) else {
             continue;
         };
         boya_maskeli_aralık(
@@ -4903,6 +4978,8 @@ impl GradyanŞeridi {
         duraklar: &[crate::GradyanRenkDurağı],
         açı: f32,
         renk_önbelleği: &mut GpuiYolÖnbelleği,
+        yol_sınırları: ::gpui::Bounds<Pixels>,
+        köşe_sayısı: usize,
     ) -> Option<::gpui::Background> {
         let sol = duraklar.get(self.sol_durak)?;
         if self.sol_durak == self.sağ_durak {
@@ -4913,8 +4990,8 @@ impl GradyanŞeridi {
         let sağ_rengi = renk_önbelleği.renk(&sağ.renk);
         // Geçiş şeridi `Background::as_solid` vermez; durak renkleri günlüğe
         // burada yazılır, yoksa gradyanla boyanan hiçbir renk görünmez.
-        boya_günlüğü::yaz_renk(sol_rengi);
-        boya_günlüğü::yaz_renk(sağ_rengi);
+        boya_günlüğü::yaz_renk(sol_rengi, yol_sınırları, köşe_sayısı);
+        boya_günlüğü::yaz_renk(sağ_rengi, yol_sınırları, köşe_sayısı);
         Some(linear_gradient(
             açı,
             linear_color_stop(sol_rengi, self.sol_yüzde),

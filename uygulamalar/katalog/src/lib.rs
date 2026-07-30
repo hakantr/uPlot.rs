@@ -10294,6 +10294,9 @@ mod tests {
     /// Boya günlüğü o aşamayı görünür kılar; `Window::rendered_frame` gpui'de
     /// `pub(crate)` olduğundan boyanan primitive'lere başka türlü
     /// erişilemiyor.
+    ///
+    /// Tek kartlık örnek; bütün katalogu gezen sistematik hâli
+    /// [`her_kart_boyanır_ve_yolları_geometri_taşır`].
     #[::gpui::test]
     async fn gradyan_kartında_iki_dal_da_boyanır(cx: &mut ::gpui::TestAppContext) {
         cx.update(|cx| {
@@ -10336,6 +10339,132 @@ mod tests {
             boyalar.contains(&yeşil),
             "ayrık gradyanın pozitif dalı boyanmadı: {} renk kaydı",
             boyalar.len()
+        );
+    }
+
+    /// Katalogdaki her kart gerçekten boyanmalı ve boyanan her yol geometri
+    /// taşımalı.
+    ///
+    /// Komut testleri sahnenin doğru komutu ürettiğini gösterir, yerleşim
+    /// testleri yüzeyin doğru yerde olduğunu. İkisi de geçerken kart yine de
+    /// boş çizilebiliyor: `Komut::Daireler` çiziminde `PathBuilder::build`
+    /// 8.000 daireyi kuramayıp hatayı `ok()` ile yutuyordu ve yüzey sessizce
+    /// boş kalıyordu. Boyanan yolun köşe sayısı bu sınıfın tek göstergesi.
+    ///
+    /// Sınırlar da kaydediliyor: sparkline taşması ve gradyan maskesinin
+    /// koordinat karışıklığı renk kusuru değil konum kusuruydu.
+    #[::gpui::test]
+    async fn her_kart_boyanır_ve_yolları_geometri_taşır(cx: &mut ::gpui::TestAppContext) {
+        cx.update(|cx| {
+            let _ = ortak_bilesenler::baslat(ortak_bileşen_ayarları(), cx);
+            başlat(cx);
+        });
+        let (liste, cx) = cx.add_window_view(|_, cx| ChartListesi::yeni(cx));
+
+        let mut ihlaller = Vec::new();
+        let mut boyanan_kart_sayısı = 0_usize;
+        for tanım in KATALOG_KARTLARI {
+            // Kart seçiminin kendi karesi ölçülüyor. Seçimden sonra yüzeyleri
+            // tek tek bildirip ikinci bir kare beklemek çoğu kartta çalışıyor
+            // ama `box-whisker` gibi yüzeyi doğrudan çocuk olarak gömen
+            // kartlarda `cached()` alt ağaç yeniden oynatılıyor ve boyama
+            // closure'ı hiç çağrılmıyordu: 17 yüzeyin 17'si ölçülüyor, sıfırı
+            // boyanıyordu. Seçim karesi bu tuzağı tamamen atlar.
+            uplot_rs::gpui::boya_günlüğü::temizle();
+            liste.update(cx, |bu, cx| bu.kartı_seç(tanım.kimlik, cx));
+            cx.run_until_parked();
+            let girdiler = uplot_rs::gpui::boya_günlüğü::girdiler();
+
+            if girdiler.is_empty() {
+                let (yüzey_sayısı, ölçülen) = liste.read_with(cx, |bu, cx| {
+                    let mut toplam = 0_usize;
+                    let mut ölçülen = 0_usize;
+                    bu.etkin_grafik_yüzeylerini_gez(|yüzey| {
+                        toplam += 1;
+                        if yüzey.read(cx).ölçülen_alan().is_some() {
+                            ölçülen += 1;
+                        }
+                    });
+                    (toplam, ölçülen)
+                });
+                let ilk = liste.read_with(cx, |bu, cx| {
+                    let mut ilk = None;
+                    bu.etkin_grafik_yüzeylerini_gez(|yüzey| {
+                        if ilk.is_none() {
+                            ilk = yüzey.read(cx).ölçülen_alan();
+                        }
+                    });
+                    ilk
+                });
+                ihlaller.push(format!(
+                    "{}: hiç boyanmadı ({yüzey_sayısı} yüzey, {ölçülen} tanesi ölçüldü, ilk {ilk:?})",
+                    tanım.slug
+                ));
+                continue;
+            }
+            boyanan_kart_sayısı += 1;
+
+            let geometrisiz = girdiler
+                .iter()
+                .filter(|kayıt| kayıt.köşe_sayısı == 0)
+                .count();
+            if geometrisiz > 0 {
+                ihlaller.push(format!(
+                    "{}: {geometrisiz}/{} boyama geometrisiz yol",
+                    tanım.slug,
+                    girdiler.len()
+                ));
+            }
+
+            let bozuk_sınır = girdiler.iter().find(|kayıt| {
+                let (genişlik, yükseklik) = (
+                    f32::from(kayıt.sınırlar.size.width),
+                    f32::from(kayıt.sınırlar.size.height),
+                );
+                !genişlik.is_finite() || !yükseklik.is_finite() || genişlik < 0.0 || yükseklik < 0.0
+            });
+            if let Some(kayıt) = bozuk_sınır {
+                ihlaller.push(format!(
+                    "{}: boyama sınırı geçersiz {:?}",
+                    tanım.slug, kayıt.sınırlar
+                ));
+            }
+
+            // Eksen ve grid tek başına kartı "boyandı" saydırır; veri katmanı
+            // hiç çizilmese de kayıt dolu görünür. Seri renklerini kart
+            // tanımından okuyup aramak denendi ve kırılgan çıktı: ısı
+            // haritası hücre renkleriyle, mum çubuğu yön renkleriyle,
+            // sparkline çubuğu gradyan dolgusuyla çiziliyor ve hiçbiri
+            // `SeriSeçenekleri::renk` alanını kullanmıyor. Ayrı renk sayısı
+            // bu varsayımların hiçbirine yaslanmadan aynı sınıfı yakalar:
+            // yalnız eksen boyanmış bir kart tek tonda kalır.
+            let mut belirgin = girdiler.iter().map(|kayıt| kayıt.renk).collect::<Vec<_>>();
+            belirgin.sort_by(|a, b| {
+                a.h.total_cmp(&b.h)
+                    .then(a.s.total_cmp(&b.s))
+                    .then(a.l.total_cmp(&b.l))
+                    .then(a.a.total_cmp(&b.a))
+            });
+            belirgin.dedup();
+            if belirgin.len() < 2 {
+                ihlaller.push(format!(
+                    "{}: {} boyama tek renkte; veri katmanı boyanmamış olabilir",
+                    tanım.slug,
+                    girdiler.len()
+                ));
+            }
+        }
+
+        assert!(
+            ihlaller.is_empty(),
+            "{} kart boya invaryantını bozdu:\n{}",
+            ihlaller.len(),
+            ihlaller.join("\n")
+        );
+        assert_eq!(
+            boyanan_kart_sayısı,
+            KATALOG_KARTLARI.len(),
+            "her ana kart ölçülmeliydi"
         );
     }
 
